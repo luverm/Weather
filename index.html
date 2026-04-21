@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>Aether — Interactive Weather</title>
+  <link rel="preconnect" href="https://api.open-meteo.com" crossorigin />
+  <link rel="preconnect" href="https://geocoding-api.open-meteo.com" crossorigin />
+  <link rel="stylesheet" href="styles/main.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='18' fill='%23fff1c9'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <!-- Stacked canvas layers, back to front. Each scene owns one. -->
+  <div class="stage" aria-hidden="true">
+    <canvas id="sky"></canvas>
+    <canvas id="stars"></canvas>
+    <canvas id="clouds"></canvas>
+    <canvas id="wind"></canvas>
+    <canvas id="rain"></canvas>
+    <canvas id="snow"></canvas>
+    <canvas id="lightning"></canvas>
+    <div class="vignette"></div>
+  </div>
+
+  <!-- Main UI -->
+  <main class="app" role="main">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark"></span>
+        <span class="brand-name">Aether</span>
+      </div>
+
+      <form class="search" role="search" aria-label="Search for a city">
+        <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M16 16l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        <input id="search-input" type="search" autocomplete="off" spellcheck="false"
+               placeholder="Search any city…" aria-label="City name" />
+        <ul id="search-results" class="search-results" role="listbox" hidden></ul>
+      </form>
+
+      <button id="locate-btn" class="icon-btn" title="Use my location" aria-label="Use my location">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="3" fill="currentColor"/>
+          <circle cx="12" cy="12" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </header>
+
+    <section class="hero">
+      <div class="hero-inner glass" data-tilt>
+        <div class="place">
+          <p class="place-label">Now in</p>
+          <h1 id="place-name" class="place-name">—</h1>
+          <p id="place-sub" class="place-sub">Fetching atmosphere…</p>
+        </div>
+
+        <div class="temp-wrap">
+          <div class="temp">
+            <span id="temp-value" class="temp-value">–</span>
+            <button id="unit-toggle" class="unit" title="Toggle units" aria-label="Toggle temperature units">°C</button>
+          </div>
+          <p id="condition-label" class="condition-label">—</p>
+          <p id="feels-like" class="feels-like">Feels like —</p>
+        </div>
+      </div>
+
+      <div class="metrics">
+        <div class="metric glass">
+          <span class="metric-label">Wind</span>
+          <span id="m-wind" class="metric-value">—</span>
+          <span class="metric-unit">km/h</span>
+        </div>
+        <div class="metric glass">
+          <span class="metric-label">Humidity</span>
+          <span id="m-humidity" class="metric-value">—</span>
+          <span class="metric-unit">%</span>
+        </div>
+        <div class="metric glass">
+          <span class="metric-label">Pressure</span>
+          <span id="m-pressure" class="metric-value">—</span>
+          <span class="metric-unit">hPa</span>
+        </div>
+        <div class="metric glass">
+          <span class="metric-label">UV</span>
+          <span id="m-uv" class="metric-value">—</span>
+          <span class="metric-unit">idx</span>
+        </div>
+      </div>
+
+      <div class="forecast glass" aria-label="Hourly forecast">
+        <div id="forecast-track" class="forecast-track"></div>
+      </div>
+    </section>
+
+    <footer class="hint">
+      <span class="dot"></span>
+      <span id="hint-text">Move your cursor — the sky responds.</span>
+    </footer>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
