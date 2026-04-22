@@ -3,6 +3,7 @@
 
 import { prepCanvas } from "../animation-engine.js";
 import { input } from "../input.js";
+import { clock } from "../clock.js";
 
 // Palettes keyed by time-of-day bucket. Each is a top-to-bottom gradient
 // sampled at three stops, plus the sun/moon tint.
@@ -94,44 +95,65 @@ export class SkyScene {
     prepCanvas(this.canvas, w, h, dpr);
   }
 
-  setWeather({ sunrise, sunset, condition, isDay }) {
+  setWeather({ sunrise, sunset, condition, isDay, daily }) {
     this.sunrise = sunrise;
     this.sunset = sunset;
     this.condition = condition;
     this.isDay = isDay;
-    const bucket = pickPalette(Date.now(), sunrise, sunset);
-    const next = buildPalette(bucket, condition);
-    if (this.to && paletteEqual(this.to, next)) return;
-    // Start a crossfade from whatever is currently displayed.
+    this.daily = daily; // used to find the right day's sunrise/sunset when scrubbing
+    this._refreshPalette();
+  }
+
+  /** Recompute palette from current (possibly simulated) clock time. */
+  _refreshPalette() {
+    if (!this.condition) return;
+    const { sunrise, sunset } = this._currentDayBounds();
+    const bucket = pickPalette(clock.now(), sunrise, sunset);
+    const next = buildPalette(bucket, this.condition);
+    if (this.to && paletteEqual(this.to, next) && this.bucket === bucket) return;
     this.from = interpolate(this.from, this.to, this.mix);
     this.to = next;
     this.mix = 0;
     this.bucket = bucket;
+  }
 
-    // Position the sun/moon based on where we are in the day/night cycle.
-    this._updateSunPos();
+  /** Pick sunrise/sunset for the day the scrubber is pointing at. */
+  _currentDayBounds() {
+    if (!this.daily?.length) return { sunrise: this.sunrise, sunset: this.sunset };
+    const t = clock.now();
+    const DAY = 86400_000;
+    // Find the day whose sunrise/sunset straddles `t`. Fall back to nearest.
+    let best = this.daily[0];
+    let bestDiff = Infinity;
+    for (const d of this.daily) {
+      if (!d.sunrise) continue;
+      const diff = Math.abs(t - (d.sunrise + DAY / 2));
+      if (diff < bestDiff) { best = d; bestDiff = diff; }
+    }
+    return { sunrise: best.sunrise ?? this.sunrise, sunset: best.sunset ?? this.sunset };
   }
 
   _updateSunPos() {
-    const now = Date.now();
+    const now = clock.now();
+    const { sunrise, sunset } = this._currentDayBounds();
     let t;
-    if (this.sunrise && this.sunset && this.bucket !== "night") {
-      // Daytime arc 0..1 from sunrise to sunset.
-      t = (now - this.sunrise) / (this.sunset - this.sunrise);
-    } else if (this.sunrise && this.sunset) {
-      // Nighttime arc for the moon: sunset -> next sunrise.
-      const nextSunrise = this.sunrise + 24 * 3600_000;
-      t = (now - this.sunset) / (nextSunrise - this.sunset);
+    if (sunrise && sunset && this.bucket !== "night") {
+      t = (now - sunrise) / (sunset - sunrise);
+    } else if (sunrise && sunset) {
+      const nextSunrise = sunrise + 24 * 3600_000;
+      t = (now - sunset) / (nextSunrise - sunset);
     } else {
-      t = ((new Date().getHours() + new Date().getMinutes() / 60) / 24) % 1;
+      const d = new Date(now);
+      t = ((d.getHours() + d.getMinutes() / 60) / 24) % 1;
     }
     t = Math.max(0, Math.min(1, t));
     this.sunX = 0.15 + t * 0.7;
-    // Parabolic arc — highest in the middle.
     this.sunY = 0.65 - Math.sin(t * Math.PI) * 0.42;
   }
 
   update(dt) {
+    // If the scrubber moved the clock, re-evaluate which palette we're in.
+    this._refreshPalette();
     if (this.mix < 1) this.mix = Math.min(1, this.mix + dt * this.fadeSpeed);
     this._updateSunPos();
     this._draw();

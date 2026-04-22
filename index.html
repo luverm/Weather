@@ -2,17 +2,23 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
   <meta name="color-scheme" content="dark light" />
   <meta name="theme-color" content="#0b1020" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Aether" />
   <title>Aether — Interactive Weather</title>
+  <link rel="manifest" href="manifest.json" />
   <link rel="preconnect" href="https://api.open-meteo.com" crossorigin />
   <link rel="preconnect" href="https://geocoding-api.open-meteo.com" crossorigin />
+  <link rel="preconnect" href="https://air-quality-api.open-meteo.com" crossorigin />
   <link rel="stylesheet" href="styles/main.css" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='18' fill='%23fff1c9'/%3E%3C/svg%3E" />
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%230b1020'/%3E%3Ccircle cx='90' cy='90' r='48' fill='%23fff1c9'/%3E%3C/svg%3E" />
 </head>
 <body>
-  <!-- Stacked canvas layers, back to front. Each scene owns one. -->
+  <!-- Stacked canvas layers, back to front -->
   <div class="stage" aria-hidden="true">
     <canvas id="sky"></canvas>
     <canvas id="stars"></canvas>
@@ -24,7 +30,6 @@
     <div class="vignette"></div>
   </div>
 
-  <!-- Main UI -->
   <main class="app" role="main">
     <header class="topbar">
       <div class="brand">
@@ -32,7 +37,7 @@
         <span class="brand-name">Aether</span>
       </div>
 
-      <form class="search" role="search" aria-label="Search for a city">
+      <form class="search" role="search" aria-label="Search for a city" onsubmit="return false">
         <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
           <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
           <path d="M16 16l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
@@ -42,21 +47,34 @@
         <ul id="search-results" class="search-results" role="listbox" hidden></ul>
       </form>
 
-      <button id="locate-btn" class="icon-btn" title="Use my location" aria-label="Use my location">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="12" cy="12" r="3" fill="currentColor"/>
-          <circle cx="12" cy="12" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"/>
-          <path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
-      </button>
+      <div class="toolbar">
+        <button id="audio-btn" class="icon-btn" title="Enable ambient sound" aria-label="Enable ambient sound">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 10v4h3l4 3V7l-4 3H4z" fill="currentColor"/>
+            <path class="sound-waves" d="M15 9c1.2 1 1.2 5 0 6M18 7c2.5 2 2.5 8 0 10"
+                  fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <button id="locate-btn" class="icon-btn" title="Use my location" aria-label="Use my location">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="3" fill="currentColor"/>
+            <circle cx="12" cy="12" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
     </header>
+
+    <!-- Saved locations strip -->
+    <nav id="places-strip" class="places-strip" aria-label="Saved locations" hidden></nav>
 
     <section class="hero">
       <div class="hero-inner glass" data-tilt>
         <div class="place">
-          <p class="place-label">Now in</p>
+          <p class="place-label"><span id="place-live-dot" class="live-dot"></span><span id="place-label-text">Now in</span></p>
           <h1 id="place-name" class="place-name">—</h1>
           <p id="place-sub" class="place-sub">Fetching atmosphere…</p>
+          <p id="narrative" class="narrative"></p>
         </div>
 
         <div class="temp-wrap">
@@ -69,37 +87,132 @@
         </div>
       </div>
 
+      <!-- Nowcast banner: rain in X minutes -->
+      <div id="nowcast" class="nowcast glass" hidden>
+        <svg class="nowcast-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M7 14a4 4 0 010-8 5 5 0 019.9-1A4 4 0 0117 14H7z" fill="none" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M9 18l-1 3M13 18l-1 3M17 18l-1 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        <div class="nowcast-text">
+          <strong id="nowcast-headline">—</strong>
+          <span id="nowcast-sub"></span>
+        </div>
+        <div id="nowcast-bars" class="nowcast-bars" aria-hidden="true"></div>
+      </div>
+
+      <!-- Time scrubber -->
+      <div class="scrubber glass" aria-label="Time scrubber">
+        <div class="scrubber-head">
+          <button id="scrubber-reset" class="scrubber-reset" aria-label="Return to now">Now</button>
+          <span id="scrubber-time" class="scrubber-time">—</span>
+          <span id="scrubber-delta" class="scrubber-delta"></span>
+        </div>
+        <div id="scrubber-track" class="scrubber-track" role="slider"
+             aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0">
+          <div class="scrubber-fill" id="scrubber-fill"></div>
+          <div class="scrubber-sunrise" id="scrubber-sunrise" title="Sunrise"></div>
+          <div class="scrubber-sunset" id="scrubber-sunset" title="Sunset"></div>
+          <div class="scrubber-thumb" id="scrubber-thumb" aria-hidden="true"></div>
+        </div>
+      </div>
+
       <div class="metrics">
         <div class="metric glass">
           <span class="metric-label">Wind</span>
           <span id="m-wind" class="metric-value">—</span>
           <span class="metric-unit">km/h</span>
+          <span id="m-wind-sub" class="metric-sub">gust —</span>
         </div>
         <div class="metric glass">
           <span class="metric-label">Humidity</span>
           <span id="m-humidity" class="metric-value">—</span>
           <span class="metric-unit">%</span>
+          <span id="m-humidity-sub" class="metric-sub">dew —°</span>
         </div>
         <div class="metric glass">
           <span class="metric-label">Pressure</span>
           <span id="m-pressure" class="metric-value">—</span>
           <span class="metric-unit">hPa</span>
+          <span id="m-pressure-sub" class="metric-sub">visibility —</span>
         </div>
         <div class="metric glass">
           <span class="metric-label">UV</span>
           <span id="m-uv" class="metric-value">—</span>
           <span class="metric-unit">idx</span>
+          <span id="m-uv-sub" class="metric-sub">peak —</span>
         </div>
       </div>
 
+      <!-- Extras row: air quality + moon -->
+      <div class="extras">
+        <div class="extra-card glass" id="aq-card">
+          <span class="metric-label">Air quality</span>
+          <div class="aq-row">
+            <div class="aq-ring" aria-hidden="true">
+              <svg viewBox="0 0 48 48">
+                <circle cx="24" cy="24" r="20" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="4"/>
+                <circle id="aq-arc" cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="4"
+                        stroke-linecap="round" stroke-dasharray="126" stroke-dashoffset="126"
+                        transform="rotate(-90 24 24)"/>
+              </svg>
+              <span id="aq-value" class="aq-value">—</span>
+            </div>
+            <div class="aq-meta">
+              <strong id="aq-label">—</strong>
+              <span id="aq-detail" class="aq-detail">PM2.5 — • O₃ —</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="extra-card glass" id="moon-card">
+          <span class="metric-label">Moon</span>
+          <div class="moon-row">
+            <svg class="moon-svg" viewBox="-24 -24 48 48" aria-hidden="true">
+              <circle cx="0" cy="0" r="18" fill="rgba(255,255,255,0.08)"/>
+              <path id="moon-lit" d="" fill="#f0e6cb"/>
+            </svg>
+            <div class="moon-meta">
+              <strong id="moon-name">—</strong>
+              <span class="moon-detail"><span id="moon-illum">—</span>% illuminated</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="extra-card glass" id="sun-card">
+          <span class="metric-label">Sun</span>
+          <div class="sun-row">
+            <div class="sun-item">
+              <span class="sun-label">Rises</span>
+              <strong id="sun-rise">—</strong>
+            </div>
+            <div class="sun-item">
+              <span class="sun-label">Sets</span>
+              <strong id="sun-set">—</strong>
+            </div>
+            <div class="sun-item">
+              <span class="sun-label">Daylight</span>
+              <strong id="sun-daylight">—</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hourly forecast -->
       <div class="forecast glass" aria-label="Hourly forecast">
+        <div class="forecast-heading">Next 24 hours</div>
         <div id="forecast-track" class="forecast-track"></div>
+      </div>
+
+      <!-- 7-day forecast -->
+      <div class="daily glass" aria-label="7-day forecast">
+        <div class="forecast-heading">7-day outlook</div>
+        <div id="daily-track" class="daily-track"></div>
       </div>
     </section>
 
     <footer class="hint">
       <span class="dot"></span>
-      <span id="hint-text">Move your cursor — the sky responds.</span>
+      <span id="hint-text">Drag the time slider to scrub the sky.</span>
     </footer>
   </main>
 
