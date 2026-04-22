@@ -15,6 +15,7 @@ import { Scrubber } from "./scrubber.js";
 import { AmbientAudio } from "./audio.js";
 import { narrate } from "./narrative.js";
 import { places } from "./places.js";
+import { RadarMap } from "./radar-map.js";
 
 const engine = new AnimationEngine();
 
@@ -27,6 +28,39 @@ const snow = engine.add("snow", new SnowScene(document.getElementById("snow")));
 const lightning = engine.add("lightning", new LightningScene(document.getElementById("lightning")));
 
 const audio = new AmbientAudio();
+
+// Radar map — instantiated lazily once Leaflet has loaded from CDN.
+// The CDN `<script>` tag is not deferred relative to this module, so we
+// poll briefly on first use rather than hard-fail.
+let radar = null;
+let radarReady = null;
+async function ensureRadar(center) {
+  if (radar) return radar;
+  if (radarReady) return radarReady;
+  radarReady = (async () => {
+    // Wait up to 5 s for Leaflet to appear.
+    const started = Date.now();
+    while (!window.L && Date.now() - started < 5000) {
+      await new Promise((r) => setTimeout(r, 80));
+    }
+    if (!window.L) {
+      document.getElementById("radar-card")?.setAttribute("data-unavailable", "true");
+      return null;
+    }
+    radar = new RadarMap({
+      mapEl: document.getElementById("radar-map"),
+      playBtn: document.getElementById("radar-play"),
+      timeLabel: document.getElementById("radar-time"),
+      deltaLabel: document.getElementById("radar-delta"),
+      frameTrack: document.getElementById("radar-track"),
+      fullscreenBtn: document.getElementById("radar-full"),
+      card: document.getElementById("radar-card"),
+    });
+    await radar.init(center || [51.5, 0]).catch((err) => console.warn("Radar init failed:", err));
+    return radar;
+  })();
+  return radarReady;
+}
 
 // Hook lightning -> thunder with a realistic delay (2–4 sec after flash).
 const origSpawn = lightning._spawnFlash.bind(lightning);
@@ -176,6 +210,9 @@ async function loadByCoords(place) {
 
   // Update scrubber bounds to this location's sunrise/sunset.
   scrubber.setBounds({ start: Date.now(), sunrise: w.sunrise, sunset: w.sunset });
+
+  // Move the radar to the new location (fire-and-forget; resolves later).
+  ensureRadar([place.lat, place.lon]).then((r) => r?.setCenter(place.lat, place.lon, place.name));
 }
 
 async function useGeolocation() {
