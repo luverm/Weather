@@ -80,6 +80,12 @@
           <h1 id="place-name" class="place-name">—</h1>
           <p id="place-sub" class="place-sub">Fetching atmosphere…</p>
           <p id="narrative" class="narrative"></p>
+          <p id="advice" class="advice" hidden>
+            <svg class="advice-icon" viewBox="0 0 24 24" aria-hidden="true" width="14" height="14">
+              <path d="M12 3a5 5 0 00-3 9v2h6v-2a5 5 0 00-3-9zM9 18h6M10 21h4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span id="advice-text"></span>
+          </p>
         </div>
 
         <div class="temp-wrap">
@@ -121,9 +127,53 @@
         </div>
       </div>
 
+      <!-- Interactive hourly chart -->
+      <div class="chart-card glass" id="chart-card" aria-label="Hourly forecast chart">
+        <div class="chart-head">
+          <span class="chart-title">Hourly trend</span>
+          <div class="chart-legend">
+            <span class="legend-swatch temp"></span><span>Temp</span>
+            <span class="legend-swatch precip"></span><span>Precip chance</span>
+          </div>
+          <span id="chart-hover" class="chart-hover" hidden></span>
+        </div>
+        <svg id="chart-svg" class="chart-svg" viewBox="0 0 600 140" preserveAspectRatio="none" role="img" aria-hidden="false">
+          <defs>
+            <linearGradient id="temp-fill" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.35"/>
+              <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
+            </linearGradient>
+            <linearGradient id="temp-stroke" x1="0" x2="1" y1="0" y2="0">
+              <stop offset="0%" stop-color="#9ad1ff"/>
+              <stop offset="50%" stop-color="#ffe6c7"/>
+              <stop offset="100%" stop-color="#ff9c7a"/>
+            </linearGradient>
+          </defs>
+          <g id="chart-night" class="chart-night"></g>
+          <g id="chart-precip" class="chart-precip"></g>
+          <path id="chart-temp-fill" class="chart-temp-fill" fill="url(#temp-fill)"></path>
+          <path id="chart-temp-line" class="chart-temp-line" fill="none" stroke="url(#temp-stroke)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"></path>
+          <g id="chart-labels" class="chart-labels"></g>
+          <line id="chart-cursor" class="chart-cursor" x1="-10" x2="-10" y1="0" y2="140"></line>
+          <circle id="chart-dot" class="chart-dot" r="4" cx="-10" cy="-10"></circle>
+        </svg>
+      </div>
+
       <div class="metrics">
-        <div class="metric glass">
+        <div class="metric glass metric-wind">
           <span class="metric-label">Wind</span>
+          <div class="wind-compass" aria-hidden="true">
+            <svg viewBox="-24 -24 48 48">
+              <circle cx="0" cy="0" r="22" fill="none" stroke="var(--stroke)" stroke-width="1"/>
+              <text x="0" y="-15" text-anchor="middle" class="compass-n">N</text>
+              <text x="15" y="4" text-anchor="middle" class="compass-card">E</text>
+              <text x="0" y="19" text-anchor="middle" class="compass-card">S</text>
+              <text x="-15" y="4" text-anchor="middle" class="compass-card">W</text>
+              <g id="wind-needle" class="wind-needle">
+                <path d="M 0 -18 L 3 6 L 0 2 L -3 6 Z" fill="currentColor"/>
+              </g>
+            </svg>
+          </div>
           <span id="m-wind" class="metric-value">—</span>
           <span class="metric-unit">km/h</span>
           <span id="m-wind-sub" class="metric-sub">gust —</span>
@@ -184,7 +234,7 @@
         </div>
 
         <div class="extra-card glass" id="sun-card">
-          <span class="metric-label">Sun</span>
+          <span class="metric-label"><span id="sun-next-label">Sun</span> <span id="sun-countdown" class="sun-countdown"></span></span>
           <div class="sun-row">
             <div class="sun-item">
               <span class="sun-label">Rises</span>
@@ -256,8 +306,30 @@
 
     <footer class="hint">
       <span class="dot"></span>
-      <span id="hint-text">Drag the time slider to scrub the sky.</span>
+      <span id="hint-text">Drag the slider, hover the chart, or press <kbd>?</kbd> for shortcuts.</span>
     </footer>
+
+    <!-- Keyboard shortcuts overlay -->
+    <div id="shortcuts" class="shortcuts" role="dialog" aria-labelledby="shortcuts-title" hidden>
+      <div class="shortcuts-inner glass">
+        <button class="shortcuts-close icon-btn" aria-label="Close shortcuts" id="shortcuts-close">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+        <h2 id="shortcuts-title">Keyboard shortcuts</h2>
+        <dl class="shortcuts-list">
+          <div><dt><kbd>/</kbd></dt><dd>Focus search</dd></div>
+          <div><dt><kbd>L</kbd></dt><dd>Use my location</dd></div>
+          <div><dt><kbd>U</kbd></dt><dd>Toggle °C / °F</dd></div>
+          <div><dt><kbd>M</kbd></dt><dd>Toggle ambient audio</dd></div>
+          <div><dt><kbd>Space</kbd></dt><dd>Play / pause radar</dd></div>
+          <div><dt><kbd>F</kbd></dt><dd>Fullscreen radar</dd></div>
+          <div><dt><kbd>N</kbd></dt><dd>Return scrubber to now</dd></div>
+          <div><dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Nudge time ± 1 h</dd></div>
+          <div><dt><kbd>?</kbd></dt><dd>Show / hide this panel</dd></div>
+          <div><dt><kbd>Esc</kbd></dt><dd>Close panels</dd></div>
+        </dl>
+      </div>
+    </div>
   </main>
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>

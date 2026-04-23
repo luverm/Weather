@@ -3,6 +3,8 @@
 
 import { searchCities } from "./weather-service.js";
 import { places } from "./places.js";
+import { HourlyChart } from "./hourly-chart.js";
+import { advise } from "./advice.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -33,6 +35,13 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunCountdown: $("#sun-countdown"),
+  sunNextLabel: $("#sun-next-label"),
+  windNeedle: $("#wind-needle"),
+  advice: $("#advice"),
+  adviceText: $("#advice-text"),
+  chartSvg: $("#chart-svg"),
+  chartHover: $("#chart-hover"),
   forecastTrack: $("#forecast-track"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
@@ -55,6 +64,8 @@ const state = {
   place: null,
   sampledWeather: null, // the weather values at the current scrubber time
   handlers: {},
+  chart: null,
+  sunTimer: null,
 };
 
 export const ui = {
@@ -67,7 +78,17 @@ export const ui = {
     bindAudio();
     bindTilt();
     renderPlaces();
+    state.chart = new HourlyChart({
+      svgEl: el.chartSvg,
+      hoverEl: el.chartHover,
+      onHoverHour: (ts) => state.handlers.onHourClick?.(ts),
+      getUnit: () => state.unit,
+    });
   },
+  focusSearch() { el.searchInput?.focus(); el.searchInput?.select?.(); },
+  toggleUnits() { el.unitBtn?.click(); },
+  isSearchOpen() { return !el.searchResults.hidden; },
+  closeSearch() { el.searchResults.hidden = true; el.searchInput?.blur(); },
   setLoading(text) { el.placeSub.textContent = text; },
   setPlace(place) {
     state.place = place;
@@ -89,6 +110,8 @@ export const ui = {
     renderHourly(weather);
     renderDaily(weather);
     renderNowcast(weather);
+    renderAdvice(weather);
+    if (state.chart) state.chart.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
@@ -105,10 +128,19 @@ export const ui = {
     renderLiveValues(sampled, { animate: false });
     renderMetrics(sampled);
     highlightHour(highlightHourIndex);
+    if (state.chart && sampled._sampledTs != null) {
+      state.chart.setCursor(sampled._sampledTs);
+    } else if (state.chart) {
+      state.chart.setCursor(sampled.hourly?.[highlightHourIndex]?.time);
+    }
   },
   setScrubbing(on) {
     document.documentElement.setAttribute("data-scrubbing", on ? "true" : "false");
-    el.hintText.textContent = on ? "Drag to explore future weather." : "Drag the slider to scrub the sky.";
+    if (on) {
+      el.hintText.textContent = "Drag to explore future weather.";
+    } else {
+      el.hintText.innerHTML = 'Drag the slider, hover the chart, or press <kbd>?</kbd> for shortcuts.';
+    }
   },
   setAudioState(on) {
     el.audioBtn.classList.toggle("on", !!on);
@@ -163,7 +195,18 @@ function renderLiveValues(w, { animate = true } = {}) {
 
 function renderMetrics(w) {
   el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
-  el.metricWindSub.textContent = `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+  const dir = w.windDir;
+  const dirLabel = dir != null ? cardinal(dir) : null;
+  el.metricWindSub.textContent = dirLabel
+    ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
+    : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+  if (el.windNeedle && dir != null) {
+    // Wind direction is where wind comes FROM, so the needle points TO that direction.
+    el.windNeedle.setAttribute("transform", `rotate(${dir})`);
+    el.windNeedle.style.opacity = "1";
+  } else if (el.windNeedle) {
+    el.windNeedle.style.opacity = "0.3";
+  }
   el.metricHumidity.textContent = Math.round(w.humidity ?? 0);
   el.metricHumiditySub.textContent = w.dewPoint != null
     ? `dew ${Math.round(convertTemp(w.dewPoint))}°`
@@ -246,6 +289,52 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  scheduleSunCountdown(w);
+}
+
+function scheduleSunCountdown(w) {
+  if (state.sunTimer) { clearInterval(state.sunTimer); state.sunTimer = null; }
+  if (!w?.daily?.length) return;
+  const update = () => {
+    const now = Date.now();
+    let nextTs = null, nextKind = null;
+    for (const d of w.daily) {
+      for (const [ts, kind] of [[d.sunrise, "Sunrise"], [d.sunset, "Sunset"]]) {
+        if (ts && ts > now && (!nextTs || ts < nextTs)) { nextTs = ts; nextKind = kind; }
+      }
+    }
+    if (!nextTs) {
+      if (el.sunCountdown) el.sunCountdown.textContent = "";
+      if (el.sunNextLabel) el.sunNextLabel.textContent = "Sun";
+      return;
+    }
+    const mins = Math.max(0, Math.round((nextTs - now) / 60_000));
+    const label = mins >= 60
+      ? `${Math.floor(mins / 60)}h ${mins % 60}m`
+      : `${mins}m`;
+    if (el.sunNextLabel) el.sunNextLabel.textContent = `${nextKind} in`;
+    if (el.sunCountdown) el.sunCountdown.textContent = label;
+  };
+  update();
+  state.sunTimer = setInterval(update, 30_000);
+}
+
+function renderAdvice(w) {
+  const text = advise(w);
+  if (!el.advice || !el.adviceText) return;
+  if (text) {
+    el.adviceText.textContent = text;
+    el.advice.hidden = false;
+  } else {
+    el.advice.hidden = true;
+  }
+}
+
+function cardinal(deg) {
+  const dirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
+                "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+  const i = Math.round(((deg % 360) + 360) % 360 / 22.5) % 16;
+  return dirs[i];
 }
 
 function renderHourly(w) {

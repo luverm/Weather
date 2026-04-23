@@ -16,6 +16,7 @@ import { AmbientAudio } from "./audio.js";
 import { narrate } from "./narrative.js";
 import { places } from "./places.js";
 import { RadarMap } from "./radar-map.js";
+import { installShortcuts } from "./shortcuts.js";
 
 const engine = new AnimationEngine();
 
@@ -138,6 +139,7 @@ function sampleAt(weather, ts) {
     sunrise: day?.sunrise ?? weather.sunrise,
     sunset: day?.sunset ?? weather.sunset,
     _sampledIndex: idx,
+    _sampledTs: nearest.time,
   };
 }
 
@@ -242,6 +244,23 @@ ui.init({
   onPlaceClick: (place) => loadByCoords(place),
   onHourClick: (ts) => {
     clock.setOffset(ts - Date.now());
+    scrubber.sync();
+    if (app.weather) applyScene(app.weather);
+    ui.setScrubbing(!clock.isLive());
+  },
+});
+
+// Keyboard shortcuts.
+installShortcuts({
+  focusSearch: () => ui.focusSearch(),
+  locate: () => useGeolocation(),
+  toggleUnits: () => ui.toggleUnits(),
+  toggleAudio: () => toggleAudio(),
+  toggleFullscreenRadar: () => document.getElementById("radar-full")?.click(),
+  toggleRadar: () => document.getElementById("radar-play")?.click(),
+  resetScrubber: () => scrubber.reset(),
+  nudge: (hours) => {
+    clock.setOffset(clock.offset() + hours * 3600_000);
     scrubber.sync();
     if (app.weather) applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
