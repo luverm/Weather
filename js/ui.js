@@ -52,6 +52,8 @@ const el = {
   pressureSparkLine: $("#pressure-spark-line"),
   pressureSparkFill: $("#pressure-spark-fill"),
   shareBtn: $("#share-btn"),
+  installBtn: $("#install-btn"),
+  chartPopover: $("#chart-popover"),
   forecastTrack: $("#forecast-track"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
@@ -92,9 +94,11 @@ export const ui = {
     state.chart = new HourlyChart({
       svgEl: el.chartSvg,
       hoverEl: el.chartHover,
+      popoverEl: el.chartPopover,
       onHoverHour: (ts) => state.handlers.onHourClick?.(ts),
       getUnit: () => state.unit,
     });
+    bindInstallPrompt();
   },
   focusSearch() { el.searchInput?.focus(); el.searchInput?.select?.(); },
   toggleUnits() { el.unitBtn?.click(); },
@@ -686,6 +690,28 @@ function bindLocate() {
 
 function bindAudio() {
   el.audioBtn.addEventListener("click", () => state.handlers.onAudioToggle?.());
+}
+
+let deferredInstallPrompt = null;
+function bindInstallPrompt() {
+  if (!el.installBtn) return;
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    el.installBtn.hidden = false;
+  });
+  window.addEventListener("appinstalled", () => {
+    deferredInstallPrompt = null;
+    el.installBtn.hidden = true;
+    ui.showToast("Aether installed");
+  });
+  el.installBtn.addEventListener("click", async () => {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    const { outcome } = await deferredInstallPrompt.userChoice;
+    if (outcome === "accepted") el.installBtn.hidden = true;
+    deferredInstallPrompt = null;
+  });
 }
 
 function bindShare() {

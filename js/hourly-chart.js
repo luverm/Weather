@@ -9,9 +9,10 @@ const PAD_TOP = 16;
 const PAD_BOT = 22;
 
 export class HourlyChart {
-  constructor({ svgEl, hoverEl, onHoverHour, getUnit }) {
+  constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit }) {
     this.svg = svgEl;
     this.hoverEl = hoverEl;
+    this.popover = popoverEl;
     this.onHoverHour = onHoverHour;
     this.getUnit = getUnit || (() => "C");
     this.hours = [];
@@ -69,9 +70,14 @@ export class HourlyChart {
       const dot = this.svg.querySelector("#chart-dot");
       cursor.setAttribute("x1", p.x); cursor.setAttribute("x2", p.x);
       dot.setAttribute("cx", p.x); dot.setAttribute("cy", p.y);
+      this._positionPopover(p, h);
     });
     this.svg.addEventListener("pointerleave", () => {
       if (this.hoverEl) this.hoverEl.hidden = true;
+      if (this.popover) {
+        this.popover.classList.remove("show");
+        this.popover.hidden = true;
+      }
     });
     this.svg.addEventListener("click", (e) => {
       const i = toHourIndex(e);
@@ -88,6 +94,34 @@ export class HourlyChart {
     const hh = d.getHours().toString().padStart(2, "0");
     this.hoverEl.textContent = `${hh}:00 · ${Math.round(t)}° · ${h.pop}% chance`;
     this.hoverEl.hidden = false;
+  }
+
+  _positionPopover(point, h) {
+    if (!this.popover) return;
+    const rect = this.svg.getBoundingClientRect();
+    const wrapRect = this.popover.parentElement.getBoundingClientRect();
+    const sx = rect.width / 600;
+    const sy = rect.height / 140;
+    const pxX = (rect.left - wrapRect.left) + point.x * sx;
+    const pxY = (rect.top - wrapRect.top) + point.y * sy;
+    const unit = this.getUnit();
+    const t = unit === "F" ? h.temp * 9 / 5 + 32 : h.temp;
+    const feels = h.feelsLike != null
+      ? (unit === "F" ? h.feelsLike * 9 / 5 + 32 : h.feelsLike)
+      : null;
+    const d = new Date(h.time);
+    const hh = d.getHours().toString().padStart(2, "0");
+    const feelsStr = (feels != null && Math.abs(feels - t) >= 1)
+      ? `<em>feels ${Math.round(feels)}°</em>` : "";
+    const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h` : "";
+    this.popover.innerHTML =
+      `<strong>${hh}:00</strong> ${Math.round(t)}° ${feelsStr}<br>` +
+      `<em>${h.pop}% precip${wind}</em>`;
+    this.popover.style.left = `${pxX.toFixed(1)}px`;
+    this.popover.style.top = `${pxY.toFixed(1)}px`;
+    this.popover.hidden = false;
+    // Next frame to allow transition.
+    requestAnimationFrame(() => this.popover.classList.add("show"));
   }
 
   _draw() {
@@ -122,6 +156,25 @@ export class HourlyChart {
       `L${firstX.toFixed(1)},${(PAD_TOP + innerH).toFixed(1)} Z`;
     this.svg.querySelector("#chart-temp-line").setAttribute("d", linePath.trim());
     this.svg.querySelector("#chart-temp-fill").setAttribute("d", fillPath);
+
+    // Feels-like dashed line — only draw when it meaningfully diverges.
+    const feelsLine = this.svg.querySelector("#chart-feels-line");
+    if (feelsLine) {
+      const hasFeels = this.hours.some((h) =>
+        h.feelsLike != null && Math.abs(h.feelsLike - h.temp) >= 2
+      );
+      if (hasFeels) {
+        let fPath = "";
+        this.hours.forEach((h, i) => {
+          const v = h.feelsLike ?? h.temp;
+          fPath += (i === 0 ? "M" : "L") + iToX(i).toFixed(1) + "," + tToY(v).toFixed(1) + " ";
+        });
+        feelsLine.setAttribute("d", fPath.trim());
+        feelsLine.setAttribute("opacity", "0.55");
+      } else {
+        feelsLine.setAttribute("d", "");
+      }
+    }
 
     // Precipitation probability bars (0-100% -> 0..12px height)
     const precipG = this.svg.querySelector("#chart-precip");
