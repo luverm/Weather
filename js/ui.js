@@ -583,14 +583,21 @@ function renderNowcast(w) {
   // 2h outlook summary.
   const totalMm = nowcast.reduce((s, n) => s + (n.precip || 0), 0);
   el.nowcastSub.textContent = `${totalMm.toFixed(1)} mm expected in the next 2 hours`;
-  // Bars.
+  // Bars (time-labeled, clickable to scrub).
   el.nowcastBars.innerHTML = "";
-  const maxP = Math.max(0.5, ...nowcast.map((n) => n.precip || 0));
-  for (const n of nowcast.slice(0, 8)) {
-    const s = document.createElement("span");
-    s.style.height = `${Math.max(2, (n.precip / maxP) * 28)}px`;
-    el.nowcastBars.appendChild(s);
-  }
+  const slice = nowcast.slice(0, 8);
+  const maxP = Math.max(0.5, ...slice.map((n) => n.precip || 0));
+  slice.forEach((n, i) => {
+    const bar = document.createElement("button");
+    bar.type = "button";
+    bar.className = "nowcast-bar";
+    bar.style.height = `${Math.max(2, (n.precip / maxP) * 28)}px`;
+    const mins = Math.round((n.time - Date.now()) / 60_000);
+    bar.title = `+${Math.max(0, mins)} min · ${n.precip.toFixed(1)} mm`;
+    bar.setAttribute("aria-label", bar.title);
+    bar.addEventListener("click", () => state.handlers.onHourClick?.(n.time));
+    el.nowcastBars.appendChild(bar);
+  });
   el.nowcast.hidden = false;
 }
 

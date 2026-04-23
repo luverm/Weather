@@ -321,13 +321,19 @@ ul { list-style: none; margin: 0; padding: 0; }
   align-items: end;
   height: 28px;
 }
-.nowcast-bars span {
+.nowcast-bars span,
+.nowcast-bars .nowcast-bar {
   background: var(--accent);
   border-radius: 2px;
   min-height: 2px;
   opacity: 0.85;
-  transition: height 300ms var(--ease);
+  transition: height 300ms var(--ease), opacity 150ms var(--ease), transform 150ms var(--ease);
+  border: 0;
+  padding: 0;
+  cursor: pointer;
 }
+.nowcast-bars .nowcast-bar:hover { opacity: 1; transform: scaleY(1.1); }
+.nowcast-bars .nowcast-bar:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @keyframes slideInUp {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
@@ -576,6 +582,10 @@ ul { list-style: none; margin: 0; padding: 0; }
 .legend-swatch.feels {
   background: linear-gradient(90deg, transparent 0 3px, var(--fg-dim) 3px 6px, transparent 6px 9px, var(--fg-dim) 9px 12px);
   opacity: 0.6;
+}
+.legend-swatch.gust {
+  background: linear-gradient(90deg, var(--fg-muted) 0 1px, transparent 1px 3px, var(--fg-muted) 3px 4px, transparent 4px 6px, var(--fg-muted) 6px 7px, transparent 7px 9px, var(--fg-muted) 9px 10px, transparent 10px 12px);
+  opacity: 0.55;
 }
 .legend-swatch.precip { background: rgba(154, 209, 255, 0.55); }
 

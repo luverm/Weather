@@ -138,9 +138,10 @@ export class HourlyChart {
     const feelsStr = (feels != null && Math.abs(feels - t) >= 1)
       ? `<em>feels ${Math.round(feels)}°</em>` : "";
     const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h` : "";
+    const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
     this.popover.innerHTML =
       `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
-      `<em>${h.pop}% precip${wind}</em>`;
+      `<em>${h.pop}% precip${wind}${hum}</em>`;
     this.popover.style.left = `${pxX.toFixed(1)}px`;
     this.popover.style.top = `${pxY.toFixed(1)}px`;
     this.popover.hidden = false;
@@ -180,6 +181,29 @@ export class HourlyChart {
       `L${firstX.toFixed(1)},${(PAD_TOP + innerH).toFixed(1)} Z`;
     this.svg.querySelector("#chart-temp-line").setAttribute("d", linePath.trim());
     this.svg.querySelector("#chart-temp-fill").setAttribute("d", fillPath);
+
+    // Gust dashed line — mapped onto the lower half of the plot so it
+    // doesn't collide with the temperature line. Shows relative magnitude.
+    const gustLine = this.svg.querySelector("#chart-gust-line");
+    if (gustLine) {
+      const gusts = this.hours.map((h) => h.gusts ?? h.wind).filter((v) => v != null);
+      if (gusts.length) {
+        const gMax = Math.max(20, ...gusts);
+        // Gust line plotted in bottom 40% of chart, inverted.
+        const gBot = PAD_TOP + innerH - 2;
+        const gTop = PAD_TOP + innerH * 0.6;
+        const gRange = gBot - gTop;
+        let gPath = "";
+        this.hours.forEach((h, i) => {
+          const v = h.gusts ?? h.wind ?? 0;
+          const y = gBot - (v / gMax) * gRange;
+          gPath += (i === 0 ? "M" : "L") + iToX(i).toFixed(1) + "," + y.toFixed(1) + " ";
+        });
+        gustLine.setAttribute("d", gPath.trim());
+      } else {
+        gustLine.setAttribute("d", "");
+      }
+    }
 
     // Feels-like dashed line — only draw when it meaningfully diverges.
     const feelsLine = this.svg.querySelector("#chart-feels-line");
