@@ -65,6 +65,12 @@ const el = {
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
   fetchedAgo: $("#fetched-ago"),
+  dailyIconStrip: $("#daily-icon-strip"),
+  settingsBtn: $("#settings-btn"),
+  settingsMenu: $("#settings-menu"),
+  settingReduceMotion: $("#setting-reduce-motion"),
+  settingUnitF: $("#setting-unit-f"),
+  settingClearPlaces: $("#setting-clear-places"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
@@ -105,7 +111,9 @@ export const ui = {
     bindAudio();
     bindShare();
     bindRefresh();
+    bindSettings();
     bindTilt();
+    applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
     state.chart = new HourlyChart({
@@ -596,6 +604,7 @@ function renderDaily(w) {
   el.dailyTrack.innerHTML = "";
   const days = (w.daily || []).slice(0, 7);
   if (!days.length) return;
+  renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
   // Global min/max for the range bar.
@@ -635,6 +644,13 @@ function renderDaily(w) {
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+}
+
+function renderDailyIconStrip(days) {
+  if (!el.dailyIconStrip) return;
+  el.dailyIconStrip.innerHTML = days.map((d) =>
+    `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
+  ).join("");
 }
 
 function renderDailySpark(days) {
@@ -849,17 +865,38 @@ function renderSearchResults(results) {
   el.searchResults._items = results;
 }
 
+function showRecentsIfAny() {
+  const recents = places.all().slice(0, 5);
+  if (!recents.length) { el.searchResults.hidden = true; return; }
+  const itemsHtml = recents.map((r, i) => `
+    <li role="option" data-index="${i}">
+      <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
+      <span class="sub">${escapeHtml(r.country || "")}</span>
+    </li>
+  `).join("");
+  el.searchResults.innerHTML = `<li class="recent-heading">Recent places</li>${itemsHtml}`;
+  el.searchResults._items = recents;
+  el.searchResults.hidden = false;
+}
+
 function bindSearch() {
   el.searchInput.addEventListener("input", (e) => {
     const v = e.target.value.trim();
-    if (v.length < 2) { el.searchResults.hidden = true; return; }
+    if (v.length < 2) {
+      showRecentsIfAny();
+      return;
+    }
     runSearch(v);
   });
   el.searchInput.addEventListener("blur", () => {
     setTimeout(() => (el.searchResults.hidden = true), 150);
   });
   el.searchInput.addEventListener("focus", () => {
-    if (el.searchResults._items?.length) el.searchResults.hidden = false;
+    if (el.searchInput.value.trim().length < 2) {
+      showRecentsIfAny();
+    } else if (el.searchResults._items?.length) {
+      el.searchResults.hidden = false;
+    }
   });
   el.searchResults.addEventListener("click", (e) => {
     const li = e.target.closest("li");
@@ -916,6 +953,64 @@ function bindInstallPrompt() {
 function bindRefresh() {
   if (!el.refreshBtn) return;
   el.refreshBtn.addEventListener("click", () => state.handlers.onRefresh?.());
+}
+
+function bindSettings() {
+  if (!el.settingsBtn || !el.settingsMenu) return;
+  const close = () => {
+    el.settingsMenu.hidden = true;
+    el.settingsBtn.setAttribute("aria-expanded", "false");
+  };
+  const open = () => {
+    el.settingsMenu.hidden = false;
+    el.settingsBtn.setAttribute("aria-expanded", "true");
+  };
+  el.settingsBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (el.settingsMenu.hidden) open(); else close();
+  });
+  document.addEventListener("click", (e) => {
+    if (el.settingsMenu.hidden) return;
+    if (e.target.closest("#settings-menu") || e.target.closest("#settings-btn")) return;
+    close();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !el.settingsMenu.hidden) close();
+  });
+
+  el.settingReduceMotion?.addEventListener("change", () => {
+    const on = el.settingReduceMotion.checked;
+    document.documentElement.setAttribute("data-reduce-motion", on ? "true" : "false");
+    localStorage.setItem("aether:reduceMotion", on ? "1" : "0");
+  });
+
+  el.settingUnitF?.addEventListener("change", () => {
+    const wantF = el.settingUnitF.checked;
+    const desired = wantF ? "F" : "C";
+    if (state.unit !== desired) {
+      state.unit = desired;
+      localStorage.setItem("aether:unit", state.unit);
+      el.unitBtn.textContent = `°${state.unit}`;
+      if (state.weather) ui.setWeather(state.weather);
+    }
+  });
+
+  el.settingClearPlaces?.addEventListener("click", () => {
+    if (!confirm("Clear all saved places?")) return;
+    for (const p of places.all()) places.remove(p);
+    renderPlaces();
+    ui.showToast("Saved places cleared");
+    close();
+  });
+}
+
+function applyStoredPreferences() {
+  const reduce = localStorage.getItem("aether:reduceMotion") === "1";
+  if (reduce) {
+    document.documentElement.setAttribute("data-reduce-motion", "true");
+    if (el.settingReduceMotion) el.settingReduceMotion.checked = true;
+  }
+  if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
 }
 
 function startFetchedTicker() {

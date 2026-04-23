@@ -53,6 +53,24 @@
       </form>
 
       <div class="toolbar">
+        <button id="settings-btn" class="icon-btn" title="Settings" aria-label="Settings" aria-haspopup="true" aria-expanded="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 8a4 4 0 100 8 4 4 0 000-8z" fill="none" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 01-4 0v-.1A1.7 1.7 0 009 19.4a1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 010-4h.1A1.7 1.7 0 004.6 9a1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 014 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 010 4h-.1a1.7 1.7 0 00-1.5 1z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div id="settings-menu" class="settings-menu glass" role="menu" hidden>
+          <label class="settings-row">
+            <span>Reduce animations</span>
+            <input type="checkbox" id="setting-reduce-motion" />
+          </label>
+          <label class="settings-row">
+            <span>Default to °F</span>
+            <input type="checkbox" id="setting-unit-f" />
+          </label>
+          <button id="setting-clear-places" class="settings-btn-inline" type="button">Clear saved places</button>
+          <div class="settings-foot">Aether · Open-Meteo + RainViewer</div>
+        </div>
         <button id="refresh-btn" class="icon-btn" title="Refresh weather" aria-label="Refresh">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M4 12a8 8 0 0115-4M20 12a8 8 0 01-15 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
@@ -355,6 +373,7 @@
           <span>7-day outlook</span>
           <span id="daily-delta" class="daily-delta"></span>
         </div>
+        <div id="daily-icon-strip" class="daily-icon-strip" aria-hidden="true"></div>
         <svg id="daily-spark" class="daily-spark" viewBox="0 0 600 60" preserveAspectRatio="none" aria-hidden="true">
           <defs>
             <linearGradient id="daily-hi-stroke" x1="0" x2="1" y1="0" y2="0">
