@@ -42,6 +42,12 @@ const el = {
   adviceText: $("#advice-text"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
+  pollenCard: $("#pollen-card"),
+  pollenLevel: $("#pollen-level"),
+  pollenDominant: $("#pollen-dominant"),
+  pollenItems: $("#pollen-items"),
+  pressureTrend: $("#m-pressure-trend"),
+  tempTrend: $("#temp-trend"),
   forecastTrack: $("#forecast-track"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
@@ -111,6 +117,8 @@ export const ui = {
     renderDaily(weather);
     renderNowcast(weather);
     renderAdvice(weather);
+    renderPollen(weather.pollen);
+    renderTrends(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
@@ -127,6 +135,7 @@ export const ui = {
     state.sampledWeather = sampled;
     renderLiveValues(sampled, { animate: false });
     renderMetrics(sampled);
+    renderAdvice(sampled);
     highlightHour(highlightHourIndex);
     if (state.chart && sampled._sampledTs != null) {
       state.chart.setCursor(sampled._sampledTs);
@@ -327,6 +336,54 @@ function renderAdvice(w) {
     el.advice.hidden = false;
   } else {
     el.advice.hidden = true;
+  }
+}
+
+function renderPollen(pollen) {
+  if (!el.pollenCard) return;
+  if (!pollen || !pollen.items?.length) {
+    el.pollenCard.hidden = true;
+    return;
+  }
+  el.pollenCard.hidden = false;
+  el.pollenLevel.textContent = pollen.level;
+  el.pollenLevel.setAttribute("data-level", pollen.level);
+  el.pollenDominant.textContent = `${pollen.dominant.label} dominant`;
+  el.pollenItems.innerHTML = pollen.items.map((p) =>
+    `<span>${escapeHtml(p.label)} ${p.value.toFixed(1)}</span>`
+  ).join("");
+}
+
+function renderTrends(w) {
+  // Pressure trend.
+  if (el.pressureTrend) {
+    if (w.pressureTrend) {
+      const { direction, delta } = w.pressureTrend;
+      const arrow = direction === "rising" ? "▲" : direction === "falling" ? "▼" : "→";
+      const cls = direction === "rising" ? "up" : direction === "falling" ? "down" : "flat";
+      el.pressureTrend.className = `trend ${cls}`;
+      el.pressureTrend.textContent = `${arrow} ${delta >= 0 ? "+" : ""}${delta.toFixed(1)}`;
+    } else {
+      el.pressureTrend.textContent = "";
+    }
+  }
+  // Temperature trend: next-3-hours delta vs now.
+  if (el.tempTrend) {
+    const hrs = w.hourly || [];
+    const cur = w.temp;
+    const future = hrs.find((h) => h.time > Date.now() + 2.5 * 3600_000);
+    if (future && cur != null) {
+      const delta = future.temp - cur;
+      if (Math.abs(delta) < 1) {
+        el.tempTrend.className = "temp-trend flat";
+        el.tempTrend.textContent = "→ steady";
+      } else {
+        el.tempTrend.className = delta > 0 ? "temp-trend up" : "temp-trend down";
+        el.tempTrend.textContent = `${delta > 0 ? "▲" : "▼"} ${Math.round(Math.abs(delta))}°/3h`;
+      }
+    } else {
+      el.tempTrend.textContent = "";
+    }
   }
 }
 

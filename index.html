@@ -94,7 +94,7 @@
             <button id="unit-toggle" class="unit" title="Toggle units" aria-label="Toggle temperature units">°C</button>
           </div>
           <p id="condition-label" class="condition-label">—</p>
-          <p id="feels-like" class="feels-like">Feels like —</p>
+          <p id="feels-like" class="feels-like"><span id="temp-trend" class="temp-trend" aria-hidden="true"></span>Feels like —</p>
         </div>
       </div>
 
@@ -185,7 +185,7 @@
           <span id="m-humidity-sub" class="metric-sub">dew —°</span>
         </div>
         <div class="metric glass">
-          <span class="metric-label">Pressure</span>
+          <span class="metric-label">Pressure <span id="m-pressure-trend" class="trend" aria-hidden="true"></span></span>
           <span id="m-pressure" class="metric-value">—</span>
           <span class="metric-unit">hPa</span>
           <span id="m-pressure-sub" class="metric-sub">visibility —</span>
@@ -229,6 +229,17 @@
             <div class="moon-meta">
               <strong id="moon-name">—</strong>
               <span class="moon-detail"><span id="moon-illum">—</span>% illuminated</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="extra-card glass" id="pollen-card" hidden>
+          <span class="metric-label">Pollen</span>
+          <div class="pollen-row">
+            <div class="pollen-level" id="pollen-level">—</div>
+            <div class="pollen-meta">
+              <strong id="pollen-dominant">—</strong>
+              <div class="pollen-items" id="pollen-items"></div>
             </div>
           </div>
         </div>

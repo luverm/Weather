@@ -82,7 +82,7 @@ export async function getWeather(lat, lon) {
       "temperature_2m", "apparent_temperature", "weather_code",
       "precipitation_probability", "precipitation",
       "wind_speed_10m", "wind_gusts_10m",
-      "is_day", "uv_index",
+      "is_day", "uv_index", "pressure_msl",
     ].join(","),
     daily: [
       "sunrise", "sunset",
@@ -101,7 +101,11 @@ export async function getWeather(lat, lon) {
   const aqParams = new URLSearchParams({
     latitude: lat,
     longitude: lon,
-    current: ["us_aqi", "pm10", "pm2_5", "carbon_monoxide", "nitrogen_dioxide", "ozone"].join(","),
+    current: [
+      "us_aqi", "pm10", "pm2_5", "carbon_monoxide", "nitrogen_dioxide", "ozone",
+      "alder_pollen", "birch_pollen", "grass_pollen", "mugwort_pollen",
+      "olive_pollen", "ragweed_pollen",
+    ].join(","),
     hourly: ["european_aqi", "us_aqi"].join(","),
     timezone: "auto",
   });
@@ -139,6 +143,7 @@ function normalize(d, aq) {
         gusts: d.hourly.wind_gusts_10m?.[i],
         isDay: !!d.hourly.is_day?.[i],
         uv: d.hourly.uv_index?.[i] ?? null,
+        pressure: d.hourly.pressure_msl?.[i] ?? null,
         ...mapWmo(d.hourly.weather_code[i]),
       });
     }
@@ -187,6 +192,7 @@ function normalize(d, aq) {
     feelsLike: c.apparent_temperature,
     humidity: c.relative_humidity_2m,
     pressure: c.pressure_msl,
+    pressureTrend: computePressureTrend(d.hourly, now),
     windSpeed: c.wind_speed_10m,
     windGusts: c.wind_gusts_10m,
     windDir: c.wind_direction_10m,
@@ -206,8 +212,65 @@ function normalize(d, aq) {
     nowcast,
     moon,
     airQuality: normalizeAq(aq),
+    pollen: normalizePollen(aq),
     fetchedAt: now,
   };
+}
+
+function computePressureTrend(hourly, now) {
+  if (!hourly?.time || !hourly?.pressure_msl) return null;
+  // Find index at or just after "now" and 3h earlier.
+  let nowIdx = -1;
+  for (let i = 0; i < hourly.time.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    if (t >= now - 30 * 60_000) { nowIdx = i; break; }
+  }
+  if (nowIdx < 0) return null;
+  const cur = hourly.pressure_msl[nowIdx];
+  const pastIdx = Math.max(0, nowIdx - 3);
+  const past = hourly.pressure_msl[pastIdx];
+  if (cur == null || past == null) return null;
+  const delta = cur - past;
+  let direction = "steady";
+  if (delta > 0.8) direction = "rising";
+  else if (delta < -0.8) direction = "falling";
+  return { delta, direction };
+}
+
+function normalizePollen(aq) {
+  if (!aq?.current) return null;
+  const c = aq.current;
+  const items = [
+    { key: "grass", label: "Grass", value: c.grass_pollen },
+    { key: "tree", label: "Tree", value: maxDefined(c.alder_pollen, c.birch_pollen, c.olive_pollen) },
+    { key: "weed", label: "Weed", value: maxDefined(c.mugwort_pollen, c.ragweed_pollen) },
+  ].filter((x) => x.value != null);
+  if (!items.length) return null;
+  // Find dominant.
+  const dominant = items.reduce((best, x) => (x.value > (best?.value ?? -1) ? x : best), null);
+  return {
+    items,
+    dominant,
+    overall: dominant,
+    level: pollenLevel(dominant.value),
+  };
+}
+
+function maxDefined(...values) {
+  let best = null;
+  for (const v of values) {
+    if (v == null) continue;
+    if (best == null || v > best) best = v;
+  }
+  return best;
+}
+
+function pollenLevel(v) {
+  if (v == null) return "—";
+  if (v < 0.5) return "Low";
+  if (v < 5) return "Moderate";
+  if (v < 20) return "High";
+  return "Very high";
 }
 
 function normalizeAq(aq) {
@@ -310,6 +373,17 @@ function mock(lat, lon) {
     nowcast: [],
     moon: computeMoonPhase(new Date()),
     airQuality: { aqi: 42, pm25: 8, pm10: 14, o3: 40, no2: 15, co: 0.2, label: "Good" },
+    pollen: {
+      items: [
+        { key: "grass", label: "Grass", value: 1.2 },
+        { key: "tree", label: "Tree", value: 3.4 },
+        { key: "weed", label: "Weed", value: 0.1 },
+      ],
+      dominant: { key: "tree", label: "Tree", value: 3.4 },
+      overall: { key: "tree", label: "Tree", value: 3.4 },
+      level: "Moderate",
+    },
+    pressureTrend: { delta: -0.4, direction: "steady" },
     fetchedAt: now,
     offline: true,
   };
