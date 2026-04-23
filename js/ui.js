@@ -56,6 +56,11 @@ const el = {
   pressureSparkFill: $("#pressure-spark-fill"),
   humiditySparkLine: $("#humidity-spark-line"),
   humiditySparkFill: $("#humidity-spark-fill"),
+  dailySpark: $("#daily-spark"),
+  dailyHi: $("#daily-hi"),
+  dailyLo: $("#daily-lo"),
+  dailySparkDots: $("#daily-spark-dots"),
+  dailyDelta: $("#daily-delta"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   chartPopover: $("#chart-popover"),
@@ -583,6 +588,8 @@ function renderDaily(w) {
   el.dailyTrack.innerHTML = "";
   const days = (w.daily || []).slice(0, 7);
   if (!days.length) return;
+  renderDailySpark(days);
+  renderDailyDelta(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -620,6 +627,64 @@ function renderDaily(w) {
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+}
+
+function renderDailySpark(days) {
+  if (!el.dailyHi || !el.dailyLo || !el.dailySparkDots) return;
+  const W = 600, H = 60, PAD = 10, TOP = 6, BOT = 6;
+  const hi = days.map((d) => d.tempMax).filter((v) => v != null);
+  const lo = days.map((d) => d.tempMin).filter((v) => v != null);
+  if (!hi.length || !lo.length) return;
+  const tMin = Math.min(...lo);
+  const tMax = Math.max(...hi);
+  const span = Math.max(4, tMax - tMin);
+  const innerW = W - PAD * 2;
+  const innerH = H - TOP - BOT;
+  const x = (i) => PAD + (i / (days.length - 1)) * innerW;
+  const y = (v) => TOP + innerH - ((v - tMin) / span) * innerH;
+  const linePath = (arr) => arr.map((v, i) => (i === 0 ? "M" : "L") + x(i).toFixed(1) + "," + y(v).toFixed(1)).join(" ");
+  el.dailyHi.setAttribute("d", linePath(days.map((d) => d.tempMax)));
+  el.dailyLo.setAttribute("d", linePath(days.map((d) => d.tempMin)));
+  // Dots at each day + per-day temp labels above/below
+  el.dailySparkDots.innerHTML = "";
+  days.forEach((d, i) => {
+    if (d.tempMax != null) {
+      const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      c.setAttribute("cx", x(i).toFixed(1));
+      c.setAttribute("cy", y(d.tempMax).toFixed(1));
+      c.setAttribute("r", "2.5");
+      c.setAttribute("class", "dot-hi");
+      el.dailySparkDots.appendChild(c);
+    }
+    if (d.tempMin != null) {
+      const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      c.setAttribute("cx", x(i).toFixed(1));
+      c.setAttribute("cy", y(d.tempMin).toFixed(1));
+      c.setAttribute("r", "2.5");
+      c.setAttribute("class", "dot-lo");
+      el.dailySparkDots.appendChild(c);
+    }
+  });
+}
+
+function renderDailyDelta(days) {
+  if (!el.dailyDelta) return;
+  if (days.length < 2) { el.dailyDelta.textContent = ""; return; }
+  const today = days[0], tmrw = days[1];
+  if (today.tempMax == null || tmrw.tempMax == null) {
+    el.dailyDelta.textContent = "";
+    return;
+  }
+  const dHi = Math.round(tmrw.tempMax - today.tempMax);
+  const dPop = (tmrw.pop ?? 0) - (today.pop ?? 0);
+  const parts = [];
+  if (dHi > 0) parts.push(`${dHi}° warmer`);
+  else if (dHi < 0) parts.push(`${Math.abs(dHi)}° cooler`);
+  else parts.push("similar temp");
+  if (Math.abs(dPop) >= 20) {
+    parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
+  }
+  el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
 }
 
 function toggleDailyExpand(item, d, w) {

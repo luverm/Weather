@@ -345,7 +345,25 @@
 
       <!-- 7-day forecast -->
       <div class="daily glass" aria-label="7-day forecast">
-        <div class="forecast-heading">7-day outlook</div>
+        <div class="forecast-heading">
+          <span>7-day outlook</span>
+          <span id="daily-delta" class="daily-delta"></span>
+        </div>
+        <svg id="daily-spark" class="daily-spark" viewBox="0 0 600 60" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="daily-hi-stroke" x1="0" x2="1" y1="0" y2="0">
+              <stop offset="0%" stop-color="#ffe6c7"/>
+              <stop offset="100%" stop-color="#ff9c7a"/>
+            </linearGradient>
+            <linearGradient id="daily-lo-stroke" x1="0" x2="1" y1="0" y2="0">
+              <stop offset="0%" stop-color="#9ad1ff"/>
+              <stop offset="100%" stop-color="#c7b4ff"/>
+            </linearGradient>
+          </defs>
+          <path id="daily-hi" fill="none" stroke="url(#daily-hi-stroke)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"></path>
+          <path id="daily-lo" fill="none" stroke="url(#daily-lo-stroke)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"></path>
+          <g id="daily-spark-dots"></g>
+        </svg>
         <div id="daily-track" class="daily-track"></div>
       </div>
     </section>
