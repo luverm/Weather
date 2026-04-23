@@ -51,6 +51,8 @@ const el = {
   uvLevel: $("#m-uv-level"),
   pressureSparkLine: $("#pressure-spark-line"),
   pressureSparkFill: $("#pressure-spark-fill"),
+  humiditySparkLine: $("#humidity-spark-line"),
+  humiditySparkFill: $("#humidity-spark-fill"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   chartPopover: $("#chart-popover"),
@@ -97,6 +99,7 @@ export const ui = {
       popoverEl: el.chartPopover,
       onHoverHour: (ts) => state.handlers.onHourClick?.(ts),
       getUnit: () => state.unit,
+      getTimezone: () => state.weather?.timezone,
     });
     bindInstallPrompt();
   },
@@ -244,10 +247,7 @@ function renderMetrics(w) {
     }
   }
   if (w.uvPeak?.time) {
-    const d = new Date(w.uvPeak.time);
-    const hh = d.getHours().toString().padStart(2, "0");
-    const mm = d.getMinutes().toString().padStart(2, "0");
-    el.metricUVSub.textContent = `peak ${Math.round(w.uvPeak.value)} at ${hh}:${mm}`;
+    el.metricUVSub.textContent = `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`;
   } else {
     el.metricUVSub.textContent = "peak —";
   }
@@ -264,19 +264,28 @@ function uvLevel(v) {
 }
 
 function renderPressureSparkline(w) {
-  if (!el.pressureSparkLine || !el.pressureSparkFill) return;
-  const series = (w.hourly || [])
-    .map((h) => h.pressure)
-    .filter((v) => v != null)
-    .slice(0, 12);
+  drawSparkline(
+    el.pressureSparkLine, el.pressureSparkFill,
+    (w.hourly || []).map((h) => h.pressure).filter((v) => v != null).slice(0, 12),
+    { minSpan: 1.5 }
+  );
+  drawSparkline(
+    el.humiditySparkLine, el.humiditySparkFill,
+    (w.hourly || []).map((h) => h.humidity).filter((v) => v != null).slice(0, 12),
+    { minSpan: 10, fixedMin: 0, fixedMax: 100 }
+  );
+}
+
+function drawSparkline(lineEl, fillEl, series, { minSpan = 1, fixedMin, fixedMax } = {}) {
+  if (!lineEl || !fillEl) return;
   if (series.length < 2) {
-    el.pressureSparkLine.setAttribute("d", "");
-    el.pressureSparkFill.setAttribute("d", "");
+    lineEl.setAttribute("d", "");
+    fillEl.setAttribute("d", "");
     return;
   }
-  const min = Math.min(...series);
-  const max = Math.max(...series);
-  const span = Math.max(1.5, max - min);
+  const min = fixedMin != null ? fixedMin : Math.min(...series);
+  const max = fixedMax != null ? fixedMax : Math.max(...series);
+  const span = Math.max(minSpan, max - min);
   const W = 100, H = 24, PAD = 1.5;
   const innerW = W - PAD * 2;
   const innerH = H - PAD * 2;
@@ -285,8 +294,8 @@ function renderPressureSparkline(w) {
   let line = "";
   series.forEach((v, i) => { line += (i === 0 ? "M" : "L") + x(i).toFixed(1) + "," + y(v).toFixed(1) + " "; });
   const fill = `${line}L${x(series.length - 1).toFixed(1)},${(H - PAD).toFixed(1)} L${x(0).toFixed(1)},${(H - PAD).toFixed(1)} Z`;
-  el.pressureSparkLine.setAttribute("d", line.trim());
-  el.pressureSparkFill.setAttribute("d", fill);
+  lineEl.setAttribute("d", line.trim());
+  fillEl.setAttribute("d", fill);
 }
 
 function aqColor(aqi) {
@@ -337,6 +346,14 @@ function renderMoon(moon) {
 
 function fmtTime(ts) {
   if (!ts) return "—";
+  const tz = state.weather?.timezone;
+  if (tz && tz !== "auto") {
+    try {
+      return new Intl.DateTimeFormat(undefined, {
+        timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
+      }).format(new Date(ts));
+    } catch { /* fall through */ }
+  }
   const d = new Date(ts);
   const hh = d.getHours().toString().padStart(2, "0");
   const mm = d.getMinutes().toString().padStart(2, "0");
@@ -451,12 +468,11 @@ function cardinal(deg) {
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
   for (const h of (w.hourly || []).slice(0, 24)) {
-    const d = new Date(h.time);
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
     item.innerHTML = `
-      <span class="forecast-time">${d.getHours().toString().padStart(2, "0")}:00</span>
+      <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
@@ -484,8 +500,11 @@ function renderDaily(w) {
   const span = Math.max(1, gMax - gMin);
   days.forEach((d, i) => {
     const dt = new Date(d.time);
-    const day = i === 0 ? "Today" :
-      dt.toLocaleDateString(undefined, { weekday: "short" });
+    const tz = state.weather?.timezone;
+    const day = i === 0 ? "Today" : dt.toLocaleDateString(undefined, {
+      weekday: "short",
+      ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    });
     const left = ((d.tempMin - gMin) / span) * 100;
     const width = ((d.tempMax - d.tempMin) / span) * 100;
     const item = document.createElement("div");

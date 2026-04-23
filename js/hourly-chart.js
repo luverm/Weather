@@ -9,15 +9,43 @@ const PAD_TOP = 16;
 const PAD_BOT = 22;
 
 export class HourlyChart {
-  constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit }) {
+  constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit, getTimezone }) {
     this.svg = svgEl;
     this.hoverEl = hoverEl;
     this.popover = popoverEl;
     this.onHoverHour = onHoverHour;
     this.getUnit = getUnit || (() => "C");
+    this.getTimezone = getTimezone || (() => null);
     this.hours = [];
     this.points = [];
     this._bind();
+  }
+
+  _formatHour(ts) {
+    const tz = this.getTimezone();
+    if (tz && tz !== "auto") {
+      try {
+        return new Intl.DateTimeFormat(undefined, {
+          timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
+        }).format(new Date(ts));
+      } catch { /* */ }
+    }
+    const d = new Date(ts);
+    return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+  }
+
+  _hourOf(ts) {
+    const tz = this.getTimezone();
+    if (tz && tz !== "auto") {
+      try {
+        const parts = new Intl.DateTimeFormat(undefined, {
+          timeZone: tz, hour: "2-digit", hour12: false,
+        }).formatToParts(new Date(ts));
+        const h = parts.find((p) => p.type === "hour")?.value ?? "00";
+        return h.padStart(2, "0");
+      } catch { /* */ }
+    }
+    return new Date(ts).getHours().toString().padStart(2, "0");
   }
 
   setHours(hours) {
@@ -90,9 +118,7 @@ export class HourlyChart {
     if (!this.hoverEl) return;
     const unit = this.getUnit();
     const t = unit === "F" ? h.temp * 9 / 5 + 32 : h.temp;
-    const d = new Date(h.time);
-    const hh = d.getHours().toString().padStart(2, "0");
-    this.hoverEl.textContent = `${hh}:00 · ${Math.round(t)}° · ${h.pop}% chance`;
+    this.hoverEl.textContent = `${this._formatHour(h.time)} · ${Math.round(t)}° · ${h.pop}% chance`;
     this.hoverEl.hidden = false;
   }
 
@@ -109,13 +135,11 @@ export class HourlyChart {
     const feels = h.feelsLike != null
       ? (unit === "F" ? h.feelsLike * 9 / 5 + 32 : h.feelsLike)
       : null;
-    const d = new Date(h.time);
-    const hh = d.getHours().toString().padStart(2, "0");
     const feelsStr = (feels != null && Math.abs(feels - t) >= 1)
       ? `<em>feels ${Math.round(feels)}°</em>` : "";
     const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h` : "";
     this.popover.innerHTML =
-      `<strong>${hh}:00</strong> ${Math.round(t)}° ${feelsStr}<br>` +
+      `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
       `<em>${h.pop}% precip${wind}</em>`;
     this.popover.style.left = `${pxX.toFixed(1)}px`;
     this.popover.style.top = `${pxY.toFixed(1)}px`;
@@ -223,8 +247,7 @@ export class HourlyChart {
     const labelStep = Math.max(3, Math.floor(this.hours.length / 8));
     this.hours.forEach((h, i) => {
       if (i % labelStep !== 0) return;
-      const d = new Date(h.time);
-      const hh = d.getHours().toString().padStart(2, "0");
+      const hh = this._hourOf(h.time);
       const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
       txt.setAttribute("x", iToX(i).toFixed(1));
       txt.setAttribute("y", String(H - 4));

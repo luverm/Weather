@@ -413,7 +413,8 @@ ul { list-style: none; margin: 0; padding: 0; }
 .scrubber-track:active .scrubber-thumb { transform: translate(-50%, -50%) scale(1.15); }
 
 /* ---------- Pressure sparkline ---------- */
-.metric-pressure {
+.metric-pressure,
+.metric-humidity {
   grid-template-rows: auto auto auto auto;
 }
 .pressure-spark {
@@ -424,6 +425,7 @@ ul { list-style: none; margin: 0; padding: 0; }
   opacity: 0.85;
   margin-top: 2px;
 }
+.metric-humidity .pressure-spark { color: #9ad1ff; }
 
 /* ---------- Daily expand ---------- */
 .daily-item { cursor: pointer; }
