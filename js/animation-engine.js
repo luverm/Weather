@@ -69,6 +69,17 @@ export class AnimationEngine {
     if (this._raf) cancelAnimationFrame(this._raf);
   }
 
+  /** Render a single frame without starting the loop — for reduced-motion mode. */
+  tickOnce() {
+    const now = performance.now();
+    const dt = 0.016;
+    for (const scene of this.scenes.values()) {
+      if (scene.visible === false) continue;
+      scene.lowQuality = this.lowQuality;
+      scene.update?.(dt, now / 1000);
+    }
+  }
+
   _evaluateQuality() {
     if (this.fps < 48) this.lowQualityStreak++;
     else this.lowQualityStreak = Math.max(0, this.lowQualityStreak - 1);

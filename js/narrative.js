@@ -100,6 +100,16 @@ export function narrate(weather) {
     bits.push(`UV peaks at ${Math.round(uvPeak.value)} near ${fmtHour(uvPeak.time)}.`);
   }
 
+  // Pressure trend narrative.
+  if (bits.length < 2 && weather.pressureTrend) {
+    const { direction, delta } = weather.pressureTrend;
+    if (direction === "rising" && Math.abs(delta) >= 1.5) {
+      bits.push("Pressure is rising — skies tend to clear soon.");
+    } else if (direction === "falling" && Math.abs(delta) >= 1.5) {
+      bits.push("Pressure is falling — watch for weather moving in.");
+    }
+  }
+
   // Calm night fallback.
   if (bits.length < 2 && condition === "clear" && windSpeed < 10) {
     bits.push("Calm and settled for the next few hours.");

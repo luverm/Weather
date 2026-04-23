@@ -171,6 +171,9 @@ function applyScene(weather) {
 
   // Update audio to match whatever the scene now shows.
   audio.setWeather(sampled, bucket);
+
+  // In reduced-motion mode, repaint exactly one frame now that weather changed.
+  if (app.reducedMotion) engine.tickOnce();
 }
 
 // ---------- Scrubber ----------
@@ -247,11 +250,23 @@ async function refreshWeather() {
   }
 }
 
+function setReducedMotion(on) {
+  app.reducedMotion = !!on;
+  if (on) {
+    engine.stop();
+    // Paint a single frame so the sky reflects the current weather state.
+    engine.tickOnce();
+  } else if (!document.hidden) {
+    engine.start();
+  }
+}
+
 ui.init({
   onSearchSelect: (place) => { places.add(place); loadByCoords(place); },
   onLocate: () => useGeolocation(),
   onAudioToggle: () => toggleAudio(),
   onRefresh: () => refreshWeather(),
+  onReduceMotion: (on) => setReducedMotion(on),
   onPlaceClick: (place) => loadByCoords(place),
   onHourClick: (ts) => {
     clock.setOffset(ts - Date.now());
@@ -260,6 +275,9 @@ ui.init({
     ui.setScrubbing(!clock.isLive());
   },
 });
+
+// Apply saved reduce-motion preference on boot.
+if (ui.isReduceMotion?.()) setReducedMotion(true);
 
 // Keyboard shortcuts.
 installShortcuts({
@@ -297,8 +315,13 @@ installShortcuts({
 
 // ---------- Lifecycle ----------
 document.addEventListener("visibilitychange", () => {
-  if (document.hidden) engine.stop();
-  else engine.start();
+  if (document.hidden) {
+    engine.stop();
+  } else if (!app.reducedMotion) {
+    engine.start();
+  } else {
+    engine.tickOnce();
+  }
 });
 
 // Re-render scenes at the top of each minute so "live" view ticks forward.

@@ -982,6 +982,7 @@ function bindSettings() {
     const on = el.settingReduceMotion.checked;
     document.documentElement.setAttribute("data-reduce-motion", on ? "true" : "false");
     localStorage.setItem("aether:reduceMotion", on ? "1" : "0");
+    state.handlers.onReduceMotion?.(on);
   });
 
   el.settingUnitF?.addEventListener("change", () => {
@@ -1009,9 +1010,14 @@ function applyStoredPreferences() {
   if (reduce) {
     document.documentElement.setAttribute("data-reduce-motion", "true");
     if (el.settingReduceMotion) el.settingReduceMotion.checked = true;
+    // Defer so app.js has time to install the handler.
+    queueMicrotask(() => state.handlers.onReduceMotion?.(true));
   }
   if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
 }
+
+// Exposed so app.js can query the current preference on boot.
+ui.isReduceMotion = () => localStorage.getItem("aether:reduceMotion") === "1";
 
 function startFetchedTicker() {
   const update = () => {
