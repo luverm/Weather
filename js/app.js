@@ -237,10 +237,21 @@ async function toggleAudio() {
   ui.setAudioState(audio.isEnabled());
 }
 
+async function refreshWeather() {
+  if (!app.place) return;
+  ui.markRefreshSpin(true);
+  try {
+    await loadByCoords(app.place);
+  } finally {
+    setTimeout(() => ui.markRefreshSpin(false), 700);
+  }
+}
+
 ui.init({
   onSearchSelect: (place) => { places.add(place); loadByCoords(place); },
   onLocate: () => useGeolocation(),
   onAudioToggle: () => toggleAudio(),
+  onRefresh: () => refreshWeather(),
   onPlaceClick: (place) => loadByCoords(place),
   onHourClick: (ts) => {
     clock.setOffset(ts - Date.now());
@@ -295,6 +306,13 @@ setInterval(() => {
   if (!app.weather || !clock.isLive()) return;
   applyScene(app.weather);
 }, 60_000);
+
+// Auto-refresh every 15 minutes (but only when live and visible).
+setInterval(() => {
+  if (document.hidden) return;
+  if (!app.weather || !clock.isLive()) return;
+  refreshWeather();
+}, 15 * 60_000);
 
 // PWA service worker — optional, best-effort.
 if ("serviceWorker" in navigator) {

@@ -1143,6 +1143,17 @@ kbd {
   background: var(--accent); box-shadow: 0 0 10px var(--accent);
   animation: pulse 2.4s ease-in-out infinite;
 }
+.fetched-ago {
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.12em;
+  margin-left: 8px;
+}
+.fetched-ago:empty { display: none; }
+.fetched-ago.stale { color: #ffb86b; }
+
+#refresh-btn.spinning svg { animation: spin 700ms var(--ease) both; }
+@keyframes spin { from { transform: rotate(0) } to { transform: rotate(360deg) } }
 @keyframes pulse {
   0%, 100% { opacity: 0.4; transform: scale(1); }
   50% { opacity: 1; transform: scale(1.2); }

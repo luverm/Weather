@@ -63,6 +63,8 @@ const el = {
   dailyDelta: $("#daily-delta"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
+  refreshBtn: $("#refresh-btn"),
+  fetchedAgo: $("#fetched-ago"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
@@ -102,8 +104,10 @@ export const ui = {
     bindLocate();
     bindAudio();
     bindShare();
+    bindRefresh();
     bindTilt();
     renderPlaces();
+    startFetchedTicker();
     state.chart = new HourlyChart({
       svgEl: el.chartSvg,
       hoverEl: el.chartHover,
@@ -118,6 +122,10 @@ export const ui = {
   toggleUnits() { el.unitBtn?.click(); },
   isSearchOpen() { return !el.searchResults.hidden; },
   closeSearch() { el.searchResults.hidden = true; el.searchInput?.blur(); },
+  markRefreshSpin(on) {
+    if (!el.refreshBtn) return;
+    el.refreshBtn.classList.toggle("spinning", !!on);
+  },
   setLoading(text) { el.placeSub.textContent = text; },
   setPlace(place) {
     state.place = place;
@@ -675,11 +683,13 @@ function renderDailyDelta(days) {
     el.dailyDelta.textContent = "";
     return;
   }
-  const dHi = Math.round(tmrw.tempMax - today.tempMax);
+  const deltaC = tmrw.tempMax - today.tempMax;
+  // Scale delta to the active unit: °F spans 1.8x a °C span.
+  const deltaDisplay = Math.round(state.unit === "F" ? deltaC * 9 / 5 : deltaC);
   const dPop = (tmrw.pop ?? 0) - (today.pop ?? 0);
   const parts = [];
-  if (dHi > 0) parts.push(`${dHi}° warmer`);
-  else if (dHi < 0) parts.push(`${Math.abs(dHi)}° cooler`);
+  if (deltaDisplay > 0) parts.push(`${deltaDisplay}° warmer`);
+  else if (deltaDisplay < 0) parts.push(`${Math.abs(deltaDisplay)}° cooler`);
   else parts.push("similar temp");
   if (Math.abs(dPop) >= 20) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
@@ -901,6 +911,30 @@ function bindInstallPrompt() {
     if (outcome === "accepted") el.installBtn.hidden = true;
     deferredInstallPrompt = null;
   });
+}
+
+function bindRefresh() {
+  if (!el.refreshBtn) return;
+  el.refreshBtn.addEventListener("click", () => state.handlers.onRefresh?.());
+}
+
+function startFetchedTicker() {
+  const update = () => {
+    if (!el.fetchedAgo || !state.weather?.fetchedAt) {
+      if (el.fetchedAgo) el.fetchedAgo.textContent = "";
+      return;
+    }
+    const ms = Date.now() - state.weather.fetchedAt;
+    const minutes = Math.max(0, Math.floor(ms / 60_000));
+    const label =
+      minutes < 1 ? "Just now" :
+      minutes < 60 ? `Updated ${minutes}m ago` :
+      `Updated ${Math.floor(minutes / 60)}h ago`;
+    el.fetchedAgo.textContent = "· " + label;
+    el.fetchedAgo.classList.toggle("stale", minutes >= 20);
+  };
+  update();
+  setInterval(update, 30_000);
 }
 
 function bindShare() {
