@@ -967,6 +967,56 @@ kbd {
 /* Ensure RainViewer tiles sit above base but below markers */
 .leaflet-layer { transition: opacity 350ms ease; }
 
+/* ---------- Insights ---------- */
+.insights {
+  padding: 10px 14px 14px;
+  border-radius: var(--radius-sm);
+}
+.insights-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 8px 12px;
+  padding: 0;
+  margin: 0;
+}
+.insights-list li {
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--stroke);
+}
+.insights-list .insight-icon {
+  width: 24px; height: 24px;
+  display: grid; place-items: center;
+  color: var(--accent);
+}
+.insights-list .insight-icon svg { width: 20px; height: 20px; }
+.insights-list .insight-meta { display: grid; gap: 2px; min-width: 0; }
+.insights-list .insight-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--fg-dim);
+}
+.insights-list .insight-value {
+  font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Daily extras ---------- */
+.daily-gust {
+  grid-column: 1 / -1;
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  margin-top: 2px;
+  letter-spacing: 0.04em;
+}
+.daily-gust.show { display: block; }
+.daily-item { grid-auto-rows: auto; }
+
 /* ---------- Forecast (hourly + daily) ---------- */
 .forecast, .daily {
   padding: 10px;

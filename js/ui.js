@@ -5,6 +5,7 @@ import { searchCities } from "./weather-service.js";
 import { places } from "./places.js";
 import { HourlyChart } from "./hourly-chart.js";
 import { advise } from "./advice.js";
+import { buildInsights } from "./insights.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -56,6 +57,8 @@ const el = {
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   chartPopover: $("#chart-popover"),
+  insightsCard: $("#insights-card"),
+  insightsList: $("#insights-list"),
   forecastTrack: $("#forecast-track"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
@@ -131,6 +134,7 @@ export const ui = {
     renderAdvice(weather);
     renderPollen(weather.pollen);
     renderTrends(weather);
+    renderInsights(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
@@ -410,6 +414,37 @@ function renderAdvice(w) {
   }
 }
 
+function renderInsights(w) {
+  if (!el.insightsCard || !el.insightsList) return;
+  const tz = w?.timezone;
+  const fmt = (ts) => fmtTime(ts);
+  const weekday = (ts) => new Date(ts).toLocaleDateString(undefined, {
+    weekday: "short",
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  const items = buildInsights(w, { fmtTime: fmt, weekday });
+  if (!items.length) {
+    el.insightsCard.hidden = true;
+    return;
+  }
+  el.insightsCard.hidden = false;
+  el.insightsList.innerHTML = items.map((it, i) => `
+    <li data-i="${i}" ${it.ts ? `data-ts="${it.ts}" style="cursor:pointer"` : ""}>
+      <span class="insight-icon">${it.icon}</span>
+      <span class="insight-meta">
+        <span class="insight-label">${escapeHtml(it.label)}</span>
+        <span class="insight-value">${escapeHtml(it.value)}</span>
+      </span>
+    </li>
+  `).join("");
+  el.insightsList.querySelectorAll("li[data-ts]").forEach((li) => {
+    li.addEventListener("click", () => {
+      const ts = parseInt(li.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
+}
+
 function renderPollen(pollen) {
   if (!el.pollenCard) return;
   if (!pollen || !pollen.items?.length) {
@@ -510,6 +545,11 @@ function renderDaily(w) {
     const item = document.createElement("div");
     item.className = "daily-item";
     item.dataset.ts = d.time;
+    const gustLabel = (d.gustsMax && d.gustsMax >= 25)
+      ? ` · gusts ${Math.round(d.gustsMax)} km/h`
+      : "";
+    const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
+    const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
@@ -518,6 +558,7 @@ function renderDaily(w) {
       </div>
       <span class="daily-temp-min">${Math.round(convertTemp(d.tempMin))}°</span>
       <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°</span>
+      ${extra}
     `;
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);

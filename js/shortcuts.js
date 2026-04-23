@@ -3,15 +3,40 @@
 export function installShortcuts(handlers) {
   const overlay = document.getElementById("shortcuts");
   const closeBtn = document.getElementById("shortcuts-close");
+  let lastFocus = null;
 
   function toggleOverlay(force) {
     const hide = force === false || (force !== true && !overlay.hidden);
-    overlay.hidden = hide;
+    if (hide) {
+      overlay.hidden = true;
+      if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
+      lastFocus = null;
+    } else {
+      lastFocus = document.activeElement;
+      overlay.hidden = false;
+      // Move focus into the dialog for screen readers / trap.
+      (closeBtn || overlay).focus?.();
+    }
   }
   overlay?.addEventListener("click", (e) => {
     if (e.target === overlay) toggleOverlay(false);
   });
   closeBtn?.addEventListener("click", () => toggleOverlay(false));
+
+  // Focus trap: Tab cycles within the dialog when open.
+  overlay?.addEventListener("keydown", (e) => {
+    if (overlay.hidden || e.key !== "Tab") return;
+    const focusables = overlay.querySelectorAll(
+      'button, [href], [tabindex]:not([tabindex="-1"])'
+    );
+    if (!focusables.length) return;
+    const first = focusables[0], last = focusables[focusables.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      last.focus(); e.preventDefault();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      first.focus(); e.preventDefault();
+    }
+  });
 
   window.addEventListener("keydown", (e) => {
     // Let browsers handle modifier combos (copy, find, etc.)
