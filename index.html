@@ -92,6 +92,7 @@
           <p class="place-label"><span id="place-live-dot" class="live-dot"></span><span id="place-label-text">Now in</span></p>
           <h1 id="place-name" class="place-name">—</h1>
           <p id="place-sub" class="place-sub">Fetching atmosphere…</p>
+          <p id="place-localtime" class="place-localtime"></p>
           <p id="narrative" class="narrative"></p>
           <p id="advice" class="advice" hidden>
             <svg class="advice-icon" viewBox="0 0 24 24" aria-hidden="true" width="14" height="14">
@@ -199,7 +200,7 @@
           <span id="m-wind-sub" class="metric-sub">gust —</span>
         </div>
         <div class="metric glass metric-humidity">
-          <span class="metric-label">Humidity</span>
+          <span class="metric-label">Humidity <span id="m-humidity-comfort" class="trend" aria-hidden="true"></span></span>
           <span id="m-humidity" class="metric-value">—</span>
           <span class="metric-unit">%</span>
           <svg id="humidity-spark" class="pressure-spark" viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true">

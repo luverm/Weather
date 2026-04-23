@@ -14,6 +14,7 @@ const el = {
   unitBtn: $("#unit-toggle"),
   placeName: $("#place-name"),
   placeSub: $("#place-sub"),
+  placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
   narrative: $("#narrative"),
@@ -50,6 +51,7 @@ const el = {
   pressureTrend: $("#m-pressure-trend"),
   tempTrend: $("#temp-trend"),
   uvLevel: $("#m-uv-level"),
+  humidityComfort: $("#m-humidity-comfort"),
   pressureSparkLine: $("#pressure-spark-line"),
   pressureSparkFill: $("#pressure-spark-fill"),
   humiditySparkLine: $("#humidity-spark-line"),
@@ -83,6 +85,7 @@ const state = {
   handlers: {},
   chart: null,
   sunTimer: null,
+  localTimer: null,
 };
 
 export const ui = {
@@ -135,6 +138,7 @@ export const ui = {
     renderPollen(weather.pollen);
     renderTrends(weather);
     renderInsights(weather);
+    startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
@@ -236,6 +240,15 @@ function renderMetrics(w) {
   el.metricHumiditySub.textContent = w.dewPoint != null
     ? `dew ${Math.round(convertTemp(w.dewPoint))}°`
     : "dew —";
+  if (el.humidityComfort) {
+    const pill = humidityComfort(w.humidity, w.dewPoint, w.temp);
+    if (pill) {
+      el.humidityComfort.className = `trend ${pill.cls}`;
+      el.humidityComfort.textContent = pill.label;
+    } else {
+      el.humidityComfort.textContent = "";
+    }
+  }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
   el.metricPressureSub.textContent = w.visibility != null
     ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
@@ -256,6 +269,20 @@ function renderMetrics(w) {
     el.metricUVSub.textContent = "peak —";
   }
   renderPressureSparkline(w);
+}
+
+function humidityComfort(rh, dew, temp) {
+  if (rh == null) return null;
+  // Prioritize dew-point-based mugginess at warm temps.
+  if (temp != null && temp >= 18 && dew != null) {
+    if (dew >= 21) return { label: "Muggy", cls: "up" };
+    if (dew >= 18) return { label: "Humid", cls: "up" };
+  }
+  if (rh >= 85) return { label: "Damp", cls: "down" };
+  if (rh >= 70) return { label: "Humid", cls: "flat" };
+  if (rh <= 25) return { label: "Dry", cls: "up" };
+  if (rh <= 35) return { label: "Crisp", cls: "flat" };
+  return { label: "Comfy", cls: "down" };
 }
 
 function uvLevel(v) {
@@ -412,6 +439,36 @@ function renderAdvice(w) {
   } else {
     el.advice.hidden = true;
   }
+}
+
+function startLocaltime(w) {
+  if (state.localTimer) { clearInterval(state.localTimer); state.localTimer = null; }
+  if (!el.placeLocaltime) return;
+  const tz = w?.timezone;
+  if (!tz || tz === "auto") {
+    // Fall back to browser — still useful.
+    el.placeLocaltime.textContent = "";
+    return;
+  }
+  const update = () => {
+    try {
+      const parts = new Intl.DateTimeFormat([], {
+        timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
+        weekday: "short", timeZoneName: "short",
+      }).formatToParts(new Date());
+      const day = parts.find((p) => p.type === "weekday")?.value ?? "";
+      const hour = parts.find((p) => p.type === "hour")?.value ?? "";
+      const minute = parts.find((p) => p.type === "minute")?.value ?? "";
+      const tzName = parts.find((p) => p.type === "timeZoneName")?.value ?? "";
+      el.placeLocaltime.innerHTML =
+        `<span class="clock-dot" aria-hidden="true"></span>` +
+        `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>`;
+    } catch {
+      el.placeLocaltime.textContent = "";
+    }
+  };
+  update();
+  state.localTimer = setInterval(update, 10_000);
 }
 
 function renderInsights(w) {
