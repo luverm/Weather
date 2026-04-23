@@ -53,6 +53,14 @@
       </form>
 
       <div class="toolbar">
+        <button id="share-btn" class="icon-btn" title="Share weather" aria-label="Share weather summary">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8 12l8-4M8 12l8 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <circle cx="6" cy="12" r="2.2" fill="none" stroke="currentColor" stroke-width="1.6"/>
+            <circle cx="18" cy="6"  r="2.2" fill="none" stroke="currentColor" stroke-width="1.6"/>
+            <circle cx="18" cy="18" r="2.2" fill="none" stroke="currentColor" stroke-width="1.6"/>
+          </svg>
+        </button>
         <button id="audio-btn" class="icon-btn" title="Enable ambient sound" aria-label="Enable ambient sound">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M4 10v4h3l4 3V7l-4 3H4z" fill="currentColor"/>
@@ -184,14 +192,18 @@
           <span class="metric-unit">%</span>
           <span id="m-humidity-sub" class="metric-sub">dew —°</span>
         </div>
-        <div class="metric glass">
+        <div class="metric glass metric-pressure">
           <span class="metric-label">Pressure <span id="m-pressure-trend" class="trend" aria-hidden="true"></span></span>
           <span id="m-pressure" class="metric-value">—</span>
           <span class="metric-unit">hPa</span>
+          <svg id="pressure-spark" class="pressure-spark" viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true">
+            <path id="pressure-spark-fill" fill="currentColor" fill-opacity="0.14"></path>
+            <path id="pressure-spark-line" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"></path>
+          </svg>
           <span id="m-pressure-sub" class="metric-sub">visibility —</span>
         </div>
         <div class="metric glass">
-          <span class="metric-label">UV</span>
+          <span class="metric-label">UV <span id="m-uv-level" class="trend" aria-hidden="true"></span></span>
           <span id="m-uv" class="metric-value">—</span>
           <span class="metric-unit">idx</span>
           <span id="m-uv-sub" class="metric-sub">peak —</span>

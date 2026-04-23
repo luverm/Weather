@@ -48,6 +48,10 @@ const el = {
   pollenItems: $("#pollen-items"),
   pressureTrend: $("#m-pressure-trend"),
   tempTrend: $("#temp-trend"),
+  uvLevel: $("#m-uv-level"),
+  pressureSparkLine: $("#pressure-spark-line"),
+  pressureSparkFill: $("#pressure-spark-fill"),
+  shareBtn: $("#share-btn"),
   forecastTrack: $("#forecast-track"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
@@ -82,6 +86,7 @@ export const ui = {
     bindUnitToggle();
     bindLocate();
     bindAudio();
+    bindShare();
     bindTilt();
     renderPlaces();
     state.chart = new HourlyChart({
@@ -225,6 +230,15 @@ function renderMetrics(w) {
     ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
     : "visibility —";
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
+  if (el.uvLevel) {
+    const lvl = uvLevel(w.uv);
+    if (lvl) {
+      el.uvLevel.className = `trend ${lvl.cls}`;
+      el.uvLevel.textContent = lvl.label;
+    } else {
+      el.uvLevel.textContent = "";
+    }
+  }
   if (w.uvPeak?.time) {
     const d = new Date(w.uvPeak.time);
     const hh = d.getHours().toString().padStart(2, "0");
@@ -233,6 +247,42 @@ function renderMetrics(w) {
   } else {
     el.metricUVSub.textContent = "peak —";
   }
+  renderPressureSparkline(w);
+}
+
+function uvLevel(v) {
+  if (v == null) return null;
+  if (v < 3) return { label: "Low", cls: "down" };
+  if (v < 6) return { label: "Moderate", cls: "flat" };
+  if (v < 8) return { label: "High", cls: "up" };
+  if (v < 11) return { label: "Very High", cls: "up" };
+  return { label: "Extreme", cls: "up" };
+}
+
+function renderPressureSparkline(w) {
+  if (!el.pressureSparkLine || !el.pressureSparkFill) return;
+  const series = (w.hourly || [])
+    .map((h) => h.pressure)
+    .filter((v) => v != null)
+    .slice(0, 12);
+  if (series.length < 2) {
+    el.pressureSparkLine.setAttribute("d", "");
+    el.pressureSparkFill.setAttribute("d", "");
+    return;
+  }
+  const min = Math.min(...series);
+  const max = Math.max(...series);
+  const span = Math.max(1.5, max - min);
+  const W = 100, H = 24, PAD = 1.5;
+  const innerW = W - PAD * 2;
+  const innerH = H - PAD * 2;
+  const x = (i) => PAD + (i / (series.length - 1)) * innerW;
+  const y = (v) => PAD + innerH - ((v - min) / span) * innerH;
+  let line = "";
+  series.forEach((v, i) => { line += (i === 0 ? "M" : "L") + x(i).toFixed(1) + "," + y(v).toFixed(1) + " "; });
+  const fill = `${line}L${x(series.length - 1).toFixed(1)},${(H - PAD).toFixed(1)} L${x(0).toFixed(1)},${(H - PAD).toFixed(1)} Z`;
+  el.pressureSparkLine.setAttribute("d", line.trim());
+  el.pressureSparkFill.setAttribute("d", fill);
 }
 
 function aqColor(aqi) {
@@ -436,6 +486,7 @@ function renderDaily(w) {
     const width = ((d.tempMax - d.tempMin) / span) * 100;
     const item = document.createElement("div");
     item.className = "daily-item";
+    item.dataset.ts = d.time;
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
@@ -445,8 +496,52 @@ function renderDaily(w) {
       <span class="daily-temp-min">${Math.round(convertTemp(d.tempMin))}°</span>
       <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°</span>
     `;
+    item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+}
+
+function toggleDailyExpand(item, d, w) {
+  const existing = item.querySelector(".daily-expand");
+  if (existing) {
+    existing.remove();
+    item.dataset.expanded = "false";
+    return;
+  }
+  // Build mini hourly bars for the 12 daytime-ish hours of that day, if we
+  // have them in the hourly series (only first 24h). Otherwise skip.
+  const dayStart = new Date(d.time);
+  dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = dayStart.getTime() + 24 * 3600_000;
+  const hrs = (w.hourly || []).filter((h) => h.time >= dayStart.getTime() && h.time < dayEnd);
+  if (!hrs.length) {
+    // For days beyond the 24h hourly range, just show summary text.
+    const summary = document.createElement("div");
+    summary.className = "daily-expand";
+    summary.style.gridTemplateColumns = "1fr";
+    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${Math.round(d.gustsMax ?? 0)} km/h · UV ${Math.round(d.uvMax ?? 0)}</span>`;
+    item.appendChild(summary);
+    item.dataset.expanded = "true";
+    return;
+  }
+  const tMin = Math.min(...hrs.map((h) => h.temp));
+  const tMax = Math.max(...hrs.map((h) => h.temp));
+  const tSpan = Math.max(1, tMax - tMin);
+  const box = document.createElement("div");
+  box.className = "daily-expand";
+  // Fit up to 12 sampled hours evenly across the day.
+  const stepped = [];
+  const step = Math.max(1, Math.floor(hrs.length / 12));
+  for (let i = 0; i < hrs.length && stepped.length < 12; i += step) stepped.push(hrs[i]);
+  box.innerHTML = stepped.map((h) => {
+    const pct = ((h.temp - tMin) / tSpan) * 100;
+    const height = 10 + (pct / 100) * 36;
+    const precipLevel = h.pop >= 60 ? 2 : h.pop >= 25 ? 1 : 0;
+    const hh = new Date(h.time).getHours().toString().padStart(2, "0");
+    return `<div class="daily-expand-bar" data-precip="${precipLevel}" style="height:${height.toFixed(1)}px" title="${hh}:00 · ${Math.round(convertTemp(h.temp))}° · ${h.pop}%"><span>${Math.round(convertTemp(h.temp))}°</span></div>`;
+  }).join("");
+  item.appendChild(box);
+  item.dataset.expanded = "true";
 }
 
 function renderNowcast(w) {
@@ -591,6 +686,39 @@ function bindLocate() {
 
 function bindAudio() {
   el.audioBtn.addEventListener("click", () => state.handlers.onAudioToggle?.());
+}
+
+function bindShare() {
+  if (!el.shareBtn) return;
+  el.shareBtn.addEventListener("click", async () => {
+    const w = state.weather;
+    if (!w) { ui.showToast("No weather to share yet"); return; }
+    const placeName = state.place?.name || "Here";
+    const unit = state.unit;
+    const t = (v) => `${Math.round(unit === "F" ? v * 9 / 5 + 32 : v)}°${unit}`;
+    const today = w.daily?.[0];
+    const lines = [
+      `Aether · ${placeName}`,
+      `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
+      today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
+      `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
+      w.uv != null ? `UV ${Math.round(w.uv)}` : null,
+      w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
+    ].filter(Boolean);
+    const text = lines.join("\n");
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: `Aether — ${placeName}`, text });
+      } else {
+        await navigator.clipboard.writeText(text);
+        ui.showToast("Summary copied to clipboard");
+      }
+      el.shareBtn.classList.add("just-copied");
+      setTimeout(() => el.shareBtn.classList.remove("just-copied"), 600);
+    } catch (err) {
+      if (err?.name !== "AbortError") ui.showToast("Share failed");
+    }
+  });
 }
 
 function bindTilt() {
