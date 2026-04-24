@@ -67,6 +67,13 @@ export function narrate(weather) {
     : "";
   bits.push(`${label} at ${Math.round(temp)}°${feels}.`);
 
+  // Storm incoming takes priority over plain rain.
+  if (weather.upcomingStorm && condition !== "storm") {
+    const when = fmtHour(weather.upcomingStorm.time);
+    bits.push(`Thunderstorms possible around ${when}.`);
+    return bits.slice(0, 2).join(" ");
+  }
+
   // Precipitation arriving.
   const rain = findNextPrecip(weather.nowcast, weather.hourly);
   if (rain && condition !== "rain" && condition !== "storm" && condition !== "snow") {

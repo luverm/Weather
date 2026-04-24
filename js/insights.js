@@ -10,6 +10,7 @@ const ICONS = {
   uv: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M4 12H2M6 6l-2-2M12 18a6 6 0 006-6H6a6 6 0 006 6z"/></svg>',
   humid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c4 5 6 8 6 11a6 6 0 01-12 0c0-3 2-6 6-11z"/></svg>',
   sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg>',
+  stars: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.6L18 9l-3.8 2L12 15l-2.2-4L6 9l4.2-1.4L12 3zM19 15l.8 2 2.2.6-2.2.6L19 20l-.8-1.8L16 17.6l2.2-.6L19 15z"/></svg>',
 };
 
 export function buildInsights(weather, { fmtTime, weekday } = {}) {
@@ -96,6 +97,23 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
       icon: ICONS.uv, label: "UV peak",
       value: `${Math.round(weather.uvPeak.value)} at ${fmt(weather.uvPeak.time)}`,
       ts: weather.uvPeak.time,
+    });
+  }
+
+  // 6. Clear-night readiness: dark, low clouds, low humidity, moon not too bright.
+  const now = Date.now();
+  const afterSunset = weather.sunset && now >= weather.sunset - 60 * 60_000;
+  const beforeSunrise = weather.sunrise && now < weather.sunrise;
+  const nightish = afterSunset || beforeSunrise;
+  if (nightish
+      && weather.cloudCover != null && weather.cloudCover <= 30
+      && (weather.humidity ?? 100) <= 75) {
+    const moonLabel = weather.moon?.illum != null
+      ? ` · moon ${Math.round(weather.moon.illum * 100)}%`
+      : "";
+    out.push({
+      icon: ICONS.stars, label: "Clear night",
+      value: `Great sky tonight${moonLabel}`,
     });
   }
 

@@ -13,6 +13,10 @@ export function advise(weather) {
     .find((h) => (h.pop ?? 0) >= 55 || (h.precip ?? 0) > 0.4);
 
   if (cond === "storm") return "Thunderstorms — stay indoors and unplug sensitive gear.";
+  if (cond === "fog") return "Fog — headlights on, give yourself extra stopping distance.";
+  if (weather.visibility != null && weather.visibility < 4000) {
+    return `Hazy — visibility only ${(weather.visibility / 1000).toFixed(1)} km, drive gently.`;
+  }
   if (cond === "snow") {
     if (t <= -5) return "Serious chill — layered thermals, beanie, and gloves.";
     return "Boots and a warm shell — watch for slick pavement.";

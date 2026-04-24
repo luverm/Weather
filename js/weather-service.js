@@ -208,6 +208,7 @@ function normalize(d, aq) {
     sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null,
     uv: daily.uv_index_max?.[0] ?? null,
     uvPeak: findUvPeak(d.hourly),
+    upcomingStorm: findUpcomingStorm(hourly, nowcast, now),
     timezone: d.timezone,
     hourly,
     daily: dailyForecast,
@@ -217,6 +218,31 @@ function normalize(d, aq) {
     pollen: normalizePollen(aq),
     fetchedAt: now,
   };
+}
+
+// Return the first storm in the next ~12h, if any, plus the peak gust we'll
+// see between now and then. Prefer the 15-min nowcast (imminent), otherwise
+// scan the hourly forecast.
+function findUpcomingStorm(hourly, nowcast, now) {
+  const HORIZON = 12 * 3600_000;
+  let stormTs = null;
+  for (const n of nowcast || []) {
+    if (n.time >= now && n.code >= 95) { stormTs = n.time; break; }
+  }
+  if (!stormTs) {
+    const h = (hourly || []).find((h) => h.time > now
+      && h.time <= now + HORIZON
+      && h.condition === CONDITIONS.STORM);
+    if (h) stormTs = h.time;
+  }
+  if (!stormTs) return null;
+  let peakGust = 0;
+  for (const h of hourly || []) {
+    if (h.time < now || h.time > stormTs + 30 * 60_000) continue;
+    const g = h.gusts ?? h.wind ?? 0;
+    if (g > peakGust) peakGust = g;
+  }
+  return { time: stormTs, peakGust: Math.round(peakGust) };
 }
 
 function computePressureTrend(hourly, now) {
@@ -350,6 +376,7 @@ function mock(lat, lon) {
     sunset: new Date().setHours(19, 0, 0, 0),
     uv: 3,
     uvPeak: { time: new Date().setHours(13, 0, 0, 0), value: 5 },
+    upcomingStorm: null,
     timezone: "UTC",
     hourly: Array.from({ length: 24 }, (_, i) => ({
       time: now + (i + 1) * 3600_000,

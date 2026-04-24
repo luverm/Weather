@@ -34,6 +34,10 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonSky: $("#moon-sky"),
+  stormAlert: $("#storm-alert"),
+  stormAlertHeadline: $("#storm-alert-headline"),
+  stormAlertSub: $("#storm-alert-sub"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -150,10 +154,11 @@ export const ui = {
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
-    renderMoon(weather.moon);
+    renderMoon(weather.moon, weather);
     renderSun(weather);
     renderHourly(weather);
     renderDaily(weather);
+    renderStormAlert(weather);
     renderNowcast(weather);
     renderAdvice(weather);
     renderPollen(weather.pollen);
@@ -374,10 +379,11 @@ function renderAirQuality(aq) {
     `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
 }
 
-function renderMoon(moon) {
+function renderMoon(moon, w) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  renderMoonSky(w);
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
@@ -394,6 +400,36 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+}
+
+const CLOUD_STEPS = [
+  [20, "clear",    "Clear skies"],
+  [50, "partial",  "Partly cloudy"],
+  [80, "most",     "Mostly cloudy"],
+  [Infinity, "overcast", "Overcast"],
+];
+function renderMoonSky(w) {
+  if (!el.moonSky) return;
+  const cc = w?.cloudCover;
+  if (cc == null) { el.moonSky.textContent = ""; return; }
+  const [, level, label] = CLOUD_STEPS.find(([max]) => cc <= max);
+  el.moonSky.textContent = `${Math.round(cc)}% cloud · ${label}`;
+  el.moonSky.dataset.level = level;
+}
+
+function renderStormAlert(w) {
+  if (!el.stormAlert) return;
+  const storm = w?.upcomingStorm;
+  if (!storm) { el.stormAlert.hidden = true; return; }
+  const mins = Math.max(0, Math.round((storm.time - Date.now()) / 60_000));
+  const when = mins <= 5 ? "now"
+    : mins < 60 ? `in ${mins} min`
+    : `in ${Math.round(mins / 60)}h`;
+  el.stormAlertHeadline.textContent = `Thunderstorm ${when}`;
+  const gustPart = storm.peakGust >= 25 ? ` · gusts to ${storm.peakGust} km/h` : "";
+  el.stormAlertSub.textContent = `Around ${fmtTime(storm.time)}${gustPart}`;
+  el.stormAlert.hidden = false;
+  el.stormAlert.onclick = () => state.handlers.onHourClick?.(storm.time);
 }
 
 function fmtTime(ts) {
