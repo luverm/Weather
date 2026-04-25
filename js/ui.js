@@ -6,6 +6,7 @@ import { places } from "./places.js";
 import { HourlyChart } from "./hourly-chart.js";
 import { advise } from "./advice.js";
 import { buildInsights } from "./insights.js";
+import { buildAlerts } from "./alerts.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -74,6 +75,7 @@ const el = {
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
+  alerts: $("#alerts"),
   forecastTrack: $("#forecast-track"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
@@ -99,7 +101,22 @@ const state = {
   chart: null,
   sunTimer: null,
   localTimer: null,
+  // Per-place set of alert IDs the user dismissed this session (or persisted).
+  dismissedAlerts: loadDismissedAlerts(),
 };
+
+function loadDismissedAlerts() {
+  try {
+    const raw = localStorage.getItem("aether:dismissedAlerts");
+    if (!raw) return new Set();
+    return new Set(JSON.parse(raw));
+  } catch { return new Set(); }
+}
+function persistDismissedAlerts() {
+  try {
+    localStorage.setItem("aether:dismissedAlerts", JSON.stringify([...state.dismissedAlerts].slice(-100)));
+  } catch { /* quota — fine to ignore */ }
+}
 
 export const ui = {
   init(handlers) {
@@ -159,6 +176,7 @@ export const ui = {
     renderPollen(weather.pollen);
     renderTrends(weather);
     renderInsights(weather);
+    renderAlerts(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
@@ -521,6 +539,68 @@ function renderInsights(w) {
       if (ts) state.handlers.onHourClick?.(ts);
     });
   });
+}
+
+function alertKey(id) {
+  // Scope dismissals to the active place so identical IDs in different
+  // cities don't accidentally hide each other.
+  const p = state.place;
+  const place = p?.id || (p?.lat != null ? `${p.lat},${p.lon}` : "global");
+  return `${place}::${id}`;
+}
+
+function renderAlerts(w) {
+  if (!el.alerts) return;
+  const formatTemp = (c) => `${Math.round(convertTemp(c))}°${state.unit}`;
+  const alerts = buildAlerts(w, { fmtTime, formatTemp });
+  // Filter dismissed & dedupe by id.
+  const visible = alerts.filter((a) => !state.dismissedAlerts.has(alertKey(a.id)));
+  if (!visible.length) {
+    el.alerts.hidden = true;
+    el.alerts.innerHTML = "";
+    return;
+  }
+  el.alerts.hidden = false;
+  el.alerts.innerHTML = visible.map((a) => `
+    <div class="alert-card alert-${a.severity}" data-id="${escapeHtml(a.id)}" ${a.ts ? `data-ts="${a.ts}"` : ""}>
+      <span class="alert-icon">${a.icon}</span>
+      <div class="alert-meta">
+        <strong class="alert-title">
+          <span class="alert-badge">${severityLabel(a.severity)}</span>
+          ${escapeHtml(a.title)}
+        </strong>
+        <span class="alert-body">${escapeHtml(a.body)}</span>
+      </div>
+      <button class="alert-dismiss" type="button" aria-label="Dismiss alert">
+        <svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
+      </button>
+    </div>
+  `).join("");
+  el.alerts.querySelectorAll(".alert-card").forEach((card) => {
+    card.addEventListener("click", (e) => {
+      if (e.target.closest(".alert-dismiss")) return;
+      const ts = parseInt(card.dataset.ts || "", 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
+  el.alerts.querySelectorAll(".alert-dismiss").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const card = btn.closest(".alert-card");
+      const id = card?.dataset.id;
+      if (!id) return;
+      state.dismissedAlerts.add(alertKey(id));
+      persistDismissedAlerts();
+      card.classList.add("dismissing");
+      setTimeout(() => {
+        if (state.weather) renderAlerts(state.weather);
+      }, 220);
+    });
+  });
+}
+
+function severityLabel(s) {
+  return s === "severe" ? "Severe" : s === "warning" ? "Warning" : "Advisory";
 }
 
 function renderPollen(pollen) {
