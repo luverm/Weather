@@ -200,6 +200,7 @@ async function loadByCoords(place) {
   app.place = place;
   ui.setPlace(place);
   ui.setLoading(`Fetching weather for ${place.name}…`);
+  syncUrl(place);
 
   // Drop any scrubber offset so we start live on each new city.
   clock.reset();
@@ -297,15 +298,47 @@ installShortcuts({
   },
 });
 
+function syncUrl(place) {
+  if (!place || place.lat == null || place.lon == null) return;
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set("lat", place.lat.toFixed(4));
+    url.searchParams.set("lon", place.lon.toFixed(4));
+    if (place.name && place.name !== "Current location") {
+      url.searchParams.set("name", place.name);
+    } else {
+      url.searchParams.delete("name");
+    }
+    history.replaceState(null, "", url);
+  } catch { /* */ }
+}
+
+function parseUrlPlace() {
+  try {
+    const p = new URLSearchParams(window.location.search);
+    const lat = parseFloat(p.get("lat"));
+    const lon = parseFloat(p.get("lon"));
+    if (!isFinite(lat) || !isFinite(lon)) return null;
+    return { name: p.get("name") || "Linked location", lat, lon };
+  } catch { return null; }
+}
+
 // ---------- Start ----------
 (async function init() {
-  // Prefer the most recent saved place if we have one — avoids the geolocation
-  // prompt on every load and feels snappier.
+  // 1. URL param wins (deep-linked city shared by another user).
+  const urlPlace = parseUrlPlace();
+  if (urlPlace) {
+    await loadByCoords(urlPlace);
+    return;
+  }
+  // 2. Prefer the most recent saved place if we have one — avoids the
+  // geolocation prompt on every load and feels snappier.
   const saved = places.all();
   if (saved.length) {
     await loadByCoords(saved[0]);
     return;
   }
+  // 3. Fall back to the user's location, then Reykjavík.
   try {
     const { lat, lon } = await getLocation();
     await loadByCoords({ name: "Current location", lat, lon });

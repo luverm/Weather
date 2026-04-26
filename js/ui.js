@@ -412,9 +412,15 @@ function renderMetrics(w) {
   }
   el.metricPressure.textContent = fmtPressure(w.pressure);
   if (el.metricPressureUnit) el.metricPressureUnit.textContent = pressureUnitLabel();
-  el.metricPressureSub.textContent = w.visibility != null
-    ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
-    : "visibility —";
+  if (w.visibility != null) {
+    const km = Math.round((w.visibility / 1000) * 10) / 10;
+    const cat = visibilityCategory(km);
+    el.metricPressureSub.textContent = cat
+      ? `${cat} · ${km} km`
+      : `visibility ${km} km`;
+  } else {
+    el.metricPressureSub.textContent = "visibility —";
+  }
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
@@ -481,6 +487,15 @@ function humidityComfort(rh, dew, temp) {
   if (rh <= 25) return { label: "Dry", cls: "up" };
   if (rh <= 35) return { label: "Crisp", cls: "flat" };
   return { label: "Comfy", cls: "down" };
+}
+
+function visibilityCategory(km) {
+  if (km == null) return null;
+  if (km < 1)  return "Fog";
+  if (km < 4)  return "Hazy";
+  if (km < 10) return "Reduced";
+  if (km < 20) return "Clear";
+  return "Excellent";
 }
 
 function beaufort(kmh) {

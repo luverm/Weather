@@ -1884,6 +1884,8 @@ kbd {
   .today-stats { grid-template-columns: repeat(5, 1fr); gap: 4px; }
   .today-stats .stat { padding: 6px 4px; }
   .today-stats .stat strong { font-size: 12px; }
+  .scrubber-thumb { width: 34px; height: 34px; }
+  .scrubber-track { height: 42px; border-radius: 21px; }
   .alert { padding: 10px 12px; gap: 10px; }
   .alert-text strong { font-size: 13px; }
   .alert-text span:not(.alert-ts) { font-size: 11.5px; white-space: normal; }
