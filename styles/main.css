@@ -1204,6 +1204,7 @@ kbd {
 }
 .daily-delta:empty { display: none; }
 .daily-icon-strip {
+  position: relative;
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
@@ -1213,6 +1214,19 @@ kbd {
   justify-items: center;
   color: var(--fg-muted);
 }
+.daily-icon-strip .strip-now {
+  position: absolute; top: 0; bottom: 0; width: 1px;
+  background: linear-gradient(180deg, transparent, var(--accent), transparent);
+  pointer-events: none;
+  opacity: 0.85;
+}
+.daily-icon-strip .strip-now em {
+  position: absolute; left: -3px; top: -2px;
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+}
+.daily-icon-strip .strip-day.weekend { color: var(--accent); opacity: 0.95; }
 .daily-icon-strip .strip-day {
   display: grid; place-items: center;
   padding: 4px;
@@ -1283,6 +1297,17 @@ kbd {
   transition: background 200ms var(--ease);
 }
 .daily-item:hover { background: var(--glass); }
+.daily-item.weekend .daily-day {
+  color: var(--accent);
+  position: relative;
+}
+.daily-item.weekend .daily-day::after {
+  content: ""; position: absolute;
+  left: 0; right: 0; bottom: -3px;
+  height: 1px;
+  background: var(--accent);
+  opacity: 0.45;
+}
 .daily-day { font-size: 13px; font-weight: 500; }
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
 .daily-range {

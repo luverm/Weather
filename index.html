@@ -68,6 +68,10 @@
             <span>Default to °F</span>
             <input type="checkbox" id="setting-unit-f" />
           </label>
+          <label class="settings-row">
+            <span>Wind in mph</span>
+            <input type="checkbox" id="setting-wind-mph" />
+          </label>
           <button id="setting-clear-places" class="settings-btn-inline" type="button">Clear saved places</button>
           <div class="settings-foot">Aether · Open-Meteo + RainViewer</div>
         </div>
@@ -243,7 +247,7 @@
             </svg>
           </div>
           <span id="m-wind" class="metric-value">—</span>
-          <span class="metric-unit">km/h</span>
+          <span id="m-wind-unit" class="metric-unit">km/h</span>
           <span id="m-wind-sub" class="metric-sub">gust —</span>
         </div>
         <div class="metric glass metric-humidity">

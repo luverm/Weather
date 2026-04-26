@@ -103,6 +103,8 @@ const el = {
   todayGust: $("#today-gust"),
   todayUV: $("#today-uv"),
   windBeaufort: $("#m-wind-beaufort"),
+  metricWindUnit: $("#m-wind-unit"),
+  settingWindMph: $("#setting-wind-mph"),
   comfortCard: $("#comfort-card"),
   comfortText: $("#comfort-text"),
   comfortScoreEl: $("#comfort-score"),
@@ -126,6 +128,7 @@ const el = {
 
 const state = {
   unit: localStorage.getItem("aether:unit") || "C",
+  windUnit: localStorage.getItem("aether:windUnit") || "kmh",
   weather: null,
   place: null,
   sampledWeather: null, // the weather values at the current scrubber time
@@ -156,6 +159,7 @@ export const ui = {
       popoverEl: el.chartPopover,
       onHoverHour: (ts) => state.handlers.onHourClick?.(ts),
       getUnit: () => state.unit,
+      getWindUnit: () => state.windUnit,
       getTimezone: () => state.weather?.timezone,
     });
     bindInstallPrompt();
@@ -255,6 +259,11 @@ export const ui = {
 // ---------- Rendering ----------
 
 function convertTemp(c) { return state.unit === "F" ? c * 9 / 5 + 32 : c; }
+function convertWind(kmh) {
+  if (kmh == null) return null;
+  return state.windUnit === "mph" ? kmh * 0.62137119 : kmh;
+}
+function windUnitLabel() { return state.windUnit === "mph" ? "mph" : "km/h"; }
 
 function animateNumber(node, target, format) {
   if (target == null || isNaN(target)) { node.textContent = "–"; return; }
@@ -316,12 +325,15 @@ function renderYesterdayPill(w) {
 }
 
 function renderMetrics(w) {
-  el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
+  if (el.metricWindUnit) el.metricWindUnit.textContent = windUnitLabel();
+  el.metricWind.textContent = w.windSpeed != null ? Math.round(convertWind(w.windSpeed)) : "—";
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
+  const u = windUnitLabel();
+  const gustStr = w.windGusts != null ? `${Math.round(convertWind(w.windGusts))} ${u}` : "—";
   el.metricWindSub.textContent = dirLabel
-    ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
-    : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+    ? `${dirLabel} · gust ${gustStr}`
+    : `gust ${gustStr}`;
   if (el.windBeaufort) {
     const b = beaufort(w.windSpeed);
     if (b) {
@@ -879,7 +891,7 @@ function renderTodayStats(w) {
   el.todayHi.textContent = today.tempMax != null ? `${Math.round(convertTemp(today.tempMax))}°` : "—";
   el.todayLo.textContent = today.tempMin != null ? `${Math.round(convertTemp(today.tempMin))}°` : "—";
   el.todayRain.textContent = today.precip != null ? `${today.precip.toFixed(1)} mm` : "—";
-  el.todayGust.textContent = today.gustsMax != null ? `${Math.round(today.gustsMax)} km/h` : "—";
+  el.todayGust.textContent = today.gustsMax != null ? `${Math.round(convertWind(today.gustsMax))} ${windUnitLabel()}` : "—";
   el.todayUV.textContent = today.uvMax != null ? `${Math.round(today.uvMax)}` : "—";
 }
 
@@ -1003,11 +1015,13 @@ function renderDaily(w) {
     });
     const left = ((d.tempMin - gMin) / span) * 100;
     const width = ((d.tempMax - d.tempMin) / span) * 100;
+    const dow = dt.getDay();
+    const weekend = dow === 0 || dow === 6;
     const item = document.createElement("div");
-    item.className = "daily-item";
+    item.className = "daily-item" + (weekend ? " weekend" : "");
     item.dataset.ts = d.time;
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
-      ? ` · gusts ${Math.round(d.gustsMax)} km/h`
+      ? ` · gusts ${Math.round(convertWind(d.gustsMax))} ${windUnitLabel()}`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
@@ -1028,9 +1042,29 @@ function renderDaily(w) {
 
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
-  el.dailyIconStrip.innerHTML = days.map((d) =>
-    `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
-  ).join("");
+  // Compute a "now" marker that floats over today's portion of the strip.
+  const now = Date.now();
+  let nowFrac = null;
+  if (days.length) {
+    const startOfToday = new Date(days[0].time);
+    startOfToday.setHours(0, 0, 0, 0);
+    const lastDay = days[days.length - 1];
+    const endOfLast = new Date(lastDay.time);
+    endOfLast.setHours(24, 0, 0, 0);
+    const span = endOfLast - startOfToday;
+    if (span > 0 && now >= startOfToday.getTime() && now <= endOfLast.getTime()) {
+      nowFrac = (now - startOfToday.getTime()) / span;
+    }
+  }
+  const marker = nowFrac != null
+    ? `<span class="strip-now" style="left:${(nowFrac * 100).toFixed(2)}%"><em></em></span>`
+    : "";
+  el.dailyIconStrip.innerHTML = marker + days.map((d) => {
+    const dt = new Date(d.time);
+    const dow = dt.getDay();
+    const weekend = dow === 0 || dow === 6 ? "weekend" : "";
+    return `<span class="strip-day ${weekend}" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`;
+  }).join("");
 }
 
 function renderDailySpark(days) {
@@ -1111,7 +1145,7 @@ function toggleDailyExpand(item, d, w) {
     const summary = document.createElement("div");
     summary.className = "daily-expand";
     summary.style.gridTemplateColumns = "1fr";
-    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${Math.round(d.gustsMax ?? 0)} km/h · UV ${Math.round(d.uvMax ?? 0)}</span>`;
+    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${Math.round(convertWind(d.gustsMax ?? 0))} ${windUnitLabel()} · UV ${Math.round(d.uvMax ?? 0)}</span>`;
     item.appendChild(summary);
     item.dataset.expanded = "true";
     return;
@@ -1434,6 +1468,12 @@ function bindSettings() {
     }
   });
 
+  el.settingWindMph?.addEventListener("change", () => {
+    state.windUnit = el.settingWindMph.checked ? "mph" : "kmh";
+    localStorage.setItem("aether:windUnit", state.windUnit);
+    if (state.weather) ui.setWeather(state.weather);
+  });
+
   el.settingClearPlaces?.addEventListener("click", () => {
     if (!confirm("Clear all saved places?")) return;
     for (const p of places.all()) places.remove(p);
@@ -1452,6 +1492,7 @@ function applyStoredPreferences() {
     queueMicrotask(() => state.handlers.onReduceMotion?.(true));
   }
   if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
+  if (el.settingWindMph) el.settingWindMph.checked = state.windUnit === "mph";
 }
 
 // Exposed so app.js can query the current preference on boot.
@@ -1489,7 +1530,7 @@ function bindShare() {
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
       today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
-      `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
+      `Wind ${Math.round(convertWind(w.windSpeed))} ${windUnitLabel()}${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
     ].filter(Boolean);

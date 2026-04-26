@@ -9,12 +9,13 @@ const PAD_TOP = 16;
 const PAD_BOT = 22;
 
 export class HourlyChart {
-  constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit, getTimezone }) {
+  constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit, getWindUnit, getTimezone }) {
     this.svg = svgEl;
     this.hoverEl = hoverEl;
     this.popover = popoverEl;
     this.onHoverHour = onHoverHour;
     this.getUnit = getUnit || (() => "C");
+    this.getWindUnit = getWindUnit || (() => "kmh");
     this.getTimezone = getTimezone || (() => null);
     this.hours = [];
     this.points = [];
@@ -158,7 +159,12 @@ export class HourlyChart {
       : null;
     const feelsStr = (feels != null && Math.abs(feels - t) >= 1)
       ? `<em>feels ${Math.round(feels)}°</em>` : "";
-    const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h` : "";
+    const windUnit = this.getWindUnit();
+    const windKmh = h.wind ?? null;
+    const windVal = windKmh != null
+      ? (windUnit === "mph" ? windKmh * 0.62137119 : windKmh)
+      : null;
+    const wind = windVal != null ? ` · ${Math.round(windVal)} ${windUnit === "mph" ? "mph" : "km/h"}` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
     this.popover.innerHTML =
       `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
