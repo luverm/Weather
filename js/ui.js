@@ -36,6 +36,7 @@ const el = {
   aqLabel: $("#aq-label"),
   aqDetail: $("#aq-detail"),
   aqCard: $("#aq-card"),
+  aqTrend: $("#aq-trend"),
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
@@ -500,6 +501,18 @@ function renderAirQuality(aq) {
   el.aqArc.setAttribute("stroke-dashoffset", String(126 * (1 - frac)));
   el.aqDetail.textContent =
     `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
+  if (el.aqTrend) {
+    if (aq.trend?.direction) {
+      const { direction, delta } = aq.trend;
+      const arrow = direction === "rising" ? "▲" : direction === "falling" ? "▼" : "→";
+      // Rising AQI is bad — flip semantics: rising = "up"=bad red.
+      const cls = direction === "rising" ? "up" : direction === "falling" ? "down" : "flat";
+      el.aqTrend.className = `trend ${cls}`;
+      el.aqTrend.textContent = direction === "steady" ? "steady" : `${arrow} ${delta >= 0 ? "+" : ""}${delta}`;
+    } else {
+      el.aqTrend.textContent = "";
+    }
+  }
 }
 
 function renderMoon(moon) {
@@ -1211,9 +1224,13 @@ function renderNowcast(w) {
   el.nowcastHeadline.textContent = inMin === 0
     ? `${kind} now`
     : `${kind} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
-  // 2h outlook summary.
+  // 2h outlook summary, with intensity classifier.
   const totalMm = nowcast.reduce((s, n) => s + (n.precip || 0), 0);
-  el.nowcastSub.textContent = `${totalMm.toFixed(1)} mm expected in the next 2 hours`;
+  const peak = nowcast.reduce((m, n) => Math.max(m, n.precip || 0), 0);
+  const rate = peak * 4; // 15-min bucket → mm/hr roughly
+  const intensity = rainIntensityWord(rate, kind === "Snow");
+  el.nowcastSub.textContent =
+    `${intensity ? intensity + " · " : ""}${totalMm.toFixed(1)} mm expected in the next 2 hours`;
   // Bars (time-labeled, clickable to scrub).
   el.nowcastBars.innerHTML = "";
   const slice = nowcast.slice(0, 8);
@@ -1261,13 +1278,19 @@ function renderPlaces() {
   const activeId = state.place ? places.idFor(state.place) : null;
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
+    const pinned = !!p.pinned;
     return `
-      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}" draggable="true">
+      <div class="place-chip ${active ? "active" : ""} ${pinned ? "pinned" : ""}" data-id="${p.id}" draggable="true">
         <span class="chip-grip" aria-hidden="true" title="Drag to reorder">
           <svg viewBox="0 0 12 16" width="9" height="12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M4 4h.01M8 4h.01M4 8h.01M8 8h.01M4 12h.01M8 12h.01"/></svg>
         </span>
         <span>${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
+        <span class="pin" data-action="pin" aria-label="${pinned ? "Unpin" : "Pin"}" title="${pinned ? "Unpin" : "Pin"}">
+          <svg viewBox="0 0 16 16" width="11" height="11" fill="${pinned ? "currentColor" : "none"}" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 1.5l1.6 4.7L14.5 7l-3.6 2.9 1.2 5L8 12.2 3.9 14.9l1.2-5L1.5 7l4.9-.8z"/>
+          </svg>
+        </span>
         <span class="close" data-action="remove" aria-label="Remove">
           <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
         </span>
@@ -1279,6 +1302,11 @@ function renderPlaces() {
     chip.addEventListener("click", (e) => {
       if (e.target.closest('[data-action="remove"]')) {
         places.remove(item);
+        renderPlaces();
+        return;
+      }
+      if (e.target.closest('[data-action="pin"]')) {
+        places.togglePin(item);
         renderPlaces();
         return;
       }
@@ -1537,6 +1565,21 @@ function applyStoredPreferences() {
 
 // Exposed so app.js can query the current preference on boot.
 ui.isReduceMotion = () => localStorage.getItem("aether:reduceMotion") === "1";
+
+function rainIntensityWord(mmPerHour, isSnow) {
+  if (mmPerHour == null || mmPerHour < 0.05) return null;
+  if (isSnow) {
+    if (mmPerHour < 0.5) return "Light snow";
+    if (mmPerHour < 2)   return "Moderate snow";
+    if (mmPerHour < 5)   return "Heavy snow";
+    return "Blizzard";
+  }
+  if (mmPerHour < 0.5) return "Light drizzle";
+  if (mmPerHour < 2.5) return "Light rain";
+  if (mmPerHour < 7.5) return "Moderate rain";
+  if (mmPerHour < 16)  return "Heavy rain";
+  return "Torrential rain";
+}
 
 function startNowcastTicker() {
   setInterval(() => {

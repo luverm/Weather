@@ -309,6 +309,21 @@ html[data-reduce-motion="true"] *::after {
   transition: background 150ms var(--ease), color 150ms var(--ease);
 }
 .place-chip .close:hover { background: rgba(255,255,255,0.12); color: var(--fg); }
+.place-chip .pin {
+  width: 16px; height: 16px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  color: var(--fg-dim);
+  opacity: 0.55;
+  transition: color 150ms var(--ease), opacity 150ms var(--ease);
+}
+.place-chip:hover .pin,
+.place-chip.pinned .pin { opacity: 1; }
+.place-chip.pinned .pin { color: var(--accent); }
+.place-chip.pinned {
+  border-color: rgba(154, 209, 255, 0.4);
+  background: linear-gradient(180deg, rgba(154, 209, 255, 0.08), var(--glass));
+}
 .place-chip .chip-grip {
   width: 12px; height: 14px; display: inline-flex; align-items: center; justify-content: center;
   color: var(--fg-dim); cursor: grab; opacity: 0;

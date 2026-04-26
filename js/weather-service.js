@@ -294,7 +294,31 @@ function normalizeAq(aq) {
     no2: c.nitrogen_dioxide,
     co: c.carbon_monoxide,
     label: aqiLabel(c.us_aqi),
+    trend: aqTrend(aq, c.us_aqi),
   };
+}
+
+function aqTrend(aq, currentAqi) {
+  if (currentAqi == null) return null;
+  const series = aq?.hourly?.us_aqi;
+  const times = aq?.hourly?.time;
+  if (!series || !times) return null;
+  const now = Date.now();
+  // Find index closest to "now" and one ~3h ahead.
+  let nowIdx = -1;
+  for (let i = 0; i < times.length; i++) {
+    const t = new Date(times[i]).getTime();
+    if (t >= now - 30 * 60_000) { nowIdx = i; break; }
+  }
+  if (nowIdx < 0) return null;
+  const futureIdx = Math.min(series.length - 1, nowIdx + 3);
+  const fut = series[futureIdx];
+  if (fut == null) return null;
+  const delta = fut - currentAqi;
+  let direction = "steady";
+  if (delta > 8) direction = "rising";
+  else if (delta < -8) direction = "falling";
+  return { delta: Math.round(delta), direction };
 }
 
 function aqiLabel(v) {
@@ -409,7 +433,7 @@ function mock(lat, lon) {
     nowcast: [],
     moon: computeMoonPhase(new Date()),
     yesterday: { temp: 16, feelsLike: 15, delta: 2, condition: CONDITIONS.CLOUDS, label: "Cloudy", time: now - 24 * 3600_000 },
-    airQuality: { aqi: 42, pm25: 8, pm10: 14, o3: 40, no2: 15, co: 0.2, label: "Good" },
+    airQuality: { aqi: 42, pm25: 8, pm10: 14, o3: 40, no2: 15, co: 0.2, label: "Good", trend: { direction: "steady", delta: 0 } },
     pollen: {
       items: [
         { key: "grass", label: "Grass", value: 1.2 },

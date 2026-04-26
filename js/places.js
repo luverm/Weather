@@ -12,7 +12,11 @@ function read() {
   catch { return []; }
 }
 function write(list) {
-  try { localStorage.setItem(KEY, JSON.stringify(list.slice(0, MAX))); } catch {}
+  // Keep pinned items first, in their relative order, then unpinned.
+  const pinned = list.filter((p) => p.pinned);
+  const rest = list.filter((p) => !p.pinned);
+  const out = [...pinned, ...rest].slice(0, MAX);
+  try { localStorage.setItem(KEY, JSON.stringify(out)); } catch {}
 }
 
 function idFor(place) {
@@ -23,15 +27,35 @@ export const places = {
   all() { return read(); },
   add(place) {
     const id = idFor(place);
-    const list = read().filter((p) => idFor(p) !== id);
-    list.unshift({
+    const existing = read();
+    const prev = existing.find((p) => idFor(p) === id);
+    const filtered = existing.filter((p) => idFor(p) !== id);
+    const entry = {
       id,
       name: place.name,
       country: place.country,
       admin1: place.admin1,
       lat: place.lat,
       lon: place.lon,
-    });
+      pinned: prev?.pinned || false,
+    };
+    if (entry.pinned) {
+      // Pinned: keep at the top of the pinned group (first overall).
+      filtered.unshift(entry);
+    } else {
+      // Unpinned: insert just after the last pinned entry.
+      const firstUnpinnedIdx = filtered.findIndex((p) => !p.pinned);
+      const insertAt = firstUnpinnedIdx === -1 ? filtered.length : firstUnpinnedIdx;
+      filtered.splice(insertAt, 0, entry);
+    }
+    write(filtered);
+  },
+  togglePin(place) {
+    const id = idFor(place);
+    const list = read();
+    const i = list.findIndex((p) => idFor(p) === id);
+    if (i < 0) return;
+    list[i] = { ...list[i], pinned: !list[i].pinned };
     write(list);
   },
   remove(place) {
@@ -60,6 +84,7 @@ export const places = {
     }
     // Append anything that wasn't covered (shouldn't normally happen).
     for (const p of byId.values()) reordered.push(p);
+    // write() will normalize pinned-first ordering.
     write(reordered);
   },
   idFor,
