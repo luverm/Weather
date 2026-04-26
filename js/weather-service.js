@@ -48,6 +48,46 @@ async function fetchJson(url, opts) {
   }
 }
 
+const CACHE_KEY = "aether:weatherCache:v1";
+const CACHE_MAX = 6;
+const CACHE_TTL_MS = 6 * 3600_000; // 6 hours
+
+function cacheKey(lat, lon) {
+  return `${lat.toFixed(2)},${lon.toFixed(2)}`;
+}
+
+function readCache() {
+  try { return JSON.parse(localStorage.getItem(CACHE_KEY)) || {}; }
+  catch { return {}; }
+}
+
+function writeCache(map) {
+  try {
+    // Keep only the most recently fetched entries.
+    const entries = Object.entries(map).sort((a, b) => (b[1].fetchedAt || 0) - (a[1].fetchedAt || 0));
+    const trimmed = Object.fromEntries(entries.slice(0, CACHE_MAX));
+    localStorage.setItem(CACHE_KEY, JSON.stringify(trimmed));
+  } catch { /* */ }
+}
+
+/**
+ * Read a previously-cached weather payload for these coords if it's recent.
+ * Used by the UI to render an instant first paint while the live fetch runs.
+ */
+export function getCachedWeather(lat, lon) {
+  const map = readCache();
+  const entry = map[cacheKey(lat, lon)];
+  if (!entry) return null;
+  if (Date.now() - (entry.fetchedAt || 0) > CACHE_TTL_MS) return null;
+  return entry;
+}
+
+function saveCache(lat, lon, weather) {
+  const map = readCache();
+  map[cacheKey(lat, lon)] = weather;
+  writeCache(map);
+}
+
 export async function searchCities(query) {
   if (!query || query.trim().length < 2) return [];
   const url = `${GEO}?name=${encodeURIComponent(query)}&count=6&language=en&format=json`;
@@ -116,9 +156,14 @@ export async function getWeather(lat, lon) {
   try {
     const [forecast, air] = await Promise.allSettled([fetchJson(url), fetchJson(aqUrl)]);
     if (forecast.status !== "fulfilled") throw forecast.reason;
-    return normalize(forecast.value, air.status === "fulfilled" ? air.value : null);
+    const weather = normalize(forecast.value, air.status === "fulfilled" ? air.value : null);
+    saveCache(lat, lon, weather);
+    return weather;
   } catch (err) {
     console.warn("Weather fetch failed, using mock", err);
+    // Try cache first — better than the static mock if user has been here.
+    const cached = getCachedWeather(lat, lon);
+    if (cached) return { ...cached, offline: true };
     return mock(lat, lon);
   }
 }

@@ -1116,19 +1116,25 @@ function renderTrends(w) {
       el.pressureTrend.textContent = "";
     }
   }
-  // Temperature trend: next-3-hours delta vs now.
+  // Temperature trend: next-3-hours delta vs now, with per-hour pace
+  // shown when the swing is dramatic enough to matter (>= 4 °C / 3 h).
   if (el.tempTrend) {
     const hrs = w.hourly || [];
     const cur = w.temp;
     const future = hrs.find((h) => h.time > Date.now() + 2.5 * 3600_000);
     if (future && cur != null) {
       const delta = future.temp - cur;
-      if (Math.abs(delta) < 1) {
+      const absDelta = Math.abs(delta);
+      if (absDelta < 1) {
         el.tempTrend.className = "temp-trend flat";
         el.tempTrend.textContent = "→ steady";
       } else {
         el.tempTrend.className = delta > 0 ? "temp-trend up" : "temp-trend down";
-        el.tempTrend.textContent = `${delta > 0 ? "▲" : "▼"} ${Math.round(Math.abs(delta))}°/3h`;
+        // Convert delta to active unit so the displayed °/3h matches.
+        const deltaDisp = state.unit === "F" ? Math.abs(delta) * 9 / 5 : Math.abs(delta);
+        const arrow = delta > 0 ? "▲" : "▼";
+        const pace = absDelta >= 4 ? ` · ${(deltaDisp / 3).toFixed(1)}°/h` : "";
+        el.tempTrend.textContent = `${arrow} ${Math.round(deltaDisp)}°/3h${pace}`;
       }
     } else {
       el.tempTrend.textContent = "";
@@ -1793,12 +1799,13 @@ function bindShare() {
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
     ].filter(Boolean);
     const text = lines.join("\n");
+    const url = window.location.href;
     try {
       if (navigator.share) {
-        await navigator.share({ title: `Aether — ${placeName}`, text });
+        await navigator.share({ title: `Aether — ${placeName}`, text, url });
       } else {
-        await navigator.clipboard.writeText(text);
-        ui.showToast("Summary copied to clipboard");
+        await navigator.clipboard.writeText(`${text}\n${url}`);
+        ui.showToast("Summary + link copied");
       }
       el.shareBtn.classList.add("just-copied");
       setTimeout(() => el.shareBtn.classList.remove("just-copied"), 600);
