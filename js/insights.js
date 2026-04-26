@@ -99,5 +99,34 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     });
   }
 
+  // 6. Best day of the week — score by warmth, dryness, gentle wind, sun.
+  if (days.length >= 3) {
+    const today = days[0];
+    let bestDay = null, bestScore = -Infinity;
+    for (let i = 1; i < days.length; i++) {
+      const d = days[i];
+      if (d.tempMax == null) continue;
+      let s = 0;
+      const t = (d.tempMax + (d.tempMin ?? d.tempMax)) / 2;
+      if (t >= 18 && t <= 24) s += 30;
+      else if (t >= 14 && t <= 28) s += 18;
+      else if (t < 5 || t > 32) s -= 20;
+      s -= (d.pop ?? 0) * 0.4;
+      const g = d.gustsMax ?? 0;
+      if (g > 35) s -= (g - 35) * 0.6;
+      if (d.condition === "clear") s += 10;
+      if (d.condition === "storm") s -= 30;
+      if (d.condition === "rain")  s -= 12;
+      if (s > bestScore) { bestScore = s; bestDay = d; }
+    }
+    if (bestDay && bestScore > 5 && bestDay !== today) {
+      out.push({
+        icon: ICONS.sun, label: "Best day",
+        value: `${dow(bestDay.time)} · ${Math.round(bestDay.tempMax)}° · ${bestDay.pop || 0}% rain`,
+        ts: bestDay.sunrise || bestDay.time,
+      });
+    }
+  }
+
   return out.slice(0, 6);
 }

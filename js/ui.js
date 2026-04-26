@@ -220,6 +220,7 @@ export const ui = {
       state.chart.setSunEvents(collectSunEvents(weather));
     }
     if (el.narrative) el.narrative.textContent = narrative || "";
+    updateDocTitle(weather);
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
@@ -1625,6 +1626,18 @@ function applyStoredPreferences() {
 
 // Exposed so app.js can query the current preference on boot.
 ui.isReduceMotion = () => localStorage.getItem("aether:reduceMotion") === "1";
+
+function updateDocTitle(w) {
+  const placeName = state.place?.name;
+  if (w?.temp == null) {
+    document.title = placeName ? `Aether — ${placeName}` : "Aether — Interactive Weather";
+    return;
+  }
+  const t = Math.round(convertTemp(w.temp));
+  const label = capitalize(w.label || w.condition || "");
+  const tail = placeName ? ` · ${placeName}` : "";
+  document.title = `${t}° ${label} · Aether${tail}`;
+}
 
 function rainIntensityWord(mmPerHour, isSnow) {
   if (mmPerHour == null || mmPerHour < 0.05) return null;

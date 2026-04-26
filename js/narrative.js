@@ -53,6 +53,26 @@ function findGusts(hourly) {
   return null;
 }
 
+function moodWord(weather) {
+  const { condition, temp, feelsLike, humidity = 0, windSpeed = 0, windGusts = 0, isDay, uv = 0, cloudCover = 0 } = weather;
+  const t = feelsLike ?? temp ?? 18;
+  if (condition === "storm") return "Tempestuous";
+  if (condition === "snow") return t < -5 ? "Glacial" : "Snow-soft";
+  if (condition === "fog")  return "Hazed";
+  if ((windGusts || windSpeed) >= 50) return "Blustery";
+  if (t >= 32) return humidity >= 60 ? "Sweltering" : "Scorching";
+  if (t >= 26) return humidity >= 65 ? "Muggy" : "Balmy";
+  if (t >= 18 && condition === "clear" && isDay && uv < 7) return "Golden";
+  if (t >= 18 && humidity < 40 && (windSpeed >= 8)) return "Breezy";
+  if (t >= 12 && t < 18 && (cloudCover ?? 0) < 30) return "Crisp";
+  if (t >= 0 && t < 8) return "Brisk";
+  if (t < 0) return t < -10 ? "Polar" : "Frigid";
+  if ((cloudCover ?? 0) > 80) return "Overcast";
+  if (condition === "clear" && !isDay) return "Star-still";
+  if (condition === "rain") return "Rain-washed";
+  return null;
+}
+
 /**
  * Return a one or two-sentence narrative for the current weather.
  */
@@ -60,12 +80,16 @@ export function narrate(weather) {
   if (!weather) return "";
   const bits = [];
   const { condition, label, temp, feelsLike, uvPeak, windSpeed } = weather;
+  const mood = moodWord(weather);
 
-  // Lead: describe current state.
+  // Lead: describe current state with mood word prefix.
   const feels = Math.abs((feelsLike ?? temp) - temp) >= 3
     ? ` — feels closer to ${Math.round(feelsLike)}°`
     : "";
-  bits.push(`${label} at ${Math.round(temp)}°${feels}.`);
+  const lead = mood
+    ? `${mood} · ${label} at ${Math.round(temp)}°${feels}.`
+    : `${label} at ${Math.round(temp)}°${feels}.`;
+  bits.push(lead);
 
   // Precipitation arriving.
   const rain = findNextPrecip(weather.nowcast, weather.hourly);
