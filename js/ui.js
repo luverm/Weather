@@ -27,6 +27,7 @@ const el = {
   metricHumidity: $("#m-humidity"),
   metricHumiditySub: $("#m-humidity-sub"),
   metricPressure: $("#m-pressure"),
+  metricPressureUnit: $("#m-pressure-unit"),
   metricPressureSub: $("#m-pressure-sub"),
   metricUV: $("#m-uv"),
   metricUVSub: $("#m-uv-sub"),
@@ -105,6 +106,8 @@ const el = {
   windBeaufort: $("#m-wind-beaufort"),
   metricWindUnit: $("#m-wind-unit"),
   settingWindMph: $("#setting-wind-mph"),
+  settingPressureInhg: $("#setting-pressure-inhg"),
+  settingTime12: $("#setting-time-12h"),
   comfortCard: $("#comfort-card"),
   comfortText: $("#comfort-text"),
   comfortScoreEl: $("#comfort-score"),
@@ -129,6 +132,8 @@ const el = {
 const state = {
   unit: localStorage.getItem("aether:unit") || "C",
   windUnit: localStorage.getItem("aether:windUnit") || "kmh",
+  pressureUnit: localStorage.getItem("aether:pressureUnit") || "hpa",
+  time12: localStorage.getItem("aether:time12") === "1",
   weather: null,
   place: null,
   sampledWeather: null, // the weather values at the current scrubber time
@@ -153,6 +158,7 @@ export const ui = {
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
+    startNowcastTicker();
     state.chart = new HourlyChart({
       svgEl: el.chartSvg,
       hoverEl: el.chartHover,
@@ -161,6 +167,7 @@ export const ui = {
       getUnit: () => state.unit,
       getWindUnit: () => state.windUnit,
       getTimezone: () => state.weather?.timezone,
+      getTime12: () => state.time12,
     });
     bindInstallPrompt();
   },
@@ -264,6 +271,16 @@ function convertWind(kmh) {
   return state.windUnit === "mph" ? kmh * 0.62137119 : kmh;
 }
 function windUnitLabel() { return state.windUnit === "mph" ? "mph" : "km/h"; }
+function convertPressure(hpa) {
+  if (hpa == null) return null;
+  return state.pressureUnit === "inhg" ? hpa * 0.02952998 : hpa;
+}
+function pressureUnitLabel() { return state.pressureUnit === "inhg" ? "inHg" : "hPa"; }
+function fmtPressure(hpa) {
+  if (hpa == null) return "—";
+  const v = convertPressure(hpa);
+  return state.pressureUnit === "inhg" ? v.toFixed(2) : Math.round(v).toString();
+}
 
 function animateNumber(node, target, format) {
   if (target == null || isNaN(target)) { node.textContent = "–"; return; }
@@ -363,7 +380,8 @@ function renderMetrics(w) {
       el.humidityComfort.textContent = "";
     }
   }
-  el.metricPressure.textContent = Math.round(w.pressure ?? 0);
+  el.metricPressure.textContent = fmtPressure(w.pressure);
+  if (el.metricPressureUnit) el.metricPressureUnit.textContent = pressureUnitLabel();
   el.metricPressureSub.textContent = w.visibility != null
     ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
     : "visibility —";
@@ -509,14 +527,19 @@ function renderMoon(moon) {
 function fmtTime(ts) {
   if (!ts) return "—";
   const tz = state.weather?.timezone;
+  const hour12 = state.time12;
   if (tz && tz !== "auto") {
     try {
       return new Intl.DateTimeFormat(undefined, {
-        timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
+        timeZone: tz, hour: hour12 ? "numeric" : "2-digit",
+        minute: "2-digit", hour12,
       }).format(new Date(ts));
     } catch { /* fall through */ }
   }
   const d = new Date(ts);
+  if (hour12) {
+    return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", hour12: true });
+  }
   const hh = d.getHours().toString().padStart(2, "0");
   const mm = d.getMinutes().toString().padStart(2, "0");
   return `${hh}:${mm}`;
@@ -938,7 +961,10 @@ function renderTrends(w) {
       const arrow = direction === "rising" ? "▲" : direction === "falling" ? "▼" : "→";
       const cls = direction === "rising" ? "up" : direction === "falling" ? "down" : "flat";
       el.pressureTrend.className = `trend ${cls}`;
-      el.pressureTrend.textContent = `${arrow} ${delta >= 0 ? "+" : ""}${delta.toFixed(1)}`;
+      // Convert the 3-hour delta into the active pressure unit.
+      const dispDelta = state.pressureUnit === "inhg" ? delta * 0.02952998 : delta;
+      const fixed = state.pressureUnit === "inhg" ? 2 : 1;
+      el.pressureTrend.textContent = `${arrow} ${dispDelta >= 0 ? "+" : ""}${dispDelta.toFixed(fixed)}`;
     } else {
       el.pressureTrend.textContent = "";
     }
@@ -1176,8 +1202,10 @@ function renderNowcast(w) {
   const first = nowcast.find((n) => n.precip > 0.1);
   if (!first) {
     el.nowcast.hidden = true;
+    state._nowcastCtx = null;
     return;
   }
+  state._nowcastCtx = { firstTime: first.time, code: first.code };
   const inMin = Math.max(0, Math.round((first.time - Date.now()) / 60_000));
   const kind = first.code >= 71 && first.code <= 86 ? "Snow" : "Rain";
   el.nowcastHeadline.textContent = inMin === 0
@@ -1473,6 +1501,16 @@ function bindSettings() {
     localStorage.setItem("aether:windUnit", state.windUnit);
     if (state.weather) ui.setWeather(state.weather);
   });
+  el.settingPressureInhg?.addEventListener("change", () => {
+    state.pressureUnit = el.settingPressureInhg.checked ? "inhg" : "hpa";
+    localStorage.setItem("aether:pressureUnit", state.pressureUnit);
+    if (state.weather) ui.setWeather(state.weather);
+  });
+  el.settingTime12?.addEventListener("change", () => {
+    state.time12 = el.settingTime12.checked;
+    localStorage.setItem("aether:time12", state.time12 ? "1" : "0");
+    if (state.weather) ui.setWeather(state.weather);
+  });
 
   el.settingClearPlaces?.addEventListener("click", () => {
     if (!confirm("Clear all saved places?")) return;
@@ -1493,10 +1531,26 @@ function applyStoredPreferences() {
   }
   if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
   if (el.settingWindMph) el.settingWindMph.checked = state.windUnit === "mph";
+  if (el.settingPressureInhg) el.settingPressureInhg.checked = state.pressureUnit === "inhg";
+  if (el.settingTime12) el.settingTime12.checked = !!state.time12;
 }
 
 // Exposed so app.js can query the current preference on boot.
 ui.isReduceMotion = () => localStorage.getItem("aether:reduceMotion") === "1";
+
+function startNowcastTicker() {
+  setInterval(() => {
+    const ctx = state._nowcastCtx;
+    if (!ctx || el.nowcast.hidden) return;
+    const inMin = Math.max(0, Math.round((ctx.firstTime - Date.now()) / 60_000));
+    if (inMin > 120) return; // out of range — keep label as-is
+    const kind = ctx.code >= 71 && ctx.code <= 86 ? "Snow" : "Rain";
+    el.nowcastHeadline.textContent = inMin === 0
+      ? `${kind} now`
+      : `${kind} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
+    if (inMin === 0 && el.nowcast) el.nowcast.classList.add("now");
+  }, 30_000);
+}
 
 function startFetchedTicker() {
   const update = () => {

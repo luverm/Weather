@@ -9,7 +9,7 @@ const PAD_TOP = 16;
 const PAD_BOT = 22;
 
 export class HourlyChart {
-  constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit, getWindUnit, getTimezone }) {
+  constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit, getWindUnit, getTimezone, getTime12 }) {
     this.svg = svgEl;
     this.hoverEl = hoverEl;
     this.popover = popoverEl;
@@ -17,6 +17,7 @@ export class HourlyChart {
     this.getUnit = getUnit || (() => "C");
     this.getWindUnit = getWindUnit || (() => "kmh");
     this.getTimezone = getTimezone || (() => null);
+    this.getTime12 = getTime12 || (() => false);
     this.hours = [];
     this.points = [];
     this._bind();
@@ -25,14 +26,19 @@ export class HourlyChart {
 
   _formatHour(ts) {
     const tz = this.getTimezone();
+    const hour12 = this.getTime12();
     if (tz && tz !== "auto") {
       try {
         return new Intl.DateTimeFormat(undefined, {
-          timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
+          timeZone: tz, hour: hour12 ? "numeric" : "2-digit",
+          minute: "2-digit", hour12,
         }).format(new Date(ts));
       } catch { /* */ }
     }
     const d = new Date(ts);
+    if (hour12) {
+      return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", hour12: true });
+    }
     return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
   }
 

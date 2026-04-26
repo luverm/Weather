@@ -72,6 +72,14 @@
             <span>Wind in mph</span>
             <input type="checkbox" id="setting-wind-mph" />
           </label>
+          <label class="settings-row">
+            <span>Pressure in inHg</span>
+            <input type="checkbox" id="setting-pressure-inhg" />
+          </label>
+          <label class="settings-row">
+            <span>12-hour clock</span>
+            <input type="checkbox" id="setting-time-12h" />
+          </label>
           <button id="setting-clear-places" class="settings-btn-inline" type="button">Clear saved places</button>
           <div class="settings-foot">Aether · Open-Meteo + RainViewer</div>
         </div>
@@ -263,7 +271,7 @@
         <div class="metric glass metric-pressure">
           <span class="metric-label">Pressure <span id="m-pressure-trend" class="trend" aria-hidden="true"></span></span>
           <span id="m-pressure" class="metric-value">—</span>
-          <span class="metric-unit">hPa</span>
+          <span id="m-pressure-unit" class="metric-unit">hPa</span>
           <svg id="pressure-spark" class="pressure-spark" viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true">
             <path id="pressure-spark-fill" fill="currentColor" fill-opacity="0.14"></path>
             <path id="pressure-spark-line" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"></path>
@@ -375,6 +383,8 @@
             <path id="sun-arc-path" d="M10 74 Q 120 -12 230 74" fill="none" stroke="url(#sun-arc-grad)" stroke-width="1.6" stroke-linecap="round"/>
             <circle id="sun-arc-rise" cx="10" cy="74" r="2.2" fill="currentColor" opacity="0.55"/>
             <circle id="sun-arc-set"  cx="230" cy="74" r="2.2" fill="currentColor" opacity="0.55"/>
+            <line id="sun-arc-noon" x1="120" y1="22" x2="120" y2="40" stroke="currentColor" stroke-width="0.8" opacity="0.32" stroke-dasharray="1.5 2"/>
+            <text id="sun-arc-noon-label" x="120" y="18" text-anchor="middle" font-size="7" fill="currentColor" opacity="0.45">noon</text>
             <g id="sun-arc-twilight" opacity="0.55">
               <line id="sun-arc-civil-rise" x1="0" y1="74" x2="10" y2="74" stroke="#9ad1ff" stroke-width="1.4" stroke-linecap="round" opacity="0.7"/>
               <line id="sun-arc-civil-set"  x1="230" y1="74" x2="240" y2="74" stroke="#ff9c7a" stroke-width="1.4" stroke-linecap="round" opacity="0.7"/>
