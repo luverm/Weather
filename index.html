@@ -257,6 +257,7 @@
           <span id="m-wind" class="metric-value">—</span>
           <span id="m-wind-unit" class="metric-unit">km/h</span>
           <span id="m-wind-sub" class="metric-sub">gust —</span>
+          <div id="wind-trail" class="wind-trail" aria-hidden="true"></div>
         </div>
         <div class="metric glass metric-humidity">
           <span class="metric-label">Humidity <span id="m-humidity-comfort" class="trend" aria-hidden="true"></span></span>
@@ -413,6 +414,13 @@
             <strong id="sunset-quality-label">—</strong>
             <span id="sunset-quality-detail" class="sunset-quality-detail">—</span>
           </p>
+          <div id="cloud-cover-bar" class="cloud-cover-bar" hidden>
+            <span class="ccb-label">Cloud cover</span>
+            <div class="ccb-track">
+              <div id="ccb-fill" class="ccb-fill"></div>
+            </div>
+            <strong id="ccb-value">—</strong>
+          </div>
         </div>
       </div>
 

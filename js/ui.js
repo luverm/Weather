@@ -106,6 +106,10 @@ const el = {
   todayUV: $("#today-uv"),
   windBeaufort: $("#m-wind-beaufort"),
   metricWindUnit: $("#m-wind-unit"),
+  windTrail: $("#wind-trail"),
+  cloudCoverBar: $("#cloud-cover-bar"),
+  cloudCoverFill: $("#ccb-fill"),
+  cloudCoverValue: $("#ccb-value"),
   settingWindMph: $("#setting-wind-mph"),
   settingPressureInhg: $("#setting-pressure-inhg"),
   settingTime12: $("#setting-time-12h"),
@@ -313,8 +317,28 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  // Append a short rationale for why feels-like differs from the actual.
+  const reason = feelsLikeReason(w);
+  el.feelsLike.textContent = reason
+    ? `Feels like ${Math.round(feels)}° (${reason})`
+    : `Feels like ${Math.round(feels)}°`;
   renderYesterdayPill(w);
+}
+
+function feelsLikeReason(w) {
+  if (w.temp == null || w.feelsLike == null) return null;
+  const delta = w.feelsLike - w.temp;
+  if (Math.abs(delta) < 2.5) return null;
+  // Cooler than air → wind chill (wind > 12 km/h, temp < 10 °C) or evaporative cooling.
+  if (delta < 0) {
+    if (w.temp < 10 && (w.windSpeed ?? 0) > 12) return "wind chill";
+    if ((w.humidity ?? 0) < 40 && w.temp >= 25) return "dry breeze";
+    return "wind";
+  }
+  // Warmer than air → heat index (humidity), solar gain.
+  if ((w.humidity ?? 0) >= 50 && w.temp >= 22) return "humidity";
+  if (w.isDay && (w.uv ?? 0) >= 6) return "sun";
+  return "muggy";
 }
 
 function renderYesterdayPill(w) {
@@ -402,6 +426,42 @@ function renderMetrics(w) {
     el.metricUVSub.textContent = "peak —";
   }
   renderPressureSparkline(w);
+  renderWindTrail(w);
+  renderCloudCover(w);
+}
+
+function renderWindTrail(w) {
+  if (!el.windTrail) return;
+  const hours = (w.hourly || []).filter((h) => h.windDir != null).slice(0, 12);
+  if (!hours.length) {
+    el.windTrail.innerHTML = "";
+    return;
+  }
+  // Find max gust to scale arrow opacity.
+  const maxG = Math.max(8, ...hours.map((h) => h.gusts ?? h.wind ?? 0));
+  el.windTrail.innerHTML = hours.map((h) => {
+    const dir = h.windDir;
+    const speed = h.gusts ?? h.wind ?? 0;
+    // Wind direction is the angle wind comes FROM. Visually we want an arrow
+    // showing where it goes TO, so rotate by (dir + 180).
+    const rot = (dir + 180) % 360;
+    const op = 0.25 + Math.min(1, speed / maxG) * 0.75;
+    return `<span class="wind-arrow" style="transform:rotate(${rot}deg);opacity:${op.toFixed(2)}" title="${cardinal(dir)} ${Math.round(convertWind(speed))} ${windUnitLabel()}">↑</span>`;
+  }).join("");
+}
+
+function renderCloudCover(w) {
+  if (!el.cloudCoverBar) return;
+  if (w.cloudCover == null) {
+    el.cloudCoverBar.hidden = true;
+    return;
+  }
+  el.cloudCoverBar.hidden = false;
+  const pct = Math.max(0, Math.min(100, w.cloudCover));
+  if (el.cloudCoverFill) el.cloudCoverFill.style.width = pct + "%";
+  if (el.cloudCoverValue) el.cloudCoverValue.textContent = `${Math.round(pct)}%`;
+  el.cloudCoverBar.dataset.density =
+    pct < 15 ? "clear" : pct < 50 ? "partly" : pct < 85 ? "cloudy" : "overcast";
 }
 
 function humidityComfort(rh, dew, temp) {
