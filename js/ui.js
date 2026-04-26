@@ -114,6 +114,8 @@ const el = {
   settingWindMph: $("#setting-wind-mph"),
   settingPressureInhg: $("#setting-pressure-inhg"),
   settingTime12: $("#setting-time-12h"),
+  weekendCard: $("#weekend-card"),
+  weekendGrid: $("#weekend-grid"),
   comfortCard: $("#comfort-card"),
   comfortText: $("#comfort-text"),
   comfortScoreEl: $("#comfort-score"),
@@ -214,6 +216,7 @@ export const ui = {
     renderBestWindow(weather);
     renderRainStrip(weather);
     renderTodayStats(weather);
+    renderWeekend(weather);
     renderComfort(weather);
     startLocaltime(weather);
     if (state.chart) {
@@ -953,6 +956,47 @@ function renderBestWindow(w) {
   el.bestWindow.style.cursor = "pointer";
 }
 
+function renderWeekend(w) {
+  if (!el.weekendCard || !el.weekendGrid) return;
+  const days = (w.daily || []);
+  if (!days.length) {
+    el.weekendCard.hidden = true;
+    return;
+  }
+  // Find Saturday & Sunday in the visible window.
+  const sat = days.find((d) => new Date(d.time).getDay() === 6);
+  const sun = days.find((d) => new Date(d.time).getDay() === 0);
+  // Skip card on weekends themselves (today IS Sat or Sun) since the daily
+  // strip already foregrounds them, and skip if we don't have at least one.
+  if (!sat && !sun) {
+    el.weekendCard.hidden = true;
+    return;
+  }
+  const todayDow = new Date(days[0].time).getDay();
+  if (todayDow === 6 || todayDow === 0) {
+    el.weekendCard.hidden = true;
+    return;
+  }
+  el.weekendCard.hidden = false;
+  const tile = (d, name) => {
+    if (!d) return `<div class="weekend-tile empty"><span class="weekend-name">${name}</span><span>—</span></div>`;
+    const hi = d.tempMax != null ? `${Math.round(convertTemp(d.tempMax))}°` : "—";
+    const lo = d.tempMin != null ? `${Math.round(convertTemp(d.tempMin))}°` : "—";
+    const pop = d.pop ?? 0;
+    return `
+      <div class="weekend-tile" data-ts="${d.sunrise || d.time}" data-cond="${d.condition || ""}">
+        <span class="weekend-name">${name}</span>
+        <span class="weekend-icon">${iconFor(d.condition)}</span>
+        <span class="weekend-temp"><strong>${hi}</strong> / ${lo}</span>
+        <span class="weekend-pop ${pop >= 30 ? "wet" : ""}">${pop}%</span>
+      </div>`;
+  };
+  el.weekendGrid.innerHTML = tile(sat, "Sat") + tile(sun, "Sun");
+  el.weekendGrid.querySelectorAll(".weekend-tile[data-ts]").forEach((t) => {
+    t.addEventListener("click", () => state.handlers.onHourClick?.(parseInt(t.dataset.ts, 10)));
+  });
+}
+
 function renderComfort(w) {
   if (!el.comfortCard) return;
   const c = comfortScore(w);
@@ -1470,9 +1514,24 @@ function renderSearchResults(results) {
 
 function showRecentsIfAny() {
   const recents = places.all().slice(0, 5);
-  if (!recents.length) { el.searchResults.hidden = true; return; }
+  if (!recents.length) {
+    // Empty-state onboarding hint.
+    el.searchResults.innerHTML = `
+      <li class="recent-heading">Try a city</li>
+      <li class="recent-tip" data-action="locate">📍 Use my location · <kbd>L</kbd></li>
+      <li class="recent-tip">Type any city · pin ⭐ favourites</li>
+    `;
+    el.searchResults._items = [];
+    el.searchResults.hidden = false;
+    el.searchResults.querySelector('[data-action="locate"]')?.addEventListener("click", () => {
+      el.searchResults.hidden = true;
+      state.handlers.onLocate?.();
+    });
+    return;
+  }
   const itemsHtml = recents.map((r, i) => `
     <li role="option" data-index="${i}">
+      ${r.pinned ? '<span class="recent-pin" aria-hidden="true">⭐</span>' : ""}
       <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
       <span class="sub">${escapeHtml(r.country || "")}</span>
     </li>

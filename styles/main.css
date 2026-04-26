@@ -267,6 +267,24 @@ html[data-reduce-motion="true"] *::after {
   color: var(--fg-dim);
   pointer-events: none;
 }
+.search-results .recent-tip {
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--fg-muted);
+  font-style: normal;
+}
+.search-results .recent-tip[data-action] { cursor: pointer; }
+.search-results .recent-tip kbd {
+  font-family: inherit;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid var(--stroke);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 10.5px;
+}
+.search-results .recent-pin {
+  font-size: 11px; margin-right: 6px;
+}
 
 .icon-btn {
   width: 42px; height: 42px;
@@ -1426,6 +1444,55 @@ kbd {
   * { animation-duration: 0ms !important; animation-iteration-count: 1 !important;
       transition-duration: 0ms !important; }
 }
+
+/* ---------- Weekend preview ---------- */
+.weekend-card {
+  padding: 14px 16px;
+  display: grid;
+  gap: 10px;
+}
+.weekend-label {
+  font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--fg-dim);
+}
+.weekend-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.weekend-tile {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--stroke);
+  cursor: pointer;
+  transition: background 200ms var(--ease), transform 200ms var(--ease);
+}
+.weekend-tile:hover { background: rgba(255,255,255,0.09); transform: translateY(-1px); }
+.weekend-tile.empty { opacity: 0.55; cursor: default; }
+.weekend-tile .weekend-name {
+  font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+}
+.weekend-tile .weekend-icon { color: var(--fg-muted); width: 22px; height: 22px; display: grid; place-items: center; }
+.weekend-tile .weekend-icon svg { width: 22px; height: 22px; }
+.weekend-tile .weekend-temp {
+  font-size: 13px; color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+.weekend-tile .weekend-temp strong { color: var(--fg); font-weight: 500; }
+.weekend-tile .weekend-pop {
+  font-size: 11px; color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+  padding: 3px 7px; border-radius: 999px;
+  background: rgba(154, 209, 255, 0.08);
+}
+.weekend-tile .weekend-pop.wet { color: var(--accent); background: rgba(154, 209, 255, 0.18); }
 
 /* ---------- Comfort gauge ---------- */
 .comfort-card {
