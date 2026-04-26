@@ -8,6 +8,7 @@ import { advise } from "./advice.js";
 import { buildInsights } from "./insights.js";
 import { buildAlerts } from "./alerts.js";
 import { findBestWindow, fmtWindow } from "./best-window.js";
+import { predictNextHorizonShow } from "./sunset-predictor.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -88,6 +89,12 @@ const el = {
   dailyRainStrip: $("#daily-rain-strip"),
   yesterdayPill: $("#yesterday-pill"),
   yesterdayText: $("#yesterday-text"),
+  sunsetQuality: $("#sunset-quality"),
+  sunsetQualityDot: $("#sunset-quality-dot"),
+  sunsetQualityLabel: $("#sunset-quality-label"),
+  sunsetQualityDetail: $("#sunset-quality-detail"),
+  sunArcCivilRise: $("#sun-arc-civil-rise"),
+  sunArcCivilSet: $("#sun-arc-civil-set"),
   forecastTrack: $("#forecast-track"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
@@ -480,7 +487,40 @@ function renderSun(w) {
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
   renderSunArc(w);
+  renderSunsetQuality(w);
   scheduleSunCountdown(w);
+}
+
+function renderSunsetQuality(w) {
+  if (!el.sunsetQuality) return;
+  const pred = predictNextHorizonShow(w);
+  if (!pred) {
+    el.sunsetQuality.hidden = true;
+    return;
+  }
+  el.sunsetQuality.hidden = false;
+  el.sunsetQuality.dataset.event = pred.event;
+  el.sunsetQuality.dataset.score = pred.score >= 0.7 ? "high" : pred.score >= 0.4 ? "mid" : "low";
+  el.sunsetQualityLabel.textContent = `${pred.label} ${pred.event}`;
+  const eta = relativeEta(pred.time);
+  el.sunsetQualityDetail.textContent = `${eta} · ${pred.detail}`;
+  // Tint the dot.
+  if (el.sunsetQualityDot) {
+    const hue = pred.event === "sunset" ? 18 : 200; // warm vs cool
+    const sat = 60 + pred.score * 30;
+    const lit = 56 + pred.score * 12;
+    el.sunsetQualityDot.style.background = `hsl(${hue} ${sat}% ${lit}%)`;
+    el.sunsetQualityDot.style.boxShadow = `0 0 ${4 + pred.score * 10}px hsla(${hue}, ${sat}%, ${lit}%, ${0.4 + pred.score * 0.5})`;
+  }
+}
+
+function relativeEta(ts) {
+  const mins = Math.round((ts - Date.now()) / 60_000);
+  if (mins <= 0) return "now";
+  if (mins < 60) return `in ${mins} min`;
+  const hrs = Math.floor(mins / 60);
+  const m = mins % 60;
+  return m === 0 ? `in ${hrs} h` : `in ${hrs} h ${m} m`;
 }
 
 // Position the sun-arc marker along the sunrise-noon-sunset path, where
@@ -522,6 +562,21 @@ function renderSunArc(w, atTime = Date.now()) {
   const g = Math.round(228 + goldenness * 12);
   const b = Math.round(168 + goldenness * 60);
   el.sunArcDot.setAttribute("fill", `rgb(${r},${g},${b})`);
+  // Draw civil-twilight extensions outside the arc, length proportional to
+  // the day's twilight duration. Open-Meteo doesn't provide this directly so
+  // we approximate via day length: long days → short twilight, short days →
+  // long twilight (rough but visually intuitive).
+  if (el.sunArcCivilRise && el.sunArcCivilSet) {
+    const dayHours = span / 3600_000;
+    // Twilight ≈ 30min near equator, longer at high lat / short days.
+    const twilightMin = Math.max(20, Math.min(90, 30 + Math.abs(12 - dayHours) * 4));
+    const twilightFrac = (twilightMin * 60_000) / span; // as fraction of day
+    const px = Math.max(4, Math.min(14, twilightFrac * 220));
+    el.sunArcCivilRise.setAttribute("x1", (10 - px).toFixed(1));
+    el.sunArcCivilRise.setAttribute("x2", "10");
+    el.sunArcCivilSet.setAttribute("x1", "230");
+    el.sunArcCivilSet.setAttribute("x2", (230 + px).toFixed(1));
+  }
 }
 
 function scheduleSunCountdown(w) {
@@ -713,6 +768,7 @@ function renderBestWindow(w) {
   if (!el.bestWindow) return;
   const tz = w?.timezone;
   const win = findBestWindow(w);
+  if (state.chart) state.chart.setBestWindow(win);
   if (!win) {
     el.bestWindow.hidden = true;
     return;

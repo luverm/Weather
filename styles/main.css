@@ -753,6 +753,20 @@ html[data-reduce-motion="true"] *::after {
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
 }
+.chart-best-window .bw-band {
+  fill: rgba(120, 220, 160, 0.10);
+  stroke: rgba(120, 220, 160, 0.32);
+  stroke-width: 0.8;
+  stroke-dasharray: 3 3;
+}
+.chart-best-window .bw-band-label {
+  fill: rgba(120, 220, 160, 0.85);
+  font-size: 8.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+[data-tone="bright"] .chart-best-window .bw-band { fill: rgba(40, 140, 90, 0.13); stroke: rgba(40, 140, 90, 0.4); }
+[data-tone="bright"] .chart-best-window .bw-band-label { fill: rgba(40, 140, 90, 0.9); }
 .chart-labels text {
   font-size: 9px;
   fill: var(--fg-dim);
@@ -1305,6 +1319,30 @@ kbd {
   * { animation-duration: 0ms !important; animation-iteration-count: 1 !important;
       transition-duration: 0ms !important; }
 }
+
+/* ---------- Sunset / sunrise quality pill ---------- */
+.sunset-quality {
+  margin: 8px 0 0;
+  padding: 6px 10px;
+  display: grid;
+  grid-template-columns: 10px auto 1fr;
+  align-items: center;
+  gap: 8px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--stroke);
+  font-size: 12px;
+  animation: alert-in 360ms var(--ease) both;
+}
+.sunset-quality strong { font-size: 12px; font-weight: 600; letter-spacing: 0.01em; }
+.sunset-quality-detail { color: var(--fg-dim); font-size: 11px; }
+.sunset-quality-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #ffe6a8;
+  transition: background 360ms var(--ease), box-shadow 360ms var(--ease);
+}
+.sunset-quality[data-score="high"] { background: rgba(255, 200, 120, 0.10); border-color: rgba(255, 200, 120, 0.35); }
+.sunset-quality[data-score="low"]  { opacity: 0.78; }
 
 /* ---------- Yesterday-comparison pill ---------- */
 .yesterday-pill {

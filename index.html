@@ -199,6 +199,7 @@
             </linearGradient>
           </defs>
           <g id="chart-night" class="chart-night"></g>
+          <g id="chart-best-window" class="chart-best-window"></g>
           <g id="chart-precip" class="chart-precip"></g>
           <path id="chart-temp-fill" class="chart-temp-fill" fill="url(#temp-fill)"></path>
           <path id="chart-gust-line" class="chart-gust-line" fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="1.5 3" opacity="0.45"></path>
@@ -336,6 +337,10 @@
             <path id="sun-arc-path" d="M10 74 Q 120 -12 230 74" fill="none" stroke="url(#sun-arc-grad)" stroke-width="1.6" stroke-linecap="round"/>
             <circle id="sun-arc-rise" cx="10" cy="74" r="2.2" fill="currentColor" opacity="0.55"/>
             <circle id="sun-arc-set"  cx="230" cy="74" r="2.2" fill="currentColor" opacity="0.55"/>
+            <g id="sun-arc-twilight" opacity="0.55">
+              <line id="sun-arc-civil-rise" x1="0" y1="74" x2="10" y2="74" stroke="#9ad1ff" stroke-width="1.4" stroke-linecap="round" opacity="0.7"/>
+              <line id="sun-arc-civil-set"  x1="230" y1="74" x2="240" y2="74" stroke="#ff9c7a" stroke-width="1.4" stroke-linecap="round" opacity="0.7"/>
+            </g>
             <g id="sun-arc-marker">
               <circle id="sun-arc-glow" cx="-20" cy="-20" r="9" fill="#ffe6a8" opacity="0.25"/>
               <circle id="sun-arc-dot"  cx="-20" cy="-20" r="4" fill="#fff1c9" stroke="#fff" stroke-opacity="0.65" stroke-width="0.8"/>
@@ -355,6 +360,11 @@
               <strong id="sun-daylight">—</strong>
             </div>
           </div>
+          <p id="sunset-quality" class="sunset-quality" hidden>
+            <span id="sunset-quality-dot" class="sunset-quality-dot" aria-hidden="true"></span>
+            <strong id="sunset-quality-label">—</strong>
+            <span id="sunset-quality-detail" class="sunset-quality-detail">—</span>
+          </p>
         </div>
       </div>
 

@@ -51,10 +51,17 @@ export class HourlyChart {
   setHours(hours) {
     this.hours = (hours || []).slice(0, 24);
     this._draw();
+    this._drawBestWindow();
     this.setCursor(null);
   }
 
-  refresh() { this._draw(); }
+  /** Show a soft band marking the optimal outdoor window. */
+  setBestWindow(win) {
+    this._bestWindow = win || null;
+    this._drawBestWindow();
+  }
+
+  refresh() { this._draw(); this._drawBestWindow(); }
 
   setCursor(ts) {
     const cursor = this.svg.querySelector("#chart-cursor");
@@ -288,5 +295,44 @@ export class HourlyChart {
       tTxt.textContent = `${Math.round(tVal)}°`;
       labG.appendChild(tTxt);
     });
+  }
+
+  _drawBestWindow() {
+    const g = this.svg.querySelector("#chart-best-window");
+    if (!g) return;
+    g.innerHTML = "";
+    if (!this._bestWindow || !this.points.length) return;
+    const win = this._bestWindow;
+    // Find indices of hours that fall inside the window.
+    let firstIdx = -1, lastIdx = -1;
+    for (let i = 0; i < this.hours.length; i++) {
+      const t = this.hours[i].time;
+      if (t >= win.start - 30 * 60_000 && t < win.end - 30 * 60_000) {
+        if (firstIdx === -1) firstIdx = i;
+        lastIdx = i;
+      }
+    }
+    if (firstIdx === -1 || lastIdx === -1) return;
+    const innerW = W - PAD_LEFT - PAD_RIGHT;
+    // Half-step left/right so the band sits between hour points.
+    const halfStep = innerW / (this.hours.length - 1) / 2;
+    const x1 = Math.max(PAD_LEFT, this.points[firstIdx].x - halfStep);
+    const x2 = Math.min(W - PAD_RIGHT, this.points[lastIdx].x + halfStep);
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    rect.setAttribute("x", x1.toFixed(1));
+    rect.setAttribute("y", String(PAD_TOP));
+    rect.setAttribute("width", Math.max(0, x2 - x1).toFixed(1));
+    rect.setAttribute("height", String(H - PAD_TOP - PAD_BOT));
+    rect.setAttribute("rx", "3");
+    rect.setAttribute("class", "bw-band");
+    g.appendChild(rect);
+    // A small label at the top edge so users notice it.
+    const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    txt.setAttribute("x", ((x1 + x2) / 2).toFixed(1));
+    txt.setAttribute("y", String(PAD_TOP + 8));
+    txt.setAttribute("text-anchor", "middle");
+    txt.setAttribute("class", "bw-band-label");
+    txt.textContent = "Best window";
+    g.appendChild(txt);
   }
 }
