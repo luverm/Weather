@@ -321,6 +321,38 @@ export class HourlyChart {
       tTxt.textContent = `${Math.round(tVal)}°`;
       labG.appendChild(tTxt);
     });
+    this._drawExtremes(tToY, iToX);
+  }
+
+  _drawExtremes(tToY, iToX) {
+    const g = this.svg.querySelector("#chart-extremes");
+    if (!g) return;
+    g.innerHTML = "";
+    if (!this.hours.length) return;
+    let hi = null, lo = null;
+    this.hours.forEach((h, i) => {
+      if (h.temp == null) return;
+      if (hi == null || h.temp > hi.t) hi = { t: h.temp, i, time: h.time };
+      if (lo == null || h.temp < lo.t) lo = { t: h.temp, i, time: h.time };
+    });
+    if (!hi || !lo || hi.i === lo.i) return;
+    const unit = this.getUnit();
+    const conv = (t) => unit === "F" ? t * 9 / 5 + 32 : t;
+    const mark = (e, kind) => {
+      const x = iToX(e.i);
+      const y = tToY(e.t);
+      const above = kind === "hi";
+      const dy = above ? -14 : 16;
+      const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      txt.setAttribute("x", x.toFixed(1));
+      txt.setAttribute("y", (y + dy).toFixed(1));
+      txt.setAttribute("text-anchor", "middle");
+      txt.setAttribute("class", `extreme-label ${kind}`);
+      txt.textContent = `${kind === "hi" ? "▲" : "▼"} ${Math.round(conv(e.t))}°`;
+      g.appendChild(txt);
+    };
+    mark(hi, "hi");
+    mark(lo, "lo");
   }
 
   _drawNowMarker() {

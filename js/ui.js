@@ -90,6 +90,7 @@ const el = {
   sunArcGlow: $("#sun-arc-glow"),
   sunArcDot: $("#sun-arc-dot"),
   dailyRainStrip: $("#daily-rain-strip"),
+  dailyRainAmount: $("#daily-rain-amount"),
   yesterdayPill: $("#yesterday-pill"),
   yesterdayText: $("#yesterday-text"),
   sunsetQuality: $("#sunset-quality"),
@@ -997,12 +998,12 @@ function renderRainStrip(w) {
   const days = (w.daily || []).slice(0, 7);
   if (!days.length) {
     el.dailyRainStrip.innerHTML = "";
+    if (el.dailyRainAmount) el.dailyRainAmount.innerHTML = "";
     return;
   }
   el.dailyRainStrip.innerHTML = days.map((d) => {
     const pop = Math.max(0, Math.min(100, d.pop ?? 0));
     const mm = d.precip ?? 0;
-    // Color goes from neutral (low) to deep blue (high).
     const intensity = Math.min(1, Math.max(pop / 100, mm / 12));
     const alpha = 0.08 + intensity * 0.85;
     return `<span class="rain-cell" style="background:rgba(112,170,255,${alpha.toFixed(2)})"
@@ -1010,6 +1011,19 @@ function renderRainStrip(w) {
               ${pop >= 30 ? `<em>${pop}</em>` : ""}
             </span>`;
   }).join("");
+  // Accumulation bars: scale to the wettest day in the visible window so the
+  // shape stays readable even on dry weeks (with a 4 mm floor).
+  if (el.dailyRainAmount) {
+    const totalMax = Math.max(4, ...days.map((d) => d.precip ?? 0));
+    el.dailyRainAmount.innerHTML = days.map((d) => {
+      const mm = d.precip ?? 0;
+      const pct = Math.max(0, Math.min(100, (mm / totalMax) * 100));
+      return `<span class="rain-bar" title="${mm.toFixed(1)} mm">
+                <span class="rain-bar-fill" style="height:${pct.toFixed(1)}%"></span>
+                ${mm >= 0.4 ? `<em>${mm.toFixed(mm < 10 ? 1 : 0)}</em>` : ""}
+              </span>`;
+    }).join("");
+  }
 }
 
 function renderPollen(pollen) {

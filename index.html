@@ -229,6 +229,7 @@
           <path id="chart-feels-line" class="chart-feels-line" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3 3" opacity="0.5"></path>
           <path id="chart-temp-line" class="chart-temp-line" fill="none" stroke="url(#temp-stroke)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"></path>
           <g id="chart-labels" class="chart-labels"></g>
+          <g id="chart-extremes" class="chart-extremes"></g>
           <g id="chart-now" class="chart-now">
             <circle id="chart-now-ring" cx="-10" cy="-10" r="6" fill="none" stroke="currentColor" stroke-width="1"></circle>
             <circle id="chart-now-dot"  cx="-10" cy="-10" r="2.4" fill="currentColor"></circle>
@@ -483,6 +484,7 @@
         </div>
         <div id="daily-icon-strip" class="daily-icon-strip" aria-hidden="true"></div>
         <div id="daily-rain-strip" class="daily-rain-strip" aria-hidden="true" title="Rain probability per day"></div>
+        <div id="daily-rain-amount" class="daily-rain-amount" aria-hidden="true" title="Rain accumulation per day"></div>
         <svg id="daily-spark" class="daily-spark" viewBox="0 0 600 60" preserveAspectRatio="none" aria-hidden="true">
           <defs>
             <linearGradient id="daily-hi-stroke" x1="0" x2="1" y1="0" y2="0">
