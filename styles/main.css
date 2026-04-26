@@ -1742,6 +1742,29 @@ kbd {
 .yesterday-pill[data-dir="down"] .yesterday-arrow { box-shadow: 0 0 6px rgba(154, 209, 255, 0.6); }
 .yesterday-pill[data-dir="flat"] { color: var(--fg-muted); }
 
+/* ---------- Offline pill ---------- */
+.offline-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255, 180, 90, 0.14);
+  border: 1px solid rgba(255, 180, 90, 0.3);
+  color: #ffce93;
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  width: fit-content;
+  align-self: start;
+  animation: alert-in 360ms var(--ease) both;
+}
+.offline-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #ffb86b;
+  box-shadow: 0 0 8px rgba(255, 184, 107, 0.6);
+  animation: pulse 2.4s ease-in-out infinite;
+}
+
 /* ---------- Severe weather alerts banner ---------- */
 .alerts-banner {
   display: grid;

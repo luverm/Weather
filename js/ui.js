@@ -168,6 +168,7 @@ export const ui = {
     applyStoredPreferences();
     renderPlaces();
     bindAqExpand();
+    bindOfflineIndicator();
     startFetchedTicker();
     startNowcastTicker();
     state.chart = new HourlyChart({
@@ -237,6 +238,7 @@ export const ui = {
     }
     if (el.narrative) el.narrative.textContent = narrative || "";
     el.heroInner?.classList.remove("hero-fading");
+    state._refreshOfflineIndicator?.();
     updateDocTitle(weather);
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
@@ -1832,6 +1834,20 @@ function rainIntensityWord(mmPerHour, isSnow) {
   if (mmPerHour < 7.5) return "Moderate rain";
   if (mmPerHour < 16)  return "Heavy rain";
   return "Torrential rain";
+}
+
+function bindOfflineIndicator() {
+  const pill = document.getElementById("offline-pill");
+  if (!pill) return;
+  const update = () => {
+    const offline = !navigator.onLine || state.weather?.offline;
+    pill.hidden = !offline;
+  };
+  window.addEventListener("online", update);
+  window.addEventListener("offline", update);
+  // Re-check whenever weather changes (offline flag may flip).
+  state._refreshOfflineIndicator = update;
+  update();
 }
 
 function bindAqExpand() {

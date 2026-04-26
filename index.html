@@ -122,6 +122,12 @@
     <!-- Saved locations strip -->
     <nav id="places-strip" class="places-strip" aria-label="Saved locations" hidden></nav>
 
+    <!-- Offline indicator -->
+    <div id="offline-pill" class="offline-pill" role="status" aria-live="polite" hidden>
+      <span class="offline-dot"></span>
+      <span>Offline — showing cached weather</span>
+    </div>
+
     <!-- Severe weather alerts -->
     <div id="alerts-banner" class="alerts-banner" aria-live="polite" hidden></div>
 
@@ -538,6 +544,7 @@
           <div><dt><kbd>,</kbd> <kbd>.</kbd></dt><dd>Nudge time ± 6 h</dd></div>
           <div><dt><kbd>R</kbd></dt><dd>Refresh weather</dd></div>
           <div><dt><kbd>P</kbd></dt><dd>Pin / unpin this place</dd></div>
+          <div><dt><kbd>[</kbd> <kbd>]</kbd></dt><dd>Previous / next saved place</dd></div>
           <div><dt><kbd>?</kbd></dt><dd>Show / hide this panel</dd></div>
           <div><dt><kbd>Esc</kbd></dt><dd>Close panels</dd></div>
         </dl>

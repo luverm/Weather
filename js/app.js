@@ -317,6 +317,15 @@ installShortcuts({
     const isPinned = places.all().find((p) => places.idFor(p) === places.idFor(app.place))?.pinned;
     ui.showToast(isPinned ? `Pinned ${app.place.name}` : `Unpinned ${app.place.name}`);
   },
+  cyclePlace: (dir) => {
+    const all = places.all();
+    if (!all.length) return;
+    if (!app.place) return loadByCoords(all[0]);
+    const curId = places.idFor(app.place);
+    const idx = all.findIndex((p) => places.idFor(p) === curId);
+    const next = (idx + dir + all.length) % all.length;
+    loadByCoords(all[next]);
+  },
 });
 
 function syncUrl(place) {
