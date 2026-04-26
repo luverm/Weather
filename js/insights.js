@@ -99,6 +99,23 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     });
   }
 
+  // 5b. Rain window today — first and last hour with significant precip
+  // probability. Useful for picking errands.
+  const rainHours = hours
+    .filter((h) => h.time <= Date.now() + 18 * 3600_000)
+    .filter((h) => (h.pop ?? 0) >= 60 || (h.precip ?? 0) >= 0.5);
+  if (rainHours.length >= 2) {
+    const first = rainHours[0];
+    const last = rainHours[rainHours.length - 1];
+    if (last.time - first.time >= 3600_000) {
+      out.push({
+        icon: ICONS.rain, label: "Rain window",
+        value: `${fmt(first.time)} – ${fmt(last.time)}`,
+        ts: first.time,
+      });
+    }
+  }
+
   // 6. Best day of the week — score by warmth, dryness, gentle wind, sun.
   if (days.length >= 3) {
     const today = days[0];

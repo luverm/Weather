@@ -215,7 +215,7 @@ export const ui = {
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
-    renderMoon(weather.moon);
+    renderMoon(weather.moon, weather);
     renderSun(weather);
     renderHourly(weather);
     renderDaily(weather);
@@ -621,10 +621,15 @@ function renderAirQuality(aq) {
   }
 }
 
-function renderMoon(moon) {
+function renderMoon(moon, w) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  // If we're rendering at night with a high moon, append a tiny mood hint.
+  if (el.moonName && w && !w.isDay) {
+    if (moon.illum >= 0.85) el.moonName.textContent = `${moon.name} · bright`;
+    else if (moon.illum <= 0.05) el.moonName.textContent = `${moon.name} · dark sky`;
+  }
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
