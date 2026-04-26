@@ -309,6 +309,14 @@ installShortcuts({
     if (app.weather) applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
   },
+  refresh: () => refreshWeather(),
+  togglePin: () => {
+    if (!app.place) return;
+    places.togglePin(app.place);
+    ui.refreshPlaces?.();
+    const isPinned = places.all().find((p) => places.idFor(p) === places.idFor(app.place))?.pinned;
+    ui.showToast(isPinned ? `Pinned ${app.place.name}` : `Unpinned ${app.place.name}`);
+  },
 });
 
 function syncUrl(place) {

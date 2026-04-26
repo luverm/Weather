@@ -67,6 +67,10 @@ export function installShortcuts(handlers) {
     }
     if (key === "ArrowLeft") { handlers.nudge?.(-1); e.preventDefault(); return; }
     if (key === "ArrowRight") { handlers.nudge?.(1); e.preventDefault(); return; }
+    if (key === "r" || key === "R") { e.preventDefault(); handlers.refresh?.(); return; }
+    if (key === "p" || key === "P") { e.preventDefault(); handlers.togglePin?.(); return; }
+    if (key === ",") { e.preventDefault(); handlers.nudge?.(-6); return; }
+    if (key === ".") { e.preventDefault(); handlers.nudge?.(6); return; }
   });
 }
 

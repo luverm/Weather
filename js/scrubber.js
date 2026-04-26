@@ -8,6 +8,12 @@ import { clock } from "./clock.js";
 
 const RANGE_HOURS = 24;
 
+function between(target, a, b) {
+  if (a == null || b == null) return false;
+  const lo = Math.min(a, b), hi = Math.max(a, b);
+  return target > lo && target <= hi;
+}
+
 export class Scrubber {
   constructor({ trackEl, thumbEl, fillEl, timeEl, deltaEl, resetEl,
                 sunriseEl, sunsetEl, ticksEl, appEl, onScrub }) {
@@ -159,13 +165,25 @@ export class Scrubber {
   }
 
   _setOffset(offset) {
+    const prevTime = clock.now();
     clock.setOffset(offset);
     // Snap "close enough" to live — prevents 0.2 min drift when releasing.
     if (Math.abs(offset) < 5 * 60_000) clock.setOffset(0);
+    const newTime = clock.now();
     const scrubbing = !clock.isLive();
     this.appEl?.setAttribute("data-scrubbing", scrubbing ? "true" : "false");
     this._render(this._currentT());
     this.onScrub?.(clock.offset());
+    // A tiny haptic blip when we cross sunrise or sunset, on devices that
+    // expose the Vibration API.
+    this._maybeBuzz(prevTime, newTime);
+  }
+
+  _maybeBuzz(prev, now) {
+    if (!this.dragging) return;
+    if (typeof navigator === "undefined" || !navigator.vibrate) return;
+    if (this.sunrise && between(this.sunrise, prev, now)) navigator.vibrate(8);
+    else if (this.sunset && between(this.sunset, prev, now)) navigator.vibrate(8);
   }
 
   _render(t) {

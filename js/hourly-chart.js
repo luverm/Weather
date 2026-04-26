@@ -8,6 +8,11 @@ const PAD_RIGHT = 6;
 const PAD_TOP = 16;
 const PAD_BOT = 22;
 
+function cardinalShort(deg) {
+  const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  return dirs[Math.round(((deg % 360) + 360) % 360 / 45) % 8];
+}
+
 export class HourlyChart {
   constructor({ svgEl, hoverEl, popoverEl, onHoverHour, onResetLive, getUnit, getWindUnit, getTimezone, getTime12 }) {
     this.svg = svgEl;
@@ -176,11 +181,15 @@ export class HourlyChart {
     const windVal = windKmh != null
       ? (windUnit === "mph" ? windKmh * 0.62137119 : windKmh)
       : null;
-    const wind = windVal != null ? ` · ${Math.round(windVal)} ${windUnit === "mph" ? "mph" : "km/h"}` : "";
+    const dirStr = h.windDir != null ? ` ${cardinalShort(h.windDir)}` : "";
+    const wind = windVal != null ? ` · ${Math.round(windVal)} ${windUnit === "mph" ? "mph" : "km/h"}${dirStr}` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
+    const precipMm = (h.precip != null && h.precip >= 0.1)
+      ? ` · ${h.precip.toFixed(1)} mm`
+      : "";
     this.popover.innerHTML =
       `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
-      `<em>${h.pop}% precip${wind}${hum}</em>`;
+      `<em>${h.pop}% precip${precipMm}${wind}${hum}</em>`;
     this.popover.style.left = `${pxX.toFixed(1)}px`;
     this.popover.style.top = `${pxY.toFixed(1)}px`;
     this.popover.hidden = false;
