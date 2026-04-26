@@ -95,6 +95,13 @@ const el = {
   sunsetQualityDetail: $("#sunset-quality-detail"),
   sunArcCivilRise: $("#sun-arc-civil-rise"),
   sunArcCivilSet: $("#sun-arc-civil-set"),
+  todayStats: $("#today-stats"),
+  todayHi: $("#today-hi"),
+  todayLo: $("#today-lo"),
+  todayRain: $("#today-rain"),
+  todayGust: $("#today-gust"),
+  todayUV: $("#today-uv"),
+  windBeaufort: $("#m-wind-beaufort"),
   forecastTrack: $("#forecast-track"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
@@ -183,8 +190,12 @@ export const ui = {
     renderAlerts(weather);
     renderBestWindow(weather);
     renderRainStrip(weather);
+    renderTodayStats(weather);
     startLocaltime(weather);
-    if (state.chart) state.chart.setHours(weather.hourly);
+    if (state.chart) {
+      state.chart.setHours(weather.hourly);
+      state.chart.setSunEvents(collectSunEvents(weather));
+    }
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
@@ -303,6 +314,15 @@ function renderMetrics(w) {
   el.metricWindSub.textContent = dirLabel
     ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
     : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+  if (el.windBeaufort) {
+    const b = beaufort(w.windSpeed);
+    if (b) {
+      el.windBeaufort.className = `trend ${b.cls}`;
+      el.windBeaufort.textContent = b.label;
+    } else {
+      el.windBeaufort.textContent = "";
+    }
+  }
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
@@ -357,6 +377,23 @@ function humidityComfort(rh, dew, temp) {
   if (rh <= 25) return { label: "Dry", cls: "up" };
   if (rh <= 35) return { label: "Crisp", cls: "flat" };
   return { label: "Comfy", cls: "down" };
+}
+
+function beaufort(kmh) {
+  if (kmh == null) return null;
+  if (kmh < 1)  return { label: "Calm",          cls: "down" };
+  if (kmh < 6)  return { label: "Light air",     cls: "down" };
+  if (kmh < 12) return { label: "Light breeze",  cls: "flat" };
+  if (kmh < 20) return { label: "Gentle breeze", cls: "flat" };
+  if (kmh < 29) return { label: "Moderate",      cls: "flat" };
+  if (kmh < 39) return { label: "Fresh breeze",  cls: "up" };
+  if (kmh < 50) return { label: "Strong breeze", cls: "up" };
+  if (kmh < 62) return { label: "Near gale",     cls: "up" };
+  if (kmh < 75) return { label: "Gale",          cls: "up" };
+  if (kmh < 89) return { label: "Strong gale",   cls: "up" };
+  if (kmh < 103) return { label: "Storm",        cls: "up" };
+  if (kmh < 118) return { label: "Violent storm", cls: "up" };
+  return { label: "Hurricane", cls: "up" };
 }
 
 function uvLevel(v) {
@@ -463,6 +500,15 @@ function fmtTime(ts) {
   const hh = d.getHours().toString().padStart(2, "0");
   const mm = d.getMinutes().toString().padStart(2, "0");
   return `${hh}:${mm}`;
+}
+
+function collectSunEvents(w) {
+  const out = [];
+  for (const d of (w.daily || [])) {
+    if (d.sunrise) out.push({ time: d.sunrise, kind: "sunrise" });
+    if (d.sunset) out.push({ time: d.sunset, kind: "sunset" });
+  }
+  return out;
 }
 
 function pickDayForTime(w, ts) {
@@ -787,6 +833,21 @@ function renderBestWindow(w) {
   }
   el.bestWindow.onclick = () => state.handlers.onHourClick?.(win.start);
   el.bestWindow.style.cursor = "pointer";
+}
+
+function renderTodayStats(w) {
+  if (!el.todayStats) return;
+  const today = w?.daily?.[0];
+  if (!today) {
+    el.todayStats.hidden = true;
+    return;
+  }
+  el.todayStats.hidden = false;
+  el.todayHi.textContent = today.tempMax != null ? `${Math.round(convertTemp(today.tempMax))}°` : "—";
+  el.todayLo.textContent = today.tempMin != null ? `${Math.round(convertTemp(today.tempMin))}°` : "—";
+  el.todayRain.textContent = today.precip != null ? `${today.precip.toFixed(1)} mm` : "—";
+  el.todayGust.textContent = today.gustsMax != null ? `${Math.round(today.gustsMax)} km/h` : "—";
+  el.todayUV.textContent = today.uvMax != null ? `${Math.round(today.uvMax)}` : "—";
 }
 
 function renderRainStrip(w) {

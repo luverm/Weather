@@ -753,6 +753,15 @@ html[data-reduce-motion="true"] *::after {
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
 }
+.chart-sun-events .sun-marker {
+  stroke-width: 0.8;
+  stroke-dasharray: 1.5 3;
+  opacity: 0.45;
+}
+.chart-sun-events .sun-marker.rise { stroke: #9ad1ff; }
+.chart-sun-events .sun-marker.set  { stroke: #ff9c7a; }
+.chart-sun-events .sun-marker-dot.rise { fill: #9ad1ff; }
+.chart-sun-events .sun-marker-dot.set  { fill: #ff9c7a; }
 .chart-best-window .bw-band {
   fill: rgba(120, 220, 160, 0.10);
   stroke: rgba(120, 220, 160, 0.32);
@@ -1320,6 +1329,39 @@ kbd {
       transition-duration: 0ms !important; }
 }
 
+/* ---------- Today by the numbers ---------- */
+.today-stats {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  padding: 0 4px;
+}
+.today-stats .stat {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--glass);
+  border: 1px solid var(--stroke);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  text-align: center;
+}
+.today-stats .stat-label {
+  font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--fg-dim);
+}
+.today-stats .stat strong {
+  font-size: 14px; font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.today-stats .stat[data-stat="hi"]   strong { color: #ffd0a8; }
+.today-stats .stat[data-stat="lo"]   strong { color: #b6dcff; }
+.today-stats .stat[data-stat="rain"] strong { color: #9ad1ff; }
+.today-stats .stat[data-stat="gust"] strong { color: #ffe6a8; }
+.today-stats .stat[data-stat="uv"]   strong { color: #ffce93; }
+[data-tone="bright"] .today-stats .stat strong { color: var(--fg); }
+
 /* ---------- Sunset / sunrise quality pill ---------- */
 .sunset-quality {
   margin: 8px 0 0;
@@ -1554,6 +1596,9 @@ kbd {
   .place-name { font-size: 28px; }
   .temp { font-size: 78px; }
   .narrative { font-size: 13px; }
+  .today-stats { grid-template-columns: repeat(5, 1fr); gap: 4px; }
+  .today-stats .stat { padding: 6px 4px; }
+  .today-stats .stat strong { font-size: 12px; }
   .alert { padding: 10px 12px; gap: 10px; }
   .alert-text strong { font-size: 13px; }
   .alert-text span:not(.alert-ts) { font-size: 11.5px; white-space: normal; }

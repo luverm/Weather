@@ -52,6 +52,7 @@ export class HourlyChart {
     this.hours = (hours || []).slice(0, 24);
     this._draw();
     this._drawBestWindow();
+    this._drawSunEvents();
     this.setCursor(null);
   }
 
@@ -61,7 +62,13 @@ export class HourlyChart {
     this._drawBestWindow();
   }
 
-  refresh() { this._draw(); this._drawBestWindow(); }
+  /** Pass an array of { time, kind: "sunrise"|"sunset" } markers. */
+  setSunEvents(events) {
+    this._sunEvents = events || [];
+    this._drawSunEvents();
+  }
+
+  refresh() { this._draw(); this._drawBestWindow(); this._drawSunEvents(); }
 
   setCursor(ts) {
     const cursor = this.svg.querySelector("#chart-cursor");
@@ -295,6 +302,38 @@ export class HourlyChart {
       tTxt.textContent = `${Math.round(tVal)}°`;
       labG.appendChild(tTxt);
     });
+  }
+
+  _drawSunEvents() {
+    const g = this.svg.querySelector("#chart-sun-events");
+    if (!g) return;
+    g.innerHTML = "";
+    if (!this._sunEvents?.length || !this.hours.length) return;
+    const innerW = W - PAD_LEFT - PAD_RIGHT;
+    const startTs = this.hours[0].time;
+    const endTs = this.hours[this.hours.length - 1].time + 3600_000;
+    if (endTs <= startTs) return;
+    for (const ev of this._sunEvents) {
+      if (ev.time < startTs || ev.time > endTs) continue;
+      const frac = (ev.time - startTs) / (endTs - startTs);
+      const x = PAD_LEFT + frac * innerW;
+      const isRise = ev.kind === "sunrise";
+      // Vertical line.
+      const ln = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      ln.setAttribute("x1", x.toFixed(1));
+      ln.setAttribute("x2", x.toFixed(1));
+      ln.setAttribute("y1", String(PAD_TOP - 2));
+      ln.setAttribute("y2", String(H - PAD_BOT));
+      ln.setAttribute("class", isRise ? "sun-marker rise" : "sun-marker set");
+      g.appendChild(ln);
+      // Tiny sun glyph at the top of the line.
+      const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      dot.setAttribute("cx", x.toFixed(1));
+      dot.setAttribute("cy", String(PAD_TOP - 2));
+      dot.setAttribute("r", "2.4");
+      dot.setAttribute("class", isRise ? "sun-marker-dot rise" : "sun-marker-dot set");
+      g.appendChild(dot);
+    }
   }
 
   _drawBestWindow() {
