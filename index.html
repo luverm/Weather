@@ -166,6 +166,7 @@
         <div id="scrubber-track" class="scrubber-track" role="slider"
              aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0">
           <div class="scrubber-fill" id="scrubber-fill"></div>
+          <div class="scrubber-ticks" id="scrubber-ticks" aria-hidden="true"></div>
           <div class="scrubber-sunrise" id="scrubber-sunrise" title="Sunrise"></div>
           <div class="scrubber-sunset" id="scrubber-sunset" title="Sunset"></div>
           <div class="scrubber-thumb" id="scrubber-thumb" aria-hidden="true"></div>
@@ -216,6 +217,10 @@
           <path id="chart-feels-line" class="chart-feels-line" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3 3" opacity="0.5"></path>
           <path id="chart-temp-line" class="chart-temp-line" fill="none" stroke="url(#temp-stroke)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"></path>
           <g id="chart-labels" class="chart-labels"></g>
+          <g id="chart-now" class="chart-now">
+            <circle id="chart-now-ring" cx="-10" cy="-10" r="6" fill="none" stroke="currentColor" stroke-width="1"></circle>
+            <circle id="chart-now-dot"  cx="-10" cy="-10" r="2.4" fill="currentColor"></circle>
+          </g>
           <line id="chart-cursor" class="chart-cursor" x1="-10" x2="-10" y1="0" y2="140"></line>
           <circle id="chart-dot" class="chart-dot" r="4" cx="-10" cy="-10"></circle>
         </svg>
@@ -267,6 +272,25 @@
           <span class="metric-unit">idx</span>
           <span id="m-uv-sub" class="metric-sub">peak —</span>
         </div>
+      </div>
+
+      <!-- Comfort index gauge -->
+      <div id="comfort-card" class="comfort-card glass" hidden>
+        <div class="comfort-head">
+          <span class="comfort-label">Comfort</span>
+          <strong id="comfort-text">—</strong>
+          <span id="comfort-score" class="comfort-score">—</span>
+        </div>
+        <div class="comfort-bar" aria-hidden="true">
+          <div id="comfort-bar-fill" class="comfort-bar-fill"></div>
+          <div class="comfort-bar-marks">
+            <span style="left: 36%"></span>
+            <span style="left: 52%"></span>
+            <span style="left: 68%"></span>
+            <span style="left: 82%"></span>
+          </div>
+        </div>
+        <span id="comfort-detail" class="comfort-detail"></span>
       </div>
 
       <!-- Best window for outdoor activity -->

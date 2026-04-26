@@ -10,7 +10,7 @@ const RANGE_HOURS = 24;
 
 export class Scrubber {
   constructor({ trackEl, thumbEl, fillEl, timeEl, deltaEl, resetEl,
-                sunriseEl, sunsetEl, appEl, onScrub }) {
+                sunriseEl, sunsetEl, ticksEl, appEl, onScrub }) {
     this.track = trackEl;
     this.thumb = thumbEl;
     this.fill = fillEl;
@@ -19,6 +19,7 @@ export class Scrubber {
     this.resetEl = resetEl;
     this.sunriseEl = sunriseEl;
     this.sunsetEl = sunsetEl;
+    this.ticksEl = ticksEl;
     this.appEl = appEl; // receives data-scrubbing attribute
     this.onScrub = onScrub;
     this.dragging = false;
@@ -26,6 +27,7 @@ export class Scrubber {
     this.sunrise = null;
     this.sunset = null;
 
+    this._renderTicks();
     this._bind();
     // Keep the label updating while live (otherwise the clock would freeze
     // at the value it had when weather was last fetched).
@@ -38,7 +40,32 @@ export class Scrubber {
     this.sunset = sunset;
     this._placeMarker(this.sunriseEl, sunrise, "Sunrise");
     this._placeMarker(this.sunsetEl, sunset, "Sunset");
+    this._renderTicks();
     this._render(this._currentT());
+  }
+
+  _renderTicks() {
+    if (!this.ticksEl) return;
+    const totalMs = RANGE_HOURS * 3600_000;
+    const startTs = this.start - 3600_000;
+    // Tick at every 6 hours and label only every 12. Position relative to the
+    // 24h scrubber span. We snap labels to clock-friendly hours when possible.
+    const out = [];
+    for (let h = 0; h <= RANGE_HOURS; h += 3) {
+      const ts = startTs + h * 3600_000;
+      const rel = h / RANGE_HOURS;
+      if (rel < 0.01 || rel > 0.99) continue; // edges look noisy
+      const major = h % 6 === 0;
+      const label = major ? this._formatTickLabel(ts) : "";
+      out.push(`<span class="scrub-tick ${major ? "major" : ""}" style="left:${(rel * 100).toFixed(2)}%">${label ? `<em>${label}</em>` : ""}</span>`);
+    }
+    this.ticksEl.innerHTML = out.join("");
+  }
+
+  _formatTickLabel(ts) {
+    const d = new Date(ts);
+    const hh = d.getHours().toString().padStart(2, "0");
+    return hh;
   }
 
   /** Called when we externally reset to "now" (e.g. search selected). */

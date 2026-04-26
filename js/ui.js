@@ -9,6 +9,7 @@ import { buildInsights } from "./insights.js";
 import { buildAlerts } from "./alerts.js";
 import { findBestWindow, fmtWindow } from "./best-window.js";
 import { predictNextHorizonShow } from "./sunset-predictor.js";
+import { comfortScore } from "./comfort.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -102,6 +103,11 @@ const el = {
   todayGust: $("#today-gust"),
   todayUV: $("#today-uv"),
   windBeaufort: $("#m-wind-beaufort"),
+  comfortCard: $("#comfort-card"),
+  comfortText: $("#comfort-text"),
+  comfortScoreEl: $("#comfort-score"),
+  comfortBarFill: $("#comfort-bar-fill"),
+  comfortDetail: $("#comfort-detail"),
   forecastTrack: $("#forecast-track"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
@@ -191,6 +197,7 @@ export const ui = {
     renderBestWindow(weather);
     renderRainStrip(weather);
     renderTodayStats(weather);
+    renderComfort(weather);
     startLocaltime(weather);
     if (state.chart) {
       state.chart.setHours(weather.hourly);
@@ -212,6 +219,7 @@ export const ui = {
     renderLiveValues(sampled, { animate: false });
     renderMetrics(sampled);
     renderAdvice(sampled);
+    renderComfort(sampled);
     highlightHour(highlightHourIndex);
     if (state.chart && sampled._sampledTs != null) {
       state.chart.setCursor(sampled._sampledTs);
@@ -833,6 +841,31 @@ function renderBestWindow(w) {
   }
   el.bestWindow.onclick = () => state.handlers.onHourClick?.(win.start);
   el.bestWindow.style.cursor = "pointer";
+}
+
+function renderComfort(w) {
+  if (!el.comfortCard) return;
+  const c = comfortScore(w);
+  if (!c) {
+    el.comfortCard.hidden = true;
+    return;
+  }
+  el.comfortCard.hidden = false;
+  el.comfortCard.dataset.tier =
+    c.score >= 82 ? "great" :
+    c.score >= 68 ? "good" :
+    c.score >= 52 ? "ok" :
+    c.score >= 36 ? "rough" : "bad";
+  el.comfortText.textContent = c.label;
+  el.comfortScoreEl.textContent = `${c.score} / 100`;
+  if (el.comfortBarFill) el.comfortBarFill.style.width = `${c.score}%`;
+  if (el.comfortDetail) {
+    if (c.dominant) {
+      el.comfortDetail.textContent = `Top factor: ${c.dominant.label.toLowerCase()}`;
+    } else {
+      el.comfortDetail.textContent = "Conditions are well balanced";
+    }
+  }
 }
 
 function renderTodayStats(w) {

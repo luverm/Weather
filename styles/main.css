@@ -501,6 +501,22 @@ html[data-reduce-motion="true"] *::after {
   transition: width 120ms linear;
   pointer-events: none;
 }
+.scrubber-ticks { position: absolute; inset: 0; pointer-events: none; }
+.scrubber-ticks .scrub-tick {
+  position: absolute; top: 4px; bottom: 4px; width: 1px;
+  background: rgba(255,255,255,0.10);
+}
+.scrubber-ticks .scrub-tick.major {
+  background: rgba(255,255,255,0.22);
+  top: 2px; bottom: 2px;
+}
+.scrubber-ticks .scrub-tick em {
+  position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+  font-style: normal;
+  font-size: 9px; letter-spacing: 0.06em;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+}
 .scrubber-sunrise,
 .scrubber-sunset {
   position: absolute; top: 0; bottom: 0; width: 2px;
@@ -753,6 +769,20 @@ html[data-reduce-motion="true"] *::after {
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
 }
+.chart-now { color: var(--accent); }
+.chart-now #chart-now-ring {
+  opacity: 0.7;
+  transform-origin: center;
+  animation: chart-now-pulse 1.6s var(--ease) infinite;
+  transform-box: fill-box;
+}
+.chart-now #chart-now-dot { filter: drop-shadow(0 0 6px var(--accent)); }
+@keyframes chart-now-pulse {
+  0%   { r: 4; opacity: 0.85; }
+  70%  { r: 12; opacity: 0; }
+  100% { r: 12; opacity: 0; }
+}
+[data-reduce-motion="true"] .chart-now #chart-now-ring { animation: none; opacity: 0.6; }
 .chart-sun-events .sun-marker {
   stroke-width: 0.8;
   stroke-dasharray: 1.5 3;
@@ -1328,6 +1358,53 @@ kbd {
   * { animation-duration: 0ms !important; animation-iteration-count: 1 !important;
       transition-duration: 0ms !important; }
 }
+
+/* ---------- Comfort gauge ---------- */
+.comfort-card {
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  display: grid;
+  gap: 8px;
+}
+.comfort-head {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: baseline;
+  gap: 12px;
+}
+.comfort-label {
+  font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--fg-dim);
+}
+.comfort-head strong { font-size: 16px; font-weight: 500; letter-spacing: 0.01em; }
+.comfort-score {
+  justify-self: end;
+  font-size: 11px; color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+}
+.comfort-bar {
+  position: relative;
+  height: 8px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.comfort-bar-fill {
+  position: absolute; inset: 0;
+  width: 0;
+  background: linear-gradient(90deg, #ff7a7a 0%, #ffd0a8 35%, #ffe6a8 55%, #b7e9c4 75%, #6fdca6 100%);
+  border-radius: 999px;
+  transition: width 600ms var(--ease);
+}
+.comfort-bar-marks span {
+  position: absolute; top: 0; bottom: 0; width: 1px;
+  background: rgba(255,255,255,0.18);
+}
+.comfort-detail { font-size: 11.5px; color: var(--fg-muted); }
+.comfort-card[data-tier="great"] .comfort-head strong { color: #a8e9c4; }
+.comfort-card[data-tier="good"]  .comfort-head strong { color: #d8edc4; }
+.comfort-card[data-tier="rough"] .comfort-head strong { color: #ffce93; }
+.comfort-card[data-tier="bad"]   .comfort-head strong { color: #ff9a9a; }
 
 /* ---------- Today by the numbers ---------- */
 .today-stats {

@@ -19,6 +19,7 @@ export class HourlyChart {
     this.hours = [];
     this.points = [];
     this._bind();
+    setInterval(() => this._drawNowMarker(), 60_000);
   }
 
   _formatHour(ts) {
@@ -53,6 +54,7 @@ export class HourlyChart {
     this._draw();
     this._drawBestWindow();
     this._drawSunEvents();
+    this._drawNowMarker();
     this.setCursor(null);
   }
 
@@ -68,7 +70,12 @@ export class HourlyChart {
     this._drawSunEvents();
   }
 
-  refresh() { this._draw(); this._drawBestWindow(); this._drawSunEvents(); }
+  refresh() {
+    this._draw();
+    this._drawBestWindow();
+    this._drawSunEvents();
+    this._drawNowMarker();
+  }
 
   setCursor(ts) {
     const cursor = this.svg.querySelector("#chart-cursor");
@@ -302,6 +309,32 @@ export class HourlyChart {
       tTxt.textContent = `${Math.round(tVal)}°`;
       labG.appendChild(tTxt);
     });
+  }
+
+  _drawNowMarker() {
+    const ring = this.svg.querySelector("#chart-now-ring");
+    const dot = this.svg.querySelector("#chart-now-dot");
+    if (!ring || !dot || !this.hours.length || !this.points.length) return;
+    const now = Date.now();
+    // Linear-interpolate position along the points based on the closest hour.
+    let i = 0;
+    while (i < this.hours.length && this.hours[i].time < now) i++;
+    let x, y;
+    if (i === 0) {
+      x = this.points[0].x; y = this.points[0].y;
+    } else if (i >= this.hours.length) {
+      const p = this.points[this.points.length - 1];
+      x = p.x; y = p.y;
+    } else {
+      const t0 = this.hours[i - 1].time, t1 = this.hours[i].time;
+      const f = (now - t0) / Math.max(1, t1 - t0);
+      x = this.points[i - 1].x + (this.points[i].x - this.points[i - 1].x) * f;
+      y = this.points[i - 1].y + (this.points[i].y - this.points[i - 1].y) * f;
+    }
+    ring.setAttribute("cx", x.toFixed(1));
+    ring.setAttribute("cy", y.toFixed(1));
+    dot.setAttribute("cx", x.toFixed(1));
+    dot.setAttribute("cy", y.toFixed(1));
   }
 
   _drawSunEvents() {
