@@ -1504,6 +1504,25 @@ kbd {
   .weekend-grid { grid-template-columns: 1fr 1fr; }
 }
 
+@media print {
+  /* Strip animation/glass/canvas, leave a clean readable text doc. */
+  .stage, .vignette, canvas { display: none !important; }
+  body { background: #fff !important; color: #111 !important; }
+  .glass, .extra-card, .alert, .comfort-card, .weekend-card, .best-window, .nowcast, .scrubber, .radar, .chart-card, .forecast, .daily, .insights, .today-stats, .today-stats .stat {
+    background: #fff !important;
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+    color: #111 !important;
+  }
+  .topbar .toolbar, .scrubber, .radar, .shortcuts, .chart-card, .icon-btn, .audio-btn, .install-btn, .share-btn {
+    display: none !important;
+  }
+  .place-name { font-size: 26px !important; }
+  .temp { font-size: 64px !important; color: #111 !important; }
+  .narrative, .place-sub, .feels-like { color: #333 !important; }
+  .insights, .forecast, .daily { page-break-inside: avoid; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0ms !important; animation-iteration-count: 1 !important;
       transition-duration: 0ms !important; }

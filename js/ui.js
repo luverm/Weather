@@ -1632,6 +1632,31 @@ function bindSearch() {
     }
     runSearch(v);
   });
+  // Arrow-key navigation through the dropdown.
+  el.searchInput.addEventListener("keydown", (e) => {
+    if (el.searchResults.hidden) return;
+    const items = [...el.searchResults.querySelectorAll('li[role="option"]')];
+    if (!items.length) return;
+    const cur = items.findIndex((li) => li.getAttribute("aria-selected") === "true");
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const next = (cur + 1 + items.length) % items.length;
+      items.forEach((li) => li.setAttribute("aria-selected", "false"));
+      items[next].setAttribute("aria-selected", "true");
+      items[next].scrollIntoView({ block: "nearest" });
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const prev = cur < 0 ? items.length - 1 : (cur - 1 + items.length) % items.length;
+      items.forEach((li) => li.setAttribute("aria-selected", "false"));
+      items[prev].setAttribute("aria-selected", "true");
+      items[prev].scrollIntoView({ block: "nearest" });
+    } else if (e.key === "Enter") {
+      const sel = items[cur >= 0 ? cur : 0];
+      if (!sel) return;
+      e.preventDefault();
+      sel.click();
+    }
+  });
   el.searchInput.addEventListener("blur", () => {
     setTimeout(() => (el.searchResults.hidden = true), 150);
   });
