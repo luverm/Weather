@@ -1252,7 +1252,7 @@ function renderDailyIconStrip(days) {
     }
   }
   const marker = nowFrac != null
-    ? `<span class="strip-now" style="left:${(nowFrac * 100).toFixed(2)}%"><em></em></span>`
+    ? `<span class="strip-now" style="left:${(nowFrac * 100).toFixed(2)}%" title="Now — click to return live"><em></em></span>`
     : "";
   el.dailyIconStrip.innerHTML = marker + days.map((d) => {
     const dt = new Date(d.time);
@@ -1260,6 +1260,11 @@ function renderDailyIconStrip(days) {
     const weekend = dow === 0 || dow === 6 ? "weekend" : "";
     return `<span class="strip-day ${weekend}" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`;
   }).join("");
+  // Wire the now-line click to reset the scrubber to live.
+  el.dailyIconStrip.querySelector(".strip-now")?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    state.handlers.onResetLive?.();
+  });
 }
 
 function renderDailySpark(days) {
@@ -1435,8 +1440,11 @@ function renderPlaces() {
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
     const pinned = !!p.pinned;
+    const tip = p.updatedAt
+      ? `${p.name} · updated ${relativeAgo(p.updatedAt)}`
+      : p.name;
     return `
-      <div class="place-chip ${active ? "active" : ""} ${pinned ? "pinned" : ""}" data-id="${p.id}" draggable="true">
+      <div class="place-chip ${active ? "active" : ""} ${pinned ? "pinned" : ""}" data-id="${p.id}" draggable="true" title="${escapeHtml(tip)}">
         <span class="chip-grip" aria-hidden="true" title="Drag to reorder">
           <svg viewBox="0 0 12 16" width="9" height="12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M4 4h.01M8 4h.01M4 8h.01M8 8h.01M4 12h.01M8 12h.01"/></svg>
         </span>
@@ -1536,6 +1544,17 @@ const runSearch = debounce(async (q) => {
   const results = await searchCities(q);
   renderSearchResults(results);
 }, 200);
+
+function relativeAgo(ts) {
+  const ms = Date.now() - ts;
+  if (ms < 60_000) return "just now";
+  const min = Math.floor(ms / 60_000);
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const d = Math.floor(hr / 24);
+  return `${d}d ago`;
+}
 
 function flagEmoji(cc) {
   if (!cc || cc.length !== 2) return "";

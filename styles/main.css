@@ -1322,10 +1322,18 @@ kbd {
   color: var(--fg-muted);
 }
 .daily-icon-strip .strip-now {
-  position: absolute; top: 0; bottom: 0; width: 1px;
+  position: absolute; top: 0; bottom: 0; width: 9px;
+  margin-left: -4px;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0.85;
+  display: flex; justify-content: center;
+}
+.daily-icon-strip .strip-now::before {
+  content: "";
+  position: absolute; top: 0; bottom: 0; width: 1px; left: 50%;
   background: linear-gradient(180deg, transparent, var(--accent), transparent);
   pointer-events: none;
-  opacity: 0.85;
 }
 .daily-icon-strip .strip-now em {
   position: absolute; left: -3px; top: -2px;

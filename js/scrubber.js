@@ -137,8 +137,23 @@ export class Scrubber {
 
   _updateFromEvent(e) {
     const r = this.track.getBoundingClientRect();
-    const t = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+    let t = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
     const totalMs = RANGE_HOURS * 3600_000;
+    // Snap to sunrise / sunset / now if the click is within ~2.5% of either,
+    // but only on the initial pointerdown (not while dragging continuously).
+    if (e.type === "pointerdown") {
+      const targets = [];
+      if (this.sunrise) targets.push((this.sunrise - (this.start - 3600_000)) / totalMs);
+      if (this.sunset)  targets.push((this.sunset  - (this.start - 3600_000)) / totalMs);
+      targets.push(1 / 24); // 'now' position
+      const SNAP = 0.025;
+      for (const target of targets) {
+        if (target >= 0 && target <= 1 && Math.abs(t - target) < SNAP) {
+          t = target;
+          break;
+        }
+      }
+    }
     const offset = t * totalMs - 3600_000;
     this._setOffset(offset);
   }
