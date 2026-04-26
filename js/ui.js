@@ -86,6 +86,8 @@ const el = {
   sunArcGlow: $("#sun-arc-glow"),
   sunArcDot: $("#sun-arc-dot"),
   dailyRainStrip: $("#daily-rain-strip"),
+  yesterdayPill: $("#yesterday-pill"),
+  yesterdayText: $("#yesterday-text"),
   forecastTrack: $("#forecast-track"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
@@ -198,6 +200,9 @@ export const ui = {
     } else if (state.chart) {
       state.chart.setCursor(sampled.hourly?.[highlightHourIndex]?.time);
     }
+    if (state.weather) {
+      renderSunArc(state.weather, sampled._sampledTs ?? Date.now());
+    }
   },
   setScrubbing(on) {
     document.documentElement.setAttribute("data-scrubbing", on ? "true" : "false");
@@ -256,6 +261,32 @@ function renderLiveValues(w, { animate = true } = {}) {
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  renderYesterdayPill(w);
+}
+
+function renderYesterdayPill(w) {
+  if (!el.yesterdayPill || !el.yesterdayText) return;
+  // Only show on the live view; while scrubbing it'd be misleading.
+  const live = state.weather === w || w?.yesterday == null;
+  const y = state.weather?.yesterday;
+  if (!y || y.delta == null || !live) {
+    el.yesterdayPill.hidden = true;
+    return;
+  }
+  // Convert the delta to whichever unit is active.
+  const deltaDisplay = state.unit === "F" ? y.delta * 9 / 5 : y.delta;
+  const rounded = Math.round(deltaDisplay);
+  if (Math.abs(rounded) < 1) {
+    el.yesterdayText.textContent = "About the same as yesterday";
+    el.yesterdayPill.dataset.dir = "flat";
+  } else if (rounded > 0) {
+    el.yesterdayText.textContent = `${rounded}° warmer than yesterday`;
+    el.yesterdayPill.dataset.dir = "up";
+  } else {
+    el.yesterdayText.textContent = `${Math.abs(rounded)}° cooler than yesterday`;
+    el.yesterdayPill.dataset.dir = "down";
+  }
+  el.yesterdayPill.hidden = false;
 }
 
 function renderMetrics(w) {
@@ -427,6 +458,18 @@ function fmtTime(ts) {
   return `${hh}:${mm}`;
 }
 
+function pickDayForTime(w, ts) {
+  if (!w?.daily?.length) return null;
+  let best = null, bestDiff = Infinity;
+  for (const d of w.daily) {
+    if (!d.sunrise || !d.sunset) continue;
+    const center = (d.sunrise + d.sunset) / 2;
+    const diff = Math.abs(ts - center);
+    if (diff < bestDiff) { bestDiff = diff; best = d; }
+  }
+  return best;
+}
+
 function renderSun(w) {
   el.sunRise.textContent = fmtTime(w.sunrise);
   el.sunSet.textContent = fmtTime(w.sunset);
@@ -443,15 +486,18 @@ function renderSun(w) {
 // Position the sun-arc marker along the sunrise-noon-sunset path, where
 // 0 = sunrise (left), 0.5 = solar noon (top), 1 = sunset (right). After
 // sunset / before sunrise we tuck the marker below the horizon.
-function renderSunArc(w) {
+function renderSunArc(w, atTime = Date.now()) {
   if (!el.sunArc || !el.sunArcMarker) return;
-  const rise = w.sunrise;
-  const set = w.sunset;
+  // Pick the day whose sunrise/sunset bracket atTime when scrubbing into
+  // future days; falls back to today's rise/set on the live view.
+  const day = pickDayForTime(state.weather, atTime);
+  const rise = day?.sunrise ?? w.sunrise;
+  const set = day?.sunset ?? w.sunset;
   if (!rise || !set || set <= rise) {
     el.sunArcMarker.style.opacity = "0";
     return;
   }
-  const now = Date.now();
+  const now = atTime;
   const span = set - rise;
   let frac = (now - rise) / span;
   let belowHorizon = false;
@@ -1004,7 +1050,10 @@ function renderPlaces() {
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
     return `
-      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
+      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}" draggable="true">
+        <span class="chip-grip" aria-hidden="true" title="Drag to reorder">
+          <svg viewBox="0 0 12 16" width="9" height="12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M4 4h.01M8 4h.01M4 8h.01M8 8h.01M4 12h.01M8 12h.01"/></svg>
+        </span>
         <span>${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
         <span class="close" data-action="remove" aria-label="Remove">
@@ -1021,7 +1070,62 @@ function renderPlaces() {
         renderPlaces();
         return;
       }
+      if (chip.dataset.justDropped === "true") {
+        delete chip.dataset.justDropped;
+        return;
+      }
       state.handlers.onPlaceClick?.(item);
+    });
+  });
+  bindPlaceChipDrag();
+}
+
+function bindPlaceChipDrag() {
+  const strip = el.placesStrip;
+  if (!strip) return;
+  let dragId = null;
+  let lastDropTarget = null;
+  strip.querySelectorAll(".place-chip").forEach((chip) => {
+    chip.addEventListener("dragstart", (e) => {
+      dragId = chip.dataset.id;
+      chip.classList.add("dragging");
+      try {
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", dragId);
+      } catch {}
+    });
+    chip.addEventListener("dragend", () => {
+      chip.classList.remove("dragging");
+      strip.querySelectorAll(".place-chip").forEach((c) => c.classList.remove("drop-before", "drop-after"));
+      if (lastDropTarget) {
+        lastDropTarget.dataset.justDropped = "true";
+        lastDropTarget = null;
+      }
+      dragId = null;
+    });
+    chip.addEventListener("dragover", (e) => {
+      if (!dragId || dragId === chip.dataset.id) return;
+      e.preventDefault();
+      try { e.dataTransfer.dropEffect = "move"; } catch {}
+      const r = chip.getBoundingClientRect();
+      const before = (e.clientX - r.left) < r.width / 2;
+      strip.querySelectorAll(".place-chip").forEach((c) => c.classList.remove("drop-before", "drop-after"));
+      chip.classList.toggle("drop-before", before);
+      chip.classList.toggle("drop-after", !before);
+    });
+    chip.addEventListener("drop", (e) => {
+      if (!dragId || dragId === chip.dataset.id) return;
+      e.preventDefault();
+      const r = chip.getBoundingClientRect();
+      const before = (e.clientX - r.left) < r.width / 2;
+      const ids = [...strip.querySelectorAll(".place-chip")]
+        .map((c) => c.dataset.id)
+        .filter((id) => id !== dragId);
+      const targetIdx = ids.indexOf(chip.dataset.id);
+      ids.splice(targetIdx + (before ? 0 : 1), 0, dragId);
+      places.reorder(ids);
+      lastDropTarget = chip;
+      renderPlaces();
     });
   });
 }

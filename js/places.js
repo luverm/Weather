@@ -50,5 +50,17 @@ export const places = {
     const id = idFor(place);
     return read().some((p) => idFor(p) === id);
   },
+  reorder(orderedIds) {
+    const list = read();
+    const byId = new Map(list.map((p) => [idFor(p), p]));
+    const reordered = [];
+    for (const id of orderedIds) {
+      const p = byId.get(id);
+      if (p) { reordered.push(p); byId.delete(id); }
+    }
+    // Append anything that wasn't covered (shouldn't normally happen).
+    for (const p of byId.values()) reordered.push(p);
+    write(reordered);
+  },
   idFor,
 };

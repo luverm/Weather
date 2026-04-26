@@ -93,6 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
+    past_days: 1,
     past_hours: 1,
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
@@ -186,6 +187,10 @@ function normalize(d, aq) {
     }
   }
 
+  // Same-hour-yesterday delta — needs `past_days=1` so the hourly series
+  // stretches back 24h+. We pick the entry closest to (now - 24h).
+  const yesterday = sameHourYesterday(d.hourly, c, now);
+
   // Moon phase is not in Open-Meteo's free tier — compute it locally.
   const moon = computeMoonPhase(new Date());
 
@@ -213,6 +218,7 @@ function normalize(d, aq) {
     daily: dailyForecast,
     nowcast,
     moon,
+    yesterday,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
     fetchedAt: now,
@@ -299,6 +305,32 @@ function aqiLabel(v) {
   return "Hazardous";
 }
 
+function sameHourYesterday(hourly, current, now) {
+  if (!hourly?.time || !hourly?.temperature_2m) return null;
+  const target = now - 24 * 3600_000;
+  let bestIdx = -1;
+  let bestDiff = Infinity;
+  for (let i = 0; i < hourly.time.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    const diff = Math.abs(t - target);
+    if (diff < bestDiff) { bestDiff = diff; bestIdx = i; }
+  }
+  // If the closest entry is more than 90 minutes off the target, skip — the
+  // forecast probably didn't include yesterday for some reason.
+  if (bestIdx < 0 || bestDiff > 90 * 60_000) return null;
+  const yTemp = hourly.temperature_2m[bestIdx];
+  if (yTemp == null) return null;
+  const yCode = hourly.weather_code?.[bestIdx];
+  return {
+    temp: yTemp,
+    feelsLike: hourly.apparent_temperature?.[bestIdx],
+    delta: current?.temperature_2m != null ? current.temperature_2m - yTemp : null,
+    condition: yCode != null ? mapWmo(yCode).condition : null,
+    label: yCode != null ? mapWmo(yCode).label : null,
+    time: new Date(hourly.time[bestIdx]).getTime(),
+  };
+}
+
 function findUvPeak(hourly) {
   if (!hourly?.uv_index) return null;
   let peak = { t: null, v: -Infinity };
@@ -374,6 +406,7 @@ function mock(lat, lon) {
     })),
     nowcast: [],
     moon: computeMoonPhase(new Date()),
+    yesterday: { temp: 16, feelsLike: 15, delta: 2, condition: CONDITIONS.CLOUDS, label: "Cloudy", time: now - 24 * 3600_000 },
     airQuality: { aqi: 42, pm25: 8, pm10: 14, o3: 40, no2: 15, co: 0.2, label: "Good" },
     pollen: {
       items: [
