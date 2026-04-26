@@ -6,6 +6,8 @@ import { places } from "./places.js";
 import { HourlyChart } from "./hourly-chart.js";
 import { advise } from "./advice.js";
 import { buildInsights } from "./insights.js";
+import { buildAlerts } from "./alerts.js";
+import { findBestWindow, fmtWindow } from "./best-window.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -74,6 +76,16 @@ const el = {
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
+  alertsBanner: $("#alerts-banner"),
+  bestWindow: $("#best-window"),
+  bwTime: $("#bw-time"),
+  bwReason: $("#bw-reason"),
+  bwScoreFill: $("#bw-score-fill"),
+  sunArc: $("#sun-arc"),
+  sunArcMarker: $("#sun-arc-marker"),
+  sunArcGlow: $("#sun-arc-glow"),
+  sunArcDot: $("#sun-arc-dot"),
+  dailyRainStrip: $("#daily-rain-strip"),
   forecastTrack: $("#forecast-track"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
@@ -159,6 +171,9 @@ export const ui = {
     renderPollen(weather.pollen);
     renderTrends(weather);
     renderInsights(weather);
+    renderAlerts(weather);
+    renderBestWindow(weather);
+    renderRainStrip(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
@@ -421,7 +436,46 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderSunArc(w);
   scheduleSunCountdown(w);
+}
+
+// Position the sun-arc marker along the sunrise-noon-sunset path, where
+// 0 = sunrise (left), 0.5 = solar noon (top), 1 = sunset (right). After
+// sunset / before sunrise we tuck the marker below the horizon.
+function renderSunArc(w) {
+  if (!el.sunArc || !el.sunArcMarker) return;
+  const rise = w.sunrise;
+  const set = w.sunset;
+  if (!rise || !set || set <= rise) {
+    el.sunArcMarker.style.opacity = "0";
+    return;
+  }
+  const now = Date.now();
+  const span = set - rise;
+  let frac = (now - rise) / span;
+  let belowHorizon = false;
+  if (frac < 0 || frac > 1) {
+    belowHorizon = true;
+    frac = Math.max(-0.15, Math.min(1.15, frac));
+  }
+  // Quadratic bezier B(t) = (1-t)^2 P0 + 2(1-t)t P1 + t^2 P2
+  // P0 (10,74) P1 (120,-12) P2 (230,74)
+  const t = frac;
+  const omt = 1 - t;
+  const x = omt * omt * 10 + 2 * omt * t * 120 + t * t * 230;
+  const y = omt * omt * 74 + 2 * omt * t * -12 + t * t * 74;
+  el.sunArcDot.setAttribute("cx", x.toFixed(1));
+  el.sunArcDot.setAttribute("cy", y.toFixed(1));
+  el.sunArcGlow.setAttribute("cx", x.toFixed(1));
+  el.sunArcGlow.setAttribute("cy", y.toFixed(1));
+  el.sunArcMarker.style.opacity = belowHorizon ? "0.3" : "1";
+  // Tint the dot warmer near the horizon (golden hour) and brightest at noon.
+  const goldenness = 1 - Math.abs(0.5 - Math.max(0, Math.min(1, frac))) * 2; // 0 at edges, 1 at noon
+  const r = Math.round(255);
+  const g = Math.round(228 + goldenness * 12);
+  const b = Math.round(168 + goldenness * 60);
+  el.sunArcDot.setAttribute("fill", `rgb(${r},${g},${b})`);
 }
 
 function scheduleSunCountdown(w) {
@@ -446,6 +500,7 @@ function scheduleSunCountdown(w) {
       : `${mins}m`;
     if (el.sunNextLabel) el.sunNextLabel.textContent = `${nextKind} in`;
     if (el.sunCountdown) el.sunCountdown.textContent = label;
+    renderSunArc(w);
   };
   update();
   state.sunTimer = setInterval(update, 30_000);
@@ -521,6 +576,135 @@ function renderInsights(w) {
       if (ts) state.handlers.onHourClick?.(ts);
     });
   });
+}
+
+function renderAlerts(w) {
+  if (!el.alertsBanner) return;
+  const tz = w?.timezone;
+  const fmt = (ts) => fmtTime(ts);
+  const weekday = (ts) => new Date(ts).toLocaleDateString(undefined, {
+    weekday: "short",
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  const alerts = buildAlerts(w);
+  const dismissed = getDismissedAlerts();
+  const visible = alerts.filter((a) => !dismissed.has(alertHash(a)));
+  if (!visible.length) {
+    el.alertsBanner.hidden = true;
+    el.alertsBanner.innerHTML = "";
+    return;
+  }
+  el.alertsBanner.hidden = false;
+  el.alertsBanner.innerHTML = visible.map((a) => {
+    const tsLabel = a.ts ? `<span class="alert-ts">${escapeHtml(weekday(a.ts))} · ${escapeHtml(fmt(a.ts))}</span>` : "";
+    const hash = alertHash(a);
+    return `
+      <div class="alert" data-severity="${a.severity}" data-hash="${hash}" ${a.ts ? `data-ts="${a.ts}"` : ""}>
+        <span class="alert-icon">${a.icon}</span>
+        <div class="alert-text">
+          <strong>${escapeHtml(a.title)}</strong>
+          <span>${escapeHtml(a.detail)}</span>
+          ${tsLabel}
+        </div>
+        <button type="button" class="alert-dismiss" aria-label="Dismiss alert">
+          <svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
+        </button>
+      </div>
+    `;
+  }).join("");
+  el.alertsBanner.querySelectorAll(".alert").forEach((node) => {
+    const ts = node.dataset.ts ? parseInt(node.dataset.ts, 10) : null;
+    if (ts) {
+      node.addEventListener("click", (e) => {
+        if (e.target.closest(".alert-dismiss")) return;
+        state.handlers.onHourClick?.(ts);
+      });
+      node.style.cursor = "pointer";
+    }
+    node.querySelector(".alert-dismiss")?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const hash = node.dataset.hash;
+      addDismissedAlert(hash);
+      node.classList.add("dismissing");
+      setTimeout(() => {
+        node.remove();
+        if (!el.alertsBanner.children.length) el.alertsBanner.hidden = true;
+      }, 220);
+    });
+  });
+}
+
+function alertHash(a) {
+  // Hash by id + hour bucket so dismissal sticks until the situation moves on.
+  // "now" alerts (no ts) bucket by the current hour so they re-appear after.
+  const bucket = a.ts ? Math.floor(a.ts / 3600_000) : Math.floor(Date.now() / 3600_000);
+  return `${a.id}:${bucket}`;
+}
+function getDismissedAlerts() {
+  try {
+    const raw = JSON.parse(localStorage.getItem("aether:dismissedAlerts") || "[]");
+    // Drop entries older than 24h based on the hour-bucket suffix.
+    const cutoff = Math.floor((Date.now() - 24 * 3600_000) / 3600_000);
+    const fresh = raw.filter((h) => {
+      const tail = h.split(":")[1];
+      return tail === "now" || parseInt(tail, 10) >= cutoff;
+    });
+    if (fresh.length !== raw.length) {
+      localStorage.setItem("aether:dismissedAlerts", JSON.stringify(fresh));
+    }
+    return new Set(fresh);
+  } catch {
+    return new Set();
+  }
+}
+function addDismissedAlert(hash) {
+  const set = getDismissedAlerts();
+  set.add(hash);
+  localStorage.setItem("aether:dismissedAlerts", JSON.stringify([...set]));
+}
+
+function renderBestWindow(w) {
+  if (!el.bestWindow) return;
+  const tz = w?.timezone;
+  const win = findBestWindow(w);
+  if (!win) {
+    el.bestWindow.hidden = true;
+    return;
+  }
+  el.bestWindow.hidden = false;
+  const weekday = (ts) => new Date(ts).toLocaleDateString(undefined, {
+    weekday: "short",
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  el.bwTime.textContent = fmtWindow(win, { fmtTime, weekday }) || "—";
+  el.bwReason.textContent = win.reason;
+  if (el.bwScoreFill) {
+    const pct = Math.round(win.score * 100);
+    el.bwScoreFill.style.width = pct + "%";
+    el.bestWindow.dataset.quality = win.score >= 0.78 ? "great" : win.score >= 0.6 ? "good" : "ok";
+  }
+  el.bestWindow.onclick = () => state.handlers.onHourClick?.(win.start);
+  el.bestWindow.style.cursor = "pointer";
+}
+
+function renderRainStrip(w) {
+  if (!el.dailyRainStrip) return;
+  const days = (w.daily || []).slice(0, 7);
+  if (!days.length) {
+    el.dailyRainStrip.innerHTML = "";
+    return;
+  }
+  el.dailyRainStrip.innerHTML = days.map((d) => {
+    const pop = Math.max(0, Math.min(100, d.pop ?? 0));
+    const mm = d.precip ?? 0;
+    // Color goes from neutral (low) to deep blue (high).
+    const intensity = Math.min(1, Math.max(pop / 100, mm / 12));
+    const alpha = 0.08 + intensity * 0.85;
+    return `<span class="rain-cell" style="background:rgba(112,170,255,${alpha.toFixed(2)})"
+              title="${pop}% · ${mm.toFixed(1)} mm">
+              ${pop >= 30 ? `<em>${pop}</em>` : ""}
+            </span>`;
+  }).join("");
 }
 
 function renderPollen(pollen) {
