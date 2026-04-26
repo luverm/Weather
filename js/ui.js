@@ -37,6 +37,8 @@ const el = {
   aqDetail: $("#aq-detail"),
   aqCard: $("#aq-card"),
   aqTrend: $("#aq-trend"),
+  aqExpand: $("#aq-expand"),
+  aqRowDetail: $("#aq-row-detail"),
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
@@ -165,6 +167,7 @@ export const ui = {
     bindTilt();
     applyStoredPreferences();
     renderPlaces();
+    bindAqExpand();
     startFetchedTicker();
     startNowcastTicker();
     state.chart = new HourlyChart({
@@ -172,6 +175,7 @@ export const ui = {
       hoverEl: el.chartHover,
       popoverEl: el.chartPopover,
       onHoverHour: (ts) => state.handlers.onHourClick?.(ts),
+      onResetLive: () => state.handlers.onResetLive?.(),
       getUnit: () => state.unit,
       getWindUnit: () => state.windUnit,
       getTimezone: () => state.weather?.timezone,
@@ -581,6 +585,18 @@ function renderAirQuality(aq) {
   el.aqArc.setAttribute("stroke-dashoffset", String(126 * (1 - frac)));
   el.aqDetail.textContent =
     `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
+  if (el.aqRowDetail) {
+    const items = [
+      { k: "PM2.5", v: aq.pm25, u: "μg/m³" },
+      { k: "PM10",  v: aq.pm10, u: "μg/m³" },
+      { k: "O₃",    v: aq.o3,   u: "μg/m³" },
+      { k: "NO₂",   v: aq.no2,  u: "μg/m³" },
+      { k: "CO",    v: aq.co,   u: "mg/m³" },
+    ].filter((x) => x.v != null);
+    el.aqRowDetail.innerHTML = items.map((x) =>
+      `<div class="aq-pollutant"><span>${x.k}</span><strong>${x.v.toFixed(1)}</strong><em>${x.u}</em></div>`
+    ).join("");
+  }
   if (el.aqTrend) {
     if (aq.trend?.direction) {
       const { direction, delta } = aq.trend;
@@ -1521,14 +1537,25 @@ const runSearch = debounce(async (q) => {
   renderSearchResults(results);
 }, 200);
 
+function flagEmoji(cc) {
+  if (!cc || cc.length !== 2) return "";
+  // Convert ISO 3166-1 alpha-2 to two regional indicator symbols.
+  const offset = 127397;
+  return String.fromCodePoint(cc.charCodeAt(0) + offset, cc.charCodeAt(1) + offset);
+}
+
 function renderSearchResults(results) {
   if (!results.length) { el.searchResults.hidden = true; el.searchResults.innerHTML = ""; return; }
-  el.searchResults.innerHTML = results.map((r, i) => `
-    <li role="option" data-index="${i}">
-      <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
-      <span class="sub">${escapeHtml(r.country || "")}</span>
-    </li>
-  `).join("");
+  el.searchResults.innerHTML = results.map((r, i) => {
+    const flag = flagEmoji(r.countryCode);
+    return `
+      <li role="option" data-index="${i}">
+        ${flag ? `<span class="flag" aria-hidden="true">${flag}</span>` : ""}
+        <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
+        <span class="sub">${escapeHtml(r.country || "")}</span>
+      </li>
+    `;
+  }).join("");
   el.searchResults.hidden = false;
   el.searchResults._items = results;
 }
@@ -1746,6 +1773,20 @@ function rainIntensityWord(mmPerHour, isSnow) {
   if (mmPerHour < 7.5) return "Moderate rain";
   if (mmPerHour < 16)  return "Heavy rain";
   return "Torrential rain";
+}
+
+function bindAqExpand() {
+  if (!el.aqCard || !el.aqExpand) return;
+  const toggle = () => {
+    const open = el.aqCard.dataset.expanded === "true";
+    el.aqCard.dataset.expanded = open ? "false" : "true";
+    el.aqCard.setAttribute("aria-expanded", open ? "false" : "true");
+    el.aqExpand.hidden = open;
+  };
+  el.aqCard.addEventListener("click", toggle);
+  el.aqCard.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); }
+  });
 }
 
 function startNowcastTicker() {

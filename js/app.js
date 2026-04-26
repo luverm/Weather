@@ -284,6 +284,11 @@ ui.init({
     if (app.weather) applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
   },
+  onResetLive: () => {
+    scrubber.reset();
+    if (app.weather) applyScene(app.weather);
+    ui.setScrubbing(false);
+  },
 });
 
 // Apply saved reduce-motion preference on boot.

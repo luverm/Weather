@@ -285,6 +285,11 @@ html[data-reduce-motion="true"] *::after {
 .search-results .recent-pin {
   font-size: 11px; margin-right: 6px;
 }
+.search-results .flag {
+  margin-right: 6px;
+  font-size: 14px;
+  vertical-align: middle;
+}
 
 .icon-btn {
   width: 42px; height: 42px;
@@ -810,7 +815,13 @@ html[data-reduce-motion="true"] *::after {
 }
 .chart-extremes .hi { fill: #ffc8a0; }
 .chart-extremes .lo { fill: #b6dcff; }
-.chart-now { color: var(--accent); }
+.chart-now { color: var(--accent); cursor: pointer; }
+.chart-now:hover #chart-now-dot { r: 3.4; }
+[data-scrubbing="true"] .chart-now { animation: chart-now-attract 1.6s var(--ease) infinite; }
+@keyframes chart-now-attract {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
 .chart-now #chart-now-ring {
   opacity: 0.7;
   transform-origin: center;
@@ -1044,6 +1055,41 @@ kbd {
 .aq-meta { display: grid; gap: 2px; min-width: 0; }
 .aq-meta strong { font-size: 14px; font-weight: 500; }
 .aq-detail { font-size: 11.5px; color: var(--fg-dim); }
+.extra-card#aq-card { cursor: pointer; transition: transform 200ms var(--ease); }
+.extra-card#aq-card:hover { transform: translateY(-1px); }
+.extra-card#aq-card[data-expanded="true"] { padding-bottom: 14px; }
+.aq-expand {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--stroke);
+  animation: alert-in 320ms var(--ease) both;
+}
+.aq-row-detail {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+.aq-pollutant {
+  display: grid;
+  gap: 1px;
+  text-align: center;
+}
+.aq-pollutant span {
+  font-size: 9.5px; letter-spacing: 0.06em;
+  color: var(--fg-dim); text-transform: uppercase;
+}
+.aq-pollutant strong {
+  font-size: 13px; font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+.aq-pollutant em {
+  font-size: 9px; font-style: normal;
+  color: var(--fg-dim);
+}
+@media (max-width: 420px) {
+  .aq-row-detail { grid-template-columns: repeat(3, 1fr); }
+}
 
 .moon-row, .sun-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
 .moon-svg { width: 48px; height: 48px; }

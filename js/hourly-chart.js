@@ -9,11 +9,12 @@ const PAD_TOP = 16;
 const PAD_BOT = 22;
 
 export class HourlyChart {
-  constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit, getWindUnit, getTimezone, getTime12 }) {
+  constructor({ svgEl, hoverEl, popoverEl, onHoverHour, onResetLive, getUnit, getWindUnit, getTimezone, getTime12 }) {
     this.svg = svgEl;
     this.hoverEl = hoverEl;
     this.popover = popoverEl;
     this.onHoverHour = onHoverHour;
+    this.onResetLive = onResetLive;
     this.getUnit = getUnit || (() => "C");
     this.getWindUnit = getWindUnit || (() => "kmh");
     this.getTimezone = getTimezone || (() => null);
@@ -136,6 +137,11 @@ export class HourlyChart {
       }
     });
     this.svg.addEventListener("click", (e) => {
+      // Clicking the pulsing 'now' marker resets the scrubber to live.
+      if (e.target.closest("#chart-now")) {
+        this.onResetLive?.();
+        return;
+      }
       const i = toHourIndex(e);
       if (i < 0) return;
       this.onHoverHour?.(this.hours[i].time);

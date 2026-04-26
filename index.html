@@ -333,7 +333,7 @@
 
       <!-- Extras row: air quality + moon -->
       <div class="extras">
-        <div class="extra-card glass" id="aq-card">
+        <div class="extra-card glass" id="aq-card" data-expanded="false" tabindex="0" role="button" aria-expanded="false">
           <span class="metric-label">Air quality <span id="aq-trend" class="trend" aria-hidden="true"></span></span>
           <div class="aq-row">
             <div class="aq-ring" aria-hidden="true">
@@ -349,6 +349,9 @@
               <strong id="aq-label">—</strong>
               <span id="aq-detail" class="aq-detail">PM2.5 — • O₃ —</span>
             </div>
+          </div>
+          <div id="aq-expand" class="aq-expand" hidden>
+            <div class="aq-row-detail" id="aq-row-detail"></div>
           </div>
         </div>
 
