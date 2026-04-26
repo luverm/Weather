@@ -372,8 +372,12 @@ html[data-reduce-motion="true"] *::after {
   align-items: end;
   gap: 24px;
   transform: perspective(1200px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
-  transition: transform 400ms var(--ease);
+  transition: transform 400ms var(--ease), opacity 320ms var(--ease), filter 320ms var(--ease);
   will-change: transform;
+}
+.hero-inner.hero-fading {
+  opacity: 0.55;
+  filter: blur(2px);
 }
 .place-label {
   margin: 0 0 6px;

@@ -191,7 +191,10 @@ export const ui = {
     if (!el.refreshBtn) return;
     el.refreshBtn.classList.toggle("spinning", !!on);
   },
-  setLoading(text) { el.placeSub.textContent = text; },
+  setLoading(text) {
+    el.placeSub.textContent = text;
+    el.heroInner?.classList.add("hero-fading");
+  },
   setPlace(place) {
     state.place = place;
     el.placeName.classList.remove("flip-in"); void el.placeName.offsetWidth;
@@ -199,6 +202,11 @@ export const ui = {
     el.placeName.textContent = place.name || "Unknown";
     const sub = [place.admin1, place.country].filter(Boolean).join(", ");
     el.placeSub.textContent = sub || "—";
+    if (place.lat != null && place.lon != null) {
+      const tip = `${place.name || "Unknown"} · ${place.lat.toFixed(3)}°, ${place.lon.toFixed(3)}°`;
+      el.placeName.setAttribute("title", tip);
+      el.placeSub.setAttribute("title", tip);
+    }
     renderPlaces();
   },
   setWeather(weather, { narrative } = {}) {
@@ -228,6 +236,7 @@ export const ui = {
       state.chart.setSunEvents(collectSunEvents(weather));
     }
     if (el.narrative) el.narrative.textContent = narrative || "";
+    el.heroInner?.classList.remove("hero-fading");
     updateDocTitle(weather);
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
@@ -389,7 +398,7 @@ function renderMetrics(w) {
     const b = beaufort(w.windSpeed);
     if (b) {
       el.windBeaufort.className = `trend ${b.cls}`;
-      el.windBeaufort.textContent = b.label;
+      el.windBeaufort.textContent = `F${b.number} · ${b.label}`;
     } else {
       el.windBeaufort.textContent = "";
     }
@@ -504,19 +513,20 @@ function visibilityCategory(km) {
 
 function beaufort(kmh) {
   if (kmh == null) return null;
-  if (kmh < 1)  return { label: "Calm",          cls: "down" };
-  if (kmh < 6)  return { label: "Light air",     cls: "down" };
-  if (kmh < 12) return { label: "Light breeze",  cls: "flat" };
-  if (kmh < 20) return { label: "Gentle breeze", cls: "flat" };
-  if (kmh < 29) return { label: "Moderate",      cls: "flat" };
-  if (kmh < 39) return { label: "Fresh breeze",  cls: "up" };
-  if (kmh < 50) return { label: "Strong breeze", cls: "up" };
-  if (kmh < 62) return { label: "Near gale",     cls: "up" };
-  if (kmh < 75) return { label: "Gale",          cls: "up" };
-  if (kmh < 89) return { label: "Strong gale",   cls: "up" };
-  if (kmh < 103) return { label: "Storm",        cls: "up" };
-  if (kmh < 118) return { label: "Violent storm", cls: "up" };
-  return { label: "Hurricane", cls: "up" };
+  // Returns { number: 0-12, label, cls } so the UI can show 'F4 · Moderate'.
+  if (kmh < 1)  return { number: 0, label: "Calm",          cls: "down" };
+  if (kmh < 6)  return { number: 1, label: "Light air",     cls: "down" };
+  if (kmh < 12) return { number: 2, label: "Light breeze",  cls: "flat" };
+  if (kmh < 20) return { number: 3, label: "Gentle breeze", cls: "flat" };
+  if (kmh < 29) return { number: 4, label: "Moderate",      cls: "flat" };
+  if (kmh < 39) return { number: 5, label: "Fresh breeze",  cls: "up" };
+  if (kmh < 50) return { number: 6, label: "Strong breeze", cls: "up" };
+  if (kmh < 62) return { number: 7, label: "Near gale",     cls: "up" };
+  if (kmh < 75) return { number: 8, label: "Gale",          cls: "up" };
+  if (kmh < 89) return { number: 9, label: "Strong gale",   cls: "up" };
+  if (kmh < 103) return { number: 10, label: "Storm",        cls: "up" };
+  if (kmh < 118) return { number: 11, label: "Violent storm", cls: "up" };
+  return { number: 12, label: "Hurricane", cls: "up" };
 }
 
 function uvLevel(v) {
