@@ -6,6 +6,7 @@ import { places } from "./places.js";
 import { HourlyChart } from "./hourly-chart.js";
 import { advise } from "./advice.js";
 import { buildInsights } from "./insights.js";
+import { findBestWindow, findAlerts } from "./outlook.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -74,6 +75,12 @@ const el = {
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
+  alerts: $("#alerts"),
+  windowCard: $("#window-card"),
+  windowRange: $("#window-range"),
+  windowRelative: $("#window-relative"),
+  windowReason: $("#window-reason"),
+  windowScore: $("#window-score"),
   forecastTrack: $("#forecast-track"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
@@ -159,6 +166,8 @@ export const ui = {
     renderPollen(weather.pollen);
     renderTrends(weather);
     renderInsights(weather);
+    renderAlerts(weather);
+    renderBestWindow(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
@@ -521,6 +530,70 @@ function renderInsights(w) {
       if (ts) state.handlers.onHourClick?.(ts);
     });
   });
+}
+
+function renderAlerts(w) {
+  if (!el.alerts) return;
+  const alerts = findAlerts(w);
+  if (!alerts.length) {
+    el.alerts.hidden = true;
+    el.alerts.innerHTML = "";
+    return;
+  }
+  el.alerts.hidden = false;
+  el.alerts.innerHTML = alerts.map((a, i) => `
+    <button class="alert-pill" data-severity="${a.severity}" data-i="${i}" ${a.ts ? `data-ts="${a.ts}"` : ""}>
+      <span class="alert-icon" aria-hidden="true">${alertIcon(a.kind)}</span>
+      <span class="alert-text">
+        <strong>${escapeHtml(a.title)}</strong>
+        <span>${escapeHtml(a.detail)}</span>
+      </span>
+    </button>
+  `).join("");
+  el.alerts.querySelectorAll(".alert-pill[data-ts]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const ts = parseInt(btn.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
+}
+
+function alertIcon(kind) {
+  const stroke = 'fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"';
+  switch (kind) {
+    case "storm": return `<svg viewBox="0 0 24 24"><path d="M7 13a4 4 0 010-8 5 5 0 019.9-1A4 4 0 0117 13H7z" ${stroke}/><path d="M12 13l-2 4h3l-2 4" ${stroke}/></svg>`;
+    case "wind": return `<svg viewBox="0 0 24 24"><path d="M3 8h12a3 3 0 100-6M3 14h16a3 3 0 100-6M3 20h9a3 3 0 100-6" ${stroke}/></svg>`;
+    case "rain": return `<svg viewBox="0 0 24 24"><path d="M7 14a4 4 0 010-8 5 5 0 019.9-1A4 4 0 0117 14H7z" ${stroke}/><path d="M8 18l-1 3M12 18l-1 3M16 18l-1 3" ${stroke}/></svg>`;
+    case "heat": return `<svg viewBox="0 0 24 24"><path d="M14 4a3 3 0 00-6 0v10a5 5 0 106 0V4z" ${stroke}/><path d="M11 14V8" ${stroke}/></svg>`;
+    case "cold": return `<svg viewBox="0 0 24 24"><path d="M12 2v20M4 7l16 10M20 7L4 17M2 12h20" ${stroke}/></svg>`;
+    case "uv": return `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" ${stroke}/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.5 5.5l1.4 1.4M17.1 17.1l1.4 1.4" ${stroke}/></svg>`;
+    case "air": return `<svg viewBox="0 0 24 24"><path d="M3 9h11a3 3 0 100-6M3 15h15a3 3 0 110 6" ${stroke}/></svg>`;
+    default: return `<svg viewBox="0 0 24 24"><path d="M12 3l10 18H2L12 3z" ${stroke}/><path d="M12 10v5M12 18v.5" ${stroke}/></svg>`;
+  }
+}
+
+function renderBestWindow(w) {
+  if (!el.windowCard) return;
+  const win = findBestWindow(w);
+  if (!win) {
+    el.windowCard.hidden = true;
+    return;
+  }
+  el.windowCard.hidden = false;
+  el.windowRange.textContent = `${fmtTime(win.start)} – ${fmtTime(win.end)}`;
+  const startsIn = Math.max(0, Math.round((win.start - Date.now()) / 60_000));
+  el.windowRelative.textContent = startsIn < 30
+    ? "starting soon"
+    : startsIn < 90
+    ? `in ~${startsIn}m`
+    : `in ~${Math.round(startsIn / 60)}h`;
+  el.windowReason.textContent = win.reason;
+  if (el.windowScore) {
+    const pct = Math.round(win.score * 100);
+    el.windowScore.className = `trend ${pct >= 75 ? "up" : pct >= 55 ? "flat" : "down"}`;
+    el.windowScore.textContent = `${pct}`;
+  }
+  el.windowCard.onclick = () => state.handlers.onHourClick?.(win.start);
 }
 
 function renderPollen(pollen) {

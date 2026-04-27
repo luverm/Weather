@@ -392,6 +392,70 @@ html[data-reduce-motion="true"] *::after {
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
 
+/* ---------- Alerts ribbon ---------- */
+.alerts {
+  display: grid;
+  gap: 8px;
+  animation: slideInUp 480ms var(--ease) both;
+}
+.alerts[hidden] { display: none; }
+.alert-pill {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--stroke);
+  background: var(--glass);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  text-align: left;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: transform 160ms var(--ease), background 160ms var(--ease);
+}
+.alert-pill:hover { transform: translateY(-1px); background: var(--glass-strong); }
+.alert-pill::before {
+  content: "";
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: currentColor;
+  opacity: 0.85;
+}
+.alert-pill[data-severity="warning"] { color: #ff7a7a; }
+.alert-pill[data-severity="advisory"] { color: #ffc36a; }
+.alert-pill[data-severity="watch"] { color: #9ad1ff; }
+.alert-icon { width: 22px; height: 22px; flex: 0 0 auto; color: currentColor; }
+.alert-icon svg { width: 100%; height: 100%; display: block; }
+.alert-text { display: grid; gap: 1px; min-width: 0; }
+.alert-text strong { font-size: 14px; font-weight: 600; color: var(--fg); }
+.alert-text span { font-size: 12px; color: var(--fg-muted); }
+
+/* ---------- Best-window card ---------- */
+#window-card { cursor: pointer; transition: transform 160ms var(--ease), background 160ms var(--ease); }
+#window-card:hover { transform: translateY(-1px); background: var(--glass-strong); }
+.window-row {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.window-time {
+  display: flex; align-items: baseline; gap: 8px;
+  flex-wrap: wrap;
+}
+.window-time strong {
+  font-size: 14px; font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+.window-relative {
+  font-size: 11px; color: var(--fg-dim);
+  text-transform: uppercase; letter-spacing: 0.12em;
+}
+.window-reason { font-size: 12px; color: var(--fg-muted); }
+
 /* ---------- Nowcast banner ---------- */
 .nowcast {
   padding: 14px 18px;
@@ -893,10 +957,10 @@ kbd {
   font-variant-numeric: tabular-nums;
 }
 
-/* ---------- Extras row: AQ + moon + sun ---------- */
+/* ---------- Extras row: AQ + moon + sun (+ pollen, best-window) ---------- */
 .extras {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 10px;
 }
 .extra-card {

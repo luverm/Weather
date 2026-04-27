@@ -136,6 +136,9 @@
         </div>
       </div>
 
+      <!-- Severe weather alerts ribbon -->
+      <div id="alerts" class="alerts" role="region" aria-label="Weather alerts" hidden></div>
+
       <!-- Nowcast banner: rain in X minutes -->
       <div id="nowcast" class="nowcast glass" hidden>
         <svg class="nowcast-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -294,6 +297,17 @@
               <strong id="pollen-dominant">—</strong>
               <div class="pollen-items" id="pollen-items"></div>
             </div>
+          </div>
+        </div>
+
+        <div class="extra-card glass" id="window-card" hidden>
+          <span class="metric-label">Best window <span id="window-score" class="trend" aria-hidden="true"></span></span>
+          <div class="window-row">
+            <div class="window-time">
+              <strong id="window-range">—</strong>
+              <span id="window-relative" class="window-relative"></span>
+            </div>
+            <span id="window-reason" class="window-reason">—</span>
           </div>
         </div>
 
