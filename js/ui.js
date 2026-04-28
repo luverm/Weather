@@ -4,6 +4,7 @@
 import { searchCities } from "./weather-service.js";
 import { places } from "./places.js";
 import { HourlyChart } from "./hourly-chart.js";
+import { ComfortStrip } from "./comfort-strip.js";
 import { advise } from "./advice.js";
 import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
@@ -81,6 +82,7 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  comfortStrip: $("#comfort-strip"),
   forecastTrack: $("#forecast-track"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
@@ -104,6 +106,7 @@ const state = {
   sampledWeather: null, // the weather values at the current scrubber time
   handlers: {},
   chart: null,
+  comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
   localTimer: null,
@@ -131,6 +134,11 @@ export const ui = {
       onHoverHour: (ts) => state.handlers.onHourClick?.(ts),
       getUnit: () => state.unit,
       getTimezone: () => state.weather?.timezone,
+    });
+    state.comfortStrip = new ComfortStrip({
+      rootEl: el.comfortStrip,
+      onCellClick: (ts) => state.handlers.onHourClick?.(ts),
+      getUnit: () => state.unit,
     });
     bindInstallPrompt();
   },
@@ -173,6 +181,7 @@ export const ui = {
     renderAlerts(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
+    if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
@@ -190,6 +199,7 @@ export const ui = {
     renderMetrics(sampled);
     renderAdvice(sampled);
     highlightHour(highlightHourIndex);
+    if (state.comfortStrip) state.comfortStrip.highlight(highlightHourIndex);
     if (state.chart && sampled._sampledTs != null) {
       state.chart.setCursor(sampled._sampledTs);
     } else if (state.chart) {
