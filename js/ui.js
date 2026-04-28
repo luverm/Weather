@@ -79,6 +79,8 @@ const el = {
   activityCard: $("#activity-card"),
   activityList: $("#activity-list"),
   alertsStrip: $("#alerts-strip"),
+  sunArcMarker: $("#sun-arc-marker"),
+  sunArcPath: $("#sun-arc-path"),
   forecastTrack: $("#forecast-track"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
@@ -103,6 +105,7 @@ const state = {
   handlers: {},
   chart: null,
   sunTimer: null,
+  sunArcTimer: null,
   localTimer: null,
 };
 
@@ -431,7 +434,43 @@ function renderSun(w) {
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
+  scheduleSunArc(w);
 }
+
+function scheduleSunArc(w) {
+  if (!el.sunArcMarker || !el.sunArcPath) return;
+  if (state.sunArcTimer) { clearInterval(state.sunArcTimer); state.sunArcTimer = null; }
+  if (!w?.sunrise || !w?.sunset) return;
+
+  const update = () => {
+    const now = Date.now();
+    const sr = w.sunrise, ss = w.sunset;
+    let frac;
+    if (now < sr) {
+      // Before sunrise: ride the night arc fraction toward 0 (left horizon).
+      frac = 0;
+    } else if (now > ss) {
+      frac = 1;
+    } else {
+      frac = (now - sr) / (ss - sr);
+    }
+    // Quadratic Bezier from (10,74) to (190,74) via (100,-26). The midpoint
+    // (50% t) reaches y = 0.5*(74) + 0.5*(74 + 2*(-26-74)/2*(...)) — easier
+    // to evaluate the curve directly.
+    const t = clamp01(frac);
+    const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
+    const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
+    el.sunArcMarker.setAttribute("cx", x.toFixed(1));
+    el.sunArcMarker.setAttribute("cy", y.toFixed(1));
+    // After sunset, dim the marker so it visually settles.
+    const isUp = now >= sr && now <= ss;
+    el.sunArcMarker.style.opacity = isUp ? "1" : "0.45";
+  };
+  update();
+  state.sunArcTimer = setInterval(update, 60_000);
+}
+
+function clamp01(v) { return Math.max(0, Math.min(1, v)); }
 
 function scheduleSunCountdown(w) {
   if (state.sunTimer) { clearInterval(state.sunTimer); state.sunTimer = null; }
