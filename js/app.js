@@ -288,6 +288,14 @@ installShortcuts({
   toggleFullscreenRadar: () => document.getElementById("radar-full")?.click(),
   toggleRadar: () => document.getElementById("radar-play")?.click(),
   resetScrubber: () => scrubber.reset(),
+  cyclePlace: (dir) => {
+    const list = places.all();
+    if (list.length < 2) return;
+    const currentId = app.place ? places.idFor(app.place) : null;
+    const idx = Math.max(0, list.findIndex((p) => places.idFor(p) === currentId));
+    const next = list[(idx + dir + list.length) % list.length];
+    if (next) loadByCoords(next);
+  },
   nudge: (hours) => {
     clock.setOffset(clock.offset() + hours * 3600_000);
     scrubber.sync();

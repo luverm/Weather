@@ -4,8 +4,12 @@
 import { searchCities } from "./weather-service.js";
 import { places } from "./places.js";
 import { HourlyChart } from "./hourly-chart.js";
+import { ComfortStrip } from "./comfort-strip.js";
 import { advise } from "./advice.js";
 import { buildInsights } from "./insights.js";
+import { findActivityWindows } from "./activity.js";
+import { buildAlerts } from "./alerts.js";
+import { weekendSnapshot } from "./weekend.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -18,8 +22,13 @@ const el = {
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
   narrative: $("#narrative"),
+  dayRange: $("#day-range"),
+  dayRangeMin: $("#day-range-min"),
+  dayRangeMax: $("#day-range-max"),
+  dayRangeMarker: $("#day-range-marker"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
+  windBft: $("#m-wind-bft"),
   metricHumidity: $("#m-humidity"),
   metricHumiditySub: $("#m-humidity-sub"),
   metricPressure: $("#m-pressure"),
@@ -31,6 +40,8 @@ const el = {
   aqLabel: $("#aq-label"),
   aqDetail: $("#aq-detail"),
   aqCard: $("#aq-card"),
+  aqTrendLine: $("#aq-trend-line"),
+  aqTrendFill: $("#aq-trend-fill"),
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
@@ -74,6 +85,17 @@ const el = {
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
+  activityCard: $("#activity-card"),
+  activityList: $("#activity-list"),
+  alertsStrip: $("#alerts-strip"),
+  sunArcMarker: $("#sun-arc-marker"),
+  sunArcPath: $("#sun-arc-path"),
+  comfortStrip: $("#comfort-strip"),
+  weekendChip: $("#weekend-chip"),
+  weekendHeadline: $("#weekend-headline"),
+  weekendDetail: $("#weekend-detail"),
+  weekendIconSat: $("#weekend-icon-sat"),
+  weekendIconSun: $("#weekend-icon-sun"),
   forecastTrack: $("#forecast-track"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
@@ -97,7 +119,9 @@ const state = {
   sampledWeather: null, // the weather values at the current scrubber time
   handlers: {},
   chart: null,
+  comfortStrip: null,
   sunTimer: null,
+  sunArcTimer: null,
   localTimer: null,
 };
 
@@ -124,6 +148,11 @@ export const ui = {
       getUnit: () => state.unit,
       getTimezone: () => state.weather?.timezone,
     });
+    state.comfortStrip = new ComfortStrip({
+      rootEl: el.comfortStrip,
+      onCellClick: (ts) => state.handlers.onHourClick?.(ts),
+      getUnit: () => state.unit,
+    });
     bindInstallPrompt();
   },
   focusSearch() { el.searchInput?.focus(); el.searchInput?.select?.(); },
@@ -142,6 +171,8 @@ export const ui = {
     el.placeName.textContent = place.name || "Unknown";
     const sub = [place.admin1, place.country].filter(Boolean).join(", ");
     el.placeSub.textContent = sub || "—";
+    // Reset alert dismissals so a fresh location can re-surface them.
+    try { sessionStorage.removeItem("aether:dismissed-alerts"); } catch { /* ignore */ }
     renderPlaces();
   },
   setWeather(weather, { narrative } = {}) {
@@ -159,8 +190,12 @@ export const ui = {
     renderPollen(weather.pollen);
     renderTrends(weather);
     renderInsights(weather);
+    renderActivity(weather);
+    renderAlerts(weather);
+    renderWeekend(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
+    if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
@@ -178,6 +213,7 @@ export const ui = {
     renderMetrics(sampled);
     renderAdvice(sampled);
     highlightHour(highlightHourIndex);
+    if (state.comfortStrip) state.comfortStrip.highlight(highlightHourIndex);
     if (state.chart && sampled._sampledTs != null) {
       state.chart.setCursor(sampled._sampledTs);
     } else if (state.chart) {
@@ -241,6 +277,32 @@ function renderLiveValues(w, { animate = true } = {}) {
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  renderDayRange(w);
+}
+
+function renderDayRange(w) {
+  if (!el.dayRange || !el.dayRangeMarker) return;
+  // Pull today's min/max from the daily forecast; fall back to nearest hour
+  // span if the daily isn't ready yet.
+  const today = w.daily?.[0];
+  let lo = today?.tempMin, hi = today?.tempMax;
+  if (lo == null || hi == null) {
+    const hours = (w.hourly || []).slice(0, 24).map((h) => h.temp).filter((v) => v != null);
+    if (hours.length < 2) { el.dayRange.hidden = true; return; }
+    lo = Math.min(...hours);
+    hi = Math.max(...hours);
+  }
+  if (lo == null || hi == null || lo === hi) {
+    el.dayRange.hidden = true;
+    return;
+  }
+  el.dayRange.hidden = false;
+  el.dayRangeMin.textContent = `${Math.round(convertTemp(lo))}°`;
+  el.dayRangeMax.textContent = `${Math.round(convertTemp(hi))}°`;
+  // Marker position: clamp current temp to [lo,hi] so marker stays on track.
+  const t = w.temp ?? (lo + hi) / 2;
+  const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
+  el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
 }
 
 function renderMetrics(w) {
@@ -256,6 +318,15 @@ function renderMetrics(w) {
     el.windNeedle.style.opacity = "1";
   } else if (el.windNeedle) {
     el.windNeedle.style.opacity = "0.3";
+  }
+  if (el.windBft) {
+    const bft = beaufort(w.windSpeed);
+    if (bft) {
+      el.windBft.className = `trend ${bft.cls}`;
+      el.windBft.textContent = bft.label;
+    } else {
+      el.windBft.textContent = "";
+    }
   }
   el.metricHumidity.textContent = Math.round(w.humidity ?? 0);
   el.metricHumiditySub.textContent = w.dewPoint != null
@@ -304,6 +375,23 @@ function humidityComfort(rh, dew, temp) {
   if (rh <= 25) return { label: "Dry", cls: "up" };
   if (rh <= 35) return { label: "Crisp", cls: "flat" };
   return { label: "Comfy", cls: "down" };
+}
+
+function beaufort(kmh) {
+  if (kmh == null) return null;
+  if (kmh < 1) return { label: "Calm", cls: "down" };
+  if (kmh < 6) return { label: "Light air", cls: "down" };
+  if (kmh < 12) return { label: "Light breeze", cls: "down" };
+  if (kmh < 20) return { label: "Gentle", cls: "flat" };
+  if (kmh < 29) return { label: "Moderate", cls: "flat" };
+  if (kmh < 39) return { label: "Fresh", cls: "up" };
+  if (kmh < 50) return { label: "Strong", cls: "up" };
+  if (kmh < 62) return { label: "Near gale", cls: "up" };
+  if (kmh < 75) return { label: "Gale", cls: "up" };
+  if (kmh < 89) return { label: "Strong gale", cls: "up" };
+  if (kmh < 103) return { label: "Storm", cls: "up" };
+  if (kmh < 118) return { label: "Violent storm", cls: "up" };
+  return { label: "Hurricane", cls: "up" };
 }
 
 function uvLevel(v) {
@@ -372,6 +460,18 @@ function renderAirQuality(aq) {
   el.aqArc.setAttribute("stroke-dashoffset", String(126 * (1 - frac)));
   el.aqDetail.textContent =
     `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
+  renderAqTrend(aq);
+}
+
+function renderAqTrend(aq) {
+  if (!el.aqTrendLine || !el.aqTrendFill) return;
+  const pts = (aq?.trend || []).map((p) => p.aqi);
+  if (pts.length < 2) {
+    el.aqTrendLine.setAttribute("d", "");
+    el.aqTrendFill.setAttribute("d", "");
+    return;
+  }
+  drawSparkline(el.aqTrendLine, el.aqTrendFill, pts, { minSpan: 20 });
 }
 
 function renderMoon(moon) {
@@ -422,7 +522,43 @@ function renderSun(w) {
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
+  scheduleSunArc(w);
 }
+
+function scheduleSunArc(w) {
+  if (!el.sunArcMarker || !el.sunArcPath) return;
+  if (state.sunArcTimer) { clearInterval(state.sunArcTimer); state.sunArcTimer = null; }
+  if (!w?.sunrise || !w?.sunset) return;
+
+  const update = () => {
+    const now = Date.now();
+    const sr = w.sunrise, ss = w.sunset;
+    let frac;
+    if (now < sr) {
+      // Before sunrise: ride the night arc fraction toward 0 (left horizon).
+      frac = 0;
+    } else if (now > ss) {
+      frac = 1;
+    } else {
+      frac = (now - sr) / (ss - sr);
+    }
+    // Quadratic Bezier from (10,74) to (190,74) via (100,-26). The midpoint
+    // (50% t) reaches y = 0.5*(74) + 0.5*(74 + 2*(-26-74)/2*(...)) — easier
+    // to evaluate the curve directly.
+    const t = clamp01(frac);
+    const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
+    const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
+    el.sunArcMarker.setAttribute("cx", x.toFixed(1));
+    el.sunArcMarker.setAttribute("cy", y.toFixed(1));
+    // After sunset, dim the marker so it visually settles.
+    const isUp = now >= sr && now <= ss;
+    el.sunArcMarker.style.opacity = isUp ? "1" : "0.45";
+  };
+  update();
+  state.sunArcTimer = setInterval(update, 60_000);
+}
+
+function clamp01(v) { return Math.max(0, Math.min(1, v)); }
 
 function scheduleSunCountdown(w) {
   if (state.sunTimer) { clearInterval(state.sunTimer); state.sunTimer = null; }
@@ -516,6 +652,117 @@ function renderInsights(w) {
     </li>
   `).join("");
   el.insightsList.querySelectorAll("li[data-ts]").forEach((li) => {
+    li.addEventListener("click", () => {
+      const ts = parseInt(li.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
+}
+
+function renderWeekend(w) {
+  if (!el.weekendChip) return;
+  const snap = weekendSnapshot(w);
+  if (!snap) {
+    el.weekendChip.hidden = true;
+    return;
+  }
+  el.weekendChip.hidden = false;
+  el.weekendChip.dataset.tone = snap.tone;
+  el.weekendIconSat.textContent = snap.iconSat;
+  el.weekendIconSun.textContent = snap.iconSun;
+  el.weekendHeadline.textContent = snap.headline;
+  const range = (snap.hi != null && isFinite(snap.hi))
+    ? `${Math.round(convertTemp(snap.hi))}° / ${Math.round(convertTemp(snap.lo))}°`
+    : "—";
+  const wd = (d, label) => d ? `${label} ${Math.round(convertTemp(d.tempMax))}°` : null;
+  const parts = [range, wd(snap.sat, "Sat"), wd(snap.sun, "Sun")].filter(Boolean);
+  el.weekendDetail.textContent = parts.join(" · ");
+  el.weekendChip.onclick = () => {
+    if (snap.ts) state.handlers.onHourClick?.(snap.ts);
+  };
+}
+
+function renderAlerts(w) {
+  if (!el.alertsStrip) return;
+  const alerts = buildAlerts(w);
+  // Respect per-place dismissals so the user isn't nagged.
+  const dismissed = getDismissedAlerts();
+  const visible = alerts.filter((a) => !dismissed.has(a.id));
+  if (!visible.length) {
+    el.alertsStrip.hidden = true;
+    el.alertsStrip.innerHTML = "";
+    return;
+  }
+  el.alertsStrip.hidden = false;
+  el.alertsStrip.innerHTML = visible.map((a) => `
+    <button class="alert-pill alert-${a.severity}" type="button"
+            data-id="${escapeHtml(a.id)}" ${a.ts ? `data-ts="${a.ts}"` : ""}
+            title="${escapeHtml(a.detail)}">
+      <span class="alert-dot" aria-hidden="true"></span>
+      <span class="alert-title">${escapeHtml(a.title)}</span>
+      <span class="alert-detail">${escapeHtml(a.detail)}</span>
+      <span class="alert-close" aria-label="Dismiss alert">×</span>
+    </button>
+  `).join("");
+  el.alertsStrip.querySelectorAll(".alert-pill").forEach((btn) => {
+    btn.addEventListener("click", (ev) => {
+      const isClose = ev.target.classList.contains("alert-close");
+      if (isClose) {
+        ev.stopPropagation();
+        const id = btn.dataset.id;
+        rememberDismissedAlert(id);
+        btn.remove();
+        if (!el.alertsStrip.children.length) el.alertsStrip.hidden = true;
+        return;
+      }
+      const ts = parseInt(btn.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
+}
+
+function getDismissedAlerts() {
+  try {
+    const raw = sessionStorage.getItem("aether:dismissed-alerts");
+    return new Set(raw ? JSON.parse(raw) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function rememberDismissedAlert(id) {
+  try {
+    const set = getDismissedAlerts();
+    set.add(id);
+    sessionStorage.setItem("aether:dismissed-alerts", JSON.stringify([...set]));
+  } catch { /* ignore */ }
+}
+
+function renderActivity(w) {
+  if (!el.activityCard || !el.activityList) return;
+  const items = findActivityWindows(w);
+  if (!items.length) {
+    el.activityCard.hidden = true;
+    return;
+  }
+  el.activityCard.hidden = false;
+  el.activityList.innerHTML = items.map((it) => {
+    const startStr = fmtTime(it.start);
+    const endStr = fmtTime(it.end);
+    const why = (it.why || []).slice(0, 3).map(escapeHtml).join(" · ");
+    return `
+      <li data-ts="${it.start}" data-kind="${it.kind}">
+        <span class="activity-icon">${it.icon}</span>
+        <span class="activity-meta">
+          <span class="activity-label">${escapeHtml(it.label)}</span>
+          <span class="activity-window">${escapeHtml(startStr)} – ${escapeHtml(endStr)}</span>
+          <span class="activity-why">${why}</span>
+        </span>
+        <span class="activity-score" aria-label="Score ${it.score} out of 100">${it.score}</span>
+      </li>
+    `;
+  }).join("");
+  el.activityList.querySelectorAll("li[data-ts]").forEach((li) => {
     li.addEventListener("click", () => {
       const ts = parseInt(li.dataset.ts, 10);
       if (ts) state.handlers.onHourClick?.(ts);
