@@ -9,6 +9,7 @@ import { advise } from "./advice.js";
 import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
+import { weekendSnapshot } from "./weekend.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -83,6 +84,11 @@ const el = {
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
   comfortStrip: $("#comfort-strip"),
+  weekendChip: $("#weekend-chip"),
+  weekendHeadline: $("#weekend-headline"),
+  weekendDetail: $("#weekend-detail"),
+  weekendIconSat: $("#weekend-icon-sat"),
+  weekendIconSun: $("#weekend-icon-sun"),
   forecastTrack: $("#forecast-track"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
@@ -179,6 +185,7 @@ export const ui = {
     renderInsights(weather);
     renderActivity(weather);
     renderAlerts(weather);
+    renderWeekend(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -579,6 +586,29 @@ function renderInsights(w) {
       if (ts) state.handlers.onHourClick?.(ts);
     });
   });
+}
+
+function renderWeekend(w) {
+  if (!el.weekendChip) return;
+  const snap = weekendSnapshot(w);
+  if (!snap) {
+    el.weekendChip.hidden = true;
+    return;
+  }
+  el.weekendChip.hidden = false;
+  el.weekendChip.dataset.tone = snap.tone;
+  el.weekendIconSat.textContent = snap.iconSat;
+  el.weekendIconSun.textContent = snap.iconSun;
+  el.weekendHeadline.textContent = snap.headline;
+  const range = (snap.hi != null && isFinite(snap.hi))
+    ? `${Math.round(convertTemp(snap.hi))}° / ${Math.round(convertTemp(snap.lo))}°`
+    : "—";
+  const wd = (d, label) => d ? `${label} ${Math.round(convertTemp(d.tempMax))}°` : null;
+  const parts = [range, wd(snap.sat, "Sat"), wd(snap.sun, "Sun")].filter(Boolean);
+  el.weekendDetail.textContent = parts.join(" · ");
+  el.weekendChip.onclick = () => {
+    if (snap.ts) state.handlers.onHourClick?.(snap.ts);
+  };
 }
 
 function renderAlerts(w) {
