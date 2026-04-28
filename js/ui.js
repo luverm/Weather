@@ -6,6 +6,7 @@ import { places } from "./places.js";
 import { HourlyChart } from "./hourly-chart.js";
 import { advise } from "./advice.js";
 import { buildInsights } from "./insights.js";
+import { findActivityWindows } from "./activity.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -74,6 +75,8 @@ const el = {
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
+  activityCard: $("#activity-card"),
+  activityList: $("#activity-list"),
   forecastTrack: $("#forecast-track"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
@@ -159,6 +162,7 @@ export const ui = {
     renderPollen(weather.pollen);
     renderTrends(weather);
     renderInsights(weather);
+    renderActivity(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
@@ -516,6 +520,38 @@ function renderInsights(w) {
     </li>
   `).join("");
   el.insightsList.querySelectorAll("li[data-ts]").forEach((li) => {
+    li.addEventListener("click", () => {
+      const ts = parseInt(li.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
+}
+
+function renderActivity(w) {
+  if (!el.activityCard || !el.activityList) return;
+  const items = findActivityWindows(w);
+  if (!items.length) {
+    el.activityCard.hidden = true;
+    return;
+  }
+  el.activityCard.hidden = false;
+  el.activityList.innerHTML = items.map((it) => {
+    const startStr = fmtTime(it.start);
+    const endStr = fmtTime(it.end);
+    const why = (it.why || []).slice(0, 3).map(escapeHtml).join(" · ");
+    return `
+      <li data-ts="${it.start}" data-kind="${it.kind}">
+        <span class="activity-icon">${it.icon}</span>
+        <span class="activity-meta">
+          <span class="activity-label">${escapeHtml(it.label)}</span>
+          <span class="activity-window">${escapeHtml(startStr)} – ${escapeHtml(endStr)}</span>
+          <span class="activity-why">${why}</span>
+        </span>
+        <span class="activity-score" aria-label="Score ${it.score} out of 100">${it.score}</span>
+      </li>
+    `;
+  }).join("");
+  el.activityList.querySelectorAll("li[data-ts]").forEach((li) => {
     li.addEventListener("click", () => {
       const ts = parseInt(li.dataset.ts, 10);
       if (ts) state.handlers.onHourClick?.(ts);

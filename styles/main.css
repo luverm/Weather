@@ -1099,6 +1099,58 @@ kbd {
   font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums;
 }
 
+/* ---------- Activity windows ---------- */
+.activity-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 6px;
+}
+.activity-list li {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--stroke);
+  cursor: pointer;
+  transition: background 160ms var(--ease), transform 160ms var(--ease);
+}
+.activity-list li:hover {
+  background: rgba(255,255,255,0.08);
+  transform: translateY(-1px);
+}
+.activity-list .activity-icon {
+  width: 26px; height: 26px;
+  display: grid; place-items: center;
+  color: var(--accent);
+}
+.activity-list .activity-icon svg { width: 22px; height: 22px; }
+.activity-list .activity-meta { display: grid; gap: 2px; min-width: 0; }
+.activity-list .activity-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--fg-dim);
+}
+.activity-list .activity-window {
+  font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums;
+}
+.activity-list .activity-why {
+  font-size: 11px; color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+.activity-list .activity-score {
+  font-size: 14px; font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(154,209,255,0.14);
+  color: var(--accent);
+  border: 1px solid rgba(154,209,255,0.25);
+}
+
 /* ---------- Daily extras ---------- */
 .daily-gust {
   grid-column: 1 / -1;
