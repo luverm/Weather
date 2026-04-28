@@ -391,6 +391,41 @@ html[data-reduce-motion="true"] *::after {
 .unit:hover { background: var(--glass); color: var(--fg); }
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
+.day-range {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  align-items: center;
+  font-size: 11px;
+  color: var(--fg-dim);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  max-width: 240px;
+  margin-left: auto;
+}
+.day-range[hidden] { display: none; }
+.day-range-end { white-space: nowrap; }
+.day-range-track {
+  position: relative;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #6aa2ff, #8be0a0 35%, #ffd47b 65%, #ff8a6a);
+  overflow: visible;
+}
+.day-range-fill { display: none; }
+.day-range-marker {
+  position: absolute;
+  top: 50%;
+  width: 12px; height: 12px;
+  margin-left: -6px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--fg);
+  transform: translateY(-50%);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+  transition: left 380ms var(--ease);
+}
 
 /* ---------- Nowcast banner ---------- */
 .nowcast {
