@@ -278,6 +278,19 @@ function pollenLevel(v) {
 function normalizeAq(aq) {
   if (!aq?.current) return null;
   const c = aq.current;
+  // Pull the next ~12h of hourly US AQI (preferred) or European AQI as
+  // fallback so we can plot a mini trend in the UI.
+  const trend = [];
+  if (aq.hourly?.time) {
+    const now = Date.now();
+    const series = aq.hourly.us_aqi || aq.hourly.european_aqi || [];
+    for (let i = 0; i < aq.hourly.time.length && trend.length < 12; i++) {
+      const ts = new Date(aq.hourly.time[i]).getTime();
+      if (ts < now - 30 * 60_000) continue;
+      if (series[i] == null) continue;
+      trend.push({ time: ts, aqi: series[i] });
+    }
+  }
   return {
     aqi: c.us_aqi,
     pm25: c.pm2_5,
@@ -286,6 +299,7 @@ function normalizeAq(aq) {
     no2: c.nitrogen_dioxide,
     co: c.carbon_monoxide,
     label: aqiLabel(c.us_aqi),
+    trend,
   };
 }
 

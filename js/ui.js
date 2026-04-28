@@ -35,6 +35,8 @@ const el = {
   aqLabel: $("#aq-label"),
   aqDetail: $("#aq-detail"),
   aqCard: $("#aq-card"),
+  aqTrendLine: $("#aq-trend-line"),
+  aqTrendFill: $("#aq-trend-fill"),
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
@@ -401,6 +403,18 @@ function renderAirQuality(aq) {
   el.aqArc.setAttribute("stroke-dashoffset", String(126 * (1 - frac)));
   el.aqDetail.textContent =
     `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
+  renderAqTrend(aq);
+}
+
+function renderAqTrend(aq) {
+  if (!el.aqTrendLine || !el.aqTrendFill) return;
+  const pts = (aq?.trend || []).map((p) => p.aqi);
+  if (pts.length < 2) {
+    el.aqTrendLine.setAttribute("d", "");
+    el.aqTrendFill.setAttribute("d", "");
+    return;
+  }
+  drawSparkline(el.aqTrendLine, el.aqTrendFill, pts, { minSpan: 20 });
 }
 
 function renderMoon(moon) {
