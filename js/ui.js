@@ -24,6 +24,7 @@ const el = {
   narrative: $("#narrative"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
+  windBft: $("#m-wind-bft"),
   metricHumidity: $("#m-humidity"),
   metricHumiditySub: $("#m-humidity-sub"),
   metricPressure: $("#m-pressure"),
@@ -288,6 +289,15 @@ function renderMetrics(w) {
   } else if (el.windNeedle) {
     el.windNeedle.style.opacity = "0.3";
   }
+  if (el.windBft) {
+    const bft = beaufort(w.windSpeed);
+    if (bft) {
+      el.windBft.className = `trend ${bft.cls}`;
+      el.windBft.textContent = bft.label;
+    } else {
+      el.windBft.textContent = "";
+    }
+  }
   el.metricHumidity.textContent = Math.round(w.humidity ?? 0);
   el.metricHumiditySub.textContent = w.dewPoint != null
     ? `dew ${Math.round(convertTemp(w.dewPoint))}°`
@@ -335,6 +345,23 @@ function humidityComfort(rh, dew, temp) {
   if (rh <= 25) return { label: "Dry", cls: "up" };
   if (rh <= 35) return { label: "Crisp", cls: "flat" };
   return { label: "Comfy", cls: "down" };
+}
+
+function beaufort(kmh) {
+  if (kmh == null) return null;
+  if (kmh < 1) return { label: "Calm", cls: "down" };
+  if (kmh < 6) return { label: "Light air", cls: "down" };
+  if (kmh < 12) return { label: "Light breeze", cls: "down" };
+  if (kmh < 20) return { label: "Gentle", cls: "flat" };
+  if (kmh < 29) return { label: "Moderate", cls: "flat" };
+  if (kmh < 39) return { label: "Fresh", cls: "up" };
+  if (kmh < 50) return { label: "Strong", cls: "up" };
+  if (kmh < 62) return { label: "Near gale", cls: "up" };
+  if (kmh < 75) return { label: "Gale", cls: "up" };
+  if (kmh < 89) return { label: "Strong gale", cls: "up" };
+  if (kmh < 103) return { label: "Storm", cls: "up" };
+  if (kmh < 118) return { label: "Violent storm", cls: "up" };
+  return { label: "Hurricane", cls: "up" };
 }
 
 function uvLevel(v) {
