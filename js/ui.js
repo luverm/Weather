@@ -7,6 +7,7 @@ import { HourlyChart } from "./hourly-chart.js";
 import { advise } from "./advice.js";
 import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
+import { buildAlerts } from "./alerts.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -77,6 +78,7 @@ const el = {
   insightsList: $("#insights-list"),
   activityCard: $("#activity-card"),
   activityList: $("#activity-list"),
+  alertsStrip: $("#alerts-strip"),
   forecastTrack: $("#forecast-track"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
@@ -145,6 +147,8 @@ export const ui = {
     el.placeName.textContent = place.name || "Unknown";
     const sub = [place.admin1, place.country].filter(Boolean).join(", ");
     el.placeSub.textContent = sub || "—";
+    // Reset alert dismissals so a fresh location can re-surface them.
+    try { sessionStorage.removeItem("aether:dismissed-alerts"); } catch { /* ignore */ }
     renderPlaces();
   },
   setWeather(weather, { narrative } = {}) {
@@ -163,6 +167,7 @@ export const ui = {
     renderTrends(weather);
     renderInsights(weather);
     renderActivity(weather);
+    renderAlerts(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
@@ -525,6 +530,62 @@ function renderInsights(w) {
       if (ts) state.handlers.onHourClick?.(ts);
     });
   });
+}
+
+function renderAlerts(w) {
+  if (!el.alertsStrip) return;
+  const alerts = buildAlerts(w);
+  // Respect per-place dismissals so the user isn't nagged.
+  const dismissed = getDismissedAlerts();
+  const visible = alerts.filter((a) => !dismissed.has(a.id));
+  if (!visible.length) {
+    el.alertsStrip.hidden = true;
+    el.alertsStrip.innerHTML = "";
+    return;
+  }
+  el.alertsStrip.hidden = false;
+  el.alertsStrip.innerHTML = visible.map((a) => `
+    <button class="alert-pill alert-${a.severity}" type="button"
+            data-id="${escapeHtml(a.id)}" ${a.ts ? `data-ts="${a.ts}"` : ""}
+            title="${escapeHtml(a.detail)}">
+      <span class="alert-dot" aria-hidden="true"></span>
+      <span class="alert-title">${escapeHtml(a.title)}</span>
+      <span class="alert-detail">${escapeHtml(a.detail)}</span>
+      <span class="alert-close" aria-label="Dismiss alert">×</span>
+    </button>
+  `).join("");
+  el.alertsStrip.querySelectorAll(".alert-pill").forEach((btn) => {
+    btn.addEventListener("click", (ev) => {
+      const isClose = ev.target.classList.contains("alert-close");
+      if (isClose) {
+        ev.stopPropagation();
+        const id = btn.dataset.id;
+        rememberDismissedAlert(id);
+        btn.remove();
+        if (!el.alertsStrip.children.length) el.alertsStrip.hidden = true;
+        return;
+      }
+      const ts = parseInt(btn.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
+}
+
+function getDismissedAlerts() {
+  try {
+    const raw = sessionStorage.getItem("aether:dismissed-alerts");
+    return new Set(raw ? JSON.parse(raw) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function rememberDismissedAlert(id) {
+  try {
+    const set = getDismissedAlerts();
+    set.add(id);
+    sessionStorage.setItem("aether:dismissed-alerts", JSON.stringify([...set]));
+  } catch { /* ignore */ }
 }
 
 function renderActivity(w) {
