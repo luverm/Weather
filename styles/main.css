@@ -1197,6 +1197,58 @@ kbd {
   font-variant-numeric: tabular-nums;
 }
 
+/* ---------- Sky-cover ribbon (24-cell cloud strip) ---------- */
+.sky-ribbon {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  gap: 1px;
+  margin-top: 4px;
+  padding: 0 4px 18px;
+  height: 26px;
+  position: relative;
+  align-items: end;
+}
+.sky-ribbon[hidden] { display: none; }
+.sky-cell {
+  position: relative;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  height: 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  transition: transform 160ms var(--ease), filter 160ms var(--ease);
+}
+.sky-cell:hover { filter: brightness(1.18); transform: translateY(-1px); }
+.sky-cell.active .sky-bar {
+  outline: 1.5px solid var(--accent);
+  outline-offset: 1px;
+}
+.sky-bar {
+  display: block;
+  width: 100%;
+  height: var(--h, 50%);
+  background: var(--c, rgba(255,255,255,0.18));
+  border-radius: 2px;
+  pointer-events: none;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.18) inset;
+}
+.sky-cell.is-night .sky-bar {
+  box-shadow: 0 1px 0 rgba(255,255,255,0.06) inset;
+}
+.sky-tick {
+  position: absolute;
+  bottom: -16px;
+  left: 0;
+  font-size: 9.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.04em;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---------- Alerts strip ---------- */
 .alerts-strip {
   display: flex;
