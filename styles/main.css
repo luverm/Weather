@@ -309,6 +309,25 @@ html[data-reduce-motion="true"] *::after {
   transition: background 150ms var(--ease), color 150ms var(--ease);
 }
 .place-chip .close:hover { background: rgba(255,255,255,0.12); color: var(--fg); }
+.place-chip .chip-icon {
+  width: 16px; height: 16px;
+  display: inline-grid; place-items: center;
+  color: var(--fg-muted);
+  flex-shrink: 0;
+}
+.place-chip .chip-icon svg { width: 16px; height: 16px; }
+.place-chip.active .chip-icon { color: var(--accent); }
+.place-chip.stale .temp { color: var(--fg-dim); opacity: 0.7; }
+.place-chip .chip-spinner {
+  width: 10px; height: 10px; border-radius: 50%;
+  border: 1.5px solid var(--stroke);
+  border-top-color: var(--fg-muted);
+  animation: chip-spin 700ms linear infinite;
+}
+@keyframes chip-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .place-chip .chip-spinner { animation-duration: 0s; }
+}
 
 /* ---------- Hero ---------- */
 .hero { align-self: start; display: grid; gap: 14px; }

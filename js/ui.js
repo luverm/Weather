@@ -1,7 +1,7 @@
 // UI layer. Renders every data module and handles non-scene interactions
 // (search, unit toggle, saved places, tilt, audio toggle).
 
-import { searchCities } from "./weather-service.js";
+import { searchCities, getCurrent } from "./weather-service.js";
 import { places } from "./places.js";
 import { HourlyChart } from "./hourly-chart.js";
 import { ComfortStrip } from "./comfort-strip.js";
@@ -201,7 +201,10 @@ export const ui = {
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
       places.updateSummary(state.place, {
-        temp: weather.temp, condition: weather.condition,
+        temp: weather.temp,
+        condition: weather.condition,
+        isDay: !!weather.isDay,
+        fetchedAt: Date.now(),
       });
     }
     renderPlaces();
@@ -1059,6 +1062,9 @@ function iconFor(condition) {
 }
 
 // ---------- Saved places strip ----------
+const PLACE_FRESH_MS = 20 * 60_000; // 20 minutes
+let _placesRefreshing = new Set();
+
 function renderPlaces() {
   const all = places.all();
   if (!all.length) { el.placesStrip.hidden = true; el.placesStrip.innerHTML = ""; return; }
@@ -1066,10 +1072,18 @@ function renderPlaces() {
   const activeId = state.place ? places.idFor(state.place) : null;
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
+    const fresh = p.fetchedAt && (Date.now() - p.fetchedAt) < PLACE_FRESH_MS;
+    const stale = p.temp != null && !fresh && !active;
+    const ageMin = p.fetchedAt ? Math.round((Date.now() - p.fetchedAt) / 60000) : null;
+    const tip = ageMin != null
+      ? (ageMin < 1 ? "Just now" : `${ageMin}m ago`)
+      : "Loading…";
+    const icon = p.condition ? `<span class="chip-icon">${iconFor(p.condition)}</span>` : "";
     return `
-      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
-        <span>${escapeHtml(p.name)}</span>
-        ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
+      <div class="place-chip ${active ? "active" : ""}${stale ? " stale" : ""}" data-id="${p.id}" title="${escapeHtml(tip)}">
+        ${icon}
+        <span class="chip-name">${escapeHtml(p.name)}</span>
+        ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : `<span class="chip-spinner" aria-hidden="true"></span>`}
         <span class="close" data-action="remove" aria-label="Remove">
           <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
         </span>
@@ -1087,6 +1101,62 @@ function renderPlaces() {
       state.handlers.onPlaceClick?.(item);
     });
   });
+  // Background-refresh stale or never-loaded chips so the strip reflects
+  // each city's current temperature instead of last-loaded value.
+  refreshStalePlaces(all, activeId);
+}
+
+async function refreshStalePlaces(list, activeId) {
+  const stale = list.filter((p) => {
+    if (places.idFor(p) === activeId) return false; // active uses full fetch
+    if (_placesRefreshing.has(p.id)) return false;
+    if (!p.fetchedAt) return true;
+    return (Date.now() - p.fetchedAt) >= PLACE_FRESH_MS;
+  });
+  if (!stale.length) return;
+  for (const p of stale) {
+    if (_placesRefreshing.has(p.id)) continue;
+    _placesRefreshing.add(p.id);
+    getCurrent(p.lat, p.lon).then((curr) => {
+      _placesRefreshing.delete(p.id);
+      if (!curr) return;
+      places.updateSummary(p, curr);
+      // Update only this chip in place to avoid wiping hover/focus.
+      patchChip(p.id, { ...p, ...curr });
+    }).catch(() => { _placesRefreshing.delete(p.id); });
+  }
+}
+
+function patchChip(id, summary) {
+  if (!el.placesStrip) return;
+  const chip = el.placesStrip.querySelector(`.place-chip[data-id="${CSS.escape(id)}"]`);
+  if (!chip) return;
+  chip.classList.remove("stale");
+  // Replace icon
+  const iconHost = chip.querySelector(".chip-icon");
+  if (summary.condition) {
+    if (iconHost) iconHost.innerHTML = iconFor(summary.condition);
+    else {
+      const span = document.createElement("span");
+      span.className = "chip-icon";
+      span.innerHTML = iconFor(summary.condition);
+      chip.insertBefore(span, chip.firstChild);
+    }
+  }
+  // Replace temp / spinner
+  const spinner = chip.querySelector(".chip-spinner");
+  const tempEl = chip.querySelector(".temp");
+  const tempStr = `${Math.round(convertTemp(summary.temp))}°`;
+  if (tempEl) {
+    tempEl.textContent = tempStr;
+  } else if (spinner) {
+    const s = document.createElement("span");
+    s.className = "temp";
+    s.textContent = tempStr;
+    spinner.replaceWith(s);
+  }
+  // Refresh tooltip with new age.
+  chip.title = "Just now";
 }
 
 // ---------- Bindings ----------

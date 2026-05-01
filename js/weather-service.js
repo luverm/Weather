@@ -67,6 +67,33 @@ export async function searchCities(query) {
   }
 }
 
+// Lightweight current-only fetch for the saved-place chip strip. Avoids
+// the multi-endpoint payload of getWeather() so we can refresh many chips
+// cheaply. Returns { temp, condition, label, isDay, fetchedAt } or null.
+export async function getCurrent(lat, lon) {
+  const params = new URLSearchParams({
+    latitude: lat,
+    longitude: lon,
+    current: ["temperature_2m", "weather_code", "is_day"].join(","),
+    timezone: "auto",
+  });
+  try {
+    const data = await fetchJson(`${FORECAST}?${params.toString()}`);
+    const c = data.current || {};
+    if (c.temperature_2m == null) return null;
+    const { condition, label } = mapWmo(c.weather_code);
+    return {
+      temp: c.temperature_2m,
+      condition,
+      label,
+      isDay: !!c.is_day,
+      fetchedAt: Date.now(),
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function getWeather(lat, lon) {
   const params = new URLSearchParams({
     latitude: lat,
