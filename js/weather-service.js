@@ -108,7 +108,7 @@ export async function getWeather(lat, lon) {
     hourly: [
       "temperature_2m", "apparent_temperature", "weather_code",
       "precipitation_probability", "precipitation",
-      "wind_speed_10m", "wind_gusts_10m",
+      "wind_speed_10m", "wind_gusts_10m", "wind_direction_10m",
       "is_day", "uv_index", "pressure_msl",
       "relative_humidity_2m",
     ].join(","),
@@ -169,6 +169,7 @@ function normalize(d, aq) {
         precip: d.hourly.precipitation?.[i] ?? 0,
         wind: d.hourly.wind_speed_10m?.[i],
         gusts: d.hourly.wind_gusts_10m?.[i],
+        windDir: d.hourly.wind_direction_10m?.[i] ?? null,
         isDay: !!d.hourly.is_day?.[i],
         uv: d.hourly.uv_index?.[i] ?? null,
         pressure: d.hourly.pressure_msl?.[i] ?? null,

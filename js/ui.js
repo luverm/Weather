@@ -6,6 +6,7 @@ import { places } from "./places.js";
 import { HourlyChart } from "./hourly-chart.js";
 import { ComfortStrip } from "./comfort-strip.js";
 import { PrecipAccum } from "./precip-accum.js";
+import { WindStrip } from "./wind-strip.js";
 import { advise } from "./advice.js";
 import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
@@ -94,6 +95,7 @@ const el = {
   sunArcPath: $("#sun-arc-path"),
   comfortStrip: $("#comfort-strip"),
   precipAccum: $("#precip-accum"),
+  windStrip: $("#wind-strip"),
   storyCard: $("#story-card"),
   storyTrack: $("#story-track"),
   storyMeta: $("#story-meta"),
@@ -163,6 +165,11 @@ export const ui = {
       rootEl: el.precipAccum,
       getTimezone: () => state.weather?.timezone,
     });
+    state.windStrip = new WindStrip({
+      rootEl: el.windStrip,
+      getTimezone: () => state.weather?.timezone,
+      onCellClick: (ts) => state.handlers.onHourClick?.(ts),
+    });
     bindChartLayerToggles();
     bindInstallPrompt();
   },
@@ -209,6 +216,7 @@ export const ui = {
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (state.precipAccum) state.precipAccum.setHours(weather.hourly);
+    if (state.windStrip) state.windStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
@@ -230,6 +238,7 @@ export const ui = {
     renderAdvice(sampled);
     highlightHour(highlightHourIndex);
     if (state.comfortStrip) state.comfortStrip.highlight(highlightHourIndex);
+    if (state.windStrip) state.windStrip.highlight(highlightHourIndex);
     if (state.chart && sampled._sampledTs != null) {
       state.chart.setCursor(sampled._sampledTs);
     } else if (state.chart) {

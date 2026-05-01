@@ -1370,6 +1370,49 @@ kbd {
   stroke-dasharray: 1.5 2;
 }
 
+/* ---------- Wind strip (24-cell hourly wind direction + speed) ---------- */
+.wind-strip {
+  margin-top: 4px;
+  padding: 0 4px 6px;
+  display: grid; gap: 6px;
+}
+.wind-strip[hidden] { display: none; }
+.wind-strip-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  font-size: 10.5px;
+  letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--fg-dim);
+}
+.wind-strip-title { color: var(--fg-muted); }
+.wind-strip-meta {
+  color: var(--fg-dim);
+  text-transform: none;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.wind-strip-grid {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  gap: 1px;
+}
+.wind-cell {
+  background: rgba(255,255,255,0.03);
+  border: 0;
+  border-radius: 3px;
+  padding: 0;
+  height: 22px;
+  display: grid; place-items: center;
+  cursor: pointer;
+  transition: background 150ms var(--ease), transform 150ms var(--ease);
+}
+.wind-cell svg { width: 12px; height: 14px; display: block; }
+.wind-cell.empty { background: transparent; cursor: default; }
+.wind-cell:hover { background: rgba(255,255,255,0.08); transform: translateY(-1px); }
+.wind-cell.active {
+  background: rgba(255,255,255,0.16);
+  outline: 1px solid var(--accent);
+}
+
 /* ---------- Comfort strip (24-cell heat band under the chart) ---------- */
 .comfort-strip {
   display: grid;
