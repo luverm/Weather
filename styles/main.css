@@ -1305,6 +1305,38 @@ kbd {
   font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums;
 }
 
+/* ---------- Precipitation accumulation strip ---------- */
+.precip-accum {
+  margin-top: 4px;
+  padding: 0 4px 6px;
+  display: grid; gap: 4px;
+}
+.precip-accum[hidden] { display: none; }
+.precip-accum-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  font-size: 10.5px;
+  letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--fg-dim);
+}
+.precip-accum-title { color: var(--fg-muted); }
+.precip-accum-total {
+  color: #cfe7ff;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+}
+.precip-accum-svg {
+  width: 100%;
+  height: 30px;
+  display: block;
+}
+.precip-accum-mid {
+  stroke: rgba(255,255,255,0.35);
+  stroke-width: 1;
+  stroke-dasharray: 1.5 2;
+}
+
 /* ---------- Comfort strip (24-cell heat band under the chart) ---------- */
 .comfort-strip {
   display: grid;
