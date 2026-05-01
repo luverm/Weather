@@ -927,6 +927,7 @@ function renderDaily(w) {
     if (d.tempMax > gMax) gMax = d.tempMax;
   }
   const span = Math.max(1, gMax - gMin);
+  const badges = pickDailyBadges(days);
   days.forEach((d, i) => {
     const dt = new Date(d.time);
     const tz = state.weather?.timezone;
@@ -944,8 +945,11 @@ function renderDaily(w) {
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const badge = badges[i]
+      ? `<span class="daily-badge ${badges[i].cls}" title="${escapeHtml(badges[i].title)}">${escapeHtml(badges[i].label)}</span>`
+      : "";
     item.innerHTML = `
-      <span class="daily-day">${day}</span>
+      <span class="daily-day">${day}${badge}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
@@ -957,6 +961,56 @@ function renderDaily(w) {
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+}
+
+// Tag the warmest / coldest / wettest / windiest day across the 7-day
+// forecast. Returns an array aligned with `days` where unmarked days are
+// undefined. Each badge is { label, cls, title }.
+function pickDailyBadges(days) {
+  const out = new Array(days.length);
+  if (days.length < 3) return out;
+  const argMax = (key, threshold) => {
+    let best = -1, bestVal = -Infinity;
+    days.forEach((d, i) => {
+      const v = d[key];
+      if (v == null) return;
+      if (v > bestVal) { bestVal = v; best = i; }
+    });
+    return threshold == null || bestVal >= threshold ? best : -1;
+  };
+  const argMin = (key) => {
+    let best = -1, bestVal = Infinity;
+    days.forEach((d, i) => {
+      const v = d[key];
+      if (v == null) return;
+      if (v < bestVal) { bestVal = v; best = i; }
+    });
+    return best;
+  };
+  const tempMaxIdx = argMax("tempMax");
+  const tempMinIdx = argMin("tempMin");
+  const wetIdx = argMax("precip", 1.0); // hide if every day is dry
+  const windIdx = argMax("gustsMax", 30);
+  // Skip placement when the extreme is on today AND today's value is barely
+  // ahead — avoids "warmest" looking trivial when the week is flat.
+  const tMaxSpread = days.length ? Math.max(...days.map((d) => d.tempMax ?? -Infinity))
+                                  - Math.min(...days.map((d) => d.tempMax ?? Infinity)) : 0;
+  const tMinSpread = days.length ? Math.max(...days.map((d) => d.tempMin ?? -Infinity))
+                                  - Math.min(...days.map((d) => d.tempMin ?? Infinity)) : 0;
+  if (tempMaxIdx >= 0 && tMaxSpread >= 3) {
+    out[tempMaxIdx] = { label: "Warmest", cls: "warm", title: `Warmest day this week (${Math.round(days[tempMaxIdx].tempMax)}°)` };
+  }
+  if (tempMinIdx >= 0 && tempMinIdx !== tempMaxIdx && tMinSpread >= 3) {
+    out[tempMinIdx] = { label: "Coldest", cls: "cold", title: `Coldest day this week (${Math.round(days[tempMinIdx].tempMin)}°)` };
+  }
+  // Wet badge takes precedence on a day even if it was also warmest/coldest.
+  if (wetIdx >= 0) {
+    out[wetIdx] = { label: "Wettest", cls: "wet", title: `Wettest day (${Math.round(days[wetIdx].precip)} mm)` };
+  }
+  if (windIdx >= 0 && out[windIdx] == null) {
+    out[windIdx] = { label: "Windiest", cls: "wind", title: `Strongest gusts (${Math.round(days[windIdx].gustsMax)} km/h)` };
+  }
+  return out;
 }
 
 function renderDailyIconStrip(days) {
