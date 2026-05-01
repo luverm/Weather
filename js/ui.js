@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { buildStory } from "./story.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -91,6 +92,9 @@ const el = {
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
   comfortStrip: $("#comfort-strip"),
+  storyCard: $("#story-card"),
+  storyTrack: $("#story-track"),
+  storyMeta: $("#story-meta"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
   weekendDetail: $("#weekend-detail"),
@@ -193,6 +197,7 @@ export const ui = {
     renderActivity(weather);
     renderAlerts(weather);
     renderWeekend(weather);
+    renderStory(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -739,6 +744,56 @@ function rememberDismissedAlert(id) {
     set.add(id);
     sessionStorage.setItem("aether:dismissed-alerts", JSON.stringify([...set]));
   } catch { /* ignore */ }
+}
+
+function renderStory(w) {
+  if (!el.storyCard || !el.storyTrack) return;
+  const chapters = buildStory(w, { tz: w.timezone });
+  if (chapters.length < 2) {
+    el.storyCard.hidden = true;
+    return;
+  }
+  el.storyCard.hidden = false;
+  el.storyTrack.innerHTML = chapters.map((c) => {
+    const hi = Math.round(convertTemp(c.tempAvg));
+    const range = `${formatChapterTime(c.startTs, w.timezone)} – ${formatChapterTime(c.endTs, w.timezone)}`;
+    const popPill = c.peakPop >= 30 ? `<span class="story-pop">${c.peakPop}%</span>` : "";
+    return `
+      <button type="button" class="story-chapter" data-condition="${c.condition}" data-ts="${c.startTs}">
+        <span class="story-icon">${iconFor(c.condition)}</span>
+        <span class="story-meta-row">
+          <span class="story-label">${escapeHtml(c.label)}</span>
+          <span class="story-window">${escapeHtml(range)}</span>
+        </span>
+        <span class="story-phrase">${escapeHtml(c.phrase)}</span>
+        <span class="story-temp">${hi}°${popPill}</span>
+      </button>
+    `;
+  }).join("");
+  el.storyTrack.querySelectorAll(".story-chapter").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const ts = parseInt(btn.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
+  if (el.storyMeta) {
+    const verbs = chapters.map((c) => c.condition);
+    const allClear = verbs.every((v) => v === "clear");
+    const wet = verbs.includes("rain") || verbs.includes("storm");
+    el.storyMeta.textContent = allClear ? "clear arc" : wet ? "wet patch" : "mixed";
+  }
+}
+
+function formatChapterTime(ts, tz) {
+  if (tz && tz !== "auto") {
+    try {
+      return new Intl.DateTimeFormat(undefined, {
+        timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
+      }).format(new Date(ts));
+    } catch { /* */ }
+  }
+  const d = new Date(ts);
+  return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
 }
 
 function renderActivity(w) {
