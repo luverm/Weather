@@ -134,7 +134,17 @@
             <span id="temp-value" class="temp-value">–</span>
             <button id="unit-toggle" class="unit" title="Toggle units" aria-label="Toggle temperature units">°C</button>
           </div>
-          <p id="condition-label" class="condition-label">—</p>
+          <p id="condition-label" class="condition-label">
+            <span id="cloud-ring" class="cloud-ring" hidden aria-hidden="true">
+              <svg viewBox="-10 -10 20 20">
+                <circle r="8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-opacity="0.25"/>
+                <circle id="cloud-ring-arc" r="8" fill="none" stroke="currentColor" stroke-width="1.4"
+                        stroke-linecap="round" stroke-dasharray="50.27" stroke-dashoffset="50.27"
+                        transform="rotate(-90)"/>
+              </svg>
+            </span>
+            <span id="condition-label-text">—</span>
+          </p>
           <p id="feels-like" class="feels-like"><span id="temp-trend" class="temp-trend" aria-hidden="true"></span>Feels like —</p>
           <div id="day-range" class="day-range" hidden aria-label="Today's temperature range">
             <span class="day-range-end" id="day-range-min">—</span>

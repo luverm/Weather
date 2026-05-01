@@ -408,7 +408,26 @@ html[data-reduce-motion="true"] *::after {
   transition: background 200ms var(--ease), color 200ms var(--ease);
 }
 .unit:hover { background: var(--glass); color: var(--fg); }
-.condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
+.condition-label {
+  margin: 6px 0 0;
+  font-size: 17px;
+  letter-spacing: 0.01em;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.cloud-ring {
+  width: 18px; height: 18px;
+  display: inline-grid; place-items: center;
+  color: var(--fg-muted);
+  vertical-align: middle;
+}
+.cloud-ring[hidden] { display: none; }
+.cloud-ring svg { width: 18px; height: 18px; transform: rotate(0deg); }
+.cloud-ring #cloud-ring-arc { transition: stroke-dashoffset 600ms var(--ease); }
+@media (prefers-reduced-motion: reduce) {
+  .cloud-ring #cloud-ring-arc { transition-duration: 0s; }
+}
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
 .day-range {
   margin-top: 10px;

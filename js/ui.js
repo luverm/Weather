@@ -23,6 +23,9 @@ const el = {
   placeSub: $("#place-sub"),
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
+  conditionLabelText: $("#condition-label-text"),
+  cloudRing: $("#cloud-ring"),
+  cloudRingArc: $("#cloud-ring-arc"),
   feelsLike: $("#feels-like"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
@@ -300,9 +303,27 @@ function renderLiveValues(w, { animate = true } = {}) {
   const feels = convertTemp(w.feelsLike ?? w.temp);
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
-  el.conditionLabel.textContent = capitalize(w.label);
+  if (el.conditionLabelText) el.conditionLabelText.textContent = capitalize(w.label);
+  else el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  renderCloudRing(w);
+}
+
+function renderCloudRing(w) {
+  if (!el.cloudRing || !el.cloudRingArc) return;
+  const cover = w.cloudCover;
+  if (cover == null) {
+    el.cloudRing.hidden = true;
+    return;
+  }
+  el.cloudRing.hidden = false;
+  el.cloudRing.title = `Sky ${Math.round(cover)}% covered`;
+  el.cloudRing.setAttribute("aria-label", `Sky ${Math.round(cover)} percent covered`);
+  const circumference = 2 * Math.PI * 8;
+  const offset = circumference * (1 - Math.max(0, Math.min(100, cover)) / 100);
+  el.cloudRingArc.setAttribute("stroke-dasharray", circumference.toFixed(3));
+  el.cloudRingArc.setAttribute("stroke-dashoffset", offset.toFixed(3));
 }
 
 function renderDayRange(w) {
