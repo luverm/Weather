@@ -180,11 +180,20 @@
       <div class="chart-card glass" id="chart-card" aria-label="Hourly forecast chart">
         <div class="chart-head">
           <span class="chart-title">Hourly trend</span>
-          <div class="chart-legend">
-            <span class="legend-swatch temp"></span><span>Temp</span>
-            <span class="legend-swatch feels"></span><span>Feels-like</span>
-            <span class="legend-swatch gust"></span><span>Gusts</span>
-            <span class="legend-swatch precip"></span><span>Precip</span>
+          <div class="chart-legend" role="group" aria-label="Chart layer toggles">
+            <span class="legend-static"><span class="legend-swatch temp"></span><span>Temp</span></span>
+            <button type="button" class="legend-toggle" data-layer="feels" aria-pressed="true" title="Toggle feels-like line">
+              <span class="legend-swatch feels"></span><span>Feels</span>
+            </button>
+            <button type="button" class="legend-toggle" data-layer="gust" aria-pressed="true" title="Toggle gusts line">
+              <span class="legend-swatch gust"></span><span>Gusts</span>
+            </button>
+            <button type="button" class="legend-toggle" data-layer="precip" aria-pressed="true" title="Toggle precip bars">
+              <span class="legend-swatch precip"></span><span>Precip</span>
+            </button>
+            <button type="button" class="legend-toggle" data-layer="pins" aria-pressed="true" title="Toggle hi/lo and sun pins">
+              <span class="legend-swatch pins"></span><span>Pins</span>
+            </button>
           </div>
           <span id="chart-hover" class="chart-hover" hidden></span>
         </div>

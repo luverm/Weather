@@ -163,6 +163,7 @@ export const ui = {
       rootEl: el.precipAccum,
       getTimezone: () => state.weather?.timezone,
     });
+    bindChartLayerToggles();
     bindInstallPrompt();
   },
   focusSearch() { el.searchInput?.focus(); el.searchInput?.select?.(); },
@@ -1447,6 +1448,34 @@ function bindShare() {
     } catch (err) {
       if (err?.name !== "AbortError") ui.showToast("Share failed");
     }
+  });
+}
+
+function bindChartLayerToggles() {
+  const KEY = "aether:chart-layers";
+  const layers = ["feels", "gust", "precip", "pins"];
+  let pref = {};
+  try { pref = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch { pref = {}; }
+  const apply = () => {
+    if (!el.chartSvg) return;
+    for (const layer of layers) {
+      const visible = pref[layer] !== false;
+      el.chartSvg.classList.toggle(`hide-${layer}`, !visible);
+    }
+  };
+  apply();
+  document.querySelectorAll(".legend-toggle").forEach((btn) => {
+    const layer = btn.dataset.layer;
+    btn.setAttribute("aria-pressed", pref[layer] === false ? "false" : "true");
+    btn.classList.toggle("off", pref[layer] === false);
+    btn.addEventListener("click", () => {
+      const visible = pref[layer] !== false;
+      pref[layer] = visible ? false : true;
+      try { localStorage.setItem(KEY, JSON.stringify(pref)); } catch {}
+      btn.setAttribute("aria-pressed", pref[layer] === false ? "false" : "true");
+      btn.classList.toggle("off", pref[layer] === false);
+      apply();
+    });
   });
 }
 
