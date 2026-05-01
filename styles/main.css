@@ -634,6 +634,38 @@ html[data-reduce-motion="true"] *::after {
   transition: opacity 160ms var(--ease);
 }
 .daily-expand-bar:hover span { opacity: 1; }
+.daily-expand-wrap {
+  grid-column: 1 / -1;
+  display: grid; gap: 8px;
+}
+.daily-sun-row {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 6px 0;
+  border-top: 1px solid var(--stroke);
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+.daily-sun-row .dsr-rise { color: #ffd28c; }
+.daily-sun-row .dsr-set { color: #ff9c7a; }
+.daily-sun-row .dsr-len { color: var(--fg-dim); margin-left: auto; }
+.daylight-delta {
+  display: inline-flex; align-items: center; gap: 2px;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.daylight-delta.up   { color: #ffd28c; background: rgba(255, 210, 140, 0.12); }
+.daylight-delta.down { color: #b9d8ff; background: rgba(154, 209, 255, 0.12); }
 
 /* ---------- Share button flash ---------- */
 #share-btn.just-copied { color: var(--accent); animation: pulseOnce 560ms var(--ease); }

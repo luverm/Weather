@@ -1111,12 +1111,19 @@ function renderDailyDelta(days) {
 }
 
 function toggleDailyExpand(item, d, w) {
-  const existing = item.querySelector(".daily-expand");
+  const existing = item.querySelector(".daily-expand-wrap");
   if (existing) {
     existing.remove();
     item.dataset.expanded = "false";
     return;
   }
+  const wrap = document.createElement("div");
+  wrap.className = "daily-expand-wrap";
+
+  // Sun-times row (always available — daily forecast carries sunrise/sunset).
+  const sunRow = buildSunRow(d, w);
+  if (sunRow) wrap.appendChild(sunRow);
+
   // Build mini hourly bars for the 12 daytime-ish hours of that day, if we
   // have them in the hourly series (only first 24h). Otherwise skip.
   const dayStart = new Date(d.time);
@@ -1129,7 +1136,8 @@ function toggleDailyExpand(item, d, w) {
     summary.className = "daily-expand";
     summary.style.gridTemplateColumns = "1fr";
     summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${Math.round(d.gustsMax ?? 0)} km/h · UV ${Math.round(d.uvMax ?? 0)}</span>`;
-    item.appendChild(summary);
+    wrap.appendChild(summary);
+    item.appendChild(wrap);
     item.dataset.expanded = "true";
     return;
   }
@@ -1149,8 +1157,47 @@ function toggleDailyExpand(item, d, w) {
     const hh = new Date(h.time).getHours().toString().padStart(2, "0");
     return `<div class="daily-expand-bar" data-precip="${precipLevel}" style="height:${height.toFixed(1)}px" title="${hh}:00 · ${Math.round(convertTemp(h.temp))}° · ${h.pop}%"><span>${Math.round(convertTemp(h.temp))}°</span></div>`;
   }).join("");
-  item.appendChild(box);
+  wrap.appendChild(box);
+  item.appendChild(wrap);
   item.dataset.expanded = "true";
+}
+
+function buildSunRow(d, w) {
+  if (d.sunrise == null || d.sunset == null) return null;
+  const tz = w.timezone;
+  const fmtT = (ts) => {
+    if (tz && tz !== "auto") {
+      try {
+        return new Intl.DateTimeFormat(undefined, {
+          timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
+        }).format(new Date(ts));
+      } catch { /* */ }
+    }
+    return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+  };
+  const daylightMs = d.sunset - d.sunrise;
+  const dh = Math.floor(daylightMs / 3600_000);
+  const dm = Math.round((daylightMs % 3600_000) / 60_000);
+  // Compare against previous day in the daily series, if present.
+  const prevIdx = (w.daily || []).indexOf(d) - 1;
+  const prev = prevIdx >= 0 ? w.daily[prevIdx] : null;
+  let deltaStr = "";
+  if (prev?.sunrise && prev?.sunset) {
+    const prevMs = prev.sunset - prev.sunrise;
+    const deltaMin = Math.round((daylightMs - prevMs) / 60_000);
+    if (deltaMin !== 0) {
+      const arrow = deltaMin > 0 ? "▲" : "▼";
+      const sign = deltaMin > 0 ? "+" : "";
+      deltaStr = ` <span class="daylight-delta ${deltaMin > 0 ? "up" : "down"}">${arrow} ${sign}${deltaMin}m</span>`;
+    }
+  }
+  const row = document.createElement("div");
+  row.className = "daily-sun-row";
+  row.innerHTML =
+    `<span class="dsr-rise" title="Sunrise">↑ ${fmtT(d.sunrise)}</span>`
+    + `<span class="dsr-set" title="Sunset">↓ ${fmtT(d.sunset)}</span>`
+    + `<span class="dsr-len">${dh}h ${dm}m daylight${deltaStr}</span>`;
+  return row;
 }
 
 function renderNowcast(w) {
