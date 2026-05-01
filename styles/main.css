@@ -428,7 +428,36 @@ html[data-reduce-motion="true"] *::after {
 @media (prefers-reduced-motion: reduce) {
   .cloud-ring #cloud-ring-arc { transition-duration: 0s; }
 }
-.feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
+.feels-like {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--fg-muted);
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.stress-pill {
+  display: inline-flex; align-items: center;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  white-space: nowrap;
+}
+.stress-pill[hidden] { display: none; }
+.stress-pill[data-stress="extreme-heat"] { color: #ffd0b6; background: rgba(255, 130, 96, 0.22); border-color: rgba(255, 130, 96, 0.55); }
+.stress-pill[data-stress="heat"]         { color: #ffd6c2; background: rgba(255, 156, 122, 0.18); border-color: rgba(255, 156, 122, 0.45); }
+.stress-pill[data-stress="muggy"]        { color: #d2e7c2; background: rgba(170, 220, 140, 0.14); border-color: rgba(170, 220, 140, 0.38); }
+.stress-pill[data-stress="freezing"]     { color: #cfe7ff; background: rgba(154, 209, 255, 0.16); border-color: rgba(154, 209, 255, 0.40); }
+.stress-pill[data-stress="wind-chill"]   { color: #b9d8ff; background: rgba(154, 209, 255, 0.18); border-color: rgba(154, 209, 255, 0.45); }
+.stress-pill[data-stress="very-cold"]    { color: #b9d8ff; background: rgba(120, 165, 220, 0.20); border-color: rgba(154, 209, 255, 0.50); }
+.stress-pill[data-stress="frostbite"]    { color: #d6e6ff; background: rgba(120, 165, 220, 0.30); border-color: rgba(154, 209, 255, 0.65); }
+.stress-pill[data-stress="humid-warm"]   { color: #ffd6c2; background: rgba(255, 156, 122, 0.12); border-color: var(--stroke); }
+.stress-pill[data-stress="wind-cool"]    { color: #b9d8ff; background: rgba(154, 209, 255, 0.12); border-color: var(--stroke); }
 .day-range {
   margin-top: 10px;
   display: grid;

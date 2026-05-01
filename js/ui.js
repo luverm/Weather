@@ -26,6 +26,7 @@ const el = {
   conditionLabelText: $("#condition-label-text"),
   cloudRing: $("#cloud-ring"),
   cloudRingArc: $("#cloud-ring-arc"),
+  stressPill: $("#stress-pill"),
   feelsLike: $("#feels-like"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
@@ -305,9 +306,52 @@ function renderLiveValues(w, { animate = true } = {}) {
   else el.temp.textContent = `${Math.round(temp)}°`;
   if (el.conditionLabelText) el.conditionLabelText.textContent = capitalize(w.label);
   else el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  // Preserve the temp-trend and stress-pill spans inside the feels-like row
+  // — textContent would wipe them, so we set the leading text node manually.
+  const feelsText = `Feels like ${Math.round(feels)}°`;
+  // The first child is the trend span, the rest is the text node + stress pill.
+  // Walk text nodes and replace the user-visible string.
+  for (const node of el.feelsLike.childNodes) {
+    if (node.nodeType === Node.TEXT_NODE) { node.textContent = feelsText; break; }
+  }
+  renderStressPill(w);
   renderDayRange(w);
   renderCloudRing(w);
+}
+
+function renderStressPill(w) {
+  if (!el.stressPill) return;
+  const level = stressLevel(w);
+  if (!level) {
+    el.stressPill.hidden = true;
+    el.stressPill.removeAttribute("data-stress");
+    return;
+  }
+  el.stressPill.hidden = false;
+  el.stressPill.dataset.stress = level.kind;
+  el.stressPill.textContent = level.label;
+  el.stressPill.title = level.tip;
+}
+
+function stressLevel(w) {
+  const feels = w.feelsLike ?? w.temp;
+  const temp = w.temp;
+  const wind = w.windSpeed ?? 0;
+  const rh = w.humidity ?? 0;
+  if (feels == null) return null;
+  // Heat tiers — bias to feels-like since that's what bodies feel.
+  if (feels >= 40) return { kind: "extreme-heat", label: "Extreme heat", tip: "Limit outdoor exertion; hydrate often." };
+  if (feels >= 35) return { kind: "heat", label: "Hot", tip: "Take it easy outside; drink water." };
+  if (feels >= 28 && rh >= 70) return { kind: "muggy", label: "Muggy", tip: "Sticky air — sweat won't cool you efficiently." };
+  // Cold tiers — windchill amplifies risk.
+  if (feels <= -20) return { kind: "frostbite", label: "Frostbite risk", tip: "Cover skin; limit outdoor time." };
+  if (feels <= -10) return { kind: "very-cold", label: "Bitter cold", tip: "Heavy layers, wind protection." };
+  if (feels <= 0 && wind >= 20) return { kind: "wind-chill", label: "Wind chill", tip: "Wind cuts through — block exposure." };
+  if (feels <= 2) return { kind: "freezing", label: "Freezing", tip: "Roads may be slick; bundle up." };
+  // Notable air contrast — feels noticeably different from temp.
+  if (temp != null && feels - temp >= 5) return { kind: "humid-warm", label: "Heat index up", tip: "Feels well above the air temperature." };
+  if (temp != null && temp - feels >= 5) return { kind: "wind-cool", label: "Wind cooled", tip: "Feels well below the air temperature." };
+  return null;
 }
 
 function renderCloudRing(w) {
