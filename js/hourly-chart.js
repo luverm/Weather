@@ -269,6 +269,10 @@ export class HourlyChart {
     const labG = this.svg.querySelector("#chart-labels");
     labG.innerHTML = "";
     const labelStep = Math.max(3, Math.floor(this.hours.length / 8));
+
+    // Pre-compute extreme indices so we can suppress overlapping per-3hr labels.
+    const extremes = this._findExtremes();
+
     this.hours.forEach((h, i) => {
       if (i % labelStep !== 0) return;
       const hh = this._hourOf(h.time);
@@ -278,7 +282,8 @@ export class HourlyChart {
       txt.setAttribute("text-anchor", "middle");
       txt.textContent = `${hh}`;
       labG.appendChild(txt);
-      // Temp label above point
+      // Temp label above point — skip when an extremes pin lands on the same hour.
+      if (i === extremes.hiIdx || i === extremes.loIdx) return;
       const tVal = unit === "F" ? h.temp * 9 / 5 + 32 : h.temp;
       const tTxt = document.createElementNS("http://www.w3.org/2000/svg", "text");
       tTxt.setAttribute("x", iToX(i).toFixed(1));
@@ -288,5 +293,143 @@ export class HourlyChart {
       tTxt.textContent = `${Math.round(tVal)}°`;
       labG.appendChild(tTxt);
     });
+
+    this._drawAnnotations(extremes, iToX, tToY);
+  }
+
+  // ---------- Annotations (hi/lo, peak precip, sunrise/sunset) ----------
+  _findExtremes() {
+    const out = { hiIdx: -1, loIdx: -1, popIdx: -1, sunrise: -1, sunset: -1 };
+    if (!this.hours.length) return out;
+    let hi = -Infinity, lo = Infinity, popMax = -1;
+    for (let i = 0; i < this.hours.length; i++) {
+      const h = this.hours[i];
+      if (h.temp != null) {
+        if (h.temp > hi) { hi = h.temp; out.hiIdx = i; }
+        if (h.temp < lo) { lo = h.temp; out.loIdx = i; }
+      }
+      const pop = h.pop ?? 0;
+      if (pop > popMax && pop >= 30) { popMax = pop; out.popIdx = i; }
+      // Sun events from isDay transitions.
+      if (i > 0) {
+        const prev = !!this.hours[i - 1].isDay;
+        const curr = !!h.isDay;
+        if (!prev && curr && out.sunrise < 0) out.sunrise = i;
+        if (prev && !curr && out.sunset < 0) out.sunset = i;
+      }
+    }
+    // Hi == Lo: chart is essentially flat — skip both to avoid clutter.
+    if (out.hiIdx === out.loIdx) { out.hiIdx = -1; out.loIdx = -1; }
+    return out;
+  }
+
+  _drawAnnotations(ex, iToX, tToY) {
+    const annG = this.svg.querySelector("#chart-annotations");
+    if (!annG) return;
+    annG.innerHTML = "";
+    const unit = this.getUnit();
+    const NS = "http://www.w3.org/2000/svg";
+
+    const make = (tag, attrs, text) => {
+      const el = document.createElementNS(NS, tag);
+      for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+      if (text != null) el.textContent = text;
+      return el;
+    };
+
+    // Sunrise / sunset vertical guides.
+    const drawSunEvent = (idx, kind) => {
+      if (idx < 0 || idx >= this.hours.length) return;
+      const x = iToX(idx);
+      const yTop = PAD_TOP - 2;
+      const yBot = H - PAD_BOT;
+      const cls = `chart-sun-line ${kind}`;
+      annG.appendChild(make("line", {
+        x1: x.toFixed(1), x2: x.toFixed(1),
+        y1: yTop.toFixed(1), y2: yBot.toFixed(1),
+        class: cls,
+      }));
+      annG.appendChild(make("text", {
+        x: x.toFixed(1), y: (yTop + 7).toFixed(1),
+        "text-anchor": "middle", class: `chart-sun-glyph ${kind}`,
+      }, kind === "sunrise" ? "↑" : "↓"));
+    };
+    drawSunEvent(ex.sunrise, "sunrise");
+    drawSunEvent(ex.sunset, "sunset");
+
+    // Hi/Lo temp pins.
+    const drawTempPin = (idx, kind) => {
+      if (idx < 0) return;
+      const h = this.hours[idx];
+      if (h?.temp == null) return;
+      const x = iToX(idx);
+      const y = tToY(h.temp);
+      const t = unit === "F" ? h.temp * 9 / 5 + 32 : h.temp;
+      const isHi = kind === "hi";
+      // Anchor label at the chart edge to avoid clipping when the
+      // extreme falls at hour 0 or 23.
+      let anchor = "middle";
+      const innerW = W - PAD_LEFT - PAD_RIGHT;
+      if (x < PAD_LEFT + 30) anchor = "start";
+      else if (x > PAD_LEFT + innerW - 30) anchor = "end";
+      // Flip pin inward when the extreme lies near the chart's top or
+      // bottom edge so the label doesn't clip or overlap precip bars.
+      const aboveOK = y - 18 >= PAD_TOP;
+      const belowOK = y + 22 <= H - PAD_BOT - 2;
+      const placeAbove = isHi ? aboveOK : !belowOK && aboveOK;
+      // Triangle always points toward the temperature dot.
+      let tri, yLabel;
+      if (placeAbove) {
+        const apexY = y - 3;
+        const baseY = y - 8;
+        tri = `M${x.toFixed(1)},${apexY.toFixed(1)} `
+            + `L${(x - 3.2).toFixed(1)},${baseY.toFixed(1)} `
+            + `L${(x + 3.2).toFixed(1)},${baseY.toFixed(1)} Z`;
+        yLabel = y - 12;
+      } else {
+        const apexY = y + 3;
+        const baseY = y + 8;
+        tri = `M${x.toFixed(1)},${apexY.toFixed(1)} `
+            + `L${(x - 3.2).toFixed(1)},${baseY.toFixed(1)} `
+            + `L${(x + 3.2).toFixed(1)},${baseY.toFixed(1)} Z`;
+        yLabel = y + 18;
+      }
+      annG.appendChild(make("path", { d: tri, class: `chart-pin-tri ${kind}` }));
+      annG.appendChild(make("text", {
+        x: x.toFixed(1), y: yLabel.toFixed(1),
+        "text-anchor": anchor, class: `chart-pin-label ${kind}`,
+      }, `${isHi ? "Hi" : "Lo"} ${Math.round(t)}°`));
+    };
+    drawTempPin(ex.hiIdx, "hi");
+    drawTempPin(ex.loIdx, "lo");
+
+    // Peak precipitation marker (rendered just above the bar).
+    if (ex.popIdx >= 0) {
+      const h = this.hours[ex.popIdx];
+      const pop = Math.max(0, Math.min(100, h.pop || 0));
+      const x = iToX(ex.popIdx);
+      const barH = (pop / 100) * 26;
+      const barTop = H - PAD_BOT - barH + 4;
+      const yMark = barTop - 5;
+      // Tiny teardrop glyph (Bezier rounded base + pointed top).
+      annG.appendChild(make("path", {
+        d: `M${x.toFixed(1)},${(yMark - 4).toFixed(1)} `
+          + `C${(x - 2.6).toFixed(1)},${(yMark - 1).toFixed(1)} `
+          + `${(x - 2.6).toFixed(1)},${(yMark + 2.4).toFixed(1)} `
+          + `${x.toFixed(1)},${(yMark + 2.4).toFixed(1)} `
+          + `C${(x + 2.6).toFixed(1)},${(yMark + 2.4).toFixed(1)} `
+          + `${(x + 2.6).toFixed(1)},${(yMark - 1).toFixed(1)} `
+          + `${x.toFixed(1)},${(yMark - 4).toFixed(1)} Z`,
+        class: "chart-pin-drop",
+      }));
+      const innerW = W - PAD_LEFT - PAD_RIGHT;
+      let anchor = "middle";
+      if (x < PAD_LEFT + 22) anchor = "start";
+      else if (x > PAD_LEFT + innerW - 22) anchor = "end";
+      annG.appendChild(make("text", {
+        x: x.toFixed(1), y: (yMark - 8).toFixed(1),
+        "text-anchor": anchor, class: "chart-pin-label pop",
+      }, `${Math.round(pop)}%`));
+    }
   }
 }

@@ -797,6 +797,51 @@ html[data-reduce-motion="true"] *::after {
   filter: drop-shadow(0 0 6px var(--accent));
 }
 
+/* Chart annotations: hi/lo, peak precipitation, sunrise/sunset markers. */
+.chart-annotations { pointer-events: none; }
+.chart-pin-tri.hi {
+  fill: #ff9c7a;
+  filter: drop-shadow(0 0 3px rgba(255, 156, 122, 0.55));
+}
+.chart-pin-tri.lo {
+  fill: #9ad1ff;
+  filter: drop-shadow(0 0 3px rgba(154, 209, 255, 0.55));
+}
+.chart-pin-drop {
+  fill: rgba(154, 209, 255, 0.95);
+  filter: drop-shadow(0 0 3px rgba(154, 209, 255, 0.55));
+}
+.chart-pin-label {
+  font-size: 9.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  paint-order: stroke fill;
+  stroke: rgba(8, 12, 30, 0.55);
+  stroke-width: 2.5px;
+  stroke-linejoin: round;
+}
+.chart-pin-label.hi { fill: #ffd6c2; }
+.chart-pin-label.lo { fill: #cfe7ff; }
+.chart-pin-label.pop { fill: #cfe7ff; }
+.chart-sun-line {
+  stroke-width: 1;
+  stroke-dasharray: 1.5 3;
+  opacity: 0.45;
+}
+.chart-sun-line.sunrise { stroke: #ffd28c; }
+.chart-sun-line.sunset { stroke: #ff9c7a; }
+.chart-sun-glyph {
+  font-size: 8.5px;
+  font-weight: 700;
+  paint-order: stroke fill;
+  stroke: rgba(8, 12, 30, 0.6);
+  stroke-width: 2px;
+  stroke-linejoin: round;
+}
+.chart-sun-glyph.sunrise { fill: #ffd28c; }
+.chart-sun-glyph.sunset { fill: #ff9c7a; }
+
 /* ---------- Wind compass (inside wind metric) ---------- */
 .metric-wind {
   grid-template-columns: 1fr auto;
