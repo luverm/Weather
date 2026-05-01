@@ -17,6 +17,7 @@ import { narrate } from "./narrative.js";
 import { places } from "./places.js";
 import { RadarMap } from "./radar-map.js";
 import { installShortcuts } from "./shortcuts.js";
+import { setFavicon } from "./favicon.js";
 
 const engine = new AnimationEngine();
 
@@ -168,6 +169,7 @@ function applyScene(weather) {
   document.querySelector('meta[name="theme-color"]').setAttribute(
     "content", toneToColor(sky.getTone())
   );
+  setFavicon(sampled.condition, sampled.isDay);
 
   // Update audio to match whatever the scene now shows.
   audio.setWeather(sampled, bucket);
