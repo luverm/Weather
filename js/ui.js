@@ -367,9 +367,10 @@ function renderMetrics(w) {
   el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
-  el.metricWindSub.textContent = dirLabel
-    ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
-    : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+  const gustStr = w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—";
+  el.metricWindSub.textContent = dir != null
+    ? `${dirLabel} ${Math.round(dir)}° · gust ${gustStr}`
+    : `gust ${gustStr}`;
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
