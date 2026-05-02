@@ -301,7 +301,11 @@ html[data-reduce-motion="true"] *::after {
   cursor: pointer;
 }
 .place-chip:hover { background: var(--glass-strong); transform: translateY(-1px); }
-.place-chip.active { background: var(--glass-strong); border-color: rgba(255,255,255,0.35); }
+.place-chip.active {
+  background: var(--glass-strong);
+  border-color: rgba(255,255,255,0.35);
+  box-shadow: 0 0 0 2px rgba(154, 209, 255, 0.18), 0 4px 14px rgba(0,0,0,0.18);
+}
 .place-chip .temp { color: var(--fg-muted); font-variant-numeric: tabular-nums; }
 .place-chip .close {
   width: 16px; height: 16px; display: grid; place-items: center;

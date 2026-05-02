@@ -23,7 +23,9 @@ export const places = {
   all() { return read(); },
   add(place) {
     const id = idFor(place);
-    const list = read().filter((p) => idFor(p) !== id);
+    const existing = read();
+    const wasNew = !existing.some((p) => idFor(p) === id);
+    const list = existing.filter((p) => idFor(p) !== id);
     list.unshift({
       id,
       name: place.name,
@@ -33,6 +35,7 @@ export const places = {
       lon: place.lon,
     });
     write(list);
+    return wasNew;
   },
   remove(place) {
     const id = idFor(place);

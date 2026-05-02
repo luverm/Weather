@@ -263,7 +263,11 @@ function setReducedMotion(on) {
 }
 
 ui.init({
-  onSearchSelect: (place) => { places.add(place); loadByCoords(place); },
+  onSearchSelect: (place) => {
+    const isNew = places.add(place);
+    loadByCoords(place);
+    if (isNew) ui.showToast(`${place.name} added to your places`);
+  },
   onLocate: () => useGeolocation(),
   onAudioToggle: () => toggleAudio(),
   onRefresh: () => refreshWeather(),

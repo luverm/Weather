@@ -1224,6 +1224,7 @@ function renderPlaces() {
       if (e.target.closest('[data-action="remove"]')) {
         places.remove(item);
         renderPlaces();
+        ui.showToast(`${item.name} removed`);
         return;
       }
       state.handlers.onPlaceClick?.(item);
