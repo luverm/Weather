@@ -1268,14 +1268,26 @@ function debounce(fn, ms) {
 
 const runSearch = debounce(async (q) => {
   const results = await searchCities(q);
-  renderSearchResults(results);
+  renderSearchResults(results, q);
 }, 200);
 
-function renderSearchResults(results) {
+function highlightMatch(text, query) {
+  const safe = escapeHtml(text || "");
+  const q = (query || "").trim();
+  if (!q) return safe;
+  // Case-insensitive match of the contiguous query string in the escaped name.
+  const lowText = safe.toLowerCase();
+  const lowQ = q.toLowerCase();
+  const i = lowText.indexOf(lowQ);
+  if (i < 0) return safe;
+  return `${safe.slice(0, i)}<mark>${safe.slice(i, i + q.length)}</mark>${safe.slice(i + q.length)}`;
+}
+
+function renderSearchResults(results, query) {
   if (!results.length) { el.searchResults.hidden = true; el.searchResults.innerHTML = ""; return; }
   el.searchResults.innerHTML = results.map((r, i) => `
     <li role="option" data-index="${i}">
-      <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
+      <span>${highlightMatch(r.name, query)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
       <span class="sub">${escapeHtml(r.country || "")}</span>
     </li>
   `).join("");

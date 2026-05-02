@@ -259,6 +259,12 @@ html[data-reduce-motion="true"] *::after {
 .search-results li:hover,
 .search-results li[aria-selected="true"] { background: rgba(255, 255, 255, 0.08); }
 .search-results .sub { color: rgba(246, 247, 251, 0.55); font-size: 13px; }
+.search-results mark {
+  background: rgba(154, 209, 255, 0.22);
+  color: var(--fg);
+  border-radius: 3px;
+  padding: 0 1px;
+}
 .search-results .recent-heading {
   padding: 8px 12px 4px;
   font-size: 10px;
