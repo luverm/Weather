@@ -823,6 +823,11 @@ html[data-reduce-motion="true"] *::after {
   color: var(--fg-dim);
   margin-left: 6px;
 }
+.chart-popover .popover-mm {
+  color: rgba(154, 209, 255, 0.95);
+  font-variant-numeric: tabular-nums;
+  margin-left: 2px;
+}
 .chart-hover {
   font-size: 12px;
   color: var(--fg);
