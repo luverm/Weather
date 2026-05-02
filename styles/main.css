@@ -1535,6 +1535,15 @@ kbd {
 .daily-spark circle { transition: r 160ms var(--ease); }
 .daily-spark .dot-hi { fill: #ff9c7a; }
 .daily-spark .dot-lo { fill: #9ad1ff; }
+.daily-spark circle.active { r: 4; filter: drop-shadow(0 0 6px currentColor); }
+.daily-spark-cursor {
+  stroke: var(--fg-muted);
+  stroke-width: 1;
+  stroke-dasharray: 2 4;
+  opacity: 0.7;
+  pointer-events: none;
+  transition: opacity 160ms var(--ease);
+}
 .forecast-track {
   display: grid;
   grid-auto-flow: column;

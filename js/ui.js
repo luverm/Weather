@@ -75,6 +75,7 @@ const el = {
   dailyHi: $("#daily-hi"),
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
+  dailySparkCursor: $("#daily-spark-cursor"),
   dailyDelta: $("#daily-delta"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
@@ -994,7 +995,31 @@ function renderDaily(w) {
       ${extra}
     `;
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
+    item.addEventListener("pointerenter", () => highlightDailySpark(i, days.length));
+    item.addEventListener("pointerleave", () => highlightDailySpark(null));
+    item.addEventListener("focus", () => highlightDailySpark(i, days.length));
+    item.addEventListener("blur", () => highlightDailySpark(null));
     el.dailyTrack.appendChild(item);
+  });
+}
+
+function highlightDailySpark(idx, total) {
+  if (!el.dailySparkCursor || !el.dailySparkDots) return;
+  const dots = el.dailySparkDots.querySelectorAll("circle");
+  dots.forEach((c) => c.classList.remove("active"));
+  if (idx == null || total < 2) {
+    el.dailySparkCursor.setAttribute("x1", "-10");
+    el.dailySparkCursor.setAttribute("x2", "-10");
+    return;
+  }
+  const W = 600, PAD = 10;
+  const x = PAD + (idx / (total - 1)) * (W - PAD * 2);
+  el.dailySparkCursor.setAttribute("x1", x.toFixed(1));
+  el.dailySparkCursor.setAttribute("x2", x.toFixed(1));
+  // Pulse the matching dots (hi at index*2, lo at index*2+1 in source order).
+  dots.forEach((c) => {
+    const cx = parseFloat(c.getAttribute("cx") || "0");
+    if (Math.abs(cx - x) < 0.5) c.classList.add("active");
   });
 }
 
