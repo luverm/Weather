@@ -911,10 +911,10 @@ function renderHourly(w) {
 function highlightHour(index) {
   const items = el.forecastTrack.querySelectorAll(".forecast-item");
   items.forEach((it, i) => it.classList.toggle("active", i === index));
-  // Keep the active tile in view when scrubbing (skip on the initial render
-  // when nothing is highlighted to avoid jolting the page on load).
-  if (index != null && index >= 0 && items[index]) {
-    items[index].scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  // Bring the active tile into view via the shortest scroll. Using "nearest"
+  // (instead of "center") avoids re-centering hour 0 on the initial render.
+  if (index != null && index > 0 && items[index]) {
+    items[index].scrollIntoView({ behavior: "smooth", inline: "nearest", block: "nearest" });
   }
 }
 
