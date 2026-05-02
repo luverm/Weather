@@ -841,6 +841,19 @@ html[data-reduce-motion="true"] *::after {
   fill: var(--fg-muted);
   font-size: 9.5px;
 }
+.chart-labels .chart-tomorrow-line {
+  stroke: var(--fg-dim);
+  stroke-width: 0.8;
+  stroke-dasharray: 2 4;
+  opacity: 0.55;
+}
+.chart-labels text.chart-tomorrow-tag {
+  fill: var(--fg-muted);
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
 .chart-cursor {
   stroke: var(--accent);
   stroke-width: 1.2;

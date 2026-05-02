@@ -288,5 +288,29 @@ export class HourlyChart {
       tTxt.textContent = `${Math.round(tVal)}°`;
       labG.appendChild(tTxt);
     });
+
+    // "Tomorrow" divider: vertical dashed line + label at the first midnight
+    // transition in the 24h window. Helps the eye separate today vs tomorrow.
+    for (let i = 1; i < this.hours.length; i++) {
+      const prevHh = this._hourOf(this.hours[i - 1].time);
+      const curHh = this._hourOf(this.hours[i].time);
+      if (prevHh === "23" && curHh === "00") {
+        const x = iToX(i - 0.5);
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", x.toFixed(1));
+        line.setAttribute("x2", x.toFixed(1));
+        line.setAttribute("y1", String(PAD_TOP));
+        line.setAttribute("y2", String(H - PAD_BOT + 6));
+        line.setAttribute("class", "chart-tomorrow-line");
+        labG.appendChild(line);
+        const tag = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        tag.setAttribute("x", (x + 4).toFixed(1));
+        tag.setAttribute("y", String(PAD_TOP + 8));
+        tag.setAttribute("class", "chart-tomorrow-tag");
+        tag.textContent = "tomorrow";
+        labG.appendChild(tag);
+        break;
+      }
+    }
   }
 }
