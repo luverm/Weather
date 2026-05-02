@@ -1233,6 +1233,41 @@ kbd {
   position: relative;
 }
 .comfort-strip[hidden] { display: none; }
+
+.chart-precip-total {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 6px 0;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--fg-muted);
+  background: rgba(154, 209, 255, 0.07);
+  border: 1px solid rgba(154, 209, 255, 0.18);
+  font-variant-numeric: tabular-nums;
+}
+.chart-precip-total[hidden] { display: none; }
+.chart-precip-icon {
+  width: 14px; height: 14px;
+  color: rgba(154, 209, 255, 0.85);
+  flex-shrink: 0;
+}
+.chart-precip-bars {
+  margin-left: auto;
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  height: 16px;
+}
+.chart-precip-bar {
+  width: 4px;
+  height: var(--p);
+  border-radius: 1px;
+  background: linear-gradient(180deg, rgba(154, 209, 255, 0.8), rgba(154, 209, 255, 0.25));
+  display: block;
+}
 .cstrip-cell {
   position: relative;
   padding: 0;

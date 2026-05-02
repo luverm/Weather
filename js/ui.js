@@ -101,6 +101,9 @@ const el = {
   weekendIconSun: $("#weekend-icon-sun"),
   forecastTrack: $("#forecast-track"),
   dailyTrack: $("#daily-track"),
+  chartPrecipTotal: $("#chart-precip-total"),
+  chartPrecipHeadline: $("#chart-precip-headline"),
+  chartPrecipBars: $("#chart-precip-bars"),
   nowcast: $("#nowcast"),
   nowcastHeadline: $("#nowcast-headline"),
   nowcastSub: $("#nowcast-sub"),
@@ -199,6 +202,7 @@ export const ui = {
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
+    renderPrecipTotal(weather);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
@@ -907,6 +911,42 @@ function highlightHour(index) {
   if (index != null && index >= 0 && items[index]) {
     items[index].scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
   }
+}
+
+function renderPrecipTotal(w) {
+  if (!el.chartPrecipTotal) return;
+  const next = (w.hourly || []).slice(0, 12);
+  if (!next.length) { el.chartPrecipTotal.hidden = true; return; }
+  let total = 0;
+  let peakPop = 0;
+  let peakIdx = -1;
+  for (let i = 0; i < next.length; i++) {
+    total += next[i].precip || 0;
+    if ((next[i].pop ?? 0) > peakPop) { peakPop = next[i].pop ?? 0; peakIdx = i; }
+  }
+  // Hide the strip entirely when there's nothing meaningful to say.
+  if (total < 0.1 && peakPop < 25) {
+    el.chartPrecipTotal.hidden = true;
+    return;
+  }
+  el.chartPrecipTotal.hidden = false;
+  let headline;
+  if (total >= 0.1) {
+    const mm = total >= 10 ? Math.round(total) : (Math.round(total * 10) / 10).toFixed(1);
+    headline = `Next 12h · ${mm} mm`;
+  } else {
+    headline = `Next 12h · dry`;
+  }
+  if (peakPop >= 25 && peakIdx >= 0) {
+    const ts = next[peakIdx].time;
+    headline += ` · peak ${peakPop}% at ${fmtTime(ts).toLowerCase()}`;
+  }
+  el.chartPrecipHeadline.textContent = headline;
+  // Render mini bars proportional to each hour's pop, capped 0..100.
+  el.chartPrecipBars.innerHTML = next.map((h) => {
+    const pct = Math.max(2, Math.min(100, h.pop ?? 0));
+    return `<span class="chart-precip-bar" style="--p:${pct}%" title="${fmtTime(h.time)} · ${h.pop ?? 0}%"></span>`;
+  }).join("");
 }
 
 function renderDaily(w) {
