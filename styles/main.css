@@ -629,6 +629,11 @@ html[data-reduce-motion="true"] *::after {
 
 /* ---------- Daily expand ---------- */
 .daily-item { cursor: pointer; }
+.daily-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
 .daily-item[data-expanded="true"] { background: var(--glass-strong); }
 .daily-expand {
   grid-column: 1 / -1;
