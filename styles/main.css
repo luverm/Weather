@@ -1475,7 +1475,7 @@ kbd {
 .forecast-track::-webkit-scrollbar { display: none; }
 .forecast-item {
   display: grid;
-  grid-template-rows: auto auto auto auto;
+  grid-template-rows: auto auto auto auto auto;
   gap: 4px;
   justify-items: center;
   padding: 10px 6px;
@@ -1484,6 +1484,23 @@ kbd {
   transition: background 200ms var(--ease), transform 200ms var(--ease);
   cursor: pointer;
 }
+.forecast-wind {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+}
+.forecast-wind-arrow {
+  width: 10px;
+  height: 10px;
+  display: inline-block;
+  color: var(--fg-muted);
+  transform-origin: 50% 50%;
+}
+.forecast-item.active .forecast-wind-arrow,
+.forecast-item:hover .forecast-wind-arrow { color: var(--accent); }
 .forecast-item:hover { background: var(--glass); transform: translateY(-2px); }
 .forecast-item.active { background: var(--glass-strong); }
 .forecast-time { font-size: 11px; letter-spacing: 0.08em; color: var(--fg-dim); text-transform: uppercase; }

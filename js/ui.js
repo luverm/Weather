@@ -881,10 +881,17 @@ function renderHourly(w) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    const windHtml = h.wind != null
+      ? `<span class="forecast-wind" title="${cardinal(h.windDir ?? 0)} ${Math.round(h.wind)} km/h">
+           ${h.windDir != null ? `<svg class="forecast-wind-arrow" viewBox="0 0 12 12" style="transform:rotate(${(h.windDir + 180) % 360}deg)" aria-hidden="true"><path d="M6 1.5 L9 9 L6 7 L3 9 Z" fill="currentColor"/></svg>` : ""}
+           <span class="forecast-wind-spd">${Math.round(h.wind)}</span>
+         </span>`
+      : "";
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
+      ${windHtml}
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
@@ -895,6 +902,11 @@ function renderHourly(w) {
 function highlightHour(index) {
   const items = el.forecastTrack.querySelectorAll(".forecast-item");
   items.forEach((it, i) => it.classList.toggle("active", i === index));
+  // Keep the active tile in view when scrubbing (skip on the initial render
+  // when nothing is highlighted to avoid jolting the page on load).
+  if (index != null && index >= 0 && items[index]) {
+    items[index].scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }
 }
 
 function renderDaily(w) {
