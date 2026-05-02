@@ -168,6 +168,10 @@
       <div class="scrubber glass" aria-label="Time scrubber">
         <div class="scrubber-head">
           <button id="scrubber-reset" class="scrubber-reset" aria-label="Return to now">Now</button>
+          <button id="scrubber-play" class="scrubber-play" type="button" aria-label="Play time-lapse" data-playing="false">
+            <svg class="scrubber-play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4l14 8-14 8V4z" fill="currentColor"/></svg>
+            <svg class="scrubber-pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h4v16H6zM14 4h4v16h-4z" fill="currentColor"/></svg>
+          </button>
           <span id="scrubber-time" class="scrubber-time">—</span>
           <span id="scrubber-delta" class="scrubber-delta"></span>
         </div>
@@ -463,6 +467,7 @@
           <div><dt><kbd>Space</kbd></dt><dd>Play / pause radar</dd></div>
           <div><dt><kbd>F</kbd></dt><dd>Fullscreen radar</dd></div>
           <div><dt><kbd>N</kbd></dt><dd>Return scrubber to now</dd></div>
+          <div><dt><kbd>P</kbd></dt><dd>Play / pause time-lapse</dd></div>
           <div><dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Nudge time ± 1 h</dd></div>
           <div><dt><kbd>[</kbd> <kbd>]</kbd></dt><dd>Cycle saved cities</dd></div>
           <div><dt><kbd>?</kbd></dt><dd>Show / hide this panel</dd></div>

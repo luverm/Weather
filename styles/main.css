@@ -531,6 +531,24 @@ html[data-reduce-motion="true"] *::after {
 }
 [data-scrubbing="true"] .scrubber-reset { opacity: 1; }
 .scrubber-reset:hover { color: var(--fg); background: var(--glass-strong); }
+
+.scrubber-play {
+  width: 26px; height: 26px;
+  display: inline-grid; place-items: center;
+  border-radius: 999px;
+  color: var(--fg-muted);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--stroke);
+  cursor: pointer;
+  transition: color 200ms var(--ease), background 200ms var(--ease), transform 200ms var(--ease);
+}
+.scrubber-play:hover { color: var(--fg); background: var(--glass-strong); transform: scale(1.05); }
+.scrubber-play svg { width: 12px; height: 12px; }
+.scrubber-play .scrubber-pause-icon { display: none; }
+.scrubber-play[data-playing="true"] { color: var(--accent); border-color: rgba(154,209,255,0.45); background: rgba(154,209,255,0.12); }
+.scrubber-play[data-playing="true"] .scrubber-play-icon { display: none; }
+.scrubber-play[data-playing="true"] .scrubber-pause-icon { display: block; }
+
 .scrubber-time {
   font-variant-numeric: tabular-nums;
   color: var(--fg);

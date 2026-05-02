@@ -9,7 +9,7 @@ import { clock } from "./clock.js";
 const RANGE_HOURS = 24;
 
 export class Scrubber {
-  constructor({ trackEl, thumbEl, fillEl, timeEl, deltaEl, resetEl,
+  constructor({ trackEl, thumbEl, fillEl, timeEl, deltaEl, resetEl, playEl,
                 sunriseEl, sunsetEl, appEl, onScrub }) {
     this.track = trackEl;
     this.thumb = thumbEl;
@@ -17,11 +17,14 @@ export class Scrubber {
     this.timeEl = timeEl;
     this.deltaEl = deltaEl;
     this.resetEl = resetEl;
+    this.playEl = playEl;
     this.sunriseEl = sunriseEl;
     this.sunsetEl = sunsetEl;
     this.appEl = appEl; // receives data-scrubbing attribute
     this.onScrub = onScrub;
     this.dragging = false;
+    this.playing = false;
+    this._playTimer = null;
     this.start = Date.now();
     this.sunrise = null;
     this.sunset = null;
@@ -69,6 +72,8 @@ export class Scrubber {
       this.dragging = true;
       this.appEl?.setAttribute("data-scrubbing", "true");
       this.track.setPointerCapture?.(e.pointerId);
+      // Stop playback the moment the user grabs the slider.
+      if (this.playing) this.pause();
       this._updateFromEvent(e);
     };
     const onMove = (e) => {
@@ -99,9 +104,54 @@ export class Scrubber {
     });
 
     this.resetEl?.addEventListener("click", () => this.reset());
+    this.playEl?.addEventListener("click", () => this.toggleplay());
+
+    // Pause auto-play when the tab loses focus so it doesn't run hidden.
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden && this.playing) this.pause();
+    });
+  }
+
+  toggleplay() {
+    if (this.playing) this.pause();
+    else this.play();
+  }
+
+  play() {
+    if (this.playing) return;
+    this.playing = true;
+    if (this.playEl) {
+      this.playEl.dataset.playing = "true";
+      this.playEl.setAttribute("aria-label", "Pause time-lapse");
+    }
+    this.appEl?.setAttribute("data-scrubbing", "true");
+    // Advance ~12 simulated minutes per real-time tick (200ms) — a full 24h
+    // pass takes about 8 seconds.
+    const STEP_MIN = 12;
+    const TICK_MS = 200;
+    const MAX_OFFSET = (RANGE_HOURS - 1) * 3600_000;
+    this._playTimer = setInterval(() => {
+      let next = clock.offset() + STEP_MIN * 60_000;
+      if (next > MAX_OFFSET) {
+        // Loop back to live so the experience feels continuous.
+        next = -3600_000;
+      }
+      this._setOffset(next);
+    }, TICK_MS);
+  }
+
+  pause() {
+    if (!this.playing) return;
+    this.playing = false;
+    if (this.playEl) {
+      this.playEl.dataset.playing = "false";
+      this.playEl.setAttribute("aria-label", "Play time-lapse");
+    }
+    if (this._playTimer) { clearInterval(this._playTimer); this._playTimer = null; }
   }
 
   reset() {
+    if (this.playing) this.pause();
     clock.setOffset(0);
     this.appEl?.setAttribute("data-scrubbing", "false");
     this._render(this._currentT());

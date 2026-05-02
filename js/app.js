@@ -184,6 +184,7 @@ const scrubber = new Scrubber({
   timeEl: document.getElementById("scrubber-time"),
   deltaEl: document.getElementById("scrubber-delta"),
   resetEl: document.getElementById("scrubber-reset"),
+  playEl: document.getElementById("scrubber-play"),
   sunriseEl: document.getElementById("scrubber-sunrise"),
   sunsetEl: document.getElementById("scrubber-sunset"),
   appEl: document.querySelector(".app"),
@@ -288,6 +289,7 @@ installShortcuts({
   toggleFullscreenRadar: () => document.getElementById("radar-full")?.click(),
   toggleRadar: () => document.getElementById("radar-play")?.click(),
   resetScrubber: () => scrubber.reset(),
+  toggleScrubberPlay: () => scrubber.toggleplay(),
   cyclePlace: (dir) => {
     const list = places.all();
     if (list.length < 2) return;
