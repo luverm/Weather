@@ -125,10 +125,10 @@ export class Scrubber {
       this.playEl.setAttribute("aria-label", "Pause time-lapse");
     }
     this.appEl?.setAttribute("data-scrubbing", "true");
-    // Advance ~12 simulated minutes per real-time tick (200ms) — a full 24h
-    // pass takes about 8 seconds.
-    const STEP_MIN = 12;
-    const TICK_MS = 200;
+    // Advance ~18 simulated minutes per real-time tick (180ms) — a full 24h
+    // pass takes about 14 seconds.
+    const STEP_MIN = 18;
+    const TICK_MS = 180;
     const MAX_OFFSET = (RANGE_HOURS - 1) * 3600_000;
     this._playTimer = setInterval(() => {
       let next = clock.offset() + STEP_MIN * 60_000;
