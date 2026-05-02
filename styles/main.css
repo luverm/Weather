@@ -340,6 +340,11 @@ html[data-reduce-motion="true"] *::after {
   animation: pulse 2.4s ease-in-out infinite;
 }
 [data-scrubbing="true"] .live-dot { background: #ffb86b; box-shadow: 0 0 8px #ffb86b; animation: none; }
+html.is-stale .live-dot {
+  animation-duration: 5s;
+  opacity: 0.55;
+  filter: saturate(0.6);
+}
 .place-name {
   margin: 0;
   font-size: clamp(30px, 4.8vw, 52px);
