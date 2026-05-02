@@ -361,6 +361,33 @@ function renderDayRange(w) {
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+
+  // Wire click-to-scrub: tap "min" jumps to today's coldest hour, "max" to
+  // the warmest. We search across hourly entries that fall in the same day.
+  bindDayRangeJump(w, lo, hi);
+}
+
+function bindDayRangeJump(w, lo, hi) {
+  const today = (w.hourly || []).filter((h) => sameLocalDay(h.time, Date.now(), w.timezone));
+  if (!today.length) return;
+  const closest = (target) =>
+    today.reduce((best, h) => (Math.abs(h.temp - target) < Math.abs(best.temp - target) ? h : best), today[0]);
+  const minHour = closest(lo);
+  const maxHour = closest(hi);
+  el.dayRangeMin.style.cursor = "pointer";
+  el.dayRangeMax.style.cursor = "pointer";
+  el.dayRangeMin.title = `Jump to coldest hour (${fmtTime(minHour.time)})`;
+  el.dayRangeMax.title = `Jump to warmest hour (${fmtTime(maxHour.time)})`;
+  el.dayRangeMin.onclick = () => state.handlers.onHourClick?.(minHour.time);
+  el.dayRangeMax.onclick = () => state.handlers.onHourClick?.(maxHour.time);
+}
+
+function sameLocalDay(ts, ref, tz) {
+  const fmt = new Intl.DateTimeFormat(undefined, {
+    year: "numeric", month: "2-digit", day: "2-digit",
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  return fmt.format(new Date(ts)) === fmt.format(new Date(ref));
 }
 
 function renderMetrics(w) {
