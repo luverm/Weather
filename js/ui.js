@@ -26,6 +26,9 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  vsYesterday: $("#vs-yesterday"),
+  vsYesterdayArrow: $("#vs-yesterday-arrow"),
+  vsYesterdayText: $("#vs-yesterday-text"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -278,6 +281,53 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  renderVsYesterday(w);
+}
+
+function renderVsYesterday(w) {
+  if (!el.vsYesterday) return;
+  const history = state.weather?.historical;
+  if (!history || !history.length || w.temp == null) {
+    el.vsYesterday.hidden = true;
+    return;
+  }
+  const targetTs = (w._sampledTs ?? Date.now()) - 86_400_000;
+  // Find the closest historical entry, but only accept it if it's within 90
+  // minutes of the target (otherwise the comparison isn't meaningful).
+  let best = null;
+  let bestDiff = Infinity;
+  for (const h of history) {
+    if (h.temp == null) continue;
+    const diff = Math.abs(h.time - targetTs);
+    if (diff < bestDiff) { best = h; bestDiff = diff; }
+  }
+  if (!best || bestDiff > 90 * 60_000) {
+    el.vsYesterday.hidden = true;
+    return;
+  }
+  const deltaC = w.temp - best.temp;
+  // Show the delta in whatever unit is active so the number matches the hero.
+  const display = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
+  const rounded = Math.round(display);
+  el.vsYesterday.hidden = false;
+  // Visual classes drive both arrow + accent color.
+  let cls = "vs-yesterday flat";
+  let arrow = "≈";
+  let copy;
+  if (Math.abs(display) < 1) {
+    copy = "Same as yesterday at this hour";
+  } else if (deltaC > 0) {
+    cls = "vs-yesterday up";
+    arrow = "↑";
+    copy = `${Math.abs(rounded)}° warmer than yesterday`;
+  } else {
+    cls = "vs-yesterday down";
+    arrow = "↓";
+    copy = `${Math.abs(rounded)}° cooler than yesterday`;
+  }
+  el.vsYesterday.className = cls;
+  el.vsYesterdayArrow.textContent = arrow;
+  el.vsYesterdayText.textContent = copy;
 }
 
 function renderDayRange(w) {

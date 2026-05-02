@@ -93,7 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
-    past_hours: 1,
+    past_days: 1, // gives ~24h of past hourly data for "vs yesterday" comparisons
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -128,12 +128,22 @@ function normalize(d, aq) {
   const daily = d.daily || {};
   const now = Date.now();
 
-  // 24-hour hourly forecast starting from the next hour.
+  // 24-hour hourly forecast starting from the next hour, plus a slim
+  // "historical" array of the past ~24h used for "vs yesterday" comparisons.
   const hourly = [];
+  const historical = [];
   if (d.hourly?.time) {
-    for (let i = 0; i < d.hourly.time.length && hourly.length < 24; i++) {
+    for (let i = 0; i < d.hourly.time.length; i++) {
       const t = new Date(d.hourly.time[i]).getTime();
-      if (t < now - 30 * 60 * 1000) continue; // allow slight past for scrubbing
+      if (t < now - 30 * 60 * 1000) {
+        historical.push({
+          time: t,
+          temp: d.hourly.temperature_2m?.[i] ?? null,
+          feelsLike: d.hourly.apparent_temperature?.[i] ?? null,
+        });
+        continue;
+      }
+      if (hourly.length >= 24) continue;
       hourly.push({
         time: t,
         temp: d.hourly.temperature_2m[i],
@@ -210,6 +220,7 @@ function normalize(d, aq) {
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
     hourly,
+    historical,
     daily: dailyForecast,
     nowcast,
     moon,
@@ -385,6 +396,11 @@ function mock(lat, lon) {
       sunrise: new Date().setHours(6, 30, 0, 0),
       sunset: new Date().setHours(19, 0, 0, 0),
       condition: CONDITIONS.CLOUDS, label: "Cloudy",
+    })),
+    historical: Array.from({ length: 24 }, (_, i) => ({
+      time: now - (24 - i) * 3600_000,
+      temp: 17 + Math.sin((i - 6) / 3) * 3,
+      feelsLike: 16 + Math.sin((i - 6) / 3) * 3,
     })),
     nowcast: [],
     moon: computeMoonPhase(new Date()),

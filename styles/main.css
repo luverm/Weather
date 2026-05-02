@@ -391,6 +391,47 @@ html[data-reduce-motion="true"] *::after {
 .unit:hover { background: var(--glass); color: var(--fg); }
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
+
+.vs-yesterday {
+  margin: 8px 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: var(--fg-muted);
+  padding: 3px 9px 3px 7px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid var(--stroke);
+  font-variant-numeric: tabular-nums;
+  transition: opacity 320ms ease, transform 320ms ease, color 200ms ease, background 200ms ease, border-color 200ms ease;
+}
+.vs-yesterday[hidden] { display: none; }
+.vs-yesterday-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1;
+}
+.vs-yesterday.up {
+  color: #ffb196;
+  background: rgba(255, 156, 122, 0.12);
+  border-color: rgba(255, 156, 122, 0.28);
+}
+.vs-yesterday.down {
+  color: #9ad1ff;
+  background: rgba(154, 209, 255, 0.12);
+  border-color: rgba(154, 209, 255, 0.28);
+}
+.vs-yesterday.flat {
+  color: var(--fg-dim);
+}
+[data-scrubbing="true"] .vs-yesterday { opacity: 0.85; }
+
 .day-range {
   margin-top: 10px;
   display: grid;
