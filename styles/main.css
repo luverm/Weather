@@ -604,6 +604,13 @@ html[data-reduce-motion="true"] *::after {
   pointer-events: none;
 }
 .scrubber-track:active .scrubber-thumb { transform: translate(-50%, -50%) scale(1.15); }
+.scrubber:has(.scrubber-play[data-playing="true"]) .scrubber-thumb {
+  animation: scrub-pulse 1.6s ease-in-out infinite;
+}
+@keyframes scrub-pulse {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(255,255,255,0.3), 0 4px 14px rgba(0,0,0,0.4), 0 0 12px var(--accent); }
+  50%      { box-shadow: 0 0 0 1px rgba(255,255,255,0.42), 0 4px 18px rgba(0,0,0,0.4), 0 0 30px var(--accent); }
+}
 
 /* ---------- Pressure sparkline ---------- */
 .metric-pressure,
