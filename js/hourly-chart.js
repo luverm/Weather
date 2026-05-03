@@ -139,9 +139,10 @@ export class HourlyChart {
       ? `<em>feels ${Math.round(feels)}°</em>` : "";
     const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
+    const clouds = h.cloudCover != null ? ` · ${Math.round(h.cloudCover)}% cloud` : "";
     this.popover.innerHTML =
       `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
-      `<em>${h.pop}% precip${wind}${hum}</em>`;
+      `<em>${h.pop}% precip${wind}${hum}${clouds}</em>`;
     this.popover.style.left = `${pxX.toFixed(1)}px`;
     this.popover.style.top = `${pxY.toFixed(1)}px`;
     this.popover.hidden = false;
@@ -222,6 +223,27 @@ export class HourlyChart {
       } else {
         feelsLine.setAttribute("d", "");
       }
+    }
+
+    // Cloud-cover ribbon: a thin band along the top whose opacity tracks
+    // how much of the sky is covered each hour. Helps explain temp dips.
+    const cloudG = this.svg.querySelector("#chart-clouds");
+    if (cloudG) {
+      cloudG.innerHTML = "";
+      const cellW = innerW / this.hours.length;
+      const ribbonY = 2;
+      const ribbonH = 5;
+      this.hours.forEach((h, i) => {
+        const cc = h.cloudCover;
+        if (cc == null || cc < 5) return;
+        const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        r.setAttribute("x", (PAD_LEFT + i * cellW).toFixed(1));
+        r.setAttribute("y", String(ribbonY));
+        r.setAttribute("width", cellW.toFixed(1));
+        r.setAttribute("height", String(ribbonH));
+        r.setAttribute("opacity", (0.18 + (cc / 100) * 0.55).toFixed(2));
+        cloudG.appendChild(r);
+      });
     }
 
     // Precipitation probability bars (0-100% -> 0..12px height)

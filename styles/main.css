@@ -716,6 +716,7 @@ html[data-reduce-motion="true"] *::after {
   opacity: 0.55;
 }
 .legend-swatch.precip { background: rgba(154, 209, 255, 0.55); }
+.legend-swatch.clouds { background: rgba(220, 226, 240, 0.55); }
 
 .chart-wrap {
   position: relative;
@@ -772,6 +773,10 @@ html[data-reduce-motion="true"] *::after {
 }
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
+}
+.chart-clouds rect {
+  fill: rgba(220, 226, 240, 0.85);
+  shape-rendering: crispEdges;
 }
 .chart-labels text {
   font-size: 9px;
