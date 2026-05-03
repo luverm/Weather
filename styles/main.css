@@ -977,9 +977,13 @@ kbd {
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
 
+.sun-chips {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-top: 8px;
+}
 .golden-chip {
   display: inline-flex; align-items: center; gap: 8px;
-  margin-top: 8px; padding: 6px 10px;
+  padding: 6px 10px;
   border-radius: 999px;
   background: linear-gradient(120deg, rgba(255,194,128,0.14), rgba(255,150,90,0.08));
   border: 1px solid rgba(255,194,128,0.28);
@@ -1022,6 +1026,29 @@ kbd {
 .golden-chip-label { color: var(--fg); }
 .golden-chip-time { color: var(--fg-muted); }
 html[data-reduce-motion="true"] .golden-chip { animation: none; }
+
+.sunset-chip[data-tier="vivid"] {
+  background: linear-gradient(120deg, rgba(255,120,140,0.22), rgba(255,180,90,0.18));
+  border-color: rgba(255,140,150,0.55);
+  box-shadow: 0 0 0 1px rgba(255,140,150,0.18) inset, 0 0 18px rgba(255,140,120,0.22);
+}
+.sunset-chip[data-tier="vivid"] .golden-chip-icon { color: rgba(255,180,160,1); }
+.sunset-chip[data-tier="colorful"] {
+  background: linear-gradient(120deg, rgba(255,170,120,0.2), rgba(255,200,150,0.1));
+  border-color: rgba(255,170,120,0.45);
+}
+.sunset-chip[data-tier="colorful"] .golden-chip-icon { color: rgba(255,200,160,0.95); }
+.sunset-chip[data-tier="soft"] {
+  background: linear-gradient(120deg, rgba(190,170,200,0.16), rgba(160,160,200,0.08));
+  border-color: rgba(190,170,210,0.36);
+}
+.sunset-chip[data-tier="soft"] .golden-chip-icon { color: rgba(210,200,230,0.9); }
+.sunset-chip[data-tier="muted"] {
+  background: linear-gradient(120deg, rgba(140,150,170,0.14), rgba(120,130,150,0.08));
+  border-color: rgba(160,170,190,0.3);
+  opacity: 0.85;
+}
+.sunset-chip[data-tier="muted"] .golden-chip-icon { color: rgba(180,190,205,0.85); }
 
 /* ---------- Radar map ---------- */
 .radar {

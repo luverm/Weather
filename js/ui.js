@@ -11,6 +11,7 @@ import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { nextLightWindow } from "./golden-hour.js";
+import { predictSunset } from "./sunset-forecast.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -94,6 +95,9 @@ const el = {
   goldenChip: $("#golden-chip"),
   goldenChipLabel: $("#golden-chip-label"),
   goldenChipTime: $("#golden-chip-time"),
+  sunsetChip: $("#sunset-chip"),
+  sunsetChipLabel: $("#sunset-chip-label"),
+  sunsetChipTime: $("#sunset-chip-time"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -529,6 +533,21 @@ function renderSun(w) {
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   scheduleGoldenChip(w);
+  renderSunsetChip(w);
+}
+
+function renderSunsetChip(w) {
+  if (!el.sunsetChip || !el.sunsetChipLabel || !el.sunsetChipTime) return;
+  const forecast = predictSunset(w);
+  if (!forecast) { el.sunsetChip.hidden = true; return; }
+  el.sunsetChipLabel.textContent = forecast.label;
+  el.sunsetChipTime.textContent = `${fmtTime(forecast.sunsetTs)} · ${forecast.score}/100`;
+  el.sunsetChip.dataset.tier = forecast.tier;
+  el.sunsetChip.hidden = false;
+  el.sunsetChip.title =
+    `Cloud cover at sunset: low ${Math.round(forecast.sample.low)}% · ` +
+    `mid ${Math.round(forecast.sample.mid)}% · high ${Math.round(forecast.sample.high)}%`;
+  el.sunsetChip.onclick = () => state.handlers.onHourClick?.(forecast.sunsetTs);
 }
 
 function scheduleGoldenChip(w) {
