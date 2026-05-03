@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { nextLightWindow } from "./golden-hour.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -90,6 +91,9 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  goldenChip: $("#golden-chip"),
+  goldenChipLabel: $("#golden-chip-label"),
+  goldenChipTime: $("#golden-chip-time"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -122,6 +126,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  goldenTimer: null,
   localTimer: null,
 };
 
@@ -523,6 +528,41 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleGoldenChip(w);
+}
+
+function scheduleGoldenChip(w) {
+  if (!el.goldenChip || !el.goldenChipLabel || !el.goldenChipTime) return;
+  if (state.goldenTimer) { clearInterval(state.goldenTimer); state.goldenTimer = null; }
+  const update = () => {
+    const win = nextLightWindow(w?.daily, Date.now());
+    if (!win) { el.goldenChip.hidden = true; return; }
+    const now = Date.now();
+    const inWindow = now >= win.start && now < win.end;
+    const targetTs = inWindow ? win.end : win.start;
+    const verb = inWindow ? "ends" : "starts";
+    const mins = Math.max(0, Math.round((targetTs - now) / 60_000));
+    const rel = mins >= 60
+      ? `${Math.floor(mins / 60)}h ${mins % 60}m`
+      : `${mins}m`;
+    el.goldenChipLabel.textContent = win.label;
+    el.goldenChipTime.textContent = inWindow
+      ? `now · ${verb} ${fmtTime(targetTs)}`
+      : `${fmtTime(targetTs)} · in ${rel}`;
+    el.goldenChip.dataset.tone = win.tone;
+    el.goldenChip.dataset.active = inWindow ? "true" : "false";
+    el.goldenChip.title = inWindow
+      ? `${win.label} ends at ${fmtTime(targetTs)}`
+      : `${win.label} starts at ${fmtTime(targetTs)}`;
+    el.goldenChip.dataset.scrubTs = String(win.start);
+    el.goldenChip.hidden = false;
+  };
+  el.goldenChip.onclick = () => {
+    const ts = parseInt(el.goldenChip.dataset.scrubTs || "", 10);
+    if (ts) state.handlers.onHourClick?.(ts);
+  };
+  update();
+  state.goldenTimer = setInterval(update, 60_000);
 }
 
 function scheduleSunArc(w) {
