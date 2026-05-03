@@ -41,7 +41,7 @@ export function predictSunset(weather, now = Date.now()) {
   // bail — the chip would just be speculative.
   if (sunset - now > 26 * 60 * 60 * 1000) return null;
 
-  const sample = nearestHourBefore(hours, sunset) ?? hours[0];
+  const sample = nearestHourBefore(hours, sunset);
   if (sample == null) return null;
   if (sample.cloudMid == null && sample.cloudHigh == null && sample.cloudCover == null) {
     return null;
@@ -54,8 +54,8 @@ export function predictSunset(weather, now = Date.now()) {
   const visKm = sample.visibility != null ? sample.visibility / 1000 : 16;
   const popPenalty = (sample.pop ?? 0) * 0.4 + Math.min(60, (sample.precip ?? 0) * 30);
 
-  // Mid+high together at ~50% is the sweet spot. Low cloud should be small.
-  const upperCanvas = bell((mid + high) / 2, 50, 40);   // 0..1
+  // High cloud is the primary canvas; mid is a bonus. ~55% is the sweet spot.
+  const upperCanvas = bell(high * 0.7 + mid * 0.3, 55, 30);   // 0..1
   const horizonClear = 1 - clamp01(low / 70);            // 1 when low<5%; 0 when >70%
   const dryAir = 1 - clamp01((humidity - 40) / 50);      // 1 below 40%, 0 above 90%
   const visibility = clamp01(visKm / 20);                // 1 at 20km+

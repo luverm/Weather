@@ -131,6 +131,7 @@ const state = {
   sunTimer: null,
   sunArcTimer: null,
   goldenTimer: null,
+  sunsetTimer: null,
   localTimer: null,
 };
 
@@ -538,16 +539,25 @@ function renderSun(w) {
 
 function renderSunsetChip(w) {
   if (!el.sunsetChip || !el.sunsetChipLabel || !el.sunsetChipTime) return;
-  const forecast = predictSunset(w);
-  if (!forecast) { el.sunsetChip.hidden = true; return; }
-  el.sunsetChipLabel.textContent = forecast.label;
-  el.sunsetChipTime.textContent = `${fmtTime(forecast.sunsetTs)} · ${forecast.score}/100`;
-  el.sunsetChip.dataset.tier = forecast.tier;
-  el.sunsetChip.hidden = false;
-  el.sunsetChip.title =
-    `Cloud cover at sunset: low ${Math.round(forecast.sample.low)}% · ` +
-    `mid ${Math.round(forecast.sample.mid)}% · high ${Math.round(forecast.sample.high)}%`;
-  el.sunsetChip.onclick = () => state.handlers.onHourClick?.(forecast.sunsetTs);
+  let scrubTs = null;
+  const update = () => {
+    const forecast = predictSunset(w);
+    if (!forecast) { el.sunsetChip.hidden = true; scrubTs = null; return; }
+    el.sunsetChipLabel.textContent = forecast.label;
+    el.sunsetChipTime.textContent = `${fmtTime(forecast.sunsetTs)} · ${forecast.score}/100`;
+    el.sunsetChip.dataset.tier = forecast.tier;
+    el.sunsetChip.title =
+      `Cloud cover at sunset: low ${Math.round(forecast.sample.low)}% · ` +
+      `mid ${Math.round(forecast.sample.mid)}% · high ${Math.round(forecast.sample.high)}%`;
+    el.sunsetChip.hidden = false;
+    scrubTs = forecast.sunsetTs;
+  };
+  el.sunsetChip.onclick = () => { if (scrubTs) state.handlers.onHourClick?.(scrubTs); };
+  update();
+  // Re-evaluate alongside the golden chip's own minute timer; predictSunset is
+  // cheap and self-hides once the next sunset isn't in range.
+  if (state.sunsetTimer) clearInterval(state.sunsetTimer);
+  state.sunsetTimer = setInterval(update, 60_000);
 }
 
 function scheduleGoldenChip(w) {
