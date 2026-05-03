@@ -130,6 +130,20 @@ export function buildAlerts(weather) {
       title: "Dense fog",
       detail: `Visibility under ${Math.round(weather.visibility)} m right now.`,
     });
+  } else {
+    // Look ahead for fog rolling in (visibility < 1 km in the next 6 h).
+    const incoming = hours.slice(0, 6).find(
+      (h) => h.visibility != null && h.visibility < 1000
+    );
+    if (incoming) {
+      out.push({
+        id: "fog-incoming",
+        severity: "info",
+        title: "Fog moving in",
+        detail: `Visibility drops near ${shortClock(incoming.time)}.`,
+        ts: incoming.time,
+      });
+    }
   }
 
   // ---- UV (only if not already mentioned by heat) ----
