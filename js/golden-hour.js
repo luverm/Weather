@@ -1,12 +1,5 @@
-// Compute the next "magic light" window — golden hour or blue hour — from
-// the daily sunrise/sunset list. Used to surface a small chip on the sun card
-// so photographers (and humans who like pretty light) know when to look up.
-//
-// Window definitions (simple, time-based; sufficient for UI purposes):
-//   morning blue:   sunrise - 30 min  →  sunrise
-//   morning golden: sunrise           →  sunrise + 30 min
-//   evening golden: sunset  - 30 min  →  sunset
-//   evening blue:   sunset            →  sunset  + 30 min
+// Surface the next "magic light" window so photographers (and humans who
+// like pretty light) know when to look up. Time-based — close enough for UI.
 
 const MIN = 60_000;
 const WINDOW_MIN = 30;
@@ -31,20 +24,12 @@ function windowsForDay(day) {
   return out;
 }
 
-// Returns the active window (if any) or the next upcoming one, looking up to
-// ~3 days ahead. Each window is decorated with .label and .tone.
+// Returns the active window (if any) or the next upcoming one, decorated
+// with .label and .tone.
 export function nextLightWindow(daily, now = Date.now()) {
   if (!Array.isArray(daily) || !daily.length) return null;
   const all = daily.flatMap(windowsForDay).sort((a, b) => a.start - b.start);
-
-  const active = all.find((w) => now >= w.start && now < w.end);
-  if (active) return decorate(active);
-
-  const upcoming = all.find((w) => w.start > now);
-  return upcoming ? decorate(upcoming) : null;
-}
-
-function decorate(w) {
-  const meta = KINDS[w.kind] || { label: "Magic light", tone: "golden" };
-  return { ...w, label: meta.label, tone: meta.tone };
+  const pick = all.find((w) => now >= w.start && now < w.end)
+            ?? all.find((w) => w.start > now);
+  return pick ? { ...pick, ...KINDS[pick.kind] } : null;
 }

@@ -534,32 +534,25 @@ function renderSun(w) {
 function scheduleGoldenChip(w) {
   if (!el.goldenChip || !el.goldenChipLabel || !el.goldenChipTime) return;
   if (state.goldenTimer) { clearInterval(state.goldenTimer); state.goldenTimer = null; }
+  let currentStart = null;
   const update = () => {
     const win = nextLightWindow(w?.daily, Date.now());
-    if (!win) { el.goldenChip.hidden = true; return; }
+    if (!win) { el.goldenChip.hidden = true; currentStart = null; return; }
     const now = Date.now();
     const inWindow = now >= win.start && now < win.end;
     const targetTs = inWindow ? win.end : win.start;
-    const verb = inWindow ? "ends" : "starts";
     const mins = Math.max(0, Math.round((targetTs - now) / 60_000));
-    const rel = mins >= 60
-      ? `${Math.floor(mins / 60)}h ${mins % 60}m`
-      : `${mins}m`;
     el.goldenChipLabel.textContent = win.label;
     el.goldenChipTime.textContent = inWindow
-      ? `now · ${verb} ${fmtTime(targetTs)}`
-      : `${fmtTime(targetTs)} · in ${rel}`;
+      ? `now · ends ${fmtTime(targetTs)}`
+      : `${fmtTime(targetTs)} · in ${fmtMins(mins)}`;
     el.goldenChip.dataset.tone = win.tone;
     el.goldenChip.dataset.active = inWindow ? "true" : "false";
-    el.goldenChip.title = inWindow
-      ? `${win.label} ends at ${fmtTime(targetTs)}`
-      : `${win.label} starts at ${fmtTime(targetTs)}`;
-    el.goldenChip.dataset.scrubTs = String(win.start);
     el.goldenChip.hidden = false;
+    currentStart = win.start;
   };
   el.goldenChip.onclick = () => {
-    const ts = parseInt(el.goldenChip.dataset.scrubTs || "", 10);
-    if (ts) state.handlers.onHourClick?.(ts);
+    if (currentStart) state.handlers.onHourClick?.(currentStart);
   };
   update();
   state.goldenTimer = setInterval(update, 60_000);
@@ -600,6 +593,10 @@ function scheduleSunArc(w) {
 
 function clamp01(v) { return Math.max(0, Math.min(1, v)); }
 
+function fmtMins(mins) {
+  return mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
+}
+
 function scheduleSunCountdown(w) {
   if (state.sunTimer) { clearInterval(state.sunTimer); state.sunTimer = null; }
   if (!w?.daily?.length) return;
@@ -617,11 +614,8 @@ function scheduleSunCountdown(w) {
       return;
     }
     const mins = Math.max(0, Math.round((nextTs - now) / 60_000));
-    const label = mins >= 60
-      ? `${Math.floor(mins / 60)}h ${mins % 60}m`
-      : `${mins}m`;
     if (el.sunNextLabel) el.sunNextLabel.textContent = `${nextKind} in`;
-    if (el.sunCountdown) el.sunCountdown.textContent = label;
+    if (el.sunCountdown) el.sunCountdown.textContent = fmtMins(mins);
   };
   update();
   state.sunTimer = setInterval(update, 30_000);
