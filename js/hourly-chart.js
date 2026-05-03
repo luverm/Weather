@@ -226,18 +226,19 @@ export class HourlyChart {
     }
 
     // Cloud-cover ribbon: a thin band along the top whose opacity tracks
-    // how much of the sky is covered each hour. Helps explain temp dips.
+    // how much of the sky is covered each hour. Cells centred on the same
+    // x-scale as the temp line so they read as "this hour was N% cloudy".
     const cloudG = this.svg.querySelector("#chart-clouds");
     if (cloudG) {
       cloudG.innerHTML = "";
-      const cellW = innerW / this.hours.length;
+      const cellW = this.hours.length > 1 ? innerW / (this.hours.length - 1) : innerW;
       const ribbonY = 2;
       const ribbonH = 5;
       this.hours.forEach((h, i) => {
         const cc = h.cloudCover;
         if (cc == null || cc < 5) return;
         const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-        r.setAttribute("x", (PAD_LEFT + i * cellW).toFixed(1));
+        r.setAttribute("x", (iToX(i) - cellW / 2).toFixed(1));
         r.setAttribute("y", String(ribbonY));
         r.setAttribute("width", cellW.toFixed(1));
         r.setAttribute("height", String(ribbonH));
