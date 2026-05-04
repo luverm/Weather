@@ -50,6 +50,11 @@ const el = {
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  sunFoot: $("#sun-foot"),
+  sunNoon: $("#sun-noon"),
+  sunTrend: $("#sun-trend"),
+  sunArcNoon: $("#sun-arc-noon"),
+  sunArcNoonLabel: $("#sun-arc-noon-label"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -515,14 +520,47 @@ function fmtTime(ts) {
 function renderSun(w) {
   el.sunRise.textContent = fmtTime(w.sunrise);
   el.sunSet.textContent = fmtTime(w.sunset);
+  let todayDaylightMin = null;
   if (w.sunrise && w.sunset) {
-    const mins = Math.round((w.sunset - w.sunrise) / 60_000);
-    const hh = Math.floor(mins / 60);
-    const mm = mins % 60;
+    todayDaylightMin = Math.round((w.sunset - w.sunrise) / 60_000);
+    const hh = Math.floor(todayDaylightMin / 60);
+    const mm = todayDaylightMin % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderSunFoot(w, todayDaylightMin);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderSunFoot(w, todayDaylightMin) {
+  if (!el.sunFoot) return;
+  const haveNoon = w.sunrise && w.sunset;
+  const days = w.daily || [];
+  let trendText = "—";
+  let trendCls = "flat";
+  if (days[1]?.sunrise && days[1]?.sunset && todayDaylightMin != null) {
+    const tmrwMin = Math.round((days[1].sunset - days[1].sunrise) / 60_000);
+    const delta = tmrwMin - todayDaylightMin;
+    const abs = Math.abs(delta);
+    if (delta > 0) { trendText = `+${abs}m daylight`; trendCls = "up"; }
+    else if (delta < 0) { trendText = `−${abs}m daylight`; trendCls = "down"; }
+    else { trendText = "Same as today"; trendCls = "flat"; }
+  }
+  if (!haveNoon && trendText === "—") {
+    el.sunFoot.hidden = true;
+    return;
+  }
+  el.sunFoot.hidden = false;
+  if (el.sunNoon) {
+    el.sunNoon.textContent = haveNoon ? fmtTime((w.sunrise + w.sunset) / 2) : "—";
+  }
+  if (el.sunTrend) {
+    el.sunTrend.textContent = trendText;
+    el.sunTrend.className = `sun-trend-value ${trendCls}`;
+  }
+  const showNoon = !!haveNoon;
+  if (el.sunArcNoon) el.sunArcNoon.style.opacity = showNoon ? "1" : "0";
+  if (el.sunArcNoonLabel) el.sunArcNoonLabel.style.opacity = showNoon ? "1" : "0";
 }
 
 function scheduleSunArc(w) {

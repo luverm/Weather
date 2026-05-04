@@ -331,6 +331,11 @@
               </linearGradient>
             </defs>
             <line x1="10" y1="74" x2="190" y2="74" stroke="var(--stroke)" stroke-dasharray="2 4"/>
+            <line id="sun-arc-noon" x1="100" x2="100" y1="74" y2="20"
+                  stroke="rgba(255,225,170,0.22)" stroke-dasharray="1.5 3"/>
+            <text id="sun-arc-noon-label" x="100" y="13"
+                  text-anchor="middle" fill="rgba(255,225,170,0.55)"
+                  font-size="7" letter-spacing="0.5">noon</text>
             <path id="sun-arc-path" d="M10 74 Q100 -26 190 74"
                   fill="none" stroke="url(#sun-arc-grad)" stroke-width="1.5" stroke-linecap="round"/>
             <circle id="sun-arc-marker" cx="10" cy="74" r="4.5" fill="#fff1c9"/>
@@ -348,6 +353,16 @@
               <span class="sun-label">Daylight</span>
               <strong id="sun-daylight">—</strong>
             </div>
+          </div>
+          <div id="sun-foot" class="sun-foot" hidden>
+            <span class="sun-foot-item">
+              <span class="sun-foot-label">Solar noon</span>
+              <strong id="sun-noon">—</strong>
+            </span>
+            <span class="sun-foot-item sun-foot-trend">
+              <span class="sun-foot-label">Tomorrow</span>
+              <strong id="sun-trend">—</strong>
+            </span>
           </div>
         </div>
       </div>
