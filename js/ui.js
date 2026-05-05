@@ -48,6 +48,7 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -515,14 +516,38 @@ function fmtTime(ts) {
 function renderSun(w) {
   el.sunRise.textContent = fmtTime(w.sunrise);
   el.sunSet.textContent = fmtTime(w.sunset);
+  let todayMs = null;
   if (w.sunrise && w.sunset) {
-    const mins = Math.round((w.sunset - w.sunrise) / 60_000);
-    const hh = Math.floor(mins / 60);
-    const mm = mins % 60;
-    el.sunDaylight.textContent = `${hh}h ${mm}m`;
+    todayMs = w.sunset - w.sunrise;
+    const mins = Math.round(todayMs / 60_000);
+    el.sunDaylight.textContent = `${Math.floor(mins / 60)}h ${mins % 60}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(todayMs, w.prevDaylightMs);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderDaylightDelta(todayMs, prevMs) {
+  const tag = el.sunDaylightDelta;
+  if (!tag) return;
+  if (todayMs == null || prevMs == null) {
+    tag.hidden = true;
+    tag.textContent = "";
+    tag.removeAttribute("data-trend");
+    return;
+  }
+  const deltaSec = Math.round((todayMs - prevMs) / 1000);
+  const sign = deltaSec > 0 ? "+" : deltaSec < 0 ? "−" : "±";
+  const abs = Math.abs(deltaSec);
+  const m = Math.floor(abs / 60);
+  const s = abs % 60;
+  let amount;
+  if (m === 0) amount = `${s}s`;
+  else if (s === 0) amount = `${m}m`;
+  else amount = `${m}m ${s}s`;
+  tag.textContent = `${sign}${amount} vs yesterday`;
+  tag.dataset.trend = deltaSec > 5 ? "up" : deltaSec < -5 ? "down" : "flat";
+  tag.hidden = false;
 }
 
 function scheduleSunArc(w) {

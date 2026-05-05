@@ -93,6 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
+    past_days: 1, // yesterday — used for daylight Δ in the sun card
     past_hours: 1,
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
@@ -151,10 +152,20 @@ function normalize(d, aq) {
     }
   }
 
-  // 7-day daily forecast.
+  // We request `past_days=1`, so daily[0] is yesterday in the location's local
+  // timezone. We expose only today + future to consumers, but stash yesterday's
+  // daylight for the sun-card Δ.
+  const todayIdx = (daily.time?.length || 0) > 7 ? 1 : 0;
+  let prevDaylightMs = null;
+  if (todayIdx > 0 && daily.sunrise?.[0] && daily.sunset?.[0]) {
+    prevDaylightMs =
+      new Date(daily.sunset[0]).getTime() - new Date(daily.sunrise[0]).getTime();
+  }
+
+  // 7-day daily forecast (today + 6 ahead).
   const dailyForecast = [];
   if (daily.time) {
-    for (let i = 0; i < daily.time.length; i++) {
+    for (let i = todayIdx; i < daily.time.length; i++) {
       const ts = new Date(daily.time[i]).getTime();
       dailyForecast.push({
         time: ts,
@@ -204,9 +215,9 @@ function normalize(d, aq) {
     isDay: !!c.is_day,
     condition,
     label,
-    sunrise: daily.sunrise?.[0] ? new Date(daily.sunrise[0]).getTime() : null,
-    sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null,
-    uv: daily.uv_index_max?.[0] ?? null,
+    sunrise: daily.sunrise?.[todayIdx] ? new Date(daily.sunrise[todayIdx]).getTime() : null,
+    sunset: daily.sunset?.[todayIdx] ? new Date(daily.sunset[todayIdx]).getTime() : null,
+    uv: daily.uv_index_max?.[todayIdx] ?? null,
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
     hourly,
@@ -215,6 +226,7 @@ function normalize(d, aq) {
     moon,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
+    prevDaylightMs,
     fetchedAt: now,
   };
 }
@@ -315,10 +327,16 @@ function aqiLabel(v) {
 
 function findUvPeak(hourly) {
   if (!hourly?.uv_index) return null;
+  // We may have past hours in the array (past_days/past_hours); only consider
+  // from ~30 min before now onward so the "peak" reflects today/upcoming.
+  const cutoff = Date.now() - 30 * 60_000;
   let peak = { t: null, v: -Infinity };
   for (let i = 0; i < hourly.uv_index.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    if (t < cutoff) continue;
     const v = hourly.uv_index[i];
-    if (v > peak.v) peak = { t: new Date(hourly.time[i]).getTime(), v };
+    if (v == null) continue;
+    if (v > peak.v) peak = { t, v };
   }
   if (peak.t == null) return null;
   return { time: peak.t, value: peak.v };
