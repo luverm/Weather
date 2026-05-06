@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { buildWear } from "./wear.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -87,6 +88,10 @@ const el = {
   insightsList: $("#insights-list"),
   activityCard: $("#activity-card"),
   activityList: $("#activity-list"),
+  wearCard: $("#wear-card"),
+  wearItems: $("#wear-items"),
+  wearHeadline: $("#wear-headline"),
+  wearTagline: $("#wear-tagline"),
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
@@ -191,6 +196,7 @@ export const ui = {
     renderTrends(weather);
     renderInsights(weather);
     renderActivity(weather);
+    renderWear(weather);
     renderAlerts(weather);
     renderWeekend(weather);
     startLocaltime(weather);
@@ -768,6 +774,24 @@ function renderActivity(w) {
       if (ts) state.handlers.onHourClick?.(ts);
     });
   });
+}
+
+function renderWear(w) {
+  if (!el.wearCard || !el.wearItems) return;
+  const wear = buildWear(w);
+  if (!wear || !wear.items?.length) {
+    el.wearCard.hidden = true;
+    return;
+  }
+  el.wearCard.hidden = false;
+  if (el.wearHeadline) el.wearHeadline.textContent = wear.headline || "";
+  if (el.wearTagline) el.wearTagline.textContent = wear.tagline || "";
+  el.wearItems.innerHTML = wear.items.map((it) => `
+    <li class="wear-item" title="${escapeHtml(it.label)}">
+      <span class="wear-icon" aria-hidden="true">${it.icon}</span>
+      <span class="wear-label">${escapeHtml(it.label)}</span>
+    </li>
+  `).join("");
 }
 
 function renderPollen(pollen) {
