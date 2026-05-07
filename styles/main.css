@@ -427,6 +427,68 @@ html[data-reduce-motion="true"] *::after {
   transition: left 380ms var(--ease);
 }
 
+/* ---------- Comfort score gauge ---------- */
+.comfort-score {
+  margin: 12px 0 0;
+  margin-left: auto;
+  max-width: 240px;
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--glass);
+  border: 1px solid var(--stroke);
+  color: var(--comfort-color, var(--accent));
+  animation: slideInUp 500ms var(--ease) both;
+  text-align: left;
+}
+.comfort-score[hidden] { display: none; }
+.comfort-score[data-tone="great"] { --comfort-color: #6fe3a8; }
+.comfort-score[data-tone="good"]  { --comfort-color: #9ad1ff; }
+.comfort-score[data-tone="okay"]  { --comfort-color: #ffd47b; }
+.comfort-score[data-tone="rough"] { --comfort-color: #ff8a6a; }
+.comfort-gauge {
+  width: 56px; height: 56px;
+  filter: drop-shadow(0 0 6px color-mix(in oklab, var(--comfort-color) 55%, transparent));
+}
+.comfort-gauge circle:nth-child(2) {
+  transition: stroke-dashoffset 600ms var(--ease);
+}
+.comfort-num {
+  font-size: 18px;
+  font-weight: 500;
+  fill: var(--fg);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.comfort-meta {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  color: var(--fg);
+}
+.comfort-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+.comfort-meta strong {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--comfort-color);
+}
+.comfort-detail {
+  font-size: 11px;
+  color: var(--fg-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.comfort-detail:empty { display: none; }
+
 /* ---------- Nowcast banner ---------- */
 .nowcast {
   padding: 14px 18px;
@@ -1551,6 +1613,7 @@ kbd {
   .app { padding: calc(14px + var(--safe-top)) 14px calc(14px + var(--safe-bottom)); gap: 12px; }
   .hero-inner { grid-template-columns: 1fr; text-align: left; padding: 22px; }
   .temp-wrap { text-align: left; }
+  .day-range, .comfort-score { margin-left: 0; max-width: none; }
   .metrics { grid-template-columns: repeat(2, 1fr); }
   .extras { grid-template-columns: 1fr; }
   .brand-name { display: none; }

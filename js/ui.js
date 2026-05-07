@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { computeComfortScore } from "./comfort-score.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -98,6 +99,11 @@ const el = {
   weekendIconSun: $("#weekend-icon-sun"),
   forecastTrack: $("#forecast-track"),
   dailyTrack: $("#daily-track"),
+  comfortScore: $("#comfort-score"),
+  comfortArc: $("#comfort-arc"),
+  comfortNum: $("#comfort-num"),
+  comfortLabel: $("#comfort-label"),
+  comfortDetail: $("#comfort-detail"),
   nowcast: $("#nowcast"),
   nowcastHeadline: $("#nowcast-headline"),
   nowcastSub: $("#nowcast-sub"),
@@ -187,6 +193,7 @@ export const ui = {
     renderDaily(weather);
     renderNowcast(weather);
     renderAdvice(weather);
+    renderComfortScore(weather);
     renderPollen(weather.pollen);
     renderTrends(weather);
     renderInsights(weather);
@@ -212,6 +219,7 @@ export const ui = {
     renderLiveValues(sampled, { animate: false });
     renderMetrics(sampled);
     renderAdvice(sampled);
+    renderComfortScore(sampled);
     highlightHour(highlightHourIndex);
     if (state.comfortStrip) state.comfortStrip.highlight(highlightHourIndex);
     if (state.chart && sampled._sampledTs != null) {
@@ -596,6 +604,28 @@ function renderAdvice(w) {
   } else {
     el.advice.hidden = true;
   }
+}
+
+const COMFORT_ARC_LEN = 163.36; // 2π · r where r = 26 in the SVG.
+
+function renderComfortScore(w) {
+  if (!el.comfortScore || !el.comfortArc) return;
+  const result = computeComfortScore(w);
+  if (!result) { el.comfortScore.hidden = true; return; }
+  el.comfortScore.hidden = false;
+  el.comfortScore.dataset.tone = result.tone;
+  const offset = COMFORT_ARC_LEN * (1 - result.score / 100);
+  el.comfortArc.style.strokeDashoffset = offset.toFixed(2);
+  if (el.comfortNum) el.comfortNum.textContent = String(result.score);
+  if (el.comfortLabel) el.comfortLabel.textContent = result.label;
+  if (el.comfortDetail) {
+    el.comfortDetail.textContent = result.limitedBy
+      ? `Limited by ${result.limitedBy}`
+      : (result.score >= 90 ? "Ideal across the board" : "");
+  }
+  el.comfortScore.title = result.limitedBy
+    ? `Comfort ${result.score}/100 — limited by ${result.limitedBy}`
+    : `Comfort ${result.score}/100`;
 }
 
 function startLocaltime(w) {

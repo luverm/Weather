@@ -144,6 +144,23 @@
             </div>
             <span class="day-range-end" id="day-range-max">—</span>
           </div>
+          <div id="comfort-score" class="comfort-score" hidden data-tone="good"
+               aria-label="Outdoor comfort score">
+            <svg class="comfort-gauge" viewBox="0 0 64 64" aria-hidden="true">
+              <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="5"/>
+              <circle id="comfort-arc" cx="32" cy="32" r="26" fill="none"
+                      stroke="currentColor" stroke-width="5" stroke-linecap="round"
+                      stroke-dasharray="163.4" stroke-dashoffset="163.4"
+                      transform="rotate(-90 32 32)"/>
+              <text id="comfort-num" class="comfort-num" x="32" y="38"
+                    text-anchor="middle">—</text>
+            </svg>
+            <div class="comfort-meta">
+              <span class="comfort-eyebrow">Comfort</span>
+              <strong id="comfort-label">—</strong>
+              <span id="comfort-detail" class="comfort-detail"></span>
+            </div>
+          </div>
         </div>
       </div>
 
