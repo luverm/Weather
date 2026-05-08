@@ -90,6 +90,9 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunNoonTick: $("#sun-noon-tick"),
+  sunNoonLabel: $("#sun-noon-label"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -515,14 +518,49 @@ function fmtTime(ts) {
 function renderSun(w) {
   el.sunRise.textContent = fmtTime(w.sunrise);
   el.sunSet.textContent = fmtTime(w.sunset);
+  let todayMins = null;
   if (w.sunrise && w.sunset) {
-    const mins = Math.round((w.sunset - w.sunrise) / 60_000);
-    const hh = Math.floor(mins / 60);
-    const mm = mins % 60;
+    todayMins = Math.round((w.sunset - w.sunrise) / 60_000);
+    const hh = Math.floor(todayMins / 60);
+    const mm = todayMins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderSolarNoon(w);
+  renderDaylightDelta(w, todayMins);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderSolarNoon(w) {
+  if (!el.sunNoonLabel) return;
+  if (!w?.sunrise || !w?.sunset) {
+    el.sunNoonLabel.textContent = "";
+    if (el.sunNoonTick) el.sunNoonTick.style.opacity = "0";
+    return;
+  }
+  const noon = (w.sunrise + w.sunset) / 2;
+  el.sunNoonLabel.textContent = fmtTime(noon);
+  if (el.sunNoonTick) el.sunNoonTick.style.opacity = "";
+}
+
+function renderDaylightDelta(w, todayMins) {
+  if (!el.sunDaylightDelta) return;
+  const tomorrow = w?.daily?.[1];
+  if (todayMins == null || !tomorrow?.sunrise || !tomorrow?.sunset) {
+    el.sunDaylightDelta.textContent = "";
+    el.sunDaylightDelta.removeAttribute("data-dir");
+    return;
+  }
+  const tomorrowMins = Math.round((tomorrow.sunset - tomorrow.sunrise) / 60_000);
+  const diff = tomorrowMins - todayMins;
+  if (Math.abs(diff) < 1) {
+    el.sunDaylightDelta.textContent = "±0m";
+    el.sunDaylightDelta.setAttribute("data-dir", "flat");
+    return;
+  }
+  const sign = diff > 0 ? "+" : "−";
+  el.sunDaylightDelta.textContent = `${sign}${Math.abs(diff)}m`;
+  el.sunDaylightDelta.setAttribute("data-dir", diff > 0 ? "up" : "down");
 }
 
 function scheduleSunArc(w) {

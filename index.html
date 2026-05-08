@@ -333,6 +333,9 @@
             <line x1="10" y1="74" x2="190" y2="74" stroke="var(--stroke)" stroke-dasharray="2 4"/>
             <path id="sun-arc-path" d="M10 74 Q100 -26 190 74"
                   fill="none" stroke="url(#sun-arc-grad)" stroke-width="1.5" stroke-linecap="round"/>
+            <line id="sun-noon-tick" class="sun-noon-tick" x1="100" y1="18" x2="100" y2="30"
+                  stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity="0.55"/>
+            <text id="sun-noon-label" class="sun-noon-label" x="100" y="12" text-anchor="middle"></text>
             <circle id="sun-arc-marker" cx="10" cy="74" r="4.5" fill="#fff1c9"/>
           </svg>
           <div class="sun-row">
@@ -345,7 +348,7 @@
               <strong id="sun-set">—</strong>
             </div>
             <div class="sun-item">
-              <span class="sun-label">Daylight</span>
+              <span class="sun-label">Daylight <span id="sun-daylight-delta" class="sun-daylight-delta" aria-hidden="true"></span></span>
               <strong id="sun-daylight">—</strong>
             </div>
           </div>
