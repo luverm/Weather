@@ -26,6 +26,7 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  vsYesterday: $("#vs-yesterday"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -189,6 +190,7 @@ export const ui = {
     renderAdvice(weather);
     renderPollen(weather.pollen);
     renderTrends(weather);
+    renderVsYesterday(weather);
     renderInsights(weather);
     renderActivity(weather);
     renderAlerts(weather);
@@ -303,6 +305,34 @@ function renderDayRange(w) {
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+}
+
+function renderVsYesterday(w) {
+  if (!el.vsYesterday) return;
+  const y = w?.yesterday;
+  if (!y || y.sameHourTemp == null || w.temp == null) {
+    el.vsYesterday.hidden = true;
+    el.vsYesterday.textContent = "";
+    return;
+  }
+  // Compare in the user's chosen unit so rounding matches the hero.
+  const deltaC = w.temp - y.sameHourTemp;
+  const deltaDisplay = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
+  const rounded = Math.round(deltaDisplay);
+  let cls, text;
+  if (rounded === 0) {
+    cls = "vs-yesterday flat";
+    text = "About the same as yesterday";
+  } else if (rounded > 0) {
+    cls = "vs-yesterday up";
+    text = `▲ ${rounded}° warmer than yesterday`;
+  } else {
+    cls = "vs-yesterday down";
+    text = `▼ ${Math.abs(rounded)}° cooler than yesterday`;
+  }
+  el.vsYesterday.className = cls;
+  el.vsYesterday.textContent = text;
+  el.vsYesterday.hidden = false;
 }
 
 function renderMetrics(w) {

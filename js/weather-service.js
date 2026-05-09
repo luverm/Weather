@@ -93,7 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
-    past_hours: 1,
+    past_hours: 25, // need yesterday-this-time for vs-yesterday delta
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -189,6 +189,8 @@ function normalize(d, aq) {
   // Moon phase is not in Open-Meteo's free tier — compute it locally.
   const moon = computeMoonPhase(new Date());
 
+  const yesterday = computeYesterday(d.hourly, now);
+
   return {
     temp: c.temperature_2m,
     feelsLike: c.apparent_temperature,
@@ -213,10 +215,30 @@ function normalize(d, aq) {
     daily: dailyForecast,
     nowcast,
     moon,
+    yesterday,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
     fetchedAt: now,
   };
+}
+
+// Find the hourly entry closest to "now − 24h" so the hero can show a
+// "vs. yesterday" delta. Returns null if the data isn't usable.
+function computeYesterday(hourly, now) {
+  if (!hourly?.time?.length || !hourly?.temperature_2m) return null;
+  const target = now - 24 * 3600_000;
+  let nearest = null;
+  let bestDiff = Infinity;
+  for (let i = 0; i < hourly.time.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    const v = hourly.temperature_2m[i];
+    if (v == null) continue;
+    const diff = Math.abs(t - target);
+    if (diff < bestDiff) { bestDiff = diff; nearest = { time: t, temp: v }; }
+  }
+  // Reject if we couldn't find anything within 90 minutes of the target.
+  if (!nearest || bestDiff > 90 * 60_000) return null;
+  return { sameHourTemp: nearest.temp, time: nearest.time };
 }
 
 function computePressureTrend(hourly, now) {
@@ -400,6 +422,7 @@ function mock(lat, lon) {
       level: "Moderate",
     },
     pressureTrend: { delta: -0.4, direction: "steady" },
+    yesterday: { sameHourTemp: 16.4, time: now - 24 * 3600_000 },
     fetchedAt: now,
     offline: true,
   };
