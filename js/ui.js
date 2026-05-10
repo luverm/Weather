@@ -1228,7 +1228,11 @@ function renderWeekRank(days) {
   if (sortedWind[0] === today && (today.gustsMax ?? 0) >= 30) {
     candidates.push({ kind: "windiest", icon: "≈", text: "Windiest day this week", priority: 2 });
   }
-  if (sortedRain[sortedRain.length - 1] === today && (sortedRain[0]?.precip ?? 0) >= 2) {
+  // Driest only when *some* day is meaningfully wet — otherwise "driest" in a
+  // dry week is a meaningless boast.
+  const minRain = sortedRain[sortedRain.length - 1]?.precip ?? 0;
+  const maxRain = sortedRain[0]?.precip ?? 0;
+  if ((today.precip ?? 0) <= minRain + 0.05 && maxRain >= 2) {
     candidates.push({ kind: "sunniest", icon: "○", text: "Driest day this week", priority: 1 });
   }
   if (!candidates.length) { el.weekRankChip.hidden = true; return; }
