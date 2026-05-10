@@ -26,6 +26,7 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  dayRangeTimes: $("#day-range-times"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -346,6 +347,21 @@ function renderDayRange(w) {
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+  renderDayRangeTimes(w);
+}
+
+function renderDayRangeTimes(w) {
+  if (!el.dayRangeTimes) return;
+  const ext = state.weather?.todayExtremes;
+  if (!ext?.hi || !ext?.lo) {
+    el.dayRangeTimes.hidden = true;
+    return;
+  }
+  el.dayRangeTimes.hidden = false;
+  el.dayRangeTimes.innerHTML =
+    `<span class="dr-hi">high ${fmtTime(ext.hi.time)}</span>` +
+    `<span class="dr-sep">·</span>` +
+    `<span class="dr-lo">low ${fmtTime(ext.lo.time)}</span>`;
 }
 
 function renderMetrics(w) {

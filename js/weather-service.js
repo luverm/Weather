@@ -177,6 +177,8 @@ function normalize(d, aq) {
   }
 
   const daylightDelta = computeDaylightDelta(daily, TODAY);
+  const todayHourly = collectTodayHourly(d.hourly, dailyForecast[0]);
+  const todayExtremes = computeExtremes(todayHourly);
 
   // 15-min nowcast for the next ~2h — used for "rain in 12 min" banner.
   const nowcast = [];
@@ -224,10 +226,39 @@ function normalize(d, aq) {
     moon,
     yesterday,
     daylightDelta,
+    todayExtremes,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
     fetchedAt: now,
   };
+}
+
+function collectTodayHourly(hourly, today) {
+  if (!hourly?.time || !today?.sunrise || !today?.sunset) return [];
+  // Window the day around solar noon ± 12h so we cover from local midnight to
+  // local midnight regardless of timezone-string parsing quirks.
+  const noon = (today.sunrise + today.sunset) / 2;
+  const lo = noon - 12 * 3600_000;
+  const hi = noon + 12 * 3600_000;
+  const out = [];
+  for (let i = 0; i < hourly.time.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    if (t < lo || t >= hi) continue;
+    out.push({ time: t, temp: hourly.temperature_2m?.[i] });
+  }
+  return out;
+}
+
+function computeExtremes(series) {
+  if (!series?.length) return null;
+  let hi = null, lo = null;
+  for (const p of series) {
+    if (p.temp == null) continue;
+    if (!hi || p.temp > hi.temp) hi = p;
+    if (!lo || p.temp < lo.temp) lo = p;
+  }
+  if (!hi || !lo) return null;
+  return { hi, lo };
 }
 
 function computeDaylightDelta(daily, todayIdx) {

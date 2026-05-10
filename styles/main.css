@@ -420,6 +420,19 @@ html[data-reduce-motion="true"] *::after {
   margin-left: auto;
 }
 .day-range[hidden] { display: none; }
+.day-range-times {
+  display: block;
+  max-width: 240px;
+  margin: 4px 0 0 auto;
+  text-align: right;
+  font-size: 10.5px; letter-spacing: 0.04em;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+}
+.day-range-times[hidden] { display: none; }
+.day-range-times .dr-hi { color: #ffb196; }
+.day-range-times .dr-lo { color: #9ad1ff; }
+.day-range-times .dr-sep { opacity: 0.4; padding: 0 4px; }
 .day-range-end { white-space: nowrap; }
 .day-range-track {
   position: relative;
