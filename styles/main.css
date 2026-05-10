@@ -942,6 +942,9 @@ kbd {
   margin-top: 4px;
   font-variant-numeric: tabular-nums;
 }
+#m-pressure-sub[data-tier="down"] { color: #ffb196; }
+#m-pressure-sub[data-tier="flat"] { color: #ffd36a; }
+#m-pressure-sub[data-tier="up"]   { color: var(--fg-dim); }
 
 /* ---------- Extras row: AQ + moon + sun ---------- */
 .extras {

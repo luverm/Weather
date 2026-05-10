@@ -379,9 +379,8 @@ function renderMetrics(w) {
     }
   }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
-  el.metricPressureSub.textContent = w.visibility != null
-    ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
-    : "visibility —";
+  el.metricPressureSub.textContent = formatVisibility(w.visibility);
+  el.metricPressureSub.dataset.tier = visibilityTier(w.visibility)?.cls || "";
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
@@ -429,6 +428,30 @@ function beaufort(kmh) {
   if (kmh < 103) return { label: "Storm", cls: "up" };
   if (kmh < 118) return { label: "Violent storm", cls: "up" };
   return { label: "Hurricane", cls: "up" };
+}
+
+function visibilityTier(meters) {
+  if (meters == null || isNaN(meters)) return null;
+  if (meters < 1000)  return { label: "Foggy",     cls: "down" };
+  if (meters < 4000)  return { label: "Hazy",      cls: "flat" };
+  if (meters < 10000) return { label: "Good",      cls: "up" };
+  if (meters < 20000) return { label: "Clear",     cls: "up" };
+  return                     { label: "Crystal",   cls: "up" };
+}
+
+function formatVisibility(meters) {
+  if (meters == null || isNaN(meters)) return "visibility —";
+  const tier = visibilityTier(meters);
+  // Cap displayed distance at 30 km / 18 mi so an open-meteo "31 km" reading
+  // doesn't read worse than "Crystal".
+  if (state.unit === "F") {
+    const mi = Math.min(30, meters / 1609.344);
+    const formatted = mi >= 10 ? Math.round(mi) : mi.toFixed(1);
+    return `${formatted} mi · ${tier.label}`;
+  }
+  const km = Math.min(50, meters / 1000);
+  const formatted = km >= 10 ? Math.round(km) : km.toFixed(1);
+  return `${formatted} km · ${tier.label}`;
 }
 
 function uvLevel(v) {
