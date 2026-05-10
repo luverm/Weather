@@ -355,11 +355,17 @@ function aqiLabel(v) {
 }
 
 function findUvPeak(hourly) {
-  if (!hourly?.uv_index) return null;
+  if (!hourly?.uv_index || !hourly?.time) return null;
+  // Only consider the next ~24h so we never advertise a peak from yesterday's
+  // past_hours buffer.
+  const now = Date.now();
+  const horizon = now + 24 * 3600_000;
   let peak = { t: null, v: -Infinity };
   for (let i = 0; i < hourly.uv_index.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    if (t < now - 30 * 60_000 || t > horizon) continue;
     const v = hourly.uv_index[i];
-    if (v > peak.v) peak = { t: new Date(hourly.time[i]).getTime(), v };
+    if (v != null && v > peak.v) peak = { t, v };
   }
   if (peak.t == null) return null;
   return { time: peak.t, value: peak.v };
