@@ -73,6 +73,9 @@ const el = {
   pressureSparkFill: $("#pressure-spark-fill"),
   humiditySparkLine: $("#humidity-spark-line"),
   humiditySparkFill: $("#humidity-spark-fill"),
+  windSparkLine: $("#wind-spark-line"),
+  windSparkFill: $("#wind-spark-fill"),
+  windSparkGust: $("#wind-spark-gust"),
   dailySpark: $("#daily-spark"),
   dailyHi: $("#daily-hi"),
   dailyLo: $("#daily-lo"),
@@ -476,6 +479,47 @@ function renderPressureSparkline(w) {
     (w.hourly || []).map((h) => h.humidity).filter((v) => v != null).slice(0, 12),
     { minSpan: 10, fixedMin: 0, fixedMax: 100 }
   );
+  renderWindSparkline(w);
+}
+
+function renderWindSparkline(w) {
+  if (!el.windSparkLine || !el.windSparkFill) return;
+  const hours = (w.hourly || []).slice(0, 12);
+  const winds = hours.map((h) => h.wind).filter((v) => v != null);
+  const gusts = hours.map((h) => h.gusts).filter((v) => v != null);
+  if (winds.length < 2) {
+    el.windSparkLine.setAttribute("d", "");
+    el.windSparkFill.setAttribute("d", "");
+    if (el.windSparkGust) el.windSparkGust.setAttribute("d", "");
+    return;
+  }
+  // Both wind and gusts share a single Y axis so the dashed gust line sits
+  // visually above the solid wind line.
+  const all = [...winds, ...gusts];
+  const max = Math.max(...all);
+  drawSparkline(el.windSparkLine, el.windSparkFill, winds,
+    { minSpan: 5, fixedMin: 0, fixedMax: max });
+  if (el.windSparkGust) {
+    drawLineOnly(el.windSparkGust, gusts,
+      { minSpan: 5, fixedMin: 0, fixedMax: max });
+  }
+}
+
+function drawLineOnly(lineEl, series, { minSpan = 1, fixedMin, fixedMax } = {}) {
+  if (!lineEl) return;
+  if (series.length < 2) { lineEl.setAttribute("d", ""); return; }
+  const min = fixedMin != null ? fixedMin : Math.min(...series);
+  const max = fixedMax != null ? fixedMax : Math.max(...series);
+  const span = Math.max(minSpan, max - min);
+  const W = 100, H = 24, PAD = 1.5;
+  const innerW = W - PAD * 2, innerH = H - PAD * 2;
+  let d = "";
+  series.forEach((v, i) => {
+    const x = PAD + (i / (series.length - 1)) * innerW;
+    const y = PAD + innerH - ((v - min) / span) * innerH;
+    d += (i === 0 ? "M" : "L") + x.toFixed(1) + "," + y.toFixed(1) + " ";
+  });
+  lineEl.setAttribute("d", d.trim());
 }
 
 function drawSparkline(lineEl, fillEl, series, { minSpan = 1, fixedMin, fixedMax } = {}) {
