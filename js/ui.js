@@ -45,6 +45,11 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  cloudCard: $("#cloud-card"),
+  cloudArc: $("#cloud-arc"),
+  cloudValue: $("#cloud-value"),
+  cloudLabel: $("#cloud-label"),
+  cloudDetail: $("#cloud-detail"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -181,6 +186,7 @@ export const ui = {
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
+    renderCloudCover(weather);
     renderMoon(weather.moon);
     renderSun(weather);
     renderHourly(weather);
@@ -472,6 +478,40 @@ function renderAqTrend(aq) {
     return;
   }
   drawSparkline(el.aqTrendLine, el.aqTrendFill, pts, { minSpan: 20 });
+}
+
+function renderCloudCover(w) {
+  if (!el.cloudCard || !el.cloudArc) return;
+  const cover = w?.cloudCover;
+  if (cover == null || isNaN(cover)) {
+    el.cloudCard.style.opacity = 0.5;
+    el.cloudValue.textContent = "—";
+    el.cloudLabel.textContent = "—";
+    el.cloudDetail.textContent = "—";
+    el.cloudArc.setAttribute("stroke-dashoffset", "126");
+    return;
+  }
+  el.cloudCard.style.opacity = 1;
+  const pct = Math.max(0, Math.min(100, Math.round(cover)));
+  el.cloudValue.textContent = `${pct}%`;
+  const tier = cloudTier(pct);
+  el.cloudLabel.textContent = tier.label;
+  el.cloudCard.style.color = tier.color;
+  el.cloudArc.setAttribute("stroke-dashoffset", String(126 * (1 - pct / 100)));
+  // Detail: a hint about sun reach. Night vs day is tracked on `isDay`.
+  if (w.isDay === false) {
+    el.cloudDetail.textContent = pct < 30 ? "Stars visible" : pct < 70 ? "Patchy sky" : "Sky obscured";
+  } else {
+    el.cloudDetail.textContent = tier.sun;
+  }
+}
+
+function cloudTier(pct) {
+  if (pct < 12) return { label: "Clear sky",     sun: "Full sun",       color: "#9ad1ff" };
+  if (pct < 30) return { label: "Mostly clear",  sun: "Mostly sunny",   color: "#bcdcff" };
+  if (pct < 60) return { label: "Partly cloudy", sun: "Mixed sun",      color: "#dcdfe6" };
+  if (pct < 90) return { label: "Mostly cloudy", sun: "Limited sun",    color: "#a9b0bd" };
+  return                { label: "Overcast",     sun: "Sun blocked",    color: "#7d828c" };
 }
 
 function renderMoon(moon) {
