@@ -103,6 +103,8 @@ const el = {
   weekendIconSat: $("#weekend-icon-sat"),
   weekendIconSun: $("#weekend-icon-sun"),
   forecastTrack: $("#forecast-track"),
+  precip24Badge: $("#precip24-badge"),
+  precip24Text: $("#precip24-text"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
   nowcastHeadline: $("#nowcast-headline"),
@@ -934,6 +936,37 @@ function renderHourly(w) {
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
   }
+  renderPrecip24(w);
+}
+
+function renderPrecip24(w) {
+  if (!el.precip24Badge || !el.precip24Text) return;
+  const next = (w.hourly || []).slice(0, 24);
+  if (!next.length) { el.precip24Badge.hidden = true; return; }
+  let totalMm = 0, peakPop = 0;
+  for (const h of next) {
+    if (h.precip != null) totalMm += h.precip;
+    if ((h.pop ?? 0) > peakPop) peakPop = h.pop;
+  }
+  // Hide the badge entirely on a genuinely dry forecast.
+  if (totalMm < 0.1 && peakPop < 30) { el.precip24Badge.hidden = true; return; }
+  el.precip24Badge.hidden = false;
+  let amountText;
+  if (totalMm < 0.1) {
+    amountText = `${peakPop}% chance`;
+  } else if (state.unit === "F") {
+    const inches = totalMm / 25.4;
+    amountText = inches >= 0.1
+      ? `${inches.toFixed(inches >= 1 ? 1 : 2)} in · ${peakPop}%`
+      : `< 0.1 in · ${peakPop}%`;
+  } else {
+    amountText = totalMm >= 1
+      ? `${totalMm.toFixed(totalMm >= 10 ? 0 : 1)} mm · ${peakPop}%`
+      : `< 1 mm · ${peakPop}%`;
+  }
+  el.precip24Text.textContent = `${amountText} next 24h`;
+  el.precip24Badge.dataset.tier =
+    totalMm >= 10 ? "heavy" : totalMm >= 0.1 ? "wet" : "dry";
 }
 
 function highlightHour(index) {

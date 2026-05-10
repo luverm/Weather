@@ -419,7 +419,15 @@
 
       <!-- Hourly forecast -->
       <div class="forecast glass" aria-label="Hourly forecast">
-        <div class="forecast-heading">Next 24 hours</div>
+        <div class="forecast-heading">
+          <span>Next 24 hours</span>
+          <span id="precip24-badge" class="precip24-badge" hidden>
+            <svg class="precip24-drop" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 3c4 5 6 8.5 6 11.5a6 6 0 11-12 0C6 11.5 8 8 12 3z" fill="currentColor"/>
+            </svg>
+            <span id="precip24-text">—</span>
+          </span>
+        </div>
         <div id="forecast-track" class="forecast-track"></div>
       </div>
 
