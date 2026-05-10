@@ -991,15 +991,28 @@ function cardinal(deg) {
 
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
-  for (const h of (w.hourly || []).slice(0, 24)) {
+  const next = (w.hourly || []).slice(0, 24);
+  // Cap the bar scale at either the window max or 4 mm/h, whichever is larger,
+  // so a single torrential hour doesn't flatten everything else to a sliver.
+  const maxPrecip = Math.max(0.5, ...next.map((h) => h.precip ?? 0), 4);
+  for (const h of next) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    const mm = h.precip ?? 0;
+    const fillFrac = Math.max(0, Math.min(1, mm / maxPrecip));
+    const tier = mm >= 2.5 ? "heavy" : mm >= 0.5 ? "wet" : mm >= 0.05 ? "trace" : "dry";
+    const tip = mm > 0
+      ? `${state.unit === "F" ? (mm / 25.4).toFixed(2) + " in" : mm.toFixed(mm >= 1 ? 1 : 2) + " mm"} · ${h.pop}% chance`
+      : `${h.pop}% chance of precipitation`;
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
+      <span class="forecast-precip-bar" data-tier="${tier}" title="${tip}">
+        <span class="forecast-precip-fill" style="width:${(fillFrac * 100).toFixed(0)}%"></span>
+      </span>
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);

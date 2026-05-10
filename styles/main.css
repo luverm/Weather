@@ -1513,6 +1513,24 @@ kbd {
   opacity: 0.9;
 }
 .forecast-pop.dim { opacity: 0; }
+.forecast-precip-bar {
+  width: 100%; height: 3px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+  margin-top: 1px;
+}
+.forecast-precip-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #9ad1ff, #c7b4ff);
+  border-radius: 2px;
+  transition: width 320ms var(--ease);
+}
+.forecast-precip-bar[data-tier="dry"]   { opacity: 0; }
+.forecast-precip-bar[data-tier="trace"] .forecast-precip-fill { background: #9ad1ff; }
+.forecast-precip-bar[data-tier="wet"]   .forecast-precip-fill { background: linear-gradient(90deg, #9ad1ff, #b9c5ff); }
+.forecast-precip-bar[data-tier="heavy"] .forecast-precip-fill { background: linear-gradient(90deg, #b9c5ff, #ff9c7a); }
 
 .daily-track {
   display: grid;
