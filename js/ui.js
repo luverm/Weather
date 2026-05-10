@@ -83,6 +83,7 @@ const el = {
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
+  weekRankChip: $("#week-rank-chip"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -1078,6 +1079,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderWeekRank(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1160,6 +1162,40 @@ function renderDailySpark(days) {
       el.dailySparkDots.appendChild(c);
     }
   });
+}
+
+function renderWeekRank(days) {
+  if (!el.weekRankChip) return;
+  // Need at least 4 days for "of the week" framing to feel meaningful.
+  if (!days || days.length < 4) { el.weekRankChip.hidden = true; return; }
+  const today = days[0];
+  if (!today) { el.weekRankChip.hidden = true; return; }
+  const sortedHi = [...days].filter((d) => d.tempMax != null).sort((a, b) => b.tempMax - a.tempMax);
+  const sortedLo = [...days].filter((d) => d.tempMin != null).sort((a, b) => a.tempMin - b.tempMin);
+  const sortedRain = [...days].filter((d) => d.precip != null).sort((a, b) => b.precip - a.precip);
+  const sortedWind = [...days].filter((d) => d.gustsMax != null).sort((a, b) => b.gustsMax - a.gustsMax);
+  const candidates = [];
+  if (sortedHi[0] === today && sortedHi.length >= 3) {
+    candidates.push({ kind: "warmest", icon: "▲", text: "Warmest day this week", priority: 3 });
+  }
+  if (sortedLo[0] === today && sortedLo.length >= 3 && sortedHi[sortedHi.length - 1] === today) {
+    candidates.push({ kind: "coolest", icon: "▼", text: "Coolest day this week", priority: 3 });
+  }
+  if (sortedRain[0] === today && (today.precip ?? 0) >= 1) {
+    candidates.push({ kind: "wettest", icon: "◆", text: "Wettest day this week", priority: 2 });
+  }
+  if (sortedWind[0] === today && (today.gustsMax ?? 0) >= 30) {
+    candidates.push({ kind: "windiest", icon: "≈", text: "Windiest day this week", priority: 2 });
+  }
+  if (sortedRain[sortedRain.length - 1] === today && (sortedRain[0]?.precip ?? 0) >= 2) {
+    candidates.push({ kind: "sunniest", icon: "○", text: "Driest day this week", priority: 1 });
+  }
+  if (!candidates.length) { el.weekRankChip.hidden = true; return; }
+  candidates.sort((a, b) => b.priority - a.priority);
+  const pick = candidates[0];
+  el.weekRankChip.hidden = false;
+  el.weekRankChip.dataset.kind = pick.kind;
+  el.weekRankChip.innerHTML = `<span class="week-rank-icon">${pick.icon}</span>${pick.text}`;
 }
 
 function renderDailyDelta(days) {
