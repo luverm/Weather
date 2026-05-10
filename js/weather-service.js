@@ -93,7 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
-    past_hours: 1,
+    past_hours: 25, // enough to compare against ~this time yesterday
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -186,6 +186,9 @@ function normalize(d, aq) {
     }
   }
 
+  // Same time yesterday — used for the "vs yesterday" delta pill.
+  const yesterday = computeYesterday(d.hourly, c.temperature_2m, now);
+
   // Moon phase is not in Open-Meteo's free tier — compute it locally.
   const moon = computeMoonPhase(new Date());
 
@@ -213,10 +216,28 @@ function normalize(d, aq) {
     daily: dailyForecast,
     nowcast,
     moon,
+    yesterday,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
     fetchedAt: now,
   };
+}
+
+function computeYesterday(hourly, currentTemp, now) {
+  if (currentTemp == null || !hourly?.time || !hourly?.temperature_2m) return null;
+  const target = now - 24 * 3600_000;
+  let bestIdx = -1;
+  let bestDiff = Infinity;
+  for (let i = 0; i < hourly.time.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    const diff = Math.abs(t - target);
+    if (diff < bestDiff) { bestDiff = diff; bestIdx = i; }
+  }
+  // Require the match to be within ~90 minutes of "this time yesterday".
+  if (bestIdx < 0 || bestDiff > 90 * 60_000) return null;
+  const temp = hourly.temperature_2m[bestIdx];
+  if (temp == null) return null;
+  return { temp, delta: currentTemp - temp };
 }
 
 function computePressureTrend(hourly, now) {

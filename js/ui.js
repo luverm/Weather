@@ -45,6 +45,7 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  yesterdayDelta: $("#yesterday-delta"),
   cloudCard: $("#cloud-card"),
   cloudArc: $("#cloud-arc"),
   cloudValue: $("#cloud-value"),
@@ -283,7 +284,37 @@ function renderLiveValues(w, { animate = true } = {}) {
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  renderYesterdayDelta(w);
   renderDayRange(w);
+}
+
+function renderYesterdayDelta(w) {
+  if (!el.yesterdayDelta) return;
+  // Only show on the live snapshot — sampleAt produces a derived object, so
+  // identity comparison cleanly distinguishes "live" from "scrubbed".
+  const live = w === state.weather;
+  const y = w?.yesterday;
+  if (!live || !y || y.delta == null || isNaN(y.delta)) {
+    el.yesterdayDelta.hidden = true;
+    return;
+  }
+  // Convert to current display units.
+  const delta = state.unit === "F" ? y.delta * 9 / 5 : y.delta;
+  const abs = Math.abs(delta);
+  // Suppress noise: only show when there's a meaningful difference.
+  if (abs < 0.6) {
+    el.yesterdayDelta.hidden = false;
+    el.yesterdayDelta.dataset.dir = "flat";
+    el.yesterdayDelta.textContent = "About the same as yesterday";
+    return;
+  }
+  const dir = delta > 0 ? "up" : "down";
+  const arrow = dir === "up" ? "↑" : "↓";
+  const word = dir === "up" ? "warmer" : "cooler";
+  el.yesterdayDelta.hidden = false;
+  el.yesterdayDelta.dataset.dir = dir;
+  el.yesterdayDelta.innerHTML =
+    `<span class="yd-arrow">${arrow}</span> ${abs.toFixed(abs < 10 ? 1 : 0)}° ${word} than yesterday`;
 }
 
 function renderDayRange(w) {
