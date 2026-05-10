@@ -54,6 +54,7 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -661,8 +662,31 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderDaylightDelta(w) {
+  if (!el.sunDaylightDelta) return;
+  const d = w?.daylightDelta;
+  if (!d || d.minutes == null || isNaN(d.minutes)) {
+    el.sunDaylightDelta.hidden = true;
+    return;
+  }
+  const m = d.minutes;
+  if (m === 0) {
+    el.sunDaylightDelta.hidden = false;
+    el.sunDaylightDelta.dataset.dir = "flat";
+    el.sunDaylightDelta.textContent = "same as yesterday";
+    return;
+  }
+  const dir = m > 0 ? "up" : "down";
+  const sign = m > 0 ? "+" : "−";
+  const word = m > 0 ? "longer" : "shorter";
+  el.sunDaylightDelta.hidden = false;
+  el.sunDaylightDelta.dataset.dir = dir;
+  el.sunDaylightDelta.textContent = `${sign}${Math.abs(m)} min ${word} than yesterday`;
 }
 
 function scheduleSunArc(w) {

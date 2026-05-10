@@ -93,6 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
+    past_days: 1, // pulls yesterday's sunrise/sunset for daylight comparison
     past_hours: 25, // enough to compare against ~this time yesterday
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
@@ -151,10 +152,13 @@ function normalize(d, aq) {
     }
   }
 
-  // 7-day daily forecast.
+  // We requested past_days=1, so daily[0] is yesterday and daily[1] is today.
+  // The forecast we expose only includes today + future days; yesterday is
+  // captured separately for daylight/temperature comparisons.
+  const TODAY = 1;
   const dailyForecast = [];
   if (daily.time) {
-    for (let i = 0; i < daily.time.length; i++) {
+    for (let i = TODAY; i < daily.time.length; i++) {
       const ts = new Date(daily.time[i]).getTime();
       dailyForecast.push({
         time: ts,
@@ -171,6 +175,8 @@ function normalize(d, aq) {
       });
     }
   }
+
+  const daylightDelta = computeDaylightDelta(daily, TODAY);
 
   // 15-min nowcast for the next ~2h — used for "rain in 12 min" banner.
   const nowcast = [];
@@ -207,9 +213,9 @@ function normalize(d, aq) {
     isDay: !!c.is_day,
     condition,
     label,
-    sunrise: daily.sunrise?.[0] ? new Date(daily.sunrise[0]).getTime() : null,
-    sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null,
-    uv: daily.uv_index_max?.[0] ?? null,
+    sunrise: daily.sunrise?.[1] ? new Date(daily.sunrise[1]).getTime() : null,
+    sunset: daily.sunset?.[1] ? new Date(daily.sunset[1]).getTime() : null,
+    uv: daily.uv_index_max?.[1] ?? null,
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
     hourly,
@@ -217,10 +223,24 @@ function normalize(d, aq) {
     nowcast,
     moon,
     yesterday,
+    daylightDelta,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
     fetchedAt: now,
   };
+}
+
+function computeDaylightDelta(daily, todayIdx) {
+  if (!daily?.sunrise || !daily?.sunset) return null;
+  const yIdx = todayIdx - 1;
+  if (yIdx < 0) return null;
+  const sr1 = daily.sunrise[todayIdx], ss1 = daily.sunset[todayIdx];
+  const sr0 = daily.sunrise[yIdx], ss0 = daily.sunset[yIdx];
+  if (!sr0 || !sr1 || !ss0 || !ss1) return null;
+  const today = new Date(ss1).getTime() - new Date(sr1).getTime();
+  const yday  = new Date(ss0).getTime() - new Date(sr0).getTime();
+  const minutes = Math.round((today - yday) / 60000);
+  return { minutes, todayMs: today, yesterdayMs: yday };
 }
 
 function computeYesterday(hourly, currentTemp, now) {
@@ -421,6 +441,7 @@ function mock(lat, lon) {
       level: "Moderate",
     },
     pressureTrend: { delta: -0.4, direction: "steady" },
+    daylightDelta: { minutes: 2, todayMs: 12.5 * 3600_000, yesterdayMs: 12.45 * 3600_000 },
     fetchedAt: now,
     offline: true,
   };
