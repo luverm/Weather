@@ -505,6 +505,9 @@ function renderWindSparkline(w) {
   const hours = (w.hourly || []).slice(0, 12);
   const winds = hours.map((h) => h.wind).filter((v) => v != null);
   const gusts = hours.map((h) => h.gusts).filter((v) => v != null);
+  const sparkSvg = el.windSparkLine.parentElement;
+  // Refresh the title every render, never stack.
+  sparkSvg?.querySelectorAll(":scope > title").forEach((n) => n.remove());
   if (winds.length < 2) {
     el.windSparkLine.setAttribute("d", "");
     el.windSparkFill.setAttribute("d", "");
@@ -520,6 +523,18 @@ function renderWindSparkline(w) {
   if (el.windSparkGust) {
     drawLineOnly(el.windSparkGust, gusts,
       { minSpan: 5, fixedMin: 0, fixedMax: max });
+  }
+  // Find peak gust within the window for the hover tooltip.
+  if (sparkSvg) {
+    let peak = { gust: -Infinity, time: null };
+    for (const h of hours) {
+      if (h.gusts != null && h.gusts > peak.gust) peak = { gust: h.gusts, time: h.time };
+    }
+    if (peak.time) {
+      const t = document.createElementNS("http://www.w3.org/2000/svg", "title");
+      t.textContent = `Next 12h · peak gust ${Math.round(peak.gust)} km/h at ${fmtTime(peak.time)}`;
+      sparkSvg.appendChild(t);
+    }
   }
 }
 
