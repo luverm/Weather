@@ -1511,6 +1511,11 @@ kbd {
 .daily-spark circle { transition: r 160ms var(--ease); }
 .daily-spark .dot-hi { fill: #ff9c7a; }
 .daily-spark .dot-lo { fill: #9ad1ff; }
+.daily-spark .spark-hit {
+  fill: transparent;
+  cursor: help;
+}
+.daily-spark .spark-hit:hover { fill: rgba(255,255,255,0.04); }
 .forecast-track {
   display: grid;
   grid-auto-flow: column;

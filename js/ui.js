@@ -1142,9 +1142,35 @@ function renderDailySpark(days) {
   const linePath = (arr) => arr.map((v, i) => (i === 0 ? "M" : "L") + x(i).toFixed(1) + "," + y(v).toFixed(1)).join(" ");
   el.dailyHi.setAttribute("d", linePath(days.map((d) => d.tempMax)));
   el.dailyLo.setAttribute("d", linePath(days.map((d) => d.tempMin)));
-  // Dots at each day + per-day temp labels above/below
+  // Dots at each day + per-day temp labels above/below. Each day gets an
+  // invisible 24px hit-target rect with a SVG <title> so a hover anywhere in
+  // the column reveals the day's high/low without precision aiming.
   el.dailySparkDots.innerHTML = "";
+  const tz = state.weather?.timezone;
+  const colW = innerW / Math.max(1, days.length - 1);
   days.forEach((d, i) => {
+    const dt = new Date(d.time);
+    const dayLabel = i === 0 ? "Today" : dt.toLocaleDateString(undefined, {
+      weekday: "short", ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    });
+    const hiText = d.tempMax != null ? `${Math.round(convertTemp(d.tempMax))}°` : "—";
+    const loText = d.tempMin != null ? `${Math.round(convertTemp(d.tempMin))}°` : "—";
+    const popText = d.pop != null && d.pop > 0 ? ` · ${d.pop}% rain` : "";
+    const tip = `${dayLabel}: ${hiText} / ${loText}${popText}`;
+
+    const hit = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    const hx = i === 0 ? PAD : x(i) - colW / 2;
+    const hw = i === 0 || i === days.length - 1 ? colW / 2 + PAD : colW;
+    hit.setAttribute("x", hx.toFixed(1));
+    hit.setAttribute("y", "0");
+    hit.setAttribute("width", hw.toFixed(1));
+    hit.setAttribute("height", String(H));
+    hit.setAttribute("class", "spark-hit");
+    const t = document.createElementNS("http://www.w3.org/2000/svg", "title");
+    t.textContent = tip;
+    hit.appendChild(t);
+    el.dailySparkDots.appendChild(hit);
+
     if (d.tempMax != null) {
       const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
       c.setAttribute("cx", x(i).toFixed(1));
