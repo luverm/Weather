@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { buildPrecipOutlook } from "./precip.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -87,6 +88,10 @@ const el = {
   insightsList: $("#insights-list"),
   activityCard: $("#activity-card"),
   activityList: $("#activity-list"),
+  precipCard: $("#precip-card"),
+  precipTotal: $("#precip-total"),
+  precipHeadline: $("#precip-headline"),
+  precipRows: $("#precip-rows"),
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
@@ -193,6 +198,7 @@ export const ui = {
     renderActivity(weather);
     renderAlerts(weather);
     renderWeekend(weather);
+    renderPrecip(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -680,6 +686,66 @@ function renderWeekend(w) {
   el.weekendChip.onclick = () => {
     if (snap.ts) state.handlers.onHourClick?.(snap.ts);
   };
+}
+
+function renderPrecip(w) {
+  if (!el.precipCard || !el.precipRows) return;
+  const tz = w?.timezone;
+  const weekday = (ts) => new Date(ts).toLocaleDateString(undefined, {
+    weekday: "short",
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  const out = buildPrecipOutlook(w, { weekday });
+  if (!out) {
+    el.precipCard.hidden = true;
+    return;
+  }
+  el.precipCard.hidden = false;
+  // Total chip — tone-coded.
+  if (el.precipTotal) {
+    el.precipTotal.dataset.tone = out.tone;
+    el.precipTotal.textContent = out.total < 0.1
+      ? "0 mm"
+      : `${out.total < 10 ? out.total.toFixed(1) : Math.round(out.total)} mm`;
+  }
+  if (el.precipHeadline) el.precipHeadline.textContent = out.headline;
+
+  const kindGlyph = (k) =>
+    k === "snow" ? "❄" : k === "storm" ? "⚡" : k === "mixed" ? "🌨" : "💧";
+
+  const peakIdx = out.peak?.i ?? -1;
+  el.precipRows.innerHTML = out.series.map((d) => {
+    const isPeak = d.i === peakIdx && out.peakIsSignificant;
+    const isToday = d.i === 0;
+    const isDry = d.mm < 0.1;
+    const widthPct = isDry ? 0 : Math.max(8, (d.mm / out.maxMm) * 100);
+    const mmText = d.mm < 0.1 ? "—"
+                : d.mm < 1 ? `${d.mm.toFixed(1)} mm`
+                : `${Math.round(d.mm * 10) / 10} mm`;
+    const popText = !isDry && d.pop >= 30 ? `<span class="precip-pop">${d.pop}%</span>` : "";
+    return `
+      <li data-ts="${d.time}" data-today="${isToday}" data-peak="${isPeak}" data-dry="${isDry}"
+          title="${escapeHtml(d.label)} · ${escapeHtml(mmText)}${d.pop ? " · " + d.pop + "% chance" : ""}">
+        <span class="precip-day-label">${escapeHtml(d.label)}</span>
+        <span class="precip-day-kind" aria-hidden="true">${kindGlyph(d.kind)}</span>
+        <span class="precip-bar-track">
+          <span class="precip-bar-fill"
+                data-kind="${d.kind}"
+                data-peak="${isPeak}"
+                data-empty="${isDry}"
+                style="width:${widthPct.toFixed(1)}%"></span>
+        </span>
+        <span class="precip-mm">${escapeHtml(mmText)}${popText}</span>
+      </li>
+    `;
+  }).join("");
+
+  el.precipRows.querySelectorAll("li[data-ts]").forEach((li) => {
+    li.addEventListener("click", () => {
+      const ts = parseInt(li.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
 }
 
 function renderAlerts(w) {
