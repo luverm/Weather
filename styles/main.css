@@ -793,6 +793,7 @@ html[data-reduce-motion="true"] *::after {
   pointer-events: none;
   transition: transform 600ms var(--ease);
 }
+[data-reduce-motion="true"] .chart-now { transition: none; }
 .chart-now line {
   stroke: rgba(255, 255, 255, 0.55);
   stroke-width: 1;

@@ -37,14 +37,18 @@ export function pickOfWeek(weather) {
   const winner = scored[0];
   if (!winner) return null;
 
-  // Skip today (index 0) when something later beats it by a clear margin,
-  // since "today" already has its own treatment elsewhere.
+  // Today already has its own treatment in the hero. If today is the winner
+  // but a later day is essentially tied, hand the spotlight to the future day
+  // so the chip surfaces fresh information.
   let pick = winner;
-  if (winner.i === 0 && scored[1] && scored[1].score >= winner.score - 4) {
-    pick = scored[1];
+  if (winner.i === 0) {
+    const challenger = scored.find((s) => s.i !== 0);
+    if (challenger && winner.score - challenger.score < 2) {
+      pick = challenger;
+    }
   }
   // Need a meaningful gap over the runner-up, otherwise the pick is just
-  // arbitrary noise.
+  // arbitrary noise (e.g. the offline mock returns near-identical days).
   const runnerUp = scored.find((s) => s.i !== pick.i);
   if (runnerUp && pick.score - runnerUp.score < 3 && pick.score < 12) {
     return null;

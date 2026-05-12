@@ -621,6 +621,9 @@ function computeGoldenHourWindow(w) {
   if (!w?.sunrise || !w?.sunset) return null;
   const now = Date.now();
   const dur = GOLDEN_MIN * 60_000;
+  // Daylight too short for distinct morning/evening windows — fall back to a
+  // single midday "golden" window centered on solar noon.
+  if (w.sunset - w.sunrise < 2 * dur) return null;
   const am = { kind: "morning", start: w.sunrise, end: w.sunrise + dur };
   const pm = { kind: "evening", start: w.sunset - dur, end: w.sunset };
   if (now >= am.start && now < am.end) return { ...am, state: "now" };
@@ -822,7 +825,8 @@ function renderPickOfWeek(w) {
       match.scrollIntoView({ behavior: "smooth", block: "nearest" });
       if (match.dataset.expanded !== "true") match.click();
       match.classList.add("flash");
-      setTimeout(() => match.classList.remove("flash"), 1200);
+      clearTimeout(match._flashTimer);
+      match._flashTimer = setTimeout(() => match.classList.remove("flash"), 1200);
     }
   };
 }
