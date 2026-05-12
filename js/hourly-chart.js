@@ -52,9 +52,40 @@ export class HourlyChart {
     this.hours = (hours || []).slice(0, 24);
     this._draw();
     this.setCursor(null);
+    this._placeNowMarker();
+    // Keep the NOW marker drifting forward even if the data set is unchanged.
+    if (this._nowTimer) clearInterval(this._nowTimer);
+    this._nowTimer = setInterval(() => this._placeNowMarker(), 60_000);
   }
 
-  refresh() { this._draw(); }
+  refresh() { this._draw(); this._placeNowMarker(); }
+
+  _placeNowMarker() {
+    const g = this.svg.querySelector("#chart-now");
+    if (!g || !this.points.length || !this.hours.length) return;
+    const now = Date.now();
+    const first = this.hours[0].time;
+    const last = this.hours[this.hours.length - 1].time;
+    // Interpolate "now" linearly through the hour array. If now sits before
+    // the first hour (we only request from now onward, but allow a small
+    // margin), pin to the left edge.
+    if (now < first - 90 * 60_000 || now > last + 60 * 60_000) {
+      g.style.display = "none";
+      return;
+    }
+    // Find the two surrounding hours.
+    let lo = 0, hi = this.hours.length - 1;
+    for (let i = 0; i < this.hours.length - 1; i++) {
+      if (this.hours[i].time <= now && this.hours[i + 1].time >= now) {
+        lo = i; hi = i + 1; break;
+      }
+    }
+    const t0 = this.hours[lo].time, t1 = this.hours[hi].time;
+    const frac = t1 === t0 ? 0 : (now - t0) / (t1 - t0);
+    const x = this.points[lo].x + (this.points[hi].x - this.points[lo].x) * frac;
+    g.setAttribute("transform", `translate(${x.toFixed(1)},0)`);
+    g.style.display = "";
+  }
 
   setCursor(ts) {
     const cursor = this.svg.querySelector("#chart-cursor");

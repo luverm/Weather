@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { pickOfWeek } from "./pick-of-week.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -96,6 +97,10 @@ const el = {
   weekendDetail: $("#weekend-detail"),
   weekendIconSat: $("#weekend-icon-sat"),
   weekendIconSun: $("#weekend-icon-sun"),
+  pickChip: $("#pick-chip"),
+  pickHeadline: $("#pick-headline"),
+  pickDetail: $("#pick-detail"),
+  pickTemp: $("#pick-temp"),
   forecastTrack: $("#forecast-track"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
@@ -193,6 +198,7 @@ export const ui = {
     renderActivity(weather);
     renderAlerts(weather);
     renderWeekend(weather);
+    renderPickOfWeek(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -515,6 +521,9 @@ function fmtTime(ts) {
 function renderSun(w) {
   el.sunRise.textContent = fmtTime(w.sunrise);
   el.sunSet.textContent = fmtTime(w.sunset);
+  // Always refresh the golden-hour chip — including hiding it when the new
+  // location lacks sun data.
+  renderGoldenHourBadge(w);
   if (w.sunrise && w.sunset) {
     const mins = Math.round((w.sunset - w.sunrise) / 60_000);
     const hh = Math.floor(mins / 60);
@@ -529,6 +538,9 @@ function scheduleSunArc(w) {
   if (!el.sunArcMarker || !el.sunArcPath) return;
   if (state.sunArcTimer) { clearInterval(state.sunArcTimer); state.sunArcTimer = null; }
   if (!w?.sunrise || !w?.sunset) return;
+
+  // Draw the golden / blue hour bands once per location.
+  renderGoldenHourBands(w);
 
   const update = () => {
     const now = Date.now();
@@ -546,16 +558,109 @@ function scheduleSunArc(w) {
     // (50% t) reaches y = 0.5*(74) + 0.5*(74 + 2*(-26-74)/2*(...)) — easier
     // to evaluate the curve directly.
     const t = clamp01(frac);
-    const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
-    const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
+    const { x, y } = sunArcPoint(t);
     el.sunArcMarker.setAttribute("cx", x.toFixed(1));
     el.sunArcMarker.setAttribute("cy", y.toFixed(1));
     // After sunset, dim the marker so it visually settles.
     const isUp = now >= sr && now <= ss;
     el.sunArcMarker.style.opacity = isUp ? "1" : "0.45";
+    renderGoldenHourBadge(w);
   };
   update();
   state.sunArcTimer = setInterval(update, 60_000);
+}
+
+// ---------- Golden / blue hour ----------
+//
+// We model the sun arc t ∈ [0, 1] linearly from sunrise→sunset and overlay
+// short stroke segments where the sun is within a golden-hour window
+// (≈50 min from horizon) or a blue-hour band (≈20 min). This is a
+// time-based approximation — good for UI, not for astrophotography.
+const GOLDEN_MIN = 50;
+const BLUE_MIN = 20;
+
+function sunArcPoint(t) {
+  // Quadratic Bezier (10, 74) → (190, 74) with control (100, -26).
+  const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
+  const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
+  return { x, y };
+}
+
+function sunArcSubPath(t1, t2, samples = 10) {
+  if (t2 <= t1) return "";
+  let d = "";
+  for (let i = 0; i <= samples; i++) {
+    const t = t1 + (t2 - t1) * (i / samples);
+    const p = sunArcPoint(t);
+    d += (i === 0 ? "M" : "L") + p.x.toFixed(2) + " " + p.y.toFixed(2) + " ";
+  }
+  return d.trim();
+}
+
+function renderGoldenHourBands(w) {
+  const bA = document.getElementById("sun-blue-am");
+  const gA = document.getElementById("sun-golden-am");
+  const gP = document.getElementById("sun-golden-pm");
+  const bP = document.getElementById("sun-blue-pm");
+  if (!bA || !gA || !gP || !bP) return;
+  if (!w?.sunrise || !w?.sunset || w.sunset <= w.sunrise) {
+    [bA, gA, gP, bP].forEach((el) => el.setAttribute("d", ""));
+    return;
+  }
+  const dayMs = w.sunset - w.sunrise;
+  // Cap fractions so very-short polar days don't produce overlapping bands.
+  const goldenFrac = Math.min(0.45, (GOLDEN_MIN * 60_000) / dayMs);
+  const blueFrac = Math.min(goldenFrac * 0.25, (BLUE_MIN * 60_000) / dayMs);
+  bA.setAttribute("d", sunArcSubPath(0, blueFrac));
+  gA.setAttribute("d", sunArcSubPath(blueFrac, goldenFrac));
+  gP.setAttribute("d", sunArcSubPath(1 - goldenFrac, 1 - blueFrac));
+  bP.setAttribute("d", sunArcSubPath(1 - blueFrac, 1));
+}
+
+function computeGoldenHourWindow(w) {
+  if (!w?.sunrise || !w?.sunset) return null;
+  const now = Date.now();
+  const dur = GOLDEN_MIN * 60_000;
+  // Daylight too short for distinct morning/evening windows — fall back to a
+  // single midday "golden" window centered on solar noon.
+  if (w.sunset - w.sunrise < 2 * dur) return null;
+  const am = { kind: "morning", start: w.sunrise, end: w.sunrise + dur };
+  const pm = { kind: "evening", start: w.sunset - dur, end: w.sunset };
+  if (now >= am.start && now < am.end) return { ...am, state: "now" };
+  if (now >= pm.start && now < pm.end) return { ...pm, state: "now" };
+  if (now < am.start) return { ...am, state: "upcoming" };
+  if (now < pm.start) return { ...pm, state: "upcoming" };
+  // Past today's evening — surface tomorrow morning if we have it.
+  const next = w.daily?.find?.((d) => d.sunrise && d.sunrise > now);
+  if (next) return { kind: "morning", state: "tomorrow", start: next.sunrise, end: next.sunrise + dur };
+  return null;
+}
+
+function renderGoldenHourBadge(w) {
+  const root = document.getElementById("golden-hour");
+  const text = document.getElementById("golden-hour-text");
+  const badge = document.getElementById("golden-hour-badge");
+  if (!root || !text || !badge) return;
+  const win = computeGoldenHourWindow(w);
+  if (!win) {
+    root.hidden = true;
+    return;
+  }
+  root.hidden = false;
+  root.dataset.state = win.state;
+  const prefix = win.kind === "evening" ? "Evening golden" : "Morning golden";
+  text.textContent = `${prefix} ${fmtTime(win.start)}–${fmtTime(win.end)}`;
+  if (win.state === "now") {
+    const left = Math.max(0, Math.round((win.end - Date.now()) / 60_000));
+    badge.textContent = left <= 0 ? "ending" : `ends in ${left}m`;
+  } else if (win.state === "tomorrow") {
+    badge.textContent = "tomorrow";
+  } else {
+    const mins = Math.max(0, Math.round((win.start - Date.now()) / 60_000));
+    badge.textContent = mins >= 60
+      ? `in ${Math.floor(mins / 60)}h ${mins % 60}m`
+      : `in ${mins}m`;
+  }
 }
 
 function clamp01(v) { return Math.max(0, Math.min(1, v)); }
@@ -679,6 +784,50 @@ function renderWeekend(w) {
   el.weekendDetail.textContent = parts.join(" · ");
   el.weekendChip.onclick = () => {
     if (snap.ts) state.handlers.onHourClick?.(snap.ts);
+  };
+}
+
+function renderPickOfWeek(w) {
+  if (!el.pickChip) return;
+  const pick = pickOfWeek(w);
+  if (!pick) {
+    el.pickChip.hidden = true;
+    return;
+  }
+  const tz = w?.timezone;
+  const dt = new Date(pick.day.time);
+  const isToday = pick.index === 0;
+  const weekday = isToday
+    ? "Today"
+    : dt.toLocaleDateString(undefined, {
+        weekday: "long",
+        ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+      });
+  el.pickHeadline.textContent = `Pick of the week · ${weekday}`;
+  el.pickDetail.textContent = pick.reason;
+  const tMax = pick.day.tempMax;
+  const tMin = pick.day.tempMin;
+  el.pickTemp.textContent = (tMax != null && tMin != null)
+    ? `${Math.round(convertTemp(tMax))}° / ${Math.round(convertTemp(tMin))}°`
+    : "";
+  el.pickChip.hidden = false;
+  el.pickChip.onclick = () => {
+    // Days more than ~23h out are beyond the scrubber's range, so scroll the
+    // matching daily-item into view and toggle it open. For today, jump the
+    // scrubber to noon so the hero updates.
+    if (pick.index === 0) {
+      const target = pick.day.time + 12 * 3600_000;
+      state.handlers.onHourClick?.(target);
+      return;
+    }
+    const match = el.dailyTrack?.querySelector(`.daily-item[data-ts="${pick.day.time}"]`);
+    if (match) {
+      match.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      if (match.dataset.expanded !== "true") match.click();
+      match.classList.add("flash");
+      clearTimeout(match._flashTimer);
+      match._flashTimer = setTimeout(() => match.classList.remove("flash"), 1200);
+    }
   };
 }
 
