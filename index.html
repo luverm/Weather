@@ -333,8 +333,17 @@
             <line x1="10" y1="74" x2="190" y2="74" stroke="var(--stroke)" stroke-dasharray="2 4"/>
             <path id="sun-arc-path" d="M10 74 Q100 -26 190 74"
                   fill="none" stroke="url(#sun-arc-grad)" stroke-width="1.5" stroke-linecap="round"/>
+            <path id="sun-blue-am"     class="sun-band sun-band-blue" d=""></path>
+            <path id="sun-golden-am"   class="sun-band sun-band-golden" d=""></path>
+            <path id="sun-golden-pm"   class="sun-band sun-band-golden" d=""></path>
+            <path id="sun-blue-pm"     class="sun-band sun-band-blue" d=""></path>
             <circle id="sun-arc-marker" cx="10" cy="74" r="4.5" fill="#fff1c9"/>
           </svg>
+          <p id="golden-hour" class="golden-hour" hidden>
+            <span class="golden-swatch" aria-hidden="true"></span>
+            <span class="golden-text" id="golden-hour-text">—</span>
+            <span class="golden-badge" id="golden-hour-badge"></span>
+          </p>
           <div class="sun-row">
             <div class="sun-item">
               <span class="sun-label">Rises</span>

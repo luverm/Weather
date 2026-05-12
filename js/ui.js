@@ -530,6 +530,9 @@ function scheduleSunArc(w) {
   if (state.sunArcTimer) { clearInterval(state.sunArcTimer); state.sunArcTimer = null; }
   if (!w?.sunrise || !w?.sunset) return;
 
+  // Draw the golden / blue hour bands once per location.
+  renderGoldenHourBands(w);
+
   const update = () => {
     const now = Date.now();
     const sr = w.sunrise, ss = w.sunset;
@@ -546,16 +549,106 @@ function scheduleSunArc(w) {
     // (50% t) reaches y = 0.5*(74) + 0.5*(74 + 2*(-26-74)/2*(...)) — easier
     // to evaluate the curve directly.
     const t = clamp01(frac);
-    const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
-    const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
+    const { x, y } = sunArcPoint(t);
     el.sunArcMarker.setAttribute("cx", x.toFixed(1));
     el.sunArcMarker.setAttribute("cy", y.toFixed(1));
     // After sunset, dim the marker so it visually settles.
     const isUp = now >= sr && now <= ss;
     el.sunArcMarker.style.opacity = isUp ? "1" : "0.45";
+    renderGoldenHourBadge(w);
   };
   update();
   state.sunArcTimer = setInterval(update, 60_000);
+}
+
+// ---------- Golden / blue hour ----------
+//
+// We model the sun arc t ∈ [0, 1] linearly from sunrise→sunset and overlay
+// short stroke segments where the sun is within a golden-hour window
+// (≈50 min from horizon) or a blue-hour band (≈20 min). This is a
+// time-based approximation — good for UI, not for astrophotography.
+const GOLDEN_MIN = 50;
+const BLUE_MIN = 20;
+
+function sunArcPoint(t) {
+  // Quadratic Bezier (10, 74) → (190, 74) with control (100, -26).
+  const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
+  const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
+  return { x, y };
+}
+
+function sunArcSubPath(t1, t2, samples = 10) {
+  if (t2 <= t1) return "";
+  let d = "";
+  for (let i = 0; i <= samples; i++) {
+    const t = t1 + (t2 - t1) * (i / samples);
+    const p = sunArcPoint(t);
+    d += (i === 0 ? "M" : "L") + p.x.toFixed(2) + " " + p.y.toFixed(2) + " ";
+  }
+  return d.trim();
+}
+
+function renderGoldenHourBands(w) {
+  const bA = document.getElementById("sun-blue-am");
+  const gA = document.getElementById("sun-golden-am");
+  const gP = document.getElementById("sun-golden-pm");
+  const bP = document.getElementById("sun-blue-pm");
+  if (!bA || !gA || !gP || !bP) return;
+  if (!w?.sunrise || !w?.sunset || w.sunset <= w.sunrise) {
+    [bA, gA, gP, bP].forEach((el) => el.setAttribute("d", ""));
+    return;
+  }
+  const dayMs = w.sunset - w.sunrise;
+  // Cap fractions so very-short polar days don't produce overlapping bands.
+  const goldenFrac = Math.min(0.45, (GOLDEN_MIN * 60_000) / dayMs);
+  const blueFrac = Math.min(goldenFrac * 0.25, (BLUE_MIN * 60_000) / dayMs);
+  bA.setAttribute("d", sunArcSubPath(0, blueFrac));
+  gA.setAttribute("d", sunArcSubPath(blueFrac, goldenFrac));
+  gP.setAttribute("d", sunArcSubPath(1 - goldenFrac, 1 - blueFrac));
+  bP.setAttribute("d", sunArcSubPath(1 - blueFrac, 1));
+}
+
+function computeGoldenHourWindow(w) {
+  if (!w?.sunrise || !w?.sunset) return null;
+  const now = Date.now();
+  const dur = GOLDEN_MIN * 60_000;
+  const am = { kind: "morning", start: w.sunrise, end: w.sunrise + dur };
+  const pm = { kind: "evening", start: w.sunset - dur, end: w.sunset };
+  if (now >= am.start && now < am.end) return { ...am, state: "now" };
+  if (now >= pm.start && now < pm.end) return { ...pm, state: "now" };
+  if (now < am.start) return { ...am, state: "upcoming" };
+  if (now < pm.start) return { ...pm, state: "upcoming" };
+  // Past today's evening — surface tomorrow morning if we have it.
+  const next = w.daily?.find?.((d) => d.sunrise && d.sunrise > now);
+  if (next) return { kind: "morning", state: "tomorrow", start: next.sunrise, end: next.sunrise + dur };
+  return null;
+}
+
+function renderGoldenHourBadge(w) {
+  const root = document.getElementById("golden-hour");
+  const text = document.getElementById("golden-hour-text");
+  const badge = document.getElementById("golden-hour-badge");
+  if (!root || !text || !badge) return;
+  const win = computeGoldenHourWindow(w);
+  if (!win) {
+    root.hidden = true;
+    return;
+  }
+  root.hidden = false;
+  root.dataset.state = win.state;
+  const prefix = win.kind === "evening" ? "Evening golden" : "Morning golden";
+  text.textContent = `${prefix} ${fmtTime(win.start)}–${fmtTime(win.end)}`;
+  if (win.state === "now") {
+    const left = Math.max(0, Math.round((win.end - Date.now()) / 60_000));
+    badge.textContent = left <= 0 ? "ending" : `ends in ${left}m`;
+  } else if (win.state === "tomorrow") {
+    badge.textContent = "tomorrow";
+  } else {
+    const mins = Math.max(0, Math.round((win.start - Date.now()) / 60_000));
+    badge.textContent = mins >= 60
+      ? `in ${Math.floor(mins / 60)}h ${mins % 60}m`
+      : `in ${mins}m`;
+  }
 }
 
 function clamp01(v) { return Math.max(0, Math.min(1, v)); }
