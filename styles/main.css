@@ -789,6 +789,24 @@ html[data-reduce-motion="true"] *::after {
   opacity: 0.75;
   pointer-events: none;
 }
+.chart-now {
+  pointer-events: none;
+  transition: transform 600ms var(--ease);
+}
+.chart-now line {
+  stroke: rgba(255, 255, 255, 0.55);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+}
+.chart-now text {
+  fill: rgba(255, 255, 255, 0.7);
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+[data-tone="bright"] .chart-now line { stroke: rgba(15, 20, 40, 0.45); }
+[data-tone="bright"] .chart-now text { fill: rgba(15, 20, 40, 0.65); }
 .chart-dot {
   fill: #fff;
   stroke: var(--accent);
