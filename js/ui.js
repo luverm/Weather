@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { pickOfWeek } from "./pick-of-week.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -96,6 +97,10 @@ const el = {
   weekendDetail: $("#weekend-detail"),
   weekendIconSat: $("#weekend-icon-sat"),
   weekendIconSun: $("#weekend-icon-sun"),
+  pickChip: $("#pick-chip"),
+  pickHeadline: $("#pick-headline"),
+  pickDetail: $("#pick-detail"),
+  pickTemp: $("#pick-temp"),
   forecastTrack: $("#forecast-track"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
@@ -193,6 +198,7 @@ export const ui = {
     renderActivity(weather);
     renderAlerts(weather);
     renderWeekend(weather);
+    renderPickOfWeek(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -772,6 +778,49 @@ function renderWeekend(w) {
   el.weekendDetail.textContent = parts.join(" · ");
   el.weekendChip.onclick = () => {
     if (snap.ts) state.handlers.onHourClick?.(snap.ts);
+  };
+}
+
+function renderPickOfWeek(w) {
+  if (!el.pickChip) return;
+  const pick = pickOfWeek(w);
+  if (!pick) {
+    el.pickChip.hidden = true;
+    return;
+  }
+  const tz = w?.timezone;
+  const dt = new Date(pick.day.time);
+  const isToday = pick.index === 0;
+  const weekday = isToday
+    ? "Today"
+    : dt.toLocaleDateString(undefined, {
+        weekday: "long",
+        ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+      });
+  el.pickHeadline.textContent = `Pick of the week · ${weekday}`;
+  el.pickDetail.textContent = pick.reason;
+  const tMax = pick.day.tempMax;
+  const tMin = pick.day.tempMin;
+  el.pickTemp.textContent = (tMax != null && tMin != null)
+    ? `${Math.round(convertTemp(tMax))}° / ${Math.round(convertTemp(tMin))}°`
+    : "";
+  el.pickChip.hidden = false;
+  el.pickChip.onclick = () => {
+    // Days more than ~23h out are beyond the scrubber's range, so scroll the
+    // matching daily-item into view and toggle it open. For today, jump the
+    // scrubber to noon so the hero updates.
+    if (pick.index === 0) {
+      const target = pick.day.time + 12 * 3600_000;
+      state.handlers.onHourClick?.(target);
+      return;
+    }
+    const match = el.dailyTrack?.querySelector(`.daily-item[data-ts="${pick.day.time}"]`);
+    if (match) {
+      match.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      if (match.dataset.expanded !== "true") match.click();
+      match.classList.add("flash");
+      setTimeout(() => match.classList.remove("flash"), 1200);
+    }
   };
 }
 
