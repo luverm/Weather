@@ -47,6 +47,11 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  skyArc: $("#sky-arc"),
+  skyValue: $("#sky-value"),
+  skyLabel: $("#sky-label"),
+  skyDetail: $("#sky-detail"),
+  skyCard: $("#sky-card"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -197,6 +202,7 @@ export const ui = {
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
+    renderSky(weather);
     renderMoon(weather.moon);
     renderSun(weather);
     renderHourly(weather);
@@ -547,6 +553,60 @@ function renderAqTrend(aq) {
     return;
   }
   drawSparkline(el.aqTrendLine, el.aqTrendFill, pts, { minSpan: 20 });
+}
+
+function renderSky(w) {
+  if (!el.skyCard || !el.skyArc) return;
+  const cloud = w?.cloudCover;
+  const vis = w?.visibility;
+  if (cloud == null && vis == null) {
+    el.skyCard.style.display = "none";
+    return;
+  }
+  el.skyCard.style.display = "";
+  // Color the ring by sky clarity: low cloud cover → warm sun colour,
+  // high cloud cover → muted gray.
+  const cFrac = cloud != null ? Math.max(0, Math.min(1, cloud / 100)) : 0;
+  const color = skyColor(cloud);
+  el.skyCard.style.color = color;
+  el.skyValue.textContent = cloud != null ? `${Math.round(cloud)}%` : "—";
+  // Reverse arc: low cloud = mostly drawn (sunny ring), high cloud = empty
+  el.skyArc.setAttribute("stroke-dashoffset", String(126 * cFrac));
+  el.skyLabel.textContent = skyLabel(cloud);
+  const visKm = vis != null ? (Math.round((vis / 1000) * 10) / 10) : null;
+  const visText = visKm != null
+    ? (visKm >= 10 ? `visibility >10 km` : `visibility ${visKm} km`)
+    : "visibility —";
+  const visPhrase = visKm != null ? visibilityPhrase(visKm) : "";
+  el.skyDetail.textContent = visPhrase
+    ? `${visText} · ${visPhrase}`
+    : visText;
+}
+
+function skyColor(cloud) {
+  if (cloud == null) return "#9aa4b2";
+  if (cloud <= 10) return "#ffd684";
+  if (cloud <= 30) return "#ffd9a8";
+  if (cloud <= 60) return "#cdd5e3";
+  if (cloud <= 85) return "#a8b1c2";
+  return "#7a8499";
+}
+
+function skyLabel(cloud) {
+  if (cloud == null) return "—";
+  if (cloud <= 10) return "Clear sky";
+  if (cloud <= 30) return "Mostly clear";
+  if (cloud <= 60) return "Partly cloudy";
+  if (cloud <= 85) return "Mostly cloudy";
+  return "Overcast";
+}
+
+function visibilityPhrase(km) {
+  if (km < 0.5) return "very poor";
+  if (km < 2) return "low";
+  if (km < 5) return "hazy";
+  if (km < 10) return "fair";
+  return "crystal clear";
 }
 
 function renderMoon(moon) {
