@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { nextGoldenWindow, daylightMs } from "./golden-hour.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -48,8 +49,14 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  goldenHour: $("#golden-hour"),
+  goldenHourSwatch: $("#golden-hour-swatch"),
+  goldenHourLabel: $("#golden-hour-label"),
+  goldenHourTimes: $("#golden-hour-times"),
+  goldenHourCountdown: $("#golden-hour-countdown"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -122,6 +129,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  goldenTimer: null,
   localTimer: null,
 };
 
@@ -521,8 +529,62 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleGoldenHour(w);
+}
+
+function renderDaylightDelta(w) {
+  if (!el.sunDaylightDelta) return;
+  const today = w?.daily?.[0];
+  const tmrw = w?.daily?.[1];
+  const a = daylightMs(today);
+  const b = daylightMs(tmrw);
+  if (a == null || b == null) {
+    el.sunDaylightDelta.textContent = "";
+    el.sunDaylightDelta.className = "sun-daylight-delta";
+    return;
+  }
+  const deltaSec = Math.round((b - a) / 1000);
+  if (Math.abs(deltaSec) < 30) {
+    el.sunDaylightDelta.textContent = "→ same tmrw";
+    el.sunDaylightDelta.className = "sun-daylight-delta flat";
+    return;
+  }
+  const absSec = Math.abs(deltaSec);
+  const m = Math.floor(absSec / 60);
+  const s = absSec % 60;
+  const dur = m > 0 ? `${m}m ${s.toString().padStart(2, "0")}s` : `${s}s`;
+  const sign = deltaSec > 0 ? "+" : "−";
+  el.sunDaylightDelta.textContent = `${sign}${dur} tmrw`;
+  el.sunDaylightDelta.className = `sun-daylight-delta ${deltaSec > 0 ? "up" : "down"}`;
+}
+
+function scheduleGoldenHour(w) {
+  if (!el.goldenHour) return;
+  if (state.goldenTimer) { clearInterval(state.goldenTimer); state.goldenTimer = null; }
+  if (!w?.daily?.length) { el.goldenHour.hidden = true; return; }
+
+  const update = () => {
+    const win = nextGoldenWindow(w.daily);
+    if (!win) {
+      el.goldenHour.hidden = true;
+      return;
+    }
+    el.goldenHour.hidden = false;
+    el.goldenHour.dataset.kind = win.kind;
+    el.goldenHour.dataset.active = win.active ? "true" : "false";
+    el.goldenHourLabel.textContent = win.label;
+    el.goldenHourTimes.textContent = `${fmtTime(win.start)} – ${fmtTime(win.end)}`;
+    const mins = Math.max(0, Math.round(win.countdown / 60_000));
+    const label = win.active
+      ? (mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m left` : `${mins}m left`)
+      : (mins >= 60 ? `in ${Math.floor(mins / 60)}h ${mins % 60}m` : `in ${mins}m`);
+    el.goldenHourCountdown.textContent = label;
+  };
+  update();
+  state.goldenTimer = setInterval(update, 60_000);
 }
 
 function scheduleSunArc(w) {
