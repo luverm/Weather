@@ -308,6 +308,34 @@ ui.init({
 // Apply saved reduce-motion preference on boot.
 if (ui.isReduceMotion?.()) setReducedMotion(true);
 
+// Kiosk mode: auto-cycle saved cities every N seconds. Useful for a
+// big-screen weather dashboard. Toggle with K.
+let kioskTimer = null;
+function toggleKiosk() {
+  if (kioskTimer) {
+    clearInterval(kioskTimer);
+    kioskTimer = null;
+    document.documentElement.removeAttribute("data-kiosk");
+    ui.showToast("Kiosk mode off");
+    return;
+  }
+  const list = places.all();
+  if (list.length < 2) {
+    ui.showToast("Save at least 2 cities to use kiosk mode");
+    return;
+  }
+  document.documentElement.setAttribute("data-kiosk", "true");
+  ui.showToast("Kiosk mode on — cycling every 12 s");
+  kioskTimer = setInterval(() => {
+    const all = places.all();
+    if (all.length < 2) { toggleKiosk(); return; }
+    const currentId = app.place ? places.idFor(app.place) : null;
+    const idx = Math.max(0, all.findIndex((p) => places.idFor(p) === currentId));
+    const next = all[(idx + 1) % all.length];
+    if (next) loadByCoords(next);
+  }, 12_000);
+}
+
 // Keyboard shortcuts.
 installShortcuts({
   focusSearch: () => ui.focusSearch(),
@@ -318,6 +346,7 @@ installShortcuts({
   toggleRadar: () => document.getElementById("radar-play")?.click(),
   resetScrubber: () => scrubber.reset(),
   refresh: () => refreshWeather(),
+  toggleKiosk: () => toggleKiosk(),
   jumpToDay: (idx) => {
     const day = app.weather?.daily?.[idx];
     if (!day || !day.time) return;

@@ -336,6 +336,14 @@ html[data-reduce-motion="true"] *::after {
   animation: pulse 2.4s ease-in-out infinite;
 }
 [data-scrubbing="true"] .live-dot { background: #ffb86b; box-shadow: 0 0 8px #ffb86b; animation: none; }
+[data-kiosk="true"] .live-dot { background: #c2a4ff; box-shadow: 0 0 10px #c2a4ff; }
+[data-kiosk="true"] .place-label::after {
+  content: "· kiosk";
+  margin-left: 6px;
+  color: #c2a4ff;
+  letter-spacing: 0.18em;
+  font-size: 10px;
+}
 .place-name {
   margin: 0;
   font-size: clamp(30px, 4.8vw, 52px);
