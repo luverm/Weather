@@ -31,6 +31,7 @@ const el = {
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
+  windGustiness: $("#m-wind-gustiness"),
   metricHumidity: $("#m-humidity"),
   metricHumiditySub: $("#m-humidity-sub"),
   metricPressure: $("#m-pressure"),
@@ -409,6 +410,17 @@ function renderMetrics(w) {
       el.windBft.textContent = "";
     }
   }
+  if (el.windGustiness) {
+    const gust = gustiness(w.windSpeed, w.windGusts);
+    if (gust) {
+      el.windGustiness.className = `trend ${gust.cls}`;
+      el.windGustiness.textContent = gust.label;
+      el.windGustiness.title = `Gust factor ${gust.factor.toFixed(1)}× wind`;
+    } else {
+      el.windGustiness.textContent = "";
+      el.windGustiness.removeAttribute("title");
+    }
+  }
   el.metricHumidity.textContent = Math.round(w.humidity ?? 0);
   el.metricHumiditySub.textContent = w.dewPoint != null
     ? `dew ${Math.round(convertTemp(w.dewPoint))}°`
@@ -473,6 +485,17 @@ function beaufort(kmh) {
   if (kmh < 103) return { label: "Storm", cls: "up" };
   if (kmh < 118) return { label: "Violent storm", cls: "up" };
   return { label: "Hurricane", cls: "up" };
+}
+
+function gustiness(wind, gust) {
+  if (wind == null || gust == null) return null;
+  // Skip very calm wind — gust factor is noisy below ~5 km/h.
+  if (wind < 5 || gust < wind + 4) return null;
+  const factor = gust / Math.max(1, wind);
+  if (factor < 1.4) return null;
+  if (factor < 1.8) return { label: "Gusty", cls: "flat", factor };
+  if (factor < 2.4) return { label: "Erratic", cls: "up", factor };
+  return { label: "Violent gusts", cls: "up", factor };
 }
 
 function uvLevel(v) {
