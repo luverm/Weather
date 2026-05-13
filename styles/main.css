@@ -697,6 +697,37 @@ html[data-reduce-motion="true"] *::after {
 }
 .advice-icon { color: var(--accent); flex: 0 0 auto; }
 
+.tonight-peek {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  color: var(--fg-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px 5px 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(60, 80, 140, 0.18), rgba(40, 60, 100, 0.10));
+  border: 1px solid rgba(120, 140, 200, 0.20);
+  cursor: pointer;
+  appearance: none;
+  font-family: inherit;
+  transition: transform 220ms var(--ease), background 220ms var(--ease);
+}
+.tonight-peek[hidden] { display: none; }
+.tonight-peek:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(90deg, rgba(60, 80, 140, 0.28), rgba(40, 60, 100, 0.16));
+}
+.tonight-glyph { font-size: 16px; line-height: 1; }
+.tonight-meta { display: inline-flex; gap: 8px; align-items: baseline; }
+.tonight-label {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+.tonight-detail { font-variant-numeric: tabular-nums; }
+
 .driving-pill {
   margin: 8px 0 0;
   margin-left: 8px;

@@ -70,6 +70,9 @@ const el = {
   drivingPill: $("#driving-pill"),
   drivingLabel: $("#driving-label"),
   drivingReason: $("#driving-reason"),
+  tonightPeek: $("#tonight-peek"),
+  tonightDetail: $("#tonight-detail"),
+  tonightGlyph: $("#tonight-glyph"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
   chartPrecipTotal: $("#chart-precip-total"),
@@ -210,6 +213,7 @@ export const ui = {
     renderDaily(weather);
     renderNowcast(weather);
     renderAdvice(weather);
+    renderTonight(weather);
     renderPollen(weather.pollen);
     renderTrends(weather);
     renderInsights(weather);
@@ -804,6 +808,52 @@ function scheduleSunCountdown(w) {
   };
   update();
   state.sunTimer = setInterval(update, 30_000);
+}
+
+function renderTonight(w) {
+  if (!el.tonightPeek || !el.tonightDetail) return;
+  const stats = computeTonight(w);
+  if (!stats) { el.tonightPeek.hidden = true; return; }
+  el.tonightPeek.hidden = false;
+  if (el.tonightGlyph) el.tonightGlyph.textContent = stats.glyph;
+  const lo = Math.round(convertTemp(stats.lo));
+  const parts = [`${lo}°`, stats.label.toLowerCase()];
+  if (stats.maxPop >= 30) parts.push(`${stats.maxPop}% rain`);
+  el.tonightDetail.textContent = parts.join(" · ");
+  el.tonightPeek.onclick = () => {
+    if (stats.coldestTs) state.handlers.onHourClick?.(stats.coldestTs);
+  };
+}
+
+function computeTonight(w) {
+  const hours = w?.hourly || [];
+  if (hours.length < 4) return null;
+  const sunset = w.daily?.[0]?.sunset || w.sunset;
+  const sunriseNext = w.daily?.[1]?.sunrise || (w.sunrise ? w.sunrise + 24 * 3600_000 : null);
+  if (!sunset || !sunriseNext) return null;
+  const nightHours = hours.filter((h) => h.time >= sunset && h.time <= sunriseNext);
+  if (nightHours.length < 2) return null;
+  let lo = Infinity, coldestTs = null, maxPop = 0;
+  const condCounts = {};
+  for (const h of nightHours) {
+    if (h.temp != null && h.temp < lo) { lo = h.temp; coldestTs = h.time; }
+    if ((h.pop ?? 0) > maxPop) maxPop = h.pop;
+    condCounts[h.condition] = (condCounts[h.condition] || 0) + 1;
+  }
+  if (!isFinite(lo)) return null;
+  const dominant = Object.entries(condCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "clear";
+  const labelMap = {
+    clear: "Clear", clouds: "Cloudy", rain: "Rainy", snow: "Snowy",
+    storm: "Stormy", fog: "Foggy",
+  };
+  const glyphMap = {
+    clear: "✦", clouds: "☁", rain: "🌧", snow: "🌨", storm: "⛈", fog: "🌫",
+  };
+  return {
+    lo, coldestTs, maxPop,
+    label: labelMap[dominant] || "Overnight",
+    glyph: glyphMap[dominant] || "🌙",
+  };
 }
 
 function renderAdvice(w) {
