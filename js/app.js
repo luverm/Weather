@@ -218,6 +218,35 @@ async function loadByCoords(place) {
 
   // Move the radar to the new location (fire-and-forget; resolves later).
   ensureRadar([place.lat, place.lon]).then((r) => r?.setCenter(place.lat, place.lon, place.name));
+
+  // Mirror the active location into the URL hash so the view is shareable.
+  writePlaceToHash(place);
+}
+
+function writePlaceToHash(place) {
+  if (!place || place.lat == null || place.lon == null) return;
+  // Build a tidy hash: #@lat,lon[/Name]. Round coordinates to 4 decimals (~11m).
+  const lat = Number(place.lat).toFixed(4);
+  const lon = Number(place.lon).toFixed(4);
+  const tag = place.name && place.name !== "Current location"
+    ? `/${encodeURIComponent(place.name)}`
+    : "";
+  const hash = `#@${lat},${lon}${tag}`;
+  if (window.location.hash !== hash) {
+    history.replaceState(null, "", hash);
+  }
+}
+
+function readPlaceFromHash() {
+  const m = (window.location.hash || "").match(/^#@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:\/(.+))?$/);
+  if (!m) return null;
+  const lat = parseFloat(m[1]);
+  const lon = parseFloat(m[2]);
+  if (!isFinite(lat) || !isFinite(lon)) return null;
+  if (Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
+  let name = "Shared location";
+  try { if (m[3]) name = decodeURIComponent(m[3]); } catch { /* keep default */ }
+  return { name, lat, lon };
 }
 
 async function useGeolocation() {
@@ -306,8 +335,14 @@ installShortcuts({
 
 // ---------- Start ----------
 (async function init() {
-  // Prefer the most recent saved place if we have one — avoids the geolocation
-  // prompt on every load and feels snappier.
+  // 1. Deep link from URL hash takes priority — supports shareable links.
+  const fromHash = readPlaceFromHash();
+  if (fromHash) {
+    await loadByCoords(fromHash);
+    return;
+  }
+  // 2. Prefer the most recent saved place if we have one — avoids the
+  // geolocation prompt on every load and feels snappier.
   const saved = places.all();
   if (saved.length) {
     await loadByCoords(saved[0]);
@@ -320,6 +355,14 @@ installShortcuts({
     await loadByCoords({ name: "Reykjavík", country: "Iceland", lat: 64.1466, lon: -21.9426 });
   }
 })();
+
+// Respond to manual hash changes (e.g. someone pasting a link into the bar).
+window.addEventListener("hashchange", () => {
+  const p = readPlaceFromHash();
+  if (p && (!app.place || p.lat !== app.place.lat || p.lon !== app.place.lon)) {
+    loadByCoords(p);
+  }
+});
 
 // ---------- Lifecycle ----------
 document.addEventListener("visibilitychange", () => {

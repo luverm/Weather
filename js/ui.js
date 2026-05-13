@@ -1735,12 +1735,15 @@ function bindShare() {
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
     ].filter(Boolean);
     const text = lines.join("\n");
+    // Include a shareable deep link if the hash contains coordinates.
+    const url = window.location.href.includes("#@") ? window.location.href : null;
     try {
       if (navigator.share) {
-        await navigator.share({ title: `Aether — ${placeName}`, text });
+        await navigator.share({ title: `Aether — ${placeName}`, text, ...(url ? { url } : {}) });
       } else {
-        await navigator.clipboard.writeText(text);
-        ui.showToast("Summary copied to clipboard");
+        const payload = url ? `${text}\n${url}` : text;
+        await navigator.clipboard.writeText(payload);
+        ui.showToast(url ? "Summary + link copied" : "Summary copied to clipboard");
       }
       el.shareBtn.classList.add("just-copied");
       setTimeout(() => el.shareBtn.classList.remove("just-copied"), 600);
