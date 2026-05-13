@@ -48,6 +48,7 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonNext: $("#moon-next"),
   skyArc: $("#sky-arc"),
   skyValue: $("#sky-value"),
   skyLabel: $("#sky-label"),
@@ -639,10 +640,38 @@ function visibilityPhrase(km) {
   return "crystal clear";
 }
 
+function daysToMoonPhase(currentPhase, targetPhase) {
+  const CYCLE = 29.5305882;
+  // phase is in [0,1). Distance forward to the target.
+  let d = (targetPhase - currentPhase + 1) % 1;
+  if (d < 0.005) d += 1; // already at target → next cycle
+  return d * CYCLE;
+}
+
+function renderMoonNext(moon) {
+  if (!el.moonNext) return;
+  if (!moon || moon.phase == null) { el.moonNext.textContent = ""; return; }
+  const dFull = daysToMoonPhase(moon.phase, 0.5);
+  const dNew = daysToMoonPhase(moon.phase, 0.0);
+  // Pick the next milestone (whichever is sooner).
+  const next = dFull < dNew
+    ? { name: "Full moon", days: dFull, glyph: "●" }
+    : { name: "New moon", days: dNew, glyph: "○" };
+  const days = Math.round(next.days);
+  let when;
+  if (days === 0) when = "tonight";
+  else if (days === 1) when = "tomorrow";
+  else when = `in ${days} days`;
+  el.moonNext.innerHTML =
+    `<span class="moon-next-glyph" aria-hidden="true">${next.glyph}</span> ` +
+    `${escapeHtml(next.name)} ${escapeHtml(when)}`;
+}
+
 function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  renderMoonNext(moon);
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
