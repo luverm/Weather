@@ -12,6 +12,7 @@ import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { nextGoldenWindow, daylightMs } from "./golden-hour.js";
 import { drivingConditions } from "./driving.js";
+import { outfitFor } from "./outfit.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -71,6 +72,7 @@ const el = {
   drivingPill: $("#driving-pill"),
   drivingLabel: $("#driving-label"),
   drivingReason: $("#driving-reason"),
+  outfitStrip: $("#outfit-strip"),
   tonightPeek: $("#tonight-peek"),
   tonightDetail: $("#tonight-detail"),
   tonightGlyph: $("#tonight-glyph"),
@@ -218,6 +220,7 @@ export const ui = {
     renderDaily(weather);
     renderNowcast(weather);
     renderAdvice(weather);
+    renderOutfit(weather);
     renderTonight(weather);
     renderPollen(weather.pollen);
     renderTrends(weather);
@@ -856,6 +859,19 @@ function scheduleSunCountdown(w) {
   };
   update();
   state.sunTimer = setInterval(update, 30_000);
+}
+
+function renderOutfit(w) {
+  if (!el.outfitStrip) return;
+  const items = outfitFor(w);
+  if (!items.length) { el.outfitStrip.hidden = true; el.outfitStrip.innerHTML = ""; return; }
+  el.outfitStrip.hidden = false;
+  el.outfitStrip.innerHTML = items.map((it) =>
+    `<span class="outfit-chip" title="${escapeHtml(it.label)}">
+       <span class="outfit-glyph" aria-hidden="true">${it.glyph}</span>
+       <span class="outfit-label">${escapeHtml(it.label)}</span>
+     </span>`
+  ).join("");
 }
 
 function renderTonight(w) {

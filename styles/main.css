@@ -738,6 +738,29 @@ html[data-reduce-motion="true"] .place-name.just-copied {
 }
 .advice-icon { color: var(--accent); flex: 0 0 auto; }
 
+.outfit-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 0;
+}
+.outfit-strip[hidden] { display: none; }
+.outfit-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid var(--stroke);
+  font-size: 11.5px;
+  color: var(--fg-muted);
+  letter-spacing: 0.02em;
+  animation: slideInUp 500ms var(--ease) both;
+}
+.outfit-glyph { font-size: 14px; line-height: 1; }
+.outfit-label { font-weight: 400; }
+
 .tonight-peek {
   margin: 8px 0 0;
   font-size: 12.5px;
