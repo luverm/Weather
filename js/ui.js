@@ -1101,9 +1101,18 @@ function renderPollen(pollen) {
   el.pollenLevel.textContent = pollen.level;
   el.pollenLevel.setAttribute("data-level", pollen.level);
   el.pollenDominant.textContent = `${pollen.dominant.label} dominant`;
-  el.pollenItems.innerHTML = pollen.items.map((p) =>
-    `<span>${escapeHtml(p.label)} ${p.value.toFixed(1)}</span>`
-  ).join("");
+  // Scale bars relative to a "high" reference (5 grains/m³) so users can
+  // compare types at a glance even when absolute values are small.
+  const scale = Math.max(5, ...pollen.items.map((p) => p.value));
+  el.pollenItems.innerHTML = pollen.items.map((p) => {
+    const frac = Math.max(0.04, Math.min(1, p.value / scale));
+    return `
+      <span class="pollen-chip" data-key="${p.key}" title="${escapeHtml(p.label)} ${p.value.toFixed(1)} grains/m³">
+        <span class="pollen-chip-label">${escapeHtml(p.label)}</span>
+        <span class="pollen-chip-bar"><span class="pollen-chip-fill" style="width:${(frac * 100).toFixed(1)}%"></span></span>
+        <span class="pollen-chip-val">${p.value.toFixed(1)}</span>
+      </span>`;
+  }).join("");
 }
 
 function renderTrends(w) {

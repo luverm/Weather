@@ -692,11 +692,35 @@ html[data-reduce-motion="true"] .place-name.just-copied {
 .pollen-level[data-level="Very high"] { background: rgba(255, 106, 106, 0.2); color: #ff9a9a; border-color: rgba(255, 106, 106, 0.35); }
 .pollen-meta strong { display: block; font-size: 14px; font-weight: 500; }
 .pollen-items {
-  display: flex; gap: 8px; flex-wrap: wrap;
-  margin-top: 3px;
+  display: grid;
+  gap: 4px;
+  margin-top: 6px;
   font-size: 11px; color: var(--fg-dim);
 }
-.pollen-items span { font-variant-numeric: tabular-nums; }
+.pollen-chip {
+  display: grid;
+  grid-template-columns: 38px 1fr 32px;
+  gap: 8px;
+  align-items: center;
+}
+.pollen-chip-label { color: var(--fg-muted); }
+.pollen-chip-val { text-align: right; font-variant-numeric: tabular-nums; color: var(--fg-dim); }
+.pollen-chip-bar {
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+}
+.pollen-chip-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: #aad282;
+  transition: width 380ms var(--ease);
+}
+.pollen-chip[data-key="grass"] .pollen-chip-fill { background: #aad282; }
+.pollen-chip[data-key="tree"]  .pollen-chip-fill { background: #ffc196; }
+.pollen-chip[data-key="weed"]  .pollen-chip-fill { background: #ffe5a8; }
 
 /* ---------- Advice ---------- */
 .advice {
