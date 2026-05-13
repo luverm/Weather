@@ -343,6 +343,23 @@ html[data-reduce-motion="true"] *::after {
   letter-spacing: -0.02em;
   line-height: 1.02;
 }
+.place-name.place-name-interactive {
+  cursor: pointer;
+  transition: color 220ms var(--ease);
+}
+.place-name.place-name-interactive:hover { color: var(--accent); }
+.place-name.just-copied {
+  animation: placePulse 700ms var(--ease);
+}
+@keyframes placePulse {
+  0%   { color: var(--fg); }
+  40%  { color: #aad282; text-shadow: 0 0 14px rgba(170, 210, 130, 0.45); }
+  100% { color: var(--fg); }
+}
+html[data-reduce-motion="true"] .place-name.just-copied {
+  animation: none;
+  color: #aad282;
+}
 .place-sub { margin: 8px 0 0; color: var(--fg-muted); font-size: 14px; }
 .place-localtime {
   margin: 6px 0 0;

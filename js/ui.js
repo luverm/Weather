@@ -179,6 +179,7 @@ export const ui = {
       getUnit: () => state.unit,
     });
     bindInstallPrompt();
+    bindPlaceNameCopy();
   },
   focusSearch() { el.searchInput?.focus(); el.searchInput?.select?.(); },
   toggleUnits() { el.unitBtn?.click(); },
@@ -194,6 +195,8 @@ export const ui = {
     el.placeName.classList.remove("flip-in"); void el.placeName.offsetWidth;
     el.placeName.classList.add("flip-in");
     el.placeName.textContent = place.name || "Unknown";
+    el.placeName.title = "Click to copy shareable link";
+    el.placeName.classList.add("place-name-interactive");
     const sub = [place.admin1, place.country].filter(Boolean).join(", ");
     el.placeSub.textContent = sub || "—";
     // Reset alert dismissals so a fresh location can re-surface them.
@@ -1749,6 +1752,25 @@ function bindShare() {
       setTimeout(() => el.shareBtn.classList.remove("just-copied"), 600);
     } catch (err) {
       if (err?.name !== "AbortError") ui.showToast("Share failed");
+    }
+  });
+}
+
+function bindPlaceNameCopy() {
+  if (!el.placeName) return;
+  el.placeName.addEventListener("click", async () => {
+    const url = window.location.href;
+    if (!url.includes("#@")) {
+      ui.showToast("Link not ready yet");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      el.placeName.classList.add("just-copied");
+      setTimeout(() => el.placeName.classList.remove("just-copied"), 700);
+      ui.showToast("Link copied");
+    } catch {
+      ui.showToast("Couldn't copy link");
     }
   });
 }
