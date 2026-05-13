@@ -11,6 +11,7 @@ import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { nextGoldenWindow, daylightMs } from "./golden-hour.js";
+import { drivingConditions } from "./driving.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -60,6 +61,9 @@ const el = {
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
+  drivingPill: $("#driving-pill"),
+  drivingLabel: $("#driving-label"),
+  drivingReason: $("#driving-reason"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
   chartPrecipTotal: $("#chart-precip-total"),
@@ -660,6 +664,25 @@ function renderAdvice(w) {
   } else {
     el.advice.hidden = true;
   }
+  renderDriving(w);
+}
+
+function renderDriving(w) {
+  if (!el.drivingPill || !el.drivingLabel) return;
+  const d = drivingConditions(w);
+  // Only surface the pill when there's something worth saying. In "good"
+  // conditions we stay quiet to avoid cluttering the hero.
+  if (!d || d.level === "good") {
+    el.drivingPill.hidden = true;
+    return;
+  }
+  el.drivingPill.hidden = false;
+  el.drivingPill.dataset.level = d.level;
+  el.drivingLabel.textContent = d.label;
+  el.drivingReason.textContent = d.reasons.slice(0, 2).join(" · ");
+  el.drivingPill.title = d.reasons.length
+    ? `${d.label} — ${d.reasons.join(", ")}`
+    : d.label;
 }
 
 function startLocaltime(w) {
