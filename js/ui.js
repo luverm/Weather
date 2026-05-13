@@ -104,6 +104,7 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcNoonLabel: $("#sun-arc-noon-label"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -656,7 +657,14 @@ function scheduleGoldenHour(w) {
 function scheduleSunArc(w) {
   if (!el.sunArcMarker || !el.sunArcPath) return;
   if (state.sunArcTimer) { clearInterval(state.sunArcTimer); state.sunArcTimer = null; }
-  if (!w?.sunrise || !w?.sunset) return;
+  if (!w?.sunrise || !w?.sunset) {
+    if (el.sunArcNoonLabel) el.sunArcNoonLabel.textContent = "noon";
+    return;
+  }
+  if (el.sunArcNoonLabel) {
+    const noon = (w.sunrise + w.sunset) / 2;
+    el.sunArcNoonLabel.textContent = fmtTime(noon);
+  }
 
   const update = () => {
     const now = Date.now();
