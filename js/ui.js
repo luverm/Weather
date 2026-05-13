@@ -1341,14 +1341,43 @@ function toggleDailyExpand(item, d, w) {
 
 function renderNowcast(w) {
   const nowcast = (w.nowcast || []).filter((n) => n.time > Date.now());
-  // Find first >0.1 precip entry.
+  // Are we currently raining/snowing? If so, surface when it'll ease off.
+  const currentlyWet = w.condition === "rain" || w.condition === "storm" || w.condition === "snow";
   const first = nowcast.find((n) => n.precip > 0.1);
+
+  if (currentlyWet && !first) {
+    // Currently wet but nowcast shows dry coming up — find the first dry slot.
+    const easingTs = pickEasingTime(w);
+    if (easingTs) {
+      const inMin = Math.max(0, Math.round((easingTs - Date.now()) / 60_000));
+      const kind = w.condition === "snow" ? "Snow" : "Rain";
+      el.nowcast.hidden = false;
+      el.nowcast.dataset.state = "easing";
+      el.nowcastHeadline.textContent = inMin <= 5
+        ? `${kind} easing now`
+        : `${kind} easing in ~${formatMins(inMin)}`;
+      el.nowcastSub.textContent = "Showers expected to fade in the next hour or so.";
+      el.nowcastBars.innerHTML = "";
+      return;
+    }
+    // No clear easing seen — say so briefly.
+    el.nowcast.hidden = false;
+    el.nowcast.dataset.state = "ongoing";
+    const kind = w.condition === "snow" ? "Snow" : "Rain";
+    el.nowcastHeadline.textContent = `${kind} ongoing`;
+    el.nowcastSub.textContent = "No break visible in the next 2 hours.";
+    el.nowcastBars.innerHTML = "";
+    return;
+  }
+
   if (!first) {
     el.nowcast.hidden = true;
+    el.nowcast.removeAttribute("data-state");
     return;
   }
   const inMin = Math.max(0, Math.round((first.time - Date.now()) / 60_000));
   const kind = first.code >= 71 && first.code <= 86 ? "Snow" : "Rain";
+  el.nowcast.dataset.state = "incoming";
   el.nowcastHeadline.textContent = inMin === 0
     ? `${kind} now`
     : `${kind} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
@@ -1371,6 +1400,23 @@ function renderNowcast(w) {
     el.nowcastBars.appendChild(bar);
   });
   el.nowcast.hidden = false;
+}
+
+function pickEasingTime(w) {
+  // First, look in the 15-min nowcast for a dry tick.
+  const nowcast = w.nowcast || [];
+  const dry = nowcast.find((n) => (n.precip ?? 0) < 0.05);
+  if (dry) return dry.time;
+  // Otherwise look ahead in hourly: first hour with <0.15mm AND <40% pop.
+  const hours = w.hourly || [];
+  const dryHour = hours.find((h) => (h.precip ?? 0) < 0.15 && (h.pop ?? 0) < 40);
+  return dryHour?.time ?? null;
+}
+
+function formatMins(mins) {
+  if (mins < 60) return `${mins}m`;
+  const h = Math.floor(mins / 60), m = mins % 60;
+  return m === 0 ? `${h}h` : `${h}h ${m}m`;
 }
 
 // ---------- Icons ----------

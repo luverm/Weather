@@ -438,6 +438,10 @@ html[data-reduce-motion="true"] *::after {
   animation: slideInUp 500ms var(--ease) both;
 }
 .nowcast-icon { width: 28px; height: 28px; color: var(--accent); flex: 0 0 auto; }
+.nowcast[data-state="easing"] .nowcast-icon { color: #aad282; }
+.nowcast[data-state="ongoing"] .nowcast-icon { color: #9ad1ff; }
+.nowcast[data-state="easing"] { border: 1px solid rgba(170, 210, 130, 0.18); }
+.nowcast[data-state="ongoing"] { border: 1px solid rgba(154, 209, 255, 0.18); }
 .nowcast-text { display: grid; gap: 2px; min-width: 0; }
 .nowcast-text strong { font-size: 15px; font-weight: 500; }
 .nowcast-text span { font-size: 12px; color: var(--fg-muted); }
