@@ -400,9 +400,11 @@ function renderMetrics(w) {
   el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
-  el.metricWindSub.textContent = dirLabel
+  const trend = windTrend3h(w);
+  const baseSub = dirLabel
     ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
     : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+  el.metricWindSub.textContent = trend ? `${baseSub} · ${trend}` : baseSub;
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
@@ -494,6 +496,19 @@ function beaufort(kmh) {
   if (kmh < 103) return { label: "Storm", cls: "up" };
   if (kmh < 118) return { label: "Violent storm", cls: "up" };
   return { label: "Hurricane", cls: "up" };
+}
+
+function windTrend3h(w) {
+  const cur = w?.windSpeed;
+  const hours = w?.hourly || [];
+  if (cur == null || hours.length < 3) return null;
+  const future = hours.find((h) => h.time > Date.now() + 2.5 * 3600_000);
+  if (!future || future.wind == null) return null;
+  const delta = future.wind - cur;
+  if (Math.abs(delta) < 4) return null;
+  const arrow = delta > 0 ? "▲" : "▼";
+  const verb = delta > 0 ? "picking up" : "easing";
+  return `${arrow} ${verb}`;
 }
 
 function gustiness(wind, gust) {
