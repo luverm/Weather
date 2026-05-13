@@ -981,6 +981,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  const badges = dailySuperlatives(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1005,8 +1006,11 @@ function renderDaily(w) {
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const dayBadges = (badges.get(i) || [])
+      .map((b) => `<span class="daily-badge" data-kind="${b.kind}" title="${escapeHtml(b.title)}">${b.icon} ${escapeHtml(b.label)}</span>`)
+      .join("");
     item.innerHTML = `
-      <span class="daily-day">${day}</span>
+      <span class="daily-day">${day}${dayBadges ? `<span class="daily-badges">${dayBadges}</span>` : ""}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
@@ -1018,6 +1022,60 @@ function renderDaily(w) {
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+}
+
+// Tag each forecast day with up to a couple "of-the-week" superlatives so
+// the eye can find the standout days (warmest, wettest, windiest, sunniest).
+function dailySuperlatives(days) {
+  const m = new Map();
+  if (days.length < 2) return m;
+  const findIdx = (key, want = "max") => {
+    let bestI = -1, bestV = want === "max" ? -Infinity : Infinity;
+    days.forEach((d, i) => {
+      const v = d[key];
+      if (v == null) return;
+      if (want === "max" ? v > bestV : v < bestV) { bestV = v; bestI = i; }
+    });
+    return { idx: bestI, val: bestV };
+  };
+  const warm = findIdx("tempMax", "max");
+  const cool = findIdx("tempMin", "min");
+  const wet = findIdx("precip", "max");
+  const windy = findIdx("gustsMax", "max");
+
+  const add = (i, badge) => {
+    if (i < 0) return;
+    const arr = m.get(i) || [];
+    // Cap at 2 badges per day to keep rows tidy.
+    if (arr.length >= 2) return;
+    arr.push(badge);
+    m.set(i, arr);
+  };
+  // Temperature: only call out when the spread is meaningful (≥4°).
+  if (warm.idx >= 0 && cool.idx >= 0 && (warm.val - cool.val) >= 4) {
+    add(warm.idx, { kind: "warm", icon: "🔥", label: "Warmest", title: `Warmest day · ${Math.round(warm.val)}°` });
+    if (cool.idx !== warm.idx) {
+      add(cool.idx, { kind: "cool", icon: "❄", label: "Coolest", title: `Coolest morning · ${Math.round(cool.val)}°` });
+    }
+  }
+  if (wet.idx >= 0 && wet.val >= 1) {
+    add(wet.idx, { kind: "wet", icon: "💧", label: "Wettest", title: `Wettest day · ${wet.val.toFixed(1)} mm` });
+  }
+  if (windy.idx >= 0 && windy.val >= 30) {
+    add(windy.idx, { kind: "windy", icon: "💨", label: "Windiest", title: `Windiest day · gusts ${Math.round(windy.val)} km/h` });
+  }
+  // Sunniest: lowest pop AND clear/clouds condition.
+  let sunIdx = -1, sunPop = Infinity;
+  days.forEach((d, i) => {
+    if (d.pop == null) return;
+    if ((d.condition === "clear" || d.condition === "clouds") && d.pop < sunPop) {
+      sunPop = d.pop; sunIdx = i;
+    }
+  });
+  if (sunIdx >= 0 && sunPop <= 15 && !m.has(sunIdx)) {
+    add(sunIdx, { kind: "sun", icon: "☀", label: "Sunniest", title: `Sunniest day · ${sunPop}% pop` });
+  }
+  return m;
 }
 
 function renderDailyIconStrip(days) {

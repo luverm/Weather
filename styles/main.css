@@ -1669,7 +1669,26 @@ html[data-reduce-motion="true"] .golden-hour[data-active="true"] .golden-hour-co
   transition: background 200ms var(--ease);
 }
 .daily-item:hover { background: var(--glass); }
-.daily-day { font-size: 13px; font-weight: 500; }
+.daily-day { font-size: 13px; font-weight: 500; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.daily-badges { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.daily-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  padding: 1px 6px 1px 4px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  color: var(--fg-muted);
+  font-weight: 400;
+  white-space: nowrap;
+  line-height: 1.4;
+  border: 1px solid var(--stroke);
+}
+.daily-badge[data-kind="warm"] { color: #ffc196; border-color: rgba(255, 156, 122, 0.30); background: rgba(255, 156, 122, 0.10); }
+.daily-badge[data-kind="cool"] { color: #a8d4ff; border-color: rgba(154, 209, 255, 0.30); background: rgba(154, 209, 255, 0.10); }
+.daily-badge[data-kind="wet"]  { color: #b8d8ff; border-color: rgba(124, 154, 255, 0.30); background: rgba(124, 154, 255, 0.10); }
+.daily-badge[data-kind="windy"]{ color: #d3d8e5; border-color: rgba(200, 210, 230, 0.25); background: rgba(200, 210, 230, 0.08); }
+.daily-badge[data-kind="sun"]  { color: #ffe5a8; border-color: rgba(255, 210, 120, 0.30); background: rgba(255, 210, 120, 0.10); }
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
 .daily-range {
   position: relative;
