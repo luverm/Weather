@@ -717,6 +717,66 @@ html[data-reduce-motion="true"] *::after {
 }
 .legend-swatch.precip { background: rgba(154, 209, 255, 0.55); }
 
+.chart-precip-total {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--stroke);
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+  transition: transform 240ms var(--ease), background 240ms var(--ease);
+}
+.chart-precip-total[hidden] { display: none; }
+.chart-precip-total:hover { transform: translateY(-1px); }
+.chart-precip-total .precip-total-icon {
+  width: 8px; height: 8px; border-radius: 999px;
+  background: var(--fg-muted);
+  box-shadow: 0 0 6px rgba(255,255,255,0.15);
+}
+.chart-precip-total[data-intensity="dry"] {
+  color: #c8d7b6;
+  background: rgba(170, 210, 130, 0.10);
+  border-color: rgba(170, 210, 130, 0.25);
+}
+.chart-precip-total[data-intensity="dry"] .precip-total-icon {
+  background: #aad282;
+  box-shadow: 0 0 8px rgba(170, 210, 130, 0.6);
+}
+.chart-precip-total[data-intensity="light"] {
+  color: #cfe2ff;
+  background: rgba(154, 209, 255, 0.12);
+  border-color: rgba(154, 209, 255, 0.30);
+}
+.chart-precip-total[data-intensity="light"] .precip-total-icon {
+  background: #9ad1ff;
+  box-shadow: 0 0 8px rgba(154, 209, 255, 0.55);
+}
+.chart-precip-total[data-intensity="moderate"] {
+  color: #cdd9ff;
+  background: rgba(124, 154, 255, 0.16);
+  border-color: rgba(124, 154, 255, 0.36);
+}
+.chart-precip-total[data-intensity="moderate"] .precip-total-icon {
+  background: #7c9aff;
+  box-shadow: 0 0 8px rgba(124, 154, 255, 0.7);
+}
+.chart-precip-total[data-intensity="heavy"] {
+  color: #ffd9d1;
+  background: rgba(255, 130, 120, 0.16);
+  border-color: rgba(255, 130, 120, 0.38);
+}
+.chart-precip-total[data-intensity="heavy"] .precip-total-icon {
+  background: #ff8a7c;
+  box-shadow: 0 0 8px rgba(255, 130, 120, 0.7);
+}
+.chart-precip-total[data-kind="snow"] .precip-total-icon {
+  background: #e4eeff;
+  box-shadow: 0 0 8px rgba(220, 235, 255, 0.7);
+}
+
 .chart-wrap {
   position: relative;
 }

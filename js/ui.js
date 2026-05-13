@@ -62,6 +62,8 @@ const el = {
   adviceText: $("#advice-text"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
+  chartPrecipTotal: $("#chart-precip-total"),
+  chartPrecipTotalText: $("#chart-precip-total-text"),
   pollenCard: $("#pollen-card"),
   pollenLevel: $("#pollen-level"),
   pollenDominant: $("#pollen-dominant"),
@@ -902,6 +904,46 @@ function renderHourly(w) {
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
   }
+  renderChartPrecipTotal(w);
+}
+
+function renderChartPrecipTotal(w) {
+  if (!el.chartPrecipTotal || !el.chartPrecipTotalText) return;
+  const hours = (w.hourly || []).slice(0, 24);
+  if (hours.length < 6) { el.chartPrecipTotal.hidden = true; return; }
+  let total = 0, snowMm = 0, rainMm = 0, maxPop = 0, peakHour = null, peakP = 0;
+  for (const h of hours) {
+    const p = h.precip ?? 0;
+    total += p;
+    if (h.condition === "snow") snowMm += p; else rainMm += p;
+    if ((h.pop ?? 0) > maxPop) maxPop = h.pop;
+    if (p > peakP) { peakP = p; peakHour = h.time; }
+  }
+  const isSnow = snowMm > rainMm && snowMm > 0.4;
+  const kind = isSnow ? "snow" : "rain";
+  el.chartPrecipTotal.dataset.kind = kind;
+  el.chartPrecipTotal.dataset.intensity =
+    total >= 15 ? "heavy" : total >= 4 ? "moderate" : total >= 0.3 ? "light" : "dry";
+  let text;
+  if (total < 0.3 && maxPop < 25) {
+    text = `Dry next 24h${maxPop >= 10 ? ` · ${maxPop}% pop` : ""}`;
+  } else if (total < 0.3) {
+    text = `Mostly dry · peak ${maxPop}% pop`;
+  } else {
+    const label = isSnow ? "snow" : "rain";
+    const t = total >= 10 ? `${Math.round(total)} mm` : `${total.toFixed(1)} mm`;
+    const peakLabel = peakHour ? ` · peak ${fmtTime(peakHour)}` : "";
+    text = `${t} ${label} next 24h${peakLabel}`;
+  }
+  el.chartPrecipTotalText.textContent = text;
+  el.chartPrecipTotal.hidden = false;
+  el.chartPrecipTotal.onclick = peakHour
+    ? () => state.handlers.onHourClick?.(peakHour)
+    : null;
+  el.chartPrecipTotal.style.cursor = peakHour ? "pointer" : "default";
+  el.chartPrecipTotal.title = peakHour
+    ? `Click to jump to peak (${fmtTime(peakHour)})`
+    : "";
 }
 
 function highlightHour(index) {
