@@ -318,6 +318,18 @@ installShortcuts({
   toggleRadar: () => document.getElementById("radar-play")?.click(),
   resetScrubber: () => scrubber.reset(),
   refresh: () => refreshWeather(),
+  jumpToDay: (idx) => {
+    const day = app.weather?.daily?.[idx];
+    if (!day || !day.time) return;
+    // Center on solar noon (~midpoint of sunrise/sunset) for a useful look.
+    const target = (day.sunrise && day.sunset)
+      ? (day.sunrise + day.sunset) / 2
+      : day.time + 12 * 3600_000;
+    clock.setOffset(target - Date.now());
+    scrubber.sync();
+    if (app.weather) applyScene(app.weather);
+    ui.setScrubbing(!clock.isLive());
+  },
   cyclePlace: (dir) => {
     const list = places.all();
     if (list.length < 2) return;

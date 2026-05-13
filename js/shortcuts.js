@@ -70,6 +70,11 @@ export function installShortcuts(handlers) {
     if (key === "ArrowRight") { handlers.nudge?.(1); e.preventDefault(); return; }
     if (key === "[") { handlers.cyclePlace?.(-1); e.preventDefault(); return; }
     if (key === "]") { handlers.cyclePlace?.(1); e.preventDefault(); return; }
+    if (key >= "1" && key <= "7") {
+      e.preventDefault();
+      handlers.jumpToDay?.(parseInt(key, 10) - 1);
+      return;
+    }
   });
 
   installSwipeNavigation(handlers);
