@@ -96,6 +96,7 @@ const el = {
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
+  weeklyPrecip: $("#weekly-precip"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -1214,6 +1215,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderWeeklyPrecip(days);
   const badges = dailySuperlatives(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
@@ -1354,6 +1356,25 @@ function renderDailySpark(days) {
       el.dailySparkDots.appendChild(c);
     }
   });
+}
+
+function renderWeeklyPrecip(days) {
+  if (!el.weeklyPrecip) return;
+  if (!days.length) { el.weeklyPrecip.hidden = true; return; }
+  const total = days.reduce((s, d) => s + (d.precip ?? 0), 0);
+  const wetDays = days.filter((d) => (d.precip ?? 0) >= 0.5).length;
+  if (total < 0.3 && wetDays === 0) {
+    el.weeklyPrecip.hidden = false;
+    el.weeklyPrecip.dataset.level = "dry";
+    el.weeklyPrecip.textContent = "Dry week";
+    return;
+  }
+  const totalLabel = total >= 10 ? `${Math.round(total)} mm` : `${total.toFixed(1)} mm`;
+  const dayLabel = wetDays === 1 ? "1 wet day" : `${wetDays} wet days`;
+  el.weeklyPrecip.hidden = false;
+  el.weeklyPrecip.dataset.level =
+    total >= 30 ? "soaked" : total >= 10 ? "wet" : total >= 2 ? "damp" : "light";
+  el.weeklyPrecip.textContent = `${totalLabel} · ${dayLabel}`;
 }
 
 function renderDailyDelta(days) {

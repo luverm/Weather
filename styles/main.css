@@ -1685,6 +1685,24 @@ html[data-reduce-motion="true"] .golden-hour[data-active="true"] .golden-hour-co
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+
+.weekly-precip {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+  background: rgba(255,255,255,0.06);
+  color: var(--fg-muted);
+  border: 1px solid var(--stroke);
+}
+.weekly-precip[hidden] { display: none; }
+.weekly-precip[data-level="dry"]    { color: #c8d7b6; background: rgba(170, 210, 130, 0.10); border-color: rgba(170, 210, 130, 0.25); }
+.weekly-precip[data-level="light"]  { color: #b9d3f0; background: rgba(154, 209, 255, 0.10); border-color: rgba(154, 209, 255, 0.22); }
+.weekly-precip[data-level="damp"]   { color: #cfe2ff; background: rgba(154, 209, 255, 0.18); border-color: rgba(154, 209, 255, 0.34); }
+.weekly-precip[data-level="wet"]    { color: #cdd9ff; background: rgba(124, 154, 255, 0.20); border-color: rgba(124, 154, 255, 0.40); }
+.weekly-precip[data-level="soaked"] { color: #ffd9d1; background: rgba(255, 130, 120, 0.18); border-color: rgba(255, 130, 120, 0.36); }
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;
