@@ -70,6 +70,48 @@ export function installShortcuts(handlers) {
     if (key === "[") { handlers.cyclePlace?.(-1); e.preventDefault(); return; }
     if (key === "]") { handlers.cyclePlace?.(1); e.preventDefault(); return; }
   });
+
+  installSwipeNavigation(handlers);
+}
+
+// Two-finger horizontal swipe cycles saved cities on touch devices.
+// We use 2 fingers (or a long edge swipe) to avoid clashing with the scrubber,
+// chart, and radar map which already capture single-touch gestures.
+function installSwipeNavigation(handlers) {
+  let startX = null;
+  let startY = null;
+  let twoFinger = false;
+  const THRESHOLD = 70;     // min horizontal distance
+  const RATIO = 1.6;        // dx must dominate dy
+
+  const isInteractive = (target) => !!(target?.closest?.(
+    "#scrubber-track, #chart-svg, #radar-map, .nowcast-bars, .comfort-strip, .search-results, .settings-menu"
+  ));
+
+  window.addEventListener("touchstart", (e) => {
+    twoFinger = e.touches.length === 2;
+    if (!twoFinger) {
+      // Allow single-finger swipe from the page background only, never from
+      // inside an interactive widget.
+      if (isInteractive(e.target)) { startX = null; return; }
+    }
+    const t = e.touches[0];
+    startX = t.clientX;
+    startY = t.clientY;
+  }, { passive: true });
+
+  window.addEventListener("touchend", (e) => {
+    if (startX == null) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - startX;
+    const dy = t.clientY - startY;
+    startX = startY = null;
+    if (Math.abs(dx) < THRESHOLD) return;
+    if (Math.abs(dx) < Math.abs(dy) * RATIO) return;
+    // Only fire when the user is past the threshold and the swipe is
+    // unmistakably horizontal.
+    handlers.cyclePlace?.(dx < 0 ? 1 : -1);
+  }, { passive: true });
 }
 
 function isTyping(el) {
