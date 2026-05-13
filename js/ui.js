@@ -199,6 +199,15 @@ export const ui = {
   },
   setLoading(text) { el.placeSub.textContent = text; },
   setPlace(place) {
+    // Remember the place we were on (with its last known temp) so the next
+    // load can surface a quick "X° warmer/cooler than …" hint.
+    if (state.place && state.weather && state.weather.temp != null
+        && places.idFor(state.place) !== places.idFor(place)) {
+      state.compareBaseline = {
+        name: state.place.name,
+        temp: state.weather.temp,
+      };
+    }
     state.place = place;
     el.placeName.classList.remove("flip-in"); void el.placeName.offsetWidth;
     el.placeName.classList.add("flip-in");
@@ -237,6 +246,7 @@ export const ui = {
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
+    else maybeShowCompareToast(weather);
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
       places.updateSummary(state.place, {
@@ -1868,6 +1878,18 @@ function bindShare() {
       if (err?.name !== "AbortError") ui.showToast("Share failed");
     }
   });
+}
+
+function maybeShowCompareToast(w) {
+  const base = state.compareBaseline;
+  if (!base || w?.temp == null) return;
+  state.compareBaseline = null; // consume once
+  const deltaC = w.temp - base.temp;
+  if (Math.abs(deltaC) < 1.5) return;
+  const deltaDisp = Math.round(state.unit === "F" ? deltaC * 9 / 5 : deltaC);
+  if (deltaDisp === 0) return;
+  const cmp = deltaDisp > 0 ? "warmer" : "cooler";
+  ui.showToast(`${Math.abs(deltaDisp)}° ${cmp} than ${base.name}`, 4200);
 }
 
 function bindPlaceNameCopy() {
