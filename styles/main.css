@@ -1007,6 +1007,8 @@ html[data-reduce-motion="true"] .driving-pill[data-level="hazard"] {
   fill: rgba(154, 209, 255, 0.42);
   transition: fill 150ms var(--ease);
 }
+.chart-precip .precip-snow  { fill: rgba(220, 235, 255, 0.65); }
+.chart-precip .precip-storm { fill: rgba(190, 120, 255, 0.55); }
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
 }

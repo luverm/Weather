@@ -241,6 +241,10 @@ export class HourlyChart {
       r.setAttribute("height", barH.toFixed(1));
       r.setAttribute("rx", "1.5");
       r.setAttribute("opacity", (0.35 + (pop / 100) * 0.55).toFixed(2));
+      const kind = h.condition === "snow" ? "snow"
+                 : h.condition === "storm" ? "storm"
+                 : "rain";
+      r.setAttribute("class", `precip-bar precip-${kind}`);
       precipG.appendChild(r);
     });
 
