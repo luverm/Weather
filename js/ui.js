@@ -74,6 +74,7 @@ const el = {
   pollenItems: $("#pollen-items"),
   pressureTrend: $("#m-pressure-trend"),
   tempTrend: $("#temp-trend"),
+  feelsDiff: $("#feels-diff"),
   uvLevel: $("#m-uv-level"),
   humidityComfort: $("#m-humidity-comfort"),
   pressureSparkLine: $("#pressure-spark-line"),
@@ -290,8 +291,67 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  // Re-render the feels-like line. The element holds the temp-trend pill and
+  // (optionally) a feels-diff pill, so we rebuild its text node while leaving
+  // those siblings intact.
+  rebuildFeelsLikeLine(feels);
+  renderFeelsDiff(w);
   renderDayRange(w);
+}
+
+function rebuildFeelsLikeLine(feels) {
+  if (!el.feelsLike) return;
+  const txt = `Feels like ${Math.round(feels)}°`;
+  // Find the existing text node (the unstructured text between spans) and
+  // update it; create one if missing.
+  let textNode = null;
+  for (const node of el.feelsLike.childNodes) {
+    if (node.nodeType === Node.TEXT_NODE) { textNode = node; break; }
+  }
+  if (textNode) {
+    textNode.textContent = txt;
+  } else if (el.feelsDiff) {
+    el.feelsLike.insertBefore(document.createTextNode(txt), el.feelsDiff);
+  } else {
+    el.feelsLike.appendChild(document.createTextNode(txt));
+  }
+}
+
+function renderFeelsDiff(w) {
+  if (!el.feelsDiff) return;
+  const t = w.temp;
+  const f = w.feelsLike;
+  if (t == null || f == null) { el.feelsDiff.hidden = true; return; }
+  const deltaC = f - t;
+  if (Math.abs(deltaC) < 3) { el.feelsDiff.hidden = true; return; }
+  const deltaDisp = Math.round(state.unit === "F" ? deltaC * 9 / 5 : deltaC);
+  let kind, label;
+  if (deltaC <= -3) {
+    kind = "chill";
+    label = `${Math.abs(deltaDisp)}° colder · ${pickChillCause(w)}`;
+  } else {
+    kind = "heat";
+    label = `${deltaDisp}° warmer · ${pickHeatCause(w)}`;
+  }
+  el.feelsDiff.dataset.kind = kind;
+  el.feelsDiff.textContent = label;
+  el.feelsDiff.hidden = false;
+}
+
+function pickChillCause(w) {
+  const wind = w.windSpeed ?? 0;
+  if (wind >= 25) return "wind chill";
+  if (wind >= 10) return "breezy chill";
+  return "evaporative chill";
+}
+
+function pickHeatCause(w) {
+  const rh = w.humidity ?? 0;
+  const dew = w.dewPoint;
+  if (dew != null && dew >= 21) return "humid heat";
+  if (rh >= 70) return "muggy";
+  if ((w.uv ?? 0) >= 7) return "strong sun";
+  return "heat load";
 }
 
 function renderDayRange(w) {
