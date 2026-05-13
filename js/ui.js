@@ -23,6 +23,8 @@ const el = {
   placeSub: $("#place-sub"),
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
+  conditionIcon: $("#condition-icon"),
+  conditionText: $("#condition-text"),
   feelsLike: $("#feels-like"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
@@ -312,7 +314,13 @@ function renderLiveValues(w, { animate = true } = {}) {
   const feels = convertTemp(w.feelsLike ?? w.temp);
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
-  el.conditionLabel.textContent = capitalize(w.label);
+  if (el.conditionText && el.conditionIcon) {
+    el.conditionText.textContent = capitalize(w.label);
+    el.conditionIcon.innerHTML = iconFor(w.condition);
+    el.conditionIcon.dataset.condition = w.condition || "";
+  } else {
+    el.conditionLabel.textContent = capitalize(w.label);
+  }
   // Re-render the feels-like line. The element holds the temp-trend pill and
   // (optionally) a feels-diff pill, so we rebuild its text node while leaving
   // those siblings intact.

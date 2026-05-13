@@ -406,7 +406,21 @@ html[data-reduce-motion="true"] .place-name.just-copied {
   transition: background 200ms var(--ease), color 200ms var(--ease);
 }
 .unit:hover { background: var(--glass); color: var(--fg); }
-.condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
+.condition-label {
+  margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.condition-icon {
+  display: inline-grid; place-items: center;
+  width: 22px; height: 22px;
+  color: var(--fg-muted);
+}
+.condition-icon svg { width: 22px; height: 22px; }
+.condition-icon[data-condition="clear"]  { color: #ffd684; }
+.condition-icon[data-condition="rain"]   { color: #9ad1ff; }
+.condition-icon[data-condition="storm"]  { color: #c2a4ff; }
+.condition-icon[data-condition="snow"]   { color: #e4eeff; }
+.condition-icon[data-condition="fog"]    { color: #b4bdcc; }
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
 .day-range {
   margin-top: 10px;
