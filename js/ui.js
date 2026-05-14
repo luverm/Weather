@@ -326,11 +326,19 @@ function animateNumber(node, target, format) {
 
 function capitalize(s) { return (s || "").charAt(0).toUpperCase() + (s || "").slice(1); }
 
+function updateDocumentTitle(w) {
+  if (w?.temp == null) return;
+  const name = state.place?.name;
+  const t = `${Math.round(convertTemp(w.temp))}°${state.unit}`;
+  document.title = name ? `${t} ${name} · Aether` : `${t} · Aether`;
+}
+
 function renderLiveValues(w, { animate = true } = {}) {
   const temp = convertTemp(w.temp);
   const feels = convertTemp(w.feelsLike ?? w.temp);
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
+  updateDocumentTitle(w);
   el.conditionLabel.textContent = capitalize(w.label);
   const feelsDeltaC = (w.feelsLike ?? w.temp) - w.temp;
   // Convert delta to °F if needed (a temp gap of 1°C is 1.8°F).
