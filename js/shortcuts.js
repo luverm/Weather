@@ -65,8 +65,14 @@ export function installShortcuts(handlers) {
       handlers.toggleRadar?.();
       return;
     }
-    if (key === "ArrowLeft") { handlers.nudge?.(-1); e.preventDefault(); return; }
-    if (key === "ArrowRight") { handlers.nudge?.(1); e.preventDefault(); return; }
+    if (key === "ArrowLeft" || key === "ArrowRight") {
+      const dir = key === "ArrowLeft" ? -1 : 1;
+      // Hold shift for 15-min steps, alt for 6-hour leaps, otherwise 1 hour.
+      const stepHours = e.shiftKey ? 0.25 : e.altKey ? 6 : 1;
+      handlers.nudge?.(dir * stepHours);
+      e.preventDefault();
+      return;
+    }
     if (key === "[") { handlers.cyclePlace?.(-1); e.preventDefault(); return; }
     if (key === "]") { handlers.cyclePlace?.(1); e.preventDefault(); return; }
     if (key === "s" || key === "S") { e.preventDefault(); handlers.toggleSavePlace?.(); return; }
