@@ -983,18 +983,37 @@ function cardinal(deg) {
 
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
-  for (const h of (w.hourly || []).slice(0, 24)) {
+  const hours = (w.hourly || []).slice(0, 24);
+  if (!hours.length) return;
+  const now = Date.now();
+  let nowIdx = 0;
+  let nowGap = Infinity;
+  for (let i = 0; i < hours.length; i++) {
+    const gap = Math.abs(hours[i].time - now);
+    if (gap < nowGap) { nowGap = gap; nowIdx = i; }
+  }
+  // Only mark "now" if the nearest hour is within 90 min — beyond that there
+  // is no meaningful current chip on screen.
+  const showNow = nowGap <= 90 * 60_000;
+  hours.forEach((h, i) => {
     const item = document.createElement("div");
-    item.className = "forecast-item";
+    const isNow = showNow && i === nowIdx;
+    item.className = "forecast-item" + (isNow ? " is-now" : "");
     item.dataset.ts = h.time;
     item.innerHTML = `
-      <span class="forecast-time">${fmtTime(h.time)}</span>
+      <span class="forecast-time">${isNow ? "Now" : fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
+  });
+  if (showNow) {
+    const nowEl = el.forecastTrack.children[nowIdx];
+    if (nowEl?.scrollIntoView) {
+      nowEl.scrollIntoView({ block: "nearest", inline: "center", behavior: "instant" in nowEl ? "instant" : "auto" });
+    }
   }
 }
 
