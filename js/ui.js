@@ -823,6 +823,25 @@ function renderAdvice(w) {
   }
 }
 
+function timezoneOffsetMin(date, tz) {
+  try {
+    // Render the same instant in the target zone and in the browser's local
+    // zone (en-US locale -> stable parseable format), then diff.
+    const there = new Date(date.toLocaleString("en-US", { timeZone: tz }));
+    const here = new Date(date.toLocaleString("en-US"));
+    return Math.round((there - here) / 60_000);
+  } catch { return 0; }
+}
+
+function formatOffsetLabel(offsetMin) {
+  if (!offsetMin) return "";
+  const abs = Math.abs(offsetMin);
+  const hh = Math.floor(abs / 60);
+  const mm = abs % 60;
+  const time = mm === 0 ? `${hh}h` : `${hh}h ${mm}m`;
+  return offsetMin > 0 ? `· ${time} ahead` : `· ${time} behind`;
+}
+
 function startLocaltime(w) {
   if (state.localTimer) { clearInterval(state.localTimer); state.localTimer = null; }
   if (!el.placeLocaltime) return;
@@ -834,17 +853,21 @@ function startLocaltime(w) {
   }
   const update = () => {
     try {
+      const now = new Date();
       const parts = new Intl.DateTimeFormat([], {
         timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
         weekday: "short", timeZoneName: "short",
-      }).formatToParts(new Date());
+      }).formatToParts(now);
       const day = parts.find((p) => p.type === "weekday")?.value ?? "";
       const hour = parts.find((p) => p.type === "hour")?.value ?? "";
       const minute = parts.find((p) => p.type === "minute")?.value ?? "";
       const tzName = parts.find((p) => p.type === "timeZoneName")?.value ?? "";
+      const offsetMin = timezoneOffsetMin(now, tz);
+      const offsetTxt = formatOffsetLabel(offsetMin);
       el.placeLocaltime.innerHTML =
         `<span class="clock-dot" aria-hidden="true"></span>` +
-        `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>`;
+        `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>` +
+        (offsetTxt ? ` <span class="tz-offset">${escapeHtml(offsetTxt)}</span>` : "");
     } catch {
       el.placeLocaltime.textContent = "";
     }
