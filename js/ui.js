@@ -261,6 +261,7 @@ export const ui = {
 function convertTemp(c) { return state.unit === "F" ? c * 9 / 5 + 32 : c; }
 function convertWind(kmh) { return state.unit === "F" ? kmh * 0.621371 : kmh; }
 function windUnit() { return state.unit === "F" ? "mph" : "km/h"; }
+function fmtWindLocal(kmh) { return `${Math.round(convertWind(kmh))} ${windUnit()}`; }
 
 function animateNumber(node, target, format) {
   if (target == null || isNaN(target)) { node.textContent = "–"; return; }
@@ -796,7 +797,7 @@ function renderInsights(w) {
     weekday: "short",
     ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
   });
-  const items = buildInsights(w, { fmtTime: fmt, weekday });
+  const items = buildInsights(w, { fmtTime: fmt, weekday, fmtWind: fmtWindLocal });
   if (!items.length) {
     el.insightsCard.hidden = true;
     return;
@@ -844,7 +845,7 @@ function renderWeekend(w) {
 
 function renderAlerts(w) {
   if (!el.alertsStrip) return;
-  const alerts = buildAlerts(w);
+  const alerts = buildAlerts(w, { fmtWind: fmtWindLocal });
   // Respect per-place dismissals so the user isn't nagged.
   const dismissed = getDismissedAlerts();
   const visible = alerts.filter((a) => !dismissed.has(a.id));
@@ -900,7 +901,7 @@ function rememberDismissedAlert(id) {
 
 function renderActivity(w) {
   if (!el.activityCard || !el.activityList) return;
-  const items = findActivityWindows(w);
+  const items = findActivityWindows(w, { fmtWind: fmtWindLocal });
   if (!items.length) {
     el.activityCard.hidden = true;
     return;
