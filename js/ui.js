@@ -96,6 +96,7 @@ const el = {
   sunDaylightDelta: $("#sun-daylight-delta"),
   precipTotal: $("#precip-total"),
   precipTotalText: $("#precip-total-text"),
+  uvBarMarker: $("#uv-bar-marker"),
   goldenHour: $("#golden-hour"),
   goldenHourLabel: $("#golden-hour-label"),
   goldenHourRange: $("#golden-hour-range"),
@@ -367,6 +368,7 @@ function renderMetrics(w) {
       el.uvLevel.textContent = "";
     }
   }
+  renderUvBar(w);
   if (w.uvPeak?.time) {
     el.metricUVSub.textContent = `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`;
   } else {
@@ -934,6 +936,19 @@ function renderPollen(pollen) {
   el.pollenItems.innerHTML = pollen.items.map((p) =>
     `<span>${escapeHtml(p.label)} ${p.value.toFixed(1)}</span>`
   ).join("");
+}
+
+function renderUvBar(w) {
+  if (!el.uvBarMarker) return;
+  const uv = w?.uv;
+  if (uv == null) {
+    el.uvBarMarker.style.opacity = "0";
+    return;
+  }
+  const frac = Math.min(1, Math.max(0, uv / 11));
+  el.uvBarMarker.style.opacity = "1";
+  el.uvBarMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+  el.uvBarMarker.title = `UV ${Math.round(uv * 10) / 10}`;
 }
 
 function renderPrecipTotal(w) {

@@ -561,6 +561,36 @@ html[data-reduce-motion="true"] *::after {
 }
 .metric-humidity .pressure-spark { color: #9ad1ff; }
 
+.uv-bar {
+  grid-column: 1 / span 2;
+  position: relative;
+  height: 6px;
+  border-radius: 999px;
+  margin-top: 4px;
+  background: linear-gradient(
+    90deg,
+    #6fd17a 0%,
+    #d6e36a 27%,
+    #ffb547 50%,
+    #ff6c5a 73%,
+    #b94be8 100%
+  );
+  opacity: 0.85;
+}
+.uv-bar-marker {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.35), 0 0 6px rgba(255,255,255,0.55);
+  transition: left 480ms var(--ease), opacity 240ms var(--ease);
+  pointer-events: auto;
+  cursor: help;
+}
+
 /* ---------- Daily expand ---------- */
 .daily-item { cursor: pointer; }
 .daily-item[data-expanded="true"] { background: var(--glass-strong); }
