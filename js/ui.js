@@ -21,6 +21,7 @@ const el = {
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
+  feelsText: $("#feels-text"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -331,7 +332,17 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  const feelsDeltaC = (w.feelsLike ?? w.temp) - w.temp;
+  // Convert delta to °F if needed (a temp gap of 1°C is 1.8°F).
+  const feelsDeltaDisp = state.unit === "F" ? feelsDeltaC * 1.8 : feelsDeltaC;
+  const absDelta = Math.abs(Math.round(feelsDeltaDisp));
+  const significant = absDelta >= (state.unit === "F" ? 3 : 2);
+  let txt = `Feels like ${Math.round(feels)}°`;
+  if (significant) {
+    txt += feelsDeltaDisp > 0 ? ` · ${absDelta}° warmer` : ` · ${absDelta}° colder`;
+  }
+  if (el.feelsText) el.feelsText.textContent = txt;
+  else el.feelsLike.textContent = txt;
   renderDayRange(w);
 }
 
