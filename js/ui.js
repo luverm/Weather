@@ -98,6 +98,7 @@ const el = {
   precipTotalText: $("#precip-total-text"),
   uvBarMarker: $("#uv-bar-marker"),
   metricWindUnit: $("#m-wind-unit"),
+  metricPressureUnit: $("#m-pressure-unit"),
   goldenHour: $("#golden-hour"),
   goldenHourLabel: $("#golden-hour-label"),
   goldenHourRange: $("#golden-hour-range"),
@@ -362,10 +363,25 @@ function renderMetrics(w) {
       el.humidityComfort.textContent = "";
     }
   }
-  el.metricPressure.textContent = Math.round(w.pressure ?? 0);
-  el.metricPressureSub.textContent = w.visibility != null
-    ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
-    : "visibility —";
+  if (w.pressure == null) {
+    el.metricPressure.textContent = "—";
+  } else if (state.unit === "F") {
+    el.metricPressure.textContent = (w.pressure * 0.02953).toFixed(2);
+  } else {
+    el.metricPressure.textContent = Math.round(w.pressure);
+  }
+  if (el.metricPressureUnit) el.metricPressureUnit.textContent = state.unit === "F" ? "inHg" : "hPa";
+  if (w.visibility != null) {
+    if (state.unit === "F") {
+      const mi = (w.visibility / 1609.344);
+      el.metricPressureSub.textContent = `visibility ${mi >= 10 ? Math.round(mi) : mi.toFixed(1)} mi`;
+    } else {
+      const km = w.visibility / 1000;
+      el.metricPressureSub.textContent = `visibility ${km >= 10 ? Math.round(km) : km.toFixed(1)} km`;
+    }
+  } else {
+    el.metricPressureSub.textContent = "visibility —";
+  }
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
