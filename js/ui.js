@@ -99,6 +99,7 @@ const el = {
   uvBarMarker: $("#uv-bar-marker"),
   metricWindUnit: $("#m-wind-unit"),
   metricPressureUnit: $("#m-pressure-unit"),
+  savePlaceBtn: $("#save-place-btn"),
   goldenHour: $("#golden-hour"),
   goldenHourLabel: $("#golden-hour-label"),
   goldenHourRange: $("#golden-hour-range"),
@@ -149,6 +150,7 @@ export const ui = {
     bindAudio();
     bindShare();
     bindRefresh();
+    bindSavePlace();
     bindSettings();
     bindTilt();
     applyStoredPreferences();
@@ -185,6 +187,7 @@ export const ui = {
     el.placeName.textContent = place.name || "Unknown";
     const sub = [place.admin1, place.country].filter(Boolean).join(", ");
     el.placeSub.textContent = sub || "—";
+    syncSavePlaceBtn();
     // Reset alert dismissals so a fresh location can re-surface them.
     try { sessionStorage.removeItem("aether:dismissed-alerts"); } catch { /* ignore */ }
     renderPlaces();
@@ -263,6 +266,40 @@ function convertTemp(c) { return state.unit === "F" ? c * 9 / 5 + 32 : c; }
 function convertWind(kmh) { return state.unit === "F" ? kmh * 0.621371 : kmh; }
 function windUnit() { return state.unit === "F" ? "mph" : "km/h"; }
 function fmtWindLocal(kmh) { return `${Math.round(convertWind(kmh))} ${windUnit()}`; }
+
+function syncSavePlaceBtn() {
+  const btn = el.savePlaceBtn;
+  if (!btn) return;
+  const p = state.place;
+  if (!p || p.lat == null || p.lon == null) { btn.hidden = true; return; }
+  btn.hidden = false;
+  const saved = places.isSaved(p);
+  btn.setAttribute("aria-pressed", saved ? "true" : "false");
+  btn.classList.toggle("is-saved", saved);
+  btn.title = saved ? "Remove from saved" : "Save this location";
+  btn.setAttribute("aria-label", btn.title);
+}
+
+function bindSavePlace() {
+  if (!el.savePlaceBtn) return;
+  el.savePlaceBtn.addEventListener("click", () => {
+    const p = state.place;
+    if (!p) return;
+    if (places.isSaved(p)) {
+      places.remove(p);
+      ui.showToast(`Removed ${p.name || "place"}`);
+    } else {
+      places.add(p);
+      // Carry over the current temp/condition so the chip shows them right away.
+      if (state.weather) {
+        places.updateSummary(p, { temp: state.weather.temp, condition: state.weather.condition });
+      }
+      ui.showToast(`Saved ${p.name || "place"}`);
+    }
+    syncSavePlaceBtn();
+    renderPlaces();
+  });
+}
 
 function animateNumber(node, target, format) {
   if (target == null || isNaN(target)) { node.textContent = "–"; return; }

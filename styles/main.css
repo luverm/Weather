@@ -342,6 +342,36 @@ html[data-reduce-motion="true"] *::after {
   font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.02;
+  display: inline;
+}
+.save-place {
+  margin-left: 8px;
+  padding: 6px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.18);
+  color: var(--fg-muted);
+  cursor: pointer;
+  vertical-align: middle;
+  display: inline-grid;
+  place-items: center;
+  width: 30px; height: 30px;
+  transition: color 200ms var(--ease), background 200ms var(--ease), transform 200ms var(--ease);
+}
+.save-place svg { width: 16px; height: 16px; }
+.save-place .star-fill { opacity: 0; transition: opacity 200ms var(--ease); }
+.save-place .star-outline { opacity: 0.9; }
+.save-place:hover { color: #ffd97a; transform: scale(1.05); }
+.save-place.is-saved {
+  color: #ffd97a;
+  background: rgba(255,210,140,0.12);
+  border-color: rgba(255,210,140,0.4);
+}
+.save-place.is-saved .star-fill { opacity: 1; }
+.save-place.is-saved .star-outline { opacity: 0; }
+.save-place:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255,210,140,0.35);
 }
 .place-sub { margin: 8px 0 0; color: var(--fg-muted); font-size: 14px; }
 .place-localtime {
