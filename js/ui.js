@@ -995,12 +995,23 @@ function renderHourly(w) {
   // Only mark "now" if the nearest hour is within 90 min — beyond that there
   // is no meaningful current chip on screen.
   const showNow = nowGap <= 90 * 60_000;
+  const weekdayFmt = new Intl.DateTimeFormat([], { weekday: "short" });
+  let prevDay = null;
   hours.forEach((h, i) => {
     const item = document.createElement("div");
     const isNow = showNow && i === nowIdx;
-    item.className = "forecast-item" + (isNow ? " is-now" : "");
+    const d = new Date(h.time);
+    const dayKey = d.toDateString();
+    const isDayBreak = i > 0 && dayKey !== prevDay;
+    prevDay = dayKey;
+    const cls = ["forecast-item"];
+    if (isNow) cls.push("is-now");
+    if (isDayBreak) cls.push("is-day-break");
+    item.className = cls.join(" ");
     item.dataset.ts = h.time;
+    const dayLabel = isDayBreak ? `<span class="forecast-daybreak">${weekdayFmt.format(d)}</span>` : "";
     item.innerHTML = `
+      ${dayLabel}
       <span class="forecast-time">${isNow ? "Now" : fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
