@@ -1033,6 +1033,14 @@ kbd {
   color: var(--fg);
   line-height: 1;
   flex-wrap: wrap;
+  cursor: pointer;
+  transition: transform 180ms var(--ease), border-color 180ms var(--ease);
+}
+.golden-hour:hover { transform: translateY(-1px); border-color: rgba(255,210,140,0.45); }
+.golden-hour:focus-visible {
+  outline: none;
+  border-color: rgba(255,210,140,0.65);
+  box-shadow: 0 0 0 2px rgba(255,210,140,0.35);
 }
 .golden-hour[hidden] { display: none; }
 .golden-hour-dot {

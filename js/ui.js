@@ -548,14 +548,20 @@ function renderSolarNoon(w) {
   const noon = (w.sunrise + w.sunset) / 2;
   el.solarNoon.setAttribute("opacity", "0.9");
   el.solarNoon.setAttribute("aria-label", `Solar noon ${fmtTime(noon)}`);
-  const titleId = "solar-noon-title";
   let title = el.solarNoon.querySelector("title");
   if (!title) {
     title = document.createElementNS("http://www.w3.org/2000/svg", "title");
-    title.setAttribute("id", titleId);
     el.solarNoon.prepend(title);
   }
-  title.textContent = `Solar noon · ${fmtTime(noon)}`;
+  title.textContent = `Solar noon · ${fmtTime(noon)} (tap)`;
+  if (!el.solarNoon._wired) {
+    el.solarNoon.addEventListener("click", () => {
+      const w2 = state.weather;
+      if (!w2?.sunrise || !w2?.sunset) return;
+      state.handlers.onHourClick?.((w2.sunrise + w2.sunset) / 2);
+    });
+    el.solarNoon._wired = true;
+  }
 }
 
 function renderDaylightDelta(w, todayMins) {
@@ -632,12 +638,30 @@ function scheduleGoldenHour(w) {
   if (!host) return;
   const windows = goldenWindows(w);
   if (!windows.length) { host.hidden = true; return; }
+  if (!host._wired) {
+    host.setAttribute("role", "button");
+    host.setAttribute("tabindex", "0");
+    host.title = "Tap to jump the time scrubber here";
+    const trigger = () => {
+      const win = host._win;
+      if (!win) return;
+      const now = Date.now();
+      const ts = now >= win.start && now <= win.end ? Math.min(win.end, Math.max(now, win.start)) : win.start;
+      state.handlers.onHourClick?.(ts);
+    };
+    host.addEventListener("click", trigger);
+    host.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); trigger(); }
+    });
+    host._wired = true;
+  }
 
   const update = () => {
     const now = Date.now();
     const win = windows.find((g) => now <= g.end);
-    if (!win) { host.hidden = true; return; }
+    if (!win) { host.hidden = true; host._win = null; return; }
     host.hidden = false;
+    host._win = win;
     const active = now >= win.start && now <= win.end;
     host.classList.toggle("is-active", active);
     const prefix = win.kind === "morning" ? "Morning golden hour" : "Evening golden hour";
