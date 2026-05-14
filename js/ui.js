@@ -1304,7 +1304,15 @@ function toggleDailyExpand(item, d, w) {
     const summary = document.createElement("div");
     summary.className = "daily-expand";
     summary.style.gridTemplateColumns = "1fr";
-    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${Math.round(convertWind(d.gustsMax ?? 0))} ${windUnit()} · UV ${Math.round(d.uvMax ?? 0)}</span>`;
+    const sunBits = [];
+    if (d.sunrise) sunBits.push(`☀ ${fmtTime(d.sunrise)}`);
+    if (d.sunset) sunBits.push(`☾ ${fmtTime(d.sunset)}`);
+    if (d.sunrise && d.sunset) {
+      const mins = Math.round((d.sunset - d.sunrise) / 60_000);
+      sunBits.push(`${Math.floor(mins / 60)}h ${mins % 60}m daylight`);
+    }
+    const sunLine = sunBits.length ? `<br>${sunBits.join(" · ")}` : "";
+    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${Math.round(convertWind(d.gustsMax ?? 0))} ${windUnit()} · UV ${Math.round(d.uvMax ?? 0)}${sunLine}</span>`;
     item.appendChild(summary);
     item.dataset.expanded = "true";
     return;
@@ -1326,6 +1334,20 @@ function toggleDailyExpand(item, d, w) {
     return `<div class="daily-expand-bar" data-precip="${precipLevel}" style="height:${height.toFixed(1)}px" title="${hh}:00 · ${Math.round(convertTemp(h.temp))}° · ${h.pop}%"><span>${Math.round(convertTemp(h.temp))}°</span></div>`;
   }).join("");
   item.appendChild(box);
+  // Sun line under the bars when we have sunrise/sunset for the day.
+  if (d.sunrise || d.sunset) {
+    const sunBits = [];
+    if (d.sunrise) sunBits.push(`☀ ${fmtTime(d.sunrise)}`);
+    if (d.sunset) sunBits.push(`☾ ${fmtTime(d.sunset)}`);
+    if (d.sunrise && d.sunset) {
+      const mins = Math.round((d.sunset - d.sunrise) / 60_000);
+      sunBits.push(`${Math.floor(mins / 60)}h ${mins % 60}m daylight`);
+    }
+    const sunFoot = document.createElement("div");
+    sunFoot.className = "daily-expand-sun";
+    sunFoot.textContent = sunBits.join(" · ");
+    item.appendChild(sunFoot);
+  }
   item.dataset.expanded = "true";
 }
 
