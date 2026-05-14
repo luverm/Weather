@@ -335,6 +335,10 @@
                   fill="none" stroke="url(#sun-arc-grad)" stroke-width="1.5" stroke-linecap="round"/>
             <path id="sun-arc-golden-am" class="sun-arc-band sun-arc-golden" fill="none" stroke-width="3" stroke-linecap="round" opacity="0"></path>
             <path id="sun-arc-golden-pm" class="sun-arc-band sun-arc-golden" fill="none" stroke-width="3" stroke-linecap="round" opacity="0"></path>
+            <g id="solar-noon" class="solar-noon" opacity="0" transform="translate(100 24)">
+              <line x1="0" y1="0" x2="0" y2="50" stroke="rgba(255,255,255,0.18)" stroke-dasharray="1.5 3"/>
+              <circle r="2.4" fill="rgba(255,255,255,0.7)"/>
+            </g>
             <circle id="sun-arc-marker" cx="10" cy="74" r="4.5" fill="#fff1c9"/>
           </svg>
           <div id="golden-hour" class="golden-hour" hidden>
@@ -355,6 +359,7 @@
             <div class="sun-item">
               <span class="sun-label">Daylight</span>
               <strong id="sun-daylight">—</strong>
+              <span id="sun-daylight-delta" class="sun-daylight-delta" hidden></span>
             </div>
           </div>
         </div>

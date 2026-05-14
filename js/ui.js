@@ -92,6 +92,8 @@ const el = {
   sunArcPath: $("#sun-arc-path"),
   sunArcGoldenAm: $("#sun-arc-golden-am"),
   sunArcGoldenPm: $("#sun-arc-golden-pm"),
+  solarNoon: $("#solar-noon"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   goldenHour: $("#golden-hour"),
   goldenHourLabel: $("#golden-hour-label"),
   goldenHourRange: $("#golden-hour-range"),
@@ -522,16 +524,59 @@ function fmtTime(ts) {
 function renderSun(w) {
   el.sunRise.textContent = fmtTime(w.sunrise);
   el.sunSet.textContent = fmtTime(w.sunset);
+  let todayMins = null;
   if (w.sunrise && w.sunset) {
-    const mins = Math.round((w.sunset - w.sunrise) / 60_000);
-    const hh = Math.floor(mins / 60);
-    const mm = mins % 60;
+    todayMins = Math.round((w.sunset - w.sunrise) / 60_000);
+    const hh = Math.floor(todayMins / 60);
+    const mm = todayMins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w, todayMins);
+  renderSolarNoon(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   renderGoldenArcBands(w);
   scheduleGoldenHour(w);
+}
+
+function renderSolarNoon(w) {
+  if (!el.solarNoon) return;
+  if (!w?.sunrise || !w?.sunset) { el.solarNoon.setAttribute("opacity", "0"); return; }
+  const noon = (w.sunrise + w.sunset) / 2;
+  el.solarNoon.setAttribute("opacity", "0.9");
+  el.solarNoon.setAttribute("aria-label", `Solar noon ${fmtTime(noon)}`);
+  const titleId = "solar-noon-title";
+  let title = el.solarNoon.querySelector("title");
+  if (!title) {
+    title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+    title.setAttribute("id", titleId);
+    el.solarNoon.prepend(title);
+  }
+  title.textContent = `Solar noon · ${fmtTime(noon)}`;
+}
+
+function renderDaylightDelta(w, todayMins) {
+  const out = el.sunDaylightDelta;
+  if (!out) return;
+  const days = w?.daily || [];
+  // Tomorrow vs today gives a sense of whether we're gaining or losing daylight.
+  let tomorrowMins = null;
+  if (days[1]?.sunrise && days[1]?.sunset) {
+    tomorrowMins = Math.round((days[1].sunset - days[1].sunrise) / 60_000);
+  }
+  if (todayMins == null || tomorrowMins == null) { out.hidden = true; return; }
+  const delta = tomorrowMins - todayMins;
+  if (delta === 0) {
+    out.hidden = false;
+    out.textContent = "steady";
+    out.className = "sun-daylight-delta is-flat";
+    return;
+  }
+  const abs = Math.abs(delta);
+  const sym = delta > 0 ? "↑" : "↓";
+  out.hidden = false;
+  out.textContent = `${sym} ${abs}m tomorrow`;
+  out.className = "sun-daylight-delta " + (delta > 0 ? "is-gain" : "is-loss");
 }
 
 // Golden-hour window length (minutes after sunrise / before sunset).
