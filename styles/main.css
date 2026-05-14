@@ -303,6 +303,8 @@ html[data-reduce-motion="true"] *::after {
 .place-chip:hover { background: var(--glass-strong); transform: translateY(-1px); }
 .place-chip.active { background: var(--glass-strong); border-color: rgba(255,255,255,0.35); }
 .place-chip .temp { color: var(--fg-muted); font-variant-numeric: tabular-nums; }
+.place-chip-icon { display: inline-flex; color: var(--fg-muted); }
+.place-chip-icon svg { width: 14px; height: 14px; }
 .place-chip .close {
   width: 16px; height: 16px; display: grid; place-items: center;
   border-radius: 50%; color: var(--fg-dim);
