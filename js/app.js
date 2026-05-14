@@ -331,6 +331,13 @@ document.addEventListener("visibilitychange", () => {
   } else {
     engine.tickOnce();
   }
+  // Wake-up freshness check: if we left the tab open and now we're returning
+  // with stale data (> 10 min old), pull a new reading. The periodic 15-min
+  // interval still handles long-lived sessions while focused.
+  if (!document.hidden && app.weather?.fetchedAt && clock.isLive()) {
+    const age = Date.now() - app.weather.fetchedAt;
+    if (age > 10 * 60_000) refreshWeather();
+  }
 });
 
 // Re-render scenes at the top of each minute so "live" view ticks forward.
