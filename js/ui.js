@@ -94,6 +94,8 @@ const el = {
   sunArcGoldenPm: $("#sun-arc-golden-pm"),
   solarNoon: $("#solar-noon"),
   sunDaylightDelta: $("#sun-daylight-delta"),
+  precipTotal: $("#precip-total"),
+  precipTotalText: $("#precip-total-text"),
   goldenHour: $("#golden-hour"),
   goldenHourLabel: $("#golden-hour-label"),
   goldenHourRange: $("#golden-hour-range"),
@@ -198,6 +200,7 @@ export const ui = {
     renderAdvice(weather);
     renderPollen(weather.pollen);
     renderTrends(weather);
+    renderPrecipTotal(weather);
     renderInsights(weather);
     renderActivity(weather);
     renderAlerts(weather);
@@ -907,6 +910,35 @@ function renderPollen(pollen) {
   el.pollenItems.innerHTML = pollen.items.map((p) =>
     `<span>${escapeHtml(p.label)} ${p.value.toFixed(1)}</span>`
   ).join("");
+}
+
+function renderPrecipTotal(w) {
+  if (!el.precipTotal || !el.precipTotalText) return;
+  const hours = (w?.hourly || []).slice(0, 24);
+  if (!hours.length) { el.precipTotal.hidden = true; return; }
+  let mm = 0;
+  let wetHours = 0;
+  let peakPop = 0;
+  for (const h of hours) {
+    const p = h.precip ?? 0;
+    mm += p;
+    if (p >= 0.1 || (h.pop ?? 0) >= 50) wetHours++;
+    if ((h.pop ?? 0) > peakPop) peakPop = h.pop ?? 0;
+  }
+  if (mm < 0.1 && peakPop < 30) {
+    el.precipTotal.hidden = false;
+    el.precipTotal.className = "precip-total dry";
+    el.precipTotalText.textContent = "Dry next 24h";
+    return;
+  }
+  const useIn = (localStorage.getItem("aether:unit") || "C") === "F";
+  const total = useIn ? `${(mm / 25.4).toFixed(mm < 25 ? 2 : 1)} in` : `${mm.toFixed(mm < 10 ? 1 : 0)} mm`;
+  const intensity = mm >= 10 ? "heavy" : mm >= 2.5 ? "moderate" : mm >= 0.1 ? "light" : "trace";
+  el.precipTotal.hidden = false;
+  el.precipTotal.className = `precip-total ${intensity}`;
+  el.precipTotalText.textContent = wetHours > 0
+    ? `${total} · ${wetHours}h wet`
+    : `${total} possible · ${peakPop}% peak`;
 }
 
 function renderTrends(w) {

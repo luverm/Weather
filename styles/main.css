@@ -697,6 +697,34 @@ html[data-reduce-motion="true"] *::after {
   text-transform: uppercase;
   color: var(--fg-dim);
 }
+.precip-total {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  background: rgba(120,180,255,0.12);
+  border: 1px solid rgba(120,180,255,0.22);
+  color: #b9d8ff;
+  line-height: 1;
+}
+.precip-total[hidden] { display: none; }
+.precip-total svg { opacity: 0.85; }
+.precip-total.dry {
+  background: rgba(255,210,140,0.10);
+  border-color: rgba(255,210,140,0.22);
+  color: #ffe1b0;
+}
+.precip-total.heavy {
+  background: rgba(150,110,255,0.18);
+  border-color: rgba(150,110,255,0.32);
+  color: #d6c5ff;
+}
+.precip-total.moderate {
+  background: rgba(120,180,255,0.16);
+  border-color: rgba(120,180,255,0.30);
+}
 .chart-legend {
   display: inline-flex; align-items: center; gap: 8px;
   font-size: 11px; color: var(--fg-dim);
