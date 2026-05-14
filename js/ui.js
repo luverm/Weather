@@ -90,6 +90,12 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcGoldenAm: $("#sun-arc-golden-am"),
+  sunArcGoldenPm: $("#sun-arc-golden-pm"),
+  goldenHour: $("#golden-hour"),
+  goldenHourLabel: $("#golden-hour-label"),
+  goldenHourRange: $("#golden-hour-range"),
+  goldenHourCount: $("#golden-hour-count"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -122,6 +128,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  goldenTimer: null,
   localTimer: null,
 };
 
@@ -523,6 +530,78 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderGoldenArcBands(w);
+  scheduleGoldenHour(w);
+}
+
+// Golden-hour window length (minutes after sunrise / before sunset).
+const GOLDEN_MIN = 45;
+
+function goldenWindows(w) {
+  const out = [];
+  for (const d of w?.daily || []) {
+    if (d.sunrise) out.push({ start: d.sunrise, end: d.sunrise + GOLDEN_MIN * 60_000, kind: "morning" });
+    if (d.sunset) out.push({ start: d.sunset - GOLDEN_MIN * 60_000, end: d.sunset, kind: "evening" });
+  }
+  out.sort((a, b) => a.start - b.start);
+  return out;
+}
+
+function renderGoldenArcBands(w) {
+  const am = el.sunArcGoldenAm, pm = el.sunArcGoldenPm;
+  if (!am || !pm) return;
+  if (!w?.sunrise || !w?.sunset) {
+    am.setAttribute("opacity", "0");
+    pm.setAttribute("opacity", "0");
+    return;
+  }
+  const span = w.sunset - w.sunrise;
+  if (span <= 0) return;
+  const goldenFrac = Math.min(0.4, (GOLDEN_MIN * 60_000) / span);
+  am.setAttribute("d", arcSegmentPath(0, goldenFrac));
+  pm.setAttribute("d", arcSegmentPath(1 - goldenFrac, 1));
+  am.setAttribute("opacity", "0.7");
+  pm.setAttribute("opacity", "0.7");
+}
+
+// Sample the same quadratic Bezier the sun marker rides and return an SVG path
+// segment from fraction t0 to t1 (0–1 across the daytime arc).
+function arcSegmentPath(t0, t1) {
+  const steps = 16;
+  let d = "";
+  for (let i = 0; i <= steps; i++) {
+    const t = t0 + ((t1 - t0) * i) / steps;
+    const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
+    const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
+    d += (i === 0 ? "M" : "L") + x.toFixed(2) + " " + y.toFixed(2) + " ";
+  }
+  return d.trim();
+}
+
+function scheduleGoldenHour(w) {
+  if (state.goldenTimer) { clearInterval(state.goldenTimer); state.goldenTimer = null; }
+  const host = el.goldenHour;
+  if (!host) return;
+  const windows = goldenWindows(w);
+  if (!windows.length) { host.hidden = true; return; }
+
+  const update = () => {
+    const now = Date.now();
+    const win = windows.find((g) => now <= g.end);
+    if (!win) { host.hidden = true; return; }
+    host.hidden = false;
+    const active = now >= win.start && now <= win.end;
+    host.classList.toggle("is-active", active);
+    const prefix = win.kind === "morning" ? "Morning golden hour" : "Evening golden hour";
+    el.goldenHourLabel.textContent = prefix;
+    el.goldenHourRange.textContent = `${fmtTime(win.start)} – ${fmtTime(win.end)}`;
+    const target = active ? win.end : win.start;
+    const mins = Math.max(0, Math.round((target - now) / 60_000));
+    const label = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
+    el.goldenHourCount.textContent = active ? `ends in ${label}` : `in ${label}`;
+  };
+  update();
+  state.goldenTimer = setInterval(update, 30_000);
 }
 
 function scheduleSunArc(w) {

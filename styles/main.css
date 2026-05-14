@@ -976,6 +976,58 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+.sun-arc-band {
+  stroke: rgba(255, 178, 102, 0.9);
+  filter: drop-shadow(0 0 4px rgba(255, 178, 102, 0.55));
+  transition: opacity 480ms var(--ease);
+}
+
+.golden-hour {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  margin: 2px 0 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255,178,102,0.16), rgba(255,210,140,0.08));
+  border: 1px solid rgba(255,200,140,0.22);
+  font-size: 11.5px;
+  color: var(--fg);
+  line-height: 1;
+  flex-wrap: wrap;
+}
+.golden-hour[hidden] { display: none; }
+.golden-hour-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ffb266;
+  box-shadow: 0 0 8px rgba(255,178,102,0.85);
+  flex: none;
+}
+.golden-hour.is-active .golden-hour-dot {
+  animation: golden-pulse 1.6s ease-in-out infinite;
+}
+@keyframes golden-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 6px rgba(255,178,102,0.7); }
+  50% { transform: scale(1.25); box-shadow: 0 0 12px rgba(255,210,140,1); }
+}
+.golden-hour-label { font-weight: 500; letter-spacing: 0.02em; }
+.golden-hour-range { color: var(--fg-dim); font-variant-numeric: tabular-nums; }
+.golden-hour-count {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255,200,140,0.14);
+  color: #ffd9a8;
+  font-variant-numeric: tabular-nums;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+}
+.golden-hour-count:empty { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .golden-hour.is-active .golden-hour-dot { animation: none; }
+}
 
 /* ---------- Radar map ---------- */
 .radar {
