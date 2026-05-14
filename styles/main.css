@@ -1661,6 +1661,22 @@ kbd {
 }
 .daily-item:hover { background: var(--glass); }
 .daily-day { font-size: 13px; font-weight: 500; }
+.daily-badge {
+  display: inline-block;
+  margin-left: 5px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  line-height: 1.4;
+  vertical-align: 1px;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid transparent;
+}
+.daily-badge-hot { background: rgba(255,150,110,0.18); border-color: rgba(255,150,110,0.35); color: #ffbfa8; }
+.daily-badge-cold { background: rgba(154,209,255,0.16); border-color: rgba(154,209,255,0.32); color: #b9d8ff; }
+.daily-badge-wet { background: rgba(150,110,255,0.16); border-color: rgba(150,110,255,0.32); color: #d6c5ff; }
+.daily-badge-sun { background: rgba(255,210,140,0.16); border-color: rgba(255,210,140,0.32); color: #ffe1b0; }
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
 .daily-range {
   position: relative;

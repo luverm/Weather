@@ -1133,6 +1133,31 @@ function highlightHour(index) {
   items.forEach((it, i) => it.classList.toggle("active", i === index));
 }
 
+function pickWeekExtremes(days) {
+  const slots = new Array(days.length).fill(null);
+  if (days.length < 2) return slots;
+  let hotIdx = 0, coldIdx = 0, wetIdx = -1, dryIdx = -1;
+  let wetVal = -1, dryVal = -1;
+  for (let i = 0; i < days.length; i++) {
+    if (days[i].tempMax > days[hotIdx].tempMax) hotIdx = i;
+    if (days[i].tempMin < days[coldIdx].tempMin) coldIdx = i;
+    const precip = days[i].precip ?? 0;
+    if (precip > wetVal) { wetVal = precip; wetIdx = i; }
+    // "Sunniest" = lowest pop with low precip.
+    const dryness = 100 - (days[i].pop ?? 0) - precip * 2;
+    if (dryness > dryVal) { dryVal = dryness; dryIdx = i; }
+  }
+  if (days[hotIdx]) slots[hotIdx] = { kind: "hot", mark: "▲", title: "Hottest this week" };
+  if (days[coldIdx] && coldIdx !== hotIdx) slots[coldIdx] = { kind: "cold", mark: "▼", title: "Coldest this week" };
+  if (wetIdx >= 0 && wetVal >= 1 && !slots[wetIdx]) {
+    slots[wetIdx] = { kind: "wet", mark: "☂", title: "Wettest this week" };
+  }
+  if (dryIdx >= 0 && !slots[dryIdx] && (days[dryIdx].pop ?? 0) < 20) {
+    slots[dryIdx] = { kind: "sun", mark: "☼", title: "Sunniest this week" };
+  }
+  return slots;
+}
+
 function renderDaily(w) {
   el.dailyTrack.innerHTML = "";
   const days = (w.daily || []).slice(0, 7);
@@ -1140,6 +1165,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  const extremes = pickWeekExtremes(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1164,8 +1190,11 @@ function renderDaily(w) {
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const badge = extremes[i]
+      ? `<span class="daily-badge daily-badge-${extremes[i].kind}" title="${extremes[i].title}">${extremes[i].mark}</span>`
+      : "";
     item.innerHTML = `
-      <span class="daily-day">${day}</span>
+      <span class="daily-day">${day}${badge}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
