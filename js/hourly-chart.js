@@ -52,6 +52,35 @@ export class HourlyChart {
     this.hours = (hours || []).slice(0, 24);
     this._draw();
     this.setCursor(null);
+    this._placeNowLine();
+  }
+
+  _placeNowLine() {
+    const line = this.svg.querySelector("#chart-now");
+    if (!line) return;
+    if (!this.points.length || !this.hours.length) {
+      line.setAttribute("x1", "-10"); line.setAttribute("x2", "-10");
+      return;
+    }
+    const now = Date.now();
+    const first = this.hours[0].time;
+    const last = this.hours[this.hours.length - 1].time;
+    if (now < first - 30 * 60_000 || now > last + 30 * 60_000) {
+      line.setAttribute("x1", "-10"); line.setAttribute("x2", "-10");
+      return;
+    }
+    // Interpolate the X position between the surrounding hour points.
+    let i = 0;
+    while (i < this.hours.length - 1 && this.hours[i + 1].time < now) i++;
+    const a = this.points[i];
+    const b = this.points[Math.min(this.points.length - 1, i + 1)];
+    const ta = this.hours[i].time;
+    const tb = this.hours[Math.min(this.hours.length - 1, i + 1)].time;
+    const span = Math.max(1, tb - ta);
+    const frac = Math.max(0, Math.min(1, (now - ta) / span));
+    const x = a.x + (b.x - a.x) * frac;
+    line.setAttribute("x1", x.toFixed(1));
+    line.setAttribute("x2", x.toFixed(1));
   }
 
   refresh() { this._draw(); }
