@@ -1460,6 +1460,11 @@ function renderPlaces() {
       state.handlers.onPlaceClick?.(item);
     });
   });
+  // Center the active chip so cycling with [ / ] always reveals it.
+  const activeChip = el.placesStrip.querySelector(".place-chip.active");
+  if (activeChip?.scrollIntoView) {
+    activeChip.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
+  }
 }
 
 // ---------- Bindings ----------
