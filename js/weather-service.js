@@ -325,7 +325,9 @@ function findUvPeak(hourly) {
 }
 
 // Conway's simplified moon-phase algorithm — accurate enough for UI glyphs.
-// Returns { phase: 0..1, name: "Waxing crescent", illum: 0..1 }
+// Returns { phase: 0..1, name, illum, nextFull, nextNew } where the two
+// timestamps mark when the moon next reaches phase 0.5 / 0 respectively.
+const SYNODIC_MONTH_MS = 29.5305882 * 86400_000;
 function computeMoonPhase(date) {
   const year = date.getUTCFullYear();
   const month = date.getUTCMonth() + 1;
@@ -348,7 +350,18 @@ function computeMoonPhase(date) {
     phase < 0.72 ? "Waning gibbous" :
     phase < 0.78 ? "Last quarter" :
     "Waning crescent";
-  return { phase, illum, name };
+  const now = date.getTime();
+  // If we're within ~half a day of full or new, treat the badge as
+  // "tonight" rather than pointing at the next cycle.
+  const nearFull = Math.abs(phase - 0.5) < 0.017;
+  const nearNew  = phase < 0.017 || phase > 0.983;
+  const toFullFrac = nearFull ? 0 : (phase < 0.5 ? 0.5 - phase : 1.5 - phase);
+  const toNewFrac  = nearNew  ? 0 : 1 - phase;
+  return {
+    phase, illum, name,
+    nextFull: now + toFullFrac * SYNODIC_MONTH_MS,
+    nextNew: now + toNewFrac * SYNODIC_MONTH_MS,
+  };
 }
 
 function mock(lat, lon) {

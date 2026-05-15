@@ -45,6 +45,9 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonEvents: $("#moon-events"),
+  moonNextFull: $("#moon-next-full"),
+  moonNextNew: $("#moon-next-new"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -499,6 +502,26 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+  renderMoonEvents(moon);
+}
+
+function renderMoonEvents(moon) {
+  if (!el.moonEvents || !el.moonNextFull || !el.moonNextNew) return;
+  if (!moon.nextFull && !moon.nextNew) { el.moonEvents.hidden = true; return; }
+  el.moonEvents.hidden = false;
+  const set = (host, ts, kind) => {
+    if (!host || !ts) return;
+    const days = Math.round((ts - Date.now()) / 86400_000);
+    const textEl = host.querySelector(".moon-event-text");
+    const label =
+      days <= 0 ? (kind === "full" ? "Full tonight" : "New tonight") :
+      days === 1 ? `${kind === "full" ? "Full" : "New"} tomorrow` :
+      `${kind === "full" ? "Full" : "New"} in ${days}d`;
+    if (textEl) textEl.textContent = label;
+    host.dataset.imminent = days <= 1 ? "true" : "false";
+  };
+  set(el.moonNextFull, moon.nextFull, "full");
+  set(el.moonNextNew, moon.nextNew, "new");
 }
 
 function fmtTime(ts) {

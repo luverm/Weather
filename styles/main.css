@@ -961,6 +961,46 @@ kbd {
 .moon-svg { width: 48px; height: 48px; }
 .moon-meta strong { display: block; font-size: 14px; font-weight: 500; }
 .moon-detail { font-size: 11.5px; color: var(--fg-dim); }
+.moon-events {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-top: 2px;
+}
+.moon-event {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--stroke);
+  font-size: 11px;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  transition: background 220ms var(--ease), border-color 220ms var(--ease), color 220ms var(--ease);
+}
+.moon-event[data-imminent="true"] {
+  background: rgba(240, 230, 203, 0.16);
+  border-color: rgba(240, 230, 203, 0.42);
+  color: #fff;
+}
+.moon-event-glyph {
+  width: 10px; height: 10px; border-radius: 50%; display: inline-block;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.18);
+}
+.moon-event-full {
+  background: radial-gradient(circle at 35% 35%, #fff7e0, #f0e6cb 55%, #b9b09a);
+}
+.moon-event-new {
+  background: radial-gradient(circle at 35% 35%, #2a2f3f, #11131c 70%);
+  border: 1px solid rgba(255,255,255,0.16);
+}
+.moon-event[data-imminent="true"] .moon-event-full {
+  animation: moon-glow 2.6s ease-in-out infinite;
+}
+@keyframes moon-glow {
+  0%, 100% { box-shadow: 0 0 6px rgba(255, 246, 220, 0.45); }
+  50%      { box-shadow: 0 0 14px rgba(255, 246, 220, 0.85); }
+}
+[data-reduce-motion="true"] .moon-event-glyph { animation: none; }
 
 .sun-row { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .sun-item { display: grid; gap: 2px; }
