@@ -425,7 +425,21 @@ html[data-reduce-motion="true"] *::after {
   margin-left: auto;
 }
 .day-range[hidden] { display: none; }
-.day-range-end { white-space: nowrap; }
+.day-range-end {
+  white-space: nowrap;
+  display: inline-grid;
+  gap: 1px;
+  text-align: center;
+}
+.day-range-end strong { font-weight: 500; }
+.day-range-time {
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+  min-height: 11px; /* reserve space so the bar doesn't jump when value populates */
+}
+.day-range-time:empty { visibility: hidden; }
 .day-range-track {
   position: relative;
   height: 6px;

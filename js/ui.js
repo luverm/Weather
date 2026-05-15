@@ -25,6 +25,8 @@ const el = {
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
+  dayRangeMinTime: $("#day-range-min-time"),
+  dayRangeMaxTime: $("#day-range-max-time"),
   dayRangeMarker: $("#day-range-marker"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
@@ -312,6 +314,34 @@ function renderDayRange(w) {
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+  // Find when (within today, in the city's timezone) the high and low occur,
+  // so we can annotate the bar with peak/trough times.
+  renderDayRangeTimes(w, lo, hi);
+}
+
+function renderDayRangeTimes(w, lo, hi) {
+  if (!el.dayRangeMinTime || !el.dayRangeMaxTime) return;
+  const tz = w?.timezone;
+  const todayKey = todayKeyInTz(tz);
+  const todayHours = (w.hourly || []).filter((h) => {
+    if (h.temp == null) return false;
+    return todayKeyInTz(tz, new Date(h.time)) === todayKey;
+  });
+  if (todayHours.length < 2) {
+    el.dayRangeMinTime.textContent = "";
+    el.dayRangeMaxTime.textContent = "";
+    return;
+  }
+  let minH = todayHours[0], maxH = todayHours[0];
+  for (const h of todayHours) {
+    if (h.temp < minH.temp) minH = h;
+    if (h.temp > maxH.temp) maxH = h;
+  }
+  // Sanity: only show the marker time if the hour's temp is within a degree
+  // of the daily extreme (so a flat day doesn't read "low at 13:42").
+  const within = (a, b) => Math.abs(a - b) <= 1.5;
+  el.dayRangeMinTime.textContent = within(minH.temp, lo) ? `↓ ${fmtTime(minH.time)}` : "";
+  el.dayRangeMaxTime.textContent = within(maxH.temp, hi) ? `↑ ${fmtTime(maxH.time)}` : "";
 }
 
 function renderMetrics(w) {
