@@ -54,6 +54,7 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   goldenHour: $("#golden-hour"),
@@ -626,9 +627,40 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   scheduleGoldenHour(w);
+}
+
+// Compare today's and tomorrow's daylight to produce a tiny "+2m" trend tag.
+// Helpful as a seasonal signal — at solstices it reads "0s", near equinoxes
+// it can swing several minutes.
+function renderDaylightDelta(w) {
+  if (!el.sunDaylightDelta) return;
+  const today = w?.daily?.[0];
+  const tmrw  = w?.daily?.[1];
+  if (!today?.sunrise || !today?.sunset || !tmrw?.sunrise || !tmrw?.sunset) {
+    el.sunDaylightDelta.textContent = "";
+    el.sunDaylightDelta.className = "sun-daylight-delta";
+    return;
+  }
+  const todayMs = today.sunset - today.sunrise;
+  const tmrwMs  = tmrw.sunset  - tmrw.sunrise;
+  const deltaSec = Math.round((tmrwMs - todayMs) / 1000);
+  if (Math.abs(deltaSec) < 15) {
+    el.sunDaylightDelta.textContent = "≈ steady";
+    el.sunDaylightDelta.className = "sun-daylight-delta flat";
+    return;
+  }
+  const abs = Math.abs(deltaSec);
+  const label = abs >= 60 ? `${Math.round(abs / 60)}m ${abs % 60}s` : `${abs}s`;
+  const sign = deltaSec > 0 ? "+" : "−";
+  el.sunDaylightDelta.textContent = `${sign}${label} tmrw`;
+  el.sunDaylightDelta.className = `sun-daylight-delta ${deltaSec > 0 ? "up" : "down"}`;
+  el.sunDaylightDelta.title = deltaSec > 0
+    ? `Tomorrow gains ${label} of daylight`
+    : `Tomorrow loses ${label} of daylight`;
 }
 
 // ---------- Golden / blue hour ----------
