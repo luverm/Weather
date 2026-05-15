@@ -83,6 +83,7 @@ const el = {
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
+  nextRain: $("#next-rain"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -1159,6 +1160,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderNextRain(days, w);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1308,6 +1310,44 @@ function renderDailySpark(days) {
       el.dailySparkDots.appendChild(c);
     }
   });
+}
+
+// Finds the next noteworthy wet day (>= 1 mm OR pop >= 55%) within the
+// forecast horizon and renders a small "☔ Thu" chip near the heading. When
+// the day is today the chip switches to "☔ Today"; if everything is dry the
+// chip is hidden so the heading stays calm on clear weeks.
+function renderNextRain(days, w) {
+  if (!el.nextRain) return;
+  const tz = w?.timezone;
+  const todayKey = todayKeyInTz(tz);
+  let pick = null, pickIdx = -1;
+  for (let i = 0; i < days.length; i++) {
+    const d = days[i];
+    if ((d.precip ?? 0) >= 1 || (d.pop ?? 0) >= 55) {
+      pick = d; pickIdx = i; break;
+    }
+  }
+  if (!pick) { el.nextRain.hidden = true; return; }
+  const dayLabel = (() => {
+    const dt = new Date(pick.time);
+    const key = todayKeyInTz(tz, dt);
+    if (key === todayKey) return "today";
+    if (pickIdx === 1) return "tomorrow";
+    return dt.toLocaleDateString(undefined, {
+      weekday: "short",
+      ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    });
+  })();
+  const mm = (pick.precip ?? 0).toFixed(pick.precip < 1 ? 1 : 0);
+  el.nextRain.hidden = false;
+  el.nextRain.innerHTML = `
+    <span class="next-rain-icon" aria-hidden="true">☔</span>
+    <span class="next-rain-label">${escapeHtml(dayLabel)}</span>
+    <span class="next-rain-meta">${escapeHtml(mm)}mm · ${pick.pop ?? 0}%</span>
+  `;
+  el.nextRain.setAttribute("aria-label",
+    `Next wet day: ${dayLabel}, ${mm} millimeters of rain, ${pick.pop ?? 0}% chance. Tap to view.`);
+  el.nextRain.onclick = () => state.handlers.onHourClick?.(noonOf(pick.time, tz));
 }
 
 function renderDailyDelta(days) {

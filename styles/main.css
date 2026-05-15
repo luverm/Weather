@@ -1596,6 +1596,30 @@ kbd {
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+.daily-delta:not(:empty) ~ .next-rain { margin-left: 0; }
+.next-rain {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(154, 209, 255, 0.12);
+  border: 1px solid rgba(154, 209, 255, 0.22);
+  color: var(--accent);
+  text-transform: none;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background 200ms var(--ease), border-color 200ms var(--ease), transform 200ms var(--ease);
+}
+.next-rain:hover { background: rgba(154, 209, 255, 0.2); transform: translateY(-1px); }
+.next-rain:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
+.next-rain[hidden] { display: none; }
+.next-rain-icon { font-size: 12px; filter: drop-shadow(0 0 4px rgba(154,209,255,0.3)); }
+.next-rain-label { font-weight: 600; text-transform: capitalize; }
+.next-rain-meta { color: var(--fg-dim); }
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;
