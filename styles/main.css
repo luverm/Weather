@@ -977,6 +977,77 @@ kbd {
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
 
+/* Golden / blue hour pill under the sun arc */
+.golden-hour {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  margin-top: 2px;
+  border-radius: 12px;
+  background: linear-gradient(120deg, rgba(255, 196, 130, 0.10), rgba(120, 150, 220, 0.10));
+  border: 1px solid var(--stroke);
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: transform 220ms var(--ease), background 320ms var(--ease), border-color 320ms var(--ease);
+}
+.golden-hour:hover { transform: translateY(-1px); border-color: rgba(255, 220, 170, 0.45); }
+.golden-hour:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.golden-hour[data-kind="golden"] {
+  background: linear-gradient(120deg, rgba(255, 196, 130, 0.18), rgba(255, 140, 90, 0.10));
+}
+.golden-hour[data-kind="blue"] {
+  background: linear-gradient(120deg, rgba(120, 150, 220, 0.16), rgba(80, 110, 180, 0.10));
+}
+.golden-hour[data-active="true"] {
+  border-color: rgba(255, 220, 170, 0.55);
+  box-shadow: 0 0 0 1px rgba(255, 220, 170, 0.18), 0 8px 22px rgba(0,0,0,0.18);
+}
+.gh-swatch {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ffe2a8, #ff9a5a 60%, rgba(255,154,90,0));
+  box-shadow: 0 0 10px rgba(255, 200, 130, 0.55);
+  flex-shrink: 0;
+}
+.golden-hour[data-kind="blue"] .gh-swatch {
+  background: radial-gradient(circle at 35% 35%, #c8d6ff, #5a7ad6 65%, rgba(90,122,214,0));
+  box-shadow: 0 0 10px rgba(140, 170, 230, 0.45);
+}
+.golden-hour[data-active="true"] .gh-swatch {
+  animation: gh-pulse 2.4s ease-in-out infinite;
+}
+@keyframes gh-pulse {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50%      { transform: scale(1.08); filter: brightness(1.15); }
+}
+[data-reduce-motion="true"] .golden-hour[data-active="true"] .gh-swatch { animation: none; }
+.gh-meta { display: grid; gap: 1px; min-width: 0; }
+.gh-label {
+  font-size: 12px; font-weight: 500;
+  letter-spacing: 0.04em;
+}
+.gh-detail {
+  font-size: 11px; color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.gh-countdown {
+  font-size: 11px;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  white-space: nowrap;
+}
+.golden-hour[data-active="true"] .gh-countdown {
+  background: rgba(255, 220, 170, 0.18);
+  color: #ffeac4;
+}
+
 /* ---------- Radar map ---------- */
 .radar {
   padding: 12px;

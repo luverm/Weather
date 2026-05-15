@@ -50,6 +50,10 @@ const el = {
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  goldenHour: $("#golden-hour"),
+  ghLabel: $("#gh-label"),
+  ghDetail: $("#gh-detail"),
+  ghCountdown: $("#gh-countdown"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -122,6 +126,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  goldenTimer: null,
   localTimer: null,
 };
 
@@ -523,6 +528,103 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleGoldenHour(w);
+}
+
+// ---------- Golden / blue hour ----------
+// Builds the day's four magic-light windows (blue+golden, morning+evening)
+// from sunrise/sunset, then highlights the active one or the next upcoming.
+// Tap to scrub. Offsets are fixed-duration approximations that hold well in
+// mid-latitudes; at extreme latitudes the windows lengthen, but we still mark
+// the right anchor (sunrise / sunset) so the badge stays meaningful.
+const GH_MORNING_BLUE_PRE = 30 * 60_000;   // blue hour starts 30m before sunrise
+const GH_MORNING_GOLDEN = 45 * 60_000;     // golden hour: sunrise → +45m
+const GH_EVENING_GOLDEN = 45 * 60_000;     // golden hour: sunset −45m → sunset
+const GH_EVENING_BLUE_POST = 30 * 60_000;  // blue hour ends 30m after sunset
+
+function buildLightWindows(daily) {
+  if (!daily?.length) return [];
+  const windows = [];
+  for (const d of daily) {
+    if (d.sunrise) {
+      windows.push({
+        kind: "blue", phase: "morning",
+        label: "Morning blue hour",
+        start: d.sunrise - GH_MORNING_BLUE_PRE,
+        end: d.sunrise,
+      });
+      windows.push({
+        kind: "golden", phase: "morning",
+        label: "Morning golden hour",
+        start: d.sunrise,
+        end: d.sunrise + GH_MORNING_GOLDEN,
+      });
+    }
+    if (d.sunset) {
+      windows.push({
+        kind: "golden", phase: "evening",
+        label: "Evening golden hour",
+        start: d.sunset - GH_EVENING_GOLDEN,
+        end: d.sunset,
+      });
+      windows.push({
+        kind: "blue", phase: "evening",
+        label: "Evening blue hour",
+        start: d.sunset,
+        end: d.sunset + GH_EVENING_BLUE_POST,
+      });
+    }
+  }
+  return windows.sort((a, b) => a.start - b.start);
+}
+
+function scheduleGoldenHour(w) {
+  if (!el.goldenHour) return;
+  if (state.goldenTimer) { clearInterval(state.goldenTimer); state.goldenTimer = null; }
+  const windows = buildLightWindows(w?.daily);
+  if (!windows.length) { el.goldenHour.hidden = true; return; }
+
+  const update = () => {
+    const now = Date.now();
+    const active = windows.find((win) => now >= win.start && now < win.end);
+    const next = active || windows.find((win) => win.start > now);
+    if (!next) { el.goldenHour.hidden = true; return; }
+    el.goldenHour.hidden = false;
+    el.goldenHour.dataset.kind = next.kind;
+    el.goldenHour.dataset.active = active ? "true" : "false";
+    el.goldenHour.dataset.ts = String(next.start);
+    el.ghLabel.textContent = next.label;
+    el.ghDetail.textContent = `${fmtTime(next.start)} – ${fmtTime(next.end)}`;
+    if (active) {
+      const minsLeft = Math.max(0, Math.round((active.end - now) / 60_000));
+      el.ghCountdown.textContent = minsLeft > 0 ? `${minsLeft}m left` : "Ending";
+      el.goldenHour.setAttribute(
+        "aria-label",
+        `${next.label} now, ends ${fmtTime(active.end)}. Tap to jump to start.`
+      );
+    } else {
+      const mins = Math.max(0, Math.round((next.start - now) / 60_000));
+      el.ghCountdown.textContent = mins >= 60
+        ? `in ${Math.floor(mins / 60)}h ${mins % 60}m`
+        : `in ${mins}m`;
+      el.goldenHour.setAttribute(
+        "aria-label",
+        `Next ${next.label} at ${fmtTime(next.start)}. Tap to jump there.`
+      );
+    }
+  };
+  update();
+  state.goldenTimer = setInterval(update, 30_000);
+
+  // (Re)bind click — single handler, scrubs to the start of the active or
+  // upcoming window.
+  if (!el.goldenHour._bound) {
+    el.goldenHour._bound = true;
+    el.goldenHour.addEventListener("click", () => {
+      const ts = parseInt(el.goldenHour.dataset.ts || "", 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  }
 }
 
 function scheduleSunArc(w) {
