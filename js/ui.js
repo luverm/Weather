@@ -29,6 +29,7 @@ const el = {
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
+  windShift: $("#wind-shift"),
   metricHumidity: $("#m-humidity"),
   metricHumiditySub: $("#m-humidity-sub"),
   metricPressure: $("#m-pressure"),
@@ -369,6 +370,52 @@ function renderMetrics(w) {
     el.metricUVSub.textContent = "peak —";
   }
   renderPressureSparkline(w);
+  renderWindShift(w);
+}
+
+// 24-hour wind direction strip: 8 cells covering ~the next 24h at 3h steps.
+// Each arrow points in the direction the wind blows TOWARD (so "from NE" looks
+// like an arrow pointing SW). Click to scrub to that hour.
+function renderWindShift(w) {
+  if (!el.windShift) return;
+  const hours = (w.hourly || []).filter((h) => h.windDir != null);
+  if (hours.length < 2) { el.windShift.hidden = true; el.windShift.innerHTML = ""; return; }
+  // Pick 8 evenly-spaced samples from up to the first 24h available.
+  const span = Math.min(hours.length, 24);
+  const step = Math.max(1, Math.floor(span / 8));
+  const picks = [];
+  for (let i = 0; i < hours.length && picks.length < 8; i += step) picks.push(hours[i]);
+  if (picks.length < 2) { el.windShift.hidden = true; return; }
+  // Strong = top 25% wind speed across the picks (with a 20 km/h floor).
+  const speeds = picks.map((h) => h.wind ?? 0).slice().sort((a, b) => b - a);
+  const strongCut = Math.max(20, speeds[Math.floor(speeds.length * 0.25)] ?? 20);
+
+  el.windShift.hidden = false;
+  el.windShift.innerHTML = picks.map((h) => {
+    const speed = h.wind ?? 0;
+    // Arrow points TOWARD where the wind is going: from-direction + 180°.
+    const toDir = ((h.windDir ?? 0) + 180) % 360;
+    const cls = ["wind-shift-cell"];
+    if (speed < 4) cls.push("calm");
+    else if (speed >= strongCut) cls.push("strong");
+    const hh = new Date(h.time).getHours().toString().padStart(2, "0");
+    const title = `${fmtTime(h.time)} · ${cardinal(h.windDir)} ${Math.round(speed)} km/h`;
+    return `
+      <button class="${cls.join(" ")}" data-ts="${h.time}" type="button" title="${escapeHtml(title)}" aria-label="${escapeHtml(title)}">
+        <svg viewBox="-12 -12 24 24" aria-hidden="true">
+          <path d="M 0 -8 L 4 4 L 0 1 L -4 4 Z" fill="currentColor"
+                style="transform: rotate(${toDir.toFixed(0)}deg);"/>
+        </svg>
+        <span class="wind-shift-time">${hh}</span>
+      </button>
+    `;
+  }).join("");
+  el.windShift.querySelectorAll(".wind-shift-cell").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const ts = parseInt(btn.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
 }
 
 function humidityComfort(rh, dew, temp) {
