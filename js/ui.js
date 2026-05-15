@@ -853,16 +853,31 @@ function startLocaltime(w) {
       const minute = parts.find((p) => p.type === "minute")?.value ?? "";
       const tzName = parts.find((p) => p.type === "timeZoneName")?.value ?? "";
       const offsetChip = tzOffsetChip(tz, now);
+      const greeting = greetingFor(parseInt(hour, 10));
       el.placeLocaltime.innerHTML =
         `<span class="clock-dot" aria-hidden="true"></span>` +
         `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>` +
-        offsetChip;
+        offsetChip +
+        `<span class="tz-greeting">· ${escapeHtml(greeting)}</span>`;
     } catch {
       el.placeLocaltime.textContent = "";
     }
   };
   update();
   state.localTimer = setInterval(update, 10_000);
+}
+
+// Picks a soft greeting phrase from the city-local hour. Same vocabulary the
+// narrative module uses elsewhere so the tone stays consistent.
+function greetingFor(hour) {
+  if (isNaN(hour)) return "";
+  if (hour < 5)  return "Late night";
+  if (hour < 8)  return "Early morning";
+  if (hour < 12) return "Good morning";
+  if (hour < 14) return "Midday";
+  if (hour < 18) return "Good afternoon";
+  if (hour < 22) return "Good evening";
+  return "Late night";
 }
 
 // Returns a small ` <span class="tz-offset">+5h</span>` HTML fragment showing

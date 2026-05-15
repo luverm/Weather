@@ -376,6 +376,14 @@ html[data-reduce-motion="true"] *::after {
   letter-spacing: 0.04em;
   text-transform: lowercase;
 }
+.place-localtime .tz-greeting {
+  margin-left: 6px;
+  font-size: 11px;
+  color: var(--fg-muted);
+  font-style: italic;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
 .narrative {
   margin: 14px 0 0;
   max-width: 52ch;
