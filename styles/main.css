@@ -1576,14 +1576,40 @@ kbd {
 }
 .daily-icon-strip .strip-day {
   display: grid; place-items: center;
-  padding: 4px;
+  gap: 3px;
+  padding: 4px 4px 6px;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 8px;
   opacity: 0.85;
-  transition: opacity 160ms var(--ease), transform 160ms var(--ease);
+  position: relative;
+  transition: opacity 160ms var(--ease), transform 160ms var(--ease), background 160ms var(--ease);
 }
-.daily-icon-strip .strip-day:hover { opacity: 1; transform: translateY(-1px); }
+.daily-icon-strip .strip-day:hover { opacity: 1; transform: translateY(-1px); background: rgba(255,255,255,0.06); }
+.daily-icon-strip .strip-day:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
 .daily-icon-strip .strip-day svg {
   width: 22px; height: 22px;
   display: block;
+}
+.daily-icon-strip .strip-day.today { opacity: 1; }
+.daily-icon-strip .strip-day.today::after {
+  content: "";
+  position: absolute;
+  left: 18%; right: 18%; bottom: 1px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
+.daily-icon-strip .strip-drop {
+  width: var(--s, 0);
+  height: var(--s, 0);
+  border-radius: 0 50% 50% 50%;
+  transform: rotate(-135deg);
+  background: linear-gradient(180deg, #9ad1ff 0%, #4f8fd1 100%);
+  transition: width 220ms var(--ease), height 220ms var(--ease), opacity 220ms var(--ease);
 }
 
 .daily-spark {

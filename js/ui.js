@@ -1123,9 +1123,76 @@ function renderDaily(w) {
 
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
-  el.dailyIconStrip.innerHTML = days.map((d) =>
-    `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
-  ).join("");
+  // Normalize the day-of-week of "today" against the city's timezone so
+  // the underline stays under the correct icon when viewing remote cities.
+  const tz = state.weather?.timezone;
+  const localTodayKey = todayKeyInTz(tz);
+  // Scale drop size against the wettest day of the week (with a sensible cap
+  // so a single soggy day doesn't drown every other indicator).
+  const maxPrecip = Math.max(2, ...days.map((d) => d.precip ?? 0));
+  el.dailyIconStrip.innerHTML = days.map((d, i) => {
+    const precip = d.precip ?? 0;
+    const pop = d.pop ?? 0;
+    // Show a droplet whenever the day is meaningfully wet OR likely to rain.
+    const wet = precip >= 0.3 || pop >= 35;
+    const dropFrac = Math.min(1, precip / maxPrecip);
+    const dropSize = wet ? (4 + Math.round(dropFrac * 6)) : 0;
+    const dropOpacity = wet ? (0.5 + dropFrac * 0.45).toFixed(2) : 0;
+    const isToday = todayKeyInTz(tz, new Date(d.time)) === localTodayKey;
+    const titleParts = [d.label || d.condition || ""];
+    if (precip > 0) titleParts.push(`${precip.toFixed(1)} mm`);
+    if (pop >= 5) titleParts.push(`${pop}% chance`);
+    return `
+      <button type="button" class="strip-day ${isToday ? "today" : ""}"
+              data-i="${i}" data-ts="${d.time}"
+              title="${escapeHtml(titleParts.join(" · "))}"
+              aria-label="${escapeHtml(titleParts.join(", "))}">
+        ${iconFor(d.condition)}
+        <span class="strip-drop" aria-hidden="true" style="
+          --s:${dropSize}px;
+          opacity:${dropOpacity};
+        "></span>
+      </button>
+    `;
+  }).join("");
+  el.dailyIconStrip.querySelectorAll(".strip-day[data-ts]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const ts = parseInt(btn.dataset.ts, 10);
+      if (!ts) return;
+      // Scrub to noon of that day in the city's timezone so we sample mid-day
+      // conditions rather than midnight (which lands deep in the previous
+      // night's hourly bucket).
+      state.handlers.onHourClick?.(noonOf(ts, tz));
+    });
+  });
+}
+
+// Day-key (YYYY-MM-DD) in a target tz, using a fixed Sweden-style format that
+// makes equality checks easy.
+function todayKeyInTz(tz, when = new Date()) {
+  try {
+    if (!tz || tz === "auto") {
+      return `${when.getFullYear()}-${when.getMonth() + 1}-${when.getDate()}`;
+    }
+    return new Intl.DateTimeFormat("sv-SE", {
+      timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit",
+    }).format(when);
+  } catch {
+    return `${when.getFullYear()}-${when.getMonth() + 1}-${when.getDate()}`;
+  }
+}
+
+function noonOf(ts, tz) {
+  // Try to land at the city's local noon. Easy when tz === user's tz; for
+  // remote cities we approximate by adjusting via Intl-derived offset.
+  const d = new Date(ts);
+  if (!tz || tz === "auto") {
+    d.setHours(12, 0, 0, 0);
+    return d.getTime();
+  }
+  // Fallback: city-day midnight + 12h. ts is already the city-day's start
+  // returned by the API, so +12h lands on noon in that city's time zone.
+  return ts + 12 * 3600_000;
 }
 
 function renderDailySpark(days) {
