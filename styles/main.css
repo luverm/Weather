@@ -356,6 +356,26 @@ html[data-reduce-motion="true"] *::after {
   width: 5px; height: 5px; border-radius: 50%;
   background: var(--accent); box-shadow: 0 0 6px var(--accent);
 }
+.place-localtime .tz-offset {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(154, 209, 255, 0.12);
+  border: 1px solid rgba(154, 209, 255, 0.22);
+  color: var(--accent);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+}
+.place-localtime .tz-offset.tz-same {
+  background: rgba(255,255,255,0.04);
+  border-color: var(--stroke);
+  color: var(--fg-dim);
+  font-style: italic;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+}
 .narrative {
   margin: 14px 0 0;
   max-width: 52ch;

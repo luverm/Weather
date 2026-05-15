@@ -781,23 +781,79 @@ function startLocaltime(w) {
   }
   const update = () => {
     try {
+      const now = new Date();
       const parts = new Intl.DateTimeFormat([], {
         timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
         weekday: "short", timeZoneName: "short",
-      }).formatToParts(new Date());
+      }).formatToParts(now);
       const day = parts.find((p) => p.type === "weekday")?.value ?? "";
       const hour = parts.find((p) => p.type === "hour")?.value ?? "";
       const minute = parts.find((p) => p.type === "minute")?.value ?? "";
       const tzName = parts.find((p) => p.type === "timeZoneName")?.value ?? "";
+      const offsetChip = tzOffsetChip(tz, now);
       el.placeLocaltime.innerHTML =
         `<span class="clock-dot" aria-hidden="true"></span>` +
-        `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>`;
+        `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>` +
+        offsetChip;
     } catch {
       el.placeLocaltime.textContent = "";
     }
   };
   update();
   state.localTimer = setInterval(update, 10_000);
+}
+
+// Returns a small ` <span class="tz-offset">+5h</span>` HTML fragment showing
+// how far the watched city is from the user's local clock. Empty string when
+// the offset is zero (same time) or can't be computed.
+function tzOffsetChip(tz, now) {
+  try {
+    const remoteMinutes = tzOffsetMinutes(tz, now);
+    if (remoteMinutes == null) return "";
+    const localMinutes = -now.getTimezoneOffset();
+    const diff = remoteMinutes - localMinutes;
+    if (Math.abs(diff) < 5) {
+      // Same local time as the user — say so once, very quietly.
+      return ` <span class="tz-offset tz-same" title="Same time as you">your time</span>`;
+    }
+    const sign = diff > 0 ? "+" : "−";
+    const abs = Math.abs(diff);
+    const h = Math.floor(abs / 60);
+    const m = abs % 60;
+    const label = m === 0 ? `${sign}${h}h` : `${sign}${h}h ${m}m`;
+    const arrow = diff > 0 ? "ahead of" : "behind";
+    return ` <span class="tz-offset" title="${escapeHtml(`${label.replace(/^[−+]/, '')} ${arrow} you`)}">${escapeHtml(label)}</span>`;
+  } catch {
+    return "";
+  }
+}
+
+// Resolve the offset (in minutes east of UTC) for a named time zone at a
+// given instant, using Intl. Returns null if anything goes wrong.
+function tzOffsetMinutes(tz, when) {
+  try {
+    const dtf = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", second: "2-digit",
+      hour12: false,
+    });
+    const parts = dtf.formatToParts(when).reduce((m, p) => {
+      if (p.type !== "literal") m[p.type] = p.value;
+      return m;
+    }, {});
+    const asUtc = Date.UTC(
+      +parts.year,
+      +parts.month - 1,
+      +parts.day,
+      +(parts.hour === "24" ? "0" : parts.hour),
+      +parts.minute,
+      +parts.second
+    );
+    return Math.round((asUtc - when.getTime()) / 60_000);
+  } catch {
+    return null;
+  }
 }
 
 function renderInsights(w) {
