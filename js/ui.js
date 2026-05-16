@@ -50,6 +50,11 @@ const el = {
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  sunLight: $("#sun-light"),
+  goldenHour: $("#golden-hour"),
+  blueHour: $("#blue-hour"),
+  sunArcGoldAm: $("#sun-arc-gold-am"),
+  sunArcGoldPm: $("#sun-arc-gold-pm"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -122,6 +127,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  sunLightTimer: null,
   localTimer: null,
 };
 
@@ -523,6 +529,8 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderSunLight(w);
+  drawGoldenBands(w);
 }
 
 function scheduleSunArc(w) {
@@ -542,14 +550,9 @@ function scheduleSunArc(w) {
     } else {
       frac = (now - sr) / (ss - sr);
     }
-    // Quadratic Bezier from (10,74) to (190,74) via (100,-26). The midpoint
-    // (50% t) reaches y = 0.5*(74) + 0.5*(74 + 2*(-26-74)/2*(...)) — easier
-    // to evaluate the curve directly.
-    const t = clamp01(frac);
-    const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
-    const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
-    el.sunArcMarker.setAttribute("cx", x.toFixed(1));
-    el.sunArcMarker.setAttribute("cy", y.toFixed(1));
+    const p = arcPoint(clamp01(frac));
+    el.sunArcMarker.setAttribute("cx", p.x.toFixed(1));
+    el.sunArcMarker.setAttribute("cy", p.y.toFixed(1));
     // After sunset, dim the marker so it visually settles.
     const isUp = now >= sr && now <= ss;
     el.sunArcMarker.style.opacity = isUp ? "1" : "0.45";
@@ -559,6 +562,94 @@ function scheduleSunArc(w) {
 }
 
 function clamp01(v) { return Math.max(0, Math.min(1, v)); }
+
+// Point on the sun-arc quadratic Bezier: (10,74) → ctrl (100,-26) → (190,74).
+function arcPoint(t) {
+  const u = 1 - t;
+  return {
+    x: u * u * 10 + 2 * u * t * 100 + t * t * 190,
+    y: u * u * 74 + 2 * u * t * -26 + t * t * 74,
+  };
+}
+
+// ---------- Golden & blue hour ----------
+// Approximate light windows derived purely from sunrise/sunset:
+//   golden hour ≈ first hour after sunrise / last hour before sunset
+//   blue hour   ≈ the ~30 min of twilight on the dark side of each
+// Good-enough heuristics for planning, not ephemeris-grade.
+const GOLD_MS = 60 * 60_000;
+const BLUE_MS = 30 * 60_000;
+
+function lightWindows(days) {
+  const golden = [], blue = [];
+  for (const d of days || []) {
+    if (!d.sunrise || !d.sunset || d.sunset <= d.sunrise) continue;
+    golden.push({ start: d.sunrise, end: d.sunrise + GOLD_MS });
+    golden.push({ start: d.sunset - GOLD_MS, end: d.sunset });
+    blue.push({ start: d.sunrise - BLUE_MS, end: d.sunrise });
+    blue.push({ start: d.sunset, end: d.sunset + BLUE_MS });
+  }
+  golden.sort((a, b) => a.start - b.start);
+  blue.sort((a, b) => a.start - b.start);
+  return { golden, blue };
+}
+
+function nextWindow(list, now) {
+  return list.find((w) => w.end >= now) || null;
+}
+
+function describeWindow(win, now) {
+  if (!win) return "—";
+  const range = `${fmtTime(win.start)}–${fmtTime(win.end)}`;
+  if (now >= win.start && now <= win.end) return `${range} · now`;
+  const mins = Math.round((win.start - now) / 60_000);
+  let when;
+  if (mins < 60) when = `in ${mins}m`;
+  else if (mins < 10 * 60) when = `in ${Math.floor(mins / 60)}h ${mins % 60}m`;
+  else when = new Date(win.start).toLocaleDateString([], { weekday: "short" });
+  return `${range} · ${when}`;
+}
+
+function renderSunLight(w) {
+  if (state.sunLightTimer) { clearInterval(state.sunLightTimer); state.sunLightTimer = null; }
+  if (!el.sunLight) return;
+  const { golden, blue } = lightWindows(w?.daily);
+  if (!golden.length && !blue.length) {
+    el.sunLight.hidden = true;
+    return;
+  }
+  el.sunLight.hidden = false;
+  const update = () => {
+    const now = Date.now();
+    if (el.goldenHour) el.goldenHour.textContent = describeWindow(nextWindow(golden, now), now);
+    if (el.blueHour) el.blueHour.textContent = describeWindow(nextWindow(blue, now), now);
+  };
+  update();
+  state.sunLightTimer = setInterval(update, 30_000);
+}
+
+// Overlay the two golden-hour spans on today's sun arc.
+function drawGoldenBands(w) {
+  if (!el.sunArcGoldAm || !el.sunArcGoldPm) return;
+  const sr = w?.sunrise, ss = w?.sunset;
+  if (!sr || !ss || ss <= sr) {
+    el.sunArcGoldAm.setAttribute("d", "");
+    el.sunArcGoldPm.setAttribute("d", "");
+    return;
+  }
+  const g = Math.min(0.5, GOLD_MS / (ss - sr));
+  const seg = (from, to) => {
+    let d = "";
+    const steps = 14;
+    for (let i = 0; i <= steps; i++) {
+      const p = arcPoint(from + (to - from) * (i / steps));
+      d += `${i ? "L" : "M"}${p.x.toFixed(1)} ${p.y.toFixed(1)}`;
+    }
+    return d;
+  };
+  el.sunArcGoldAm.setAttribute("d", seg(0, g));
+  el.sunArcGoldPm.setAttribute("d", seg(1 - g, 1));
+}
 
 function scheduleSunCountdown(w) {
   if (state.sunTimer) { clearInterval(state.sunTimer); state.sunTimer = null; }

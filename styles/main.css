@@ -976,6 +976,39 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+.sun-arc-gold {
+  stroke: #ffc46b;
+  stroke-width: 3;
+  opacity: 0.5;
+  filter: drop-shadow(0 0 3px rgba(255, 190, 90, 0.45));
+  transition: opacity 600ms var(--ease);
+}
+
+.sun-light {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+  margin-top: 2px;
+  padding-top: 10px;
+  border-top: 1px solid var(--stroke);
+}
+.sun-light[hidden] { display: none; }
+.sun-light-item { display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: center; min-width: 0; }
+.sun-light-dot { width: 9px; height: 9px; border-radius: 50%; }
+.sun-light-dot.golden {
+  background: radial-gradient(circle at 30% 30%, #ffe6a8, #ffb24d);
+  box-shadow: 0 0 7px rgba(255, 190, 90, 0.65);
+}
+.sun-light-dot.blue {
+  background: radial-gradient(circle at 30% 30%, #9fb4ff, #5b6fe0);
+  box-shadow: 0 0 7px rgba(110, 130, 255, 0.55);
+}
+.sun-light-text { display: grid; gap: 2px; min-width: 0; }
+.sun-light-text strong {
+  font-size: 13px; font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 
 /* ---------- Radar map ---------- */
 .radar {
