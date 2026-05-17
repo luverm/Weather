@@ -977,6 +977,44 @@ kbd {
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
 
+.golden-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--stroke);
+}
+.golden-item { display: grid; grid-template-columns: auto 1fr; gap: 4px 7px; align-items: center; }
+.golden-item .sun-label { grid-column: 2; }
+.golden-item strong {
+  grid-column: 2;
+  font-size: 13.5px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.golden-dot {
+  grid-row: 1 / span 2;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  align-self: center;
+}
+.golden-dot.golden { background: linear-gradient(135deg, #ffe6c7, #ff9c7a); }
+.golden-dot.blue   { background: linear-gradient(135deg, #9ad1ff, #6f7dff); }
+.golden-item.active strong { color: #ffe9c4; }
+.golden-item.active .golden-dot {
+  box-shadow: 0 0 0 3px rgba(255,225,170,0.18);
+  animation: golden-pulse 2.4s var(--ease) infinite;
+}
+.golden-item.active .golden-dot.blue {
+  box-shadow: 0 0 0 3px rgba(140,170,255,0.2);
+}
+@keyframes golden-pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.25); }
+}
+
 /* ---------- Radar map ---------- */
 .radar {
   padding: 12px;

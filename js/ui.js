@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { nextLightWindows } from "./golden-hour.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -50,6 +51,11 @@ const el = {
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  goldenRow: $("#golden-row"),
+  goldenItem: $("#golden-item"),
+  goldenTime: $("#golden-time"),
+  blueItem: $("#blue-item"),
+  blueTime: $("#blue-time"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -122,6 +128,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  goldenTimer: null,
   localTimer: null,
 };
 
@@ -523,6 +530,35 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleGoldenHour(w);
+}
+
+function scheduleGoldenHour(w) {
+  if (state.goldenTimer) { clearInterval(state.goldenTimer); state.goldenTimer = null; }
+  if (!el.goldenRow) return;
+
+  const render = (item, timeEl, win) => {
+    if (!win) {
+      timeEl.textContent = "—";
+      item.classList.remove("active");
+      return false;
+    }
+    timeEl.textContent = win.active
+      ? `Now · until ${fmtTime(win.end)}`
+      : `${fmtTime(win.start)}–${fmtTime(win.end)}`;
+    item.classList.toggle("active", !!win.active);
+    return true;
+  };
+
+  const update = () => {
+    const lat = state.place?.lat;
+    const { golden, blue } = nextLightWindows(w, lat);
+    const hasG = render(el.goldenItem, el.goldenTime, golden);
+    const hasB = render(el.blueItem, el.blueTime, blue);
+    el.goldenRow.hidden = !(hasG || hasB);
+  };
+  update();
+  state.goldenTimer = setInterval(update, 60_000);
 }
 
 function scheduleSunArc(w) {
