@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { sunWindows } from "./sun-windows.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -50,6 +51,14 @@ const el = {
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  sunExtra: $("#sun-extra"),
+  goldenChip: $("#golden-chip"),
+  goldenLabel: $("#golden-label"),
+  goldenTime: $("#golden-time"),
+  goldenSub: $("#golden-sub"),
+  daylightChip: $("#daylight-chip"),
+  daylightTrend: $("#daylight-trend"),
+  daylightTrendSub: $("#daylight-trend-sub"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -122,6 +131,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  sunWindowTimer: null,
   localTimer: null,
 };
 
@@ -523,6 +533,52 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleSunWindows(w);
+}
+
+function scheduleSunWindows(w) {
+  if (!el.sunExtra) return;
+  if (state.sunWindowTimer) { clearInterval(state.sunWindowTimer); state.sunWindowTimer = null; }
+
+  const update = () => {
+    const sw = sunWindows(w);
+    if (!sw) { el.sunExtra.hidden = true; return; }
+    el.sunExtra.hidden = false;
+
+    const g = sw.golden;
+    el.goldenLabel.textContent =
+      g.phase === "morning" ? "Morning golden hour" : "Evening golden hour";
+    el.goldenTime.textContent = `${fmtTime(g.start)} – ${fmtTime(g.end)}`;
+    if (sw.active) {
+      el.goldenSub.textContent = `Now · blue hour ${fmtTime(sw.blue.start)}`;
+    } else {
+      const mins = Math.max(0, Math.round((g.start - Date.now()) / 60_000));
+      const rel = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
+      el.goldenSub.textContent = `in ${rel} · blue hour ${fmtTime(sw.blue.start)}`;
+    }
+    el.goldenChip.classList.toggle("is-active", sw.active);
+    el.goldenChip.onclick = () => {
+      const ts = sw.active ? Date.now() : g.start;
+      state.handlers.onHourClick?.(ts);
+    };
+
+    if (sw.trend) {
+      const dms = sw.trend.deltaMs;
+      const secs = Math.round(Math.abs(dms) / 1000);
+      const mm = Math.floor(secs / 60);
+      const ss = secs % 60;
+      const sign = dms > 0 ? "+" : dms < 0 ? "−" : "";
+      el.daylightTrend.textContent =
+        secs < 1 ? "no change" : `${sign}${mm}m ${ss.toString().padStart(2, "0")}s`;
+      el.daylightTrendSub.textContent =
+        dms > 0 ? "longer tomorrow" : dms < 0 ? "shorter tomorrow" : "same as today";
+      el.daylightChip.hidden = false;
+    } else {
+      el.daylightChip.hidden = true;
+    }
+  };
+  update();
+  state.sunWindowTimer = setInterval(update, 60_000);
 }
 
 function scheduleSunArc(w) {
