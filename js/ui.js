@@ -48,6 +48,7 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -521,8 +522,47 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function dayLengthMs(d) {
+  if (!d?.sunrise || !d?.sunset) return null;
+  const len = d.sunset - d.sunrise;
+  return len > 0 ? len : null;
+}
+
+// Round 22: how much longer/shorter tomorrow's day is than today's,
+// derived from the 7-day sunrise/sunset series. Near a solstice the
+// delta collapses toward zero — phrase that honestly.
+function renderDaylightDelta(w) {
+  const node = el.sunDaylightDelta;
+  if (!node) return;
+  const days = w?.daily || [];
+  const todayLen = dayLengthMs(days[0]);
+  const tomorrowLen = dayLengthMs(days[1]);
+  if (todayLen == null || tomorrowLen == null) {
+    node.textContent = "";
+    node.className = "daylight-delta";
+    return;
+  }
+  const deltaSec = Math.round((tomorrowLen - todayLen) / 1000);
+  const abs = Math.abs(deltaSec);
+  let cls = "daylight-delta";
+  let text;
+  if (abs < 25) {
+    text = "≈ same tomorrow";
+    cls += " flat";
+  } else {
+    const m = Math.floor(abs / 60);
+    const s = abs % 60;
+    const span = m ? `${m}m${s ? " " + s + "s" : ""}` : `${s}s`;
+    text = `${deltaSec > 0 ? "+" : "−"}${span} tomorrow`;
+    cls += deltaSec > 0 ? " gaining" : " losing";
+  }
+  node.textContent = text;
+  node.className = cls;
 }
 
 function scheduleSunArc(w) {

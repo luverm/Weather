@@ -840,6 +840,19 @@ html[data-reduce-motion="true"] *::after {
 }
 .sun-countdown:empty { display: none; }
 
+/* ---------- Daylight delta (Round 22) ---------- */
+.daylight-delta {
+  font-size: 9.5px;
+  letter-spacing: 0.05em;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-dim);
+  opacity: 0.92;
+}
+.daylight-delta:empty { display: none; }
+.daylight-delta.gaining { color: #ffb196; }
+.daylight-delta.losing { color: #9ad1ff; }
+.daylight-delta.flat { color: var(--fg-dim); }
+
 /* ---------- Keyboard shortcuts overlay ---------- */
 .shortcuts {
   position: fixed;
