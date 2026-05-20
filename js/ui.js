@@ -1136,8 +1136,11 @@ function renderPlaces() {
   const activeId = state.place ? places.idFor(state.place) : null;
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
+    const stale = p.updatedAt && (Date.now() - p.updatedAt) > 60 * 60_000;
+    const tip = p.updatedAt ? `Updated ${chipAgo(p.updatedAt)}` : "Loading…";
     return `
-      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
+      <div class="place-chip ${active ? "active" : ""} ${stale ? "stale" : ""}" data-id="${p.id}" title="${escapeHtml(tip)}">
+        ${p.condition ? `<span class="chip-icon">${iconFor(p.condition)}</span>` : ""}
         <span>${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
         <span class="close" data-action="remove" aria-label="Remove">
@@ -1335,6 +1338,16 @@ function applyStoredPreferences() {
 
 // Exposed so app.js can query the current preference on boot.
 ui.isReduceMotion = () => localStorage.getItem("aether:reduceMotion") === "1";
+
+function chipAgo(ts) {
+  if (!ts) return "";
+  const minutes = Math.max(0, Math.floor((Date.now() - ts) / 60_000));
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
 
 function startFetchedTicker() {
   const update = () => {

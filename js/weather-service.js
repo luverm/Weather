@@ -67,6 +67,31 @@ export async function searchCities(query) {
   }
 }
 
+// Tiny payload used to refresh the saved-cities chips. Just enough data to
+// render a temp + condition icon without paying for the full hourly forecast.
+export async function getCurrentSummary(lat, lon) {
+  const params = new URLSearchParams({
+    latitude: lat,
+    longitude: lon,
+    current: ["temperature_2m", "weather_code", "is_day"].join(","),
+    timezone: "auto",
+  });
+  try {
+    const data = await fetchJson(`${FORECAST}?${params.toString()}`);
+    const c = data.current || {};
+    const { condition, label } = mapWmo(c.weather_code);
+    return {
+      temp: c.temperature_2m,
+      condition,
+      label,
+      isDay: !!c.is_day,
+      fetchedAt: Date.now(),
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function getWeather(lat, lon) {
   const params = new URLSearchParams({
     latitude: lat,

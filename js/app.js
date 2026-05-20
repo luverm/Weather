@@ -8,7 +8,7 @@ import { RainScene } from "./scenes/rain.js";
 import { SnowScene } from "./scenes/snow.js";
 import { LightningScene } from "./scenes/lightning.js";
 import { WindScene } from "./scenes/wind.js";
-import { getWeather, getLocation } from "./weather-service.js";
+import { getWeather, getLocation, getCurrentSummary } from "./weather-service.js";
 import { ui } from "./ui.js";
 import { clock } from "./clock.js";
 import { Scrubber } from "./scrubber.js";
@@ -304,6 +304,25 @@ installShortcuts({
   },
 });
 
+// Refresh the saved-city chips that haven't been updated recently. Active
+// place gets its summary refreshed by loadByCoords, so we skip it here.
+const STALE_MS = 30 * 60_000;
+async function refreshStaleChips() {
+  const activeId = app.place ? places.idFor(app.place) : null;
+  const stale = places.all().filter((p) => {
+    if (places.idFor(p) === activeId) return false;
+    return !p.updatedAt || (Date.now() - p.updatedAt) > STALE_MS;
+  });
+  if (!stale.length) return;
+  await Promise.all(stale.map(async (p) => {
+    const sum = await getCurrentSummary(p.lat, p.lon);
+    if (sum && sum.temp != null) {
+      places.updateSummary(p, { temp: sum.temp, condition: sum.condition });
+    }
+  }));
+  ui.refreshPlaces?.();
+}
+
 // ---------- Start ----------
 (async function init() {
   // Prefer the most recent saved place if we have one — avoids the geolocation
@@ -311,14 +330,16 @@ installShortcuts({
   const saved = places.all();
   if (saved.length) {
     await loadByCoords(saved[0]);
-    return;
+  } else {
+    try {
+      const { lat, lon } = await getLocation();
+      await loadByCoords({ name: "Current location", lat, lon });
+    } catch {
+      await loadByCoords({ name: "Reykjavík", country: "Iceland", lat: 64.1466, lon: -21.9426 });
+    }
   }
-  try {
-    const { lat, lon } = await getLocation();
-    await loadByCoords({ name: "Current location", lat, lon });
-  } catch {
-    await loadByCoords({ name: "Reykjavík", country: "Iceland", lat: 64.1466, lon: -21.9426 });
-  }
+  // After the primary load completes, fire-and-forget chip refresh.
+  refreshStaleChips();
 })();
 
 // ---------- Lifecycle ----------
