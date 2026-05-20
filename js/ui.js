@@ -119,6 +119,7 @@ const el = {
   rainfallNext6h: $("#rainfall-next6h"),
   rainfallBars: $("#rainfall-bars"),
   rainfallNarrative: $("#rainfall-narrative"),
+  vsYesterday: $("#vs-yesterday"),
 };
 
 const state = {
@@ -288,6 +289,32 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  renderVsYesterday(w);
+}
+
+function renderVsYesterday(w) {
+  if (!el.vsYesterday) return;
+  if (w.yesterdayTemp == null || w.temp == null) {
+    el.vsYesterday.hidden = true; return;
+  }
+  const deltaC = w.temp - w.yesterdayTemp;
+  // Convert delta into the active display unit. Subtracting in °C and scaling
+  // is correct only for ratios — here we want the unit-display magnitude, so
+  // multiply by 9/5 for °F.
+  const deltaDisplay = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
+  const abs = Math.abs(deltaDisplay);
+  if (abs < 0.5) {
+    el.vsYesterday.hidden = false;
+    el.vsYesterday.className = "vs-yesterday flat";
+    el.vsYesterday.textContent = "Same as this time yesterday";
+    return;
+  }
+  const cls = deltaC > 0 ? "up" : "down";
+  const sign = deltaC > 0 ? "+" : "−";
+  const arrow = deltaC > 0 ? "▲" : "▼";
+  el.vsYesterday.hidden = false;
+  el.vsYesterday.className = `vs-yesterday ${cls}`;
+  el.vsYesterday.textContent = `${arrow} ${sign}${abs.toFixed(1)}°${state.unit} vs yesterday`;
 }
 
 function renderDayRange(w) {

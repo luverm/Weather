@@ -118,6 +118,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
+    past_days: 1,         // gives us yesterday for vs-yesterday comparison
     past_hours: 1,
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
@@ -214,6 +215,11 @@ function normalize(d, aq) {
   // Moon phase is not in Open-Meteo's free tier — compute it locally.
   const moon = computeMoonPhase(new Date());
 
+  // Find yesterday's temperature at this same wall-clock hour so the UI can
+  // surface a "vs. yesterday" delta. Falls back to null if past_days didn't
+  // give us enough data.
+  const yesterdayTemp = findYesterdaySameHour(d.hourly, now);
+
   return {
     temp: c.temperature_2m,
     feelsLike: c.apparent_temperature,
@@ -238,10 +244,27 @@ function normalize(d, aq) {
     daily: dailyForecast,
     nowcast,
     moon,
+    yesterdayTemp,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
     fetchedAt: now,
   };
+}
+
+function findYesterdaySameHour(hourly, nowMs) {
+  if (!hourly?.time || !hourly?.temperature_2m) return null;
+  const target = nowMs - 24 * 3600_000;
+  let bestIdx = -1, bestDiff = Infinity;
+  for (let i = 0; i < hourly.time.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    const diff = Math.abs(t - target);
+    if (diff < bestDiff) { bestDiff = diff; bestIdx = i; }
+  }
+  // Reject if the closest hour is more than 90 min off the target — past_days
+  // wasn't honored or the series is too short.
+  if (bestIdx < 0 || bestDiff > 90 * 60_000) return null;
+  const v = hourly.temperature_2m[bestIdx];
+  return v == null ? null : v;
 }
 
 function computePressureTrend(hourly, now) {
