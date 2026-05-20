@@ -77,10 +77,11 @@ function buildNarrative({ today, tomorrow, peak, next6h, next24 }) {
       for (let i = peakIdx + 1; i < next24.length; i++) {
         if ((next24[i].precip || 0) >= 0.1) endIdx = i; else break;
       }
-      const endHour = next24[endIdx];
-      const endTime = fmtClock(endHour.time);
+      // First dry hour after the wet streak; falls back to the last wet
+      // hour if the streak runs to the end of the window.
+      const dryHour = next24[endIdx + 1] ?? next24[endIdx];
       if (endIdx > peakIdx + 1) {
-        return `Peak ${round(peak.precip)} mm at ${fmtClock(peak.time)}, easing by ${endTime}.`;
+        return `Peak ${round(peak.precip)} mm at ${fmtClock(peak.time)}, easing by ${fmtClock(dryHour.time)}.`;
       }
       return `Peak ${round(peak.precip)} mm around ${fmtClock(peak.time)}.`;
     }

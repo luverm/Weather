@@ -412,7 +412,7 @@ html[data-reduce-motion="true"] *::after {
 .vs-yesterday.up { background: rgba(255, 156, 122, 0.18); color: #ffb196; }
 .vs-yesterday.down { background: rgba(154, 209, 255, 0.18); color: #9ad1ff; }
 .vs-yesterday.flat { background: rgba(255,255,255,0.08); color: var(--fg-dim); }
-html[data-scrubbing="true"] .vs-yesterday { display: none; }
+html[data-scrubbing="true"] .vs-yesterday { visibility: hidden; }
 .day-range {
   margin-top: 10px;
   display: grid;

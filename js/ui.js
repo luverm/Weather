@@ -298,17 +298,16 @@ function renderVsYesterday(w) {
     el.vsYesterday.hidden = true; return;
   }
   const deltaC = w.temp - w.yesterdayTemp;
-  // Convert delta into the active display unit. Subtracting in °C and scaling
-  // is correct only for ratios — here we want the unit-display magnitude, so
-  // multiply by 9/5 for °F.
-  const deltaDisplay = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
-  const abs = Math.abs(deltaDisplay);
-  if (abs < 0.5) {
+  // Dead-band in °C so the "same as yesterday" threshold doesn't change
+  // meaning between unit modes.
+  if (Math.abs(deltaC) < 0.3) {
     el.vsYesterday.hidden = false;
     el.vsYesterday.className = "vs-yesterday flat";
     el.vsYesterday.textContent = "Same as this time yesterday";
     return;
   }
+  const deltaDisplay = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
+  const abs = Math.abs(deltaDisplay);
   const cls = deltaC > 0 ? "up" : "down";
   const sign = deltaC > 0 ? "+" : "−";
   const arrow = deltaC > 0 ? "▲" : "▼";

@@ -177,10 +177,19 @@ function normalize(d, aq) {
     }
   }
 
+  // We request past_days=1 (for yesterday-temp comparison) so Open-Meteo's
+  // daily arrays now lead with yesterday. The rest of the app — sky scene,
+  // forecast strip, weekend, insights, alerts, rainfall card, sun card —
+  // all treat daily[0] as TODAY, so trim the leading past day(s) before
+  // exposing them. Defensively keep all entries if the response is shorter
+  // than expected.
+  const expectedDailyLen = 1 + 7; // past_days + forecast_days
+  const dailyStart = (daily.time && daily.time.length >= expectedDailyLen) ? 1 : 0;
+
   // 7-day daily forecast.
   const dailyForecast = [];
   if (daily.time) {
-    for (let i = 0; i < daily.time.length; i++) {
+    for (let i = dailyStart; i < daily.time.length; i++) {
       const ts = new Date(daily.time[i]).getTime();
       dailyForecast.push({
         time: ts,
@@ -235,9 +244,9 @@ function normalize(d, aq) {
     isDay: !!c.is_day,
     condition,
     label,
-    sunrise: daily.sunrise?.[0] ? new Date(daily.sunrise[0]).getTime() : null,
-    sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null,
-    uv: daily.uv_index_max?.[0] ?? null,
+    sunrise: daily.sunrise?.[dailyStart] ? new Date(daily.sunrise[dailyStart]).getTime() : null,
+    sunset: daily.sunset?.[dailyStart] ? new Date(daily.sunset[dailyStart]).getTime() : null,
+    uv: daily.uv_index_max?.[dailyStart] ?? null,
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
     hourly,
