@@ -49,6 +49,7 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -530,8 +531,34 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderDaylightDelta(w) {
+  if (!el.sunDaylightDelta) return;
+  const today = w.daily?.[0];
+  const tomorrow = w.daily?.[1];
+  if (!today?.sunrise || !today?.sunset || !tomorrow?.sunrise || !tomorrow?.sunset) {
+    el.sunDaylightDelta.hidden = true; return;
+  }
+  const todayMs = today.sunset - today.sunrise;
+  const tomorrowMs = tomorrow.sunset - tomorrow.sunrise;
+  const deltaSec = Math.round((tomorrowMs - todayMs) / 1000);
+  el.sunDaylightDelta.hidden = false;
+  if (Math.abs(deltaSec) < 30) {
+    el.sunDaylightDelta.className = "sun-delta flat";
+    el.sunDaylightDelta.textContent = "≈ same tomorrow";
+    return;
+  }
+  const sign = deltaSec > 0 ? "+" : "−";
+  const absSec = Math.abs(deltaSec);
+  const m = Math.floor(absSec / 60);
+  const s = absSec % 60;
+  const label = m > 0 ? `${m}m ${s}s` : `${s}s`;
+  el.sunDaylightDelta.className = `sun-delta ${deltaSec > 0 ? "up" : "down"}`;
+  el.sunDaylightDelta.textContent = `${sign}${label} tomorrow`;
 }
 
 function scheduleSunArc(w) {
