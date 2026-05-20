@@ -87,6 +87,7 @@ function buildNarrative({ today, tomorrow, peak, next6h, next24 }) {
   }
   if (next6h > 0.2) return `About ${round(next6h)} mm in the next 6 hours.`;
   if (tomorrow > today + 1) return `Quiet today — wetter tomorrow (${round(tomorrow)} mm).`;
+  if (today >= 5) return `Wet day — ${round(today)} mm expected.`;
   if (today > 0.5) return `Light passing showers — ${round(today)} mm today.`;
   return "Mostly dry — just a trace expected.";
 }

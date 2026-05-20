@@ -204,6 +204,7 @@ export const ui = {
     renderAlerts(weather);
     renderWeekend(weather);
     renderRainfall(weather);
+    renderVsYesterday(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -289,7 +290,6 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
-  renderVsYesterday(w);
 }
 
 function renderVsYesterday(w) {
