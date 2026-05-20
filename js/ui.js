@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { buildRainfall } from "./rainfall.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -110,6 +111,13 @@ const el = {
   heroInner: document.querySelector(".hero-inner"),
   toast: $("#toast"),
   placesStrip: $("#places-strip"),
+  rainfallCard: $("#rainfall-card"),
+  rainfallLevel: $("#rainfall-level"),
+  rainfallToday: $("#rainfall-today"),
+  rainfallTomorrow: $("#rainfall-tomorrow"),
+  rainfallNext6h: $("#rainfall-next6h"),
+  rainfallBars: $("#rainfall-bars"),
+  rainfallNarrative: $("#rainfall-narrative"),
 };
 
 const state = {
@@ -193,6 +201,7 @@ export const ui = {
     renderActivity(weather);
     renderAlerts(weather);
     renderWeekend(weather);
+    renderRainfall(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -768,6 +777,67 @@ function renderActivity(w) {
       if (ts) state.handlers.onHourClick?.(ts);
     });
   });
+}
+
+function renderRainfall(w) {
+  if (!el.rainfallCard) return;
+  const snap = buildRainfall(w);
+  if (!snap) { el.rainfallCard.hidden = true; return; }
+  el.rainfallCard.hidden = false;
+
+  el.rainfallToday.textContent = fmtMm(snap.today);
+  el.rainfallTomorrow.textContent = fmtMm(snap.tomorrow);
+  el.rainfallNext6h.textContent = fmtMm(snap.next6h);
+  el.rainfallNarrative.textContent = snap.narrative;
+  if (el.rainfallLevel) {
+    el.rainfallLevel.className = `trend ${snap.levelClass}`;
+    el.rainfallLevel.textContent = snap.level;
+  }
+  drawRainfallBars(snap.hours, snap.peak?.time);
+}
+
+function fmtMm(v) {
+  if (v == null || isNaN(v)) return "—";
+  if (v < 0.1) return "0 mm";
+  if (v < 10) return `${(Math.round(v * 10) / 10).toFixed(1)} mm`;
+  return `${Math.round(v)} mm`;
+}
+
+function drawRainfallBars(hours, peakTs) {
+  if (!el.rainfallBars) return;
+  const W = 240, H = 36, GAP = 1.5;
+  const n = Math.max(1, hours.length);
+  const bw = (W - GAP * (n - 1)) / n;
+  // Use 4 mm as a soft cap so a typical shower fills ~2/3 of the bar height;
+  // anything heavier saturates at the top. Avoids tiny invisible bars on
+  // light-rain days where max is 0.3 mm.
+  const peakPrecip = hours.reduce((m, h) => Math.max(m, h.precip || 0), 0);
+  const cap = Math.max(2, Math.min(10, peakPrecip * 1.2));
+  const ticks = [];
+  for (let i = 0; i < n; i++) {
+    const h = hours[i];
+    const mm = h.precip || 0;
+    const frac = Math.max(0.02, Math.min(1, mm / cap)); // min height so empty hours show a faint baseline
+    const barH = frac * (H - 4);
+    const x = i * (bw + GAP);
+    const y = H - barH;
+    const opacity = mm < 0.05 ? 0.12 : Math.min(0.95, 0.35 + mm / cap);
+    const isPeak = peakTs && h.time === peakTs && mm > 0.1;
+    const color = colorForPrecip(mm);
+    ticks.push(
+      `<rect x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${bw.toFixed(2)}" height="${barH.toFixed(2)}" ` +
+      `fill="${color}" opacity="${opacity.toFixed(2)}" rx="1.2" ` +
+      `${isPeak ? 'stroke="#fff" stroke-opacity="0.6" stroke-width="0.6"' : ''} />`
+    );
+  }
+  el.rainfallBars.innerHTML = ticks.join("");
+}
+
+function colorForPrecip(mm) {
+  if (mm >= 4) return "#b75cff";
+  if (mm >= 2) return "#7c9dff";
+  if (mm >= 0.5) return "#5ec8ff";
+  return "#9ad1ff";
 }
 
 function renderPollen(pollen) {

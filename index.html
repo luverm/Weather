@@ -318,6 +318,30 @@
           <ul id="activity-list" class="activity-list"></ul>
         </div>
 
+        <div class="extra-card glass" id="rainfall-card" hidden>
+          <span class="metric-label">
+            Rainfall outlook
+            <span id="rainfall-level" class="trend" aria-hidden="true"></span>
+          </span>
+          <div class="rainfall-totals">
+            <div class="rainfall-stat">
+              <strong id="rainfall-today">—</strong>
+              <span>today</span>
+            </div>
+            <div class="rainfall-stat">
+              <strong id="rainfall-tomorrow">—</strong>
+              <span>tomorrow</span>
+            </div>
+            <div class="rainfall-stat">
+              <strong id="rainfall-next6h">—</strong>
+              <span>next 6 h</span>
+            </div>
+          </div>
+          <svg id="rainfall-bars" class="rainfall-bars" viewBox="0 0 240 36"
+               preserveAspectRatio="none" aria-hidden="true"></svg>
+          <span id="rainfall-narrative" class="metric-sub">—</span>
+        </div>
+
         <div class="extra-card glass" id="sun-card">
           <span class="metric-label"><span id="sun-next-label">Sun</span> <span id="sun-countdown" class="sun-countdown"></span></span>
           <svg id="sun-arc" class="sun-arc" viewBox="0 0 200 84" aria-hidden="true">
