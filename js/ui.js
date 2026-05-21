@@ -21,6 +21,7 @@ const el = {
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
+  tempYesterday: $("#temp-yesterday"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -179,6 +180,7 @@ export const ui = {
     state.weather = weather;
     state.sampledWeather = weather; // initially same as live
     renderLiveValues(weather);
+    renderYesterday(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
     renderMoon(weather.moon);
@@ -303,6 +305,32 @@ function renderDayRange(w) {
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+}
+
+// "3° warmer than yesterday" — compares the live temp against the reading
+// from exactly 24h ago. Hidden when the data is missing or temps match.
+function renderYesterday(w) {
+  if (!el.tempYesterday) return;
+  const y = w.yesterday;
+  if (!y || y.temp == null || w.temp == null) {
+    el.tempYesterday.hidden = true;
+    el.tempYesterday.textContent = "";
+    return;
+  }
+  // Difference is computed in °C, then scaled to the active unit's span.
+  const deltaC = w.temp - y.temp;
+  const delta = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
+  const rounded = Math.round(delta);
+  el.tempYesterday.hidden = false;
+  if (Math.abs(rounded) < 1) {
+    el.tempYesterday.className = "temp-yesterday flat";
+    el.tempYesterday.textContent = "Same as this time yesterday";
+  } else {
+    const warmer = rounded > 0;
+    el.tempYesterday.className = `temp-yesterday ${warmer ? "up" : "down"}`;
+    el.tempYesterday.textContent =
+      `${warmer ? "▲" : "▼"} ${Math.abs(rounded)}° ${warmer ? "warmer" : "cooler"} than yesterday`;
+  }
 }
 
 function renderMetrics(w) {

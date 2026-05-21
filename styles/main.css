@@ -391,6 +391,26 @@ html[data-reduce-motion="true"] *::after {
 .unit:hover { background: var(--glass); color: var(--fg); }
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
+.temp-yesterday {
+  margin: 8px 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--fg-dim);
+}
+.temp-yesterday[hidden] { display: none; }
+.temp-yesterday.up { background: rgba(255, 156, 122, 0.16); color: #ffb196; }
+.temp-yesterday.down { background: rgba(154, 209, 255, 0.16); color: #9ad1ff; }
+.temp-yesterday.flat { background: rgba(255, 255, 255, 0.06); color: var(--fg-dim); }
+/* During time-scrubbing the hero temp shows a future value, so the
+   "vs yesterday" comparison would be misleading — hide it. */
+[data-scrubbing="true"] .temp-yesterday { display: none; }
 .day-range {
   margin-top: 10px;
   display: grid;

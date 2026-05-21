@@ -112,17 +112,54 @@ export async function getWeather(lat, lon) {
   });
   const aqUrl = `${AIR_QUALITY}?${aqParams.toString()}`;
 
+  // A small extra request for yesterday's hourly temps — kept separate from
+  // the main forecast so adding a past day never shifts daily[0] off "today".
+  const ydayParams = new URLSearchParams({
+    latitude: lat,
+    longitude: lon,
+    hourly: ["temperature_2m", "apparent_temperature"].join(","),
+    past_days: 1,
+    forecast_days: 1,
+    timezone: "auto",
+  });
+  const ydayUrl = `${FORECAST}?${ydayParams.toString()}`;
+
   try {
-    const [forecast, air] = await Promise.allSettled([fetchJson(url), fetchJson(aqUrl)]);
+    const [forecast, air, yday] = await Promise.allSettled([
+      fetchJson(url), fetchJson(aqUrl), fetchJson(ydayUrl),
+    ]);
     if (forecast.status !== "fulfilled") throw forecast.reason;
-    return normalize(forecast.value, air.status === "fulfilled" ? air.value : null);
+    return normalize(
+      forecast.value,
+      air.status === "fulfilled" ? air.value : null,
+      yday.status === "fulfilled" ? yday.value : null,
+    );
   } catch (err) {
     console.warn("Weather fetch failed, using mock", err);
     return mock(lat, lon);
   }
 }
 
-function normalize(d, aq) {
+// Pull the hourly reading closest to exactly 24h ago so the UI can say
+// "warmer/cooler than yesterday". Returns null when no entry lands within 90m.
+function normalizeYesterday(yday, now) {
+  if (!yday?.hourly?.time) return null;
+  const target = now - 24 * 3600_000;
+  let bestIdx = -1, bestDiff = Infinity;
+  for (let i = 0; i < yday.hourly.time.length; i++) {
+    const diff = Math.abs(new Date(yday.hourly.time[i]).getTime() - target);
+    if (diff < bestDiff) { bestDiff = diff; bestIdx = i; }
+  }
+  if (bestIdx < 0 || bestDiff > 90 * 60_000) return null;
+  const temp = yday.hourly.temperature_2m?.[bestIdx];
+  if (temp == null) return null;
+  return {
+    temp,
+    feelsLike: yday.hourly.apparent_temperature?.[bestIdx] ?? null,
+  };
+}
+
+function normalize(d, aq, yday) {
   const c = d.current || {};
   const { condition, label } = mapWmo(c.weather_code);
   const daily = d.daily || {};
@@ -215,6 +252,7 @@ function normalize(d, aq) {
     moon,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
+    yesterday: normalizeYesterday(yday, now),
     fetchedAt: now,
   };
 }
@@ -400,6 +438,7 @@ function mock(lat, lon) {
       level: "Moderate",
     },
     pressureTrend: { delta: -0.4, direction: "steady" },
+    yesterday: { temp: 16, feelsLike: 15 },
     fetchedAt: now,
     offline: true,
   };
