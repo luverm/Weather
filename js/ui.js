@@ -916,13 +916,38 @@ function cardinal(deg) {
   return dirs[i];
 }
 
+function sunMarkGlyph(kind) {
+  const up = kind === "rise";
+  return `<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 19h16"/>
+    <path d="M8 15.5a4 4 0 018 0"/>
+    <path d="M12 ${up ? "3v5" : "8V3"}"/>
+    <path d="${up ? "M9 6l3-3 3 3" : "M9 5l3 3 3-3"}"/>
+  </g></svg>`;
+}
+
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
+  const HOUR = 3600_000;
+  const sunEvents = [];
+  for (const d of (w.daily || [])) {
+    if (d.sunrise) sunEvents.push({ t: d.sunrise, kind: "rise" });
+    if (d.sunset) sunEvents.push({ t: d.sunset, kind: "set" });
+  }
   for (const h of (w.hourly || []).slice(0, 24)) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    item.dataset.day = h.isDay ? "true" : "false";
+    const sun = sunEvents.find((e) => e.t >= h.time && e.t < h.time + HOUR);
+    let badge = "";
+    if (sun) {
+      item.dataset.sun = sun.kind;
+      item.title = `${sun.kind === "rise" ? "Sunrise" : "Sunset"} ${fmtTime(sun.t)}`;
+      badge = `<span class="forecast-sun" aria-hidden="true">${sunMarkGlyph(sun.kind)}</span>`;
+    }
     item.innerHTML = `
+      ${badge}
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
