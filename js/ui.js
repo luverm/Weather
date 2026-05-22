@@ -20,7 +20,7 @@ const el = {
   placeSub: $("#place-sub"),
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
-  feelsLike: $("#feels-like"),
+  feelsLikeText: $("#feels-like-text"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -279,7 +279,8 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  // Update only the text node — the sibling #temp-trend pill must survive.
+  el.feelsLikeText.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
 }
 
@@ -900,8 +901,9 @@ function renderTrends(w) {
         el.tempTrend.className = "temp-trend flat";
         el.tempTrend.textContent = "→ steady";
       } else {
+        const shown = Math.round(Math.abs(state.unit === "F" ? delta * 9 / 5 : delta));
         el.tempTrend.className = delta > 0 ? "temp-trend up" : "temp-trend down";
-        el.tempTrend.textContent = `${delta > 0 ? "▲" : "▼"} ${Math.round(Math.abs(delta))}°/3h`;
+        el.tempTrend.textContent = `${delta > 0 ? "▲" : "▼"} ${shown}°/3h`;
       }
     } else {
       el.tempTrend.textContent = "";
