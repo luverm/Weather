@@ -935,6 +935,15 @@ function renderDaily(w) {
     if (d.tempMax > gMax) gMax = d.tempMax;
   }
   const span = Math.max(1, gMax - gMin);
+  // Flag the week's warmest & coldest days, but only when the spread is wide
+  // enough that the distinction is meaningful.
+  let warmIdx = -1, coldIdx = -1;
+  const highs = days.map((d) => d.tempMax).filter((v) => v != null);
+  if (highs.length >= 3 && Math.max(...highs) - Math.min(...highs) >= 4) {
+    const hi = Math.max(...highs), lo = Math.min(...highs);
+    warmIdx = days.findIndex((d) => d.tempMax === hi);
+    coldIdx = days.findIndex((d) => d.tempMax === lo);
+  }
   days.forEach((d, i) => {
     const dt = new Date(d.time);
     const tz = state.weather?.timezone;
@@ -951,7 +960,12 @@ function renderDaily(w) {
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
-    const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const flag = i === warmIdx ? "warmest" : i === coldIdx ? "coldest" : "";
+    const flagLabel = flag === "warmest" ? "Warmest day" : "Coldest day";
+    const flagHtml = flag ? `<span class="daily-flag ${flag}">${flagLabel}</span>` : "";
+    const extra = flagHtml || gustLabel || popLabel
+      ? `<span class="daily-gust">${flagHtml}${popLabel}${gustLabel}</span>`
+      : "";
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>

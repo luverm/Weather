@@ -1381,6 +1381,19 @@ kbd {
 }
 .daily-gust.show { display: block; }
 .daily-item { grid-auto-rows: auto; }
+.daily-flag {
+  display: inline-block;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 1.5px 7px;
+  border-radius: 999px;
+  margin-right: 2px;
+  vertical-align: 1px;
+}
+.daily-flag.warmest { background: rgba(255, 150, 110, 0.18); color: #ffb38f; }
+.daily-flag.coldest { background: rgba(140, 190, 255, 0.18); color: #9fc8ff; }
 
 /* ---------- Forecast (hourly + daily) ---------- */
 .forecast, .daily {
