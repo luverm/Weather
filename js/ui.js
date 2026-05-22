@@ -45,6 +45,7 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonNext: $("#moon-next"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -476,10 +477,26 @@ function renderAqTrend(aq) {
   drawSparkline(el.aqTrendLine, el.aqTrendFill, pts, { minSpan: 20 });
 }
 
+// Days until the next full or new moon, whichever lands first, from the
+// current phase fraction (0 = new, 0.5 = full).
+function nextMoonMilestone(phase) {
+  const SYNODIC = 29.530588;
+  const toFull = (((0.5 - phase) % 1) + 1) % 1;
+  const toNew = (((1 - phase) % 1) + 1) % 1;
+  const full = toFull <= toNew;
+  const days = Math.round((full ? toFull : toNew) * SYNODIC);
+  const name = full ? "Full moon" : "New moon";
+  if (days <= 0) return `${name} tonight`;
+  return `${name} in ${days} day${days === 1 ? "" : "s"}`;
+}
+
 function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  if (el.moonNext) {
+    el.moonNext.textContent = moon.phase != null ? nextMoonMilestone(moon.phase) : "";
+  }
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
