@@ -50,6 +50,8 @@ const el = {
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  sunGolden: $("#sun-golden"),
+  sunTrend: $("#sun-trend"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -523,6 +525,78 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderDaylight(w);
+}
+
+// Golden hour ≈ the hour just after sunrise and just before sunset, when the
+// light is warm and low. Built across every day we have sun times for so the
+// "next" window is correct even late at night.
+function goldenHourWindows(w) {
+  const H = 3600_000;
+  const src = (w.daily && w.daily.length)
+    ? w.daily
+    : [{ sunrise: w.sunrise, sunset: w.sunset }];
+  const out = [];
+  for (const d of src) {
+    if (d.sunrise) out.push({ start: d.sunrise, end: d.sunrise + H, kind: "morning" });
+    if (d.sunset) out.push({ start: d.sunset - H, end: d.sunset, kind: "evening" });
+  }
+  return out.sort((a, b) => a.start - b.start);
+}
+
+function nextGoldenHour(w) {
+  const now = Date.now();
+  const wins = goldenHourWindows(w);
+  const active = wins.find((win) => now >= win.start && now <= win.end);
+  if (active) return { ...active, active: true };
+  const upcoming = wins.find((win) => win.start > now);
+  return upcoming ? { ...upcoming, active: false } : null;
+}
+
+// Average change in day length across the daily forecast, in minutes/day.
+function daylightTrend(w) {
+  const lengths = [];
+  for (const d of (w.daily || [])) {
+    if (d.sunrise && d.sunset && d.sunset > d.sunrise) {
+      lengths.push(d.sunset - d.sunrise);
+    }
+  }
+  if (lengths.length < 2) return null;
+  return (lengths[lengths.length - 1] - lengths[0]) / (lengths.length - 1) / 60_000;
+}
+
+function renderDaylight(w) {
+  if (el.sunGolden) {
+    const gh = nextGoldenHour(w);
+    if (gh) {
+      el.sunGolden.textContent = `${fmtTime(gh.start)}–${fmtTime(gh.end)}`;
+      el.sunGolden.dataset.active = gh.active ? "true" : "false";
+      el.sunGolden.title = gh.active
+        ? "Golden hour in progress — warm, low light"
+        : `Next golden hour · ${gh.kind === "morning" ? "after sunrise" : "before sunset"}`;
+    } else {
+      el.sunGolden.textContent = "—";
+      el.sunGolden.dataset.active = "false";
+      el.sunGolden.removeAttribute("title");
+    }
+  }
+  if (el.sunTrend) {
+    const perDay = daylightTrend(w);
+    if (perDay == null) {
+      el.sunTrend.textContent = "—";
+      el.sunTrend.removeAttribute("data-dir");
+      el.sunTrend.removeAttribute("title");
+    } else if (Math.abs(perDay) < 0.5) {
+      el.sunTrend.textContent = "Steady";
+      el.sunTrend.dataset.dir = "flat";
+      el.sunTrend.title = "Day length is holding steady";
+    } else {
+      const gaining = perDay > 0;
+      el.sunTrend.textContent = `${gaining ? "+" : "−"}${Math.abs(Math.round(perDay))}m/day`;
+      el.sunTrend.dataset.dir = gaining ? "up" : "down";
+      el.sunTrend.title = gaining ? "Days are getting longer" : "Days are getting shorter";
+    }
+  }
 }
 
 function scheduleSunArc(w) {
