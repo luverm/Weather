@@ -931,13 +931,66 @@ kbd {
 /* ---------- Extras row: AQ + moon + sun ---------- */
 .extras {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 10px;
 }
 .extra-card {
   padding: 14px 16px;
   border-radius: var(--radius-sm);
   display: grid; gap: 10px;
+}
+
+/* ---------- Comfort score card ---------- */
+.comfort-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
+.comfort-dial {
+  position: relative; width: 56px; height: 56px;
+  color: #6ee0a3;
+  transition: color 600ms var(--ease);
+}
+.comfort-dial svg { width: 56px; height: 56px; display: block; }
+#comfort-card[data-tone="great"] .comfort-dial { color: #6ee0a3; }
+#comfort-card[data-tone="good"]  .comfort-dial { color: #aee06e; }
+#comfort-card[data-tone="fair"]  .comfort-dial { color: #f0c25a; }
+#comfort-card[data-tone="poor"]  .comfort-dial { color: #ef7461; }
+#comfort-arc {
+  transition: stroke-dashoffset 900ms var(--ease), stroke 600ms var(--ease);
+  filter: drop-shadow(0 0 6px currentColor);
+}
+.comfort-value {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+.comfort-meta { display: grid; gap: 4px; min-width: 0; }
+.comfort-meta strong { font-size: 14px; font-weight: 500; }
+.comfort-tagline {
+  font-size: 11.5px; color: var(--fg-dim);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.comfort-chips {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  margin-top: 2px;
+}
+.comfort-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 7px 2px 5px;
+  border-radius: 999px;
+  font-size: 10.5px; font-variant-numeric: tabular-nums;
+  background: rgba(255,255,255,0.07);
+  color: var(--fg-muted);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.comfort-chip.ok  { color: #aee0b8; background: rgba(110, 224, 163, 0.10); border-color: rgba(110, 224, 163, 0.22); }
+.comfort-chip.mid { color: #f0d894; background: rgba(240, 194, 90, 0.10); border-color: rgba(240, 194, 90, 0.22); }
+.comfort-chip.bad { color: #f3a796; background: rgba(239, 116, 97, 0.10); border-color: rgba(239, 116, 97, 0.24); }
+.comfort-chip-icon { display: inline-flex; }
+.comfort-chip-icon svg { width: 11px; height: 11px; display: block; }
+@media (prefers-reduced-motion: reduce) {
+  #comfort-arc { transition: none; }
 }
 .aq-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
 .aq-ring { position: relative; width: 48px; height: 48px; color: #78d06a; }

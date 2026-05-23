@@ -265,6 +265,26 @@
 
       <!-- Extras row: air quality + moon -->
       <div class="extras">
+        <div class="extra-card glass" id="comfort-card" data-tone="good">
+          <span class="metric-label">Comfort <span id="comfort-tone" class="trend" aria-hidden="true"></span></span>
+          <div class="comfort-row">
+            <div class="comfort-dial" aria-hidden="true">
+              <svg viewBox="0 0 56 56">
+                <circle cx="28" cy="28" r="24" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="4"/>
+                <circle id="comfort-arc" cx="28" cy="28" r="24" fill="none" stroke="currentColor" stroke-width="4"
+                        stroke-linecap="round" stroke-dasharray="150.8" stroke-dashoffset="150.8"
+                        transform="rotate(-90 28 28)"/>
+              </svg>
+              <span id="comfort-value" class="comfort-value">—</span>
+            </div>
+            <div class="comfort-meta">
+              <strong id="comfort-label">—</strong>
+              <span id="comfort-tagline" class="comfort-tagline">—</span>
+              <div id="comfort-chips" class="comfort-chips"></div>
+            </div>
+          </div>
+        </div>
+
         <div class="extra-card glass" id="aq-card">
           <span class="metric-label">Air quality</span>
           <div class="aq-row">

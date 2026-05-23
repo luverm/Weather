@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { computeComfortScore, COMFORT_ICONS } from "./comfort-score.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -91,6 +92,13 @@ const el = {
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
   comfortStrip: $("#comfort-strip"),
+  comfortCard: $("#comfort-card"),
+  comfortArc: $("#comfort-arc"),
+  comfortValue: $("#comfort-value"),
+  comfortLabel: $("#comfort-label"),
+  comfortTagline: $("#comfort-tagline"),
+  comfortChips: $("#comfort-chips"),
+  comfortTone: $("#comfort-tone"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
   weekendDetail: $("#weekend-detail"),
@@ -361,6 +369,41 @@ function renderMetrics(w) {
     el.metricUVSub.textContent = "peak —";
   }
   renderPressureSparkline(w);
+  renderComfortScore(w);
+}
+
+function renderComfortScore(w) {
+  if (!el.comfortCard || !el.comfortArc) return;
+  const result = computeComfortScore(w);
+  if (!result) {
+    el.comfortCard.hidden = true;
+    return;
+  }
+  el.comfortCard.hidden = false;
+  el.comfortCard.setAttribute("data-tone", result.tone);
+
+  // Arc circumference: r=24 -> 2π·24 ≈ 150.8.
+  const CIRC = 150.8;
+  el.comfortArc.setAttribute("stroke-dashoffset", String(CIRC * (1 - result.score / 100)));
+
+  if (el.comfortValue) el.comfortValue.textContent = String(result.score);
+  if (el.comfortLabel) el.comfortLabel.textContent = result.label;
+  if (el.comfortTagline) el.comfortTagline.textContent = result.tagline;
+  if (el.comfortTone) {
+    el.comfortTone.className = `trend ${result.tone === "great" ? "down" : result.tone === "poor" ? "up" : "flat"}`;
+    el.comfortTone.textContent = result.label;
+  }
+  if (el.comfortChips) {
+    el.comfortChips.innerHTML = result.chips.map((c) => {
+      const cls = c.score >= 80 ? "ok" : c.score >= 55 ? "mid" : "bad";
+      return `
+        <span class="comfort-chip ${cls}" title="${escapeHtml(c.hint)} · ${c.score}/100">
+          <span class="comfort-chip-icon">${COMFORT_ICONS[c.icon] || ""}</span>
+          <span class="comfort-chip-label">${escapeHtml(c.label)}</span>
+        </span>
+      `;
+    }).join("");
+  }
 }
 
 function humidityComfort(rh, dew, temp) {
