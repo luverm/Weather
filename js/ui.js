@@ -1160,12 +1160,26 @@ function renderPlaces() {
   if (!all.length) { el.placesStrip.hidden = true; el.placesStrip.innerHTML = ""; return; }
   el.placesStrip.hidden = false;
   const activeId = state.place ? places.idFor(state.place) : null;
+  const activeTemp = state.weather?.temp;
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
+    // Delta vs the currently-active city's live temp (rounded to display unit).
+    let deltaHtml = "";
+    if (!active && p.temp != null && activeTemp != null) {
+      const dC = p.temp - activeTemp;
+      const dU = state.unit === "F" ? dC * 9 / 5 : dC;
+      const r = Math.round(dU);
+      if (r !== 0) {
+        const sign = r > 0 ? "+" : "−";
+        const dir = r > 0 ? "warm" : "cool";
+        deltaHtml = `<span class="delta" data-dir="${dir}">${sign}${Math.abs(r)}°</span>`;
+      }
+    }
     return `
       <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
         <span>${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
+        ${deltaHtml}
         <span class="close" data-action="remove" aria-label="Remove">
           <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
         </span>
