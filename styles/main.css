@@ -1877,9 +1877,23 @@ kbd {
   .daily-item { grid-template-columns: 64px 24px 1fr 48px 48px; gap: 8px; }
   .chart-svg { height: 120px; }
   .shortcuts-list { grid-template-columns: 1fr; }
+  .tomorrow-tease { max-width: none; }
+}
+@media (max-width: 600px) {
+  .hm-grid { grid-template-columns: 32px repeat(24, minmax(0, 1fr)); gap: 1px; }
+  .hm-label { font-size: 9.5px; letter-spacing: 0.06em; padding-right: 2px; }
+  .hm-cell { height: 12px; border-radius: 1.5px; }
+  .hm-arrow { display: none; } /* arrows get unreadable below ~12px cells */
+  .hm-htick { font-size: 8px; }
+  .hm-toolbar { gap: 3px; }
+  .hm-tab { padding: 3px 8px; font-size: 10.5px; }
 }
 @media (max-width: 420px) {
   .place-name { font-size: 28px; }
   .temp { font-size: 78px; }
   .narrative { font-size: 13px; }
+  .hm-cell { height: 10px; }
+  .hm-grid { grid-template-columns: 26px repeat(24, minmax(0, 1fr)); }
+  /* Only the start-of-quarter ticks on tiny screens. */
+  .hm-htick:not(:nth-child(13n+1)) { visibility: hidden; }
 }
