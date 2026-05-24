@@ -11,6 +11,7 @@ import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { sunQuality } from "./sun-quality.js";
+import { CloudRibbon } from "./cloud-ribbon.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -98,6 +99,7 @@ const el = {
   sunQualityDetail: $("#sun-quality-detail"),
   sunQualityMeter: $("#sun-quality-meter"),
   comfortStrip: $("#comfort-strip"),
+  cloudRibbon: $("#cloud-ribbon"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
   weekendDetail: $("#weekend-detail"),
@@ -127,6 +129,7 @@ const state = {
   handlers: {},
   chart: null,
   comfortStrip: null,
+  cloudRibbon: null,
   sunTimer: null,
   sunArcTimer: null,
   localTimer: null,
@@ -159,6 +162,10 @@ export const ui = {
       rootEl: el.comfortStrip,
       onCellClick: (ts) => state.handlers.onHourClick?.(ts),
       getUnit: () => state.unit,
+    });
+    state.cloudRibbon = new CloudRibbon({
+      rootEl: el.cloudRibbon,
+      onCellClick: (ts) => state.handlers.onHourClick?.(ts),
     });
     bindInstallPrompt();
   },
@@ -203,6 +210,7 @@ export const ui = {
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
+    if (state.cloudRibbon) state.cloudRibbon.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
@@ -221,6 +229,7 @@ export const ui = {
     renderAdvice(sampled);
     highlightHour(highlightHourIndex);
     if (state.comfortStrip) state.comfortStrip.highlight(highlightHourIndex);
+    if (state.cloudRibbon) state.cloudRibbon.highlight(highlightHourIndex);
     if (state.chart && sampled._sampledTs != null) {
       state.chart.setCursor(sampled._sampledTs);
     } else if (state.chart) {

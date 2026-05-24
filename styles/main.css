@@ -1249,6 +1249,45 @@ kbd {
   font-variant-numeric: tabular-nums;
 }
 
+/* Cloud-cover ribbon (round 23) */
+.cloud-ribbon {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  gap: 1px;
+  margin-top: 8px;
+  padding: 0 4px 16px;
+  height: 22px;
+  position: relative;
+}
+.cloud-ribbon[hidden] { display: none; }
+.cribbon-cell {
+  position: relative;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  height: 6px;
+  background:
+    linear-gradient(180deg, rgba(var(--base), var(--alpha)), rgba(var(--base), calc(var(--alpha) * 0.55)));
+  cursor: pointer;
+  transition: transform 160ms var(--ease), filter 160ms var(--ease), height 160ms var(--ease);
+}
+.cribbon-cell:hover { filter: brightness(1.25); transform: translateY(-1px); }
+.cribbon-cell.active {
+  outline: 1.5px solid var(--accent);
+  outline-offset: 1px;
+  height: 10px;
+}
+.cribbon-tick {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  font-size: 9px;
+  color: var(--fg-dim);
+  letter-spacing: 0.04em;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---------- Alerts strip ---------- */
 .alerts-strip {
   display: flex;
