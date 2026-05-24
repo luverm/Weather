@@ -1009,6 +1009,7 @@ function renderDaily(w) {
     if (d.tempMax > gMax) gMax = d.tempMax;
   }
   const span = Math.max(1, gMax - gMin);
+  const pleasantIdx = pickPleasantDay(days);
   days.forEach((d, i) => {
     const dt = new Date(d.time);
     const tz = state.weather?.timezone;
@@ -1020,14 +1021,18 @@ function renderDaily(w) {
     const width = ((d.tempMax - d.tempMin) / span) * 100;
     const item = document.createElement("div");
     item.className = "daily-item";
+    if (i === pleasantIdx) item.classList.add("is-pleasant");
     item.dataset.ts = d.time;
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const badge = i === pleasantIdx
+      ? `<span class="daily-badge" title="Most pleasant day this week">★</span>`
+      : "";
     item.innerHTML = `
-      <span class="daily-day">${day}</span>
+      <span class="daily-day">${day}${badge}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
@@ -1039,6 +1044,26 @@ function renderDaily(w) {
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+}
+
+// Score each day on temperate highs (16–24°), low pop, modest wind, no extreme
+// UV. Returns the index of the most pleasant day, or -1 if none stand out.
+function pickPleasantDay(days) {
+  let best = -1, bestScore = -Infinity;
+  days.forEach((d, i) => {
+    if (d.tempMax == null) return;
+    let s = 0;
+    const mid = (d.tempMin + d.tempMax) / 2;
+    s += Math.max(0, 60 - Math.abs(mid - 20) * 4);   // temperate sweet-spot
+    s -= (d.pop ?? 0) * 0.5;                          // dry days win
+    if (d.windMax != null) s -= Math.max(0, (d.windMax - 18) * 1.5);
+    if (d.uvMax != null && d.uvMax >= 9) s -= 10;
+    if (d.condition === "rain" || d.condition === "storm" || d.condition === "snow") s -= 30;
+    if (d.condition === "clear") s += 8;
+    if (s > bestScore) { bestScore = s; best = i; }
+  });
+  // Require a meaningful score so we don't badge a mediocre best.
+  return bestScore >= 35 ? best : -1;
 }
 
 function renderDailyIconStrip(days) {
