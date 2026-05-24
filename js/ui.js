@@ -1193,8 +1193,10 @@ function renderPlaces() {
         deltaHtml = `<span class="delta" data-dir="${dir}">${sign}${Math.abs(r)}°</span>`;
       }
     }
+    const iconHtml = p.condition ? `<span class="place-cond">${iconFor(p.condition)}</span>` : "";
     return `
       <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
+        ${iconHtml}
         <span>${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
         ${deltaHtml}
