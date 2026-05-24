@@ -25,6 +25,7 @@ export class CloudRibbon {
     }
     this.root.hidden = false;
 
+    const now = Date.now();
     const html = this.hours.map((h, i) => {
       const cc = clamp(h.cloudCover ?? 0, 0, 100);
       const opacity = (0.18 + (cc / 100) * 0.72).toFixed(2);
@@ -32,8 +33,9 @@ export class CloudRibbon {
       const base = night ? "30, 36, 56" : "200, 210, 225";
       const tick = new Date(h.time).getHours();
       const showTick = tick % 6 === 0;
+      const isNow = Math.abs(h.time - now) < 30 * 60_000;
       return `
-        <button class="cribbon-cell" data-i="${i}" data-ts="${h.time}"
+        <button class="cribbon-cell${isNow ? " cribbon-now" : ""}" data-i="${i}" data-ts="${h.time}"
                 title="${tick}:00 · ${Math.round(cc)}% cloud${night ? " (night)" : ""}"
                 style="--base:${base};--alpha:${opacity}">
           ${showTick ? `<span class="cribbon-tick">${pad(tick)}</span>` : ""}

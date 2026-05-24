@@ -107,8 +107,9 @@ export class WeeklyHeatmap {
         const color = metric.color(raw, lo, hi, span);
         const display = metric.format(raw, unit);
         const dayDim = h.isDay === false ? "0.55" : "1";
+        const isNow = Math.abs(h.time - Date.now()) < 30 * 60_000;
         return `
-          <button class="hm-cell" data-ts="${h.time}"
+          <button class="hm-cell${isNow ? " hm-now" : ""}" data-ts="${h.time}"
                   title="${label} ${pad(hr)}:00 · ${display}"
                   style="--c:${color}; --d:${dayDim}"></button>
         `;
