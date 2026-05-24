@@ -561,6 +561,23 @@ html[data-reduce-motion="true"] *::after {
 }
 [data-scrubbing="true"] .scrubber-reset { opacity: 1; }
 .scrubber-reset:hover { color: var(--fg); background: var(--glass-strong); }
+.scrubber-play {
+  width: 26px; height: 26px;
+  display: inline-grid; place-items: center;
+  padding: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--stroke);
+  color: var(--fg-muted);
+  cursor: pointer;
+  transition: color 200ms var(--ease), background 200ms var(--ease), transform 200ms var(--ease);
+}
+.scrubber-play:hover { color: var(--fg); background: var(--glass-strong); }
+.scrubber-play svg { width: 12px; height: 12px; }
+.scrubber-play .icon-pause { display: none; }
+.scrubber-play.playing .icon-play { display: none; }
+.scrubber-play.playing .icon-pause { display: block; }
+.scrubber-play.playing { color: var(--accent); border-color: rgba(124,192,255,0.5); }
 .scrubber-time {
   font-variant-numeric: tabular-nums;
   color: var(--fg);

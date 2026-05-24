@@ -9,7 +9,7 @@ import { clock } from "./clock.js";
 const RANGE_HOURS = 24;
 
 export class Scrubber {
-  constructor({ trackEl, thumbEl, fillEl, timeEl, deltaEl, resetEl,
+  constructor({ trackEl, thumbEl, fillEl, timeEl, deltaEl, resetEl, playEl,
                 sunriseEl, sunsetEl, appEl, onScrub }) {
     this.track = trackEl;
     this.thumb = thumbEl;
@@ -17,11 +17,14 @@ export class Scrubber {
     this.timeEl = timeEl;
     this.deltaEl = deltaEl;
     this.resetEl = resetEl;
+    this.playEl = playEl;
     this.sunriseEl = sunriseEl;
     this.sunsetEl = sunsetEl;
     this.appEl = appEl; // receives data-scrubbing attribute
     this.onScrub = onScrub;
     this.dragging = false;
+    this.playing = false;
+    this.playTimer = null;
     this.start = Date.now();
     this.sunrise = null;
     this.sunset = null;
@@ -30,6 +33,42 @@ export class Scrubber {
     // Keep the label updating while live (otherwise the clock would freeze
     // at the value it had when weather was last fetched).
     setInterval(() => { if (clock.isLive()) this._render(0); }, 30_000);
+  }
+
+  togglePlay() {
+    if (this.playing) this._stopPlay();
+    else this._startPlay();
+  }
+
+  _startPlay() {
+    if (this.playing) return;
+    this.playing = true;
+    if (this.playEl) {
+      this.playEl.setAttribute("aria-pressed", "true");
+      this.playEl.classList.add("playing");
+    }
+    // If we're already past the end, restart from live.
+    if (clock.offset() >= (RANGE_HOURS - 1) * 3600_000) clock.setOffset(-3600_000);
+    const STEP_MS = 30 * 60_000;  // simulated 30 min per tick
+    const TICK_MS = 350;          // real ms per tick → 24h ≈ 28 s
+    this.playTimer = setInterval(() => {
+      const next = clock.offset() + STEP_MS;
+      if (next >= (RANGE_HOURS - 1) * 3600_000) {
+        this._setOffset((RANGE_HOURS - 1) * 3600_000);
+        this._stopPlay();
+        return;
+      }
+      this._setOffset(next);
+    }, TICK_MS);
+  }
+
+  _stopPlay() {
+    this.playing = false;
+    if (this.playTimer) { clearInterval(this.playTimer); this.playTimer = null; }
+    if (this.playEl) {
+      this.playEl.setAttribute("aria-pressed", "false");
+      this.playEl.classList.remove("playing");
+    }
   }
 
   setBounds({ start, sunrise, sunset }) {
@@ -66,6 +105,7 @@ export class Scrubber {
 
   _bind() {
     const onDown = (e) => {
+      this._stopPlay();
       this.dragging = true;
       this.appEl?.setAttribute("data-scrubbing", "true");
       this.track.setPointerCapture?.(e.pointerId);
@@ -99,9 +139,11 @@ export class Scrubber {
     });
 
     this.resetEl?.addEventListener("click", () => this.reset());
+    this.playEl?.addEventListener("click", () => this.togglePlay());
   }
 
   reset() {
+    this._stopPlay();
     clock.setOffset(0);
     this.appEl?.setAttribute("data-scrubbing", "false");
     this._render(this._currentT());
