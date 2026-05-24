@@ -1249,6 +1249,64 @@ kbd {
   font-variant-numeric: tabular-nums;
 }
 
+/* Weekly heatmap (round 25) */
+.weekly-heatmap {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--stroke);
+  display: grid;
+  gap: 8px;
+}
+.weekly-heatmap[hidden] { display: none; }
+.hm-grid {
+  display: grid;
+  grid-template-columns: 40px repeat(24, minmax(0, 1fr));
+  gap: 2px;
+  align-items: center;
+}
+.hm-corner { height: 12px; }
+.hm-htick {
+  font-size: 9px;
+  color: var(--fg-dim);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+.hm-label {
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding-right: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.hm-cell {
+  appearance: none;
+  border: 0; padding: 0; margin: 0;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--c, rgba(255,255,255,0.05));
+  opacity: var(--d, 1);
+  cursor: pointer;
+  transition: transform 140ms var(--ease), filter 140ms var(--ease), outline-color 140ms var(--ease);
+  outline: 1px solid transparent;
+}
+.hm-cell:hover { filter: brightness(1.2); transform: scale(1.18); z-index: 2; position: relative; }
+.hm-cell.hm-empty { cursor: default; pointer-events: none; }
+.hm-scale {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 10px; color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+  padding: 0 4px;
+}
+.hm-gradient {
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg,
+    #3a4d8f, #4a78c2, #3da9a1, #5cc77a, #cdd86a, #f0a557, #e96a4d, #a73838);
+}
+
 /* Cloud-cover ribbon (round 23) */
 .cloud-ribbon {
   display: grid;

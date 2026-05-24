@@ -128,13 +128,14 @@ function normalize(d, aq) {
   const daily = d.daily || {};
   const now = Date.now();
 
-  // 24-hour hourly forecast starting from the next hour.
+  // 24-hour hourly forecast starting from the next hour, plus a full extended
+  // series (~168 entries) used by the weekly heatmap.
   const hourly = [];
+  const hourlyExtended = [];
   if (d.hourly?.time) {
-    for (let i = 0; i < d.hourly.time.length && hourly.length < 24; i++) {
+    for (let i = 0; i < d.hourly.time.length; i++) {
       const t = new Date(d.hourly.time[i]).getTime();
-      if (t < now - 30 * 60 * 1000) continue; // allow slight past for scrubbing
-      hourly.push({
+      const entry = {
         time: t,
         temp: d.hourly.temperature_2m[i],
         feelsLike: d.hourly.apparent_temperature?.[i],
@@ -148,7 +149,11 @@ function normalize(d, aq) {
         humidity: d.hourly.relative_humidity_2m?.[i] ?? null,
         cloudCover: d.hourly.cloud_cover?.[i] ?? null,
         ...mapWmo(d.hourly.weather_code[i]),
-      });
+      };
+      hourlyExtended.push(entry);
+      if (hourly.length < 24 && t >= now - 30 * 60 * 1000) {
+        hourly.push(entry);
+      }
     }
   }
 
@@ -211,6 +216,7 @@ function normalize(d, aq) {
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
     hourly,
+    hourlyExtended,
     daily: dailyForecast,
     nowcast,
     moon,
@@ -375,6 +381,17 @@ function mock(lat, lon) {
       isDay: (i + hour) % 24 >= 6 && (i + hour) % 24 < 19,
       uv: Math.max(0, Math.sin((i - 6) * Math.PI / 13) * 6),
       cloudCover: Math.round(40 + Math.sin(i / 3) * 30),
+      condition: CONDITIONS.CLOUDS, label: "Cloudy",
+    })),
+    hourlyExtended: Array.from({ length: 168 }, (_, i) => ({
+      time: now + (i + 1) * 3600_000,
+      temp: 16 + Math.sin(i / 4) * 4 + Math.cos(i / 12) * 3,
+      feelsLike: 16 + Math.sin(i / 4) * 4,
+      pop: i % 17 === 0 ? 60 : 10,
+      precip: 0,
+      wind: 10, gusts: 16,
+      isDay: (i + hour) % 24 >= 6 && (i + hour) % 24 < 19,
+      cloudCover: Math.round(45 + Math.sin(i / 5) * 25),
       condition: CONDITIONS.CLOUDS, label: "Cloudy",
     })),
     daily: Array.from({ length: 7 }, (_, i) => ({

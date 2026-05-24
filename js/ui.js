@@ -12,6 +12,7 @@ import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { sunQuality } from "./sun-quality.js";
 import { CloudRibbon } from "./cloud-ribbon.js";
+import { WeeklyHeatmap } from "./weekly-heatmap.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -100,6 +101,7 @@ const el = {
   sunQualityMeter: $("#sun-quality-meter"),
   comfortStrip: $("#comfort-strip"),
   cloudRibbon: $("#cloud-ribbon"),
+  weeklyHeatmap: $("#weekly-heatmap"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
   weekendDetail: $("#weekend-detail"),
@@ -130,6 +132,7 @@ const state = {
   chart: null,
   comfortStrip: null,
   cloudRibbon: null,
+  weeklyHeatmap: null,
   sunTimer: null,
   sunArcTimer: null,
   localTimer: null,
@@ -166,6 +169,11 @@ export const ui = {
     state.cloudRibbon = new CloudRibbon({
       rootEl: el.cloudRibbon,
       onCellClick: (ts) => state.handlers.onHourClick?.(ts),
+    });
+    state.weeklyHeatmap = new WeeklyHeatmap({
+      rootEl: el.weeklyHeatmap,
+      onCellClick: (ts) => state.handlers.onHourClick?.(ts),
+      getUnit: () => state.unit,
     });
     bindInstallPrompt();
   },
@@ -211,6 +219,7 @@ export const ui = {
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (state.cloudRibbon) state.cloudRibbon.setHours(weather.hourly);
+    if (state.weeklyHeatmap) state.weeklyHeatmap.setHours(weather.hourlyExtended);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
