@@ -404,6 +404,23 @@ html[data-reduce-motion="true"] *::after {
 .unit:hover { background: var(--glass); color: var(--fg); }
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
+.feels-why {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--stroke);
+  color: var(--fg-dim);
+}
+.feels-why[hidden] { display: none; }
+.feels-why[data-kind="wind"]  { color: #9ec5ee; border-color: rgba(158,197,238,0.32); }
+.feels-why[data-kind="humid"] { color: #b8d8a8; border-color: rgba(184,216,168,0.32); }
+.feels-why[data-kind="sun"]   { color: #f3c46a; border-color: rgba(243,196,106,0.32); }
+.feels-why[data-kind="warm"]  { color: #f3a16a; border-color: rgba(243,161,106,0.32); }
 .day-range {
   margin-top: 10px;
   display: grid;

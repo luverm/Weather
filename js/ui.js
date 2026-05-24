@@ -25,6 +25,8 @@ const el = {
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
+  feelsText: $("#feels-text"),
+  feelsWhy: $("#feels-why"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -311,9 +313,41 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  if (el.feelsText) el.feelsText.textContent = `Feels like ${Math.round(feels)}°`;
+  const why = feelsLikeWhy(w);
+  if (el.feelsWhy) {
+    if (why) {
+      el.feelsWhy.textContent = why.label;
+      el.feelsWhy.dataset.kind = why.kind;
+      el.feelsWhy.hidden = false;
+    } else {
+      el.feelsWhy.hidden = true;
+    }
+  }
   renderDayRange(w);
   renderTomorrowTease(w);
+}
+
+function feelsLikeWhy(w) {
+  if (w.temp == null || w.feelsLike == null) return null;
+  const deltaC = w.feelsLike - w.temp;
+  const deltaU = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
+  if (Math.abs(deltaU) < 3) return null;
+  if (deltaC < 0) {
+    // Cooler than air — typically wind chill (light winds + cold air).
+    if (w.windSpeed != null && w.windSpeed >= 12) {
+      return { kind: "wind", label: `wind chill ${Math.round(deltaU)}°` };
+    }
+    return { kind: "wind", label: `chill ${Math.round(deltaU)}°` };
+  }
+  // Warmer than air — typically high humidity.
+  if (w.humidity != null && w.humidity >= 60) {
+    return { kind: "humid", label: `+${Math.round(deltaU)}° from humidity` };
+  }
+  if (w.uv != null && w.uv >= 6) {
+    return { kind: "sun", label: `+${Math.round(deltaU)}° in sun` };
+  }
+  return { kind: "warm", label: `+${Math.round(deltaU)}°` };
 }
 
 function renderTomorrowTease(w) {
