@@ -504,7 +504,10 @@ html[data-reduce-motion="true"] *::after {
   align-items: center;
   border-radius: var(--radius-sm);
   animation: slideInUp 500ms var(--ease) both;
+  transition: border-color 320ms var(--ease);
 }
+.nowcast[data-intensity="heavy"]   { border-color: rgba(255,150,90,0.45); }
+.nowcast[data-intensity="intense"] { border-color: rgba(255,90,60,0.6); }
 .nowcast-icon { width: 28px; height: 28px; color: var(--accent); flex: 0 0 auto; }
 .nowcast-text { display: grid; gap: 2px; min-width: 0; }
 .nowcast-text strong { font-size: 15px; font-weight: 500; }

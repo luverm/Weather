@@ -1176,6 +1176,17 @@ function toggleDailyExpand(item, d, w) {
   item.dataset.expanded = "true";
 }
 
+// Classify a 15-min precipitation bucket into a human label.
+// Thresholds derived from ~4× hourly rates: light < 0.6mm/15min,
+// moderate < 2.5, heavy < 7.5, intense ≥ 7.5.
+function classifyPrecip15(mm, kind) {
+  if (mm == null || mm < 0.05) return kind === "Snow" ? "wisp of" : "drizzle";
+  if (mm < 0.6) return kind === "Snow" ? "light" : "light";
+  if (mm < 2.5) return "moderate";
+  if (mm < 7.5) return "heavy";
+  return "intense";
+}
+
 function renderNowcast(w) {
   const nowcast = (w.nowcast || []).filter((n) => n.time > Date.now());
   // Find first >0.1 precip entry.
@@ -1186,12 +1197,23 @@ function renderNowcast(w) {
   }
   const inMin = Math.max(0, Math.round((first.time - Date.now()) / 60_000));
   const kind = first.code >= 71 && first.code <= 86 ? "Snow" : "Rain";
-  el.nowcastHeadline.textContent = inMin === 0
-    ? `${kind} now`
-    : `${kind} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
-  // 2h outlook summary.
+  // Peak bucket (15-min) so we can classify intensity even if the first
+  // drops are only drizzle.
+  const peak = nowcast.reduce((best, n) => (n.precip > (best?.precip ?? 0) ? n : best), null);
+  const intensity = classifyPrecip15(peak?.precip ?? first.precip, kind);
+  const headline = inMin === 0
+    ? `${capitalize(intensity)} ${kind.toLowerCase()} now`
+    : `${capitalize(intensity)} ${kind.toLowerCase()} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
+  el.nowcastHeadline.textContent = headline;
+  // 2h outlook summary, with peak time if it's different from the start.
   const totalMm = nowcast.reduce((s, n) => s + (n.precip || 0), 0);
-  el.nowcastSub.textContent = `${totalMm.toFixed(1)} mm expected in the next 2 hours`;
+  let subParts = [`${totalMm.toFixed(1)} mm in next 2 h`];
+  if (peak && peak !== first) {
+    const peakIn = Math.max(0, Math.round((peak.time - Date.now()) / 60_000));
+    subParts.push(`peak ${peak.precip.toFixed(1)} mm at +${peakIn} min`);
+  }
+  el.nowcastSub.textContent = subParts.join(" · ");
+  el.nowcast.dataset.intensity = intensity;
   // Bars (time-labeled, clickable to scrub).
   el.nowcastBars.innerHTML = "";
   const slice = nowcast.slice(0, 8);
