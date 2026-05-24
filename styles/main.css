@@ -1249,7 +1249,7 @@ kbd {
   font-variant-numeric: tabular-nums;
 }
 
-/* Weekly heatmap (round 25) */
+/* Weekly heatmap (round 25, metric toggle round 26) */
 .weekly-heatmap {
   margin-top: 12px;
   padding-top: 12px;
@@ -1258,6 +1258,30 @@ kbd {
   gap: 8px;
 }
 .weekly-heatmap[hidden] { display: none; }
+.hm-toolbar {
+  display: flex;
+  gap: 4px;
+  padding: 0 4px;
+}
+.hm-tab {
+  appearance: none;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--stroke);
+  color: var(--fg-dim);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 160ms var(--ease), color 160ms var(--ease), border-color 160ms var(--ease);
+}
+.hm-tab:hover { background: rgba(255,255,255,0.08); color: var(--fg); }
+.hm-tab[aria-pressed="true"] {
+  background: rgba(255,255,255,0.12);
+  color: var(--fg);
+  border-color: rgba(255,255,255,0.22);
+}
 .hm-grid {
   display: grid;
   grid-template-columns: 40px repeat(24, minmax(0, 1fr));
@@ -1303,8 +1327,7 @@ kbd {
   flex: 1;
   height: 4px;
   border-radius: 999px;
-  background: linear-gradient(90deg,
-    #3a4d8f, #4a78c2, #3da9a1, #5cc77a, #cdd86a, #f0a557, #e96a4d, #a73838);
+  /* Background is set inline based on the active metric. */
 }
 
 /* Cloud-cover ribbon (round 23) */
