@@ -658,8 +658,16 @@ function renderSunQuality(w) {
   if (!q) { chip.hidden = true; return; }
   chip.hidden = false;
   chip.dataset.tier = q.tier;
+  // Flag imminent sun events (≤30 min) so CSS can pulse the swatch.
+  const minutesAway = Math.round((q.ts - Date.now()) / 60_000);
+  chip.dataset.imminent = minutesAway >= 0 && minutesAway <= 30 ? "true" : "false";
   if (el.sunQualityLabel) el.sunQualityLabel.textContent = q.label;
-  if (el.sunQualityKind) el.sunQualityKind.textContent = ` · ${q.kind.toLowerCase()}`;
+  if (el.sunQualityKind) {
+    const kindText = minutesAway >= 0 && minutesAway <= 30
+      ? ` · ${q.kind.toLowerCase()} in ${minutesAway}m`
+      : ` · ${q.kind.toLowerCase()}`;
+    el.sunQualityKind.textContent = kindText;
+  }
   if (el.sunQualityMeter) el.sunQualityMeter.style.width = `${q.score}%`;
   if (el.sunQualitySwatch) {
     el.sunQualitySwatch.style.background = `linear-gradient(135deg, ${q.swatch.join(", ")})`;
