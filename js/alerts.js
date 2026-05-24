@@ -112,7 +112,25 @@ export function buildAlerts(weather) {
 
   // ---- Snow ----
   const snowHour = hours.find((h) => h.condition === "snow");
-  if (snowHour) {
+  // Total accumulation over today + tomorrow (Open-Meteo reports cm).
+  const snowSum = (today?.snowfall ?? 0) + (tomorrow?.snowfall ?? 0);
+  if (snowSum >= 15) {
+    out.push({
+      id: "heavy-snow",
+      severity: "danger",
+      title: "Heavy snow",
+      detail: `~${snowSum.toFixed(0)} cm accumulating over the next 48 h.`,
+      ts: snowHour?.time,
+    });
+  } else if (snowSum >= 5) {
+    out.push({
+      id: "snow-accum",
+      severity: "warn",
+      title: "Snow accumulating",
+      detail: `~${snowSum.toFixed(0)} cm over the next 48 h.`,
+      ts: snowHour?.time,
+    });
+  } else if (snowHour) {
     out.push({
       id: "snow",
       severity: "info",
@@ -289,5 +307,7 @@ function dedupe(items) {
   if (ids.has("aqi-very-unhealthy")) { drop.add("aqi-unhealthy"); drop.add("aqi-sensitive"); }
   else if (ids.has("aqi-unhealthy")) { drop.add("aqi-sensitive"); }
   if (ids.has("pollen-very-high")) drop.add("pollen-high");
+  if (ids.has("heavy-snow")) { drop.add("snow-accum"); drop.add("snow"); }
+  else if (ids.has("snow-accum")) drop.add("snow");
   return items.filter((x) => !drop.has(x.id));
 }
