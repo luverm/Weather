@@ -764,12 +764,17 @@ html[data-reduce-motion="true"] *::after {
   background: linear-gradient(90deg, var(--fg-muted) 0 1px, transparent 1px 3px, var(--fg-muted) 3px 4px, transparent 4px 6px, var(--fg-muted) 6px 7px, transparent 7px 9px, var(--fg-muted) 9px 10px, transparent 10px 12px);
   opacity: 0.55;
 }
+.legend-swatch.pressure {
+  background: linear-gradient(90deg, #c9a8f0 0 4px, transparent 4px 6px, #c9a8f0 6px 10px, transparent 10px 12px);
+  opacity: 0.7;
+}
 .legend-swatch.precip { background: rgba(154, 209, 255, 0.55); }
 
 .chart-wrap {
   position: relative;
 }
 .chart-feels-line { color: var(--fg-muted); }
+.chart-pressure-line { color: #c9a8f0; }
 .chart-popover {
   position: absolute;
   pointer-events: none;

@@ -139,9 +139,10 @@ export class HourlyChart {
       ? `<em>feels ${Math.round(feels)}°</em>` : "";
     const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
+    const press = h.pressure != null ? ` · ${Math.round(h.pressure)} hPa` : "";
     this.popover.innerHTML =
       `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
-      `<em>${h.pop}% precip${wind}${hum}</em>`;
+      `<em>${h.pop}% precip${wind}${hum}${press}</em>`;
     this.popover.style.left = `${pxX.toFixed(1)}px`;
     this.popover.style.top = `${pxY.toFixed(1)}px`;
     this.popover.hidden = false;
@@ -202,6 +203,33 @@ export class HourlyChart {
         gustLine.setAttribute("d", gPath.trim());
       } else {
         gustLine.setAttribute("d", "");
+      }
+    }
+
+    // Pressure trace — drawn in the upper third of the chart so it doesn't
+    // collide with the temperature curve. Normalised across its own min/max
+    // so subtle barometric shifts are visible even within ±5 hPa.
+    const pressureLine = this.svg.querySelector("#chart-pressure-line");
+    if (pressureLine) {
+      const pressures = this.hours.map((h) => h.pressure).filter((v) => v != null);
+      if (pressures.length >= 4) {
+        const pMin = Math.min(...pressures);
+        const pMax = Math.max(...pressures);
+        // Pad so a perfectly flat day still renders as a horizontal trace.
+        const pSpan = Math.max(1.5, pMax - pMin);
+        const pTop = PAD_TOP + 2;
+        const pBot = PAD_TOP + innerH * 0.32;
+        const pRange = pBot - pTop;
+        let pPath = "";
+        this.hours.forEach((h, i) => {
+          const v = h.pressure ?? (pMin + pMax) / 2;
+          // Invert so high pressure rides at the top.
+          const y = pBot - ((v - pMin) / pSpan) * pRange;
+          pPath += (i === 0 ? "M" : "L") + iToX(i).toFixed(1) + "," + y.toFixed(1) + " ";
+        });
+        pressureLine.setAttribute("d", pPath.trim());
+      } else {
+        pressureLine.setAttribute("d", "");
       }
     }
 
