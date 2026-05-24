@@ -427,6 +427,44 @@ html[data-reduce-motion="true"] *::after {
   transition: left 380ms var(--ease);
 }
 
+/* Tomorrow tease chip (round 27) */
+.tomorrow-tease {
+  margin-top: 10px;
+  margin-left: auto;
+  max-width: 240px;
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--stroke);
+  border-radius: 10px;
+  color: var(--fg);
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 180ms var(--ease), border-color 180ms var(--ease), transform 180ms var(--ease);
+}
+.tomorrow-tease[hidden] { display: none; }
+.tomorrow-tease:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.18); }
+.tomorrow-tease:active { transform: scale(0.99); }
+.tt-day { color: var(--fg-dim); text-transform: uppercase; letter-spacing: 0.14em; font-size: 9.5px; }
+.tt-icon { width: 18px; height: 18px; display: inline-grid; color: var(--accent); }
+.tt-icon svg { width: 18px; height: 18px; }
+.tt-temps { display: inline-flex; gap: 6px; font-variant-numeric: tabular-nums; font-size: 12px; }
+.tt-hi { font-weight: 600; }
+.tt-lo { color: var(--fg-dim); }
+.tt-delta {
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-dim);
+  white-space: nowrap;
+}
+.tt-delta[data-dir="up"]   { color: #f3a16a; }
+.tt-delta[data-dir="down"] { color: #6fb0e8; }
+
 /* ---------- Nowcast banner ---------- */
 .nowcast {
   padding: 14px 18px;

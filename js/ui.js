@@ -29,6 +29,11 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  tomorrowTease: $("#tomorrow-tease"),
+  tomorrowTeaseIcon: $("#tomorrow-tease-icon"),
+  tomorrowTeaseHi: $("#tomorrow-tease-hi"),
+  tomorrowTeaseLo: $("#tomorrow-tease-lo"),
+  tomorrowTeaseDelta: $("#tomorrow-tease-delta"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -303,6 +308,49 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  renderTomorrowTease(w);
+}
+
+function renderTomorrowTease(w) {
+  const btn = el.tomorrowTease;
+  if (!btn) return;
+  // Use the live weather (state.weather) so scrubbing doesn't blank out the
+  // tease — `w` here can be either live or a sampled snapshot.
+  const source = state.weather || w;
+  const tomorrow = source.daily?.[1];
+  const today = source.daily?.[0];
+  if (!tomorrow || tomorrow.tempMax == null) {
+    btn.hidden = true;
+    return;
+  }
+  btn.hidden = false;
+  if (el.tomorrowTeaseHi) el.tomorrowTeaseHi.textContent = `${Math.round(convertTemp(tomorrow.tempMax))}°`;
+  if (el.tomorrowTeaseLo) el.tomorrowTeaseLo.textContent = `${Math.round(convertTemp(tomorrow.tempMin))}°`;
+  if (el.tomorrowTeaseIcon) el.tomorrowTeaseIcon.innerHTML = iconFor(tomorrow.condition);
+  if (el.tomorrowTeaseDelta) {
+    if (today?.tempMax != null) {
+      const dC = tomorrow.tempMax - today.tempMax;
+      const dU = state.unit === "F" ? dC * 9 / 5 : dC;
+      const rounded = Math.round(dU);
+      if (rounded === 0) {
+        el.tomorrowTeaseDelta.textContent = "≈ today";
+        el.tomorrowTeaseDelta.dataset.dir = "flat";
+      } else {
+        const sign = rounded > 0 ? "+" : "";
+        el.tomorrowTeaseDelta.textContent = `${sign}${rounded}° vs today`;
+        el.tomorrowTeaseDelta.dataset.dir = rounded > 0 ? "up" : "down";
+      }
+    } else {
+      el.tomorrowTeaseDelta.textContent = "";
+      el.tomorrowTeaseDelta.dataset.dir = "flat";
+    }
+  }
+  btn.onclick = () => {
+    // Scrub to local noon on the tomorrow day.
+    const d = new Date(tomorrow.time);
+    d.setHours(12, 0, 0, 0);
+    state.handlers.onHourClick?.(d.getTime());
+  };
 }
 
 function renderDayRange(w) {
