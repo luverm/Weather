@@ -1,7 +1,7 @@
 // Simple service worker: cache the shell, network-first for everything else.
 // Bump CACHE_VERSION on any deploy that changes which files exist.
 
-const CACHE_VERSION = "aether-v21";
+const CACHE_VERSION = "aether-v22";
 const SHELL = [
   "./",
   "./index.html",
@@ -29,6 +29,7 @@ const SHELL = [
   "./js/sun-quality.js",
   "./js/cloud-ribbon.js",
   "./js/weekly-heatmap.js",
+  "./js/sleep-comfort.js",
   "./js/scenes/sky.js",
   "./js/scenes/stars.js",
   "./js/scenes/clouds.js",

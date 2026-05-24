@@ -13,6 +13,7 @@ import { weekendSnapshot } from "./weekend.js";
 import { sunQuality } from "./sun-quality.js";
 import { CloudRibbon } from "./cloud-ribbon.js";
 import { WeeklyHeatmap } from "./weekly-heatmap.js";
+import { sleepComfort } from "./sleep-comfort.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -53,6 +54,9 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  sleepComfort: $("#sleep-comfort"),
+  sleepComfortLabel: $("#sleep-comfort-label"),
+  sleepComfortDetail: $("#sleep-comfort-detail"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -209,6 +213,7 @@ export const ui = {
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
     renderMoon(weather.moon);
+    renderSleepComfort(weather);
     renderSun(weather);
     renderHourly(weather);
     renderDaily(weather);
@@ -545,6 +550,19 @@ function renderAqTrend(aq) {
     return;
   }
   drawSparkline(el.aqTrendLine, el.aqTrendFill, pts, { minSpan: 20 });
+}
+
+function renderSleepComfort(w) {
+  const chip = el.sleepComfort;
+  if (!chip) return;
+  const sc = sleepComfort(w);
+  if (!sc) { chip.hidden = true; return; }
+  chip.hidden = false;
+  chip.dataset.tone = sc.tone;
+  chip.dataset.tier = sc.tier;
+  if (el.sleepComfortLabel) el.sleepComfortLabel.textContent = sc.label;
+  if (el.sleepComfortDetail) el.sleepComfortDetail.textContent = sc.detail;
+  chip.title = `Sleep comfort ${sc.score} / 100`;
 }
 
 function renderMoon(moon) {
