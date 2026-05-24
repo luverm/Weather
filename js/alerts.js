@@ -50,6 +50,18 @@ export function buildAlerts(weather) {
     });
   }
 
+  // ---- Tropical night (overnight low ≥ 20° — disrupts sleep) ----
+  const warmNight = warmestNight(weather);
+  if (warmNight && warmNight.t >= 20 && (!coldest || coldest.t > 18)) {
+    out.push({
+      id: "tropical-night",
+      severity: "info",
+      title: "Tropical night",
+      detail: `Stays around ${Math.round(warmNight.t)}° overnight — keep windows open if you can.`,
+      ts: warmNight.ts,
+    });
+  }
+
   // ---- Wind / gusts ----
   const gust = peakGust(hours);
   if (gust && gust.v >= 75) {
@@ -132,6 +144,52 @@ export function buildAlerts(weather) {
     });
   }
 
+  // ---- Air quality ----
+  const aqi = weather.airQuality?.aqi;
+  if (aqi != null && aqi >= 201) {
+    out.push({
+      id: "aqi-very-unhealthy",
+      severity: "danger",
+      title: "Air: very unhealthy",
+      detail: `AQI ${Math.round(aqi)} — avoid outdoor exertion, wear a mask.`,
+    });
+  } else if (aqi != null && aqi >= 151) {
+    out.push({
+      id: "aqi-unhealthy",
+      severity: "warn",
+      title: "Air: unhealthy",
+      detail: `AQI ${Math.round(aqi)} — limit outdoor activity.`,
+    });
+  } else if (aqi != null && aqi >= 101) {
+    out.push({
+      id: "aqi-sensitive",
+      severity: "info",
+      title: "Air: sensitive groups",
+      detail: `AQI ${Math.round(aqi)} — sensitive groups should take it easy outside.`,
+    });
+  }
+
+  // ---- Pollen (allergy-relevant spikes) ----
+  const pollen = weather.pollen?.overall;
+  if (pollen && pollen.value != null) {
+    const v = pollen.value, kind = pollen.label?.toLowerCase() || "pollen";
+    if (v >= 20) {
+      out.push({
+        id: "pollen-very-high",
+        severity: "warn",
+        title: "Very high pollen",
+        detail: `${capitalizeFirst(kind)} levels are very high — keep windows shut.`,
+      });
+    } else if (v >= 5) {
+      out.push({
+        id: "pollen-high",
+        severity: "info",
+        title: "High pollen",
+        detail: `${capitalizeFirst(kind)} levels are high today.`,
+      });
+    }
+  }
+
   // ---- UV (only if not already mentioned by heat) ----
   if (!out.some((a) => a.id === "severe-heat" || a.id === "heat")
       && weather.uvPeak?.value >= 9) {
@@ -176,6 +234,20 @@ function coldestNight(weather) {
   return best;
 }
 
+function warmestNight(weather) {
+  const hours = (weather.hourly || []).slice(0, 24);
+  let best = null;
+  for (const h of hours) {
+    if (h.temp == null || h.isDay) continue;
+    if (!best || h.temp > best.t) best = { t: h.temp, ts: h.time };
+  }
+  return best;
+}
+
+function capitalizeFirst(s) {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+}
+
 function peakGust(hours) {
   let best = null;
   for (const h of hours) {
@@ -207,11 +279,15 @@ function shortClock(ts) {
 
 function dedupe(items) {
   // Drop "wet-day" if "soaking-rain" or "heavy-rain" present, and "heat"
-  // if "severe-heat" present, and "frost" if "hard-freeze" present.
+  // if "severe-heat" present, and "frost" if "hard-freeze" present. Also
+  // collapse AQ and pollen tiers down to the most severe.
   const ids = new Set(items.map((x) => x.id));
   const drop = new Set();
   if (ids.has("severe-heat")) drop.add("heat");
   if (ids.has("hard-freeze")) drop.add("frost");
   if (ids.has("heavy-rain") || ids.has("soaking-rain")) drop.add("wet-day");
+  if (ids.has("aqi-very-unhealthy")) { drop.add("aqi-unhealthy"); drop.add("aqi-sensitive"); }
+  else if (ids.has("aqi-unhealthy")) { drop.add("aqi-sensitive"); }
+  if (ids.has("pollen-very-high")) drop.add("pollen-high");
   return items.filter((x) => !drop.has(x.id));
 }
