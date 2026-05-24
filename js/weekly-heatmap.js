@@ -108,10 +108,15 @@ export class WeeklyHeatmap {
         const display = metric.format(raw, unit);
         const dayDim = h.isDay === false ? "0.55" : "1";
         const isNow = Math.abs(h.time - Date.now()) < 30 * 60_000;
+        // Tiny direction arrow when the wind metric is active.
+        let inner = "";
+        if (this.metric === "wind" && h.windDir != null && (h.wind ?? 0) >= 6) {
+          inner = `<span class="hm-arrow" style="transform:rotate(${(h.windDir + 180) % 360}deg)" aria-hidden="true">↑</span>`;
+        }
         return `
           <button class="hm-cell${isNow ? " hm-now" : ""}" data-ts="${h.time}"
                   title="${label} ${pad(hr)}:00 · ${display}"
-                  style="--c:${color}; --d:${dayDim}"></button>
+                  style="--c:${color}; --d:${dayDim}">${inner}</button>
         `;
       }).join("");
       return `
