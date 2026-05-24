@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { sunQuality } from "./sun-quality.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -90,6 +91,12 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunQuality: $("#sun-quality"),
+  sunQualitySwatch: $("#sun-quality-swatch"),
+  sunQualityLabel: $("#sun-quality-label"),
+  sunQualityKind: $("#sun-quality-kind"),
+  sunQualityDetail: $("#sun-quality-detail"),
+  sunQualityMeter: $("#sun-quality-meter"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -523,6 +530,29 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderSunQuality(w);
+}
+
+function renderSunQuality(w) {
+  const chip = el.sunQuality;
+  if (!chip) return;
+  const q = sunQuality(w);
+  if (!q) { chip.hidden = true; return; }
+  chip.hidden = false;
+  chip.dataset.tier = q.tier;
+  if (el.sunQualityLabel) el.sunQualityLabel.textContent = q.label;
+  if (el.sunQualityKind) el.sunQualityKind.textContent = ` · ${q.kind.toLowerCase()}`;
+  if (el.sunQualityMeter) el.sunQualityMeter.style.width = `${q.score}%`;
+  if (el.sunQualitySwatch) {
+    el.sunQualitySwatch.style.background = `linear-gradient(135deg, ${q.swatch.join(", ")})`;
+  }
+  if (el.sunQualityDetail) {
+    const cc = q.cloudCover != null ? `${Math.round(q.cloudCover)}% cloud` : "cloud cover unknown";
+    const gh = `golden ${fmtTime(q.goldenHour.start)}–${fmtTime(q.goldenHour.end)}`;
+    el.sunQualityDetail.textContent = `${cc} · ${gh}`;
+  }
+  chip.title = `Quality score ${q.score} / 100`;
+  chip.onclick = () => state.handlers.onHourClick?.(q.ts);
 }
 
 function scheduleSunArc(w) {
