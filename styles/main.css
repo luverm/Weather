@@ -1698,6 +1698,17 @@ kbd {
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+.weekly-headline {
+  margin: -4px 10px 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--stroke);
+  font-size: 12.5px;
+  color: var(--fg-muted);
+  letter-spacing: 0.01em;
+}
+.weekly-headline[hidden] { display: none; }
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;

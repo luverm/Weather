@@ -14,6 +14,7 @@ import { sunQuality } from "./sun-quality.js";
 import { CloudRibbon } from "./cloud-ribbon.js";
 import { WeeklyHeatmap } from "./weekly-heatmap.js";
 import { sleepComfort } from "./sleep-comfort.js";
+import { weeklyNarrative } from "./weekly-narrative.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -120,6 +121,7 @@ const el = {
   weekendIconSun: $("#weekend-icon-sun"),
   forecastTrack: $("#forecast-track"),
   dailyTrack: $("#daily-track"),
+  weeklyHeadline: $("#weekly-headline"),
   nowcast: $("#nowcast"),
   nowcastHeadline: $("#nowcast-headline"),
   nowcastSub: $("#nowcast-sub"),
@@ -1010,6 +1012,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderWeeklyHeadline(w);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1052,6 +1055,19 @@ function renderDaily(w) {
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+}
+
+function renderWeeklyHeadline(w) {
+  if (!el.weeklyHeadline) return;
+  const text = weeklyNarrative(w);
+  if (!text) { el.weeklyHeadline.hidden = true; el.weeklyHeadline.textContent = ""; return; }
+  // Display temperatures in the user's chosen unit by post-processing the
+  // generated string. The narrative emits °C values; we rewrite trailing "X°"
+  // matches when °F is active.
+  el.weeklyHeadline.hidden = false;
+  el.weeklyHeadline.textContent = state.unit === "F"
+    ? text.replace(/(-?\d+)°(?!\w)/g, (_, n) => `${Math.round(parseInt(n, 10) * 9 / 5 + 32)}°`)
+    : text;
 }
 
 // Score each day on temperate highs (16–24°), low pop, modest wind, no extreme
