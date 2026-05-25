@@ -48,6 +48,7 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -521,8 +522,39 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w.daylightDelta);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderDaylightDelta(seconds) {
+  const node = el.sunDaylightDelta;
+  if (!node) return;
+  if (seconds == null || !Number.isFinite(seconds)) {
+    node.hidden = true;
+    node.textContent = "";
+    node.removeAttribute("data-trend");
+    return;
+  }
+  const abs = Math.abs(seconds);
+  let label;
+  if (abs < 30) {
+    label = "≈ same as yesterday";
+  } else {
+    const m = Math.floor(abs / 60);
+    const s = abs % 60;
+    const sign = seconds > 0 ? "+" : "−";
+    const arrow = seconds > 0 ? "▲" : "▼";
+    const body = m > 0 ? `${m}m ${s}s` : `${s}s`;
+    label = `${arrow} ${sign}${body} vs yesterday`;
+  }
+  node.textContent = label;
+  node.hidden = false;
+  node.dataset.trend = seconds > 30 ? "up" : seconds < -30 ? "down" : "flat";
+  const aria = seconds > 30 ? "Days are getting longer" :
+               seconds < -30 ? "Days are getting shorter" :
+               "Daylight is steady";
+  node.setAttribute("aria-label", `${aria} (${label.replace(/[▲▼−]/g, "").trim()})`);
 }
 
 function scheduleSunArc(w) {

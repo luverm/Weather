@@ -93,6 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
+    past_days: 1, // include yesterday so we can compute the daylight delta
     past_hours: 1,
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
@@ -151,10 +152,29 @@ function normalize(d, aq) {
     }
   }
 
-  // 7-day daily forecast.
+  // Daily forecast. With past_days=1 the first entry is yesterday; identify
+  // today's index by matching the local date so downstream code (which assumes
+  // dailyForecast[0] = today) keeps working regardless of the past_days offset.
   const dailyForecast = [];
+  let previousDay = null;
   if (daily.time) {
+    const todayKey = localDateKey(new Date(), d.timezone);
+    let todayIdx = -1;
     for (let i = 0; i < daily.time.length; i++) {
+      if (daily.time[i] === todayKey) { todayIdx = i; break; }
+    }
+    if (todayIdx < 0) todayIdx = daily.time.length > 1 ? 1 : 0;
+    if (todayIdx > 0) {
+      const yi = todayIdx - 1;
+      previousDay = {
+        time: new Date(daily.time[yi]).getTime(),
+        sunrise: daily.sunrise?.[yi] ? new Date(daily.sunrise[yi]).getTime() : null,
+        sunset: daily.sunset?.[yi] ? new Date(daily.sunset[yi]).getTime() : null,
+        tempMax: daily.temperature_2m_max?.[yi],
+        tempMin: daily.temperature_2m_min?.[yi],
+      };
+    }
+    for (let i = todayIdx; i < daily.time.length; i++) {
       const ts = new Date(daily.time[i]).getTime();
       dailyForecast.push({
         time: ts,
@@ -170,6 +190,16 @@ function normalize(d, aq) {
         ...mapWmo(daily.weather_code[i]),
       });
     }
+  }
+
+  // Daylight delta: today's daylight length minus yesterday's, in seconds.
+  // Positive = days getting longer.
+  const today = dailyForecast[0];
+  let daylightDelta = null;
+  if (today?.sunrise && today?.sunset && previousDay?.sunrise && previousDay?.sunset) {
+    const todayLen = today.sunset - today.sunrise;
+    const yLen = previousDay.sunset - previousDay.sunrise;
+    daylightDelta = Math.round((todayLen - yLen) / 1000);
   }
 
   // 15-min nowcast for the next ~2h — used for "rain in 12 min" banner.
@@ -204,19 +234,42 @@ function normalize(d, aq) {
     isDay: !!c.is_day,
     condition,
     label,
-    sunrise: daily.sunrise?.[0] ? new Date(daily.sunrise[0]).getTime() : null,
-    sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null,
-    uv: daily.uv_index_max?.[0] ?? null,
+    sunrise: today?.sunrise ?? null,
+    sunset: today?.sunset ?? null,
+    uv: today?.uvMax ?? null,
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
     hourly,
     daily: dailyForecast,
+    previousDay,
+    daylightDelta,
     nowcast,
     moon,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
     fetchedAt: now,
   };
+}
+
+// Returns the local YYYY-MM-DD key for `date` interpreted in `timezone`
+// (falls back to the browser's zone). Matches the format Open-Meteo uses for
+// `daily.time` entries.
+function localDateKey(date, timezone) {
+  try {
+    if (timezone) {
+      const parts = new Intl.DateTimeFormat("en-CA", {
+        timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit",
+      }).formatToParts(date);
+      const y = parts.find((p) => p.type === "year")?.value;
+      const m = parts.find((p) => p.type === "month")?.value;
+      const dd = parts.find((p) => p.type === "day")?.value;
+      if (y && m && dd) return `${y}-${m}-${dd}`;
+    }
+  } catch { /* fall through to local time */ }
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${dd}`;
 }
 
 function computePressureTrend(hourly, now) {
@@ -315,10 +368,14 @@ function aqiLabel(v) {
 
 function findUvPeak(hourly) {
   if (!hourly?.uv_index) return null;
+  const now = Date.now();
   let peak = { t: null, v: -Infinity };
   for (let i = 0; i < hourly.uv_index.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    if (t < now - 30 * 60_000) continue; // skip the extra past hours
     const v = hourly.uv_index[i];
-    if (v > peak.v) peak = { t: new Date(hourly.time[i]).getTime(), v };
+    if (v == null) continue;
+    if (v > peak.v) peak = { t, v };
   }
   if (peak.t == null) return null;
   return { time: peak.t, value: peak.v };
@@ -387,6 +444,12 @@ function mock(lat, lon) {
       condition: CONDITIONS.CLOUDS, label: "Cloudy",
     })),
     nowcast: [],
+    previousDay: {
+      time: now - 86400_000,
+      sunrise: new Date(now - 86400_000).setHours(6, 32, 0, 0),
+      sunset: new Date(now - 86400_000).setHours(18, 58, 0, 0),
+    },
+    daylightDelta: 180, // mock: +3 min vs yesterday
     moon: computeMoonPhase(new Date()),
     airQuality: { aqi: 42, pm25: 8, pm10: 14, o3: 40, no2: 15, co: 0.2, label: "Good" },
     pollen: {
