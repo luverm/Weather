@@ -20,6 +20,7 @@ const el = {
   temp: $("#temp-value"),
   unitBtn: $("#unit-toggle"),
   placeName: $("#place-name"),
+  pinPlace: $("#pin-place"),
   placeSub: $("#place-sub"),
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
@@ -184,6 +185,7 @@ export const ui = {
     bindInstallPrompt();
     bindStickyNow();
     bindTodayJourney();
+    bindPinPlace();
   },
   focusSearch() { el.searchInput?.focus(); el.searchInput?.select?.(); },
   toggleUnits() { el.unitBtn?.click(); },
@@ -198,7 +200,11 @@ export const ui = {
     state.place = place;
     el.placeName.classList.remove("flip-in"); void el.placeName.offsetWidth;
     el.placeName.classList.add("flip-in");
-    el.placeName.textContent = place.name || "Unknown";
+    // textContent on placeName would wipe the pin button — set just the
+    // leading text node and keep the button as the trailing child.
+    el.placeName.firstChild && el.placeName.firstChild.nodeType === 3
+      ? (el.placeName.firstChild.nodeValue = place.name || "Unknown")
+      : el.placeName.insertBefore(document.createTextNode(place.name || "Unknown"), el.placeName.firstChild);
     const sub = [place.admin1, place.country].filter(Boolean).join(", ");
     const flag = flagFor(place.countryCode);
     if (flag && sub) {
@@ -208,6 +214,7 @@ export const ui = {
     }
     // Reset alert dismissals so a fresh location can re-surface them.
     try { sessionStorage.removeItem("aether:dismissed-alerts"); } catch { /* ignore */ }
+    syncPinButton();
     renderPlaces();
   },
   setWeather(weather, { narrative } = {}) {
@@ -1720,6 +1727,32 @@ function bindShare() {
       if (err?.name !== "AbortError") ui.showToast("Share failed");
     }
   });
+}
+
+function bindPinPlace() {
+  if (!el.pinPlace) return;
+  el.pinPlace.addEventListener("click", () => {
+    const p = state.place;
+    if (!p) return;
+    if (places.isSaved(p)) {
+      places.remove(p);
+      ui.showToast(`Removed ${p.name} from saved places`);
+    } else {
+      places.add(p);
+      ui.showToast(`Saved ${p.name}`);
+    }
+    syncPinButton();
+    renderPlaces();
+  });
+}
+
+function syncPinButton() {
+  if (!el.pinPlace) return;
+  const saved = state.place ? places.isSaved(state.place) : false;
+  el.pinPlace.dataset.saved = saved ? "true" : "false";
+  el.pinPlace.setAttribute("aria-pressed", saved ? "true" : "false");
+  el.pinPlace.setAttribute("aria-label", saved ? "Remove from saved places" : "Save this place");
+  el.pinPlace.setAttribute("title", saved ? "Remove from saved places" : "Save this place");
 }
 
 function bindStickyNow() {

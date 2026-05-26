@@ -429,6 +429,36 @@ html[data-reduce-motion="true"] *::after {
   letter-spacing: -0.02em;
   line-height: 1.02;
 }
+.pin-place {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 0 6px;
+  margin-left: 10px;
+  vertical-align: middle;
+  color: var(--fg-dim);
+  cursor: pointer;
+  transition: color 200ms var(--ease), transform 200ms var(--ease);
+}
+.pin-place svg {
+  width: 22px;
+  height: 22px;
+  display: inline-block;
+  transition: fill 200ms var(--ease);
+}
+.pin-place:hover { color: #ffd36a; transform: translateY(-1px); }
+.pin-place[data-saved="true"] {
+  color: #ffd36a;
+}
+.pin-place[data-saved="true"] svg path {
+  fill: currentColor;
+  stroke: currentColor;
+}
+.pin-place:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
 .place-sub { margin: 8px 0 0; color: var(--fg-muted); font-size: 14px; }
 .place-localtime {
   margin: 6px 0 0;
