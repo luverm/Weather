@@ -447,22 +447,28 @@ function renderTodayJourney(w) {
   el.todayJourney.hidden = false;
 
   const fmt = (v) => v == null ? "—" : `${Math.round(convertTemp(v))}°`;
+  const lowBtn = el.todayJourney.querySelector('[data-step="low"]');
+  const nowBtn = el.todayJourney.querySelector('[data-step="now"]');
+  const peakBtn = el.todayJourney.querySelector('[data-step="peak"]');
   if (low) {
     el.journeyLow.textContent = fmt(low.temp);
     el.journeyLowTime.textContent = fmtTime(low.time);
-    el.todayJourney.querySelector('[data-step="low"]').dataset.ts = String(low.time);
-    el.todayJourney.querySelector('[data-step="low"]').hidden = false;
+    lowBtn.dataset.ts = String(low.time);
+    lowBtn.hidden = false;
+    lowBtn.setAttribute("aria-label", `Today's low so far: ${fmt(low.temp)} at ${fmtTime(low.time)}. Scrub to that time.`);
   } else {
-    el.todayJourney.querySelector('[data-step="low"]').hidden = true;
+    lowBtn.hidden = true;
   }
   el.journeyNow.textContent = fmt(w.temp);
+  nowBtn.setAttribute("aria-label", `Now: ${fmt(w.temp)}. Return scrubber to live.`);
   if (peak) {
     el.journeyPeak.textContent = fmt(peak.temp);
     el.journeyPeakTime.textContent = fmtTime(peak.time);
-    el.todayJourney.querySelector('[data-step="peak"]').dataset.ts = String(peak.time);
-    el.todayJourney.querySelector('[data-step="peak"]').hidden = false;
+    peakBtn.dataset.ts = String(peak.time);
+    peakBtn.hidden = false;
+    peakBtn.setAttribute("aria-label", `Today's expected peak: ${fmt(peak.temp)} at ${fmtTime(peak.time)}. Scrub to that time.`);
   } else {
-    el.todayJourney.querySelector('[data-step="peak"]').hidden = true;
+    peakBtn.hidden = true;
   }
   // Separators visible only between two visible steps — collapse leading/trailing.
   const visibleSteps = [...el.todayJourney.querySelectorAll('.journey-step')].filter((s) => !s.hidden).length;
@@ -1767,6 +1773,9 @@ function syncPinButton() {
 function bindStickyNow() {
   if (!el.stickyNow || !el.heroInner) return;
   if (typeof IntersectionObserver === "undefined") return;
+  // Disconnect a previous observer if init runs more than once (defensive —
+  // ui.init shouldn't be invoked twice but the harness is cheap).
+  state.stickyIO?.disconnect?.();
   const io = new IntersectionObserver(
     ([entry]) => {
       // Visible when hero has scrolled out; hidden while hero is on-screen.
@@ -1783,6 +1792,7 @@ function bindStickyNow() {
     { threshold: 0, rootMargin: "-80px 0px 0px 0px" }
   );
   io.observe(el.heroInner);
+  state.stickyIO = io;
   el.stickyNow.addEventListener("click", () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   });

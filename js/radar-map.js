@@ -207,12 +207,20 @@ export class RadarMap {
   _renderTrack() {
     if (!this.frameTrack || !this.frames.length) return;
     this.frameTrack.innerHTML = "";
+    // Tag the first future-tick so CSS can draw a "NOW" divider on its left edge.
+    let markedFirstFuture = false;
     this.frames.forEach((f, i) => {
       const tick = document.createElement("button");
       tick.type = "button";
       const isFuture = f.time * 1000 > Date.now();
       tick.className = `radar-tick ${isFuture ? "future" : ""}`;
-      tick.setAttribute("aria-label", new Date(f.time * 1000).toLocaleTimeString());
+      if (isFuture && !markedFirstFuture) {
+        tick.classList.add("first-future");
+        markedFirstFuture = true;
+      }
+      const when = new Date(f.time * 1000);
+      tick.setAttribute("aria-label",
+        `${isFuture ? "Nowcast" : "Past"} radar frame at ${when.toLocaleTimeString()}`);
       tick.addEventListener("click", () => {
         this._showFrame(i);
         this._pause();

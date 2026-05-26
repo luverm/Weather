@@ -1435,6 +1435,34 @@ kbd {
 .radar-tick:hover { background: rgba(255,255,255,0.2); transform: scaleY(1.15); }
 .radar-tick.future { background: rgba(154, 209, 255, 0.22); }
 .radar-tick.active { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+/* "NOW" divider: a 2 px rail along the left edge of the first future tick,
+   visually splitting the played history from the upcoming nowcast frames. */
+.radar-tick.first-future {
+  position: relative;
+  margin-left: 6px;
+}
+.radar-tick.first-future::before {
+  content: "";
+  position: absolute;
+  left: -5px;
+  top: -2px;
+  bottom: -2px;
+  width: 2px;
+  border-radius: 1px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.7), rgba(154,209,255,0.4));
+  box-shadow: 0 0 6px rgba(255,255,255,0.4);
+}
+.radar-tick.first-future::after {
+  content: "now";
+  position: absolute;
+  left: -10px;
+  top: -14px;
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.6);
+  pointer-events: none;
+}
 
 /* Fullscreen radar */
 .radar[data-fullscreen="true"] {
