@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { predictGoldenHour } from "./golden-hour.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -90,6 +91,10 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  goldenChip: $("#golden-chip"),
+  goldenHeadline: $("#golden-headline"),
+  goldenDetail: $("#golden-detail"),
+  goldenTime: $("#golden-time"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -523,6 +528,27 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderGoldenHour(w);
+}
+
+function renderGoldenHour(w) {
+  if (!el.goldenChip) return;
+  const g = predictGoldenHour(w);
+  if (!g) {
+    el.goldenChip.hidden = true;
+    return;
+  }
+  el.goldenChip.hidden = false;
+  el.goldenChip.dataset.tone = g.tone;
+  // Light up bars proportionally to score (5 bars, 0..100).
+  const lit = Math.max(0, Math.min(5, Math.round(g.score / 20)));
+  el.goldenChip.style.setProperty("--lit-bars", lit);
+  el.goldenHeadline.textContent = g.headline;
+  el.goldenDetail.textContent = g.why.length ? g.why.join(" · ") : "—";
+  el.goldenTime.textContent = fmtTime(g.ts);
+  el.goldenChip.setAttribute("aria-label",
+    `${g.headline} at ${fmtTime(g.ts)}. ${g.why.join(", ")}. Score ${g.score} of 100.`);
+  el.goldenChip.onclick = () => state.handlers.onHourClick?.(g.ts);
 }
 
 function scheduleSunArc(w) {
