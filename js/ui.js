@@ -72,6 +72,9 @@ const el = {
   pressureSparkFill: $("#pressure-spark-fill"),
   humiditySparkLine: $("#humidity-spark-line"),
   humiditySparkFill: $("#humidity-spark-fill"),
+  windSparkLine: $("#wind-spark-line"),
+  windSparkFill: $("#wind-spark-fill"),
+  windSparkGust: $("#wind-spark-gust"),
   dailySpark: $("#daily-spark"),
   dailyHi: $("#daily-hi"),
   dailyLo: $("#daily-lo"),
@@ -424,13 +427,31 @@ function renderPressureSparkline(w) {
     (w.hourly || []).map((h) => h.humidity).filter((v) => v != null).slice(0, 12),
     { minSpan: 10, fixedMin: 0, fixedMax: 100 }
   );
+  // Wind: line is mean wind, dashed overlay is gusts. Share a y-axis so a
+  // calm-now-gusty-later spike is visible at a glance.
+  const slice = (w.hourly || []).slice(0, 12);
+  const winds = slice.map((h) => h.wind).filter((v) => v != null);
+  const gusts = slice.map((h) => h.gusts).filter((v) => v != null);
+  const combined = [...winds, ...gusts];
+  if (combined.length >= 2) {
+    const fixedMin = 0;
+    const fixedMax = Math.max(...combined, 5);
+    drawSparkline(el.windSparkLine, el.windSparkFill, winds,
+      { minSpan: 4, fixedMin, fixedMax });
+    drawSparkline(el.windSparkGust, null, gusts,
+      { minSpan: 4, fixedMin, fixedMax });
+  } else {
+    el.windSparkLine?.setAttribute("d", "");
+    el.windSparkFill?.setAttribute("d", "");
+    el.windSparkGust?.setAttribute("d", "");
+  }
 }
 
 function drawSparkline(lineEl, fillEl, series, { minSpan = 1, fixedMin, fixedMax } = {}) {
-  if (!lineEl || !fillEl) return;
+  if (!lineEl) return;
   if (series.length < 2) {
     lineEl.setAttribute("d", "");
-    fillEl.setAttribute("d", "");
+    fillEl?.setAttribute("d", "");
     return;
   }
   const min = fixedMin != null ? fixedMin : Math.min(...series);
@@ -443,9 +464,11 @@ function drawSparkline(lineEl, fillEl, series, { minSpan = 1, fixedMin, fixedMax
   const y = (v) => PAD + innerH - ((v - min) / span) * innerH;
   let line = "";
   series.forEach((v, i) => { line += (i === 0 ? "M" : "L") + x(i).toFixed(1) + "," + y(v).toFixed(1) + " "; });
-  const fill = `${line}L${x(series.length - 1).toFixed(1)},${(H - PAD).toFixed(1)} L${x(0).toFixed(1)},${(H - PAD).toFixed(1)} Z`;
   lineEl.setAttribute("d", line.trim());
-  fillEl.setAttribute("d", fill);
+  if (fillEl) {
+    const fill = `${line}L${x(series.length - 1).toFixed(1)},${(H - PAD).toFixed(1)} L${x(0).toFixed(1)},${(H - PAD).toFixed(1)} Z`;
+    fillEl.setAttribute("d", fill);
+  }
 }
 
 function aqColor(aqi) {
