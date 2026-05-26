@@ -14,7 +14,7 @@ const REFRESH_MS = 5 * 60 * 1000; // RainViewer updates every ~10 min; refresh h
 const FRAME_MS = 500;             // How long each frame displays during playback.
 
 export class RadarMap {
-  constructor({ mapEl, playBtn, timeLabel, deltaLabel, frameTrack, fullscreenBtn, card }) {
+  constructor({ mapEl, playBtn, timeLabel, deltaLabel, frameTrack, fullscreenBtn, card, onPick }) {
     this.mapEl = mapEl;
     this.playBtn = playBtn;
     this.timeLabel = timeLabel;
@@ -22,6 +22,7 @@ export class RadarMap {
     this.frameTrack = frameTrack;
     this.fullscreenBtn = fullscreenBtn;
     this.card = card;
+    this.onPick = onPick;
 
     this.map = null;
     this.baseLayer = null;
@@ -47,9 +48,18 @@ export class RadarMap {
       zoomControl: false,
       attributionControl: false,
       scrollWheelZoom: false, // avoid hijacking the page
+      doubleClickZoom: false, // dblclick reserved for "load weather here"
       zoomSnap: 0.5,
       fadeAnimation: true,
     }).setView(center, 7);
+
+    // Double-click (or double-tap on mobile via Leaflet's pointer shim)
+    // picks the spot under the cursor as a new location.
+    this.map.on("dblclick", (e) => {
+      if (this.onPick && e.latlng) {
+        this.onPick(e.latlng.lat, e.latlng.lng);
+      }
+    });
 
     // Dark base map — matches our palette. CartoCDN is free for non-commercial.
     this.baseLayer = L.tileLayer(

@@ -57,6 +57,14 @@ async function ensureRadar(center) {
       frameTrack: document.getElementById("radar-track"),
       fullscreenBtn: document.getElementById("radar-full"),
       card: document.getElementById("radar-card"),
+      onPick: (lat, lon) => {
+        const place = {
+          name: `Map pin · ${lat.toFixed(2)}, ${lon.toFixed(2)}`,
+          lat, lon,
+        };
+        ui.showToast(`Loading weather at ${lat.toFixed(2)}, ${lon.toFixed(2)}…`);
+        loadByCoords(place);
+      },
     });
     await radar.init(center || [51.5, 0]).catch((err) => console.warn("Radar init failed:", err));
     return radar;
