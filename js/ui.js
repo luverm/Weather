@@ -12,6 +12,7 @@ import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { predictGoldenHour } from "./golden-hour.js";
 import { shareUrl } from "./url-state.js";
+import { tonightSkyClarity } from "./stargaze.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -47,6 +48,8 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  clarityPill: $("#clarity-pill"),
+  clarityDetail: $("#clarity-detail"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -484,6 +487,7 @@ function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  renderClarityPill();
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
@@ -530,6 +534,22 @@ function renderSun(w) {
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   renderGoldenHour(w);
+}
+
+function renderClarityPill() {
+  if (!el.clarityPill || !el.clarityDetail) return;
+  const c = tonightSkyClarity(state.weather);
+  if (!c) {
+    el.clarityPill.hidden = true;
+    el.clarityDetail.hidden = true;
+    return;
+  }
+  el.clarityPill.hidden = false;
+  el.clarityDetail.hidden = false;
+  el.clarityPill.dataset.tone = c.tone;
+  el.clarityPill.textContent = c.label;
+  el.clarityDetail.textContent =
+    `Tonight ${c.avgCloud}% cloud · ${c.clearHours}/${c.totalHours}h clear`;
 }
 
 function renderGoldenHour(w) {

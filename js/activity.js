@@ -50,13 +50,18 @@ function activityScore(h) {
 
 function stargazeScore(h) {
   if (!h) return 0;
-  // Need: night, clear, dry. Cloud cover not in hourly — proxy via condition.
   if (h.isDay) return 0;
-  const isClear = h.condition === "clear";
-  const isCloudy = h.condition === "clouds" || h.condition === "fog";
   const isWet = h.condition === "rain" || h.condition === "snow" || h.condition === "storm";
   if (isWet) return 0;
-  const base = isClear ? 95 : isCloudy ? 35 : 60;
+  // Prefer real cloud cover when present; fall back to condition buckets.
+  let base;
+  if (h.cloud != null) {
+    base = Math.max(0, 100 - h.cloud); // 0% cloud → 100; 100% cloud → 0
+  } else {
+    const isClear = h.condition === "clear";
+    const isCloudy = h.condition === "clouds" || h.condition === "fog";
+    base = isClear ? 95 : isCloudy ? 35 : 60;
+  }
   const popPenalty = (h.pop ?? 0) * 0.6;
   const windPenalty = Math.max(0, ((h.wind ?? 0) - 18) * 2);
   return Math.max(0, Math.round(base - popPenalty - windPenalty));
