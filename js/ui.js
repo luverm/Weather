@@ -200,6 +200,7 @@ export const ui = {
     state.sampledWeather = weather; // initially same as live
     renderLiveValues(weather);
     renderStickyNow(weather);
+    updateDocumentTitle(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
     renderMoon(weather.moon);
@@ -1494,6 +1495,21 @@ function renderStickyNow(w) {
   el.stickyNowCond.textContent = capitalize(w.label || "");
   el.stickyNowPlace.textContent = state.place?.name || "—";
   el.stickyNowIcon.innerHTML = iconFor(w.condition);
+}
+
+const CONDITION_GLYPH = {
+  clear: "☀", clouds: "⛅", rain: "🌧",
+  snow: "🌨", storm: "⛈", fog: "🌫",
+};
+
+function updateDocumentTitle(w) {
+  if (!w || w.temp == null) return;
+  const glyph = CONDITION_GLYPH[w.condition] || "•";
+  const temp = `${Math.round(convertTemp(w.temp))}°`;
+  const place = state.place?.name;
+  document.title = place
+    ? `${glyph} ${temp} · ${place} — Aether`
+    : `${glyph} ${temp} — Aether`;
 }
 
 function bindTilt() {
