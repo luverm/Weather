@@ -94,6 +94,7 @@ export async function getWeather(lat, lon) {
     timezone: "auto",
     forecast_days: 7,
     past_hours: 1,
+    past_days: 1, // enables "vs. yesterday at this hour" comparison
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -190,8 +191,11 @@ function normalize(d, aq) {
   // Moon phase is not in Open-Meteo's free tier — compute it locally.
   const moon = computeMoonPhase(new Date());
 
+  const tempYesterday = findTempAt(d.hourly, now - 24 * 3600_000);
+
   return {
     temp: c.temperature_2m,
+    tempYesterday,
     feelsLike: c.apparent_temperature,
     humidity: c.relative_humidity_2m,
     pressure: c.pressure_msl,
@@ -218,6 +222,21 @@ function normalize(d, aq) {
     pollen: normalizePollen(aq),
     fetchedAt: now,
   };
+}
+
+function findTempAt(hourly, targetTs) {
+  if (!hourly?.time || !hourly?.temperature_2m) return null;
+  let best = null;
+  let bestDiff = Infinity;
+  for (let i = 0; i < hourly.time.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    const diff = Math.abs(t - targetTs);
+    if (diff < bestDiff) { bestDiff = diff; best = hourly.temperature_2m[i]; }
+  }
+  // Require the match to land within 45 min so a partial series doesn't return
+  // a useless "yesterday" from many hours away.
+  if (bestDiff > 45 * 60_000) return null;
+  return best;
 }
 
 function computePressureTrend(hourly, now) {
@@ -357,7 +376,7 @@ function mock(lat, lon) {
   const isDay = hour >= 6 && hour < 19;
   const now = Date.now();
   return {
-    temp: 18, feelsLike: 17, humidity: 64, pressure: 1013,
+    temp: 18, tempYesterday: 16, feelsLike: 17, humidity: 64, pressure: 1013,
     windSpeed: 9, windGusts: 14, windDir: 220,
     dewPoint: 11, visibility: 10000, cloudCover: 45,
     isDay, condition: CONDITIONS.CLOUDS, label: "Partly cloudy (offline)",

@@ -66,6 +66,7 @@ const el = {
   pollenItems: $("#pollen-items"),
   pressureTrend: $("#m-pressure-trend"),
   tempTrend: $("#temp-trend"),
+  yesterdayDelta: $("#yesterday-delta"),
   uvLevel: $("#m-uv-level"),
   humidityComfort: $("#m-humidity-comfort"),
   pressureSparkLine: $("#pressure-spark-line"),
@@ -289,8 +290,41 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  // The yesterday-delta sits inside .feels-like, so rebuild the text without
+  // clobbering the pill node.
+  if (el.feelsLike) {
+    const trendNode = el.tempTrend;
+    const pillNode = el.yesterdayDelta;
+    el.feelsLike.textContent = "";
+    if (trendNode) el.feelsLike.appendChild(trendNode);
+    el.feelsLike.appendChild(document.createTextNode(`Feels like ${Math.round(feels)}°`));
+    if (pillNode) el.feelsLike.appendChild(pillNode);
+  }
+  renderYesterdayDelta(w);
   renderDayRange(w);
+}
+
+function renderYesterdayDelta(w) {
+  if (!el.yesterdayDelta) return;
+  const cur = w.temp;
+  const past = w.tempYesterday;
+  if (cur == null || past == null) {
+    el.yesterdayDelta.hidden = true;
+    return;
+  }
+  const deltaC = cur - past;
+  // Match the visible unit; the underlying values are always Celsius.
+  const deltaDisplay = Math.round(state.unit === "F" ? deltaC * 9 / 5 : deltaC);
+  if (Math.abs(deltaDisplay) < 1) {
+    el.yesterdayDelta.hidden = false;
+    el.yesterdayDelta.dataset.dir = "flat";
+    el.yesterdayDelta.textContent = "same as yesterday";
+    return;
+  }
+  el.yesterdayDelta.hidden = false;
+  el.yesterdayDelta.dataset.dir = deltaDisplay > 0 ? "up" : "down";
+  const arrow = deltaDisplay > 0 ? "▲" : "▼";
+  el.yesterdayDelta.textContent = `${arrow} ${Math.abs(deltaDisplay)}° vs yesterday`;
 }
 
 function renderDayRange(w) {
