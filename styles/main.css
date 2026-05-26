@@ -369,6 +369,15 @@ html[data-reduce-motion="true"] *::after {
 .place-chip:hover { background: var(--glass-strong); transform: translateY(-1px); }
 .place-chip.active { background: var(--glass-strong); border-color: rgba(255,255,255,0.35); }
 .place-chip .temp { color: var(--fg-muted); font-variant-numeric: tabular-nums; }
+.flag {
+  display: inline-block;
+  margin-right: 6px;
+  font-size: 1.05em;
+  line-height: 1;
+  /* Slight bottom nudge so the glyph baselines with the city name. */
+  vertical-align: -1px;
+  filter: saturate(1.05);
+}
 .place-chip .close {
   width: 16px; height: 16px; display: grid; place-items: center;
   border-radius: 50%; color: var(--fg-dim);

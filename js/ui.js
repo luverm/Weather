@@ -197,7 +197,12 @@ export const ui = {
     el.placeName.classList.add("flip-in");
     el.placeName.textContent = place.name || "Unknown";
     const sub = [place.admin1, place.country].filter(Boolean).join(", ");
-    el.placeSub.textContent = sub || "—";
+    const flag = flagFor(place.countryCode);
+    if (flag && sub) {
+      el.placeSub.innerHTML = `<span class="flag" aria-hidden="true">${flag}</span>${escapeHtml(sub)}`;
+    } else {
+      el.placeSub.textContent = sub || "—";
+    }
     // Reset alert dismissals so a fresh location can re-surface them.
     try { sessionStorage.removeItem("aether:dismissed-alerts"); } catch { /* ignore */ }
     renderPlaces();
@@ -1297,8 +1302,10 @@ function renderPlaces() {
   const activeId = state.place ? places.idFor(state.place) : null;
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
+    const flag = flagFor(p.countryCode);
     return `
       <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
+        ${flag ? `<span class="flag" aria-hidden="true">${flag}</span>` : ""}
         <span>${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
         <span class="close" data-action="remove" aria-label="Remove">
@@ -1333,12 +1340,14 @@ const runSearch = debounce(async (q) => {
 
 function renderSearchResults(results) {
   if (!results.length) { el.searchResults.hidden = true; el.searchResults.innerHTML = ""; return; }
-  el.searchResults.innerHTML = results.map((r, i) => `
+  el.searchResults.innerHTML = results.map((r, i) => {
+    const flag = flagFor(r.countryCode);
+    return `
     <li role="option" data-index="${i}">
-      <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
+      <span>${flag ? `<span class="flag" aria-hidden="true">${flag}</span>` : ""}${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
       <span class="sub">${escapeHtml(r.country || "")}</span>
     </li>
-  `).join("");
+  `;}).join("");
   el.searchResults.hidden = false;
   el.searchResults._items = results;
 }
@@ -1346,12 +1355,14 @@ function renderSearchResults(results) {
 function showRecentsIfAny() {
   const recents = places.all().slice(0, 5);
   if (!recents.length) { el.searchResults.hidden = true; return; }
-  const itemsHtml = recents.map((r, i) => `
+  const itemsHtml = recents.map((r, i) => {
+    const flag = flagFor(r.countryCode);
+    return `
     <li role="option" data-index="${i}">
-      <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
+      <span>${flag ? `<span class="flag" aria-hidden="true">${flag}</span>` : ""}${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
       <span class="sub">${escapeHtml(r.country || "")}</span>
     </li>
-  `).join("");
+  `;}).join("");
   el.searchResults.innerHTML = `<li class="recent-heading">Recent places</li>${itemsHtml}`;
   el.searchResults._items = recents;
   el.searchResults.hidden = false;
@@ -1623,6 +1634,15 @@ function bindTilt() {
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+// ISO-3166 alpha-2 → flag emoji (regional indicator letters at U+1F1E6).
+function flagFor(code) {
+  if (!code || code.length !== 2) return "";
+  const cc = code.toUpperCase();
+  if (!/^[A-Z]{2}$/.test(cc)) return "";
+  const A = 0x1F1E6;
+  return String.fromCodePoint(A + cc.charCodeAt(0) - 65, A + cc.charCodeAt(1) - 65);
 }
 
 // Export renderPlaces so the app can refresh the strip after a load.
