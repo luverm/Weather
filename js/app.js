@@ -336,13 +336,20 @@ onHashPlace((place) => {
 });
 
 // ---------- Lifecycle ----------
+const STALE_AFTER_MS = 10 * 60_000;
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
     engine.stop();
-  } else if (!app.reducedMotion) {
-    engine.start();
-  } else {
-    engine.tickOnce();
+    return;
+  }
+  if (!app.reducedMotion) engine.start();
+  else engine.tickOnce();
+  // Background tabs miss the auto-refresh interval. When the user returns,
+  // refresh if the data is older than STALE_AFTER_MS and the timeline is
+  // sitting on "now" — never interrupt an active scrub.
+  if (app.weather?.fetchedAt && clock.isLive()
+      && Date.now() - app.weather.fetchedAt >= STALE_AFTER_MS) {
+    refreshWeather();
   }
 });
 
