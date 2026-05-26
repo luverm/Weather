@@ -110,6 +110,16 @@
     <!-- Saved locations strip -->
     <nav id="places-strip" class="places-strip" aria-label="Saved locations" hidden></nav>
 
+    <!-- Sticky mini-summary, surfaced when hero scrolls out of view. -->
+    <button id="sticky-now" class="sticky-now" type="button" hidden aria-label="Scroll back to current conditions">
+      <span id="sticky-now-icon" class="sticky-now-icon" aria-hidden="true"></span>
+      <span class="sticky-now-meta">
+        <span id="sticky-now-place" class="sticky-now-place">—</span>
+        <span id="sticky-now-cond" class="sticky-now-cond">—</span>
+      </span>
+      <span id="sticky-now-temp" class="sticky-now-temp">—</span>
+    </button>
+
     <!-- Smart alerts strip (synthesized from forecast). -->
     <div id="alerts-strip" class="alerts-strip" role="region" aria-label="Weather alerts" hidden></div>
 

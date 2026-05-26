@@ -124,6 +124,11 @@ const el = {
   heroInner: document.querySelector(".hero-inner"),
   toast: $("#toast"),
   placesStrip: $("#places-strip"),
+  stickyNow: $("#sticky-now"),
+  stickyNowIcon: $("#sticky-now-icon"),
+  stickyNowPlace: $("#sticky-now-place"),
+  stickyNowCond: $("#sticky-now-cond"),
+  stickyNowTemp: $("#sticky-now-temp"),
 };
 
 const state = {
@@ -168,6 +173,7 @@ export const ui = {
       getUnit: () => state.unit,
     });
     bindInstallPrompt();
+    bindStickyNow();
   },
   focusSearch() { el.searchInput?.focus(); el.searchInput?.select?.(); },
   toggleUnits() { el.unitBtn?.click(); },
@@ -193,6 +199,7 @@ export const ui = {
     state.weather = weather;
     state.sampledWeather = weather; // initially same as live
     renderLiveValues(weather);
+    renderStickyNow(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
     renderMoon(weather.moon);
@@ -224,6 +231,7 @@ export const ui = {
   setSampledWeather(sampled, { highlightHourIndex } = {}) {
     state.sampledWeather = sampled;
     renderLiveValues(sampled, { animate: false });
+    renderStickyNow(sampled);
     renderMetrics(sampled);
     renderAdvice(sampled);
     highlightHour(highlightHourIndex);
@@ -1453,6 +1461,39 @@ function bindShare() {
       if (err?.name !== "AbortError") ui.showToast("Share failed");
     }
   });
+}
+
+function bindStickyNow() {
+  if (!el.stickyNow || !el.heroInner) return;
+  if (typeof IntersectionObserver === "undefined") return;
+  const io = new IntersectionObserver(
+    ([entry]) => {
+      // Visible when hero has scrolled out; hidden while hero is on-screen.
+      const onscreen = entry.isIntersecting;
+      el.stickyNow.classList.toggle("revealed", !onscreen);
+      // The `hidden` attribute kicks in once the slide-out finishes, so
+      // assistive tech doesn't fight with the visual state mid-transition.
+      if (onscreen) {
+        setTimeout(() => { if (!el.stickyNow.classList.contains("revealed")) el.stickyNow.hidden = true; }, 260);
+      } else {
+        el.stickyNow.hidden = false;
+      }
+    },
+    { threshold: 0, rootMargin: "-80px 0px 0px 0px" }
+  );
+  io.observe(el.heroInner);
+  el.stickyNow.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+}
+
+function renderStickyNow(w) {
+  if (!el.stickyNow) return;
+  const t = w.temp != null ? `${Math.round(convertTemp(w.temp))}°` : "—";
+  el.stickyNowTemp.textContent = t;
+  el.stickyNowCond.textContent = capitalize(w.label || "");
+  el.stickyNowPlace.textContent = state.place?.name || "—";
+  el.stickyNowIcon.innerHTML = iconFor(w.condition);
 }
 
 function bindTilt() {
