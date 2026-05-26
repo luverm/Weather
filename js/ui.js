@@ -339,12 +339,34 @@ function renderLiveValues(w, { animate = true } = {}) {
     const pillNode = el.yesterdayDelta;
     el.feelsLike.textContent = "";
     if (trendNode) el.feelsLike.appendChild(trendNode);
-    el.feelsLike.appendChild(document.createTextNode(`Feels like ${Math.round(feels)}°`));
+    const reason = feelsLikeReason(w);
+    const reasonSuffix = reason ? ` (${reason})` : "";
+    el.feelsLike.appendChild(document.createTextNode(`Feels like ${Math.round(feels)}°${reasonSuffix}`));
     if (pillNode) el.feelsLike.appendChild(pillNode);
   }
   renderYesterdayDelta(w);
   renderDayRange(w);
   renderTodayJourney(w);
+}
+
+// Short label explaining why apparent temperature is meaningfully off the dry
+// air-temp reading. Returns null when the difference is small enough not to
+// warrant an explanation.
+function feelsLikeReason(w) {
+  const t = w.temp, f = w.feelsLike, rh = w.humidity, wind = w.windSpeed, dew = w.dewPoint;
+  if (t == null || f == null) return null;
+  const delta = f - t;
+  if (Math.abs(delta) < 3) return null;
+  if (delta > 0) {
+    // Hotter than the air.
+    if (dew != null && dew >= 21) return "muggy air";
+    if (rh != null && rh >= 65) return "humid air";
+    return "humid";
+  }
+  // Colder than the air.
+  if (wind != null && wind >= 20) return "wind chill";
+  if (rh != null && rh < 30) return "dry chill";
+  return "cooler than it reads";
 }
 
 function renderYesterdayDelta(w) {
