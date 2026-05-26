@@ -1479,9 +1479,11 @@ function bindSearch() {
     const v = e.target.value.trim();
     if (v.length < 2) {
       showRecentsIfAny();
-      return;
+    } else {
+      runSearch(v);
     }
-    runSearch(v);
+    // A fresh query invalidates whatever was highlighted.
+    setSearchActive(-1);
   });
   el.searchInput.addEventListener("blur", () => {
     setTimeout(() => (el.searchResults.hidden = true), 150);
@@ -1493,17 +1495,70 @@ function bindSearch() {
       el.searchResults.hidden = false;
     }
   });
+  // Keyboard navigation through the dropdown.
+  el.searchInput.addEventListener("keydown", (e) => {
+    const items = el.searchResults._items || [];
+    const open = !el.searchResults.hidden && items.length;
+    if (e.key === "ArrowDown") {
+      if (!open) {
+        // Re-open the dropdown with the current set on first arrow press.
+        if (items.length) el.searchResults.hidden = false;
+      }
+      if (!items.length) return;
+      e.preventDefault();
+      setSearchActive(((state.searchActive ?? -1) + 1) % items.length);
+    } else if (e.key === "ArrowUp") {
+      if (!open) return;
+      e.preventDefault();
+      const cur = state.searchActive ?? 0;
+      setSearchActive((cur - 1 + items.length) % items.length);
+    } else if (e.key === "Enter") {
+      if (!open) return;
+      const idx = state.searchActive ?? 0;
+      const item = items[idx];
+      if (!item) return;
+      e.preventDefault();
+      pickSearchItem(item);
+    } else if (e.key === "Escape") {
+      if (!el.searchResults.hidden) {
+        e.preventDefault();
+        el.searchResults.hidden = true;
+        setSearchActive(-1);
+      }
+    }
+  });
   el.searchResults.addEventListener("click", (e) => {
     const li = e.target.closest("li");
     if (!li) return;
     const i = parseInt(li.dataset.index, 10);
     const item = el.searchResults._items?.[i];
     if (!item) return;
-    el.searchInput.value = item.name;
-    el.searchResults.hidden = true;
-    places.add(item);
-    state.handlers.onSearchSelect?.(item);
+    pickSearchItem(item);
   });
+  el.searchResults.addEventListener("pointermove", (e) => {
+    const li = e.target.closest("li[data-index]");
+    if (!li) return;
+    const i = parseInt(li.dataset.index, 10);
+    if (i !== state.searchActive) setSearchActive(i);
+  });
+}
+
+function setSearchActive(idx) {
+  state.searchActive = idx;
+  const items = el.searchResults.querySelectorAll("li[data-index]");
+  items.forEach((li) => li.classList.remove("active"));
+  if (idx >= 0 && items[idx]) {
+    items[idx].classList.add("active");
+    items[idx].scrollIntoView({ block: "nearest" });
+  }
+}
+
+function pickSearchItem(item) {
+  el.searchInput.value = item.name;
+  el.searchResults.hidden = true;
+  setSearchActive(-1);
+  places.add(item);
+  state.handlers.onSearchSelect?.(item);
 }
 
 function bindUnitToggle() {
