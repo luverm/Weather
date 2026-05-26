@@ -129,13 +129,14 @@ function normalize(d, aq) {
   const daily = d.daily || {};
   const now = Date.now();
 
-  // 24-hour hourly forecast starting from the next hour.
+  // 24-hour hourly forecast starting from the next hour. Past entries are
+  // siphoned off into hourlyPast so callers can show "today so far" context.
   const hourly = [];
+  const hourlyPast = [];
   if (d.hourly?.time) {
-    for (let i = 0; i < d.hourly.time.length && hourly.length < 24; i++) {
+    for (let i = 0; i < d.hourly.time.length; i++) {
       const t = new Date(d.hourly.time[i]).getTime();
-      if (t < now - 30 * 60 * 1000) continue; // allow slight past for scrubbing
-      hourly.push({
+      const entry = {
         time: t,
         temp: d.hourly.temperature_2m[i],
         feelsLike: d.hourly.apparent_temperature?.[i],
@@ -149,7 +150,9 @@ function normalize(d, aq) {
         humidity: d.hourly.relative_humidity_2m?.[i] ?? null,
         cloud: d.hourly.cloud_cover?.[i] ?? null,
         ...mapWmo(d.hourly.weather_code[i]),
-      });
+      };
+      if (t < now - 30 * 60 * 1000) hourlyPast.push(entry);
+      else if (hourly.length < 24) hourly.push(entry);
     }
   }
 
@@ -215,6 +218,7 @@ function normalize(d, aq) {
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
     hourly,
+    hourlyPast,
     daily: dailyForecast,
     nowcast,
     moon,
@@ -409,6 +413,7 @@ function mock(lat, lon) {
       condition: CONDITIONS.CLOUDS, label: "Cloudy",
     })),
     nowcast: [],
+    hourlyPast: [],
     moon: computeMoonPhase(new Date()),
     airQuality: { aqi: 42, pm25: 8, pm10: 14, o3: 40, no2: 15, co: 0.2, label: "Good" },
     pollen: {

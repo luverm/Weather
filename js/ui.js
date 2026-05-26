@@ -29,6 +29,12 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  todayJourney: $("#today-journey"),
+  journeyLow: $("#journey-low"),
+  journeyLowTime: $("#journey-low-time"),
+  journeyNow: $("#journey-now"),
+  journeyPeak: $("#journey-peak"),
+  journeyPeakTime: $("#journey-peak-time"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -174,6 +180,7 @@ export const ui = {
     });
     bindInstallPrompt();
     bindStickyNow();
+    bindTodayJourney();
   },
   focusSearch() { el.searchInput?.focus(); el.searchInput?.select?.(); },
   toggleUnits() { el.unitBtn?.click(); },
@@ -311,6 +318,7 @@ function renderLiveValues(w, { animate = true } = {}) {
   }
   renderYesterdayDelta(w);
   renderDayRange(w);
+  renderTodayJourney(w);
 }
 
 function renderYesterdayDelta(w) {
@@ -334,6 +342,82 @@ function renderYesterdayDelta(w) {
   el.yesterdayDelta.dataset.dir = deltaDisplay > 0 ? "up" : "down";
   const arrow = deltaDisplay > 0 ? "▲" : "▼";
   el.yesterdayDelta.textContent = `${arrow} ${Math.abs(deltaDisplay)}° vs yesterday`;
+}
+
+function renderTodayJourney(w) {
+  if (!el.todayJourney) return;
+  if (w.temp == null) { el.todayJourney.hidden = true; return; }
+
+  // Today bounds in the location's timezone if available; fall back to local.
+  const tz = w.timezone && w.timezone !== "auto" ? w.timezone : null;
+  const dayKey = (ts) => {
+    if (!tz) {
+      const d = new Date(ts);
+      return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    }
+    try {
+      return new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(ts));
+    } catch {
+      const d = new Date(ts);
+      return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    }
+  };
+  const todayKey = dayKey(Date.now());
+
+  // All today's known hours (past + current + remaining forecast).
+  const all = [
+    ...(w.hourlyPast || []),
+    ...(w.hourly || []),
+  ].filter((h) => h.temp != null && dayKey(h.time) === todayKey);
+
+  // Low so far today, peak still to come today.
+  const now = Date.now();
+  const past = all.filter((h) => h.time <= now);
+  const future = all.filter((h) => h.time > now);
+  const low = past.reduce((b, h) => (!b || h.temp < b.temp ? h : b), null);
+  const peak = future.reduce((b, h) => (!b || h.temp > b.temp ? h : b), null);
+
+  // Hide when we have no useful before/after data.
+  if (!low && !peak) { el.todayJourney.hidden = true; return; }
+  el.todayJourney.hidden = false;
+
+  const fmt = (v) => v == null ? "—" : `${Math.round(convertTemp(v))}°`;
+  if (low) {
+    el.journeyLow.textContent = fmt(low.temp);
+    el.journeyLowTime.textContent = fmtTime(low.time);
+    el.todayJourney.querySelector('[data-step="low"]').dataset.ts = String(low.time);
+    el.todayJourney.querySelector('[data-step="low"]').hidden = false;
+  } else {
+    el.todayJourney.querySelector('[data-step="low"]').hidden = true;
+  }
+  el.journeyNow.textContent = fmt(w.temp);
+  if (peak) {
+    el.journeyPeak.textContent = fmt(peak.temp);
+    el.journeyPeakTime.textContent = fmtTime(peak.time);
+    el.todayJourney.querySelector('[data-step="peak"]').dataset.ts = String(peak.time);
+    el.todayJourney.querySelector('[data-step="peak"]').hidden = false;
+  } else {
+    el.todayJourney.querySelector('[data-step="peak"]').hidden = true;
+  }
+  // Separators visible only between two visible steps — collapse leading/trailing.
+  const visibleSteps = [...el.todayJourney.querySelectorAll('.journey-step')].filter((s) => !s.hidden).length;
+  el.todayJourney.classList.toggle("single", visibleSteps <= 1);
+}
+
+function bindTodayJourney() {
+  if (!el.todayJourney) return;
+  el.todayJourney.addEventListener("click", (e) => {
+    const btn = e.target.closest(".journey-step");
+    if (!btn) return;
+    const step = btn.dataset.step;
+    if (step === "now") {
+      // Reset scrubber to now.
+      state.handlers.onHourClick?.(Date.now());
+      return;
+    }
+    const ts = parseInt(btn.dataset.ts, 10);
+    if (ts) state.handlers.onHourClick?.(ts);
+  });
 }
 
 function renderDayRange(w) {

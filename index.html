@@ -154,6 +154,26 @@
             </div>
             <span class="day-range-end" id="day-range-max">—</span>
           </div>
+          <div id="today-journey" class="today-journey" hidden aria-label="Today's temperature journey">
+            <button class="journey-step" data-step="low" type="button">
+              <span class="journey-arrow">↓</span>
+              <span class="journey-label">low</span>
+              <span class="journey-val" id="journey-low">—</span>
+              <span class="journey-time" id="journey-low-time">—</span>
+            </button>
+            <span class="journey-sep" aria-hidden="true">›</span>
+            <button class="journey-step now" data-step="now" type="button">
+              <span class="journey-label">now</span>
+              <span class="journey-val" id="journey-now">—</span>
+            </button>
+            <span class="journey-sep" aria-hidden="true">›</span>
+            <button class="journey-step" data-step="peak" type="button">
+              <span class="journey-arrow">↑</span>
+              <span class="journey-label">peak</span>
+              <span class="journey-val" id="journey-peak">—</span>
+              <span class="journey-time" id="journey-peak-time">—</span>
+            </button>
+          </div>
         </div>
       </div>
 

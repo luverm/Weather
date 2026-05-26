@@ -493,6 +493,68 @@ html[data-reduce-motion="true"] *::after {
   transition: left 380ms var(--ease);
 }
 
+/* ---------- Today journey chip ---------- */
+.today-journey {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  max-width: 280px;
+  margin-left: auto;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+.today-journey[hidden] { display: none; }
+.journey-step {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--fg-muted);
+  font: inherit;
+  cursor: pointer;
+  transition: background 160ms var(--ease), transform 160ms var(--ease), color 160ms var(--ease);
+}
+.journey-step:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--fg);
+  transform: translateY(-1px);
+}
+.journey-step[hidden] { display: none; }
+.journey-step.now {
+  background: rgba(154, 209, 255, 0.18);
+  color: var(--fg);
+}
+.journey-arrow {
+  font-size: 10px;
+  opacity: 0.7;
+}
+.journey-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--fg-dim);
+}
+.journey-val {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+.journey-time {
+  font-size: 10px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+}
+.journey-sep {
+  font-size: 12px;
+  color: var(--fg-dim);
+  padding: 0 2px;
+}
+.today-journey.single .journey-sep { display: none; }
+
 /* ---------- Nowcast banner ---------- */
 .nowcast {
   padding: 14px 18px;
