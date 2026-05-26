@@ -36,11 +36,13 @@ const el = {
   journeyPeak: $("#journey-peak"),
   journeyPeakTime: $("#journey-peak-time"),
   metricWind: $("#m-wind"),
+  metricWindUnit: $("#m-wind-unit"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
   metricHumidity: $("#m-humidity"),
   metricHumiditySub: $("#m-humidity-sub"),
   metricPressure: $("#m-pressure"),
+  metricPressureUnit: $("#m-pressure-unit"),
   metricPressureSub: $("#m-pressure-sub"),
   metricUV: $("#m-uv"),
   metricUVSub: $("#m-uv-sub"),
@@ -280,6 +282,25 @@ export const ui = {
 // ---------- Rendering ----------
 
 function convertTemp(c) { return state.unit === "F" ? c * 9 / 5 + 32 : c; }
+// Imperial conventions piggy-back on the temperature preference: most users
+// who want °F also want mph / inHg / miles.
+const isImperial = () => state.unit === "F";
+function convertWind(kmh) { return isImperial() ? kmh * 0.621371 : kmh; }
+const windUnitLabel = () => (isImperial() ? "mph" : "km/h");
+function convertPressure(hpa) { return isImperial() ? hpa * 0.02953 : hpa; }
+const pressureUnitLabel = () => (isImperial() ? "inHg" : "hPa");
+const formatPressure = (hpa) => {
+  const v = convertPressure(hpa);
+  return isImperial() ? v.toFixed(2) : String(Math.round(v));
+};
+function formatVisibility(meters) {
+  if (meters == null) return "—";
+  if (isImperial()) {
+    const miles = (meters / 1000) * 0.621371;
+    return `${miles.toFixed(1)} mi`;
+  }
+  return `${(Math.round((meters / 1000) * 10) / 10)} km`;
+}
 
 function animateNumber(node, target, format) {
   if (target == null || isNaN(target)) { node.textContent = "–"; return; }
@@ -451,9 +472,12 @@ function renderDayRange(w) {
 }
 
 function renderMetrics(w) {
-  el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
+  el.metricWind.textContent = Math.round(convertWind(w.windSpeed ?? 0));
+  if (el.metricWindUnit) el.metricWindUnit.textContent = windUnitLabel();
   const dir = w.windDir;
-  const gustStr = w.windGusts != null ? `${Math.round(w.windGusts)} km/h` : "—";
+  const gustStr = w.windGusts != null
+    ? `${Math.round(convertWind(w.windGusts))} ${windUnitLabel()}`
+    : "—";
   if (dir != null) {
     el.metricWindSub.textContent = `${Math.round(dir)}° ${cardinal(dir)} · gust ${gustStr}`;
   } else {
@@ -488,9 +512,10 @@ function renderMetrics(w) {
       el.humidityComfort.textContent = "";
     }
   }
-  el.metricPressure.textContent = Math.round(w.pressure ?? 0);
+  el.metricPressure.textContent = w.pressure != null ? formatPressure(w.pressure) : "—";
+  if (el.metricPressureUnit) el.metricPressureUnit.textContent = pressureUnitLabel();
   el.metricPressureSub.textContent = w.visibility != null
-    ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
+    ? `visibility ${formatVisibility(w.visibility)}`
     : "visibility —";
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
@@ -998,7 +1023,9 @@ function renderTrends(w) {
       const arrow = direction === "rising" ? "▲" : direction === "falling" ? "▼" : "→";
       const cls = direction === "rising" ? "up" : direction === "falling" ? "down" : "flat";
       el.pressureTrend.className = `trend ${cls}`;
-      el.pressureTrend.textContent = `${arrow} ${delta >= 0 ? "+" : ""}${delta.toFixed(1)}`;
+      const dispDelta = convertPressure(delta);
+      const dispStr = isImperial() ? dispDelta.toFixed(2) : dispDelta.toFixed(1);
+      el.pressureTrend.textContent = `${arrow} ${dispDelta >= 0 ? "+" : ""}${dispStr}`;
     } else {
       el.pressureTrend.textContent = "";
     }
@@ -1079,7 +1106,7 @@ function renderDaily(w) {
     item.className = "daily-item";
     item.dataset.ts = d.time;
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
-      ? ` · gusts ${Math.round(d.gustsMax)} km/h`
+      ? ` · gusts ${Math.round(convertWind(d.gustsMax))} ${windUnitLabel()}`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
@@ -1214,7 +1241,7 @@ function toggleDailyExpand(item, d, w) {
     const summary = document.createElement("div");
     summary.className = "daily-expand";
     summary.style.gridTemplateColumns = "1fr";
-    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${Math.round(d.gustsMax ?? 0)} km/h · UV ${Math.round(d.uvMax ?? 0)}</span>`;
+    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${Math.round(convertWind(d.gustsMax ?? 0))} ${windUnitLabel()} · UV ${Math.round(d.uvMax ?? 0)}</span>`;
     item.appendChild(summary);
     item.dataset.expanded = "true";
     return;
@@ -1254,7 +1281,10 @@ function renderNowcast(w) {
     : `${kind} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
   // 2h outlook summary.
   const totalMm = nowcast.reduce((s, n) => s + (n.precip || 0), 0);
-  el.nowcastSub.textContent = `${totalMm.toFixed(1)} mm expected in the next 2 hours`;
+  const precipStr = isImperial()
+    ? `${(totalMm / 25.4).toFixed(2)} in`
+    : `${totalMm.toFixed(1)} mm`;
+  el.nowcastSub.textContent = `${precipStr} expected in the next 2 hours`;
   // Bars (time-labeled, clickable to scrub).
   el.nowcastBars.innerHTML = "";
   const slice = nowcast.slice(0, 8);
@@ -1540,7 +1570,7 @@ function bindShare() {
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
       today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
-      `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
+      `Wind ${Math.round(convertWind(w.windSpeed))} ${windUnitLabel()}${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
     ].filter(Boolean);
