@@ -95,6 +95,7 @@ const el = {
   fetchedAgo: $("#fetched-ago"),
   dailyIconStrip: $("#daily-icon-strip"),
   precipTotal: $("#precip-total"),
+  snowTotal: $("#snow-total"),
   settingsBtn: $("#settings-btn"),
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
@@ -1128,6 +1129,7 @@ function renderDaily(w) {
     const item = document.createElement("div");
     item.className = "daily-item";
     item.dataset.ts = d.time;
+    item.dataset.severity = severityForDay(d);
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(convertWind(d.gustsMax))} ${windUnitLabel()}`
       : "";
@@ -1150,6 +1152,24 @@ function renderDaily(w) {
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+}
+
+function severityForDay(d) {
+  if (!d) return "none";
+  if (d.condition === "storm") return "danger";
+  if ((d.snowfall ?? 0) >= 10) return "danger";
+  if ((d.precip ?? 0) >= 25) return "danger";
+  if ((d.gustsMax ?? 0) >= 75) return "danger";
+  if ((d.tempMax ?? -Infinity) >= 35) return "danger";
+  if ((d.tempMin ?? Infinity) <= -5) return "danger";
+  if ((d.snowfall ?? 0) >= 3) return "warn";
+  if ((d.precip ?? 0) >= 10) return "warn";
+  if ((d.gustsMax ?? 0) >= 50) return "warn";
+  if ((d.tempMax ?? -Infinity) >= 30) return "warn";
+  if ((d.tempMin ?? Infinity) <= 2) return "warn";
+  if ((d.pop ?? 0) >= 60) return "info";
+  if ((d.snowfall ?? 0) >= 0.5) return "info";
+  return "none";
 }
 
 function renderDailyIconStrip(days) {
@@ -1175,18 +1195,31 @@ function renderDailyIconStrip(days) {
 }
 
 function renderPrecipTotal(days) {
-  if (!el.precipTotal) return;
-  const total = days.reduce((s, d) => s + (d.precip ?? 0), 0);
-  if (total < 0.5) {
-    el.precipTotal.hidden = true;
-    return;
+  if (el.precipTotal) {
+    const total = days.reduce((s, d) => s + (d.precip ?? 0), 0);
+    if (total < 0.5) {
+      el.precipTotal.hidden = true;
+    } else {
+      el.precipTotal.hidden = false;
+      // Convert mm → in when the user has chosen °F (American conventions).
+      if (state.unit === "F") {
+        el.precipTotal.textContent = `${(total / 25.4).toFixed(2)} in this week`;
+      } else {
+        el.precipTotal.textContent = `${Math.round(total)} mm this week`;
+      }
+    }
   }
-  el.precipTotal.hidden = false;
-  // Convert mm → in when the user has chosen °F (American conventions).
-  if (state.unit === "F") {
-    el.precipTotal.textContent = `${(total / 25.4).toFixed(2)} in this week`;
-  } else {
-    el.precipTotal.textContent = `${Math.round(total)} mm this week`;
+  if (el.snowTotal) {
+    const snow = days.reduce((s, d) => s + (d.snowfall ?? 0), 0);
+    if (snow < 0.5) {
+      el.snowTotal.hidden = true;
+    } else {
+      el.snowTotal.hidden = false;
+      // Open-Meteo snow totals come in cm; convert to inches for °F users.
+      el.snowTotal.textContent = state.unit === "F"
+        ? `❄ ${(snow / 2.54).toFixed(1)} in snow`
+        : `❄ ${snow.toFixed(1)} cm snow`;
+    }
   }
 }
 

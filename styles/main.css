@@ -1755,7 +1755,8 @@ kbd {
   background: linear-gradient(180deg, rgba(180,140,255,0.7), rgba(140,90,210,1));
 }
 
-.precip-total {
+.precip-total,
+.snow-total {
   font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: none;
@@ -1765,7 +1766,12 @@ kbd {
   color: #c8e3ff;
   font-variant-numeric: tabular-nums;
 }
-.precip-total[hidden] { display: none; }
+.snow-total {
+  background: rgba(220, 230, 255, 0.14);
+  color: #e3eaff;
+}
+.precip-total[hidden],
+.snow-total[hidden] { display: none; }
 
 .daily-spark {
   width: 100%;
@@ -1825,6 +1831,24 @@ kbd {
   transition: background 200ms var(--ease);
 }
 .daily-item:hover { background: var(--glass); }
+.daily-item {
+  /* Severity stripe: a thin coloured rail down the left edge that hints at
+     the day's worst headline (heat, freeze, heavy precip, gale, storm). */
+  position: relative;
+}
+.daily-item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 6px; bottom: 6px;
+  width: 3px;
+  border-radius: 2px;
+  background: transparent;
+  transition: background 200ms var(--ease);
+}
+.daily-item[data-severity="info"]::before   { background: rgba(154, 209, 255, 0.6); }
+.daily-item[data-severity="warn"]::before   { background: rgba(255, 200, 110, 0.8); }
+.daily-item[data-severity="danger"]::before { background: rgba(255, 110, 110, 0.85); }
 .daily-day { font-size: 13px; font-weight: 500; }
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
 .daily-range {
