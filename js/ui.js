@@ -82,6 +82,7 @@ const el = {
   refreshBtn: $("#refresh-btn"),
   fetchedAgo: $("#fetched-ago"),
   dailyIconStrip: $("#daily-icon-strip"),
+  precipTotal: $("#precip-total"),
   settingsBtn: $("#settings-btn"),
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
@@ -942,9 +943,40 @@ function renderDaily(w) {
 
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
-  el.dailyIconStrip.innerHTML = days.map((d) =>
-    `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
-  ).join("");
+  // Bar heights scale to whichever day has the most precip; 0.4 mm minimum so
+  // a trace amount still shows as a visible nub.
+  const precips = days.map((d) => d.precip ?? 0);
+  const maxP = Math.max(0.4, ...precips);
+  el.dailyIconStrip.innerHTML = days.map((d) => {
+    const mm = d.precip ?? 0;
+    const frac = Math.min(1, mm / maxP);
+    const label = `${(d.label || d.condition || "").trim()}${mm > 0 ? ` · ${mm.toFixed(1)} mm` : ""}`;
+    const intensity = mm >= 10 ? 3 : mm >= 3 ? 2 : mm >= 0.5 ? 1 : 0;
+    return `
+      <span class="strip-day" title="${escapeHtml(label)}">
+        ${iconFor(d.condition)}
+        <span class="strip-precip" data-level="${intensity}" aria-hidden="true">
+          <span class="strip-precip-fill" style="height:${(frac * 100).toFixed(1)}%"></span>
+        </span>
+      </span>`;
+  }).join("");
+  renderPrecipTotal(days);
+}
+
+function renderPrecipTotal(days) {
+  if (!el.precipTotal) return;
+  const total = days.reduce((s, d) => s + (d.precip ?? 0), 0);
+  if (total < 0.5) {
+    el.precipTotal.hidden = true;
+    return;
+  }
+  el.precipTotal.hidden = false;
+  // Convert mm → in when the user has chosen °F (American conventions).
+  if (state.unit === "F") {
+    el.precipTotal.textContent = `${(total / 25.4).toFixed(2)} in this week`;
+  } else {
+    el.precipTotal.textContent = `${Math.round(total)} mm this week`;
+  }
 }
 
 function renderDailySpark(days) {

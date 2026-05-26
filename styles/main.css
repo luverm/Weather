@@ -1550,6 +1550,46 @@ kbd {
   width: 22px; height: 22px;
   display: block;
 }
+.daily-icon-strip .strip-day {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+}
+.strip-precip {
+  position: relative;
+  width: 16px;
+  height: 14px;
+  display: block;
+  border-radius: 3px;
+  background: rgba(154, 209, 255, 0.08);
+  overflow: hidden;
+}
+.strip-precip-fill {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  background: linear-gradient(180deg, rgba(154,209,255,0.6), rgba(124,140,200,0.9));
+  border-radius: 3px;
+  transition: height 320ms var(--ease);
+}
+.strip-precip[data-level="0"] { opacity: 0.35; }
+.strip-precip[data-level="2"] .strip-precip-fill {
+  background: linear-gradient(180deg, rgba(140,170,255,0.7), rgba(100,120,210,1));
+}
+.strip-precip[data-level="3"] .strip-precip-fill {
+  background: linear-gradient(180deg, rgba(180,140,255,0.7), rgba(140,90,210,1));
+}
+
+.precip-total {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: none;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(154, 209, 255, 0.12);
+  color: #c8e3ff;
+  font-variant-numeric: tabular-nums;
+}
+.precip-total[hidden] { display: none; }
 
 .daily-spark {
   width: 100%;
