@@ -11,6 +11,7 @@ import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { predictGoldenHour } from "./golden-hour.js";
+import { shareUrl } from "./url-state.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -1328,12 +1329,13 @@ function bindShare() {
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
     ].filter(Boolean);
+    const url = shareUrl();
     const text = lines.join("\n");
     try {
       if (navigator.share) {
-        await navigator.share({ title: `Aether — ${placeName}`, text });
+        await navigator.share({ title: `Aether — ${placeName}`, text, url });
       } else {
-        await navigator.clipboard.writeText(text);
+        await navigator.clipboard.writeText(`${text}\n${url}`);
         ui.showToast("Summary copied to clipboard");
       }
       el.shareBtn.classList.add("just-copied");

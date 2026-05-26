@@ -17,6 +17,7 @@ import { narrate } from "./narrative.js";
 import { places } from "./places.js";
 import { RadarMap } from "./radar-map.js";
 import { installShortcuts } from "./shortcuts.js";
+import { getPlaceFromUrl, setPlaceInUrl, onHashPlace } from "./url-state.js";
 
 const engine = new AnimationEngine();
 
@@ -199,6 +200,7 @@ async function loadByCoords(place) {
   app.place = place;
   ui.setPlace(place);
   ui.setLoading(`Fetching weather for ${place.name}…`);
+  setPlaceInUrl(place);
 
   // Drop any scrubber offset so we start live on each new city.
   clock.reset();
@@ -306,8 +308,15 @@ installShortcuts({
 
 // ---------- Start ----------
 (async function init() {
-  // Prefer the most recent saved place if we have one — avoids the geolocation
-  // prompt on every load and feels snappier.
+  // Highest priority: explicit URL hash (a shared link or bookmark).
+  const fromUrl = getPlaceFromUrl();
+  if (fromUrl) {
+    places.add(fromUrl);
+    await loadByCoords(fromUrl);
+    return;
+  }
+  // Then: most recent saved place — avoids the geolocation prompt on every
+  // load and feels snappier.
   const saved = places.all();
   if (saved.length) {
     await loadByCoords(saved[0]);
@@ -320,6 +329,11 @@ installShortcuts({
     await loadByCoords({ name: "Reykjavík", country: "Iceland", lat: 64.1466, lon: -21.9426 });
   }
 })();
+
+// Back/forward through the browser history swaps the city without a reload.
+onHashPlace((place) => {
+  if (!app.place || place.id !== places.idFor(app.place)) loadByCoords(place);
+});
 
 // ---------- Lifecycle ----------
 document.addEventListener("visibilitychange", () => {
