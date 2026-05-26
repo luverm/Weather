@@ -369,6 +369,15 @@ html[data-reduce-motion="true"] *::after {
 .place-chip:hover { background: var(--glass-strong); transform: translateY(-1px); }
 .place-chip.active { background: var(--glass-strong); border-color: rgba(255,255,255,0.35); }
 .place-chip .temp { color: var(--fg-muted); font-variant-numeric: tabular-nums; }
+.place-chip .chip-delta {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  padding: 1px 6px;
+  border-radius: 999px;
+  margin-left: -2px;
+}
+.place-chip .chip-delta[data-dir="up"]   { background: rgba(255, 156, 122, 0.18); color: #ffb196; }
+.place-chip .chip-delta[data-dir="down"] { background: rgba(154, 209, 255, 0.18); color: #9ad1ff; }
 .flag {
   display: inline-block;
   margin-right: 6px;
