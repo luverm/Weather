@@ -572,6 +572,10 @@ html[data-reduce-motion="true"] *::after {
   padding: 0 2px;
 }
 .today-journey.single .journey-sep { display: none; }
+/* Hide a separator whose adjacent step is hidden, so we never leave a
+   dangling "›" between a missing step and the next visible one. */
+.journey-step[hidden] + .journey-sep,
+.journey-sep:has(+ .journey-step[hidden]) { display: none; }
 
 /* ---------- Nowcast banner ---------- */
 .nowcast {

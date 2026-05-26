@@ -587,18 +587,19 @@ function renderPressureSparkline(w) {
     { minSpan: 10, fixedMin: 0, fixedMax: 100 }
   );
   // Wind: line is mean wind, dashed overlay is gusts. Share a y-axis so a
-  // calm-now-gusty-later spike is visible at a glance.
+  // calm-now-gusty-later spike is visible at a glance. Convert to the active
+  // unit so the curve's amplitude tracks the metric tile value.
   const slice = (w.hourly || []).slice(0, 12);
-  const winds = slice.map((h) => h.wind).filter((v) => v != null);
-  const gusts = slice.map((h) => h.gusts).filter((v) => v != null);
+  const winds = slice.map((h) => h.wind).filter((v) => v != null).map(convertWind);
+  const gusts = slice.map((h) => h.gusts).filter((v) => v != null).map(convertWind);
   const combined = [...winds, ...gusts];
   if (combined.length >= 2) {
     const fixedMin = 0;
-    const fixedMax = Math.max(...combined, 5);
+    const fixedMax = Math.max(...combined, isImperial() ? 3 : 5);
     drawSparkline(el.windSparkLine, el.windSparkFill, winds,
-      { minSpan: 4, fixedMin, fixedMax });
+      { minSpan: isImperial() ? 2.5 : 4, fixedMin, fixedMax });
     drawSparkline(el.windSparkGust, null, gusts,
-      { minSpan: 4, fixedMin, fixedMax });
+      { minSpan: isImperial() ? 2.5 : 4, fixedMin, fixedMax });
   } else {
     el.windSparkLine?.setAttribute("d", "");
     el.windSparkFill?.setAttribute("d", "");

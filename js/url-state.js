@@ -2,9 +2,9 @@
 //
 // The current location is mirrored in the URL hash so a tab can be reloaded,
 // bookmarked, or shared and end up on the same place. Format:
-//   #place=<name>|<lat>|<lon>|<country>|<admin1>
-// Country and admin1 are optional. Coordinates are decimal with up to 4
-// fractional digits — enough for any city resolution.
+//   #place=<name>|<lat>|<lon>|<country>|<admin1>|<countryCode>
+// Country, admin1 and countryCode are optional. Coordinates are decimal with
+// up to 4 fractional digits — enough for any city resolution.
 
 const KEY = "place";
 
@@ -20,7 +20,7 @@ export function getPlaceFromUrl() {
   if (!raw) return null;
   const parts = raw.split("|").map(decode);
   if (parts.length < 3) return null;
-  const [name, latStr, lonStr, country = "", admin1 = ""] = parts;
+  const [name, latStr, lonStr, country = "", admin1 = "", countryCode = ""] = parts;
   const lat = parseFloat(latStr);
   const lon = parseFloat(lonStr);
   if (!isFinite(lat) || !isFinite(lon)) return null;
@@ -30,6 +30,7 @@ export function getPlaceFromUrl() {
     id: `${lat.toFixed(4)},${lon.toFixed(4)}`,
     name,
     country: country || undefined,
+    countryCode: /^[A-Za-z]{2}$/.test(countryCode) ? countryCode.toUpperCase() : undefined,
     admin1: admin1 || undefined,
     lat,
     lon,
@@ -44,6 +45,7 @@ export function setPlaceInUrl(place) {
     place.lon.toFixed(4),
     place.country || "",
     place.admin1 || "",
+    place.countryCode || "",
   ].map(encode);
   // Trim trailing empty segments to keep the URL tidy.
   while (parts.length > 3 && parts[parts.length - 1] === "") parts.pop();
