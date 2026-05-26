@@ -55,9 +55,13 @@ function findGusts(hourly) {
 
 /**
  * Return a one or two-sentence narrative for the current weather.
+ *
+ * Options:
+ *   fmtWind(kmh) → string  // formats a wind value with the user's unit
  */
-export function narrate(weather) {
+export function narrate(weather, opts = {}) {
   if (!weather) return "";
+  const fmtWind = opts.fmtWind || ((kmh) => `${Math.round(kmh)} km/h`);
   const bits = [];
   const { condition, label, temp, feelsLike, uvPeak, windSpeed } = weather;
 
@@ -92,7 +96,7 @@ export function narrate(weather) {
   // Wind gusts.
   if (bits.length < 2) {
     const gust = findGusts(weather.hourly);
-    if (gust) bits.push(`Gusts up to ${gust.kmh} km/h around ${fmtHour(gust.ts)}.`);
+    if (gust) bits.push(`Gusts up to ${fmtWind(gust.kmh)} around ${fmtHour(gust.ts)}.`);
   }
 
   // UV warning.

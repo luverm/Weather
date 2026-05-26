@@ -13,6 +13,7 @@ import { weekendSnapshot } from "./weekend.js";
 import { predictGoldenHour } from "./golden-hour.js";
 import { shareUrl } from "./url-state.js";
 import { tonightSkyClarity } from "./stargaze.js";
+import { narrate } from "./narrative.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -240,7 +241,15 @@ export const ui = {
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
-    if (el.narrative) el.narrative.textContent = narrative || "";
+    // Generate the narrative here so it can be regenerated on unit changes
+    // (and so wind values use the active mph/km/h preference). Callers can
+    // still pass an explicit `narrative` to override.
+    if (el.narrative) {
+      const text = narrative != null ? narrative : narrate(weather, {
+        fmtWind: (kmh) => `${Math.round(convertWind(kmh))} ${windUnitLabel()}`,
+      });
+      el.narrative.textContent = text || "";
+    }
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
