@@ -99,8 +99,27 @@ export function buildAlerts(weather) {
   }
 
   // ---- Snow ----
-  const snowHour = hours.find((h) => h.condition === "snow");
-  if (snowHour) {
+  // Sum the next-24h snowfall (cm) so we can grade light flurries vs major
+  // storms instead of just "snow at 14:00".
+  const totalSnowCm = hours.reduce((s, h) => s + (h.snowfall ?? 0), 0);
+  const snowHour = hours.find((h) => (h.snowfall ?? 0) > 0.1 || h.condition === "snow");
+  if (totalSnowCm >= 10) {
+    out.push({
+      id: "heavy-snow",
+      severity: "danger",
+      title: "Heavy snowfall",
+      detail: `~${Math.round(totalSnowCm)} cm forecast over the next 24h.`,
+      ts: snowHour?.time,
+    });
+  } else if (totalSnowCm >= 3) {
+    out.push({
+      id: "snow-totals",
+      severity: "warn",
+      title: "Snow accumulating",
+      detail: `~${totalSnowCm.toFixed(1)} cm by tomorrow${snowHour ? ` (from ${shortClock(snowHour.time)})` : ""}.`,
+      ts: snowHour?.time,
+    });
+  } else if (snowHour) {
     out.push({
       id: "snow",
       severity: "info",
@@ -213,5 +232,7 @@ function dedupe(items) {
   if (ids.has("severe-heat")) drop.add("heat");
   if (ids.has("hard-freeze")) drop.add("frost");
   if (ids.has("heavy-rain") || ids.has("soaking-rain")) drop.add("wet-day");
+  if (ids.has("heavy-snow")) { drop.add("snow-totals"); drop.add("snow"); }
+  else if (ids.has("snow-totals")) drop.add("snow");
   return items.filter((x) => !drop.has(x.id));
 }

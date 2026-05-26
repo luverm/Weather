@@ -81,7 +81,7 @@ export async function getWeather(lat, lon) {
     minutely_15: ["precipitation", "weather_code"].join(","),
     hourly: [
       "temperature_2m", "apparent_temperature", "weather_code",
-      "precipitation_probability", "precipitation",
+      "precipitation_probability", "precipitation", "snowfall",
       "wind_speed_10m", "wind_gusts_10m",
       "is_day", "uv_index", "pressure_msl",
       "relative_humidity_2m", "cloud_cover",
@@ -90,6 +90,7 @@ export async function getWeather(lat, lon) {
       "sunrise", "sunset",
       "temperature_2m_max", "temperature_2m_min",
       "weather_code", "precipitation_sum", "precipitation_probability_max",
+      "snowfall_sum",
       "wind_speed_10m_max", "wind_gusts_10m_max", "uv_index_max",
     ].join(","),
     timezone: "auto",
@@ -150,6 +151,7 @@ function normalize(d, aq) {
         pressure: d.hourly.pressure_msl?.[i] ?? null,
         humidity: d.hourly.relative_humidity_2m?.[i] ?? null,
         cloud: d.hourly.cloud_cover?.[i] ?? null,
+        snowfall: d.hourly.snowfall?.[i] ?? 0,
         ...mapWmo(d.hourly.weather_code[i]),
       };
       if (t < now - 30 * 60 * 1000) hourlyPast.push(entry);
@@ -167,6 +169,7 @@ function normalize(d, aq) {
         tempMax: daily.temperature_2m_max?.[i],
         tempMin: daily.temperature_2m_min?.[i],
         precip: daily.precipitation_sum?.[i] ?? 0,
+        snowfall: daily.snowfall_sum?.[i] ?? 0,
         pop: daily.precipitation_probability_max?.[i] ?? 0,
         windMax: daily.wind_speed_10m_max?.[i],
         gustsMax: daily.wind_gusts_10m_max?.[i],

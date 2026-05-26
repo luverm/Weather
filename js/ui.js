@@ -1132,7 +1132,11 @@ function renderDaily(w) {
       ? ` · gusts ${Math.round(convertWind(d.gustsMax))} ${windUnitLabel()}`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
-    const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const snowLabel = (d.snowfall ?? 0) >= 0.5
+      ? ` · ❄ ${d.snowfall.toFixed(1)} cm`
+      : "";
+    const extras = gustLabel || popLabel || snowLabel;
+    const extra = extras ? `<span class="daily-gust">${popLabel}${snowLabel}${gustLabel}</span>` : "";
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
