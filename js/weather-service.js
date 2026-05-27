@@ -93,6 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
+    past_days: 1,         // include yesterday for same-hour comparison
     past_hours: 1,
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
@@ -151,12 +152,18 @@ function normalize(d, aq) {
     }
   }
 
-  // 7-day daily forecast.
+  // 7-day daily forecast. With past_days=1, daily[0] is yesterday — capture it
+  // for comparison and then drop it so today is index 0 for the UI.
   const dailyForecast = [];
+  let yesterdayDaily = null;
+  // Prefer the response's local-time date string when present so timezone
+  // mismatches don't accidentally classify "today" as past.
+  const todayDate = (c.time || "").slice(0, 10);
   if (daily.time) {
     for (let i = 0; i < daily.time.length; i++) {
+      const dateStr = daily.time[i];
       const ts = new Date(daily.time[i]).getTime();
-      dailyForecast.push({
+      const entry = {
         time: ts,
         tempMax: daily.temperature_2m_max?.[i],
         tempMin: daily.temperature_2m_min?.[i],
@@ -168,9 +175,20 @@ function normalize(d, aq) {
         sunrise: daily.sunrise?.[i] ? new Date(daily.sunrise[i]).getTime() : null,
         sunset: daily.sunset?.[i] ? new Date(daily.sunset[i]).getTime() : null,
         ...mapWmo(daily.weather_code[i]),
-      });
+      };
+      const isYesterday = todayDate
+        ? dateStr < todayDate
+        : (i === 0 && daily.time.length > 7); // fallback: past_days=1 prepends one
+      if (isYesterday) {
+        yesterdayDaily = entry;
+        continue;
+      }
+      dailyForecast.push(entry);
     }
   }
+
+  // Same-hour-yesterday temperature for the "vs yesterday" pill.
+  const yesterday = findYesterdaySameHour(d.hourly, now);
 
   // 15-min nowcast for the next ~2h — used for "rain in 12 min" banner.
   const nowcast = [];
@@ -215,8 +233,43 @@ function normalize(d, aq) {
     moon,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
+    yesterday: buildYesterday(c.temperature_2m, yesterday, yesterdayDaily),
     fetchedAt: now,
   };
+}
+
+function findYesterdaySameHour(hourly, now) {
+  if (!hourly?.time || !hourly?.temperature_2m) return null;
+  const target = now - 24 * 3600 * 1000;
+  let bestIdx = -1;
+  let bestDiff = Infinity;
+  for (let i = 0; i < hourly.time.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    const diff = Math.abs(t - target);
+    if (diff < bestDiff) { bestDiff = diff; bestIdx = i; }
+  }
+  if (bestIdx < 0 || bestDiff > 90 * 60_000) return null; // need <90min match
+  return {
+    time: new Date(hourly.time[bestIdx]).getTime(),
+    temp: hourly.temperature_2m[bestIdx],
+    feelsLike: hourly.apparent_temperature?.[bestIdx] ?? null,
+  };
+}
+
+function buildYesterday(currentTemp, sameHour, dailyEntry) {
+  if (currentTemp == null) return null;
+  const out = {};
+  if (sameHour?.temp != null) {
+    out.sameHourTemp = sameHour.temp;
+    out.delta = currentTemp - sameHour.temp;
+  }
+  if (dailyEntry) {
+    out.tempMax = dailyEntry.tempMax;
+    out.tempMin = dailyEntry.tempMin;
+    out.label = dailyEntry.label;
+    out.condition = dailyEntry.condition;
+  }
+  return Object.keys(out).length ? out : null;
 }
 
 function computePressureTrend(hourly, now) {
@@ -315,10 +368,14 @@ function aqiLabel(v) {
 
 function findUvPeak(hourly) {
   if (!hourly?.uv_index) return null;
+  const now = Date.now();
+  const dayEnd = now + 24 * 3600 * 1000;
   let peak = { t: null, v: -Infinity };
   for (let i = 0; i < hourly.uv_index.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    if (t < now - 30 * 60_000 || t > dayEnd) continue; // peak among the next 24h only
     const v = hourly.uv_index[i];
-    if (v > peak.v) peak = { t: new Date(hourly.time[i]).getTime(), v };
+    if (v > peak.v) peak = { t, v };
   }
   if (peak.t == null) return null;
   return { time: peak.t, value: peak.v };
@@ -400,6 +457,7 @@ function mock(lat, lon) {
       level: "Moderate",
     },
     pressureTrend: { delta: -0.4, direction: "steady" },
+    yesterday: { sameHourTemp: 16, delta: 2, tempMax: 19, tempMin: 11, label: "Cloudy", condition: CONDITIONS.CLOUDS },
     fetchedAt: now,
     offline: true,
   };

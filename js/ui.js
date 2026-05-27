@@ -26,6 +26,8 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  yesterdayDelta: $("#yesterday-delta"),
+  yesterdayDeltaText: $("#yesterday-delta-text"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -278,6 +280,51 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  renderYesterday(w);
+}
+
+function renderYesterday(w) {
+  if (!el.yesterdayDelta || !el.yesterdayDeltaText) return;
+  // Use the live weather (not sampled) for the comparison — "vs yesterday at
+  // this hour" only makes sense relative to *actual* now.
+  const live = state.weather || w;
+  const y = live?.yesterday;
+  if (!y || y.delta == null) {
+    el.yesterdayDelta.hidden = true;
+    return;
+  }
+  // Compute delta in the active unit. Open-Meteo returns °C; °F = °C * 1.8.
+  const deltaC = y.delta;
+  const delta = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
+  const rounded = Math.round(delta * 10) / 10;
+  el.yesterdayDelta.hidden = false;
+  let cls = "flat";
+  let arrow = "→";
+  let phrase;
+  if (Math.abs(rounded) < 0.5) {
+    phrase = "Same as yesterday";
+    cls = "flat";
+    arrow = "→";
+  } else if (rounded > 0) {
+    cls = "up";
+    arrow = "↑";
+    phrase = `${formatDelta(rounded)}° warmer than yesterday`;
+  } else {
+    cls = "down";
+    arrow = "↓";
+    phrase = `${formatDelta(Math.abs(rounded))}° cooler than yesterday`;
+  }
+  el.yesterdayDelta.dataset.dir = cls;
+  el.yesterdayDeltaText.textContent = phrase;
+  // Swap the SVG arrow via a class hook (CSS rotates the arrow).
+  el.yesterdayDelta.setAttribute("title",
+    `Yesterday at this hour: ${Math.round(convertTemp(y.sameHourTemp))}° (arrow ${arrow})`);
+}
+
+function formatDelta(v) {
+  // Show one decimal for small deltas, integer otherwise.
+  if (v < 5) return v.toFixed(1).replace(/\.0$/, "");
+  return Math.round(v).toString();
 }
 
 function renderDayRange(w) {
