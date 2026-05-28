@@ -55,6 +55,7 @@ const el = {
   adviceText: $("#advice-text"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
+  chartYesterdayChip: $("#chart-yesterday-chip"),
   pollenCard: $("#pollen-card"),
   pollenLevel: $("#pollen-level"),
   pollenDominant: $("#pollen-dominant"),
@@ -194,7 +195,8 @@ export const ui = {
     renderAlerts(weather);
     renderWeekend(weather);
     startLocaltime(weather);
-    if (state.chart) state.chart.setHours(weather.hourly);
+    if (state.chart) state.chart.setHours(weather.hourly, { yesterday: weather.yesterdayByHour });
+    renderYesterdayChip(weather);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
@@ -823,6 +825,29 @@ function cardinal(deg) {
                 "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
   const i = Math.round(((deg % 360) + 360) % 360 / 22.5) % 16;
   return dirs[i];
+}
+
+function renderYesterdayChip(w) {
+  const chip = el.chartYesterdayChip;
+  if (!chip) return;
+  const d = w?.yesterdayDelta;
+  if (d == null || !isFinite(d)) {
+    chip.hidden = true;
+    return;
+  }
+  const v = state.unit === "F" ? d * 9 / 5 : d;
+  let label, cls;
+  if (Math.abs(v) < 0.5) {
+    label = "≈ yesterday";
+    cls = "flat";
+  } else {
+    const sign = v > 0 ? "+" : "−";
+    label = `${sign}${Math.abs(v).toFixed(1)}° vs yesterday`;
+    cls = v > 0 ? "up" : "down";
+  }
+  chip.className = `chart-yesterday-chip ${cls}`;
+  chip.textContent = label;
+  chip.hidden = false;
 }
 
 function renderHourly(w) {

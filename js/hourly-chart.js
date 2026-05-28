@@ -18,6 +18,7 @@ export class HourlyChart {
     this.getTimezone = getTimezone || (() => null);
     this.hours = [];
     this.points = [];
+    this.yesterday = null;
     this._bind();
   }
 
@@ -48,8 +49,9 @@ export class HourlyChart {
     return new Date(ts).getHours().toString().padStart(2, "0");
   }
 
-  setHours(hours) {
+  setHours(hours, { yesterday } = {}) {
     this.hours = (hours || []).slice(0, 24);
+    this.yesterday = Array.isArray(yesterday) ? yesterday.slice(0, this.hours.length) : null;
     this._draw();
     this.setCursor(null);
   }
@@ -92,13 +94,13 @@ export class HourlyChart {
       const i = toHourIndex(e);
       if (i < 0) return;
       const h = this.hours[i];
-      this._showHover(h);
+      this._showHover(h, i);
       const p = this.points[i];
       const cursor = this.svg.querySelector("#chart-cursor");
       const dot = this.svg.querySelector("#chart-dot");
       cursor.setAttribute("x1", p.x); cursor.setAttribute("x2", p.x);
       dot.setAttribute("cx", p.x); dot.setAttribute("cy", p.y);
-      this._positionPopover(p, h);
+      this._positionPopover(p, h, i);
     });
     this.svg.addEventListener("pointerleave", () => {
       if (this.hoverEl) this.hoverEl.hidden = true;
@@ -114,15 +116,28 @@ export class HourlyChart {
     });
   }
 
-  _showHover(h) {
+  _showHover(h, i) {
     if (!this.hoverEl) return;
     const unit = this.getUnit();
     const t = unit === "F" ? h.temp * 9 / 5 + 32 : h.temp;
-    this.hoverEl.textContent = `${this._formatHour(h.time)} · ${Math.round(t)}° · ${h.pop}% chance`;
+    const y = this.yesterday?.[i];
+    const deltaStr = y != null
+      ? ` · ${this._fmtDelta(h.temp - y)} vs yesterday`
+      : "";
+    this.hoverEl.textContent = `${this._formatHour(h.time)} · ${Math.round(t)}° · ${h.pop}% chance${deltaStr}`;
     this.hoverEl.hidden = false;
   }
 
-  _positionPopover(point, h) {
+  _fmtDelta(d) {
+    if (d == null || !isFinite(d)) return "—";
+    const unit = this.getUnit();
+    const v = unit === "F" ? d * 9 / 5 : d;
+    if (Math.abs(v) < 0.5) return "≈";
+    const sign = v > 0 ? "+" : "−";
+    return `${sign}${Math.abs(v).toFixed(1)}°`;
+  }
+
+  _positionPopover(point, h, i) {
     if (!this.popover) return;
     const rect = this.svg.getBoundingClientRect();
     const wrapRect = this.popover.parentElement.getBoundingClientRect();
@@ -139,9 +154,13 @@ export class HourlyChart {
       ? `<em>feels ${Math.round(feels)}°</em>` : "";
     const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
+    const y = this.yesterday?.[i];
+    const yStr = y != null
+      ? `<br><em>yesterday ${Math.round(unit === "F" ? y * 9 / 5 + 32 : y)}° · ${this._fmtDelta(h.temp - y)}</em>`
+      : "";
     this.popover.innerHTML =
       `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
-      `<em>${h.pop}% precip${wind}${hum}</em>`;
+      `<em>${h.pop}% precip${wind}${hum}</em>${yStr}`;
     this.popover.style.left = `${pxX.toFixed(1)}px`;
     this.popover.style.top = `${pxY.toFixed(1)}px`;
     this.popover.hidden = false;
@@ -155,8 +174,9 @@ export class HourlyChart {
     const innerH = H - PAD_TOP - PAD_BOT;
 
     const temps = this.hours.map((h) => h.temp).filter((v) => v != null);
-    let tMin = Math.min(...temps);
-    let tMax = Math.max(...temps);
+    const yTemps = (this.yesterday || []).filter((v) => v != null);
+    let tMin = Math.min(...temps, ...yTemps);
+    let tMax = Math.max(...temps, ...yTemps);
     if (tMax - tMin < 4) {
       const mid = (tMin + tMax) / 2;
       tMin = mid - 2; tMax = mid + 2;
@@ -202,6 +222,24 @@ export class HourlyChart {
         gustLine.setAttribute("d", gPath.trim());
       } else {
         gustLine.setAttribute("d", "");
+      }
+    }
+
+    // Yesterday's temperature curve — faint dashed ghost behind today's line.
+    const yLine = this.svg.querySelector("#chart-yesterday-line");
+    if (yLine) {
+      if (this.yesterday && yTemps.length >= 2) {
+        let yPath = "";
+        let pen = false;
+        this.hours.forEach((_, i) => {
+          const v = this.yesterday[i];
+          if (v == null) { pen = false; return; }
+          yPath += (pen ? "L" : "M") + iToX(i).toFixed(1) + "," + tToY(v).toFixed(1) + " ";
+          pen = true;
+        });
+        yLine.setAttribute("d", yPath.trim());
+      } else {
+        yLine.setAttribute("d", "");
       }
     }
 

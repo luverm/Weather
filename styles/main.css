@@ -716,11 +716,32 @@ html[data-reduce-motion="true"] *::after {
   opacity: 0.55;
 }
 .legend-swatch.precip { background: rgba(154, 209, 255, 0.55); }
+.legend-swatch.yesterday {
+  background: linear-gradient(90deg, rgba(220, 200, 160, 0.85) 0 2px, transparent 2px 6px, rgba(220, 200, 160, 0.85) 6px 8px, transparent 8px 12px);
+  opacity: 0.75;
+}
 
 .chart-wrap {
   position: relative;
 }
 .chart-feels-line { color: var(--fg-muted); }
+.chart-yesterday-line { color: #d9c79b; }
+.chart-yesterday-chip {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--stroke);
+  color: var(--fg-muted);
+  margin-left: 8px;
+  white-space: nowrap;
+}
+.chart-yesterday-chip[hidden] { display: none; }
+.chart-yesterday-chip.up { color: #ffb88a; border-color: rgba(255, 184, 138, 0.35); }
+.chart-yesterday-chip.down { color: #9ad1ff; border-color: rgba(154, 209, 255, 0.35); }
+.chart-yesterday-chip.flat { color: var(--fg-dim); }
 .chart-popover {
   position: absolute;
   pointer-events: none;

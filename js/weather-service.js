@@ -93,7 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
-    past_hours: 1,
+    past_hours: 26, // enough headroom to align yesterday's curve to the 24h window
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -149,6 +149,38 @@ function normalize(d, aq) {
         ...mapWmo(d.hourly.weather_code[i]),
       });
     }
+  }
+
+  // Yesterday-aligned series: for each upcoming hour, find the temperature
+  // recorded ~24 h earlier so the chart can overlay a "ghost" of yesterday.
+  const yesterdayByHour = hourly.map((h) => {
+    if (!d.hourly?.time) return null;
+    const target = h.time - 24 * 3600_000;
+    let best = null, bestDiff = Infinity;
+    for (let i = 0; i < d.hourly.time.length; i++) {
+      const t = new Date(d.hourly.time[i]).getTime();
+      const diff = Math.abs(t - target);
+      if (diff < bestDiff) { bestDiff = diff; best = i; }
+    }
+    if (best == null || bestDiff > 60 * 60_000) return null;
+    const v = d.hourly.temperature_2m?.[best];
+    return v == null ? null : v;
+  });
+  const hasYesterday = yesterdayByHour.some((v) => v != null);
+
+  // Delta of today's current temp vs yesterday at the same wall-clock hour.
+  let yesterdayDelta = null;
+  if (hasYesterday && c.temperature_2m != null && d.hourly?.time) {
+    const target = now - 24 * 3600_000;
+    let best = null, bestDiff = Infinity;
+    for (let i = 0; i < d.hourly.time.length; i++) {
+      const t = new Date(d.hourly.time[i]).getTime();
+      const diff = Math.abs(t - target);
+      if (diff < bestDiff) { bestDiff = diff; best = i; }
+    }
+    const v = best != null && bestDiff <= 60 * 60_000
+      ? d.hourly.temperature_2m?.[best] : null;
+    if (v != null) yesterdayDelta = c.temperature_2m - v;
   }
 
   // 7-day daily forecast.
@@ -215,6 +247,8 @@ function normalize(d, aq) {
     moon,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
+    yesterdayByHour: hasYesterday ? yesterdayByHour : null,
+    yesterdayDelta,
     fetchedAt: now,
   };
 }
@@ -400,6 +434,8 @@ function mock(lat, lon) {
       level: "Moderate",
     },
     pressureTrend: { delta: -0.4, direction: "steady" },
+    yesterdayByHour: Array.from({ length: 24 }, (_, i) => 17 + Math.sin((i + 1) / 2 + 0.4) * 3),
+    yesterdayDelta: 1.2,
     fetchedAt: now,
     offline: true,
   };

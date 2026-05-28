@@ -180,11 +180,13 @@
       <div class="chart-card glass" id="chart-card" aria-label="Hourly forecast chart">
         <div class="chart-head">
           <span class="chart-title">Hourly trend</span>
+          <span id="chart-yesterday-chip" class="chart-yesterday-chip" hidden></span>
           <div class="chart-legend">
             <span class="legend-swatch temp"></span><span>Temp</span>
             <span class="legend-swatch feels"></span><span>Feels-like</span>
             <span class="legend-swatch gust"></span><span>Gusts</span>
             <span class="legend-swatch precip"></span><span>Precip</span>
+            <span class="legend-swatch yesterday"></span><span>Yesterday</span>
           </div>
           <span id="chart-hover" class="chart-hover" hidden></span>
         </div>
@@ -205,6 +207,7 @@
           <g id="chart-night" class="chart-night"></g>
           <g id="chart-precip" class="chart-precip"></g>
           <path id="chart-temp-fill" class="chart-temp-fill" fill="url(#temp-fill)"></path>
+          <path id="chart-yesterday-line" class="chart-yesterday-line" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="2 4" opacity="0.42"></path>
           <path id="chart-gust-line" class="chart-gust-line" fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="1.5 3" opacity="0.45"></path>
           <path id="chart-feels-line" class="chart-feels-line" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3 3" opacity="0.5"></path>
           <path id="chart-temp-line" class="chart-temp-line" fill="none" stroke="url(#temp-stroke)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"></path>
