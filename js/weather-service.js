@@ -94,6 +94,7 @@ export async function getWeather(lat, lon) {
     timezone: "auto",
     forecast_days: 7,
     past_hours: 1,
+    past_days: 1, // yesterday's sunrise/sunset for daylight-delta
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -151,7 +152,7 @@ function normalize(d, aq) {
     }
   }
 
-  // 7-day daily forecast.
+  // 7-day daily forecast (with one past day at index 0 if available).
   const dailyForecast = [];
   if (daily.time) {
     for (let i = 0; i < daily.time.length; i++) {
@@ -171,6 +172,18 @@ function normalize(d, aq) {
       });
     }
   }
+
+  // Pull yesterday's day out before slicing — it powers the daylight-delta
+  // badge. Identify "today" by matching the current local date; anything before
+  // that is the past day we requested.
+  const todayKey = new Date().toDateString();
+  const todayIdx = dailyForecast.findIndex((d) => new Date(d.time).toDateString() === todayKey);
+  const yesterday = todayIdx > 0 ? dailyForecast[todayIdx - 1] : null;
+  const trimmedDaily = todayIdx > 0 ? dailyForecast.slice(todayIdx) : dailyForecast;
+  const today = trimmedDaily[0];
+  const daylightDelta = (today?.sunrise && today?.sunset && yesterday?.sunrise && yesterday?.sunset)
+    ? Math.round(((today.sunset - today.sunrise) - (yesterday.sunset - yesterday.sunrise)) / 1000)
+    : null;
 
   // 15-min nowcast for the next ~2h — used for "rain in 12 min" banner.
   const nowcast = [];
@@ -204,13 +217,14 @@ function normalize(d, aq) {
     isDay: !!c.is_day,
     condition,
     label,
-    sunrise: daily.sunrise?.[0] ? new Date(daily.sunrise[0]).getTime() : null,
-    sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null,
-    uv: daily.uv_index_max?.[0] ?? null,
+    sunrise: today?.sunrise ?? null,
+    sunset: today?.sunset ?? null,
+    uv: today?.uvMax ?? null,
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
     hourly,
-    daily: dailyForecast,
+    daily: trimmedDaily,
+    daylightDelta, // seconds, signed; null if unavailable
     nowcast,
     moon,
     airQuality: normalizeAq(aq),
@@ -400,6 +414,7 @@ function mock(lat, lon) {
       level: "Moderate",
     },
     pressureTrend: { delta: -0.4, direction: "steady" },
+    daylightDelta: 92,
     fetchedAt: now,
     offline: true,
   };

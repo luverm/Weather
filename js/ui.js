@@ -48,6 +48,7 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -521,8 +522,30 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w.daylightDelta);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderDaylightDelta(seconds) {
+  if (!el.sunDaylightDelta) return;
+  if (seconds == null) {
+    el.sunDaylightDelta.hidden = true;
+    el.sunDaylightDelta.textContent = "";
+    return;
+  }
+  const abs = Math.abs(seconds);
+  const m = Math.floor(abs / 60);
+  const s = abs % 60;
+  const parts = [];
+  if (m) parts.push(`${m}m`);
+  if (s || !m) parts.push(`${s}s`);
+  const sign = seconds > 0 ? "+" : seconds < 0 ? "−" : "±";
+  const dir = seconds >= 0 ? "longer" : "shorter";
+  el.sunDaylightDelta.textContent = `${sign}${parts.join(" ")} vs yesterday`;
+  el.sunDaylightDelta.dataset.direction = dir;
+  el.sunDaylightDelta.title = `Today is ${parts.join(" ")} ${dir} than yesterday`;
+  el.sunDaylightDelta.hidden = false;
 }
 
 function scheduleSunArc(w) {
