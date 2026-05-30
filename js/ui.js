@@ -50,6 +50,7 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -538,8 +539,41 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderDaylightDelta(w) {
+  if (!el.sunDaylightDelta) return;
+  const days = w.daily || [];
+  // Find today and tomorrow inside the daily array — first entry whose sunset is
+  // still in the future is "today"; the one after it is "tomorrow".
+  const now = Date.now();
+  let todayIdx = -1;
+  for (let i = 0; i < days.length; i++) {
+    if (days[i].sunset && days[i].sunset >= now) { todayIdx = i; break; }
+  }
+  if (todayIdx < 0) todayIdx = 0;
+  const today = days[todayIdx];
+  const tmrw = days[todayIdx + 1];
+  if (!today?.sunrise || !today?.sunset || !tmrw?.sunrise || !tmrw?.sunset) {
+    el.sunDaylightDelta.textContent = "";
+    el.sunDaylightDelta.className = "sun-daylight-delta";
+    return;
+  }
+  const todayMins = (today.sunset - today.sunrise) / 60_000;
+  const tmrwMins = (tmrw.sunset - tmrw.sunrise) / 60_000;
+  const deltaMin = Math.round(tmrwMins - todayMins);
+  if (Math.abs(deltaMin) < 1) {
+    el.sunDaylightDelta.textContent = "±0s tomorrow";
+    el.sunDaylightDelta.className = "sun-daylight-delta flat";
+    return;
+  }
+  const cls = deltaMin > 0 ? "up" : "down";
+  const arrow = deltaMin > 0 ? "▲" : "▼";
+  el.sunDaylightDelta.textContent = `${arrow} ${Math.abs(deltaMin)}m tomorrow`;
+  el.sunDaylightDelta.className = `sun-daylight-delta ${cls}`;
 }
 
 function scheduleSunArc(w) {
