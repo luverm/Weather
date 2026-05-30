@@ -23,6 +23,9 @@ const el = {
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
   feelsReason: $("#feels-reason"),
+  cloudChip: $("#cloud-chip"),
+  cloudChipFill: $("#cloud-chip-fill"),
+  cloudChipText: $("#cloud-chip-text"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -278,10 +281,31 @@ function renderLiveValues(w, { animate = true } = {}) {
   const feels = convertTemp(w.feelsLike ?? w.temp);
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
-  el.conditionLabel.textContent = capitalize(w.label);
+  // Preserve the cloud chip inside the condition label by setting text on the
+  // leading text node rather than replacing the element's children.
+  const labelNode = el.conditionLabel.firstChild;
+  const labelText = capitalize(w.label);
+  if (labelNode && labelNode.nodeType === Node.TEXT_NODE) labelNode.nodeValue = labelText;
+  else el.conditionLabel.insertBefore(document.createTextNode(labelText), el.conditionLabel.firstChild);
+  renderCloudChip(w);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderFeelsReason(w);
   renderDayRange(w);
+}
+
+function renderCloudChip(w) {
+  if (!el.cloudChip || !el.cloudChipFill || !el.cloudChipText) return;
+  const cc = w.cloudCover;
+  // Skip when irrelevant: storm/snow/heavy rain already imply heavy cover, and
+  // very low/high percentages duplicate the condition label.
+  const noisyCondition = w.condition === "storm" || w.condition === "snow";
+  if (cc == null || noisyCondition || cc < 5 || cc > 95) {
+    el.cloudChip.hidden = true;
+    return;
+  }
+  el.cloudChip.hidden = false;
+  el.cloudChipFill.style.width = `${Math.round(cc)}%`;
+  el.cloudChipText.textContent = `${Math.round(cc)}% cover`;
 }
 
 function renderFeelsReason(w) {

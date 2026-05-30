@@ -389,7 +389,44 @@ html[data-reduce-motion="true"] *::after {
   transition: background 200ms var(--ease), color 200ms var(--ease);
 }
 .unit:hover { background: var(--glass); color: var(--fg); }
-.condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
+.condition-label {
+  margin: 6px 0 0;
+  font-size: 17px;
+  letter-spacing: 0.01em;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.cloud-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--stroke);
+}
+.cloud-chip[hidden] { display: none; }
+.cloud-chip-bar {
+  position: relative;
+  width: 28px; height: 4px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.10);
+  overflow: hidden;
+}
+.cloud-chip-fill {
+  position: absolute;
+  top: 0; left: 0; height: 100%;
+  background: linear-gradient(90deg, rgba(255,255,255,0.5), rgba(255,255,255,0.85));
+  border-radius: inherit;
+  transition: width 380ms var(--ease);
+}
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
 .feels-reason {
   margin: 6px 0 0;
