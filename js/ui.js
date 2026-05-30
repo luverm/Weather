@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { feelsLikeReason } from "./feels-like.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -21,6 +22,7 @@ const el = {
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
+  feelsReason: $("#feels-reason"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -277,7 +279,22 @@ function renderLiveValues(w, { animate = true } = {}) {
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  renderFeelsReason(w);
   renderDayRange(w);
+}
+
+function renderFeelsReason(w) {
+  if (!el.feelsReason) return;
+  const reason = feelsLikeReason(w);
+  if (!reason) {
+    el.feelsReason.hidden = true;
+    el.feelsReason.textContent = "";
+    el.feelsReason.className = "feels-reason";
+    return;
+  }
+  el.feelsReason.hidden = false;
+  el.feelsReason.textContent = reason.label;
+  el.feelsReason.className = `feels-reason ${reason.cls}`;
 }
 
 function renderDayRange(w) {

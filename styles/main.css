@@ -391,6 +391,31 @@ html[data-reduce-motion="true"] *::after {
 .unit:hover { background: var(--glass); color: var(--fg); }
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
+.feels-reason {
+  margin: 6px 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--stroke);
+  color: var(--fg-muted);
+  max-width: 100%;
+  animation: slideInUp 380ms var(--ease) both;
+}
+.feels-reason[hidden] { display: none; }
+.feels-reason::before {
+  content: "";
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.65;
+}
+.feels-reason.up { color: #ffb196; background: rgba(255, 156, 122, 0.10); }
+.feels-reason.down { color: #9ad1ff; background: rgba(154, 209, 255, 0.10); }
 .day-range {
   margin-top: 10px;
   display: grid;
