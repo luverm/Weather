@@ -298,7 +298,7 @@ function renderCloudChip(w) {
   const cc = w.cloudCover;
   // Skip when irrelevant: storm/snow/heavy rain already imply heavy cover, and
   // very low/high percentages duplicate the condition label.
-  const noisyCondition = w.condition === "storm" || w.condition === "snow";
+  const noisyCondition = w.condition === "storm" || w.condition === "snow" || w.condition === "fog";
   if (cc == null || noisyCondition || cc < 5 || cc > 95) {
     el.cloudChip.hidden = true;
     return;
@@ -590,7 +590,7 @@ function renderDaylightDelta(w) {
   const tmrwMins = (tmrw.sunset - tmrw.sunrise) / 60_000;
   const deltaMin = Math.round(tmrwMins - todayMins);
   if (Math.abs(deltaMin) < 1) {
-    el.sunDaylightDelta.textContent = "±0s tomorrow";
+    el.sunDaylightDelta.textContent = "same tomorrow";
     el.sunDaylightDelta.className = "sun-daylight-delta flat";
     return;
   }
