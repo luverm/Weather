@@ -10,9 +10,10 @@ const ICONS = {
   uv: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M4 12H2M6 6l-2-2M12 18a6 6 0 006-6H6a6 6 0 006 6z"/></svg>',
   humid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c4 5 6 8 6 11a6 6 0 01-12 0c0-3 2-6 6-11z"/></svg>',
   sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg>',
+  cloud: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17a4 4 0 010-8 5 5 0 019.9-1A4 4 0 0117 17H7z"/></svg>',
 };
 
-export function buildInsights(weather, { fmtTime, weekday } = {}) {
+export function buildInsights(weather, { fmtTime, weekday, getUnit } = {}) {
   const out = [];
   if (!weather) return out;
 
@@ -20,6 +21,8 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
   const days = weather.daily || [];
   const fmt = fmtTime || ((t) => new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
   const dow = weekday || ((t) => new Date(t).toLocaleDateString([], { weekday: "short" }));
+  const unit = (getUnit && getUnit()) || "C";
+  const T = (c) => c == null ? null : Math.round(unit === "F" ? c * 9 / 5 + 32 : c);
 
   // 1. Next rain in the week.
   const rainyDay = days.find((d) => (d.pop ?? 0) >= 55 || (d.precip ?? 0) >= 1.5);
@@ -63,12 +66,12 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
   if (coldest && warmest && warmest.t - coldest.t >= 4) {
     out.push({
       icon: ICONS.cold, label: "Coldest",
-      value: `${Math.round(coldest.t)}° at ${fmt(coldest.ts)}`,
+      value: `${T(coldest.t)}° at ${fmt(coldest.ts)}`,
       ts: coldest.ts,
     });
     out.push({
       icon: ICONS.warm, label: "Warmest",
-      value: `${Math.round(warmest.t)}° at ${fmt(warmest.ts)}`,
+      value: `${T(warmest.t)}° at ${fmt(warmest.ts)}`,
       ts: warmest.ts,
     });
   }
@@ -84,7 +87,7 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     if (hotDay && coolDay && hotDay !== coolDay) {
       out.push({
         icon: ICONS.warm, label: "Week high",
-        value: `${Math.round(hotDay.tempMax)}° on ${dow(hotDay.time)}`,
+        value: `${T(hotDay.tempMax)}° on ${dow(hotDay.time)}`,
         ts: hotDay.sunrise || hotDay.time,
       });
     }
@@ -97,6 +100,29 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
       value: `${Math.round(weather.uvPeak.value)} at ${fmt(weather.uvPeak.time)}`,
       ts: weather.uvPeak.time,
     });
+  }
+
+  // 6. Sky narrative — first cloud-cover transition (clearing or cloudifying)
+  // in the next 12 hours, using the hourly cloudCover field.
+  const skyHours = hours.slice(0, 12).filter((h) => h.cloudCover != null);
+  if (skyHours.length >= 4) {
+    const startCover = skyHours[0].cloudCover;
+    // Find first hour that crosses into the opposite half (>50 or <50).
+    let cross = null;
+    const startClear = startCover < 50;
+    for (let i = 1; i < skyHours.length; i++) {
+      const c = skyHours[i].cloudCover;
+      if (startClear && c >= 70) { cross = { ts: skyHours[i].time, kind: "clouds" }; break; }
+      if (!startClear && c <= 30) { cross = { ts: skyHours[i].time, kind: "clear" }; break; }
+    }
+    if (cross) {
+      out.push({
+        icon: cross.kind === "clear" ? ICONS.sun : ICONS.cloud,
+        label: cross.kind === "clear" ? "Clearing" : "Clouding over",
+        value: `around ${fmt(cross.ts)}`,
+        ts: cross.ts,
+      });
+    }
   }
 
   return out.slice(0, 6);
