@@ -1150,6 +1150,70 @@ kbd {
   font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums;
 }
 
+/* ---------- Sky ribbon (12-cell cloud-cover band above comfort strip) ---------- */
+.sky-ribbon {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 0 4px;
+}
+.sky-ribbon[hidden] { display: none; }
+.sky-ribbon .sky-row {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 2px;
+  height: 14px;
+}
+.sky-cell {
+  position: relative;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  cursor: pointer;
+  background: var(--sky, #6cb4ff);
+  /* subtle inner sheen so cells read as "sky" not as flat swatches */
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), inset 0 -1px 0 rgba(0,0,0,0.18);
+  transition: transform 160ms var(--ease), filter 160ms var(--ease);
+}
+.sky-cell:hover { filter: brightness(1.12); transform: translateY(-1px); }
+.sky-cell:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.sky-tick {
+  position: absolute;
+  bottom: -14px;
+  left: 0;
+  font-size: 9px;
+  color: var(--fg-dim);
+  letter-spacing: 0.04em;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+.sky-cross {
+  position: absolute;
+  top: -2px;
+  right: 1px;
+  font-size: 9px;
+  line-height: 1;
+  color: rgba(255, 240, 200, 0.95);
+  text-shadow: 0 0 4px rgba(255, 200, 120, 0.6);
+  pointer-events: none;
+}
+.sky-legend {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  color: var(--fg-dim);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-top: 10px;
+}
+.sky-legend-meta { display: inline-flex; gap: 10px; font-variant-numeric: tabular-nums; }
+.sky-legend-item { color: var(--fg); opacity: 0.78; }
+
 /* ---------- Comfort strip (24-cell heat band under the chart) ---------- */
 .comfort-strip {
   display: grid;
