@@ -23,6 +23,7 @@ const el = {
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
   narrative: $("#narrative"),
+  yesterdayDelta: $("#yesterday-delta"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
@@ -288,6 +289,27 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  renderYesterdayDelta(w);
+}
+
+function renderYesterdayDelta(w) {
+  if (!el.yesterdayDelta) return;
+  const y = w.yesterday;
+  // Only show on the live view — hide when scrubbing into the future.
+  const isLive = w._sampledTs == null;
+  if (!isLive || !y || y.temp == null || w.temp == null) {
+    el.yesterdayDelta.hidden = true;
+    return;
+  }
+  // Convert delta to active unit. °F span is 1.8x °C span.
+  const deltaC = w.temp - y.temp;
+  const deltaDisp = Math.round(state.unit === "F" ? deltaC * 9 / 5 : deltaC);
+  let cls = "", word = "similar";
+  if (deltaDisp >= 1) { cls = "warmer"; word = `${deltaDisp}° warmer`; }
+  else if (deltaDisp <= -1) { cls = "cooler"; word = `${Math.abs(deltaDisp)}° cooler`; }
+  el.yesterdayDelta.className = `yesterday-delta ${cls}`.trim();
+  el.yesterdayDelta.textContent = `${word} than yesterday`;
+  el.yesterdayDelta.hidden = false;
 }
 
 function renderDayRange(w) {

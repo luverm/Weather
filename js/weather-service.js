@@ -94,6 +94,7 @@ export async function getWeather(lat, lon) {
     timezone: "auto",
     forecast_days: 7,
     past_hours: 1,
+    past_days: 1,
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -127,6 +128,31 @@ function normalize(d, aq) {
   const { condition, label } = mapWmo(c.weather_code);
   const daily = d.daily || {};
   const now = Date.now();
+
+  // Yesterday at the same wall-clock hour (used for "vs yesterday" pill).
+  // We scan the full hourly series — including the past_days=1 segment —
+  // for the entry whose timestamp is closest to "now − 24h".
+  let yesterday = null;
+  if (d.hourly?.time) {
+    const target = now - 24 * 3600_000;
+    let bestDiff = Infinity, bestIdx = -1;
+    for (let i = 0; i < d.hourly.time.length; i++) {
+      const diff = Math.abs(new Date(d.hourly.time[i]).getTime() - target);
+      if (diff < bestDiff) { bestDiff = diff; bestIdx = i; }
+    }
+    // Only count it if within 90 min of the target — guards against an empty
+    // past window collapsing to the next available hour.
+    if (bestIdx >= 0 && bestDiff <= 90 * 60_000) {
+      yesterday = {
+        time: new Date(d.hourly.time[bestIdx]).getTime(),
+        temp: d.hourly.temperature_2m?.[bestIdx],
+        feelsLike: d.hourly.apparent_temperature?.[bestIdx],
+        precip: d.hourly.precipitation?.[bestIdx] ?? 0,
+        humidity: d.hourly.relative_humidity_2m?.[bestIdx] ?? null,
+        ...mapWmo(d.hourly.weather_code?.[bestIdx]),
+      };
+    }
+  }
 
   // 24-hour hourly forecast starting from the next hour.
   const hourly = [];
@@ -215,6 +241,7 @@ function normalize(d, aq) {
     daily: dailyForecast,
     nowcast,
     moon,
+    yesterday,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
     fetchedAt: now,
@@ -404,6 +431,11 @@ function mock(lat, lon) {
       level: "Moderate",
     },
     pressureTrend: { delta: -0.4, direction: "steady" },
+    yesterday: {
+      time: now - 24 * 3600_000,
+      temp: 16, feelsLike: 15, humidity: 70, precip: 0,
+      condition: CONDITIONS.CLOUDS, label: "Cloudy",
+    },
     fetchedAt: now,
     offline: true,
   };

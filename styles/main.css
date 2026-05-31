@@ -391,6 +391,28 @@ html[data-reduce-motion="true"] *::after {
 .unit:hover { background: var(--glass); color: var(--fg); }
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
+.yesterday-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 0;
+  padding: 3px 8px;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--stroke);
+  color: var(--fg-muted);
+}
+.yesterday-delta[hidden] { display: none; }
+.yesterday-delta.warmer { background: rgba(255, 156, 122, 0.12); color: #ffb196; }
+.yesterday-delta.cooler { background: rgba(154, 209, 255, 0.12); color: #9ad1ff; }
+.yesterday-delta::before {
+  content: "";
+  width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor;
+  opacity: 0.75;
+}
 .day-range {
   margin-top: 10px;
   display: grid;
