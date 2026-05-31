@@ -188,6 +188,23 @@ function normalize(d, aq) {
     }
   }
 
+  // Past-24h hourly series (the past_days=1 window). Used to overlay a
+  // faint 'yesterday' temperature trace on the hourly chart so today's
+  // shape has visible context.
+  const yesterdayHourly = [];
+  if (d.hourly?.time) {
+    const cutoff = now - 27 * 3600_000;
+    for (let i = 0; i < d.hourly.time.length; i++) {
+      const t = new Date(d.hourly.time[i]).getTime();
+      if (t < cutoff) continue;
+      if (t >= now - 30 * 60_000) break;
+      yesterdayHourly.push({
+        time: t,
+        temp: d.hourly.temperature_2m?.[i],
+      });
+    }
+  }
+
   // 24-hour hourly forecast starting from the next hour.
   const hourly = [];
   if (d.hourly?.time) {
@@ -293,6 +310,7 @@ function normalize(d, aq) {
     moon,
     yesterday,
     yesterdayDaily,
+    yesterdayHourly,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
     fetchedAt: now,
@@ -508,6 +526,10 @@ function mock(lat, lon) {
       temp: 16, feelsLike: 15, humidity: 70, precip: 0,
       condition: CONDITIONS.CLOUDS, label: "Cloudy",
     },
+    yesterdayHourly: Array.from({ length: 24 }, (_, i) => ({
+      time: new Date().setMinutes(0, 0, 0) + i * 3600_000 - 86400_000,
+      temp: 16 + Math.sin((i + 1) / 2) * 2.5,
+    })),
     yesterdayDaily: {
       time: now - 24 * 3600_000,
       tempMax: 19, tempMin: 11, precip: 0, pop: 10,

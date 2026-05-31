@@ -48,8 +48,9 @@ export class HourlyChart {
     return new Date(ts).getHours().toString().padStart(2, "0");
   }
 
-  setHours(hours) {
+  setHours(hours, { yesterdayHourly } = {}) {
     this.hours = (hours || []).slice(0, 24);
+    this.yesterdayHourly = yesterdayHourly || [];
     this._draw();
     this.setCursor(null);
   }
@@ -227,6 +228,33 @@ export class HourlyChart {
         gustLine.setAttribute("d", gPath.trim());
       } else {
         gustLine.setAttribute("d", "");
+      }
+    }
+
+    // Yesterday line — for each today-hour, look up the past entry whose
+    // wall-clock hour matches and plot at the same x. Skip if the past
+    // series is missing or thin.
+    const yLine = this.svg.querySelector("#chart-yesterday-line");
+    if (yLine) {
+      const past = this.yesterdayHourly || [];
+      if (past.length >= 6) {
+        const byHour = new Map();
+        for (const p of past) {
+          if (p.temp == null) continue;
+          byHour.set(this._hourOf(p.time), p.temp);
+        }
+        // Use the same y-scale as today so the lines are comparable.
+        let path = "";
+        let cmd = "M";
+        this.hours.forEach((h, i) => {
+          const yTemp = byHour.get(this._hourOf(h.time));
+          if (yTemp == null) { cmd = "M"; return; } // gap -> restart subpath
+          path += `${cmd}${iToX(i).toFixed(1)},${tToY(yTemp).toFixed(1)} `;
+          cmd = "L";
+        });
+        yLine.setAttribute("d", path.trim());
+      } else {
+        yLine.setAttribute("d", "");
       }
     }
 

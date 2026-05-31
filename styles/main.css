@@ -744,6 +744,8 @@ html[data-reduce-motion="true"] *::after {
   opacity: 0.55;
 }
 .legend-swatch.precip { background: rgba(154, 209, 255, 0.55); }
+.legend-swatch.yesterday { background: var(--fg-muted); opacity: 0.4; }
+.chart-yesterday-line { color: var(--fg-muted); }
 
 .chart-wrap {
   position: relative;

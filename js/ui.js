@@ -205,7 +205,9 @@ export const ui = {
     renderAlerts(weather);
     renderWeekend(weather);
     startLocaltime(weather);
-    if (state.chart) state.chart.setHours(weather.hourly);
+    if (state.chart) state.chart.setHours(weather.hourly, {
+      yesterdayHourly: weather.yesterdayHourly,
+    });
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (state.skyRibbon) state.skyRibbon.setData(weather.hourly, {
       sunrise: weather.sunrise, sunset: weather.sunset,
