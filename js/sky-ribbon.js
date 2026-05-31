@@ -19,6 +19,19 @@ export class SkyRibbon {
     this.render();
   }
 
+  /** Index of the cell whose hour contains the current moment. */
+  _nowIndex() {
+    if (!this.hours.length) return -1;
+    const now = Date.now();
+    let best = -1, bestDiff = Infinity;
+    for (let i = 0; i < this.hours.length; i++) {
+      const diff = Math.abs(this.hours[i].time - now);
+      if (diff < bestDiff) { bestDiff = diff; best = i; }
+    }
+    // Only mark if within 90 minutes — otherwise "now" isn't in view.
+    return bestDiff <= 90 * 60_000 ? best : -1;
+  }
+
   render() {
     if (!this.root) return;
     if (!this.hours.length) {
@@ -29,6 +42,7 @@ export class SkyRibbon {
     this.root.hidden = false;
     const sunriseLabel = this.sunrise ? fmtHour(this.sunrise) : null;
     const sunsetLabel = this.sunset ? fmtHour(this.sunset) : null;
+    const nowIdx = this._nowIndex();
 
     const cells = this.hours.map((h, i) => {
       const cover = h.cloudCover ?? estimateCoverFromCondition(h.condition);
@@ -44,8 +58,9 @@ export class SkyRibbon {
       const crossIcon = isCross
         ? (this.sunrise && hourMatches(h.time, this.sunrise) ? "↑" : "↓")
         : "";
+      const nowAttr = i === nowIdx ? ' data-now="true"' : "";
       return `
-        <button class="sky-cell" data-i="${i}" data-ts="${h.time}"
+        <button class="sky-cell" data-i="${i}" data-ts="${h.time}"${nowAttr}
                 title="${title}" aria-label="${title}"
                 style="--sky:${color}">
           ${isCross ? `<span class="sky-cross" aria-hidden="true">${crossIcon}</span>` : ""}

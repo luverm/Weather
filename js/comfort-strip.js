@@ -23,6 +23,7 @@ export class ComfortStrip {
     }
     this.root.hidden = false;
     const unit = this.getUnit();
+    const nowIdx = this._nowIndex();
     // Min/max across the displayed range for crisp colors.
     const temps = this.hours.map((h) => h.feelsLike ?? h.temp).filter((v) => v != null);
     const tMin = Math.min(...temps);
@@ -37,8 +38,9 @@ export class ComfortStrip {
       const tickHour = new Date(h.time).getHours();
       const showTick = tickHour % 6 === 0;
       const tickLabel = showTick ? `${tickHour.toString().padStart(2, "0")}:00` : "";
+      const nowAttr = i === nowIdx ? ' data-now="true"' : "";
       return `
-        <button class="cstrip-cell" data-i="${i}" data-ts="${h.time}"
+        <button class="cstrip-cell" data-i="${i}" data-ts="${h.time}"${nowAttr}
                 title="${tickHour}:00 · ${display} feels · ${h.pop ?? 0}% rain"
                 style="--c:${color}">
           <span class="cstrip-bar" style="--rain:${rainOpacity}"></span>
@@ -54,6 +56,17 @@ export class ComfortStrip {
         if (ts) this.onCellClick?.(ts);
       });
     });
+  }
+
+  _nowIndex() {
+    if (!this.hours.length) return -1;
+    const now = Date.now();
+    let best = -1, bestDiff = Infinity;
+    for (let i = 0; i < this.hours.length; i++) {
+      const diff = Math.abs(this.hours[i].time - now);
+      if (diff < bestDiff) { bestDiff = diff; best = i; }
+    }
+    return bestDiff <= 90 * 60_000 ? best : -1;
   }
 
   highlight(idx) {
