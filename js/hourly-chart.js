@@ -137,11 +137,14 @@ export class HourlyChart {
       : null;
     const feelsStr = (feels != null && Math.abs(feels - t) >= 1)
       ? `<em>feels ${Math.round(feels)}°</em>` : "";
-    const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h` : "";
+    const windArrow = h.windDir != null
+      ? `<span class="popover-wind" style="--dir:${h.windDir}deg" aria-hidden="true">↑</span>`
+      : "";
+    const wind = h.wind != null ? ` ${windArrow}${Math.round(h.wind)} km/h` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
     this.popover.innerHTML =
       `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
-      `<em>${h.pop}% precip${wind}${hum}</em>`;
+      `<em>${h.pop}% precip${wind ? " ·" : ""}${wind}${hum}</em>`;
     this.popover.style.left = `${pxX.toFixed(1)}px`;
     this.popover.style.top = `${pxY.toFixed(1)}px`;
     this.popover.hidden = false;
@@ -166,6 +169,28 @@ export class HourlyChart {
     const iToX = (i) => PAD_LEFT + (i / (this.hours.length - 1)) * innerW;
 
     this.points = this.hours.map((h, i) => ({ x: iToX(i), y: tToY(h.temp) }));
+
+    // Position the "now" guideline at the interpolated x for the current
+    // timestamp — falls between hourly samples on most loads.
+    const now = Date.now();
+    const nowLine = this.svg.querySelector("#chart-now");
+    const nowLabel = this.svg.querySelector("#chart-now-label");
+    if (nowLine && nowLabel && this.hours.length >= 2) {
+      const first = this.hours[0].time;
+      const last = this.hours[this.hours.length - 1].time;
+      if (now >= first && now <= last) {
+        const frac = (now - first) / (last - first);
+        const x = PAD_LEFT + frac * innerW;
+        nowLine.setAttribute("x1", x.toFixed(1));
+        nowLine.setAttribute("x2", x.toFixed(1));
+        nowLabel.setAttribute("x", x.toFixed(1));
+        nowLine.setAttribute("opacity", "1");
+        nowLabel.setAttribute("opacity", "1");
+      } else {
+        nowLine.setAttribute("opacity", "0");
+        nowLabel.setAttribute("opacity", "0");
+      }
+    }
 
     // Temp line path
     let linePath = "";
