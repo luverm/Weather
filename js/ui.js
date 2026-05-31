@@ -94,6 +94,7 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcNoonLabel: $("#sun-arc-noon-label"),
   comfortStrip: $("#comfort-strip"),
   skyRibbon: $("#sky-ribbon"),
   weekendChip: $("#weekend-chip"),
@@ -608,6 +609,12 @@ function scheduleSunArc(w) {
   if (!el.sunArcMarker || !el.sunArcPath) return;
   if (state.sunArcTimer) { clearInterval(state.sunArcTimer); state.sunArcTimer = null; }
   if (!w?.sunrise || !w?.sunset) return;
+
+  // Solar-noon label at the apex of the arc.
+  if (el.sunArcNoonLabel) {
+    const noonTs = (w.sunrise + w.sunset) / 2;
+    el.sunArcNoonLabel.textContent = fmtTime(noonTs);
+  }
 
   const update = () => {
     const now = Date.now();
