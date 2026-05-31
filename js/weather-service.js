@@ -181,12 +181,13 @@ function normalize(d, aq) {
 
   // 7-day daily forecast. We split past_days entries (yesterday) out into
   // a side channel so the rest of the app can still treat dailyForecast[0]
-  // as "today" without paging.
+  // as "today" without paging. The split is timezone-aware: we compare
+  // each daily entry's date string against today's date *in the location's
+  // timezone* — anchoring on browser-local midnight would misclassify by
+  // a day when viewing a city many timezones away.
   const dailyForecast = [];
   let yesterdayDaily = null;
-  // Anchor "today" to local midnight of the timezone the API replied with so
-  // the split survives daylight-saving boundaries.
-  const todayStart = startOfLocalDay(now);
+  const todayDateStr = todayDateInTimezone(d.timezone);
   if (daily.time) {
     for (let i = 0; i < daily.time.length; i++) {
       const ts = new Date(daily.time[i]).getTime();
@@ -203,11 +204,10 @@ function normalize(d, aq) {
         sunset: daily.sunset?.[i] ? new Date(daily.sunset[i]).getTime() : null,
         ...mapWmo(daily.weather_code[i]),
       };
-      if (ts < todayStart - 12 * 3600_000) {
-        // Older than yesterday — discard.
-        continue;
-      }
-      if (ts < todayStart) {
+      // daily.time[i] is "YYYY-MM-DD" — direct string compare is safe and
+      // dodges all clock-skew edge cases.
+      const entryDateStr = String(daily.time[i]).slice(0, 10);
+      if (entryDateStr < todayDateStr) {
         yesterdayDaily = entry;
         continue;
       }
@@ -265,10 +265,22 @@ function normalize(d, aq) {
   };
 }
 
-function startOfLocalDay(ts) {
-  const d = new Date(ts);
-  d.setHours(0, 0, 0, 0);
-  return d.getTime();
+function todayDateInTimezone(tz) {
+  // Returns "YYYY-MM-DD" for the current moment in the given IANA timezone.
+  // Falls back to browser-local when the timezone string is unusable.
+  try {
+    if (tz && tz !== "auto") {
+      // en-CA reliably emits ISO-formatted YYYY-MM-DD.
+      return new Intl.DateTimeFormat("en-CA", {
+        timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit",
+      }).format(new Date());
+    }
+  } catch { /* fall through */ }
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 function computePressureTrend(hourly, now) {

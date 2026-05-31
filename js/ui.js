@@ -305,11 +305,18 @@ function renderYesterdayDelta(w) {
   // Convert delta to active unit. °F span is 1.8x °C span.
   const deltaC = w.temp - y.temp;
   const deltaDisp = Math.round(state.unit === "F" ? deltaC * 9 / 5 : deltaC);
-  let cls = "", word = "similar";
-  if (deltaDisp >= 1) { cls = "warmer"; word = `${deltaDisp}° warmer`; }
-  else if (deltaDisp <= -1) { cls = "cooler"; word = `${Math.abs(deltaDisp)}° cooler`; }
+  let cls = "", text;
+  if (deltaDisp >= 1) {
+    cls = "warmer";
+    text = `${deltaDisp}° warmer than yesterday`;
+  } else if (deltaDisp <= -1) {
+    cls = "cooler";
+    text = `${Math.abs(deltaDisp)}° cooler than yesterday`;
+  } else {
+    text = "Similar to yesterday";
+  }
   el.yesterdayDelta.className = `yesterday-delta ${cls}`.trim();
-  el.yesterdayDelta.textContent = `${word} than yesterday`;
+  el.yesterdayDelta.textContent = text;
   el.yesterdayDelta.hidden = false;
 }
 
