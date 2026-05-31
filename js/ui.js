@@ -11,6 +11,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { narrate } from "./narrative.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -208,7 +209,14 @@ export const ui = {
     if (state.skyRibbon) state.skyRibbon.setData(weather.hourly, {
       sunrise: weather.sunrise, sunset: weather.sunset,
     });
-    if (el.narrative) el.narrative.textContent = narrative || "";
+    // Regenerate narrative if caller didn't pass one — keeps the unit
+    // toggle from blanking it out.
+    if (el.narrative) {
+      const text = narrative != null
+        ? narrative
+        : narrate(weather, { getUnit: () => state.unit });
+      el.narrative.textContent = text || "";
+    }
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
     if (state.place) {

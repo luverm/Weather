@@ -211,8 +211,9 @@ async function loadByCoords(place) {
   const w = await getWeather(place.lat, place.lon);
   app.weather = w;
 
-  // Render full UI (live + forecasts + narrative).
-  ui.setWeather(w, { narrative: narrate(w) });
+  // Render full UI (live + forecasts + narrative). The narrative is built
+  // here so app.js controls when it's regenerated.
+  ui.setWeather(w, { narrative: narrate(w, { getUnit: ui.getUnit }) });
 
   // Apply to scenes at current (live) time.
   applyScene(w);

@@ -55,17 +55,23 @@ function findGusts(hourly) {
 
 /**
  * Return a one or two-sentence narrative for the current weather.
+ *
+ * `opts.getUnit` returns "C" or "F" — when "F", temperature numbers in the
+ * narrative are converted so they match the visible toggle.
  */
-export function narrate(weather) {
+export function narrate(weather, opts = {}) {
   if (!weather) return "";
   const bits = [];
   const { condition, label, temp, feelsLike, uvPeak, windSpeed } = weather;
+  const unit = opts.getUnit?.() ?? "C";
+  const T = (c) => c == null ? null : Math.round(unit === "F" ? c * 9 / 5 + 32 : c);
 
-  // Lead: describe current state.
+  // Lead: describe current state. When clouds are sparse/heavy and the API
+  // label is generic ("Mostly clear"), nudge with cloud-cover context.
   const feels = Math.abs((feelsLike ?? temp) - temp) >= 3
-    ? ` — feels closer to ${Math.round(feelsLike)}°`
+    ? ` — feels closer to ${T(feelsLike)}°`
     : "";
-  bits.push(`${label} at ${Math.round(temp)}°${feels}.`);
+  bits.push(`${label} at ${T(temp)}°${feels}.`);
 
   // Precipitation arriving.
   const rain = findNextPrecip(weather.nowcast, weather.hourly);
@@ -79,13 +85,15 @@ export function narrate(weather) {
     if (dry) bits.push(`Easing off by ${fmtHour(dry.time)}.`);
   }
 
-  // Temperature swing.
+  // Temperature swing. `swing.by` is in Celsius; scale into the active unit
+  // so '4° drop' shows in the same scale the hero displays.
   if (bits.length < 2) {
     const swing = findTempSwing(weather.hourly);
     if (swing) {
+      const by = Math.round(unit === "F" ? swing.by * 9 / 5 : swing.by);
       bits.push(swing.kind === "drop"
-        ? `Temperature drops ${swing.by}° by ${fmtHour(swing.ts)}.`
-        : `Warming ${swing.by}° by ${fmtHour(swing.ts)}.`);
+        ? `Temperature drops ${by}° by ${fmtHour(swing.ts)}.`
+        : `Warming ${by}° by ${fmtHour(swing.ts)}.`);
     }
   }
 
