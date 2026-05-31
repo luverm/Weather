@@ -464,7 +464,10 @@ function mock(lat, lon) {
     uvPeak: { time: new Date().setHours(13, 0, 0, 0), value: 5 },
     timezone: "UTC",
     hourly: Array.from({ length: 24 }, (_, i) => ({
-      time: now + (i + 1) * 3600_000,
+      // Anchor the first sample at the current hour boundary so the chart's
+      // 'now' line and the strips' 'now' markers line up the way they do
+      // with real Open-Meteo data.
+      time: new Date().setMinutes(0, 0, 0) + i * 3600_000,
       temp: 18 + Math.sin(i / 2) * 3,
       feelsLike: 17 + Math.sin(i / 2) * 3,
       pop: 20, precip: 0,
@@ -503,6 +506,15 @@ function mock(lat, lon) {
     yesterday: {
       time: now - 24 * 3600_000,
       temp: 16, feelsLike: 15, humidity: 70, precip: 0,
+      condition: CONDITIONS.CLOUDS, label: "Cloudy",
+    },
+    yesterdayDaily: {
+      time: now - 24 * 3600_000,
+      tempMax: 19, tempMin: 11, precip: 0, pop: 10,
+      windMax: 11, gustsMax: 18, uvMax: 4,
+      // 1 minute longer than today, so the trend pill prints something useful.
+      sunrise: new Date().setHours(6, 31, 0, 0) - 86400_000,
+      sunset: new Date().setHours(18, 59, 0, 0) - 86400_000,
       condition: CONDITIONS.CLOUDS, label: "Cloudy",
     },
     fetchedAt: now,

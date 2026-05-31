@@ -229,7 +229,10 @@ export const ui = {
   /** Called by the scrubber whenever simulated time moves. */
   setSampledWeather(sampled, { highlightHourIndex } = {}) {
     state.sampledWeather = sampled;
-    renderLiveValues(sampled, { animate: false });
+    // Live when the sampled timestamp is within ~30 min of the wall clock.
+    const isLive = sampled._sampledTs == null
+      || Math.abs(sampled._sampledTs - Date.now()) < 30 * 60_000;
+    renderLiveValues(sampled, { animate: false, isLive });
     renderMetrics(sampled);
     renderAdvice(sampled);
     highlightHour(highlightHourIndex);
@@ -290,7 +293,7 @@ function animateNumber(node, target, format) {
 
 function capitalize(s) { return (s || "").charAt(0).toUpperCase() + (s || "").slice(1); }
 
-function renderLiveValues(w, { animate = true } = {}) {
+function renderLiveValues(w, { animate = true, isLive = true } = {}) {
   const temp = convertTemp(w.temp);
   const feels = convertTemp(w.feelsLike ?? w.temp);
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
@@ -298,14 +301,13 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
-  renderYesterdayDelta(w);
+  renderYesterdayDelta(w, isLive);
 }
 
-function renderYesterdayDelta(w) {
+function renderYesterdayDelta(w, isLive) {
   if (!el.yesterdayDelta) return;
   const y = w.yesterday;
-  // Only show on the live view — hide when scrubbing into the future.
-  const isLive = w._sampledTs == null;
+  // Only show on the live view — hide when scrubbing into another hour.
   if (!isLive || !y || y.temp == null || w.temp == null) {
     el.yesterdayDelta.hidden = true;
     return;
