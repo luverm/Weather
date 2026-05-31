@@ -12,6 +12,38 @@ const GEO = "https://geocoding-api.open-meteo.com/v1/search";
 const FORECAST = "https://api.open-meteo.com/v1/forecast";
 const AIR_QUALITY = "https://air-quality-api.open-meteo.com/v1/air-quality";
 
+// localStorage cache for the most recent successful fetch per coordinate.
+// Used to paint the UI instantly on app open while a fresh request races
+// in the background.
+const CACHE_KEY_PREFIX = "aether:weather:";
+const CACHE_MAX_AGE = 90 * 60_000; // 90 minutes — recent enough to be useful
+
+function cacheKey(lat, lon) {
+  return `${CACHE_KEY_PREFIX}${lat.toFixed(2)},${lon.toFixed(2)}`;
+}
+
+export function readCachedWeather(lat, lon) {
+  try {
+    const raw = localStorage.getItem(cacheKey(lat, lon));
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    if (!obj || typeof obj.fetchedAt !== "number") return null;
+    if (Date.now() - obj.fetchedAt > CACHE_MAX_AGE) return null;
+    return { ...obj, cached: true };
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedWeather(lat, lon, weather) {
+  try {
+    if (!weather || weather.offline) return;
+    localStorage.setItem(cacheKey(lat, lon), JSON.stringify(weather));
+  } catch {
+    /* quota exceeded or storage disabled — best-effort */
+  }
+}
+
 export const CONDITIONS = Object.freeze({
   CLEAR: "clear",
   CLOUDS: "clouds",
@@ -116,7 +148,9 @@ export async function getWeather(lat, lon) {
   try {
     const [forecast, air] = await Promise.allSettled([fetchJson(url), fetchJson(aqUrl)]);
     if (forecast.status !== "fulfilled") throw forecast.reason;
-    return normalize(forecast.value, air.status === "fulfilled" ? air.value : null);
+    const result = normalize(forecast.value, air.status === "fulfilled" ? air.value : null);
+    writeCachedWeather(lat, lon, result);
+    return result;
   } catch (err) {
     console.warn("Weather fetch failed, using mock", err);
     return mock(lat, lon);
