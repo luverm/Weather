@@ -50,6 +50,7 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunTrend: $("#sun-trend"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -553,8 +554,37 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderSunTrend(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderSunTrend(w) {
+  if (!el.sunTrend) return;
+  const today = w.daily?.[0];
+  const yd = w.yesterdayDaily;
+  if (!today?.sunrise || !today?.sunset || !yd?.sunrise || !yd?.sunset) {
+    el.sunTrend.hidden = true;
+    return;
+  }
+  const todayMin = (today.sunset - today.sunrise) / 60_000;
+  const ydMin = (yd.sunset - yd.sunrise) / 60_000;
+  const deltaSec = Math.round((todayMin - ydMin) * 60);
+  if (Math.abs(deltaSec) < 5) {
+    el.sunTrend.className = "sun-trend";
+    el.sunTrend.textContent = "Daylight steady vs yesterday";
+    el.sunTrend.hidden = false;
+    return;
+  }
+  const longer = deltaSec > 0;
+  const abs = Math.abs(deltaSec);
+  const m = Math.floor(abs / 60), s = abs % 60;
+  const label = m > 0 ? `${m}m ${s}s` : `${s}s`;
+  el.sunTrend.className = `sun-trend ${longer ? "longer" : "shorter"}`;
+  el.sunTrend.textContent = longer
+    ? `Days getting longer by ${label}`
+    : `Days getting shorter by ${label}`;
+  el.sunTrend.hidden = false;
 }
 
 function scheduleSunArc(w) {

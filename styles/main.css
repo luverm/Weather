@@ -988,6 +988,21 @@ kbd {
 .sun-item { display: grid; gap: 2px; }
 .sun-label { font-size: 10.5px; color: var(--fg-dim); letter-spacing: 0.14em; text-transform: uppercase; }
 .sun-item strong { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.sun-trend {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: var(--fg-dim);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  display: flex; align-items: center; gap: 6px;
+}
+.sun-trend[hidden] { display: none; }
+.sun-trend::before {
+  content: ""; width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor; opacity: 0.6;
+}
+.sun-trend.longer { color: #ffd9a8; }
+.sun-trend.shorter { color: #9ad1ff; }
 .sun-arc {
   width: 100%;
   height: 76px;

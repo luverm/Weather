@@ -179,12 +179,18 @@ function normalize(d, aq) {
     }
   }
 
-  // 7-day daily forecast.
+  // 7-day daily forecast. We split past_days entries (yesterday) out into
+  // a side channel so the rest of the app can still treat dailyForecast[0]
+  // as "today" without paging.
   const dailyForecast = [];
+  let yesterdayDaily = null;
+  // Anchor "today" to local midnight of the timezone the API replied with so
+  // the split survives daylight-saving boundaries.
+  const todayStart = startOfLocalDay(now);
   if (daily.time) {
     for (let i = 0; i < daily.time.length; i++) {
       const ts = new Date(daily.time[i]).getTime();
-      dailyForecast.push({
+      const entry = {
         time: ts,
         tempMax: daily.temperature_2m_max?.[i],
         tempMin: daily.temperature_2m_min?.[i],
@@ -196,9 +202,19 @@ function normalize(d, aq) {
         sunrise: daily.sunrise?.[i] ? new Date(daily.sunrise[i]).getTime() : null,
         sunset: daily.sunset?.[i] ? new Date(daily.sunset[i]).getTime() : null,
         ...mapWmo(daily.weather_code[i]),
-      });
+      };
+      if (ts < todayStart - 12 * 3600_000) {
+        // Older than yesterday — discard.
+        continue;
+      }
+      if (ts < todayStart) {
+        yesterdayDaily = entry;
+        continue;
+      }
+      dailyForecast.push(entry);
     }
   }
+  const todayDaily = dailyForecast[0];
 
   // 15-min nowcast for the next ~2h — used for "rain in 12 min" banner.
   const nowcast = [];
@@ -232,9 +248,9 @@ function normalize(d, aq) {
     isDay: !!c.is_day,
     condition,
     label,
-    sunrise: daily.sunrise?.[0] ? new Date(daily.sunrise[0]).getTime() : null,
-    sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null,
-    uv: daily.uv_index_max?.[0] ?? null,
+    sunrise: todayDaily?.sunrise ?? null,
+    sunset: todayDaily?.sunset ?? null,
+    uv: todayDaily?.uvMax ?? null,
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
     hourly,
@@ -242,10 +258,17 @@ function normalize(d, aq) {
     nowcast,
     moon,
     yesterday,
+    yesterdayDaily,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
     fetchedAt: now,
   };
+}
+
+function startOfLocalDay(ts) {
+  const d = new Date(ts);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
 }
 
 function computePressureTrend(hourly, now) {
