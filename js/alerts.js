@@ -3,12 +3,14 @@
 // derive them locally. Each alert is { id, severity, title, detail, ts? }.
 // `ts` lets the UI scrub to the exact moment of the alert when clicked.
 
-export function buildAlerts(weather) {
+export function buildAlerts(weather, opts = {}) {
   if (!weather) return [];
   const out = [];
   const hours = (weather.hourly || []).slice(0, 24);
   const today = (weather.daily || [])[0];
   const tomorrow = (weather.daily || [])[1];
+  const unit = opts.getUnit?.() ?? "C";
+  const T = (c) => c == null ? null : Math.round(unit === "F" ? c * 9 / 5 + 32 : c);
 
   // ---- Heat ----
   const hottest = hottestHour(hours);
@@ -17,7 +19,7 @@ export function buildAlerts(weather) {
       id: "severe-heat",
       severity: "danger",
       title: "Severe heat",
-      detail: `Up to ${Math.round(hottest.t)}° at ${shortClock(hottest.ts)} — hydrate, avoid sun.`,
+      detail: `Up to ${T(hottest.t)}° at ${shortClock(hottest.ts)} — hydrate, avoid sun.`,
       ts: hottest.ts,
     });
   } else if (hottest && hottest.t >= 30) {
@@ -25,7 +27,7 @@ export function buildAlerts(weather) {
       id: "heat",
       severity: "warn",
       title: "Heat advisory",
-      detail: `Peaks near ${Math.round(hottest.t)}° around ${shortClock(hottest.ts)}.`,
+      detail: `Peaks near ${T(hottest.t)}° around ${shortClock(hottest.ts)}.`,
       ts: hottest.ts,
     });
   }
@@ -37,7 +39,7 @@ export function buildAlerts(weather) {
       id: "hard-freeze",
       severity: "danger",
       title: "Hard freeze tonight",
-      detail: `Lows near ${Math.round(coldest.t)}° — bring plants in, drip pipes.`,
+      detail: `Lows near ${T(coldest.t)}° — bring plants in, drip pipes.`,
       ts: coldest.ts,
     });
   } else if (coldest && coldest.t <= 2) {
@@ -45,7 +47,7 @@ export function buildAlerts(weather) {
       id: "frost",
       severity: "warn",
       title: "Frost overnight",
-      detail: `Drops to ${Math.round(coldest.t)}° around ${shortClock(coldest.ts)}.`,
+      detail: `Drops to ${T(coldest.t)}° around ${shortClock(coldest.ts)}.`,
       ts: coldest.ts,
     });
   }
