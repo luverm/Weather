@@ -139,9 +139,10 @@ export class HourlyChart {
       ? `<em>feels ${Math.round(feels)}°</em>` : "";
     const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
+    const cloud = h.cloudCover != null ? ` · ${Math.round(h.cloudCover)}% cloud` : "";
     this.popover.innerHTML =
       `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
-      `<em>${h.pop}% precip${wind}${hum}</em>`;
+      `<em>${h.pop}% precip${wind}${hum}${cloud}</em>`;
     this.popover.style.left = `${pxX.toFixed(1)}px`;
     this.popover.style.top = `${pxY.toFixed(1)}px`;
     this.popover.hidden = false;
@@ -222,6 +223,31 @@ export class HourlyChart {
       } else {
         feelsLine.setAttribute("d", "");
       }
+    }
+
+    // Cloud-cover ribbon along the top of the plot — each hour is a slim cell
+    // whose opacity scales with cloud %. Subtle by design so the temp line
+    // remains the focal point.
+    const cloudsG = this.svg.querySelector("#chart-clouds");
+    if (cloudsG) {
+      cloudsG.innerHTML = "";
+      const bandY = 1;
+      const bandH = 6;
+      const cellW = innerW / Math.max(1, this.hours.length - 1);
+      this.hours.forEach((h, i) => {
+        const cc = h.cloudCover;
+        if (cc == null) return;
+        const op = Math.max(0, Math.min(1, cc / 100));
+        if (op < 0.05) return;
+        const x = iToX(i) - cellW / 2;
+        const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        r.setAttribute("x", Math.max(PAD_LEFT, x).toFixed(1));
+        r.setAttribute("y", String(bandY));
+        r.setAttribute("width", Math.max(0, cellW).toFixed(1));
+        r.setAttribute("height", String(bandH));
+        r.setAttribute("opacity", (0.15 + op * 0.6).toFixed(2));
+        cloudsG.appendChild(r);
+      });
     }
 
     // Precipitation probability bars (0-100% -> 0..12px height)
