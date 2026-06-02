@@ -122,6 +122,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  sunGoldenTimer: null,
   localTimer: null,
 };
 
@@ -523,6 +524,88 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleSunGolden(w);
+}
+
+// Bezier sample for the existing arc: M10 74 Q100 -26 190 74.
+function sunArcPoint(t) {
+  t = clamp01(t);
+  const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
+  const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
+  return `${x.toFixed(1)},${y.toFixed(1)}`;
+}
+function sunArcPolyline(tStart, tEnd, samples = 10) {
+  const out = [];
+  for (let i = 0; i <= samples; i++) {
+    out.push(sunArcPoint(tStart + ((tEnd - tStart) * i) / samples));
+  }
+  return out.join(" ");
+}
+function formatMinutes(mins) {
+  if (mins >= 60) return `${Math.floor(mins / 60)}h ${mins % 60}m`;
+  return `${mins}m`;
+}
+
+// Morning + evening golden-hour bands on the sun arc, plus a live countdown.
+function scheduleSunGolden(w) {
+  const goldenEl = $("#sun-golden");
+  const headEl = $("#sun-golden-head");
+  const subEl = $("#sun-golden-sub");
+  const amEl = $("#sun-arc-golden-am");
+  const pmEl = $("#sun-arc-golden-pm");
+  if (state.sunGoldenTimer) { clearInterval(state.sunGoldenTimer); state.sunGoldenTimer = null; }
+  if (!goldenEl || !w?.sunrise || !w?.sunset || w.sunset <= w.sunrise) {
+    if (goldenEl) goldenEl.hidden = true;
+    if (amEl) amEl.setAttribute("points", "");
+    if (pmEl) pmEl.setAttribute("points", "");
+    return;
+  }
+  const sr = w.sunrise, ss = w.sunset;
+  const dayMs = ss - sr;
+  // Golden hour ≈ first/last 60 min of daylight. On very short polar days, cap
+  // to 20% of daylight so the bands stay visually distinct from the arc.
+  const goldenMs = Math.min(60 * 60_000, dayMs * 0.2);
+  const tAmEnd = goldenMs / dayMs;
+  const tPmStart = 1 - goldenMs / dayMs;
+  amEl.setAttribute("points", sunArcPolyline(0, tAmEnd));
+  pmEl.setAttribute("points", sunArcPolyline(tPmStart, 1));
+
+  const update = () => {
+    const now = Date.now();
+    const morningEnd = sr + goldenMs;
+    const eveningStart = ss - goldenMs;
+    let head, sub, isNow = false;
+    if (now >= sr && now < morningEnd) {
+      isNow = true;
+      head = "Golden hour now";
+      sub = `Morning · ends in ${formatMinutes(Math.max(0, Math.round((morningEnd - now) / 60_000)))}`;
+    } else if (now >= eveningStart && now <= ss) {
+      isNow = true;
+      head = "Golden hour now";
+      sub = `Evening · ends in ${formatMinutes(Math.max(0, Math.round((ss - now) / 60_000)))}`;
+    } else if (now < sr) {
+      head = "Morning golden hour";
+      sub = `In ${formatMinutes(Math.max(0, Math.round((sr - now) / 60_000)))} · at sunrise`;
+    } else if (now < eveningStart) {
+      head = "Evening golden hour";
+      sub = `In ${formatMinutes(Math.max(0, Math.round((eveningStart - now) / 60_000)))} · before sunset`;
+    } else {
+      // After tonight's sunset — find tomorrow's morning golden hour.
+      let nextSr = null;
+      for (const d of (w.daily || [])) {
+        if (d.sunrise && d.sunrise > now) { nextSr = d.sunrise; break; }
+      }
+      if (!nextSr) { goldenEl.hidden = true; return; }
+      head = "Morning golden hour";
+      sub = `In ${formatMinutes(Math.max(0, Math.round((nextSr - now) / 60_000)))} · at sunrise`;
+    }
+    goldenEl.hidden = false;
+    goldenEl.classList.toggle("now", isNow);
+    headEl.textContent = head;
+    subEl.textContent = sub;
+  };
+  update();
+  state.sunGoldenTimer = setInterval(update, 30_000);
 }
 
 function scheduleSunArc(w) {
