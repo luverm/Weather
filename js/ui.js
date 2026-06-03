@@ -32,6 +32,7 @@ const el = {
   yesterdayDelta: $("#yesterday-delta"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
+  metricWindUnit: $("#m-wind-unit"),
   windBft: $("#m-wind-bft"),
   metricHumidity: $("#m-humidity"),
   metricHumiditySub: $("#m-humidity-sub"),
@@ -86,6 +87,7 @@ const el = {
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
+  settingImperial: $("#setting-imperial"),
   settingClearPlaces: $("#setting-clear-places"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
@@ -145,6 +147,7 @@ const el = {
 
 const state = {
   unit: localStorage.getItem("aether:unit") || "C",
+  imperial: localStorage.getItem("aether:imperial") === "1",
   weather: null,
   place: null,
   sampledWeather: null, // the weather values at the current scrubber time
@@ -293,6 +296,10 @@ export const ui = {
 // ---------- Rendering ----------
 
 function convertTemp(c) { return state.unit === "F" ? c * 9 / 5 + 32 : c; }
+function convertSpeed(kmh) { return state.imperial ? kmh * 0.621371 : kmh; }
+function speedUnit() { return state.imperial ? "mph" : "km/h"; }
+function convertDistanceM(m) { return state.imperial ? m * 0.000621371 : m / 1000; }
+function distanceUnit() { return state.imperial ? "mi" : "km"; }
 
 function animateNumber(node, target, format) {
   if (target == null || isNaN(target)) { node.textContent = "–"; return; }
@@ -428,12 +435,16 @@ function renderDayRange(w) {
 }
 
 function renderMetrics(w) {
-  el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
+  el.metricWind.textContent = Math.round(convertSpeed(w.windSpeed ?? 0));
+  if (el.metricWindUnit) el.metricWindUnit.textContent = speedUnit();
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
+  const gustText = w.windGusts != null
+    ? `${Math.round(convertSpeed(w.windGusts))} ${speedUnit()}`
+    : "—";
   el.metricWindSub.textContent = dirLabel
-    ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
-    : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+    ? `${dirLabel} · gust ${gustText}`
+    : `gust ${gustText}`;
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
@@ -465,7 +476,7 @@ function renderMetrics(w) {
   }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
   el.metricPressureSub.textContent = w.visibility != null
-    ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
+    ? `visibility ${(Math.round(convertDistanceM(w.visibility) * 10) / 10)} ${distanceUnit()}`
     : "visibility —";
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
@@ -984,12 +995,19 @@ function renderVisibility(w) {
   if (el.visibilityArc) {
     el.visibilityArc.setAttribute("stroke-dashoffset", String(circ * (1 - fillFrac)));
   }
+  const displayDist = convertDistanceM(meters);
   if (el.visibilityValue) {
-    el.visibilityValue.textContent = km >= 10 ? `${Math.round(km)}` : `${km.toFixed(1)}`;
+    el.visibilityValue.textContent = displayDist >= 10
+      ? `${Math.round(displayDist)}`
+      : `${displayDist.toFixed(1)}`;
   }
   if (el.visibilityLabel) el.visibilityLabel.textContent = label;
   if (el.visibilityDetail) {
-    const tag = km >= 1 ? `${km.toFixed(km >= 10 ? 0 : 1)} km` : `${Math.round(meters)} m`;
+    // Below ~1 km show the raw distance in m / yd-ish; the imperial conversion
+    // for very low values isn't critical so we still show m.
+    const tag = km >= 1
+      ? `${displayDist.toFixed(displayDist >= 10 ? 0 : 1)} ${distanceUnit()}`
+      : `${Math.round(meters)} m`;
     el.visibilityDetail.textContent = tag;
   }
   if (el.visibilityTone) {
@@ -1238,12 +1256,13 @@ function renderHourly(w) {
     item.className = "forecast-item";
     item.dataset.ts = h.time;
     const showWind = h.wind != null && h.windDir != null && h.wind >= 12;
+    const windDisplay = Math.round(convertSpeed(h.wind ?? 0));
     const windChip = showWind
-      ? `<span class="forecast-wind" title="${cardinal(h.windDir)} · ${Math.round(h.wind)} km/h">
+      ? `<span class="forecast-wind" title="${cardinal(h.windDir)} · ${windDisplay} ${speedUnit()}">
            <svg viewBox="-8 -8 16 16" aria-hidden="true" style="transform: rotate(${Math.round(h.windDir)}deg)">
              <path d="M 0 -6 L 2.2 4 L 0 1.6 L -2.2 4 Z" fill="currentColor"/>
            </svg>
-           <em>${Math.round(h.wind)}</em>
+           <em>${windDisplay}</em>
          </span>`
       : "";
     item.innerHTML = `
@@ -1292,7 +1311,7 @@ function renderDaily(w) {
     if (best && best.index === i) item.classList.add("is-best");
     item.dataset.ts = d.time;
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
-      ? ` · gusts ${Math.round(d.gustsMax)} km/h`
+      ? ` · gusts ${Math.round(convertSpeed(d.gustsMax))} ${speedUnit()}`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
@@ -1431,7 +1450,7 @@ function buildDailyExpandStats(d) {
     { label: "Sunset", value: fmt(d.sunset) },
     { label: "Daylight", value: daylight },
     { label: "Rain", value: `${Math.round(d.pop ?? 0)}% · ${(d.precip ?? 0).toFixed(1)} mm` },
-    { label: "Gust max", value: d.gustsMax ? `${Math.round(d.gustsMax)} km/h` : "—" },
+    { label: "Gust max", value: d.gustsMax ? `${Math.round(convertSpeed(d.gustsMax))} ${speedUnit()}` : "—" },
     { label: "UV max", value: d.uvMax != null ? Math.round(d.uvMax) : "—" },
   ];
   stats.innerHTML = items.map((it) =>
@@ -1746,6 +1765,12 @@ function bindSettings() {
     }
   });
 
+  el.settingImperial?.addEventListener("change", () => {
+    state.imperial = !!el.settingImperial.checked;
+    localStorage.setItem("aether:imperial", state.imperial ? "1" : "0");
+    if (state.weather) ui.setWeather(state.weather);
+  });
+
   el.settingClearPlaces?.addEventListener("click", () => {
     if (!confirm("Clear all saved places?")) return;
     for (const p of places.all()) places.remove(p);
@@ -1764,6 +1789,7 @@ function applyStoredPreferences() {
     queueMicrotask(() => state.handlers.onReduceMotion?.(true));
   }
   if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
+  if (el.settingImperial) el.settingImperial.checked = !!state.imperial;
 }
 
 // Exposed so app.js can query the current preference on boot.
