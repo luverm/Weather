@@ -120,10 +120,51 @@ ul { list-style: none; margin: 0; padding: 0; }
   letter-spacing: 0.02em;
 }
 .brand-mark {
-  width: 22px; height: 22px; border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #fff, var(--accent) 60%, transparent 70%);
-  box-shadow: 0 0 24px var(--accent);
+  width: 26px; height: 26px;
+  position: relative;
+  display: grid; place-items: center;
+  color: var(--accent);
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 70%, transparent));
   animation: breathe 4.5s ease-in-out infinite;
+}
+.brand-mark svg { width: 100%; height: 100%; display: block; transition: color 600ms var(--ease); }
+.brand-mark .bm-sun { fill: currentColor; transition: opacity 600ms var(--ease), transform 600ms var(--ease); transform-origin: 12px 12px; }
+.brand-mark .bm-rays { transition: opacity 600ms var(--ease), transform 700ms var(--ease); transform-origin: 12px 12px; }
+.brand-mark .bm-moon, .brand-mark .bm-cloud, .brand-mark .bm-bolt, .brand-mark .bm-drops, .brand-mark .bm-snow {
+  transition: opacity 600ms var(--ease);
+}
+/* default (clear): just the sun + rays. */
+.brand-mark[data-condition="clear"] .bm-sun { opacity: 1; }
+.brand-mark[data-condition="clear"] .bm-rays { opacity: 1; animation: bm-spin 36s linear infinite; }
+.brand-mark[data-condition="night"] .bm-sun,
+.brand-mark[data-condition="night"] .bm-rays { opacity: 0; }
+.brand-mark[data-condition="night"] .bm-moon { opacity: 1; fill: #f0e6cb; }
+.brand-mark[data-condition="clouds"] .bm-rays { opacity: 0.55; }
+.brand-mark[data-condition="clouds"] .bm-sun { transform: scale(0.7) translate(-3px, -3px); opacity: 0.9; }
+.brand-mark[data-condition="clouds"] .bm-cloud { opacity: 0.9; }
+.brand-mark[data-condition="rain"] .bm-rays { opacity: 0; }
+.brand-mark[data-condition="rain"] .bm-sun { opacity: 0; }
+.brand-mark[data-condition="rain"] .bm-cloud { opacity: 0.95; }
+.brand-mark[data-condition="rain"] .bm-drops { opacity: 0.9; animation: bm-drip 1.2s ease-in-out infinite; }
+.brand-mark[data-condition="storm"] .bm-rays,
+.brand-mark[data-condition="storm"] .bm-sun { opacity: 0; }
+.brand-mark[data-condition="storm"] .bm-cloud { opacity: 0.9; }
+.brand-mark[data-condition="storm"] .bm-bolt { opacity: 1; fill: #ffe26b; animation: bm-flash 1.8s ease-in-out infinite; }
+.brand-mark[data-condition="snow"] .bm-rays,
+.brand-mark[data-condition="snow"] .bm-sun { opacity: 0; }
+.brand-mark[data-condition="snow"] .bm-cloud { opacity: 0.9; }
+.brand-mark[data-condition="snow"] .bm-snow { opacity: 0.9; animation: bm-drift 3s ease-in-out infinite; }
+.brand-mark[data-condition="fog"] .bm-sun { opacity: 0.35; }
+.brand-mark[data-condition="fog"] .bm-rays { opacity: 0.15; }
+.brand-mark[data-condition="fog"] .bm-cloud { opacity: 0.7; filter: blur(0.6px); }
+@keyframes bm-spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+@keyframes bm-drip { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(2px); } }
+@keyframes bm-flash { 0%, 90%, 100% { opacity: 1; } 92%, 94% { opacity: 0.2; } 95% { opacity: 1; } }
+@keyframes bm-drift { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(1.5px) rotate(-3deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .brand-mark, .brand-mark .bm-rays, .brand-mark .bm-drops, .brand-mark .bm-bolt, .brand-mark .bm-snow {
+    animation: none !important;
+  }
 }
 .brand-name {
   font-weight: 600; font-size: 14px;

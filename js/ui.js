@@ -128,6 +128,7 @@ const el = {
   heroInner: document.querySelector(".hero-inner"),
   toast: $("#toast"),
   placesStrip: $("#places-strip"),
+  brandMark: $(".brand-mark"),
 };
 
 const state = {
@@ -307,6 +308,14 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
   renderYesterdayDelta(w);
+  setBrandCondition(w);
+}
+
+function setBrandCondition(w) {
+  if (!el.brandMark) return;
+  let key = w.condition || "clear";
+  if (key === "clear" && w.isDay === false) key = "night";
+  el.brandMark.setAttribute("data-condition", key);
 }
 
 function renderYesterdayDelta(w) {
