@@ -208,6 +208,10 @@ function normalize(d, aq) {
   // Vs yesterday: temp at the same hour 24h ago, plus yesterday's daily hi/lo.
   const yesterday = computeYesterdayCompare(d.hourly, daily, c.temperature_2m, now, todayIdx);
 
+  // Tomorrow morning + evening snapshots, picked directly from the raw API
+  // (the client-side `hourly` array is capped at 24 entries).
+  const tomorrow = computeTomorrowPreview(d.hourly, daily, todayIdx);
+
   return {
     temp: c.temperature_2m,
     feelsLike: c.apparent_temperature,
@@ -233,10 +237,41 @@ function normalize(d, aq) {
     nowcast,
     moon,
     yesterday,
+    tomorrow,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
     fetchedAt: now,
   };
+}
+
+function pickHour(hourly, isoPrefix, hourStr) {
+  if (!hourly?.time) return null;
+  const want = `${isoPrefix}T${hourStr}`;
+  // First try exact match, then fall back to startsWith for unusual formats.
+  let i = hourly.time.indexOf(want);
+  if (i < 0) i = hourly.time.findIndex((t) => t === want || t.startsWith(want));
+  if (i < 0) return null;
+  return {
+    time: new Date(hourly.time[i]).getTime(),
+    temp: hourly.temperature_2m?.[i] ?? null,
+    feelsLike: hourly.apparent_temperature?.[i] ?? null,
+    pop: hourly.precipitation_probability?.[i] ?? 0,
+    wind: hourly.wind_speed_10m?.[i] ?? null,
+    cloudCover: hourly.cloud_cover?.[i] ?? null,
+    ...mapWmo(hourly.weather_code?.[i]),
+  };
+}
+
+function computeTomorrowPreview(hourly, daily, todayIdx) {
+  if (!hourly?.time || !daily?.time) return null;
+  const tIdx = (todayIdx ?? 1) + 1;
+  if (tIdx >= daily.time.length) return null;
+  const tmrwDate = daily.time[tIdx]; // "YYYY-MM-DD"
+  if (!tmrwDate) return null;
+  const morning = pickHour(hourly, tmrwDate, "07:00");
+  const evening = pickHour(hourly, tmrwDate, "19:00");
+  if (!morning && !evening) return null;
+  return { date: tmrwDate, morning, evening };
 }
 
 function computeYesterdayCompare(hourly, daily, currentTemp, now, todayIdx) {

@@ -1474,6 +1474,52 @@ kbd {
   .outfit-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
+/* ---------- Tomorrow morning + evening preview ---------- */
+.tomorrow-preview {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 8px 0 4px;
+}
+.tomorrow-preview[hidden] { display: none; }
+.tomorrow-chip {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--stroke);
+  color: var(--fg);
+  text-align: left;
+}
+.tomorrow-chip[hidden] { display: none; }
+.tomorrow-chip .tomorrow-icon {
+  width: 26px; height: 26px;
+  display: grid; place-items: center;
+  color: var(--accent);
+}
+.tomorrow-chip[data-period="evening"] .tomorrow-icon { color: #ffb78c; }
+.tomorrow-chip .tomorrow-meta { display: grid; gap: 2px; min-width: 0; }
+.tomorrow-chip .tomorrow-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--fg-dim);
+}
+.tomorrow-chip .tomorrow-detail {
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (max-width: 540px) {
+  .tomorrow-preview { grid-template-columns: 1fr; }
+}
+
 /* ---------- Weekend snapshot chip ---------- */
 .weekend-chip {
   display: grid;

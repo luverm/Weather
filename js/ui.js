@@ -109,6 +109,11 @@ const el = {
   weekendDetail: $("#weekend-detail"),
   weekendIconSat: $("#weekend-icon-sat"),
   weekendIconSun: $("#weekend-icon-sun"),
+  tomorrowPreview: $("#tomorrow-preview"),
+  tomorrowMorning: $("#tomorrow-morning"),
+  tomorrowEvening: $("#tomorrow-evening"),
+  tomorrowMorningDetail: $("#tomorrow-morning-detail"),
+  tomorrowEveningDetail: $("#tomorrow-evening-detail"),
   forecastTrack: $("#forecast-track"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
@@ -208,6 +213,7 @@ export const ui = {
     renderSunshine(weather);
     renderAlerts(weather);
     renderWeekend(weather);
+    renderTomorrowPreview(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -842,6 +848,29 @@ function renderOutfit(w) {
       </span>
     </li>
   `).join("");
+}
+
+function renderTomorrowPreview(w) {
+  if (!el.tomorrowPreview) return;
+  const tmrw = w.tomorrow;
+  if (!tmrw || (!tmrw.morning && !tmrw.evening)) {
+    el.tomorrowPreview.hidden = true;
+    return;
+  }
+  el.tomorrowPreview.hidden = false;
+  const renderChip = (slot, chip, detailEl) => {
+    if (!chip) return;
+    if (!slot || slot.temp == null) {
+      chip.hidden = true;
+      return;
+    }
+    chip.hidden = false;
+    const t = Math.round(convertTemp(slot.temp));
+    const pop = slot.pop != null && slot.pop >= 20 ? ` · ${Math.round(slot.pop)}% rain` : "";
+    detailEl.textContent = `${t}° · ${capitalize(slot.label || "—")}${pop}`;
+  };
+  renderChip(tmrw.morning, el.tomorrowMorning, el.tomorrowMorningDetail);
+  renderChip(tmrw.evening, el.tomorrowEvening, el.tomorrowEveningDetail);
 }
 
 function renderSunshine(w) {
