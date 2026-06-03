@@ -23,7 +23,8 @@ const el = {
   placeSub: $("#place-sub"),
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
-  feelsLike: $("#feels-like"),
+  feelsLike: $("#feels-like-text"),
+  feelsGap: $("#feels-gap"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -333,9 +334,34 @@ function renderLiveValues(w, { animate = true } = {}) {
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  renderFeelsGap(w);
   renderDayRange(w);
   renderYesterdayDelta(w);
   setBrandCondition(w);
+}
+
+function renderFeelsGap(w) {
+  if (!el.feelsGap) return;
+  if (w.temp == null || w.feelsLike == null) { el.feelsGap.hidden = true; return; }
+  // Gap is in °C since the API returns °C; the displayed value scales with
+  // the unit but the label depends on the cause.
+  const gapC = w.feelsLike - w.temp;
+  if (Math.abs(gapC) < 1.5) { el.feelsGap.hidden = true; return; }
+  let label = null, cls = "flat";
+  if (gapC <= -1.5) {
+    // Cooler than actual.
+    if ((w.windSpeed ?? 0) >= 12) { label = "wind chill"; cls = "cool"; }
+    else if ((w.humidity ?? 0) <= 35) { label = "dry air"; cls = "cool"; }
+    else { label = "cool feel"; cls = "cool"; }
+  } else if (gapC >= 1.5) {
+    if ((w.humidity ?? 0) >= 60 && (w.temp ?? 0) >= 18) { label = "humidex"; cls = "warm"; }
+    else if ((w.temp ?? 0) >= 24) { label = "heat index"; cls = "warm"; }
+    else { label = "warm feel"; cls = "warm"; }
+  }
+  if (!label) { el.feelsGap.hidden = true; return; }
+  el.feelsGap.hidden = false;
+  el.feelsGap.className = `feels-gap ${cls}`;
+  el.feelsGap.textContent = label;
 }
 
 function setBrandCondition(w) {

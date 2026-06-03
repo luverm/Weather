@@ -470,6 +470,21 @@ html[data-reduce-motion="true"] *::after {
 .unit:hover { background: var(--glass); color: var(--fg); }
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
+.feels-like #feels-gap { margin-left: 6px; vertical-align: 1px; }
+.feels-gap {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--stroke);
+  color: var(--fg-dim);
+}
+.feels-gap[hidden] { display: none; }
+.feels-gap.cool { background: rgba(154,209,255,0.14); color: #9ad1ff; border-color: rgba(154,209,255,0.28); }
+.feels-gap.warm { background: rgba(255,183,140,0.14); color: #ffb78c; border-color: rgba(255,183,140,0.28); }
 .day-range {
   margin-top: 10px;
   display: grid;
