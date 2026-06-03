@@ -877,13 +877,39 @@ function renderPrecipSummary(w) {
   }
   const total = hours.reduce((s, h) => s + (h.precip ?? 0), 0);
   let wetHours = 0, longestWet = 0, run = 0;
+  let firstWetTs = null;
   for (const h of hours) {
     const isWet = (h.precip ?? 0) > 0.1 || (h.pop ?? 0) >= 60;
-    if (isWet) { wetHours += 1; run += 1; if (run > longestWet) longestWet = run; }
-    else { run = 0; }
+    if (isWet) {
+      if (firstWetTs == null) firstWetTs = h.time;
+      wetHours += 1; run += 1; if (run > longestWet) longestWet = run;
+    } else {
+      run = 0;
+    }
   }
   el.precipSummary.hidden = false;
   el.precipSummary.classList.toggle("is-wet", total >= 0.5 || wetHours >= 2);
+
+  // Click-to-scrub when there's a wet hour to jump to.
+  if (firstWetTs != null) {
+    el.precipSummary.classList.add("is-clickable");
+    el.precipSummary.setAttribute("role", "button");
+    el.precipSummary.setAttribute("tabindex", "0");
+    el.precipSummary.onclick = () => state.handlers.onHourClick?.(firstWetTs);
+    el.precipSummary.onkeydown = (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        state.handlers.onHourClick?.(firstWetTs);
+      }
+    };
+  } else {
+    el.precipSummary.classList.remove("is-clickable");
+    el.precipSummary.removeAttribute("role");
+    el.precipSummary.removeAttribute("tabindex");
+    el.precipSummary.onclick = null;
+    el.precipSummary.onkeydown = null;
+  }
+
   if (total < 0.2 && wetHours === 0) {
     el.precipSummaryText.textContent = "Dry across the next 24 h";
     return;
