@@ -11,6 +11,7 @@ import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { pickOutfit } from "./outfit.js";
+import { computeSunshine, sparklinePaths } from "./sunshine.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -91,6 +92,12 @@ const el = {
   outfitCard: $("#outfit-card"),
   outfitList: $("#outfit-list"),
   outfitTempHint: $("#outfit-temp-hint"),
+  sunshineCard: $("#sunshine-card"),
+  sunshinePercent: $("#sunshine-percent"),
+  sunshineLabel: $("#sunshine-label"),
+  sunshineDetail: $("#sunshine-detail"),
+  sunshineSparkLine: $("#sunshine-spark-line"),
+  sunshineSparkFill: $("#sunshine-spark-fill"),
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
@@ -196,6 +203,7 @@ export const ui = {
     renderInsights(weather);
     renderActivity(weather);
     renderOutfit(weather);
+    renderSunshine(weather);
     renderAlerts(weather);
     renderWeekend(weather);
     startLocaltime(weather);
@@ -799,6 +807,41 @@ function renderOutfit(w) {
       </span>
     </li>
   `).join("");
+}
+
+function renderSunshine(w) {
+  if (!el.sunshineCard) return;
+  const sun = computeSunshine(w);
+  if (!sun) {
+    el.sunshineCard.hidden = true;
+    return;
+  }
+  el.sunshineCard.hidden = false;
+  // Percent chip ("64%" or hidden when nighttime).
+  if (el.sunshinePercent) {
+    el.sunshinePercent.textContent = sun.percent != null ? `${sun.percent}%` : "";
+    el.sunshinePercent.setAttribute("data-tone",
+      sun.percent == null ? "night" :
+      sun.percent >= 75 ? "bright" :
+      sun.percent >= 45 ? "partly" :
+      sun.percent >= 20 ? "cloudy" : "overcast"
+    );
+  }
+  if (el.sunshineLabel) el.sunshineLabel.textContent = sun.label;
+  if (el.sunshineDetail) {
+    if (sun.peakWindow) {
+      el.sunshineDetail.textContent =
+        `Peak sun ${fmtTime(sun.peakWindow.start)}–${fmtTime(sun.peakWindow.end)}`;
+    } else if (sun.nextSunnyHour) {
+      el.sunshineDetail.textContent = `Next sun around ${fmtTime(sun.nextSunnyHour)}`;
+    } else {
+      el.sunshineDetail.textContent = "Cloud cover over the next 14 h";
+    }
+  }
+  // Sparkline = inverted cloud cover (high = sunny).
+  const paths = sparklinePaths(sun.points);
+  if (el.sunshineSparkLine) el.sunshineSparkLine.setAttribute("d", paths.line);
+  if (el.sunshineSparkFill) el.sunshineSparkFill.setAttribute("d", paths.fill);
 }
 
 function renderPollen(pollen) {
