@@ -828,16 +828,43 @@ function renderSunshine(w) {
     );
   }
   if (el.sunshineLabel) el.sunshineLabel.textContent = sun.label;
+
+  // The detail line doubles as a jump-to-window button when we have one.
+  let jumpTs = null;
   if (el.sunshineDetail) {
     if (sun.peakWindow) {
       el.sunshineDetail.textContent =
         `Peak sun ${fmtTime(sun.peakWindow.start)}–${fmtTime(sun.peakWindow.end)}`;
+      jumpTs = sun.peakWindow.start;
     } else if (sun.nextSunnyHour) {
       el.sunshineDetail.textContent = `Next sun around ${fmtTime(sun.nextSunnyHour)}`;
+      jumpTs = sun.nextSunnyHour;
     } else {
       el.sunshineDetail.textContent = "Cloud cover over the next 14 h";
     }
   }
+  // Only the card body is clickable; the metric-label/percent chip stays as
+  // header text.
+  if (el.sunshineCard) {
+    el.sunshineCard.classList.toggle("is-clickable", jumpTs != null);
+    el.sunshineCard.onclick = jumpTs != null
+      ? () => state.handlers.onHourClick?.(jumpTs)
+      : null;
+    if (jumpTs != null) {
+      el.sunshineCard.setAttribute("role", "button");
+      el.sunshineCard.setAttribute("tabindex", "0");
+    } else {
+      el.sunshineCard.removeAttribute("role");
+      el.sunshineCard.removeAttribute("tabindex");
+    }
+    el.sunshineCard.onkeydown = jumpTs != null
+      ? (e) => { if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          state.handlers.onHourClick?.(jumpTs);
+        } }
+      : null;
+  }
+
   // Sparkline = inverted cloud cover (high = sunny).
   const paths = sparklinePaths(sun.points);
   if (el.sunshineSparkLine) el.sunshineSparkLine.setAttribute("d", paths.line);

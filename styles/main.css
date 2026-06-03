@@ -1357,6 +1357,22 @@ kbd {
   color: #ffd28c;
   opacity: 0.95;
 }
+#sunshine-card.is-clickable {
+  cursor: pointer;
+  transition: background 160ms var(--ease), transform 160ms var(--ease), border-color 160ms var(--ease);
+}
+#sunshine-card.is-clickable:hover,
+#sunshine-card.is-clickable:focus-visible {
+  transform: translateY(-1px);
+  border-color: rgba(255,210,140,0.35);
+  background: rgba(255,210,140,0.06);
+  outline: none;
+}
+#sunshine-card.is-clickable .sunshine-detail::after {
+  content: " →";
+  color: #ffd28c;
+  opacity: 0.85;
+}
 
 /* ---------- Outfit / what to wear ---------- */
 .outfit-temp-hint {
