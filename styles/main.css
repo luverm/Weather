@@ -377,6 +377,12 @@ html[data-reduce-motion="true"] *::after {
   animation: pulse 2.4s ease-in-out infinite;
 }
 [data-scrubbing="true"] .live-dot { background: #ffb86b; box-shadow: 0 0 8px #ffb86b; animation: none; }
+.place-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
 .place-name {
   margin: 0;
   font-size: clamp(30px, 4.8vw, 52px);
@@ -384,6 +390,22 @@ html[data-reduce-motion="true"] *::after {
   letter-spacing: -0.02em;
   line-height: 1.02;
 }
+.save-place-btn {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  color: var(--fg-dim);
+  display: inline-grid; place-items: center;
+  transition: background 160ms var(--ease), color 220ms var(--ease), transform 200ms var(--ease);
+}
+.save-place-btn[hidden] { display: none; }
+.save-place-btn:hover { background: var(--glass); color: var(--fg); transform: translateY(-1px); }
+.save-place-btn:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
+.save-place-btn .save-place-filled { display: none; }
+.save-place-btn.is-saved .save-place-empty { display: none; }
+.save-place-btn.is-saved .save-place-filled { display: block; color: #ffd28c; filter: drop-shadow(0 0 6px rgba(255,210,140,0.5)); }
 .place-sub { margin: 8px 0 0; color: var(--fg-muted); font-size: 14px; }
 .place-localtime {
   margin: 6px 0 0;

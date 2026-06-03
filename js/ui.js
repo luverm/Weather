@@ -131,6 +131,7 @@ const el = {
   brandMark: $(".brand-mark"),
   precipSummary: $("#precip-summary"),
   precipSummaryText: $("#precip-summary-text"),
+  savePlaceBtn: $("#save-place-btn"),
 };
 
 const state = {
@@ -175,6 +176,7 @@ export const ui = {
       getUnit: () => state.unit,
     });
     bindInstallPrompt();
+    bindSavePlaceBtn();
   },
   focusSearch() { el.searchInput?.focus(); el.searchInput?.select?.(); },
   toggleUnits() { el.unitBtn?.click(); },
@@ -195,6 +197,7 @@ export const ui = {
     // Reset alert dismissals so a fresh location can re-surface them.
     try { sessionStorage.removeItem("aether:dismissed-alerts"); } catch { /* ignore */ }
     renderPlaces();
+    renderSavePlaceBtn();
   },
   setWeather(weather, { narrative } = {}) {
     state.weather = weather;
@@ -1358,6 +1361,7 @@ function renderPlaces() {
       if (e.target.closest('[data-action="remove"]')) {
         places.remove(item);
         renderPlaces();
+        renderSavePlaceBtn();
         return;
       }
       state.handlers.onPlaceClick?.(item);
@@ -1441,6 +1445,45 @@ function bindUnitToggle() {
     el.unitBtn.textContent = `°${state.unit}`;
     if (state.weather) ui.setWeather(state.weather);
   });
+}
+
+function bindSavePlaceBtn() {
+  if (!el.savePlaceBtn) return;
+  el.savePlaceBtn.addEventListener("click", () => {
+    if (!state.place) return;
+    // The default Current-location seed has no real city info — refuse to
+    // save it; the user should search a real city instead.
+    if (state.place.name === "Current location") {
+      ui.showToast("Search a city to save it as a favorite");
+      return;
+    }
+    if (places.isSaved(state.place)) {
+      places.remove(state.place);
+      ui.showToast(`${state.place.name} removed from saved`);
+    } else {
+      places.add(state.place);
+      ui.showToast(`${state.place.name} saved`);
+    }
+    renderSavePlaceBtn();
+    renderPlaces();
+  });
+}
+
+function renderSavePlaceBtn() {
+  if (!el.savePlaceBtn) return;
+  if (!state.place || state.place.name === "Current location") {
+    el.savePlaceBtn.hidden = true;
+    return;
+  }
+  el.savePlaceBtn.hidden = false;
+  const saved = places.isSaved(state.place);
+  el.savePlaceBtn.classList.toggle("is-saved", saved);
+  el.savePlaceBtn.setAttribute("aria-pressed", saved ? "true" : "false");
+  el.savePlaceBtn.setAttribute(
+    "aria-label",
+    saved ? "Remove from saved locations" : "Save this location"
+  );
+  el.savePlaceBtn.title = saved ? "Saved — tap to remove" : "Save this location";
 }
 
 function bindLocate() {
