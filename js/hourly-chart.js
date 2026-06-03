@@ -291,6 +291,44 @@ export class HourlyChart {
       }
     }
 
+    // "Now" marker: vertical line + small dot at the closest hour to current
+    // wall-clock time. Helps orient when the user has scrubbed away from now.
+    const nowLine = this.svg.querySelector("#chart-now");
+    const nowDot = this.svg.querySelector("#chart-now-dot");
+    if (nowLine && nowDot) {
+      const now = Date.now();
+      const first = this.hours[0]?.time ?? 0;
+      const last = this.hours[this.hours.length - 1]?.time ?? 0;
+      if (this.hours.length >= 2 && now >= first - 60_000 && now <= last + 60_000) {
+        // Linear interpolation between adjacent hour bins.
+        let segIdx = 0;
+        for (let i = 0; i < this.hours.length - 1; i++) {
+          if (this.hours[i].time <= now && now <= this.hours[i + 1].time) {
+            segIdx = i; break;
+          }
+        }
+        const t0 = this.hours[segIdx].time;
+        const t1 = this.hours[segIdx + 1]?.time ?? t0;
+        const frac = t1 > t0 ? (now - t0) / (t1 - t0) : 0;
+        const x = iToX(segIdx) + (iToX(segIdx + 1) - iToX(segIdx)) * frac;
+        // Y for the temp at that interpolated point.
+        const v0 = this.hours[segIdx].temp;
+        const v1 = this.hours[segIdx + 1]?.temp ?? v0;
+        const v = v0 + (v1 - v0) * frac;
+        nowLine.setAttribute("x1", x.toFixed(1));
+        nowLine.setAttribute("x2", x.toFixed(1));
+        nowLine.setAttribute("y1", String(PAD_TOP));
+        nowLine.setAttribute("y2", String(H - PAD_BOT));
+        nowDot.setAttribute("cx", x.toFixed(1));
+        nowDot.setAttribute("cy", tToY(v).toFixed(1));
+      } else {
+        nowLine.setAttribute("x1", "-10");
+        nowLine.setAttribute("x2", "-10");
+        nowDot.setAttribute("cx", "-10");
+        nowDot.setAttribute("cy", "-10");
+      }
+    }
+
     // Labels: every ~3 hours
     const unit = this.getUnit();
     const labG = this.svg.querySelector("#chart-labels");
