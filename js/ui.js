@@ -1201,40 +1201,56 @@ function toggleDailyExpand(item, d, w) {
     item.dataset.expanded = "false";
     return;
   }
+  const wrap = document.createElement("div");
+  wrap.className = "daily-expand-wrap";
+  wrap.appendChild(buildDailyExpandStats(d));
+
   // Build mini hourly bars for the 12 daytime-ish hours of that day, if we
   // have them in the hourly series (only first 24h). Otherwise skip.
   const dayStart = new Date(d.time);
   dayStart.setHours(0, 0, 0, 0);
   const dayEnd = dayStart.getTime() + 24 * 3600_000;
   const hrs = (w.hourly || []).filter((h) => h.time >= dayStart.getTime() && h.time < dayEnd);
-  if (!hrs.length) {
-    // For days beyond the 24h hourly range, just show summary text.
-    const summary = document.createElement("div");
-    summary.className = "daily-expand";
-    summary.style.gridTemplateColumns = "1fr";
-    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${Math.round(d.gustsMax ?? 0)} km/h · UV ${Math.round(d.uvMax ?? 0)}</span>`;
-    item.appendChild(summary);
-    item.dataset.expanded = "true";
-    return;
+  if (hrs.length) {
+    const tMin = Math.min(...hrs.map((h) => h.temp));
+    const tMax = Math.max(...hrs.map((h) => h.temp));
+    const tSpan = Math.max(1, tMax - tMin);
+    const box = document.createElement("div");
+    box.className = "daily-expand";
+    const stepped = [];
+    const step = Math.max(1, Math.floor(hrs.length / 12));
+    for (let i = 0; i < hrs.length && stepped.length < 12; i += step) stepped.push(hrs[i]);
+    box.innerHTML = stepped.map((h) => {
+      const pct = ((h.temp - tMin) / tSpan) * 100;
+      const height = 10 + (pct / 100) * 36;
+      const precipLevel = h.pop >= 60 ? 2 : h.pop >= 25 ? 1 : 0;
+      const hh = new Date(h.time).getHours().toString().padStart(2, "0");
+      return `<div class="daily-expand-bar" data-precip="${precipLevel}" style="height:${height.toFixed(1)}px" title="${hh}:00 · ${Math.round(convertTemp(h.temp))}° · ${h.pop}%"><span>${Math.round(convertTemp(h.temp))}°</span></div>`;
+    }).join("");
+    wrap.appendChild(box);
   }
-  const tMin = Math.min(...hrs.map((h) => h.temp));
-  const tMax = Math.max(...hrs.map((h) => h.temp));
-  const tSpan = Math.max(1, tMax - tMin);
-  const box = document.createElement("div");
-  box.className = "daily-expand";
-  // Fit up to 12 sampled hours evenly across the day.
-  const stepped = [];
-  const step = Math.max(1, Math.floor(hrs.length / 12));
-  for (let i = 0; i < hrs.length && stepped.length < 12; i += step) stepped.push(hrs[i]);
-  box.innerHTML = stepped.map((h) => {
-    const pct = ((h.temp - tMin) / tSpan) * 100;
-    const height = 10 + (pct / 100) * 36;
-    const precipLevel = h.pop >= 60 ? 2 : h.pop >= 25 ? 1 : 0;
-    const hh = new Date(h.time).getHours().toString().padStart(2, "0");
-    return `<div class="daily-expand-bar" data-precip="${precipLevel}" style="height:${height.toFixed(1)}px" title="${hh}:00 · ${Math.round(convertTemp(h.temp))}° · ${h.pop}%"><span>${Math.round(convertTemp(h.temp))}°</span></div>`;
-  }).join("");
-  item.appendChild(box);
+  item.appendChild(wrap);
   item.dataset.expanded = "true";
+}
+
+function buildDailyExpandStats(d) {
+  const stats = document.createElement("div");
+  stats.className = "daily-expand-stats";
+  const fmt = (ts) => ts ? fmtTime(ts) : "—";
+  const daylightMs = (d.sunrise && d.sunset) ? d.sunset - d.sunrise : null;
+  const daylight = daylightMs ? `${Math.floor(daylightMs / 3600_000)}h ${Math.round((daylightMs % 3600_000) / 60_000)}m` : "—";
+  const items = [
+    { label: "Sunrise", value: fmt(d.sunrise) },
+    { label: "Sunset", value: fmt(d.sunset) },
+    { label: "Daylight", value: daylight },
+    { label: "Rain", value: `${Math.round(d.pop ?? 0)}% · ${(d.precip ?? 0).toFixed(1)} mm` },
+    { label: "Gust max", value: d.gustsMax ? `${Math.round(d.gustsMax)} km/h` : "—" },
+    { label: "UV max", value: d.uvMax != null ? Math.round(d.uvMax) : "—" },
+  ];
+  stats.innerHTML = items.map((it) =>
+    `<span class="daily-expand-stat"><em>${escapeHtml(it.label)}</em><strong>${escapeHtml(String(it.value))}</strong></span>`
+  ).join("");
+  return stats;
 }
 
 function renderNowcast(w) {

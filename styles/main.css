@@ -652,6 +652,42 @@ html[data-reduce-motion="true"] *::after {
   transition: opacity 160ms var(--ease);
 }
 .daily-expand-bar:hover span { opacity: 1; }
+.daily-expand-wrap {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 6px;
+  border-top: 1px solid var(--stroke);
+  margin-top: 4px;
+  padding-top: 8px;
+}
+.daily-expand-wrap > .daily-expand {
+  border-top: 0;
+  margin-top: 0;
+  padding: 6px 6px 4px;
+}
+.daily-expand-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 6px 12px;
+  padding: 2px 6px 4px;
+}
+.daily-expand-stat {
+  display: grid;
+  gap: 1px;
+  font-variant-numeric: tabular-nums;
+}
+.daily-expand-stat em {
+  font-style: normal;
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+.daily-expand-stat strong {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--fg);
+}
 
 /* ---------- Share button flash ---------- */
 #share-btn.just-copied { color: var(--accent); animation: pulseOnce 560ms var(--ease); }
