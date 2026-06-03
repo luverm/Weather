@@ -177,6 +177,7 @@ export const ui = {
     });
     bindInstallPrompt();
     bindSavePlaceBtn();
+    bindChartLegend();
   },
   focusSearch() { el.searchInput?.focus(); el.searchInput?.select?.(); },
   toggleUnits() { el.unitBtn?.click(); },
@@ -1444,6 +1445,32 @@ function bindUnitToggle() {
     localStorage.setItem("aether:unit", state.unit);
     el.unitBtn.textContent = `°${state.unit}`;
     if (state.weather) ui.setWeather(state.weather);
+  });
+}
+
+function bindChartLegend() {
+  const chartCard = document.getElementById("chart-card");
+  if (!chartCard) return;
+  const STORAGE_KEY = "aether:chart-layers";
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); } catch { /* ignore */ }
+  const setVisible = (series, on) => {
+    chartCard.setAttribute(`data-show-${series}`, on ? "true" : "false");
+    const btn = chartCard.querySelector(`.legend-btn[data-series="${series}"]`);
+    if (btn) btn.setAttribute("aria-pressed", on ? "true" : "false");
+  };
+  // Apply saved prefs (default to "true").
+  for (const series of ["feels", "gust", "precip"]) {
+    setVisible(series, saved[series] !== false);
+  }
+  chartCard.querySelectorAll(".legend-btn:not([disabled])").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const series = btn.dataset.series;
+      const on = btn.getAttribute("aria-pressed") !== "true";
+      setVisible(series, on);
+      saved[series] = on;
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(saved)); } catch { /* ignore */ }
+    });
   });
 }
 
