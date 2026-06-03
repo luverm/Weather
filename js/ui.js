@@ -129,6 +129,8 @@ const el = {
   toast: $("#toast"),
   placesStrip: $("#places-strip"),
   brandMark: $(".brand-mark"),
+  precipSummary: $("#precip-summary"),
+  precipSummaryText: $("#precip-summary-text"),
 };
 
 const state = {
@@ -215,6 +217,7 @@ export const ui = {
     renderAlerts(weather);
     renderWeekend(weather);
     renderTomorrowPreview(weather);
+    renderPrecipSummary(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -863,6 +866,42 @@ function renderOutfit(w) {
       </span>
     </li>
   `).join("");
+}
+
+function renderPrecipSummary(w) {
+  if (!el.precipSummary || !el.precipSummaryText) return;
+  const hours = (w.hourly || []).slice(0, 24);
+  if (hours.length < 6) {
+    el.precipSummary.hidden = true;
+    return;
+  }
+  const total = hours.reduce((s, h) => s + (h.precip ?? 0), 0);
+  let wetHours = 0, longestWet = 0, run = 0;
+  for (const h of hours) {
+    const isWet = (h.precip ?? 0) > 0.1 || (h.pop ?? 0) >= 60;
+    if (isWet) { wetHours += 1; run += 1; if (run > longestWet) longestWet = run; }
+    else { run = 0; }
+  }
+  el.precipSummary.hidden = false;
+  el.precipSummary.classList.toggle("is-wet", total >= 0.5 || wetHours >= 2);
+  if (total < 0.2 && wetHours === 0) {
+    el.precipSummaryText.textContent = "Dry across the next 24 h";
+    return;
+  }
+  if (total < 1) {
+    el.precipSummaryText.textContent =
+      `Light shower chance · ${wetHours} wet ${wetHours === 1 ? "hour" : "hours"} ahead`;
+    return;
+  }
+  // Round to 1 decimal for ≤10 mm, whole numbers above.
+  const totalStr = total >= 10 ? `${Math.round(total)} mm` : `${total.toFixed(1)} mm`;
+  if (longestWet >= 4) {
+    el.precipSummaryText.textContent =
+      `${totalStr} over ${wetHours} wet h · longest stretch ${longestWet} h`;
+  } else {
+    el.precipSummaryText.textContent =
+      `${totalStr} over ${wetHours} wet ${wetHours === 1 ? "hour" : "hours"} in the next 24 h`;
+  }
 }
 
 function renderTomorrowPreview(w) {

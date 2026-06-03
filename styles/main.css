@@ -833,6 +833,28 @@ html[data-reduce-motion="true"] *::after {
   pointer-events: none;
   transition: d 200ms var(--ease);
 }
+.precip-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 2px 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--stroke);
+  font-size: 11.5px;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+.precip-summary[hidden] { display: none; }
+.precip-summary.is-wet {
+  background: rgba(154,209,255,0.10);
+  border-color: rgba(154,209,255,0.25);
+  color: #b6cfe6;
+}
+.precip-summary .precip-summary-icon {
+  opacity: 0.8;
+}
 [data-tone="bright"] .chart-clouds { fill: rgba(255,255,255,0.12); stroke: rgba(255,255,255,0.22); }
 [data-tone="warm"] .chart-clouds { fill: rgba(255,205,160,0.10); stroke: rgba(255,205,160,0.18); }
 [data-tone="dark"] .chart-clouds { fill: rgba(255,255,255,0.08); stroke: rgba(255,255,255,0.14); }
