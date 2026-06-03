@@ -296,6 +296,7 @@ installShortcuts({
     const next = list[(idx + dir + list.length) % list.length];
     if (next) loadByCoords(next);
   },
+  toggleSavePlace: () => document.getElementById("save-place-btn")?.click(),
   nudge: (hours) => {
     clock.setOffset(clock.offset() + hours * 3600_000);
     scrubber.sync();
