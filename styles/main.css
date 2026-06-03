@@ -773,6 +773,13 @@ html[data-reduce-motion="true"] *::after {
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
 }
+.chart-clouds {
+  pointer-events: none;
+  transition: d 200ms var(--ease);
+}
+[data-tone="bright"] .chart-clouds { fill: rgba(255,255,255,0.12); stroke: rgba(255,255,255,0.22); }
+[data-tone="warm"] .chart-clouds { fill: rgba(255,205,160,0.10); stroke: rgba(255,205,160,0.18); }
+[data-tone="dark"] .chart-clouds { fill: rgba(255,255,255,0.08); stroke: rgba(255,255,255,0.14); }
 .chart-labels text {
   font-size: 9px;
   fill: var(--fg-dim);

@@ -139,9 +139,10 @@ export class HourlyChart {
       ? `<em>feels ${Math.round(feels)}°</em>` : "";
     const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
+    const cc = h.cloudCover != null ? ` · ${Math.round(h.cloudCover)}% clouds` : "";
     this.popover.innerHTML =
       `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
-      `<em>${h.pop}% precip${wind}${hum}</em>`;
+      `<em>${h.pop}% precip${wind}${hum}${cc}</em>`;
     this.popover.style.left = `${pxX.toFixed(1)}px`;
     this.popover.style.top = `${pxY.toFixed(1)}px`;
     this.popover.hidden = false;
@@ -221,6 +222,32 @@ export class HourlyChart {
         feelsLine.setAttribute("opacity", "0.55");
       } else {
         feelsLine.setAttribute("d", "");
+      }
+    }
+
+    // Cloud cover band: filled area at the top of the chart, height grows
+    // with cloud cover %. Subtle so it doesn't compete with the temp line.
+    const cloudsPath = this.svg.querySelector("#chart-clouds");
+    if (cloudsPath) {
+      const hasClouds = this.hours.some((h) => h.cloudCover != null);
+      if (hasClouds) {
+        const bandMax = PAD_TOP * 0.4 + innerH * 0.30; // depth band can reach
+        const top = 1;
+        let dTop = "";
+        this.hours.forEach((h, i) => {
+          const cc = Math.max(0, Math.min(100, h.cloudCover ?? 0));
+          const y = top + (cc / 100) * bandMax;
+          dTop += (i === 0 ? "M" : "L") + iToX(i).toFixed(1) + "," + y.toFixed(1) + " ";
+        });
+        // Close back across the top edge.
+        const firstXC = iToX(0).toFixed(1);
+        const lastXC = iToX(this.hours.length - 1).toFixed(1);
+        cloudsPath.setAttribute(
+          "d",
+          `${dTop.trim()} L${lastXC},${top} L${firstXC},${top} Z`
+        );
+      } else {
+        cloudsPath.setAttribute("d", "");
       }
     }
 
