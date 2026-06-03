@@ -427,6 +427,21 @@ html[data-reduce-motion="true"] *::after {
   transition: left 380ms var(--ease);
 }
 
+.yesterday-delta {
+  margin: 8px 0 0;
+  max-width: 240px;
+  margin-left: auto;
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-muted);
+  text-align: right;
+}
+.yesterday-delta[hidden] { display: none; }
+.yesterday-delta.up { color: #ffb78c; }
+.yesterday-delta.down { color: #9ad1ff; }
+.yesterday-delta.flat { color: var(--fg-dim); }
+
 /* ---------- Nowcast banner ---------- */
 .nowcast {
   padding: 14px 18px;

@@ -28,6 +28,7 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  yesterdayDelta: $("#yesterday-delta"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -292,6 +293,39 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  renderYesterdayDelta(w);
+}
+
+function renderYesterdayDelta(w) {
+  if (!el.yesterdayDelta) return;
+  // Only show on the live view — when scrubbing, the comparison is meaningless.
+  const live = state.weather && state.sampledWeather === state.weather;
+  const y = state.weather?.yesterday;
+  if (!live || !y || y.delta == null) {
+    el.yesterdayDelta.hidden = true;
+    return;
+  }
+  const abs = Math.abs(y.delta);
+  if (abs < 0.5) {
+    el.yesterdayDelta.hidden = false;
+    el.yesterdayDelta.className = "yesterday-delta flat";
+    el.yesterdayDelta.textContent = "About the same as yesterday";
+    return;
+  }
+  // Convert delta in degrees: °F = °C * 9/5 (deltas don't need +32 offset).
+  const unitDelta = state.unit === "F" ? y.delta * 9 / 5 : y.delta;
+  const rounded = Math.round(Math.abs(unitDelta));
+  if (rounded === 0) {
+    el.yesterdayDelta.hidden = false;
+    el.yesterdayDelta.className = "yesterday-delta flat";
+    el.yesterdayDelta.textContent = "About the same as yesterday";
+    return;
+  }
+  const warmer = y.delta > 0;
+  el.yesterdayDelta.hidden = false;
+  el.yesterdayDelta.className = `yesterday-delta ${warmer ? "up" : "down"}`;
+  el.yesterdayDelta.textContent =
+    `${warmer ? "▲" : "▼"} ${rounded}° ${warmer ? "warmer" : "cooler"} than yesterday`;
 }
 
 function renderDayRange(w) {

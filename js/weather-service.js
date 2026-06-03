@@ -93,7 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
-    past_hours: 1,
+    past_days: 1, // for "vs yesterday" delta on the hero
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -128,6 +128,20 @@ function normalize(d, aq) {
   const daily = d.daily || {};
   const now = Date.now();
 
+  // With past_days=1, the daily array is [yesterday, today, ...next 6].
+  // Find "today" by matching the local YYYY-MM-DD; fall back to index 1 (then 0)
+  // so older Open-Meteo responses without past_days still work.
+  let todayIdx = 0;
+  if (daily.time?.length) {
+    const todayStr = (() => {
+      const dt = new Date();
+      return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+    })();
+    const found = daily.time.findIndex((s) => s === todayStr);
+    if (found >= 0) todayIdx = found;
+    else if (daily.time.length > 1) todayIdx = 1;
+  }
+
   // 24-hour hourly forecast starting from the next hour.
   const hourly = [];
   if (d.hourly?.time) {
@@ -152,10 +166,10 @@ function normalize(d, aq) {
     }
   }
 
-  // 7-day daily forecast.
+  // 7-day daily forecast — start at todayIdx so we skip yesterday.
   const dailyForecast = [];
   if (daily.time) {
-    for (let i = 0; i < daily.time.length; i++) {
+    for (let i = todayIdx; i < daily.time.length; i++) {
       const ts = new Date(daily.time[i]).getTime();
       dailyForecast.push({
         time: ts,
@@ -190,6 +204,9 @@ function normalize(d, aq) {
   // Moon phase is not in Open-Meteo's free tier — compute it locally.
   const moon = computeMoonPhase(new Date());
 
+  // Vs yesterday: temp at the same hour 24h ago, plus yesterday's daily hi/lo.
+  const yesterday = computeYesterdayCompare(d.hourly, daily, c.temperature_2m, now, todayIdx);
+
   return {
     temp: c.temperature_2m,
     feelsLike: c.apparent_temperature,
@@ -205,18 +222,47 @@ function normalize(d, aq) {
     isDay: !!c.is_day,
     condition,
     label,
-    sunrise: daily.sunrise?.[0] ? new Date(daily.sunrise[0]).getTime() : null,
-    sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null,
-    uv: daily.uv_index_max?.[0] ?? null,
+    sunrise: daily.sunrise?.[todayIdx] ? new Date(daily.sunrise[todayIdx]).getTime() : null,
+    sunset: daily.sunset?.[todayIdx] ? new Date(daily.sunset[todayIdx]).getTime() : null,
+    uv: daily.uv_index_max?.[todayIdx] ?? null,
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
     hourly,
     daily: dailyForecast,
     nowcast,
     moon,
+    yesterday,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
     fetchedAt: now,
+  };
+}
+
+function computeYesterdayCompare(hourly, daily, currentTemp, now, todayIdx) {
+  if (!hourly?.time || !hourly?.temperature_2m) return null;
+  const target = now - 24 * 3600_000;
+  let bestIdx = -1, bestDiff = Infinity;
+  for (let i = 0; i < hourly.time.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    const diff = Math.abs(t - target);
+    if (diff < bestDiff) { bestDiff = diff; bestIdx = i; }
+  }
+  // Only trust if the match is within ~90 minutes of the target.
+  if (bestIdx < 0 || bestDiff > 90 * 60_000) return null;
+  const yTemp = hourly.temperature_2m[bestIdx];
+  if (yTemp == null || currentTemp == null) return null;
+  // Yesterday lives at todayIdx - 1 in the daily arrays (when past_days=1).
+  const yIdx = (todayIdx ?? 1) - 1;
+  let yMax = null, yMin = null;
+  if (yIdx >= 0 && daily?.temperature_2m_max && daily?.temperature_2m_min) {
+    yMax = daily.temperature_2m_max[yIdx] ?? null;
+    yMin = daily.temperature_2m_min[yIdx] ?? null;
+  }
+  return {
+    sameHourTemp: yTemp,
+    delta: currentTemp - yTemp,
+    high: yMax,
+    low: yMin,
   };
 }
 
