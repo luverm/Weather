@@ -134,6 +134,12 @@ const el = {
   savePlaceBtn: $("#save-place-btn"),
   tonightChip: $("#tonight-chip"),
   tonightText: $("#tonight-text"),
+  visibilityCard: $("#visibility-card"),
+  visibilityArc: $("#visibility-arc"),
+  visibilityValue: $("#visibility-value"),
+  visibilityLabel: $("#visibility-label"),
+  visibilityDetail: $("#visibility-detail"),
+  visibilityTone: $("#visibility-tone"),
 };
 
 const state = {
@@ -226,6 +232,7 @@ export const ui = {
     renderTomorrowPreview(weather);
     renderPrecipSummary(weather);
     renderTonightChip(weather);
+    renderVisibility(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -907,6 +914,52 @@ function renderOutfit(w) {
       </span>
     </li>
   `).join("");
+}
+
+function renderVisibility(w) {
+  if (!el.visibilityCard) return;
+  const meters = w.visibility;
+  if (meters == null) {
+    el.visibilityCard.hidden = true;
+    return;
+  }
+  el.visibilityCard.hidden = false;
+  const km = meters / 1000;
+  // Bucket the visibility into one of four bands.
+  let label, tone, color, fillFrac;
+  if (km >= 15) {
+    label = "Crystal clear"; tone = "great"; color = "#78d06a";
+    fillFrac = 1;
+  } else if (km >= 8) {
+    label = "Good visibility"; tone = "good"; color = "#9ad1ff";
+    fillFrac = 0.75;
+  } else if (km >= 3) {
+    label = "Hazy"; tone = "ok"; color = "#ffd28c";
+    fillFrac = 0.5;
+  } else if (km >= 1) {
+    label = "Limited"; tone = "warn"; color = "#ffb78c";
+    fillFrac = 0.3;
+  } else {
+    label = "Very poor"; tone = "bad"; color = "#ff8a8a";
+    fillFrac = 0.15;
+  }
+  el.visibilityCard.style.color = color;
+  const circ = 126;
+  if (el.visibilityArc) {
+    el.visibilityArc.setAttribute("stroke-dashoffset", String(circ * (1 - fillFrac)));
+  }
+  if (el.visibilityValue) {
+    el.visibilityValue.textContent = km >= 10 ? `${Math.round(km)}` : `${km.toFixed(1)}`;
+  }
+  if (el.visibilityLabel) el.visibilityLabel.textContent = label;
+  if (el.visibilityDetail) {
+    const tag = km >= 1 ? `${km.toFixed(km >= 10 ? 0 : 1)} km` : `${Math.round(meters)} m`;
+    el.visibilityDetail.textContent = tag;
+  }
+  if (el.visibilityTone) {
+    el.visibilityTone.className = `visibility-tone ${tone}`;
+    el.visibilityTone.textContent = tone === "great" || tone === "good" ? "" : label.split(" ")[0];
+  }
 }
 
 function renderTonightChip(w) {

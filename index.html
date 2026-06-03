@@ -397,6 +397,25 @@
           </div>
         </div>
 
+        <div class="extra-card glass" id="visibility-card" hidden>
+          <span class="metric-label">Visibility <span id="visibility-tone" class="visibility-tone"></span></span>
+          <div class="visibility-row">
+            <div class="visibility-ring" aria-hidden="true">
+              <svg viewBox="0 0 48 48">
+                <circle cx="24" cy="24" r="20" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="4"/>
+                <circle id="visibility-arc" cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="4"
+                        stroke-linecap="round" stroke-dasharray="126" stroke-dashoffset="126"
+                        transform="rotate(-90 24 24)"/>
+              </svg>
+              <span id="visibility-value" class="visibility-value">—</span>
+            </div>
+            <div class="visibility-meta">
+              <strong id="visibility-label">—</strong>
+              <span id="visibility-detail" class="visibility-detail">—</span>
+            </div>
+          </div>
+        </div>
+
         <div class="extra-card glass" id="sun-card">
           <span class="metric-label"><span id="sun-next-label">Sun</span> <span id="sun-countdown" class="sun-countdown"></span></span>
           <svg id="sun-arc" class="sun-arc" viewBox="0 0 200 84" aria-hidden="true">
