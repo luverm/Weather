@@ -830,6 +830,7 @@ html[data-reduce-motion="true"] *::after {
   opacity: 0.55;
 }
 .legend-swatch.precip { background: rgba(154, 209, 255, 0.55); }
+.legend-swatch.clouds { background: rgba(255,255,255,0.30); border: 1px solid rgba(255,255,255,0.22); }
 .legend-btn {
   display: inline-flex;
   align-items: center;
@@ -852,6 +853,7 @@ html[data-reduce-motion="true"] *::after {
 .chart-card[data-show-gust="false"] .chart-gust-line { display: none; }
 .chart-card[data-show-precip="false"] .chart-precip { display: none; }
 .chart-card[data-show-precip="false"] .precip-summary { opacity: 0.4; }
+.chart-card[data-show-clouds="false"] .chart-clouds { display: none; }
 
 .chart-wrap {
   position: relative;

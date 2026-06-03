@@ -1460,7 +1460,7 @@ function bindChartLegend() {
     if (btn) btn.setAttribute("aria-pressed", on ? "true" : "false");
   };
   // Apply saved prefs (default to "true").
-  for (const series of ["feels", "gust", "precip"]) {
+  for (const series of ["feels", "gust", "precip", "clouds"]) {
     setVisible(series, saved[series] !== false);
   }
   chartCard.querySelectorAll(".legend-btn:not([disabled])").forEach((btn) => {
