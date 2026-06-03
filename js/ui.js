@@ -374,6 +374,25 @@ function setBrandCondition(w) {
   const greeting = pickGreeting(state.weather?.timezone);
   const cond = capitalize(w.label || key);
   el.brandMark.title = `${greeting} · ${cond}`;
+  updateDocumentTitle(w, key);
+}
+
+function updateDocumentTitle(w, key) {
+  // "☀ 23° — Reykjavík · Aether" so the browser tab gives an at-a-glance
+  // summary. Stays as plain text if anything is missing.
+  const emoji = {
+    clear: "☀", night: "🌙", clouds: "⛅", rain: "🌧", storm: "⛈",
+    snow: "🌨", fog: "🌫",
+  }[key] || "🌤";
+  const tempC = w.temp;
+  const place = state.place?.name;
+  if (tempC == null) {
+    document.title = place ? `${place} · Aether` : "Aether — Interactive Weather";
+    return;
+  }
+  const t = Math.round(convertTemp(tempC));
+  const placeStr = place ? ` — ${place}` : "";
+  document.title = `${emoji} ${t}°${placeStr} · Aether`;
 }
 
 function pickGreeting(tz) {
