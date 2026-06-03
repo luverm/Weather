@@ -126,7 +126,14 @@ ul { list-style: none; margin: 0; padding: 0; }
   color: var(--accent);
   filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 70%, transparent));
   animation: breathe 4.5s ease-in-out infinite;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 50%;
 }
+.brand-mark:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
+.brand-mark:hover { filter: drop-shadow(0 0 14px color-mix(in srgb, var(--accent) 80%, transparent)); }
 .brand-mark svg { width: 100%; height: 100%; display: block; transition: color 600ms var(--ease); }
 .brand-mark .bm-sun { fill: currentColor; transition: opacity 600ms var(--ease), transform 600ms var(--ease); transform-origin: 12px 12px; }
 .brand-mark .bm-rays { transition: opacity 600ms var(--ease), transform 700ms var(--ease); transform-origin: 12px 12px; }

@@ -178,6 +178,7 @@ export const ui = {
     bindInstallPrompt();
     bindSavePlaceBtn();
     bindChartLegend();
+    bindBrandMark();
   },
   focusSearch() { el.searchInput?.focus(); el.searchInput?.select?.(); },
   toggleUnits() { el.unitBtn?.click(); },
@@ -323,6 +324,39 @@ function setBrandCondition(w) {
   let key = w.condition || "clear";
   if (key === "clear" && w.isDay === false) key = "night";
   el.brandMark.setAttribute("data-condition", key);
+  // Tooltip: "Good morning · Mostly clear" — picks the part-of-day from the
+  // city's local time when we have a timezone, browser local otherwise.
+  const greeting = pickGreeting(state.weather?.timezone);
+  const cond = capitalize(w.label || key);
+  el.brandMark.title = `${greeting} · ${cond}`;
+}
+
+function pickGreeting(tz) {
+  let hour;
+  try {
+    if (tz && tz !== "auto") {
+      const parts = new Intl.DateTimeFormat(undefined, {
+        timeZone: tz, hour: "2-digit", hour12: false,
+      }).formatToParts(new Date());
+      hour = parseInt(parts.find((p) => p.type === "hour")?.value ?? "12", 10);
+    } else {
+      hour = new Date().getHours();
+    }
+  } catch {
+    hour = new Date().getHours();
+  }
+  if (hour < 5) return "Late night";
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  if (hour < 21) return "Good evening";
+  return "Good night";
+}
+
+function bindBrandMark() {
+  if (!el.brandMark) return;
+  el.brandMark.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
 }
 
 function renderYesterdayDelta(w) {
