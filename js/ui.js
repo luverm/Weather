@@ -243,11 +243,17 @@ export const ui = {
     }
   },
   setScrubbing(on) {
+    const wasScrubbing = document.documentElement.dataset.scrubbing === "true";
     document.documentElement.setAttribute("data-scrubbing", on ? "true" : "false");
     if (on) {
       el.hintText.textContent = "Drag to explore future weather.";
     } else {
       el.hintText.innerHTML = 'Drag the slider, hover the chart, or press <kbd>?</kbd> for shortcuts.';
+    }
+    // When we transition back to live, re-render the yesterday delta so it
+    // reappears (renderLiveValues was called before this attribute flipped).
+    if (wasScrubbing && !on && state.sampledWeather) {
+      renderYesterdayDelta(state.sampledWeather);
     }
   },
   setAudioState(on) {
@@ -306,7 +312,7 @@ function renderLiveValues(w, { animate = true } = {}) {
 function renderYesterdayDelta(w) {
   if (!el.yesterdayDelta) return;
   // Only show on the live view — when scrubbing, the comparison is meaningless.
-  const live = state.weather && state.sampledWeather === state.weather;
+  const live = state.weather && document.documentElement.dataset.scrubbing !== "true";
   const y = state.weather?.yesterday;
   if (!live || !y || y.delta == null) {
     el.yesterdayDelta.hidden = true;
