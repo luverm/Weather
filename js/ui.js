@@ -54,6 +54,7 @@ const el = {
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  sunExtras: $("#sun-extras"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -642,8 +643,43 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderSunExtras(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderSunExtras(w) {
+  if (!el.sunExtras) return;
+  if (!w.sunrise || !w.sunset) {
+    el.sunExtras.hidden = true;
+    return;
+  }
+  // Solar noon: midpoint of sunrise and sunset (close enough for UI use).
+  // Golden hour: ~1 h after sunrise and ~1 h before sunset on average.
+  const noon = (w.sunrise + w.sunset) / 2;
+  const goldenAm = w.sunrise + 60 * 60_000;
+  const goldenPm = w.sunset - 60 * 60_000;
+  const now = Date.now();
+  // Pick the most relevant upcoming moment (or current if in golden hour).
+  let nextLabel = null, nextTs = null;
+  if (now < w.sunrise) {
+    nextLabel = "Golden hour"; nextTs = goldenAm;
+  } else if (now < goldenAm) {
+    nextLabel = "Golden hour"; nextTs = goldenAm;
+  } else if (now < noon) {
+    nextLabel = "Solar noon"; nextTs = noon;
+  } else if (now < goldenPm) {
+    nextLabel = "Golden hour"; nextTs = goldenPm;
+  } else if (now < w.sunset) {
+    nextLabel = "Sunset"; nextTs = w.sunset; // already covered by countdown
+  }
+  el.sunExtras.hidden = false;
+  if (nextLabel && nextLabel !== "Sunset") {
+    el.sunExtras.textContent =
+      `${nextLabel} ${fmtTime(nextTs)} · Solar noon ${fmtTime(noon)}`;
+  } else {
+    el.sunExtras.textContent = `Solar noon ${fmtTime(noon)} · Golden hour ${fmtTime(goldenPm)}`;
+  }
 }
 
 function scheduleSunArc(w) {

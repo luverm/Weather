@@ -1231,6 +1231,14 @@ kbd {
   display: block;
   margin: -2px 0 4px;
 }
+.sun-extras {
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+.sun-extras[hidden] { display: none; }
 #sun-arc-marker {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
