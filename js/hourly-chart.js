@@ -9,13 +9,16 @@ const PAD_TOP = 16;
 const PAD_BOT = 22;
 
 export class HourlyChart {
-  constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit, getTimezone }) {
+  constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit, getTimezone, getSpeed }) {
     this.svg = svgEl;
     this.hoverEl = hoverEl;
     this.popover = popoverEl;
     this.onHoverHour = onHoverHour;
     this.getUnit = getUnit || (() => "C");
     this.getTimezone = getTimezone || (() => null);
+    // getSpeed(kmh) -> { v, unit } so the chart can render in mph when the
+    // user prefers imperial.
+    this.getSpeed = getSpeed || ((kmh) => ({ v: kmh, unit: "km/h" }));
     this.hours = [];
     this.points = [];
     this._bind();
@@ -137,7 +140,8 @@ export class HourlyChart {
       : null;
     const feelsStr = (feels != null && Math.abs(feels - t) >= 1)
       ? `<em>feels ${Math.round(feels)}°</em>` : "";
-    const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h` : "";
+    const { v: ws, unit: su } = h.wind != null ? this.getSpeed(h.wind) : { v: null, unit: "" };
+    const wind = h.wind != null ? ` · ${Math.round(ws)} ${su}` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
     const cc = h.cloudCover != null ? ` · ${Math.round(h.cloudCover)}% clouds` : "";
     this.popover.innerHTML =

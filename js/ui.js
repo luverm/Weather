@@ -181,6 +181,7 @@ export const ui = {
       onHoverHour: (ts) => state.handlers.onHourClick?.(ts),
       getUnit: () => state.unit,
       getTimezone: () => state.weather?.timezone,
+      getSpeed: (kmh) => ({ v: convertSpeed(kmh), unit: speedUnit() }),
     });
     state.comfortStrip = new ComfortStrip({
       rootEl: el.comfortStrip,
@@ -1827,7 +1828,7 @@ function bindShare() {
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
       today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
-      `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
+      `Wind ${Math.round(convertSpeed(w.windSpeed))} ${speedUnit()}${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
     ].filter(Boolean);
