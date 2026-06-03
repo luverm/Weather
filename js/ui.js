@@ -132,6 +132,8 @@ const el = {
   precipSummary: $("#precip-summary"),
   precipSummaryText: $("#precip-summary-text"),
   savePlaceBtn: $("#save-place-btn"),
+  tonightChip: $("#tonight-chip"),
+  tonightText: $("#tonight-text"),
 };
 
 const state = {
@@ -223,6 +225,7 @@ export const ui = {
     renderWeekend(weather);
     renderTomorrowPreview(weather);
     renderPrecipSummary(weather);
+    renderTonightChip(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -904,6 +907,37 @@ function renderOutfit(w) {
       </span>
     </li>
   `).join("");
+}
+
+function renderTonightChip(w) {
+  if (!el.tonightChip || !el.tonightText) return;
+  // Find the overnight low — minimum hourly temp during the night portion of
+  // the next ~16 hours. Fall back to today's daily min if we can't.
+  const hours = (w.hourly || []).slice(0, 18);
+  const nightHours = hours.filter((h) => !h.isDay);
+  let low = null;
+  if (nightHours.length) {
+    low = Math.min(...nightHours.map((h) => h.temp).filter((v) => v != null));
+    if (!isFinite(low)) low = null;
+  }
+  if (low == null) low = w.daily?.[0]?.tempMin ?? null;
+  if (low == null) {
+    el.tonightChip.hidden = true;
+    return;
+  }
+  const lowC = low;
+  const lowDisplay = Math.round(convertTemp(low));
+  let comfort = "";
+  if (lowC <= -10) comfort = "freezing — extra blankets";
+  else if (lowC <= 0) comfort = "cold — bundle up";
+  else if (lowC <= 8) comfort = "chilly — heater weather";
+  else if (lowC <= 14) comfort = "comfortable sleeping";
+  else if (lowC <= 19) comfort = "mild";
+  else if (lowC <= 23) comfort = "warm — light covers";
+  else if (lowC <= 27) comfort = "warm night — fan friendly";
+  else comfort = "hot — keep windows open";
+  el.tonightChip.hidden = false;
+  el.tonightText.textContent = `Tonight ${lowDisplay}° · ${comfort}`;
 }
 
 function renderPrecipSummary(w) {

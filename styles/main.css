@@ -511,6 +511,24 @@ html[data-reduce-motion="true"] *::after {
 .yesterday-delta.up { color: #ffb78c; }
 .yesterday-delta.down { color: #9ad1ff; }
 .yesterday-delta.flat { color: var(--fg-dim); }
+.tonight-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(120, 140, 200, 0.10);
+  border: 1px solid rgba(120, 140, 200, 0.22);
+  color: #c8d2f0;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  max-width: 240px;
+  margin-left: auto;
+}
+.tonight-chip[hidden] { display: none; }
+.tonight-chip .tonight-icon { opacity: 0.85; }
 
 /* ---------- Nowcast banner ---------- */
 .nowcast {
