@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { pickOutfit } from "./outfit.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -87,6 +88,9 @@ const el = {
   insightsList: $("#insights-list"),
   activityCard: $("#activity-card"),
   activityList: $("#activity-list"),
+  outfitCard: $("#outfit-card"),
+  outfitList: $("#outfit-list"),
+  outfitTempHint: $("#outfit-temp-hint"),
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
@@ -191,6 +195,7 @@ export const ui = {
     renderTrends(weather);
     renderInsights(weather);
     renderActivity(weather);
+    renderOutfit(weather);
     renderAlerts(weather);
     renderWeekend(weather);
     startLocaltime(weather);
@@ -212,6 +217,7 @@ export const ui = {
     renderLiveValues(sampled, { animate: false });
     renderMetrics(sampled);
     renderAdvice(sampled);
+    renderOutfit(sampled);
     highlightHour(highlightHourIndex);
     if (state.comfortStrip) state.comfortStrip.highlight(highlightHourIndex);
     if (state.chart && sampled._sampledTs != null) {
@@ -768,6 +774,31 @@ function renderActivity(w) {
       if (ts) state.handlers.onHourClick?.(ts);
     });
   });
+}
+
+function renderOutfit(w) {
+  if (!el.outfitCard || !el.outfitList) return;
+  const items = pickOutfit(w);
+  if (!items.length) {
+    el.outfitCard.hidden = true;
+    return;
+  }
+  el.outfitCard.hidden = false;
+  if (el.outfitTempHint) {
+    const feels = w.feelsLike ?? w.temp;
+    el.outfitTempHint.textContent = feels != null
+      ? `feels ${Math.round(convertTemp(feels))}°`
+      : "";
+  }
+  el.outfitList.innerHTML = items.map((it) => `
+    <li data-key="${escapeHtml(it.key)}" title="${escapeHtml(it.hint || "")}">
+      <span class="outfit-icon">${it.icon}</span>
+      <span class="outfit-meta">
+        <span class="outfit-label">${escapeHtml(it.label)}</span>
+        <span class="outfit-hint">${escapeHtml(it.hint || "")}</span>
+      </span>
+    </li>
+  `).join("");
 }
 
 function renderPollen(pollen) {
