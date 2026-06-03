@@ -12,6 +12,7 @@ import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { pickOutfit } from "./outfit.js";
 import { computeSunshine, sparklinePaths } from "./sunshine.js";
+import { pickBestDay } from "./best-day.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -999,6 +1000,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  const best = pickBestDay({ daily: days });
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1017,14 +1019,18 @@ function renderDaily(w) {
     const width = ((d.tempMax - d.tempMin) / span) * 100;
     const item = document.createElement("div");
     item.className = "daily-item";
+    if (best && best.index === i) item.classList.add("is-best");
     item.dataset.ts = d.time;
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const bestBadge = (best && best.index === i)
+      ? `<span class="daily-best-badge" title="Best day · ${escapeHtml(best.reasons.join(' · '))}">★ Best</span>`
+      : "";
     item.innerHTML = `
-      <span class="daily-day">${day}</span>
+      <span class="daily-day">${day}${bestBadge}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
