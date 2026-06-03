@@ -1572,14 +1572,31 @@ function renderSearchResults(results) {
 
 function showRecentsIfAny() {
   const recents = places.all().slice(0, 5);
-  if (!recents.length) { el.searchResults.hidden = true; return; }
+  const locateItem = `
+    <li role="option" class="search-locate" data-action="locate">
+      <span>
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+          <circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/>
+          <circle cx="12" cy="12" r="7.5"/>
+          <path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22"/>
+        </svg>
+        Use my location
+      </span>
+      <span class="sub">geolocation</span>
+    </li>`;
+  if (!recents.length) {
+    el.searchResults.innerHTML = locateItem;
+    el.searchResults._items = [];
+    el.searchResults.hidden = false;
+    return;
+  }
   const itemsHtml = recents.map((r, i) => `
     <li role="option" data-index="${i}">
       <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
       <span class="sub">${escapeHtml(r.country || "")}</span>
     </li>
   `).join("");
-  el.searchResults.innerHTML = `<li class="recent-heading">Recent places</li>${itemsHtml}`;
+  el.searchResults.innerHTML = `${locateItem}<li class="recent-heading">Recent places</li>${itemsHtml}`;
   el.searchResults._items = recents;
   el.searchResults.hidden = false;
 }
@@ -1606,6 +1623,12 @@ function bindSearch() {
   el.searchResults.addEventListener("click", (e) => {
     const li = e.target.closest("li");
     if (!li) return;
+    if (li.dataset.action === "locate") {
+      el.searchInput.value = "";
+      el.searchResults.hidden = true;
+      state.handlers.onLocate?.();
+      return;
+    }
     const i = parseInt(li.dataset.index, 10);
     const item = el.searchResults._items?.[i];
     if (!item) return;

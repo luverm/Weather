@@ -315,6 +315,15 @@ html[data-reduce-motion="true"] *::after {
   color: var(--fg-dim);
   pointer-events: none;
 }
+.search-results .search-locate {
+  color: var(--accent);
+}
+.search-results .search-locate > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.search-results .search-locate svg { vertical-align: -2px; }
 
 .icon-btn {
   width: 42px; height: 42px;
