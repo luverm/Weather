@@ -129,18 +129,9 @@ function normalize(d, aq) {
   const now = Date.now();
 
   // With past_days=1, the daily array is [yesterday, today, ...next 6].
-  // Find "today" by matching the local YYYY-MM-DD; fall back to index 1 (then 0)
-  // so older Open-Meteo responses without past_days still work.
-  let todayIdx = 0;
-  if (daily.time?.length) {
-    const todayStr = (() => {
-      const dt = new Date();
-      return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
-    })();
-    const found = daily.time.findIndex((s) => s === todayStr);
-    if (found >= 0) todayIdx = found;
-    else if (daily.time.length > 1) todayIdx = 1;
-  }
+  // Today's index is always 1; fall back to 0 if the API somehow returns a
+  // single-day array (e.g. when past_days isn't honoured).
+  const todayIdx = (daily.time?.length ?? 0) > 1 ? 1 : 0;
 
   // 24-hour hourly forecast starting from the next hour.
   const hourly = [];
