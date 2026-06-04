@@ -752,6 +752,22 @@ html[data-reduce-motion="true"] *::after {
 }
 .legend-swatch.precip { background: rgba(154, 209, 255, 0.55); }
 
+.chart-rain-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  color: var(--fg-dim);
+}
+.chart-rain-chip[hidden] { display: none; }
+.chart-rain-chip.wet { color: #9ad1ff; border-color: rgba(154,209,255,0.30); background: rgba(154,209,255,0.10); }
+.chart-rain-chip.dry { color: var(--fg-dim); }
+
 .chart-wrap {
   position: relative;
 }

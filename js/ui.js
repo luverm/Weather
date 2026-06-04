@@ -57,6 +57,7 @@ const el = {
   adviceText: $("#advice-text"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
+  chartRainChip: $("#chart-rain-chip"),
   pollenCard: $("#pollen-card"),
   pollenLevel: $("#pollen-level"),
   pollenDominant: $("#pollen-dominant"),
@@ -200,6 +201,7 @@ export const ui = {
       state.chart.setHours(weather.hourly);
       state.chart.setSunEvents(weather.daily);
     }
+    renderRainChip(weather);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
@@ -1070,6 +1072,39 @@ function toggleDailyExpand(item, d, w) {
       if (ts) state.handlers.onHourClick?.(ts);
     });
   });
+}
+
+function renderRainChip(w) {
+  if (!el.chartRainChip) return;
+  const today = w?.daily?.[0];
+  const total = today?.precip;
+  const popMax = today?.pop;
+  if (total == null && popMax == null) {
+    el.chartRainChip.hidden = true;
+    return;
+  }
+  // Cumulative rain already in the day (hours strictly before "now") so we
+  // can phrase it as "1.2 mm so far · 0.5 mm more".
+  const now = Date.now();
+  const dayStart = new Date(today.time).setHours(0, 0, 0, 0);
+  const dayEnd = dayStart + 24 * 3600_000;
+  let soFar = 0, ahead = 0;
+  for (const h of w.hourly || []) {
+    if (h.time < dayStart || h.time >= dayEnd) continue;
+    const p = h.precip || 0;
+    if (h.time <= now) soFar += p; else ahead += p;
+  }
+  const sum = total != null ? total : (soFar + ahead);
+  if (sum < 0.1 && popMax < 20) {
+    el.chartRainChip.className = "chart-rain-chip dry";
+    el.chartRainChip.textContent = `Dry · ${popMax ?? 0}% peak`;
+  } else {
+    const totalStr = `${sum.toFixed(1)} mm today`;
+    const popStr = popMax != null ? ` · ${popMax}% peak` : "";
+    el.chartRainChip.className = "chart-rain-chip wet";
+    el.chartRainChip.textContent = totalStr + popStr;
+  }
+  el.chartRainChip.hidden = false;
 }
 
 function renderNowcast(w) {
