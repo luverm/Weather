@@ -110,6 +110,16 @@ export function narrate(weather) {
     }
   }
 
+  // Yesterday comparison — only when the swing is striking and the lead
+  // sentence didn't already discuss today's temp.
+  if (bits.length < 2 && weather.yesterdayTemp != null && temp != null) {
+    const delta = temp - weather.yesterdayTemp;
+    if (Math.abs(delta) >= 4) {
+      const word = delta > 0 ? "warmer" : "cooler";
+      bits.push(`Noticeably ${word} than yesterday at this hour.`);
+    }
+  }
+
   // Calm night fallback.
   if (bits.length < 2 && condition === "clear" && windSpeed < 10) {
     bits.push("Calm and settled for the next few hours.");
