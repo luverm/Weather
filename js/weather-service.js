@@ -203,10 +203,19 @@ function normalize(d, aq) {
   // much longer/shorter today is. With past_days=1 the raw daily.sunrise[0]
   // / daily.sunset[0] arrays cover yesterday before the dropped-day filter.
   let yesterdayDaylightMs = null;
+  let yesterdayHi = null;
+  let yesterdayLo = null;
   if (daily.sunrise?.[0] && daily.sunset?.[0]) {
     const yRise = new Date(daily.sunrise[0]).getTime();
     const ySet = new Date(daily.sunset[0]).getTime();
     if (yRise < dayCutoff) yesterdayDaylightMs = ySet - yRise;
+  }
+  if (daily.time?.[0]) {
+    const firstTs = new Date(daily.time[0]).getTime();
+    if (firstTs < dayCutoff) {
+      yesterdayHi = daily.temperature_2m_max?.[0] ?? null;
+      yesterdayLo = daily.temperature_2m_min?.[0] ?? null;
+    }
   }
 
   // Moon phase is not in Open-Meteo's free tier — compute it locally.
@@ -240,6 +249,8 @@ function normalize(d, aq) {
     moon,
     yesterdayTemp,
     yesterdayDaylightMs,
+    yesterdayHi,
+    yesterdayLo,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
     fetchedAt: now,

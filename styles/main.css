@@ -426,6 +426,18 @@ html[data-reduce-motion="true"] *::after {
   box-shadow: 0 2px 8px rgba(0,0,0,0.35);
   transition: left 380ms var(--ease);
 }
+.day-range-ytick {
+  position: absolute;
+  top: -3px;
+  width: 2px; height: 12px;
+  margin-left: -1px;
+  background: rgba(255,255,255,0.55);
+  border-radius: 1px;
+  pointer-events: auto;
+  cursor: help;
+  transition: left 380ms var(--ease);
+}
+.day-range-ytick[hidden] { display: none; }
 
 /* ---------- Nowcast banner ---------- */
 .nowcast {

@@ -26,6 +26,8 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  dayRangeYesterdayHi: $("#day-range-ytick-hi"),
+  dayRangeYesterdayLo: $("#day-range-ytick-lo"),
   yesterdayChip: $("#yesterday-chip"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
@@ -342,6 +344,19 @@ function renderDayRange(w) {
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+  placeYesterdayTick(el.dayRangeYesterdayHi, state.weather?.yesterdayHi, lo, hi);
+  placeYesterdayTick(el.dayRangeYesterdayLo, state.weather?.yesterdayLo, lo, hi);
+}
+
+function placeYesterdayTick(node, value, lo, hi) {
+  if (!node) return;
+  if (value == null || hi === lo) { node.hidden = true; return; }
+  // Hide if yesterday's value is well outside today's span — looks like a glitch.
+  const margin = (hi - lo) * 0.15;
+  if (value < lo - margin || value > hi + margin) { node.hidden = true; return; }
+  const frac = Math.max(0, Math.min(1, (value - lo) / (hi - lo)));
+  node.style.left = `${(frac * 100).toFixed(1)}%`;
+  node.hidden = false;
 }
 
 function renderMetrics(w) {
