@@ -6,6 +6,7 @@
 const ICONS = {
   walk: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4" r="2"/><path d="M9 21l3-7 4 3 2-4M7 13l3-3 3 4"/></svg>',
   stars: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 4.5L18 9l-4.4 1.5L12 15l-1.6-4.5L6 9l4.4-1.5L12 3z"/><path d="M19 14l.7 1.8L21 17l-1.3.6L19 19l-.7-1.4L17 17l1.3-1.2z"/></svg>',
+  bike: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="17" r="3.5"/><circle cx="18" cy="17" r="3.5"/><path d="M6 17l4-8h4l4 8M10 9l3-3h2"/></svg>',
 };
 
 function tempScore(t) {
@@ -46,6 +47,23 @@ function activityScore(h) {
   const pw = precipScore(h.pop, h.precip) * 0.40;
   const daytimeBonus = h.isDay ? 5 : -8;
   return Math.round(tw + ww + pw + daytimeBonus - uvPenalty(h.uv));
+}
+
+function cyclingScore(h) {
+  if (!h) return 0;
+  // Cycling is more wind-sensitive, less temp-sensitive (motion creates
+  // wind-chill on its own). Wet roads are a hard penalty.
+  const w = h.wind ?? h.windSpeed ?? 0;
+  const g = h.gusts ?? w;
+  const t = h.temp;
+  const tw = t == null ? 50 : Math.max(0, 100 - Math.abs(t - 18) * 4) * 0.20;
+  let ww = 100;
+  if (w > 15) ww -= (w - 15) * 5;
+  if (g > 30) ww -= (g - 30) * 4;
+  ww = Math.max(0, ww) * 0.35;
+  const pw = precipScore(h.pop, h.precip) * 0.40;
+  const daytimeBonus = h.isDay ? 6 : -10;
+  return Math.round(tw + ww + pw + daytimeBonus - uvPenalty(h.uv) * 0.5);
 }
 
 function stargazeScore(h) {
@@ -117,6 +135,25 @@ export function findActivityWindows(weather) {
       score: Math.round(walk.score),
       why: reasonsFor(walk, hours),
     });
+  }
+
+  // Cycling: 2h window — pick a distinct slot if the walk window dominates
+  // the same hours, otherwise skip so we don't repeat the same row.
+  const bike = rollingPeak(hours, cyclingScore, 2);
+  if (bike && bike.score >= 55) {
+    const overlap = walk && !(bike.endIdx < walk.startIdx || bike.startIdx > walk.endIdx);
+    const noticeably = !walk || bike.score >= walk.score + 5;
+    if (!overlap || noticeably) {
+      out.push({
+        kind: "bike",
+        icon: ICONS.bike,
+        label: "Best for cycling",
+        start: hours[bike.startIdx].time,
+        end: hours[bike.endIdx].time + 60 * 60 * 1000,
+        score: Math.round(bike.score),
+        why: reasonsFor(bike, hours),
+      });
+    }
   }
 
   // Stargazing: 2h window.
