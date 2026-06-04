@@ -54,6 +54,17 @@ export class HourlyChart {
     this.setCursor(null);
   }
 
+  /** Provide daily sun events so the chart can draw sunrise/sunset markers
+   *  inside its 24-hour window. Accepts the same shape as weather.daily[]. */
+  setSunEvents(daily) {
+    this.sunEvents = [];
+    for (const d of daily || []) {
+      if (d.sunrise) this.sunEvents.push({ time: d.sunrise, kind: "rise" });
+      if (d.sunset) this.sunEvents.push({ time: d.sunset, kind: "set" });
+    }
+    this._draw();
+  }
+
   refresh() { this._draw(); }
 
   setCursor(ts) {
@@ -283,6 +294,39 @@ export class HourlyChart {
         r.setAttribute("height", String(H));
         nightG.appendChild(r);
         runStart = null;
+      }
+    }
+
+    // Sunrise / sunset vertical markers — anchored to actual event time,
+    // interpolated between hour columns for fractional-hour positioning.
+    const sunG = this.svg.querySelector("#chart-sun-events");
+    if (sunG && this.hours.length >= 2) {
+      sunG.innerHTML = "";
+      const start = this.hours[0].time;
+      const end = this.hours[this.hours.length - 1].time;
+      const span = end - start;
+      const innerW2 = W - PAD_LEFT - PAD_RIGHT;
+      for (const ev of this.sunEvents || []) {
+        if (ev.time < start || ev.time > end) continue;
+        const x = PAD_LEFT + ((ev.time - start) / span) * innerW2;
+        const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        g.setAttribute("class", `sun-event sun-${ev.kind}`);
+        g.setAttribute("transform", `translate(${x.toFixed(1)},0)`);
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", "0"); line.setAttribute("x2", "0");
+        line.setAttribute("y1", String(PAD_TOP - 2));
+        line.setAttribute("y2", String(H - PAD_BOT + 2));
+        g.appendChild(line);
+        const glyph = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        glyph.setAttribute("x", "0");
+        glyph.setAttribute("y", String(PAD_TOP - 4));
+        glyph.setAttribute("text-anchor", "middle");
+        glyph.textContent = ev.kind === "rise" ? "↑" : "↓";
+        const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+        title.textContent = `${ev.kind === "rise" ? "Sunrise" : "Sunset"} ${this._formatHour(ev.time)}`;
+        g.appendChild(title);
+        g.appendChild(glyph);
+        sunG.appendChild(g);
       }
     }
 

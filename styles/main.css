@@ -802,6 +802,19 @@ html[data-reduce-motion="true"] *::after {
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
 }
+.chart-sun-events .sun-event { pointer-events: auto; }
+.chart-sun-events line {
+  stroke: rgba(255, 224, 168, 0.35);
+  stroke-width: 0.6;
+  stroke-dasharray: 1.5 2.5;
+}
+.chart-sun-events text {
+  font-size: 8px;
+  fill: rgba(255, 224, 168, 0.85);
+  font-variant-numeric: tabular-nums;
+}
+.chart-sun-events .sun-set line { stroke: rgba(154, 209, 255, 0.30); }
+.chart-sun-events .sun-set text { fill: rgba(154, 209, 255, 0.78); }
 .chart-freezing {
   stroke: #9ad1ff;
   stroke-width: 0.8;
