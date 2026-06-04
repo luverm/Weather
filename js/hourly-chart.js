@@ -1,6 +1,11 @@
 // Interactive hourly chart: temperature line + precipitation probability bars.
 // Fills the full 24-point domain, synced to the scrubber cursor.
 
+function cardinalShort(deg) {
+  const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  return dirs[Math.round(((deg % 360) + 360) % 360 / 45) % 8];
+}
+
 const W = 600;
 const H = 140;
 const PAD_LEFT = 6;
@@ -148,7 +153,8 @@ export class HourlyChart {
       : null;
     const feelsStr = (feels != null && Math.abs(feels - t) >= 1)
       ? `<em>feels ${Math.round(feels)}°</em>` : "";
-    const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h` : "";
+    const windDir = h.windDir != null ? ` ${cardinalShort(h.windDir)}` : "";
+    const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h${windDir}` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
     this.popover.innerHTML =
       `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
