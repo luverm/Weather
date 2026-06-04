@@ -286,6 +286,48 @@ export class HourlyChart {
       }
     }
 
+    // Warmest / coldest extrema markers — only when the day has real swing.
+    const extremaG = this.svg.querySelector("#chart-extrema");
+    if (extremaG) {
+      extremaG.innerHTML = "";
+      if (span >= 4) {
+        let hotIdx = 0, coldIdx = 0;
+        this.hours.forEach((h, i) => {
+          if (h.temp > this.hours[hotIdx].temp) hotIdx = i;
+          if (h.temp < this.hours[coldIdx].temp) coldIdx = i;
+        });
+        const drawMarker = (idx, cls, glyph) => {
+          if (idx == null || idx < 0) return;
+          const p = this.points[idx];
+          if (!p) return;
+          const unit = this.getUnit();
+          const h = this.hours[idx];
+          const t = unit === "F" ? h.temp * 9 / 5 + 32 : h.temp;
+          // Push label above for hot, below for cold so they don't collide
+          // with the per-step labels.
+          const above = cls === "hot";
+          const tag = document.createElementNS("http://www.w3.org/2000/svg", "g");
+          tag.setAttribute("class", `extrema-tag extrema-${cls}`);
+          tag.setAttribute("transform", `translate(${p.x.toFixed(1)},${p.y.toFixed(1)})`);
+          const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          dot.setAttribute("r", "2.6");
+          dot.setAttribute("cx", "0"); dot.setAttribute("cy", "0");
+          tag.appendChild(dot);
+          const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          text.setAttribute("x", "0");
+          text.setAttribute("y", above ? "-9" : "13");
+          text.setAttribute("text-anchor", "middle");
+          text.textContent = `${glyph} ${Math.round(t)}° · ${this._formatHour(h.time)}`;
+          tag.appendChild(text);
+          extremaG.appendChild(tag);
+        };
+        drawMarker(hotIdx, "hot", "▲");
+        // Only show the cold marker when it's genuinely distinct from hot
+        // (sometimes they collide on flat days even past the span threshold).
+        if (coldIdx !== hotIdx) drawMarker(coldIdx, "cold", "▼");
+      }
+    }
+
     // Labels: every ~3 hours
     const unit = this.getUnit();
     const labG = this.svg.querySelector("#chart-labels");

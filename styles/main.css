@@ -817,6 +817,20 @@ html[data-reduce-motion="true"] *::after {
   text-anchor: end;
   pointer-events: none;
 }
+.chart-extrema .extrema-tag { pointer-events: none; }
+.chart-extrema circle { stroke: rgba(11, 16, 32, 0.85); stroke-width: 1.4; }
+.chart-extrema text {
+  font-size: 8.5px;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  paint-order: stroke;
+  stroke: rgba(11, 16, 32, 0.7);
+  stroke-width: 2;
+}
+.chart-extrema .extrema-hot  circle { fill: #ff9c7a; }
+.chart-extrema .extrema-hot  text   { fill: #ffb196; }
+.chart-extrema .extrema-cold circle { fill: #9ad1ff; }
+.chart-extrema .extrema-cold text   { fill: #b8dcff; }
 .chart-labels text {
   font-size: 9px;
   fill: var(--fg-dim);
