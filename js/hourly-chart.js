@@ -224,6 +224,28 @@ export class HourlyChart {
       }
     }
 
+    // Freezing reference line — drawn only when the plotted window straddles
+    // 0°C, so it doesn't show as visual noise on hot days.
+    const freezing = this.svg.querySelector("#chart-freezing");
+    const freezingLabel = this.svg.querySelector("#chart-freezing-label");
+    if (freezing && freezingLabel) {
+      if (tMin <= 0 && tMax >= 0) {
+        const y = tToY(0);
+        freezing.setAttribute("x1", PAD_LEFT);
+        freezing.setAttribute("x2", W - PAD_RIGHT);
+        freezing.setAttribute("y1", y.toFixed(1));
+        freezing.setAttribute("y2", y.toFixed(1));
+        freezingLabel.setAttribute("x", (W - PAD_RIGHT - 2).toFixed(1));
+        freezingLabel.setAttribute("y", (y - 3).toFixed(1));
+        const unit = this.getUnit();
+        freezingLabel.textContent = unit === "F" ? "32°" : "0°";
+      } else {
+        freezing.setAttribute("x1", "-10");
+        freezing.setAttribute("x2", "-10");
+        freezingLabel.setAttribute("x", "-10");
+      }
+    }
+
     // Precipitation probability bars (0-100% -> 0..12px height)
     const precipG = this.svg.querySelector("#chart-precip");
     precipG.innerHTML = "";

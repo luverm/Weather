@@ -649,7 +649,7 @@ html[data-reduce-motion="true"] *::after {
   border: 1px solid rgba(255,255,255,0.08);
   background: rgba(255,255,255,0.04);
   color: var(--fg-dim);
-  white-space: nowrap;
+  max-width: 100%;
   animation: chipFadeIn 420ms var(--ease);
 }
 .yesterday-chip[hidden] { display: none; }
@@ -801,6 +801,21 @@ html[data-reduce-motion="true"] *::after {
 }
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
+}
+.chart-freezing {
+  stroke: #9ad1ff;
+  stroke-width: 0.8;
+  stroke-dasharray: 4 5;
+  opacity: 0.5;
+  pointer-events: none;
+}
+.chart-freezing-label {
+  fill: #9ad1ff;
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  opacity: 0.7;
+  text-anchor: end;
+  pointer-events: none;
 }
 .chart-labels text {
   font-size: 9px;
