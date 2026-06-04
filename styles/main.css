@@ -635,6 +635,35 @@ html[data-reduce-motion="true"] *::after {
 .temp-trend.down { background: rgba(154, 209, 255, 0.18); color: #9ad1ff; }
 .temp-trend.flat { background: rgba(255,255,255,0.08); color: var(--fg-dim); }
 
+/* ---------- Yesterday comparison chip ---------- */
+.yesterday-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  color: var(--fg-dim);
+  white-space: nowrap;
+  animation: chipFadeIn 420ms var(--ease);
+}
+.yesterday-chip[hidden] { display: none; }
+.yesterday-chip.up   { color: #ffb196; border-color: rgba(255,156,122,0.28); background: rgba(255,156,122,0.10); }
+.yesterday-chip.down { color: #9ad1ff; border-color: rgba(154,209,255,0.28); background: rgba(154,209,255,0.10); }
+.yesterday-chip.flat { color: var(--fg-dim); }
+/* During scrubbing the displayed temp isn't "now" — dim the chip so it
+   doesn't read as a delta against the scrubbed value. */
+:root[data-scrubbing="true"] .yesterday-chip { opacity: 0.35; }
+@keyframes chipFadeIn {
+  from { opacity: 0; transform: translateY(-2px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* ---------- Pollen card ---------- */
 #pollen-card[hidden] { display: none; }
 .pollen-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }

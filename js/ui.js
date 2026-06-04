@@ -26,6 +26,7 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  yesterdayChip: $("#yesterday-chip"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -278,6 +279,37 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  renderYesterdayChip(w);
+}
+
+function renderYesterdayChip(w) {
+  if (!el.yesterdayChip) return;
+  // The "vs yesterday" comparison is anchored to actual now, not the scrubber
+  // sample. Pull the live temperature off the most recent weather object.
+  const liveTemp = state.weather?.temp ?? w.temp;
+  const yest = state.weather?.yesterdayTemp ?? w.yesterdayTemp;
+  if (liveTemp == null || yest == null) {
+    el.yesterdayChip.hidden = true;
+    el.yesterdayChip.textContent = "";
+    return;
+  }
+  const deltaC = liveTemp - yest;
+  // Compute the delta in the user's chosen unit, but stay in raw °C span
+  // for the "≈ same" threshold so it matches perceptual differences.
+  const deltaDisplay = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
+  let label, cls;
+  if (Math.abs(deltaC) < 0.75) {
+    label = "≈ same as yesterday";
+    cls = "flat";
+  } else {
+    const arrow = deltaC > 0 ? "▲" : "▼";
+    const word = deltaC > 0 ? "warmer" : "cooler";
+    label = `${arrow} ${Math.round(Math.abs(deltaDisplay))}° ${word} than yesterday`;
+    cls = deltaC > 0 ? "up" : "down";
+  }
+  el.yesterdayChip.className = `yesterday-chip ${cls}`;
+  el.yesterdayChip.textContent = label;
+  el.yesterdayChip.hidden = false;
 }
 
 function renderDayRange(w) {
