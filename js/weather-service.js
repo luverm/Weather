@@ -152,11 +152,17 @@ function normalize(d, aq) {
     }
   }
 
-  // 7-day daily forecast.
+  // 7-day daily forecast. We request past_days=1 for the "vs yesterday"
+  // chip, but the rest of the app assumes daily[0] is today — so anchor on
+  // start-of-today (local) and drop earlier days.
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const dayCutoff = todayStart.getTime();
   const dailyForecast = [];
   if (daily.time) {
     for (let i = 0; i < daily.time.length; i++) {
       const ts = new Date(daily.time[i]).getTime();
+      if (ts < dayCutoff - 12 * 3600_000) continue; // skip yesterday
       dailyForecast.push({
         time: ts,
         tempMax: daily.temperature_2m_max?.[i],
@@ -210,9 +216,11 @@ function normalize(d, aq) {
     isDay: !!c.is_day,
     condition,
     label,
-    sunrise: daily.sunrise?.[0] ? new Date(daily.sunrise[0]).getTime() : null,
-    sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null,
-    uv: daily.uv_index_max?.[0] ?? null,
+    // Pull live sunrise/sunset/uv off the normalized "today" entry — the raw
+    // daily.* arrays are offset by past_days so [0] would be yesterday.
+    sunrise: dailyForecast[0]?.sunrise ?? null,
+    sunset: dailyForecast[0]?.sunset ?? null,
+    uv: dailyForecast[0]?.uvMax ?? null,
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
     hourly,
@@ -339,10 +347,16 @@ function aqiLabel(v) {
 
 function findUvPeak(hourly) {
   if (!hourly?.uv_index) return null;
+  // Scope to future + recent-past (~ next 24h) so past_days=1 doesn't surface
+  // yesterday's peak as "today's".
+  const now = Date.now();
   let peak = { t: null, v: -Infinity };
   for (let i = 0; i < hourly.uv_index.length; i++) {
+    const ts = new Date(hourly.time[i]).getTime();
+    if (ts < now - 30 * 60_000) continue;
+    if (ts > now + 24 * 3600_000) break;
     const v = hourly.uv_index[i];
-    if (v > peak.v) peak = { t: new Date(hourly.time[i]).getTime(), v };
+    if (v != null && v > peak.v) peak = { t: ts, v };
   }
   if (peak.t == null) return null;
   return { time: peak.t, value: peak.v };
