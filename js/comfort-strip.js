@@ -29,6 +29,8 @@ export class ComfortStrip {
     const tMax = Math.max(...temps);
     const span = Math.max(4, tMax - tMin);
 
+    // Threshold so calm-wind cells don't show a tiny noisy arrow.
+    const maxWind = Math.max(10, ...this.hours.map((h) => h.wind ?? 0));
     const cells = this.hours.map((h, i) => {
       const t = h.feelsLike ?? h.temp;
       const color = colorForFeels(t);
@@ -37,11 +39,20 @@ export class ComfortStrip {
       const tickHour = new Date(h.time).getHours();
       const showTick = tickHour % 6 === 0;
       const tickLabel = showTick ? `${tickHour.toString().padStart(2, "0")}:00` : "";
+      // Wind dir arrow points the way the wind is going (dir + 180° from "from").
+      let windArrow = "";
+      if (h.windDir != null && (h.wind ?? 0) >= 3) {
+        const intensity = clamp01((h.wind ?? 0) / maxWind);
+        const opacity = 0.35 + intensity * 0.55;
+        windArrow = `<span class="cstrip-wind" style="--dir:${(h.windDir + 180) % 360}deg;--o:${opacity.toFixed(2)}" aria-hidden="true">↑</span>`;
+      }
+      const dirTitle = h.windDir != null ? ` · wind ${Math.round(h.wind ?? 0)} km/h ${cardinal(h.windDir)}` : "";
       return `
         <button class="cstrip-cell" data-i="${i}" data-ts="${h.time}"
-                title="${tickHour}:00 · ${display} feels · ${h.pop ?? 0}% rain"
+                title="${tickHour}:00 · ${display} feels · ${h.pop ?? 0}% rain${dirTitle}"
                 style="--c:${color}">
           <span class="cstrip-bar" style="--rain:${rainOpacity}"></span>
+          ${windArrow}
           ${showTick ? `<span class="cstrip-tick">${tickLabel}</span>` : ""}
         </button>
       `;
@@ -66,6 +77,12 @@ export class ComfortStrip {
 }
 
 function clamp01(v) { return Math.max(0, Math.min(1, v)); }
+
+function cardinal(deg) {
+  const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  const i = Math.round(((deg % 360) + 360) % 360 / 45) % 8;
+  return dirs[i];
+}
 
 // Feels-like temperature -> CSS color. Inspired by classic isotherm palettes:
 // cold = deep blue, cool = teal, comfy = green, warm = amber, hot = red.
