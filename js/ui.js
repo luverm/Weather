@@ -48,6 +48,7 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonNextFull: $("#moon-next-full"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -532,6 +533,20 @@ function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  if (el.moonNextFull) {
+    // Phase 0 = new, 0.5 = full, 1 = new again. Synodic month ≈ 29.5306 days.
+    const cycle = 29.5306;
+    const toFull = ((0.5 - moon.phase + 1) % 1) * cycle;
+    const days = Math.round(toFull);
+    if (days <= 1) {
+      el.moonNextFull.textContent = days === 0 ? "Full tonight" : "Full tomorrow";
+    } else if (days >= 28) {
+      // Within rounding of "just was full".
+      el.moonNextFull.textContent = "Full moon just passed";
+    } else {
+      el.moonNextFull.textContent = `Full moon in ${days} days`;
+    }
+  }
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
