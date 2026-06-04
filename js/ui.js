@@ -201,10 +201,7 @@ export const ui = {
     renderAlerts(weather);
     renderWeekend(weather);
     startLocaltime(weather);
-    if (state.chart) {
-      state.chart.setHours(weather.hourly);
-      state.chart.setSunEvents(weather.daily);
-    }
+    if (state.chart) state.chart.setData({ hours: weather.hourly, daily: weather.daily });
     renderRainChip(weather);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
@@ -535,16 +532,25 @@ function renderMoon(moon) {
   el.moonIllum.textContent = Math.round(moon.illum * 100);
   if (el.moonNextFull) {
     // Phase 0 = new, 0.5 = full, 1 = new again. Synodic month ≈ 29.5306 days.
+    // We use signed distance from "full" so the just-passed window is a real
+    // small negative number rather than ~cycle-1 days, which avoids a
+    // pop-in/out discontinuity right around phase 0.5.
     const cycle = 29.5306;
-    const toFull = ((0.5 - moon.phase + 1) % 1) * cycle;
-    const days = Math.round(toFull);
-    if (days <= 1) {
-      el.moonNextFull.textContent = days === 0 ? "Full tonight" : "Full tomorrow";
-    } else if (days >= 28) {
-      // Within rounding of "just was full".
-      el.moonNextFull.textContent = "Full moon just passed";
+    let signedDays = (moon.phase - 0.5) * cycle;
+    // Wrap into [-cycle/2, cycle/2] so "just passed" and "just before full"
+    // sit naturally on either side of zero.
+    const half = cycle / 2;
+    if (signedDays > half) signedDays -= cycle;
+    if (signedDays < -half) signedDays += cycle;
+    const days = Math.round(Math.abs(signedDays));
+    if (days === 0) {
+      el.moonNextFull.textContent = "Full tonight";
+    } else if (signedDays > 0) {
+      el.moonNextFull.textContent = days === 1 ? "Full moon just passed"
+        : `Full moon was ${days} days ago`;
     } else {
-      el.moonNextFull.textContent = `Full moon in ${days} days`;
+      el.moonNextFull.textContent = days === 1 ? "Full tomorrow"
+        : `Full moon in ${days} days`;
     }
   }
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
@@ -597,12 +603,19 @@ function renderSun(w) {
 
 function renderDaylightDelta(w) {
   if (!el.sunDaylightDelta) return;
-  if (!w?.sunrise || !w?.sunset || !w.yesterdayDaylightMs) {
+  // yesterdayDaylightMs can legitimately be 0 (polar night), so guard with
+  // explicit null/undefined check rather than falsy.
+  if (!w?.sunrise || !w?.sunset || w.yesterdayDaylightMs == null) {
     el.sunDaylightDelta.hidden = true;
     el.sunDaylightDelta.textContent = "";
     return;
   }
   const todayMs = w.sunset - w.sunrise;
+  if (todayMs <= 0) {
+    el.sunDaylightDelta.hidden = true;
+    el.sunDaylightDelta.textContent = "";
+    return;
+  }
   const diffSec = Math.round((todayMs - w.yesterdayDaylightMs) / 1000);
   // Anything under 15 seconds reads as "same" — tropical latitudes hover here.
   if (Math.abs(diffSec) < 15) {
@@ -611,9 +624,15 @@ function renderDaylightDelta(w) {
   } else {
     const sign = diffSec > 0 ? "+" : "−";
     const abs = Math.abs(diffSec);
-    const mins = Math.floor(abs / 60);
+    const hours = Math.floor(abs / 3600);
+    const mins = Math.floor((abs % 3600) / 60);
     const secs = abs % 60;
-    const part = mins ? `${mins}m ${secs.toString().padStart(2, "0")}s` : `${secs}s`;
+    // For sub-minute deltas keep the seconds resolution; otherwise scale up
+    // so polar-region transitions (multi-hour swings) read cleanly.
+    let part;
+    if (hours) part = mins ? `${hours}h ${mins}m` : `${hours}h`;
+    else if (mins) part = `${mins}m ${secs.toString().padStart(2, "0")}s`;
+    else part = `${secs}s`;
     el.sunDaylightDelta.className = `sun-daylight-delta ${diffSec > 0 ? "up" : "down"}`;
     el.sunDaylightDelta.textContent = `${sign}${part} vs yesterday`;
   }
@@ -1049,15 +1068,21 @@ function renderWeeklyPrecip(days) {
   el.weeklyPrecip.hidden = false;
 }
 
+function clearDailyDelta() {
+  if (!el.dailyDelta) return;
+  el.dailyDelta.textContent = "";
+  el.dailyDelta.removeAttribute("role");
+  el.dailyDelta.removeAttribute("tabindex");
+  el.dailyDelta.style.cursor = "";
+  el.dailyDelta.onclick = null;
+  el.dailyDelta.onkeydown = null;
+}
+
 function renderDailyDelta(days) {
   if (!el.dailyDelta) return;
-  if (days.length < 2) { el.dailyDelta.textContent = ""; el.dailyDelta.removeAttribute("role"); return; }
+  if (days.length < 2) { clearDailyDelta(); return; }
   const today = days[0], tmrw = days[1];
-  if (today.tempMax == null || tmrw.tempMax == null) {
-    el.dailyDelta.textContent = "";
-    el.dailyDelta.removeAttribute("role");
-    return;
-  }
+  if (today.tempMax == null || tmrw.tempMax == null) { clearDailyDelta(); return; }
   const deltaC = tmrw.tempMax - today.tempMax;
   // Scale delta to the active unit: °F spans 1.8x a °C span.
   const deltaDisplay = Math.round(state.unit === "F" ? deltaC * 9 / 5 : deltaC);
@@ -1140,32 +1165,15 @@ function toggleDailyExpand(item, d, w) {
 function renderRainChip(w) {
   if (!el.chartRainChip) return;
   const today = w?.daily?.[0];
-  const total = today?.precip;
-  const popMax = today?.pop;
-  if (total == null && popMax == null) {
-    el.chartRainChip.hidden = true;
-    return;
-  }
-  // Cumulative rain already in the day (hours strictly before "now") so we
-  // can phrase it as "1.2 mm so far · 0.5 mm more".
-  const now = Date.now();
-  const dayStart = new Date(today.time).setHours(0, 0, 0, 0);
-  const dayEnd = dayStart + 24 * 3600_000;
-  let soFar = 0, ahead = 0;
-  for (const h of w.hourly || []) {
-    if (h.time < dayStart || h.time >= dayEnd) continue;
-    const p = h.precip || 0;
-    if (h.time <= now) soFar += p; else ahead += p;
-  }
-  const sum = total != null ? total : (soFar + ahead);
+  if (!today) { el.chartRainChip.hidden = true; return; }
+  const sum = today.precip ?? 0;
+  const popMax = today.pop ?? 0;
   if (sum < 0.1 && popMax < 20) {
     el.chartRainChip.className = "chart-rain-chip dry";
-    el.chartRainChip.textContent = `Dry · ${popMax ?? 0}% peak`;
+    el.chartRainChip.textContent = `Dry · ${popMax}% peak`;
   } else {
-    const totalStr = `${sum.toFixed(1)} mm today`;
-    const popStr = popMax != null ? ` · ${popMax}% peak` : "";
     el.chartRainChip.className = "chart-rain-chip wet";
-    el.chartRainChip.textContent = totalStr + popStr;
+    el.chartRainChip.textContent = `${sum.toFixed(1)} mm today · ${popMax}% peak`;
   }
   el.chartRainChip.hidden = false;
 }

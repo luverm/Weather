@@ -23,6 +23,7 @@ export class HourlyChart {
     this.getTimezone = getTimezone || (() => null);
     this.hours = [];
     this.points = [];
+    this.sunEvents = [];
     this._bind();
   }
 
@@ -60,14 +61,22 @@ export class HourlyChart {
   }
 
   /** Provide daily sun events so the chart can draw sunrise/sunset markers
-   *  inside its 24-hour window. Accepts the same shape as weather.daily[]. */
+   *  inside its 24-hour window. Accepts the same shape as weather.daily[].
+   *  Stores the events but does NOT redraw — call setHours afterwards or
+   *  pair via setData() so each weather refresh costs one _draw(). */
   setSunEvents(daily) {
     this.sunEvents = [];
     for (const d of daily || []) {
       if (d.sunrise) this.sunEvents.push({ time: d.sunrise, kind: "rise" });
       if (d.sunset) this.sunEvents.push({ time: d.sunset, kind: "set" });
     }
-    this._draw();
+  }
+
+  /** Single entry point for a fresh weather payload — avoids the double
+   *  redraw of calling setHours() and setSunEvents() back to back. */
+  setData({ hours, daily }) {
+    this.setSunEvents(daily);
+    this.setHours(hours);
   }
 
   refresh() { this._draw(); }
@@ -172,8 +181,14 @@ export class HourlyChart {
     const innerH = H - PAD_TOP - PAD_BOT;
 
     const temps = this.hours.map((h) => h.temp).filter((v) => v != null);
-    let tMin = Math.min(...temps);
-    let tMax = Math.max(...temps);
+    // Keep raw extremes for predicates like "does the day actually cross 0°"
+    // and "is there real swing"; the padded extents below are only used to
+    // shape the plot so a flat line doesn't sit on the axis.
+    const rawMin = temps.length ? Math.min(...temps) : 0;
+    const rawMax = temps.length ? Math.max(...temps) : 0;
+    const rawSpan = rawMax - rawMin;
+    let tMin = rawMin;
+    let tMax = rawMax;
     if (tMax - tMin < 4) {
       const mid = (tMin + tMax) / 2;
       tMin = mid - 2; tMax = mid + 2;
@@ -246,7 +261,7 @@ export class HourlyChart {
     const freezing = this.svg.querySelector("#chart-freezing");
     const freezingLabel = this.svg.querySelector("#chart-freezing-label");
     if (freezing && freezingLabel) {
-      if (tMin <= 0 && tMax >= 0) {
+      if (rawMin <= 0 && rawMax >= 0) {
         const y = tToY(0);
         freezing.setAttribute("x1", PAD_LEFT);
         freezing.setAttribute("x2", W - PAD_RIGHT);
@@ -340,7 +355,7 @@ export class HourlyChart {
     const extremaG = this.svg.querySelector("#chart-extrema");
     if (extremaG) {
       extremaG.innerHTML = "";
-      if (span >= 4) {
+      if (rawSpan >= 4) {
         let hotIdx = 0, coldIdx = 0;
         this.hours.forEach((h, i) => {
           if (h.temp > this.hours[hotIdx].temp) hotIdx = i;

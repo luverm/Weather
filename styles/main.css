@@ -836,7 +836,9 @@ html[data-reduce-motion="true"] *::after {
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
 }
-.chart-sun-events .sun-event { pointer-events: auto; }
+/* Markers are decorative; let pointer events fall through to the chart so
+   hovering/tapping near them still scrubs and surfaces the chart popover. */
+.chart-sun-events .sun-event { pointer-events: none; }
 .chart-sun-events line {
   stroke: rgba(255, 224, 168, 0.35);
   stroke-width: 0.6;

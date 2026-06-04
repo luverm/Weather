@@ -39,14 +39,17 @@ export class ComfortStrip {
       const tickHour = new Date(h.time).getHours();
       const showTick = tickHour % 6 === 0;
       const tickLabel = showTick ? `${tickHour.toString().padStart(2, "0")}:00` : "";
-      // Wind dir arrow points the way the wind is going (dir + 180° from "from").
+      // h.windDir is meteorological "from" direction. Match the wind-compass
+      // needle convention used elsewhere: the ↑ glyph unrotated points up
+      // (north), so rotate(windDir) sends it toward the source. The label
+      // then reads "from N" and arrow + label agree.
       let windArrow = "";
       if (h.windDir != null && (h.wind ?? 0) >= 3) {
         const intensity = clamp01((h.wind ?? 0) / maxWind);
         const opacity = 0.35 + intensity * 0.55;
-        windArrow = `<span class="cstrip-wind" style="--dir:${(h.windDir + 180) % 360}deg;--o:${opacity.toFixed(2)}" aria-hidden="true">↑</span>`;
+        windArrow = `<span class="cstrip-wind" style="--dir:${h.windDir}deg;--o:${opacity.toFixed(2)}" aria-hidden="true">↑</span>`;
       }
-      const dirTitle = h.windDir != null ? ` · wind ${Math.round(h.wind ?? 0)} km/h ${cardinal(h.windDir)}` : "";
+      const dirTitle = h.windDir != null ? ` · wind ${Math.round(h.wind ?? 0)} km/h from ${cardinal(h.windDir)}` : "";
       return `
         <button class="cstrip-cell" data-i="${i}" data-ts="${h.time}"
                 title="${tickHour}:00 · ${display} feels · ${h.pop ?? 0}% rain${dirTitle}"

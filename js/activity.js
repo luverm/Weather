@@ -56,7 +56,8 @@ function cyclingScore(h) {
   const w = h.wind ?? h.windSpeed ?? 0;
   const g = h.gusts ?? w;
   const t = h.temp;
-  const tw = t == null ? 50 : Math.max(0, 100 - Math.abs(t - 18) * 4) * 0.20;
+  const tRaw = t == null ? 50 : Math.max(0, 100 - Math.abs(t - 18) * 4);
+  const tw = tRaw * 0.20;
   let ww = 100;
   if (w > 15) ww -= (w - 15) * 5;
   if (g > 30) ww -= (g - 30) * 4;
