@@ -1051,10 +1051,11 @@ function renderWeeklyPrecip(days) {
 
 function renderDailyDelta(days) {
   if (!el.dailyDelta) return;
-  if (days.length < 2) { el.dailyDelta.textContent = ""; return; }
+  if (days.length < 2) { el.dailyDelta.textContent = ""; el.dailyDelta.removeAttribute("role"); return; }
   const today = days[0], tmrw = days[1];
   if (today.tempMax == null || tmrw.tempMax == null) {
     el.dailyDelta.textContent = "";
+    el.dailyDelta.removeAttribute("role");
     return;
   }
   const deltaC = tmrw.tempMax - today.tempMax;
@@ -1069,6 +1070,21 @@ function renderDailyDelta(days) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
   }
   el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
+  // Tap to scrub to tomorrow noon (or whatever hour the scrubber range allows).
+  el.dailyDelta.setAttribute("role", "button");
+  el.dailyDelta.setAttribute("tabindex", "0");
+  el.dailyDelta.style.cursor = "pointer";
+  el.dailyDelta.onclick = () => {
+    const noon = new Date(tmrw.time);
+    noon.setHours(12, 0, 0, 0);
+    state.handlers.onHourClick?.(noon.getTime());
+  };
+  el.dailyDelta.onkeydown = (ev) => {
+    if (ev.key === "Enter" || ev.key === " ") {
+      ev.preventDefault();
+      el.dailyDelta.click();
+    }
+  };
 }
 
 function toggleDailyExpand(item, d, w) {

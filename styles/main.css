@@ -1521,6 +1521,8 @@ kbd {
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+.daily-delta[role="button"]:hover { color: var(--fg); text-decoration: underline; text-underline-offset: 3px; }
+.daily-delta:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
 .weekly-precip {
   display: inline-flex;
   align-items: center;
