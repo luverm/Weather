@@ -49,6 +49,7 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -556,8 +557,34 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderDaylightDelta(w) {
+  if (!el.sunDaylightDelta) return;
+  if (!w?.sunrise || !w?.sunset || !w.yesterdayDaylightMs) {
+    el.sunDaylightDelta.hidden = true;
+    el.sunDaylightDelta.textContent = "";
+    return;
+  }
+  const todayMs = w.sunset - w.sunrise;
+  const diffSec = Math.round((todayMs - w.yesterdayDaylightMs) / 1000);
+  // Anything under 15 seconds reads as "same" — tropical latitudes hover here.
+  if (Math.abs(diffSec) < 15) {
+    el.sunDaylightDelta.className = "sun-daylight-delta flat";
+    el.sunDaylightDelta.textContent = "≈ same as yesterday";
+  } else {
+    const sign = diffSec > 0 ? "+" : "−";
+    const abs = Math.abs(diffSec);
+    const mins = Math.floor(abs / 60);
+    const secs = abs % 60;
+    const part = mins ? `${mins}m ${secs.toString().padStart(2, "0")}s` : `${secs}s`;
+    el.sunDaylightDelta.className = `sun-daylight-delta ${diffSec > 0 ? "up" : "down"}`;
+    el.sunDaylightDelta.textContent = `${sign}${part} vs yesterday`;
+  }
+  el.sunDaylightDelta.hidden = false;
 }
 
 function scheduleSunArc(w) {

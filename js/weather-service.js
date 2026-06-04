@@ -198,6 +198,16 @@ function normalize(d, aq) {
   // ~24h of past data ahead of "now".
   const yesterdayTemp = sameHourYesterday(d.hourly, now);
 
+  // Yesterday's daylight duration — surfaced so the sun card can show how
+  // much longer/shorter today is. With past_days=1 the raw daily.sunrise[0]
+  // / daily.sunset[0] arrays cover yesterday before the dropped-day filter.
+  let yesterdayDaylightMs = null;
+  if (daily.sunrise?.[0] && daily.sunset?.[0]) {
+    const yRise = new Date(daily.sunrise[0]).getTime();
+    const ySet = new Date(daily.sunset[0]).getTime();
+    if (yRise < dayCutoff) yesterdayDaylightMs = ySet - yRise;
+  }
+
   // Moon phase is not in Open-Meteo's free tier — compute it locally.
   const moon = computeMoonPhase(new Date());
 
@@ -228,6 +238,7 @@ function normalize(d, aq) {
     nowcast,
     moon,
     yesterdayTemp,
+    yesterdayDaylightMs,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
     fetchedAt: now,
