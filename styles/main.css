@@ -1507,6 +1507,23 @@ kbd {
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+.weekly-precip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  color: var(--fg-dim);
+  text-transform: none;
+  margin-left: 10px;
+}
+.weekly-precip[hidden] { display: none; }
+.weekly-precip.wet { color: #9ad1ff; border-color: rgba(154,209,255,0.30); background: rgba(154,209,255,0.10); }
+.weekly-precip.dry { color: var(--fg-dim); }
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;
