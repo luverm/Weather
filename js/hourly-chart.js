@@ -232,6 +232,31 @@ export class HourlyChart {
       }
     }
 
+    // Freezing-point reference line. Only drawn when 0°C is within the chart's
+    // visible temperature range — keeps the chart clean in mild seasons.
+    const freezeG = this.svg.querySelector("#chart-freeze");
+    if (freezeG) {
+      freezeG.innerHTML = "";
+      if (tMin <= 0 && tMax >= 0) {
+        const y = tToY(0);
+        const SVG = "http://www.w3.org/2000/svg";
+        const line = document.createElementNS(SVG, "line");
+        line.setAttribute("x1", String(PAD_LEFT));
+        line.setAttribute("x2", String(W - PAD_RIGHT));
+        line.setAttribute("y1", y.toFixed(1));
+        line.setAttribute("y2", y.toFixed(1));
+        line.setAttribute("class", "freeze-line");
+        freezeG.appendChild(line);
+        const label = document.createElementNS(SVG, "text");
+        label.setAttribute("x", String(W - PAD_RIGHT - 4));
+        label.setAttribute("y", (y - 3).toFixed(1));
+        label.setAttribute("text-anchor", "end");
+        label.setAttribute("class", "freeze-label");
+        label.textContent = this.getUnit() === "F" ? "freezing (32°F)" : "freezing (0°)";
+        freezeG.appendChild(label);
+      }
+    }
+
     // Precipitation probability bars (0-100% -> 0..12px height)
     const precipG = this.svg.querySelector("#chart-precip");
     precipG.innerHTML = "";

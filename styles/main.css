@@ -778,6 +778,17 @@ html[data-reduce-motion="true"] *::after {
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
 }
+.chart-freeze .freeze-line {
+  stroke: rgba(154, 209, 255, 0.55);
+  stroke-width: 0.7;
+  stroke-dasharray: 3 4;
+}
+.chart-freeze .freeze-label {
+  font-size: 8.5px;
+  fill: rgba(154, 209, 255, 0.85);
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
+}
 .chart-labels text {
   font-size: 9px;
   fill: var(--fg-dim);
