@@ -336,6 +336,7 @@ document.addEventListener("visibilitychange", () => {
 setInterval(() => {
   if (!app.weather || !clock.isLive()) return;
   applyScene(app.weather);
+  ui.tickChartNow?.();
 }, 60_000);
 
 // Auto-refresh every 15 minutes (but only when live and visible).

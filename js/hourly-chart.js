@@ -51,10 +51,18 @@ export class HourlyChart {
   setHours(hours) {
     this.hours = (hours || []).slice(0, 24);
     this._draw();
+    this._drawNow();
+    this._drawSuns();
     this.setCursor(null);
   }
 
-  refresh() { this._draw(); }
+  setSunEvents(daily) {
+    this.daily = daily || [];
+    this._drawSuns();
+  }
+
+  refresh() { this._draw(); this._drawNow(); this._drawSuns(); }
+  tickNow() { this._drawNow(); }
 
   setCursor(ts) {
     const cursor = this.svg.querySelector("#chart-cursor");
@@ -288,5 +296,86 @@ export class HourlyChart {
       tTxt.textContent = `${Math.round(tVal)}°`;
       labG.appendChild(tTxt);
     });
+  }
+
+  // Translate a timestamp to an X coordinate within the chart's hour range.
+  // Returns null if the timestamp is outside the visible window.
+  _xForTime(ts) {
+    if (!ts || !this.hours.length) return null;
+    const first = this.hours[0].time;
+    const last = this.hours[this.hours.length - 1].time;
+    if (ts < first || ts > last) return null;
+    const innerW = W - PAD_LEFT - PAD_RIGHT;
+    return PAD_LEFT + ((ts - first) / (last - first)) * innerW;
+  }
+
+  _drawSuns() {
+    const g = this.svg.querySelector("#chart-suns");
+    if (!g) return;
+    g.innerHTML = "";
+    const events = [];
+    for (const d of (this.daily || [])) {
+      if (d.sunrise) events.push({ ts: d.sunrise, kind: "rise" });
+      if (d.sunset)  events.push({ ts: d.sunset,  kind: "set" });
+    }
+    const SVG = "http://www.w3.org/2000/svg";
+    for (const ev of events) {
+      const x = this._xForTime(ev.ts);
+      if (x == null) continue;
+      const top = PAD_TOP - 4;
+      const bot = H - PAD_BOT + 2;
+      const line = document.createElementNS(SVG, "line");
+      line.setAttribute("x1", x.toFixed(1));
+      line.setAttribute("x2", x.toFixed(1));
+      line.setAttribute("y1", String(top));
+      line.setAttribute("y2", String(bot));
+      line.setAttribute("class", `sun-tick sun-tick-${ev.kind}`);
+      g.appendChild(line);
+
+      const glyph = document.createElementNS(SVG, "g");
+      glyph.setAttribute("transform", `translate(${x.toFixed(1)},${(top - 1).toFixed(1)})`);
+      glyph.setAttribute("class", `sun-glyph sun-glyph-${ev.kind}`);
+      const dot = document.createElementNS(SVG, "circle");
+      dot.setAttribute("cx", "0"); dot.setAttribute("cy", "0"); dot.setAttribute("r", "2.4");
+      glyph.appendChild(dot);
+      const arrow = document.createElementNS(SVG, "path");
+      // Rise = up triangle, set = down triangle.
+      arrow.setAttribute("d", ev.kind === "rise" ? "M -3 4 L 0 -1 L 3 4 Z" : "M -3 -4 L 0 1 L 3 -4 Z");
+      glyph.appendChild(arrow);
+      const t = document.createElementNS(SVG, "title");
+      t.textContent = `${ev.kind === "rise" ? "Sunrise" : "Sunset"} ${this._formatHour(ev.ts)}`;
+      glyph.appendChild(t);
+      g.appendChild(glyph);
+    }
+  }
+
+  _drawNow() {
+    const g = this.svg.querySelector("#chart-now");
+    if (!g) return;
+    g.innerHTML = "";
+    const x = this._xForTime(Date.now());
+    if (x == null) return;
+    const SVG = "http://www.w3.org/2000/svg";
+    const line = document.createElementNS(SVG, "line");
+    line.setAttribute("x1", x.toFixed(1));
+    line.setAttribute("x2", x.toFixed(1));
+    line.setAttribute("y1", String(PAD_TOP));
+    line.setAttribute("y2", String(H - PAD_BOT + 2));
+    line.setAttribute("class", "now-tick");
+    g.appendChild(line);
+    const tag = document.createElementNS(SVG, "g");
+    tag.setAttribute("transform", `translate(${x.toFixed(1)},${PAD_TOP - 6})`);
+    tag.setAttribute("class", "now-tag");
+    const rect = document.createElementNS(SVG, "rect");
+    rect.setAttribute("x", "-12"); rect.setAttribute("y", "-9");
+    rect.setAttribute("width", "24"); rect.setAttribute("height", "11");
+    rect.setAttribute("rx", "3");
+    tag.appendChild(rect);
+    const text = document.createElementNS(SVG, "text");
+    text.setAttribute("x", "0"); text.setAttribute("y", "-1");
+    text.setAttribute("text-anchor", "middle");
+    text.textContent = "NOW";
+    tag.appendChild(text);
+    g.appendChild(tag);
   }
 }

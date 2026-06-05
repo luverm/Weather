@@ -201,7 +201,10 @@ export const ui = {
     renderAlerts(weather);
     renderWeekend(weather);
     startLocaltime(weather);
-    if (state.chart) state.chart.setHours(weather.hourly);
+    if (state.chart) {
+      state.chart.setHours(weather.hourly);
+      state.chart.setSunEvents(weather.daily);
+    }
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
@@ -247,6 +250,7 @@ export const ui = {
     el.toast._t = setTimeout(() => (el.toast.hidden = true), dur);
   },
   getUnit: () => state.unit,
+  tickChartNow() { state.chart?.tickNow?.(); },
 };
 
 // ---------- Rendering ----------
