@@ -195,14 +195,17 @@ const scrubber = new Scrubber({
 });
 
 // ---------- Load flow ----------
-async function loadByCoords(place) {
+async function loadByCoords(place, { preserveClock = false } = {}) {
   app.place = place;
   ui.setPlace(place);
   ui.setLoading(`Fetching weather for ${place.name}…`);
 
-  // Drop any scrubber offset so we start live on each new city.
-  clock.reset();
-  ui.setScrubbing(false);
+  // Drop any scrubber offset so we start live on each new city. On the
+  // initial restore-from-hash boot, the caller preserves it.
+  if (!preserveClock) {
+    clock.reset();
+    ui.setScrubbing(false);
+  }
 
   const w = await getWeather(place.lat, place.lon);
   app.weather = w;
@@ -304,22 +307,67 @@ installShortcuts({
   },
 });
 
+// ---------- URL hash <-> scrubber sync ----------
+// Format: #t=+150  (minutes ahead of live, signed). Empty / missing -> live.
+function parseHashOffset() {
+  const m = /[#&]t=(-?\d+)/.exec(window.location.hash || "");
+  if (!m) return 0;
+  const mins = parseInt(m[1], 10);
+  if (!isFinite(mins)) return 0;
+  // Clamp to the scrubber range (-1h to +23h).
+  return Math.max(-60, Math.min(23 * 60, mins)) * 60_000;
+}
+let hashWriteTimer = 0;
+function writeHashOffset(ms) {
+  clearTimeout(hashWriteTimer);
+  hashWriteTimer = setTimeout(() => {
+    const mins = Math.round(ms / 60_000);
+    const hash = mins === 0 ? "" : `#t=${mins > 0 ? "+" : ""}${mins}`;
+    // Only push if it actually changes — avoids polluting history.
+    if (window.location.hash !== hash) {
+      history.replaceState(null, "", hash || window.location.pathname + window.location.search);
+    }
+  }, 250);
+}
+clock.onChange((ms) => writeHashOffset(ms));
+
 // ---------- Start ----------
 (async function init() {
+  // Restore any scrubber offset from the URL hash before fetching weather.
+  const startOffset = parseHashOffset();
+  if (startOffset) clock.setOffset(startOffset);
+
   // Prefer the most recent saved place if we have one — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();
+  const opts = { preserveClock: startOffset !== 0 };
   if (saved.length) {
-    await loadByCoords(saved[0]);
-    return;
+    await loadByCoords(saved[0], opts);
+  } else {
+    try {
+      const { lat, lon } = await getLocation();
+      await loadByCoords({ name: "Current location", lat, lon }, opts);
+    } catch {
+      await loadByCoords({ name: "Reykjavík", country: "Iceland", lat: 64.1466, lon: -21.9426 }, opts);
+    }
   }
-  try {
-    const { lat, lon } = await getLocation();
-    await loadByCoords({ name: "Current location", lat, lon });
-  } catch {
-    await loadByCoords({ name: "Reykjavík", country: "Iceland", lat: 64.1466, lon: -21.9426 });
+  // After weather loads, sync the scrubber UI to the restored offset.
+  if (startOffset) {
+    scrubber.sync();
+    if (app.weather) applyScene(app.weather);
+    ui.setScrubbing(!clock.isLive());
   }
 })();
+
+window.addEventListener("hashchange", () => {
+  const off = parseHashOffset();
+  if (off !== clock.offset()) {
+    clock.setOffset(off);
+    scrubber.sync();
+    if (app.weather) applyScene(app.weather);
+    ui.setScrubbing(!clock.isLive());
+  }
+});
 
 // ---------- Lifecycle ----------
 document.addEventListener("visibilitychange", () => {
