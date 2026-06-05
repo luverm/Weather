@@ -652,12 +652,22 @@ function scheduleSunWindow(w) {
     el.sunWindowLabel.textContent = win.active ? `Now: ${labelFor(win).toLowerCase()}` : labelFor(win);
     el.sunWindowRange.textContent = `${fmtTime(win.start)} – ${fmtTime(win.end)}`;
     el.sunWindowCount.textContent = countdownFor(win, t);
+    // Stash the active window's start for the click handler.
+    el.sunWindow.dataset.start = String(win.start);
   };
   update();
   // Re-render on scrubber moves too so the pill responds immediately.
   if (state.sunWindowUnsub) state.sunWindowUnsub();
   state.sunWindowUnsub = clock.onChange(update);
   state.sunWindowTimer = setInterval(update, 30_000);
+  // Click jumps the scrubber to the start of the displayed window.
+  if (!el.sunWindow._bound) {
+    el.sunWindow.addEventListener("click", () => {
+      const ts = parseInt(el.sunWindow.dataset.start || "0", 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+    el.sunWindow._bound = true;
+  }
 }
 
 function scheduleSunArc(w) {
