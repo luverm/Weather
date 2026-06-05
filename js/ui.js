@@ -288,8 +288,33 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  // Preserve the temp-trend pill that lives inside #feels-like.
+  const trendNode = el.feelsLike?.querySelector?.(".temp-trend");
+  const reason = feelsLikeReason(w);
+  const reasonHtml = reason ? ` <span class="feels-reason">· ${escapeHtml(reason)}</span>` : "";
+  el.feelsLike.innerHTML = "";
+  if (trendNode) el.feelsLike.appendChild(trendNode);
+  el.feelsLike.insertAdjacentHTML("beforeend", `Feels like ${Math.round(feels)}°${reasonHtml}`);
+  // Re-bind reference since innerHTML clears it.
+  el.tempTrend = el.feelsLike.querySelector(".temp-trend");
   renderDayRange(w);
+}
+
+function feelsLikeReason(w) {
+  if (w.feelsLike == null || w.temp == null) return null;
+  const gap = w.feelsLike - w.temp;
+  if (Math.abs(gap) < 2) return null;
+  // Pick the dominant explanation.
+  if (gap <= -2) {
+    if ((w.windSpeed ?? 0) >= 15) return "wind chill";
+    if ((w.humidity ?? 100) <= 30 && w.temp >= 20) return "dry air";
+    return "cool air";
+  }
+  // Warmer than actual.
+  if ((w.humidity ?? 0) >= 65 && w.temp >= 18) return "muggy";
+  if ((w.uv ?? 0) >= 6 && w.isDay) return "strong sun";
+  if (w.temp >= 25) return "humid heat";
+  return "still air";
 }
 
 function renderDayRange(w) {
