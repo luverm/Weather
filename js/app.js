@@ -221,6 +221,9 @@ async function loadByCoords(place, { preserveClock = false } = {}) {
 
   // Move the radar to the new location (fire-and-forget; resolves later).
   ensureRadar([place.lat, place.lon]).then((r) => r?.setCenter(place.lat, place.lon, place.name));
+
+  // Reflect the new active place in the URL so the link is shareable.
+  writeHash();
 }
 
 async function useGeolocation() {
@@ -307,52 +310,81 @@ installShortcuts({
   },
 });
 
-// ---------- URL hash <-> scrubber sync ----------
-// Format: #t=+150  (minutes ahead of live, signed). Empty / missing -> live.
-function parseHashOffset() {
-  const m = /[#&]t=(-?\d+)/.exec(window.location.hash || "");
-  if (!m) return 0;
-  const mins = parseInt(m[1], 10);
-  if (!isFinite(mins)) return 0;
-  // Clamp to the scrubber range (-1h to +23h).
-  return Math.max(-60, Math.min(23 * 60, mins)) * 60_000;
+// ---------- URL hash <-> app state sync ----------
+// Hash carries:  #t=+150  (scrubber minutes, signed),
+//                #lat=48.85&lon=2.35&name=Paris  (active city)
+// Empty / missing -> default behaviour.
+function parseHash() {
+  const raw = (window.location.hash || "").replace(/^#/, "");
+  if (!raw) return {};
+  const params = new URLSearchParams(raw);
+  const out = {};
+  const t = params.get("t");
+  if (t != null) {
+    const mins = parseInt(t, 10);
+    if (isFinite(mins)) out.offsetMs = Math.max(-60, Math.min(23 * 60, mins)) * 60_000;
+  }
+  const lat = parseFloat(params.get("lat"));
+  const lon = parseFloat(params.get("lon"));
+  if (isFinite(lat) && isFinite(lon)) {
+    out.place = {
+      lat, lon,
+      name: params.get("name") || "Shared location",
+      country: params.get("c") || "",
+      admin1: params.get("a") || "",
+    };
+  }
+  return out;
 }
 let hashWriteTimer = 0;
-function writeHashOffset(ms) {
+function writeHash() {
   clearTimeout(hashWriteTimer);
   hashWriteTimer = setTimeout(() => {
-    const mins = Math.round(ms / 60_000);
-    const hash = mins === 0 ? "" : `#t=${mins > 0 ? "+" : ""}${mins}`;
-    // Only push if it actually changes — avoids polluting history.
+    const params = new URLSearchParams();
+    const mins = Math.round(clock.offset() / 60_000);
+    if (mins !== 0) params.set("t", mins > 0 ? `+${mins}` : String(mins));
+    if (app.place && app.place.lat != null && app.place.lon != null
+        && app.place.name !== "Current location") {
+      params.set("lat", app.place.lat.toFixed(4));
+      params.set("lon", app.place.lon.toFixed(4));
+      if (app.place.name) params.set("name", app.place.name);
+      if (app.place.country) params.set("c", app.place.country);
+      if (app.place.admin1) params.set("a", app.place.admin1);
+    }
+    const s = params.toString();
+    const hash = s ? `#${s}` : "";
     if (window.location.hash !== hash) {
       history.replaceState(null, "", hash || window.location.pathname + window.location.search);
     }
   }, 250);
 }
-clock.onChange((ms) => writeHashOffset(ms));
+clock.onChange(() => writeHash());
 
 // ---------- Start ----------
 (async function init() {
-  // Restore any scrubber offset from the URL hash before fetching weather.
-  const startOffset = parseHashOffset();
-  if (startOffset) clock.setOffset(startOffset);
+  // Restore state from URL hash first.
+  const hash = parseHash();
+  if (hash.offsetMs) clock.setOffset(hash.offsetMs);
+  const opts = { preserveClock: !!hash.offsetMs };
 
-  // Prefer the most recent saved place if we have one — avoids the geolocation
-  // prompt on every load and feels snappier.
-  const saved = places.all();
-  const opts = { preserveClock: startOffset !== 0 };
-  if (saved.length) {
-    await loadByCoords(saved[0], opts);
+  // 1) URL place wins, 2) most recent saved place, 3) geolocation, 4) fallback.
+  if (hash.place) {
+    await loadByCoords(hash.place, opts);
   } else {
-    try {
-      const { lat, lon } = await getLocation();
-      await loadByCoords({ name: "Current location", lat, lon }, opts);
-    } catch {
-      await loadByCoords({ name: "Reykjavík", country: "Iceland", lat: 64.1466, lon: -21.9426 }, opts);
+    const saved = places.all();
+    if (saved.length) {
+      await loadByCoords(saved[0], opts);
+    } else {
+      try {
+        const { lat, lon } = await getLocation();
+        await loadByCoords({ name: "Current location", lat, lon }, opts);
+      } catch {
+        await loadByCoords({ name: "Reykjavík", country: "Iceland", lat: 64.1466, lon: -21.9426 }, opts);
+      }
     }
   }
   // After weather loads, sync the scrubber UI to the restored offset.
-  if (startOffset) {
+  if (hash.offsetMs) {
     scrubber.sync();
     if (app.weather) applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
@@ -360,7 +392,13 @@ clock.onChange((ms) => writeHashOffset(ms));
 })();
 
 window.addEventListener("hashchange", () => {
-  const off = parseHashOffset();
+  const h = parseHash();
+  const off = h.offsetMs || 0;
+  if (h.place && app.place &&
+      (h.place.lat.toFixed(3) !== app.place.lat?.toFixed?.(3) ||
+       h.place.lon.toFixed(3) !== app.place.lon?.toFixed?.(3))) {
+    loadByCoords(h.place, { preserveClock: !!off });
+  }
   if (off !== clock.offset()) {
     clock.setOffset(off);
     scrubber.sync();
