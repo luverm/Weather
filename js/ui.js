@@ -49,6 +49,7 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -532,10 +533,38 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   scheduleSunWindow(w);
   renderSunArcBands(w);
+}
+
+function renderDaylightDelta(w) {
+  if (!el.sunDaylightDelta) return;
+  const today = w.daily?.[0];
+  const tmrw = w.daily?.[1];
+  if (!today?.sunrise || !today?.sunset || !tmrw?.sunrise || !tmrw?.sunset) {
+    el.sunDaylightDelta.textContent = "";
+    el.sunDaylightDelta.removeAttribute("data-dir");
+    return;
+  }
+  const todaySec = Math.round((today.sunset - today.sunrise) / 1000);
+  const tmrwSec  = Math.round((tmrw.sunset  - tmrw.sunrise)  / 1000);
+  const deltaSec = tmrwSec - todaySec;
+  // Below ~15 s of change isn't visually meaningful — usually rounding noise.
+  if (Math.abs(deltaSec) < 15) {
+    el.sunDaylightDelta.textContent = "no change tomorrow";
+    el.sunDaylightDelta.setAttribute("data-dir", "flat");
+    return;
+  }
+  const abs = Math.abs(deltaSec);
+  const m = Math.floor(abs / 60);
+  const s = abs % 60;
+  const mag = m > 0 ? `${m}m ${s.toString().padStart(2, "0")}s` : `${s}s`;
+  const sign = deltaSec > 0 ? "+" : "−";
+  el.sunDaylightDelta.textContent = `${sign}${mag} tomorrow`;
+  el.sunDaylightDelta.setAttribute("data-dir", deltaSec > 0 ? "up" : "down");
 }
 
 function renderSunArcBands(w) {
