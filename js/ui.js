@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { windowsForDays, currentOrNext, labelFor, countdownFor, arcFractions } from "./sun-windows.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -90,6 +91,11 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcBands: $("#sun-arc-bands"),
+  sunWindow: $("#sun-window"),
+  sunWindowLabel: $("#sun-window-label"),
+  sunWindowRange: $("#sun-window-range"),
+  sunWindowCount: $("#sun-window-count"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -122,6 +128,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  sunWindowTimer: null,
   localTimer: null,
 };
 
@@ -523,6 +530,54 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleSunWindow(w);
+  renderSunArcBands(w);
+}
+
+function renderSunArcBands(w) {
+  if (!el.sunArcBands) return;
+  el.sunArcBands.innerHTML = "";
+  const fracs = arcFractions(w?.sunrise, w?.sunset);
+  if (!fracs) return;
+  const ARC_X0 = 10, ARC_X1 = 190;
+  const Y = 78; // just under the dashed horizon line at y=74
+  const xAt = (f) => ARC_X0 + Math.max(-0.06, Math.min(1.06, f)) * (ARC_X1 - ARC_X0);
+  const seg = (a, b, cls) => {
+    const x1 = xAt(a), x2 = xAt(b);
+    if (x2 - x1 < 0.5) return; // skip degenerate bands
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", x1.toFixed(1));
+    line.setAttribute("x2", x2.toFixed(1));
+    line.setAttribute("y1", Y);
+    line.setAttribute("y2", Y);
+    line.setAttribute("class", `sun-band ${cls}`);
+    line.setAttribute("stroke-linecap", "round");
+    el.sunArcBands.appendChild(line);
+  };
+  seg(fracs.blueMorning.a,   fracs.blueMorning.b,   "blue");
+  seg(fracs.goldenMorning.a, fracs.goldenMorning.b, "golden");
+  seg(fracs.goldenEvening.a, fracs.goldenEvening.b, "golden");
+  seg(fracs.blueEvening.a,   fracs.blueEvening.b,   "blue");
+}
+
+function scheduleSunWindow(w) {
+  if (state.sunWindowTimer) { clearInterval(state.sunWindowTimer); state.sunWindowTimer = null; }
+  if (!el.sunWindow) return;
+  const days = w?.daily || (w?.sunrise && w?.sunset ? [{ sunrise: w.sunrise, sunset: w.sunset }] : []);
+  const windows = windowsForDays(days);
+  if (!windows.length) { el.sunWindow.hidden = true; return; }
+  const update = () => {
+    const win = currentOrNext(windows, Date.now());
+    if (!win) { el.sunWindow.hidden = true; return; }
+    el.sunWindow.hidden = false;
+    el.sunWindow.dataset.kind = win.kind;
+    el.sunWindow.dataset.active = win.active ? "true" : "false";
+    el.sunWindowLabel.textContent = win.active ? `Now: ${labelFor(win).toLowerCase()}` : labelFor(win);
+    el.sunWindowRange.textContent = `${fmtTime(win.start)} – ${fmtTime(win.end)}`;
+    el.sunWindowCount.textContent = countdownFor(win, Date.now());
+  };
+  update();
+  state.sunWindowTimer = setInterval(update, 30_000);
 }
 
 function scheduleSunArc(w) {
