@@ -787,6 +787,25 @@ html[data-reduce-motion="true"] *::after {
   fill: var(--fg-muted);
   font-size: 9.5px;
 }
+.chart-labels text.temp-extreme {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.chart-labels text.temp-extreme-hi { fill: #ffd2a8; }
+.chart-labels text.temp-extreme-lo { fill: #b0d8ff; }
+.chart-labels text.temp-extreme-time {
+  fill: var(--fg-dim);
+  font-size: 8.5px;
+  font-variant-numeric: tabular-nums;
+}
+.chart-labels circle.temp-extreme-dot {
+  stroke: var(--fg);
+  stroke-width: 1.2;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.4));
+}
+.chart-labels circle.temp-extreme-hi { fill: #ffd2a8; }
+.chart-labels circle.temp-extreme-lo { fill: #b0d8ff; }
 .chart-cursor {
   stroke: var(--accent);
   stroke-width: 1.2;

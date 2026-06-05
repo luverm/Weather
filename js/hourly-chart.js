@@ -277,8 +277,15 @@ export class HourlyChart {
     const labG = this.svg.querySelector("#chart-labels");
     labG.innerHTML = "";
     const labelStep = Math.max(3, Math.floor(this.hours.length / 8));
+    // Find peak hi/lo indices first so we can skip duplicating their labels.
+    let hiIdx = 0, loIdx = 0;
+    for (let i = 1; i < this.hours.length; i++) {
+      if (this.hours[i].temp > this.hours[hiIdx].temp) hiIdx = i;
+      if (this.hours[i].temp < this.hours[loIdx].temp) loIdx = i;
+    }
     this.hours.forEach((h, i) => {
       if (i % labelStep !== 0) return;
+      if (i === hiIdx || i === loIdx) return; // hi/lo own their own labels below
       const hh = this._hourOf(h.time);
       const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
       txt.setAttribute("x", iToX(i).toFixed(1));
@@ -296,6 +303,41 @@ export class HourlyChart {
       tTxt.textContent = `${Math.round(tVal)}°`;
       labG.appendChild(tTxt);
     });
+    // Distinct hi/lo annotations. Only emit when they meaningfully diverge.
+    if (hiIdx !== loIdx && Math.abs(this.hours[hiIdx].temp - this.hours[loIdx].temp) >= 3) {
+      this._extremeLabel(labG, this.hours[hiIdx], iToX(hiIdx), tToY(this.hours[hiIdx].temp), "hi", unit);
+      this._extremeLabel(labG, this.hours[loIdx], iToX(loIdx), tToY(this.hours[loIdx].temp), "lo", unit);
+    }
+  }
+
+  _extremeLabel(parent, hour, x, y, kind, unit) {
+    const SVG = "http://www.w3.org/2000/svg";
+    const tVal = unit === "F" ? hour.temp * 9 / 5 + 32 : hour.temp;
+    // Small dot marker on the line.
+    const dot = document.createElementNS(SVG, "circle");
+    dot.setAttribute("cx", x.toFixed(1));
+    dot.setAttribute("cy", y.toFixed(1));
+    dot.setAttribute("r", "2.8");
+    dot.setAttribute("class", `temp-extreme-dot temp-extreme-${kind}`);
+    parent.appendChild(dot);
+    // Label sits above (hi) or below (lo) the line so they don't collide.
+    const above = kind === "hi";
+    const ty = above ? (y - 9) : (y + 14);
+    const txt = document.createElementNS(SVG, "text");
+    txt.setAttribute("x", x.toFixed(1));
+    txt.setAttribute("y", ty.toFixed(1));
+    txt.setAttribute("text-anchor", "middle");
+    txt.setAttribute("class", `temp-extreme temp-extreme-${kind}`);
+    txt.textContent = `${above ? "↑" : "↓"} ${Math.round(tVal)}°`;
+    parent.appendChild(txt);
+    // Time stamp under the hour cell.
+    const tm = document.createElementNS(SVG, "text");
+    tm.setAttribute("x", x.toFixed(1));
+    tm.setAttribute("y", String(H - 4));
+    tm.setAttribute("text-anchor", "middle");
+    tm.setAttribute("class", "temp-extreme-time");
+    tm.textContent = this._hourOf(hour.time);
+    parent.appendChild(tm);
   }
 
   // Translate a timestamp to an X coordinate within the chart's hour range.
