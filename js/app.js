@@ -337,26 +337,29 @@ function parseHash() {
   return out;
 }
 let hashWriteTimer = 0;
+function flushHashNow() {
+  clearTimeout(hashWriteTimer);
+  hashWriteTimer = 0;
+  const params = new URLSearchParams();
+  const mins = Math.round(clock.offset() / 60_000);
+  if (mins !== 0) params.set("t", mins > 0 ? `+${mins}` : String(mins));
+  if (app.place && app.place.lat != null && app.place.lon != null
+      && app.place.name !== "Current location") {
+    params.set("lat", app.place.lat.toFixed(4));
+    params.set("lon", app.place.lon.toFixed(4));
+    if (app.place.name) params.set("name", app.place.name);
+    if (app.place.country) params.set("c", app.place.country);
+    if (app.place.admin1) params.set("a", app.place.admin1);
+  }
+  const s = params.toString();
+  const hash = s ? `#${s}` : "";
+  if (window.location.hash !== hash) {
+    history.replaceState(null, "", hash || window.location.pathname + window.location.search);
+  }
+}
 function writeHash() {
   clearTimeout(hashWriteTimer);
-  hashWriteTimer = setTimeout(() => {
-    const params = new URLSearchParams();
-    const mins = Math.round(clock.offset() / 60_000);
-    if (mins !== 0) params.set("t", mins > 0 ? `+${mins}` : String(mins));
-    if (app.place && app.place.lat != null && app.place.lon != null
-        && app.place.name !== "Current location") {
-      params.set("lat", app.place.lat.toFixed(4));
-      params.set("lon", app.place.lon.toFixed(4));
-      if (app.place.name) params.set("name", app.place.name);
-      if (app.place.country) params.set("c", app.place.country);
-      if (app.place.admin1) params.set("a", app.place.admin1);
-    }
-    const s = params.toString();
-    const hash = s ? `#${s}` : "";
-    if (window.location.hash !== hash) {
-      history.replaceState(null, "", hash || window.location.pathname + window.location.search);
-    }
-  }, 250);
+  hashWriteTimer = setTimeout(flushHashNow, 250);
 }
 clock.onChange(() => writeHash());
 
@@ -391,14 +394,24 @@ clock.onChange(() => writeHash());
   }
 })();
 
-window.addEventListener("hashchange", () => {
+window.addEventListener("hashchange", async () => {
   const h = parseHash();
   const off = h.offsetMs || 0;
-  if (h.place && app.place &&
-      (h.place.lat.toFixed(3) !== app.place.lat?.toFixed?.(3) ||
-       h.place.lon.toFixed(3) !== app.place.lon?.toFixed?.(3))) {
-    loadByCoords(h.place, { preserveClock: !!off });
+  // Match locations at the same precision writeHash emits (4 decimals).
+  const samePlace = h.place && app.place
+    && coordKey(h.place) === coordKey(app.place);
+  if (h.place && !samePlace) {
+    // Place change: load the new place first (loadByCoords resets the clock
+    // unless preserveClock is set), THEN restore the requested offset against
+    // the freshly-loaded weather so we don't render the old city.
+    await loadByCoords(h.place, { preserveClock: true });
+    if (off !== clock.offset()) clock.setOffset(off);
+    scrubber.sync();
+    if (app.weather) applyScene(app.weather);
+    ui.setScrubbing(!clock.isLive());
+    return;
   }
+  // Pure offset change.
   if (off !== clock.offset()) {
     clock.setOffset(off);
     scrubber.sync();
@@ -406,6 +419,11 @@ window.addEventListener("hashchange", () => {
     ui.setScrubbing(!clock.isLive());
   }
 });
+
+function coordKey(p) {
+  if (!p || p.lat == null || p.lon == null) return "";
+  return `${p.lat.toFixed(4)},${p.lon.toFixed(4)}`;
+}
 
 // ---------- Lifecycle ----------
 document.addEventListener("visibilitychange", () => {
@@ -439,4 +457,4 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-window.__aether = { engine, app, clock, audio };
+window.__aether = { engine, app, clock, audio, flushHash: flushHashNow };

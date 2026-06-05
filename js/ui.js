@@ -11,6 +11,7 @@ import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { windowsForDays, currentOrNext, labelFor, countdownFor, arcFractions } from "./sun-windows.js";
+import { clock } from "./clock.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -130,6 +131,7 @@ const state = {
   sunTimer: null,
   sunArcTimer: null,
   sunWindowTimer: null,
+  sunWindowUnsub: null,
   localTimer: null,
 };
 
@@ -203,8 +205,11 @@ export const ui = {
     renderWeekend(weather);
     startLocaltime(weather);
     if (state.chart) {
-      state.chart.setHours(weather.hourly);
+      // Feed sun events first so the chart's internal _drawSuns inside
+      // setHours has the daily array on the very first paint (otherwise it
+      // renders no ticks, then setSunEvents repaints them milliseconds later).
       state.chart.setSunEvents(weather.daily);
+      state.chart.setHours(weather.hourly);
     }
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
@@ -288,15 +293,16 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
+  // The reason text leans on the LIVE humidity/wind/UV that the API only
+  // delivers for "now"; sampleAt doesn't override them per-hour, so we
+  // suppress the reason when the scrubber is off-live to avoid lying.
+  const reason = clock.isLive() ? feelsLikeReason(w) : null;
   // Preserve the temp-trend pill that lives inside #feels-like.
   const trendNode = el.feelsLike?.querySelector?.(".temp-trend");
-  const reason = feelsLikeReason(w);
   const reasonHtml = reason ? ` <span class="feels-reason">· ${escapeHtml(reason)}</span>` : "";
   el.feelsLike.innerHTML = "";
   if (trendNode) el.feelsLike.appendChild(trendNode);
   el.feelsLike.insertAdjacentHTML("beforeend", `Feels like ${Math.round(feels)}°${reasonHtml}`);
-  // Re-bind reference since innerHTML clears it.
-  el.tempTrend = el.feelsLike.querySelector(".temp-trend");
   renderDayRange(w);
 }
 
@@ -304,17 +310,20 @@ function feelsLikeReason(w) {
   if (w.feelsLike == null || w.temp == null) return null;
   const gap = w.feelsLike - w.temp;
   if (Math.abs(gap) < 2) return null;
-  // Pick the dominant explanation.
+  const wind = w.windSpeed ?? 0;
+  const rh = w.humidity ?? null;
+  // Cooler than actual.
   if (gap <= -2) {
-    if ((w.windSpeed ?? 0) >= 15) return "wind chill";
-    if ((w.humidity ?? 100) <= 30 && w.temp >= 20) return "dry air";
+    if (wind >= 15) return "wind chill";
+    if (rh != null && rh <= 30 && w.temp >= 20) return "dry air";
     return "cool air";
   }
-  // Warmer than actual.
-  if ((w.humidity ?? 0) >= 65 && w.temp >= 18) return "muggy";
+  // Warmer than actual — order matters: high humidity wins over UV.
+  if (rh != null && rh >= 75) return "humid";
+  if (rh != null && rh >= 60 && w.temp >= 22) return "muggy";
   if ((w.uv ?? 0) >= 6 && w.isDay) return "strong sun";
-  if (w.temp >= 25) return "humid heat";
-  return "still air";
+  if (wind <= 4 && w.temp >= 24) return "still air";
+  return null;
 }
 
 function renderDayRange(w) {
@@ -621,20 +630,33 @@ function renderSunArcBands(w) {
 function scheduleSunWindow(w) {
   if (state.sunWindowTimer) { clearInterval(state.sunWindowTimer); state.sunWindowTimer = null; }
   if (!el.sunWindow) return;
-  const days = w?.daily || (w?.sunrise && w?.sunset ? [{ sunrise: w.sunrise, sunset: w.sunset }] : []);
+  // Pull the daily array directly so windows extend across all 7 forecast
+  // days; the single-day synthesis is only a stopgap for shape-incomplete
+  // payloads (e.g. mock/offline). When that fallback runs, the pill is
+  // re-evaluated on every setWeather call (auto-refresh + place change).
+  const days = (Array.isArray(w?.daily) && w.daily.length)
+    ? w.daily
+    : (w?.sunrise && w?.sunset ? [{ sunrise: w.sunrise, sunset: w.sunset }] : []);
   const windows = windowsForDays(days);
   if (!windows.length) { el.sunWindow.hidden = true; return; }
   const update = () => {
-    const win = currentOrNext(windows, Date.now());
+    // Use the simulated clock so the pill matches the visible scene when the
+    // user scrubs to a future moment ("Now: golden hour" lights up when
+    // they reach it).
+    const t = clock.now();
+    const win = currentOrNext(windows, t);
     if (!win) { el.sunWindow.hidden = true; return; }
     el.sunWindow.hidden = false;
     el.sunWindow.dataset.kind = win.kind;
     el.sunWindow.dataset.active = win.active ? "true" : "false";
     el.sunWindowLabel.textContent = win.active ? `Now: ${labelFor(win).toLowerCase()}` : labelFor(win);
     el.sunWindowRange.textContent = `${fmtTime(win.start)} – ${fmtTime(win.end)}`;
-    el.sunWindowCount.textContent = countdownFor(win, Date.now());
+    el.sunWindowCount.textContent = countdownFor(win, t);
   };
   update();
+  // Re-render on scrubber moves too so the pill responds immediately.
+  if (state.sunWindowUnsub) state.sunWindowUnsub();
+  state.sunWindowUnsub = clock.onChange(update);
   state.sunWindowTimer = setInterval(update, 30_000);
 }
 
@@ -1416,6 +1438,9 @@ function bindShare() {
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
     ].filter(Boolean);
     const text = lines.join("\n");
+    // Flush any pending hash write so the shared URL captures the current
+    // scrubber moment instead of a stale offset.
+    window.__aether?.flushHash?.();
     const url = window.location.href;
     try {
       if (navigator.share) {

@@ -52,12 +52,24 @@ export class HourlyChart {
     this.hours = (hours || []).slice(0, 24);
     this._draw();
     this._drawNow();
+    // Re-emit suns against the new hour range using whatever daily we have;
+    // setSunEvents may follow with fresher data.
     this._drawSuns();
     this.setCursor(null);
   }
 
   setSunEvents(daily) {
-    this.daily = daily || [];
+    // Skip redundant redraw when daily hasn't actually changed shape — the
+    // common case during setWeather is setHours immediately followed by
+    // setSunEvents with the same forecast.
+    const next = daily || [];
+    if (this.daily && this.daily.length === next.length
+        && this.daily.every((d, i) => d.sunrise === next[i]?.sunrise
+                                   && d.sunset  === next[i]?.sunset)) {
+      this.daily = next;
+      return;
+    }
+    this.daily = next;
     this._drawSuns();
   }
 
@@ -302,15 +314,18 @@ export class HourlyChart {
     const labG = this.svg.querySelector("#chart-labels");
     labG.innerHTML = "";
     const labelStep = Math.max(3, Math.floor(this.hours.length / 8));
-    // Find peak hi/lo indices first so we can skip duplicating their labels.
+    // Find peak hi/lo indices first so we can skip duplicating their labels —
+    // but only when we actually emit the extreme labels below (span >= 3°).
     let hiIdx = 0, loIdx = 0;
     for (let i = 1; i < this.hours.length; i++) {
       if (this.hours[i].temp > this.hours[hiIdx].temp) hiIdx = i;
       if (this.hours[i].temp < this.hours[loIdx].temp) loIdx = i;
     }
+    const drawExtremes = hiIdx !== loIdx
+      && Math.abs(this.hours[hiIdx].temp - this.hours[loIdx].temp) >= 3;
     this.hours.forEach((h, i) => {
       if (i % labelStep !== 0) return;
-      if (i === hiIdx || i === loIdx) return; // hi/lo own their own labels below
+      if (drawExtremes && (i === hiIdx || i === loIdx)) return;
       const hh = this._hourOf(h.time);
       const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
       txt.setAttribute("x", iToX(i).toFixed(1));
@@ -328,8 +343,7 @@ export class HourlyChart {
       tTxt.textContent = `${Math.round(tVal)}°`;
       labG.appendChild(tTxt);
     });
-    // Distinct hi/lo annotations. Only emit when they meaningfully diverge.
-    if (hiIdx !== loIdx && Math.abs(this.hours[hiIdx].temp - this.hours[loIdx].temp) >= 3) {
+    if (drawExtremes) {
       this._extremeLabel(labG, this.hours[hiIdx], iToX(hiIdx), tToY(this.hours[hiIdx].temp), "hi", unit);
       this._extremeLabel(labG, this.hours[loIdx], iToX(loIdx), tToY(this.hours[loIdx].temp), "lo", unit);
     }
@@ -420,6 +434,8 @@ export class HourlyChart {
     const g = this.svg.querySelector("#chart-now");
     if (!g) return;
     g.innerHTML = "";
+    // NOW pin is a fixed reference to real wall time — the cursor (drawn by
+    // setCursor) already shows the scrubbed moment, so the two complement.
     const x = this._xForTime(Date.now());
     if (x == null) return;
     const SVG = "http://www.w3.org/2000/svg";
