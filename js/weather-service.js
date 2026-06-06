@@ -93,7 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
-    past_hours: 1,
+    past_days: 1, // pulls yesterday's hourly + daily for "vs yesterday" deltas
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -151,10 +151,22 @@ function normalize(d, aq) {
     }
   }
 
-  // 7-day daily forecast.
+  // 7-day daily forecast. With past_days=1, the API returns 8 entries
+  // (yesterday + 7 forecast) — peel daily[0] off so dailyForecast[0] stays
+  // "today". If past data is missing for some reason, fall back to no peel.
   const dailyForecast = [];
+  let yesterdayDaily = null;
   if (daily.time) {
-    for (let i = 0; i < daily.time.length; i++) {
+    const hasYesterday = daily.time.length > 7;
+    const startIdx = hasYesterday ? 1 : 0;
+    if (hasYesterday) {
+      yesterdayDaily = {
+        tempMax: daily.temperature_2m_max?.[0],
+        tempMin: daily.temperature_2m_min?.[0],
+        ...mapWmo(daily.weather_code?.[0]),
+      };
+    }
+    for (let i = startIdx; i < daily.time.length; i++) {
       const ts = new Date(daily.time[i]).getTime();
       dailyForecast.push({
         time: ts,
@@ -171,6 +183,10 @@ function normalize(d, aq) {
       });
     }
   }
+
+  // Yesterday comparison: find the hourly entry exactly ~24h before now so
+  // the hero can show "2° warmer than yesterday at this hour".
+  const yesterdayCompare = findYesterdayCompare(d.hourly, c.temperature_2m, now);
 
   // 15-min nowcast for the next ~2h — used for "rain in 12 min" banner.
   const nowcast = [];
@@ -204,9 +220,10 @@ function normalize(d, aq) {
     isDay: !!c.is_day,
     condition,
     label,
-    sunrise: daily.sunrise?.[0] ? new Date(daily.sunrise[0]).getTime() : null,
-    sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null,
-    uv: daily.uv_index_max?.[0] ?? null,
+    // dailyForecast[0] is "today" — read from there so past_days doesn't shift these.
+    sunrise: dailyForecast[0]?.sunrise ?? null,
+    sunset: dailyForecast[0]?.sunset ?? null,
+    uv: dailyForecast[0]?.uvMax ?? null,
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
     hourly,
@@ -215,7 +232,31 @@ function normalize(d, aq) {
     moon,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
+    yesterday: yesterdayDaily,
+    yesterdayCompare,
     fetchedAt: now,
+  };
+}
+
+function findYesterdayCompare(hourly, currentTemp, now) {
+  if (!hourly?.time || !hourly?.temperature_2m || currentTemp == null) return null;
+  const target = now - 24 * 3600_000;
+  let bestIdx = -1;
+  let bestDiff = Infinity;
+  for (let i = 0; i < hourly.time.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    const diff = Math.abs(t - target);
+    if (diff < bestDiff) { bestDiff = diff; bestIdx = i; }
+  }
+  // Need to land within 90 min of "this hour, yesterday" — otherwise the
+  // window is too wide to be meaningful.
+  if (bestIdx < 0 || bestDiff > 90 * 60_000) return null;
+  const tempY = hourly.temperature_2m[bestIdx];
+  if (tempY == null) return null;
+  return {
+    time: new Date(hourly.time[bestIdx]).getTime(),
+    temp: tempY,
+    delta: currentTemp - tempY, // °C
   };
 }
 
@@ -315,12 +356,17 @@ function aqiLabel(v) {
 
 function findUvPeak(hourly) {
   if (!hourly?.uv_index) return null;
+  // Only consider remaining-day UV — past_days=1 means the raw array spans
+  // yesterday too, but the user cares about the peak still ahead.
+  const now = Date.now();
   let peak = { t: null, v: -Infinity };
   for (let i = 0; i < hourly.uv_index.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    if (t < now - 30 * 60_000) continue;
     const v = hourly.uv_index[i];
-    if (v > peak.v) peak = { t: new Date(hourly.time[i]).getTime(), v };
+    if (v > peak.v) peak = { t, v };
   }
-  if (peak.t == null) return null;
+  if (peak.t == null || peak.v <= 0) return null;
   return { time: peak.t, value: peak.v };
 }
 
@@ -400,6 +446,8 @@ function mock(lat, lon) {
       level: "Moderate",
     },
     pressureTrend: { delta: -0.4, direction: "steady" },
+    yesterday: { tempMax: 19, tempMin: 11, condition: CONDITIONS.CLOUDS, label: "Cloudy" },
+    yesterdayCompare: { time: now - 24 * 3600_000, temp: 16, delta: 2 },
     fetchedAt: now,
     offline: true,
   };

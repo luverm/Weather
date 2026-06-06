@@ -391,6 +391,33 @@ html[data-reduce-motion="true"] *::after {
 .unit:hover { background: var(--glass); color: var(--fg); }
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
+.yesterday-compare {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--fg-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+  animation: fadeInSoft 420ms var(--ease) both;
+}
+.yesterday-compare[hidden] { display: none; }
+.yesterday-arrow {
+  font-size: 10px;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 999px;
+  letter-spacing: 0.04em;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--fg-dim);
+}
+.yesterday-compare.up   .yesterday-arrow { background: rgba(255, 156, 122, 0.18); color: #ffb196; }
+.yesterday-compare.down .yesterday-arrow { background: rgba(154, 209, 255, 0.18); color: #9ad1ff; }
+.yesterday-compare.flat .yesterday-arrow { background: rgba(255, 255, 255, 0.08);  color: var(--fg-dim); }
+@keyframes fadeInSoft {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
 .day-range {
   margin-top: 10px;
   display: grid;

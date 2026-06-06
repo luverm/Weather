@@ -26,6 +26,9 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  yesterdayCompare: $("#yesterday-compare"),
+  yesterdayArrow: $("#yesterday-arrow"),
+  yesterdayText: $("#yesterday-text"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -278,6 +281,37 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  renderYesterdayCompare(w);
+}
+
+function renderYesterdayCompare(w) {
+  if (!el.yesterdayCompare || !el.yesterdayArrow || !el.yesterdayText) return;
+  const yc = w?.yesterdayCompare;
+  // Only meaningful when viewing "now" — hide while scrubbing to other hours.
+  const scrubbedAway = w?._sampledTs != null && Math.abs(w._sampledTs - Date.now()) > 30 * 60_000;
+  if (!yc || yc.delta == null || scrubbedAway) {
+    el.yesterdayCompare.hidden = true;
+    return;
+  }
+  // Scale delta to the active unit so the number matches what the user sees
+  // above. °C → °F multiplies the *difference* by 9/5 (no offset).
+  const deltaUnits = state.unit === "F" ? yc.delta * 9 / 5 : yc.delta;
+  const rounded = Math.round(deltaUnits);
+  let arrow, text, cls;
+  if (rounded > 0) {
+    arrow = "▲"; cls = "up";
+    text = `${rounded}° warmer than yesterday`;
+  } else if (rounded < 0) {
+    arrow = "▼"; cls = "down";
+    text = `${Math.abs(rounded)}° cooler than yesterday`;
+  } else {
+    arrow = "→"; cls = "flat";
+    text = "Same as yesterday";
+  }
+  el.yesterdayCompare.hidden = false;
+  el.yesterdayCompare.className = `yesterday-compare ${cls}`;
+  el.yesterdayArrow.textContent = arrow;
+  el.yesterdayText.textContent = text;
 }
 
 function renderDayRange(w) {
@@ -1294,9 +1328,17 @@ function bindShare() {
     const unit = state.unit;
     const t = (v) => `${Math.round(unit === "F" ? v * 9 / 5 + 32 : v)}°${unit}`;
     const today = w.daily?.[0];
+    const yc = w.yesterdayCompare;
+    const ycLine = (yc && yc.delta != null) ? (() => {
+      const d = Math.round(unit === "F" ? yc.delta * 9 / 5 : yc.delta);
+      if (d > 0) return `${d}° warmer than yesterday`;
+      if (d < 0) return `${Math.abs(d)}° cooler than yesterday`;
+      return null;
+    })() : null;
     const lines = [
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
+      ycLine,
       today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
       `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
