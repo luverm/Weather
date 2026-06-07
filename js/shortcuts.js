@@ -63,6 +63,7 @@ export function installShortcuts(handlers) {
     if (key === "s" || key === "S") { e.preventDefault(); handlers.share?.(); return; }
     if (key === "v" || key === "V") { e.preventDefault(); handlers.speak?.(); return; }
     if (key === "r" || key === "R") { e.preventDefault(); handlers.refresh?.(); return; }
+    if (key === "c" || key === "C") { e.preventDefault(); handlers.toggleCompact?.(); return; }
     if (key === " ") {
       e.preventDefault();
       handlers.toggleRadar?.();

@@ -302,6 +302,14 @@ installShortcuts({
   share: () => document.getElementById("share-btn")?.click(),
   speak: () => ui.speakSummary?.(),
   refresh: () => refreshWeather(),
+  toggleCompact: () => {
+    const root = document.documentElement;
+    const cur = root.getAttribute("data-compact") === "true";
+    root.setAttribute("data-compact", cur ? "false" : "true");
+    localStorage.setItem("aether:compact", cur ? "0" : "1");
+    const cb = document.getElementById("setting-compact");
+    if (cb) cb.checked = !cur;
+  },
   cyclePlace: (dir) => cyclePlace(dir),
   nudge: (hours) => {
     clock.setOffset(clock.offset() + hours * 3600_000);
