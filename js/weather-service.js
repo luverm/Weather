@@ -394,6 +394,8 @@ function mock(lat, lon) {
       windDir: (220 + i * 8) % 360,
       isDay: (i + hour) % 24 >= 6 && (i + hour) % 24 < 19,
       uv: Math.max(0, Math.sin((i - 6) * Math.PI / 13) * 6),
+      pressure: 1013 + Math.sin(i / 4) * 4,
+      humidity: 60 + Math.sin(i / 3) * 10,
       condition: CONDITIONS.CLOUDS, label: "Cloudy",
     })),
     daily: Array.from({ length: 7 }, (_, i) => ({
