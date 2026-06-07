@@ -10,7 +10,7 @@ const RANGE_HOURS = 24;
 
 export class Scrubber {
   constructor({ trackEl, thumbEl, fillEl, timeEl, deltaEl, resetEl,
-                sunriseEl, sunsetEl, appEl, onScrub }) {
+                sunriseEl, sunsetEl, nowEl, appEl, onScrub }) {
     this.track = trackEl;
     this.thumb = thumbEl;
     this.fill = fillEl;
@@ -19,6 +19,7 @@ export class Scrubber {
     this.resetEl = resetEl;
     this.sunriseEl = sunriseEl;
     this.sunsetEl = sunsetEl;
+    this.nowEl = nowEl;
     this.appEl = appEl; // receives data-scrubbing attribute
     this.onScrub = onScrub;
     this.dragging = false;
@@ -137,6 +138,18 @@ export class Scrubber {
       weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false,
     });
     if (this.timeEl) this.timeEl.textContent = label;
+
+    // Position the "now" marker based on elapsed real-time since load.
+    if (this.nowEl) {
+      const totalMs = RANGE_HOURS * 3600_000;
+      const rel = (Date.now() - (this.start - 3600_000)) / totalMs;
+      if (rel >= 0 && rel <= 1) {
+        this.nowEl.style.display = "block";
+        this.nowEl.style.left = `${(rel * 100).toFixed(2)}%`;
+      } else {
+        this.nowEl.style.display = "none";
+      }
+    }
 
     const offMin = Math.round(clock.offset() / 60_000);
     if (this.deltaEl) {

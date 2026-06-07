@@ -556,6 +556,16 @@ html[data-reduce-motion="true"] *::after {
   font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
   color: var(--fg-dim); white-space: nowrap;
 }
+.scrubber-now {
+  position: absolute; top: 50%; transform: translate(-50%, -50%);
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+  pointer-events: none;
+  transition: left 240ms linear;
+}
+[data-scrubbing="false"] .scrubber-now { opacity: 0; }
 .scrubber-thumb {
   position: absolute; top: 50%; left: calc(var(--scrub) * 100%);
   transform: translate(-50%, -50%);
