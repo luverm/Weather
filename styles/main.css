@@ -308,6 +308,19 @@ html[data-reduce-motion="true"] *::after {
   transition: background 150ms var(--ease), transform 150ms var(--ease);
   cursor: pointer;
 }
+.place-chip { animation: chipPop 280ms var(--ease) both; }
+.place-chip:nth-child(2) { animation-delay: 40ms; }
+.place-chip:nth-child(3) { animation-delay: 80ms; }
+.place-chip:nth-child(4) { animation-delay: 120ms; }
+.place-chip:nth-child(5) { animation-delay: 160ms; }
+.place-chip:nth-child(n+6) { animation-delay: 200ms; }
+@keyframes chipPop {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .place-chip { animation: none; }
+}
 .place-chip:hover { background: var(--glass-strong); transform: translateY(-1px); }
 .place-chip.active { background: var(--glass-strong); border-color: rgba(255,255,255,0.35); }
 .place-chip .temp { color: var(--fg-muted); font-variant-numeric: tabular-nums; }
@@ -730,6 +743,17 @@ html[data-reduce-motion="true"] *::after {
   color: var(--fg-muted);
   cursor: help;
   transition: transform 200ms var(--ease), color 200ms var(--ease);
+  animation: gearPop 360ms var(--ease) both;
+}
+.gear-pip:nth-child(2) { animation-delay: 80ms; }
+.gear-pip:nth-child(3) { animation-delay: 160ms; }
+.gear-pip:nth-child(4) { animation-delay: 240ms; }
+@keyframes gearPop {
+  from { opacity: 0; transform: translateY(6px) scale(0.85); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gear-pip { animation: none; }
 }
 .gear-pip:hover {
   transform: translateY(-2px);
