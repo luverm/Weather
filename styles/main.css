@@ -390,6 +390,13 @@ html[data-reduce-motion="true"] *::after {
 }
 .unit:hover { background: var(--glass); color: var(--fg); }
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
+.condition-change {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.02em;
+}
+.condition-change[hidden] { display: none; }
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
 .feels-reason {
   font-size: 12px;

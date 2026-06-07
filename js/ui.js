@@ -20,6 +20,7 @@ const el = {
   placeSub: $("#place-sub"),
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
+  conditionChange: $("#condition-change"),
   feelsLike: $("#feels-like"),
   feelsText: $("#feels-text"),
   feelsReason: $("#feels-reason"),
@@ -293,12 +294,37 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
+  renderConditionChange(w);
   // Update only the text span so sibling spans (#temp-trend, #feels-reason)
   // remain in the DOM across re-renders.
   if (el.feelsText) el.feelsText.textContent = `Feels like ${Math.round(feels)}°`;
   else el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderFeelsReason(w);
   renderDayRange(w);
+}
+
+function renderConditionChange(w) {
+  if (!el.conditionChange) return;
+  const cur = w.condition;
+  const hrs = (w.hourly || []);
+  if (!cur || hrs.length < 2) { el.conditionChange.hidden = true; return; }
+  // Search forward from "now" for the first hour with a different bucket.
+  // The current weather sample (live or scrubbed) may not match hrs[0]
+  // exactly, so we look for the first transition off `cur`.
+  let nextIdx = -1;
+  for (let i = 0; i < hrs.length; i++) {
+    if (hrs[i].condition && hrs[i].condition !== cur) { nextIdx = i; break; }
+  }
+  if (nextIdx < 0) {
+    // No change in the visible window — confirm if condition is stable.
+    el.conditionChange.textContent = `Stable for the next ${Math.min(24, hrs.length)} hours`;
+    el.conditionChange.hidden = false;
+    return;
+  }
+  const nextH = hrs[nextIdx];
+  // Time until the change. Drop a label like "Until 3pm · then Rain".
+  el.conditionChange.textContent = `Until ${fmtTime(nextH.time)} · then ${capitalize(nextH.label || nextH.condition)}`;
+  el.conditionChange.hidden = false;
 }
 
 function renderFeelsReason(w) {
