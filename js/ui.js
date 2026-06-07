@@ -46,7 +46,9 @@ const el = {
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
   sunRise: $("#sun-rise"),
+  sunRiseDir: $("#sun-rise-dir"),
   sunSet: $("#sun-set"),
+  sunSetDir: $("#sun-set-dir"),
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
@@ -521,6 +523,7 @@ function fmtTime(ts) {
 function renderSun(w) {
   el.sunRise.textContent = fmtTime(w.sunrise);
   el.sunSet.textContent = fmtTime(w.sunset);
+  renderSunDirections(w);
   if (w.sunrise && w.sunset) {
     const mins = Math.round((w.sunset - w.sunrise) / 60_000);
     const hh = Math.floor(mins / 60);
@@ -530,6 +533,44 @@ function renderSun(w) {
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   renderDaylightTrend(w);
+}
+
+function renderSunDirections(w) {
+  if (!el.sunRiseDir || !el.sunSetDir) return;
+  const lat = state.place?.lat;
+  if (lat == null || !w?.sunrise) {
+    el.sunRiseDir.textContent = "";
+    el.sunSetDir.textContent = "";
+    return;
+  }
+  const dirs = sunAzimuths(new Date(w.sunrise), lat);
+  if (!dirs) {
+    el.sunRiseDir.textContent = "";
+    el.sunSetDir.textContent = "";
+    return;
+  }
+  el.sunRiseDir.textContent = cardinal(dirs.rise);
+  el.sunSetDir.textContent = cardinal(dirs.set);
+}
+
+// Approximate sun azimuth (degrees from north, clockwise) at the moment of
+// sunrise and sunset for a given date + latitude. Accurate to within a few
+// degrees — more than enough for the cardinal-label we surface in the UI.
+function sunAzimuths(date, lat) {
+  const latRad = lat * Math.PI / 180;
+  const cosLat = Math.cos(latRad);
+  if (Math.abs(cosLat) < 1e-3) return null; // poles
+  const start = new Date(date.getFullYear(), 0, 0);
+  const dayOfYear = Math.floor((date - start) / 86400_000);
+  const decDeg = 23.44 * Math.sin(2 * Math.PI * (284 + dayOfYear) / 365);
+  const decRad = decDeg * Math.PI / 180;
+  let cosAz = Math.sin(decRad) / cosLat;
+  if (cosAz < -1 || cosAz > 1) return null; // polar day/night
+  // arccos -> 0..π. This is the azimuth east of north for sunrise.
+  const rise = Math.acos(cosAz) * 180 / Math.PI;
+  // Sunset mirrors across the meridian: 360 - rise.
+  const set = 360 - rise;
+  return { rise, set };
 }
 
 function renderDaylightTrend(w) {
