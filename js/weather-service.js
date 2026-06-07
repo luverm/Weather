@@ -50,6 +50,23 @@ async function fetchJson(url, opts) {
 
 export async function searchCities(query) {
   if (!query || query.trim().length < 2) return [];
+  // Allow direct lat,lon entries like "51.5, -0.1" — handy for offline use
+  // and for users who paste coordinates from another tool.
+  const coordMatch = query.trim().match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
+  if (coordMatch) {
+    const lat = parseFloat(coordMatch[1]);
+    const lon = parseFloat(coordMatch[2]);
+    if (Math.abs(lat) <= 90 && Math.abs(lon) <= 180) {
+      return [{
+        id: `${lat},${lon}`,
+        name: `${lat.toFixed(3)}, ${lon.toFixed(3)}`,
+        country: "Custom location",
+        admin1: null,
+        lat, lon,
+        timezone: null,
+      }];
+    }
+  }
   const url = `${GEO}?name=${encodeURIComponent(query)}&count=6&language=en&format=json`;
   try {
     const data = await fetchJson(url);
