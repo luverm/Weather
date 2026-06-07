@@ -1073,6 +1073,13 @@ kbd {
 .moon-stargazing.good { color: #cdd86a; }
 .moon-stargazing.fair { color: var(--fg-muted); }
 .moon-stargazing.poor { color: var(--fg-dim); }
+.moon-best-night {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--fg-dim);
+  text-transform: uppercase;
+}
+.moon-best-night:empty { display: none; }
 
 .sun-row { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .sun-item { display: grid; gap: 2px; }

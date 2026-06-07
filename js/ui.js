@@ -51,6 +51,7 @@ const el = {
   moonIllum: $("#moon-illum"),
   moonNext: $("#moon-next"),
   moonStargazing: $("#moon-stargazing"),
+  moonBestNight: $("#moon-best-night"),
   sunRise: $("#sun-rise"),
   sunRiseDir: $("#sun-rise-dir"),
   sunSet: $("#sun-set"),
@@ -611,6 +612,7 @@ function renderMoon(moon) {
   el.moonIllum.textContent = Math.round(moon.illum * 100);
   renderMoonNext(moon);
   renderStargazingRating(moon, state.weather);
+  renderBestStargazingNight(state.weather);
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
@@ -627,6 +629,51 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+}
+
+function renderBestStargazingNight(w) {
+  if (!el.moonBestNight) return;
+  const days = w?.daily?.slice(1, 7) || []; // exclude today (tonight covered by main rating)
+  if (!days.length) { el.moonBestNight.textContent = ""; return; }
+  // Score each upcoming day's night: condition clarity * lunar darkness.
+  const CLARITY = { clear: 1.0, clouds: 0.45, fog: 0.2, rain: 0.05, snow: 0.05, storm: 0.0 };
+  let best = null;
+  for (const d of days) {
+    if (!d.sunset) continue;
+    const nightTs = d.sunset + 90 * 60_000; // ~1.5h after sunset
+    const phase = approxMoonPhase(new Date(nightTs));
+    const illum = 0.5 * (1 - Math.cos(2 * Math.PI * phase));
+    const darkness = 1 - illum;
+    const clarity = CLARITY[d.condition] ?? 0.5;
+    const score = darkness * clarity;
+    if (!best || score > best.score) best = { score, day: d };
+  }
+  if (!best || best.score < 0.35) {
+    el.moonBestNight.textContent = "";
+    return;
+  }
+  const tz = w?.timezone;
+  const wd = new Date(best.day.time).toLocaleDateString(undefined, {
+    weekday: "short",
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  el.moonBestNight.textContent = `Best night this week: ${wd}`;
+}
+
+function approxMoonPhase(date) {
+  // Same simplified Conway formula as the weather-service computeMoonPhase,
+  // duplicated here to avoid exposing the helper across modules.
+  const year = date.getUTCFullYear();
+  const month = date.getUTCMonth() + 1;
+  const day = date.getUTCDate() + date.getUTCHours() / 24;
+  let r = year % 100;
+  r %= 19;
+  if (r > 9) r -= 19;
+  r = (r * 11) % 30 + month + day;
+  if (month < 3) r += 2;
+  r -= (year < 2000 ? 4 : 8.3);
+  r = ((r % 30) + 30) % 30;
+  return r / 29.5305882;
 }
 
 function renderStargazingRating(moon, w) {
