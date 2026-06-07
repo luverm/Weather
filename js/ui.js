@@ -1259,9 +1259,16 @@ function renderDaily(w) {
 
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
-  el.dailyIconStrip.innerHTML = days.map((d) =>
-    `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
-  ).join("");
+  const tz = state.weather?.timezone;
+  const weekday = (ts) => new Date(ts).toLocaleDateString(undefined, {
+    weekday: "short",
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  el.dailyIconStrip.innerHTML = days.map((d, i) => {
+    const cls = i === 0 ? "strip-day today" : "strip-day";
+    const wd = i === 0 ? "Today" : weekday(d.time);
+    return `<span class="${cls}" title="${escapeHtml(wd)} · ${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`;
+  }).join("");
 }
 
 function renderDailySpark(days) {
