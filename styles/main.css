@@ -1029,6 +1029,17 @@ kbd {
   margin-top: 2px;
 }
 .moon-next:empty { display: none; }
+.moon-stargazing {
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--fg-muted);
+  margin-top: 2px;
+}
+.moon-stargazing:empty { display: none; }
+.moon-stargazing.excellent { color: #ffe6c7; }
+.moon-stargazing.good { color: #cdd86a; }
+.moon-stargazing.fair { color: var(--fg-muted); }
+.moon-stargazing.poor { color: var(--fg-dim); }
 
 .sun-row { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .sun-item { display: grid; gap: 2px; }

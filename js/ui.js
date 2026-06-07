@@ -49,6 +49,7 @@ const el = {
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
   moonNext: $("#moon-next"),
+  moonStargazing: $("#moon-stargazing"),
   sunRise: $("#sun-rise"),
   sunRiseDir: $("#sun-rise-dir"),
   sunSet: $("#sun-set"),
@@ -538,6 +539,7 @@ function renderMoon(moon) {
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
   renderMoonNext(moon);
+  renderStargazingRating(moon, state.weather);
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
@@ -554,6 +556,27 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+}
+
+function renderStargazingRating(moon, w) {
+  if (!el.moonStargazing) return;
+  const cloud = w?.cloudCover; // 0..100
+  if (cloud == null) { el.moonStargazing.textContent = ""; return; }
+  const darkness = 1 - (moon.illum ?? 0);       // 0..1
+  const clarity  = 1 - Math.min(1, cloud / 100); // 0..1
+  // Heavy cloud dominates — even a new moon can't help if it's overcast.
+  let label, cls;
+  if (cloud >= 80) { label = "Stargazing: clouded out"; cls = "poor"; }
+  else if (cloud >= 50 && darkness < 0.6) { label = "Stargazing: poor"; cls = "poor"; }
+  else {
+    const score = darkness * clarity; // 0..1
+    if (score >= 0.7) { label = "Stargazing: excellent ★"; cls = "excellent"; }
+    else if (score >= 0.45) { label = "Stargazing: good"; cls = "good"; }
+    else if (score >= 0.2)  { label = "Stargazing: fair"; cls = "fair"; }
+    else { label = "Stargazing: poor"; cls = "poor"; }
+  }
+  el.moonStargazing.textContent = label;
+  el.moonStargazing.className = `moon-stargazing ${cls}`;
 }
 
 function renderMoonNext(moon) {
