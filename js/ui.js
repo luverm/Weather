@@ -21,6 +21,8 @@ const el = {
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
+  feelsText: $("#feels-text"),
+  feelsReason: $("#feels-reason"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -285,8 +287,32 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  // Update only the text span so sibling spans (#temp-trend, #feels-reason)
+  // remain in the DOM across re-renders.
+  if (el.feelsText) el.feelsText.textContent = `Feels like ${Math.round(feels)}°`;
+  else el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  renderFeelsReason(w);
   renderDayRange(w);
+}
+
+function renderFeelsReason(w) {
+  if (!el.feelsReason) return;
+  if (w.temp == null || w.feelsLike == null) { el.feelsReason.textContent = ""; return; }
+  const diff = w.feelsLike - w.temp; // °C
+  if (Math.abs(diff) < 2.5) { el.feelsReason.textContent = ""; return; }
+  let reason = "";
+  if (diff < 0) {
+    // Feels colder. Most likely wind chill, possibly evaporation (low humidity).
+    if (w.windSpeed != null && w.windSpeed >= 12) reason = "wind chill";
+    else if (w.humidity != null && w.humidity <= 35) reason = "dry air";
+    else reason = "cooler than air";
+  } else {
+    // Feels warmer. Heat index from humidity, or solar load.
+    if (w.humidity != null && w.humidity >= 65 && w.temp >= 22) reason = "humid air";
+    else if (w.uv != null && w.uv >= 6 && (w.cloudCover ?? 0) < 50) reason = "strong sun";
+    else reason = "heat index";
+  }
+  el.feelsReason.textContent = ` · ${reason}`;
 }
 
 function renderDayRange(w) {
