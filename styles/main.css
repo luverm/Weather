@@ -977,6 +977,31 @@ kbd {
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
 
+.daylight-trend {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--stroke);
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  gap: 10px;
+  align-items: center;
+}
+.daylight-spark {
+  width: 100%;
+  height: 26px;
+  display: block;
+  color: rgba(255, 210, 140, 1);
+}
+#daylight-spark-today {
+  filter: drop-shadow(0 0 4px rgba(255, 225, 170, 0.85));
+}
+.daylight-trend-label {
+  font-size: 11px;
+  color: var(--fg-dim);
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+}
+
 /* ---------- Radar map ---------- */
 .radar {
   padding: 12px;

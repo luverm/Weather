@@ -349,6 +349,20 @@
               <strong id="sun-daylight">—</strong>
             </div>
           </div>
+          <div class="daylight-trend" id="daylight-trend" hidden>
+            <svg id="daylight-spark" class="daylight-spark" viewBox="0 0 140 26" preserveAspectRatio="none" aria-hidden="true">
+              <defs>
+                <linearGradient id="daylight-grad" x1="0" x2="1" y1="0" y2="0">
+                  <stop offset="0%" stop-color="rgba(255,210,140,0.7)"/>
+                  <stop offset="100%" stop-color="rgba(255,170,120,1)"/>
+                </linearGradient>
+              </defs>
+              <path id="daylight-spark-fill" fill="rgba(255,210,140,0.14)"></path>
+              <path id="daylight-spark-line" fill="none" stroke="url(#daylight-grad)" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"></path>
+              <circle id="daylight-spark-today" r="2.4" fill="#fff1c9"></circle>
+            </svg>
+            <span class="daylight-trend-label" id="daylight-trend-label">—</span>
+          </div>
         </div>
       </div>
 

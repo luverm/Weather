@@ -50,6 +50,11 @@ const el = {
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  daylightTrend: $("#daylight-trend"),
+  daylightSparkLine: $("#daylight-spark-line"),
+  daylightSparkFill: $("#daylight-spark-fill"),
+  daylightSparkToday: $("#daylight-spark-today"),
+  daylightTrendLabel: $("#daylight-trend-label"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -523,6 +528,57 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderDaylightTrend(w);
+}
+
+function renderDaylightTrend(w) {
+  if (!el.daylightTrend || !el.daylightSparkLine) return;
+  const days = (w.daily || []).filter((d) => d.sunrise && d.sunset);
+  if (days.length < 3) { el.daylightTrend.hidden = true; return; }
+  const mins = days.map((d) => Math.round((d.sunset - d.sunrise) / 60_000));
+  const lo = Math.min(...mins), hi = Math.max(...mins);
+  // If the week is essentially flat (tropics), still show the chart but skip
+  // the misleading change label.
+  const span = Math.max(2, hi - lo);
+  const W = 140, H = 26, PAD = 2;
+  const innerW = W - PAD * 2;
+  const innerH = H - PAD * 2;
+  const x = (i) => PAD + (i / (mins.length - 1)) * innerW;
+  const y = (v) => PAD + innerH - ((v - lo) / span) * innerH;
+  let line = "";
+  mins.forEach((v, i) => { line += (i === 0 ? "M" : "L") + x(i).toFixed(1) + "," + y(v).toFixed(1) + " "; });
+  el.daylightSparkLine.setAttribute("d", line.trim());
+  el.daylightSparkFill.setAttribute(
+    "d",
+    `${line}L${x(mins.length - 1).toFixed(1)},${(H - PAD).toFixed(1)} L${x(0).toFixed(1)},${(H - PAD).toFixed(1)} Z`,
+  );
+  el.daylightSparkToday.setAttribute("cx", x(0).toFixed(1));
+  el.daylightSparkToday.setAttribute("cy", y(mins[0]).toFixed(1));
+
+  const delta = mins[mins.length - 1] - mins[0];
+  let label;
+  if (Math.abs(delta) < 2) {
+    label = "Day length steady this week";
+  } else {
+    const mag = Math.abs(delta);
+    const dur = mag >= 60 ? `${Math.floor(mag / 60)}h ${mag % 60}m` : `${mag}m`;
+    label = delta > 0
+      ? `Days +${dur} longer by ${weekdayShort(days[days.length - 1].time, w.timezone)}`
+      : `Days −${dur} shorter by ${weekdayShort(days[days.length - 1].time, w.timezone)}`;
+  }
+  el.daylightTrendLabel.textContent = label;
+  el.daylightTrend.hidden = false;
+}
+
+function weekdayShort(ts, tz) {
+  try {
+    return new Date(ts).toLocaleDateString(undefined, {
+      weekday: "short",
+      ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    });
+  } catch {
+    return new Date(ts).toLocaleDateString(undefined, { weekday: "short" });
+  }
 }
 
 function scheduleSunArc(w) {
