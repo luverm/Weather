@@ -262,6 +262,13 @@ export const ui = {
     el.toast.hidden = false;
     clearTimeout(el.toast._t);
     el.toast._t = setTimeout(() => (el.toast.hidden = true), dur);
+    if (!el.toast._dismissBound) {
+      el.toast._dismissBound = true;
+      el.toast.addEventListener("click", () => {
+        clearTimeout(el.toast._t);
+        el.toast.hidden = true;
+      });
+    }
   },
   getUnit: () => state.unit,
 };

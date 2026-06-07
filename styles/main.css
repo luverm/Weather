@@ -1880,8 +1880,10 @@ kbd {
   backdrop-filter: blur(18px);
   z-index: 20;
   opacity: 0;
+  cursor: pointer;
   transition: transform 320ms var(--ease), opacity 320ms var(--ease);
 }
+.toast:hover { background: rgba(20, 26, 50, 0.92); }
 .toast:not([hidden]) { opacity: 1; transform: translate(-50%, 0); }
 
 /* ---------- Reveal animations ---------- */
