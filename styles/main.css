@@ -1911,6 +1911,20 @@ kbd {
 .scroll-top svg { width: 18px; height: 18px; }
 .scroll-top:hover { background: rgba(255,255,255,0.18); }
 
+/* ---------- Compact view ---------- */
+[data-compact="true"] #insights-card,
+[data-compact="true"] #activity-card,
+[data-compact="true"] #pollen-card,
+[data-compact="true"] #moon-card,
+[data-compact="true"] .nowcast,
+[data-compact="true"] #daily-icon-strip,
+[data-compact="true"] #weekly-precip-label,
+[data-compact="true"] #daily-precip-strip,
+[data-compact="true"] #weekend-chip,
+[data-compact="true"] #comfort-strip {
+  display: none !important;
+}
+
 .sr-only {
   position: absolute;
   width: 1px; height: 1px;

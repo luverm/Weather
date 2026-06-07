@@ -100,6 +100,7 @@ const el = {
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
+  settingCompact: $("#setting-compact"),
   settingClearPlaces: $("#setting-clear-places"),
   settingListen: $("#setting-listen"),
   settingCopyLink: $("#setting-copy-link"),
@@ -1801,6 +1802,12 @@ function bindSettings() {
     state.handlers.onReduceMotion?.(on);
   });
 
+  el.settingCompact?.addEventListener("change", () => {
+    const on = el.settingCompact.checked;
+    document.documentElement.setAttribute("data-compact", on ? "true" : "false");
+    localStorage.setItem("aether:compact", on ? "1" : "0");
+  });
+
   el.settingUnitF?.addEventListener("change", () => {
     const wantF = el.settingUnitF.checked;
     const desired = wantF ? "F" : "C";
@@ -1896,6 +1903,11 @@ function applyStoredPreferences() {
     queueMicrotask(() => state.handlers.onReduceMotion?.(true));
   }
   if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
+  const compact = localStorage.getItem("aether:compact") === "1";
+  if (compact) {
+    document.documentElement.setAttribute("data-compact", "true");
+    if (el.settingCompact) el.settingCompact.checked = true;
+  }
 }
 
 // Exposed so app.js can query the current preference on boot.
