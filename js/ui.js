@@ -634,12 +634,30 @@ function renderSun(w) {
     const mins = Math.round((w.sunset - w.sunrise) / 60_000);
     const hh = Math.floor(mins / 60);
     const mm = mins % 60;
-    el.sunDaylight.textContent = `${hh}h ${mm}m`;
+    const sunny = countClearDaytimeHours(w);
+    el.sunDaylight.innerHTML = sunny != null
+      ? `${hh}h ${mm}m<span class="sun-sunny">${sunny}h clear</span>`
+      : `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   renderGoldenHours(w);
   renderDaylightTrend(w);
+}
+
+function countClearDaytimeHours(w) {
+  const hrs = w.hourly || [];
+  if (!hrs.length || !w.sunrise || !w.sunset) return null;
+  // Count daytime hours in the forecast window where the condition is
+  // "clear" (mostly sunny). Cap at the daylight length so we don't double
+  // count past sunset on the next day.
+  let count = 0;
+  for (const h of hrs) {
+    if (!h.isDay) continue;
+    if (h.condition === "clear") count++;
+  }
+  if (count <= 0) return null;
+  return count;
 }
 
 function renderGoldenHours(w) {
