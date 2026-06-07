@@ -1443,6 +1443,56 @@ kbd {
   padding: 0 10px;
   display: block;
 }
+.daily-precip-strip {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 6px;
+  padding: 4px 10px 0;
+  align-items: end;
+  height: 36px;
+}
+.daily-precip-cell {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  display: grid;
+  grid-template-rows: 12px 1fr;
+  align-items: end;
+  justify-items: center;
+  height: 100%;
+  color: var(--fg-dim);
+  transition: transform 160ms var(--ease);
+}
+.daily-precip-cell:hover { transform: translateY(-1px); }
+.daily-precip-amount {
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.daily-precip-bar {
+  width: 70%;
+  min-height: 2px;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(180deg, rgba(154, 209, 255, 0.85), rgba(154, 209, 255, 0.25));
+  box-shadow: inset 0 -1px 0 rgba(255,255,255,0.08);
+}
+.daily-precip-bar.none {
+  background: rgba(255, 255, 255, 0.06);
+}
+.daily-precip-bar.light {
+  background: linear-gradient(180deg, rgba(154, 209, 255, 0.7), rgba(154, 209, 255, 0.2));
+}
+.daily-precip-bar.moderate {
+  background: linear-gradient(180deg, rgba(108, 163, 255, 0.95), rgba(108, 163, 255, 0.35));
+}
+.daily-precip-bar.heavy {
+  background: linear-gradient(180deg, rgba(120, 110, 255, 1), rgba(120, 110, 255, 0.45));
+}
 .daily-spark circle { transition: r 160ms var(--ease); }
 .daily-spark .dot-hi { fill: #ff9c7a; }
 .daily-spark .dot-lo { fill: #9ad1ff; }

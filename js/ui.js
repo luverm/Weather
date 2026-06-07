@@ -77,6 +77,7 @@ const el = {
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
+  dailyPrecipStrip: $("#daily-precip-strip"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -909,6 +910,7 @@ function renderDaily(w) {
   if (!days.length) return;
   renderDailyIconStrip(days);
   renderDailySpark(days);
+  renderDailyPrecip(days, w);
   renderDailyDelta(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
@@ -991,6 +993,51 @@ function renderDailySpark(days) {
       c.setAttribute("class", "dot-lo");
       el.dailySparkDots.appendChild(c);
     }
+  });
+}
+
+function renderDailyPrecip(days, w) {
+  if (!el.dailyPrecipStrip) return;
+  const precips = days.map((d) => Number(d.precip ?? 0));
+  const maxP = Math.max(...precips);
+  if (!isFinite(maxP) || maxP < 0.1) {
+    el.dailyPrecipStrip.hidden = true;
+    el.dailyPrecipStrip.innerHTML = "";
+    return;
+  }
+  const tz = w?.timezone;
+  const wd = (ts, i) => i === 0 ? "Today" : new Date(ts).toLocaleDateString(undefined, {
+    weekday: "short",
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  el.dailyPrecipStrip.hidden = false;
+  el.dailyPrecipStrip.innerHTML = days.map((d, i) => {
+    const mm = precips[i];
+    const ratio = mm / maxP;
+    const heightPct = mm < 0.1 ? 4 : Math.max(8, Math.round(ratio * 100));
+    const label = mm < 0.1 ? "" : (mm >= 1 ? `${mm.toFixed(1)}` : `${mm.toFixed(2)}`);
+    const cls = mm >= 5 ? "heavy" : mm >= 1 ? "moderate" : mm >= 0.1 ? "light" : "none";
+    return `
+      <button class="daily-precip-cell" type="button" data-ts="${d.time}"
+              title="${escapeHtml(wd(d.time, i))} · ${mm.toFixed(2)} mm">
+        <span class="daily-precip-amount">${label}</span>
+        <span class="daily-precip-bar ${cls}" style="height:${heightPct}%"></span>
+      </button>
+    `;
+  }).join("");
+  el.dailyPrecipStrip.querySelectorAll(".daily-precip-cell").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const ts = parseInt(btn.dataset.ts, 10);
+      if (!ts) return;
+      // Expand the matching daily-item if it's loaded; falls back to scrubbing.
+      const item = el.dailyTrack.querySelector(`.daily-item[data-ts="${ts}"]`);
+      if (item) {
+        item.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        item.click();
+      } else {
+        state.handlers.onHourClick?.(ts);
+      }
+    });
   });
 }
 
