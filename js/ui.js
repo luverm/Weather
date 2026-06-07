@@ -103,6 +103,7 @@ const el = {
   settingClearPlaces: $("#setting-clear-places"),
   settingListen: $("#setting-listen"),
   settingCopyLink: $("#setting-copy-link"),
+  settingSavePlace: $("#setting-save-place"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
@@ -1817,6 +1818,19 @@ function bindSettings() {
 
   el.settingListen?.addEventListener("click", () => {
     ui.speakSummary();
+    close();
+  });
+
+  el.settingSavePlace?.addEventListener("click", () => {
+    const p = state.place;
+    if (!p || p.lat == null) { ui.showToast("No place to save"); close(); return; }
+    if (places.isSaved(p)) {
+      ui.showToast("Already saved");
+    } else {
+      places.add(p);
+      renderPlaces();
+      ui.showToast(`Saved ${p.name}`);
+    }
     close();
   });
 
