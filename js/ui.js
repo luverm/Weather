@@ -225,6 +225,7 @@ export const ui = {
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
+    announceWeather(weather);
     // Save summary for the strip so chips can show current temp + local time.
     if (state.place) {
       places.updateSummary(state.place, {
@@ -2016,6 +2017,19 @@ function bindTilt() {
   };
   el.heroInner.addEventListener("pointermove", onMove);
   el.heroInner.addEventListener("pointerleave", reset);
+}
+
+function announceWeather(w) {
+  const live = document.getElementById("sr-live");
+  if (!live) return;
+  const placeName = state.place?.name || "current location";
+  const t = (v) => Math.round(state.unit === "F" ? v * 9 / 5 + 32 : v);
+  const today = w.daily?.[0];
+  const parts = [
+    `${placeName}, ${t(w.temp)} degrees, ${(w.label || "").toLowerCase()}.`,
+    today ? `Today's range, ${t(today.tempMin)} to ${t(today.tempMax)}.` : "",
+  ].filter(Boolean);
+  live.textContent = parts.join(" ");
 }
 
 function escapeHtml(s) {
