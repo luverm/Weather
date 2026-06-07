@@ -90,7 +90,22 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     }
   }
 
-  // 5. UV peak
+  // 5. Rain stops — only if it's currently wet.
+  const RAINY_NOW = weather.condition === "rain" || weather.condition === "storm";
+  if (RAINY_NOW) {
+    const dry = hours.find((h) =>
+      h.condition !== "rain" && h.condition !== "storm" && (h.pop ?? 0) < 30
+    );
+    if (dry) {
+      out.push({
+        icon: ICONS.sun, label: "Rain stops",
+        value: `${fmt(dry.time)} · ${dry.pop}% chance`,
+        ts: dry.time,
+      });
+    }
+  }
+
+  // 6. UV peak
   if (weather.uvPeak?.value >= 6) {
     out.push({
       icon: ICONS.uv, label: "UV peak",
