@@ -1409,14 +1409,17 @@ function renderDailyPrecip(days, w) {
     weekday: "short",
     ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
   });
-  // Weekly summary: total + wettest day.
+  // Weekly summary: total, wettest day, sunniest day, average high.
   if (el.weeklyPrecipLabel) {
     const total = precips.reduce((s, v) => s + v, 0);
     const wettestIdx = precips.indexOf(maxP);
     const parts = [`${total.toFixed(total >= 10 ? 0 : 1)} mm this week`];
     if (maxP >= 1 && wettestIdx >= 0) {
-      parts.push(`wettest ${wd(days[wettestIdx].time, wettestIdx)} (${maxP.toFixed(maxP >= 10 ? 0 : 1)} mm)`);
+      parts.push(`wettest ${wd(days[wettestIdx].time, wettestIdx)}`);
     }
+    // Sunniest = first day with the lowest precip + condition "clear".
+    const sunIdx = days.findIndex((d) => d.condition === "clear" && (d.precip ?? 0) < 0.2);
+    if (sunIdx > 0) parts.push(`sunniest ${wd(days[sunIdx].time, sunIdx)}`);
     el.weeklyPrecipLabel.textContent = parts.join(" · ");
     el.weeklyPrecipLabel.hidden = false;
   }
