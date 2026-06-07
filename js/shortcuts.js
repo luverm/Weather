@@ -60,6 +60,7 @@ export function installShortcuts(handlers) {
     if (key === "m" || key === "M") { e.preventDefault(); handlers.toggleAudio?.(); return; }
     if (key === "f" || key === "F") { e.preventDefault(); handlers.toggleFullscreenRadar?.(); return; }
     if (key === "n" || key === "N") { e.preventDefault(); handlers.resetScrubber?.(); return; }
+    if (key === "s" || key === "S") { e.preventDefault(); handlers.share?.(); return; }
     if (key === " ") {
       e.preventDefault();
       handlers.toggleRadar?.();

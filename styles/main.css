@@ -792,6 +792,16 @@ html[data-reduce-motion="true"] *::after {
   color: var(--fg-dim);
   margin-left: 6px;
 }
+.chart-popover-cond {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--fg-muted);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+}
 .chart-hover {
   font-size: 12px;
   color: var(--fg);

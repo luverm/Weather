@@ -7,6 +7,10 @@ function cardinalDir(deg) {
   const i = Math.round(((deg % 360) + 360) % 360 / 22.5) % 16;
   return CARDINALS[i];
 }
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
 
 const W = 600;
 const H = 140;
@@ -147,8 +151,9 @@ export class HourlyChart {
     const dir = h.windDir != null ? `${cardinalDir(h.windDir)} ` : "";
     const wind = h.wind != null ? ` · ${dir}${Math.round(h.wind)} km/h` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
+    const cond = h.label ? `<span class="chart-popover-cond">${escapeHtml(h.label)}</span>` : "";
     this.popover.innerHTML =
-      `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
+      `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr} ${cond}<br>` +
       `<em>${h.pop}% precip${wind}${hum}</em>`;
     this.popover.style.left = `${pxX.toFixed(1)}px`;
     this.popover.style.top = `${pxY.toFixed(1)}px`;
