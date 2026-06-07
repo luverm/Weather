@@ -1251,11 +1251,13 @@ function renderHourly(w) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    const popPct = Math.max(0, Math.min(100, h.pop ?? 0));
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
-      <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
+      <span class="forecast-pop ${popPct < 20 ? "dim" : ""}">${popPct}%</span>
+      <span class="forecast-pop-bar" aria-hidden="true"><span style="width:${popPct}%"></span></span>
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);

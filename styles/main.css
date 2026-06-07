@@ -1762,6 +1762,21 @@ kbd {
   opacity: 0.9;
 }
 .forecast-pop.dim { opacity: 0; }
+.forecast-pop-bar {
+  width: 80%;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+  display: block;
+}
+.forecast-pop-bar > span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(154,209,255,0.7), rgba(108,163,255,0.95));
+  border-radius: 2px;
+  transition: width 320ms var(--ease);
+}
 
 .daily-track {
   display: grid;
