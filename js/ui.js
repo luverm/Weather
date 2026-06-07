@@ -160,6 +160,7 @@ export const ui = {
     bindTilt();
     bindSwipe();
     bindScrollTop();
+    bindTempClick();
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
@@ -1894,6 +1895,13 @@ function bindShare() {
       if (err?.name !== "AbortError") ui.showToast("Share failed");
     }
   });
+}
+
+function bindTempClick() {
+  if (!el.temp) return;
+  el.temp.style.cursor = "pointer";
+  el.temp.setAttribute("title", "Tap to switch units");
+  el.temp.addEventListener("click", () => ui.toggleUnits());
 }
 
 function bindScrollTop() {
