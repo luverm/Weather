@@ -224,10 +224,12 @@ export const ui = {
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
-    // Save summary for the strip so chips can show current temp.
+    // Save summary for the strip so chips can show current temp + local time.
     if (state.place) {
       places.updateSummary(state.place, {
-        temp: weather.temp, condition: weather.condition,
+        temp: weather.temp,
+        condition: weather.condition,
+        timezone: weather.timezone,
       });
     }
     renderPlaces();
@@ -1579,6 +1581,40 @@ function iconFor(condition) {
   }
 }
 
+function formatPlaceLocalTime(p) {
+  const tz = p.timezone;
+  if (!tz || tz === "auto") return "";
+  try {
+    return new Intl.DateTimeFormat([], {
+      timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
+    }).format(new Date());
+  } catch {
+    return "";
+  }
+}
+
+// Re-render only the place chip times once a minute so they stay current
+// without rebuilding the whole strip (and resetting hover state).
+setInterval(() => {
+  const chips = document.querySelectorAll(".place-chip");
+  if (!chips.length) return;
+  const all = places.all();
+  chips.forEach((chip) => {
+    const p = all.find((q) => q.id === chip.dataset.id);
+    if (!p) return;
+    const t = formatPlaceLocalTime(p);
+    let timeEl = chip.querySelector(".place-chip-time");
+    if (t && !timeEl) {
+      const nameEl = chip.querySelector(".place-chip-name");
+      if (nameEl) nameEl.insertAdjacentHTML("afterend", `<span class="place-chip-time">${t}</span>`);
+    } else if (t && timeEl) {
+      timeEl.textContent = t;
+    } else if (!t && timeEl) {
+      timeEl.remove();
+    }
+  });
+}, 60_000);
+
 // ---------- Saved places strip ----------
 function renderPlaces() {
   const all = places.all();
@@ -1587,9 +1623,11 @@ function renderPlaces() {
   const activeId = state.place ? places.idFor(state.place) : null;
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
+    const localTime = formatPlaceLocalTime(p);
     return `
       <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
-        <span>${escapeHtml(p.name)}</span>
+        <span class="place-chip-name">${escapeHtml(p.name)}</span>
+        ${localTime ? `<span class="place-chip-time">${escapeHtml(localTime)}</span>` : ""}
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
         <span class="close" data-action="remove" aria-label="Remove">
           <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
