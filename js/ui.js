@@ -383,9 +383,14 @@ function renderMetrics(w) {
     }
   }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
-  el.metricPressureSub.textContent = w.visibility != null
-    ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
-    : "visibility —";
+  if (w.visibility != null) {
+    const km = w.visibility / 1000;
+    const tier = visibilityTier(km);
+    el.metricPressureSub.textContent =
+      `visibility ${Math.round(km * 10) / 10} km · ${tier}`;
+  } else {
+    el.metricPressureSub.textContent = "visibility —";
+  }
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
@@ -452,6 +457,14 @@ function renderWindDirStrip(w) {
     return `<span class="wind-dir-arrow" style="--rot:${rot}deg;opacity:${opacity.toFixed(2)}"
              title="${fmtTime(h.time)} · ${cardinal(rot)} · ${Math.round(h.wind ?? 0)} km/h"></span>`;
   }).join("");
+}
+
+function visibilityTier(km) {
+  if (km < 0.5) return "fog";
+  if (km < 2) return "poor";
+  if (km < 5) return "moderate";
+  if (km < 10) return "good";
+  return "clear";
 }
 
 function uvLevel(v) {
