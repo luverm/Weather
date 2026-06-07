@@ -1431,13 +1431,24 @@ function toggleDailyExpand(item, d, w) {
   const stepped = [];
   const step = Math.max(1, Math.floor(hrs.length / 12));
   for (let i = 0; i < hrs.length && stepped.length < 12; i += step) stepped.push(hrs[i]);
-  box.innerHTML = stepped.map((h) => {
+  const barsHtml = stepped.map((h) => {
     const pct = ((h.temp - tMin) / tSpan) * 100;
     const height = 10 + (pct / 100) * 36;
     const precipLevel = h.pop >= 60 ? 2 : h.pop >= 25 ? 1 : 0;
     const hh = new Date(h.time).getHours().toString().padStart(2, "0");
     return `<div class="daily-expand-bar" data-precip="${precipLevel}" style="height:${height.toFixed(1)}px" title="${hh}:00 · ${Math.round(convertTemp(h.temp))}° · ${h.pop}%"><span>${Math.round(convertTemp(h.temp))}°</span></div>`;
   }).join("");
+  // Build an extra info row: sun times, wind, UV peak hour.
+  const statsParts = [];
+  if (d.sunrise) statsParts.push(`<span title="Sunrise">↑ ${fmtTime(d.sunrise)}</span>`);
+  if (d.sunset) statsParts.push(`<span title="Sunset">↓ ${fmtTime(d.sunset)}</span>`);
+  if (d.gustsMax != null) statsParts.push(`<span title="Peak gust">⚑ ${Math.round(d.gustsMax)} km/h</span>`);
+  if (d.uvMax != null) statsParts.push(`<span title="UV peak">☼ UV ${Math.round(d.uvMax)}</span>`);
+  if (d.precip != null && d.precip >= 0.1) statsParts.push(`<span title="Rainfall">☂ ${d.precip.toFixed(1)} mm</span>`);
+  const statsHtml = statsParts.length
+    ? `<div class="daily-expand-stats">${statsParts.join("")}</div>`
+    : "";
+  box.innerHTML = barsHtml + statsHtml;
   item.appendChild(box);
   item.dataset.expanded = "true";
 }

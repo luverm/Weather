@@ -609,6 +609,22 @@ html[data-reduce-motion="true"] *::after {
   transition: opacity 160ms var(--ease);
 }
 .daily-expand-bar:hover span { opacity: 1; }
+.daily-expand-stats {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  padding: 8px 4px 2px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-muted);
+  letter-spacing: 0.02em;
+}
+.daily-expand-stats span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
 
 /* ---------- Share button flash ---------- */
 #share-btn.just-copied { color: var(--accent); animation: pulseOnce 560ms var(--ease); }
