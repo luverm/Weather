@@ -86,6 +86,7 @@ const el = {
   dailyHi: $("#daily-hi"),
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
+  dailySparkNow: $("#daily-spark-now"),
   dailyDelta: $("#daily-delta"),
   dailyPrecipStrip: $("#daily-precip-strip"),
   weeklyPrecipLabel: $("#weekly-precip-label"),
@@ -1276,6 +1277,17 @@ function renderDailySpark(days) {
   const innerH = H - TOP - BOT;
   const x = (i) => PAD + (i / (days.length - 1)) * innerW;
   const y = (v) => TOP + innerH - ((v - tMin) / span) * innerH;
+  // Position the "now" marker at today's column based on current live temp.
+  if (el.dailySparkNow) {
+    const t = state.weather?.temp;
+    if (t == null) {
+      el.dailySparkNow.setAttribute("cx", "-10");
+      el.dailySparkNow.setAttribute("cy", "-10");
+    } else {
+      el.dailySparkNow.setAttribute("cx", x(0).toFixed(1));
+      el.dailySparkNow.setAttribute("cy", y(t).toFixed(1));
+    }
+  }
   const linePath = (arr) => arr.map((v, i) => (i === 0 ? "M" : "L") + x(i).toFixed(1) + "," + y(v).toFixed(1)).join(" ");
   el.dailyHi.setAttribute("d", linePath(days.map((d) => d.tempMax)));
   el.dailyLo.setAttribute("d", linePath(days.map((d) => d.tempMin)));

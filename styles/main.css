@@ -1644,6 +1644,21 @@ kbd {
 .daily-spark circle { transition: r 160ms var(--ease); }
 .daily-spark .dot-hi { fill: #ff9c7a; }
 .daily-spark .dot-lo { fill: #9ad1ff; }
+.daily-spark .dot-now {
+  fill: #fff1c9;
+  stroke: rgba(255, 241, 201, 0.4);
+  stroke-width: 2;
+  filter: drop-shadow(0 0 4px rgba(255, 241, 201, 0.8));
+  animation: dotNowPulse 2.4s ease-in-out infinite;
+  transition: cx 400ms var(--ease), cy 400ms var(--ease);
+}
+@keyframes dotNowPulse {
+  0%, 100% { stroke-width: 2; }
+  50% { stroke-width: 5; opacity: 0.85; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .daily-spark .dot-now { animation: none; }
+}
 .forecast-track {
   display: grid;
   grid-auto-flow: column;
