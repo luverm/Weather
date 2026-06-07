@@ -64,6 +64,7 @@ const el = {
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
+  gearStrip: $("#gear-strip"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
   pollenCard: $("#pollen-card"),
@@ -206,6 +207,7 @@ export const ui = {
     renderActivity(weather);
     renderAlerts(weather);
     renderWeekend(weather);
+    renderGearStrip(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -750,6 +752,73 @@ function scheduleSunCountdown(w) {
   };
   update();
   state.sunTimer = setInterval(update, 30_000);
+}
+
+function renderGearStrip(w) {
+  if (!el.gearStrip) return;
+  const items = pickGear(w);
+  if (!items.length) {
+    el.gearStrip.hidden = true;
+    el.gearStrip.innerHTML = "";
+    return;
+  }
+  el.gearStrip.hidden = false;
+  el.gearStrip.innerHTML = items.map((g) =>
+    `<span class="gear-pip" title="${escapeHtml(g.why)}" aria-label="${escapeHtml(g.label)}">${g.icon}</span>`
+  ).join("");
+}
+
+function pickGear(w) {
+  const out = [];
+  const today = w.daily?.[0];
+  const hours = (w.hourly || []).slice(0, 12);
+  const peakWind = hours.reduce((m, h) => Math.max(m, h.gusts ?? h.wind ?? 0), 0);
+  const willRain = (today?.pop ?? 0) >= 40 || hours.some((h) => (h.pop ?? 0) >= 50 || (h.precip ?? 0) > 0.3);
+  const willSnow = hours.some((h) => h.condition === "snow") || today?.condition === "snow";
+  const cold = (w.feelsLike ?? w.temp ?? 99) <= 8;
+  const hot = (w.feelsLike ?? w.temp ?? -99) >= 28;
+  const sunny = (w.uv ?? 0) >= 6 || w.uvPeak?.value >= 6;
+  const veryWindy = peakWind >= 40;
+
+  if (willRain && !willSnow) {
+    out.push({ icon: gearIcon("umbrella"), label: "Umbrella", why: "Rain likely today — bring an umbrella." });
+  }
+  if (willSnow) {
+    out.push({ icon: gearIcon("boots"), label: "Boots", why: "Snow in the forecast — sturdy boots help." });
+  }
+  if (cold) {
+    out.push({ icon: gearIcon("jacket"), label: "Jacket", why: "Cool out — pack a warm layer." });
+  }
+  if (sunny && !cold) {
+    out.push({ icon: gearIcon("sunglasses"), label: "Sunglasses", why: "Bright sun expected — UV is high." });
+  }
+  if (hot) {
+    out.push({ icon: gearIcon("water"), label: "Hydrate", why: "Hot — keep a water bottle handy." });
+  }
+  if (veryWindy) {
+    out.push({ icon: gearIcon("wind"), label: "Windy", why: `Gusts up to ${Math.round(peakWind)} km/h expected.` });
+  }
+  return out.slice(0, 4);
+}
+
+function gearIcon(kind) {
+  const common = 'fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"';
+  switch (kind) {
+    case "umbrella":
+      return `<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 0118 0H3z" ${common}/><path d="M12 12v7a2 2 0 01-4 0" ${common}/></svg>`;
+    case "boots":
+      return `<svg viewBox="0 0 24 24"><path d="M8 3v11l-3 4v3h12v-3l-3-4V3H8z" ${common}/><path d="M8 9h4" ${common}/></svg>`;
+    case "jacket":
+      return `<svg viewBox="0 0 24 24"><path d="M8 4l-4 4v12h6V8l2-2 2 2v12h6V8l-4-4-4 2-4-2z" ${common}/></svg>`;
+    case "sunglasses":
+      return `<svg viewBox="0 0 24 24"><path d="M3 10l2-2h5l1 2M21 10l-2-2h-5l-1 2M5 12a3 3 0 006 0M13 12a3 3 0 006 0M11 12h2" ${common}/></svg>`;
+    case "water":
+      return `<svg viewBox="0 0 24 24"><path d="M12 3c4 5 6 8 6 11a6 6 0 01-12 0c0-3 2-6 6-11z" ${common}/></svg>`;
+    case "wind":
+      return `<svg viewBox="0 0 24 24"><path d="M3 8h12a3 3 0 100-6M3 14h16a3 3 0 100-6M3 20h9a3 3 0 100-6" ${common}/></svg>`;
+    default:
+      return `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" ${common}/></svg>`;
+  }
 }
 
 function renderAdvice(w) {

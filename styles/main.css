@@ -669,6 +669,37 @@ html[data-reduce-motion="true"] *::after {
 }
 .pollen-items span { font-variant-numeric: tabular-nums; }
 
+/* ---------- Gear / clothing recommendations ---------- */
+.gear-strip {
+  margin: 10px 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.gear-strip[hidden] { display: none; }
+.gear-pip {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: var(--glass);
+  border: 1px solid var(--stroke);
+  color: var(--fg-muted);
+  cursor: help;
+  transition: transform 200ms var(--ease), color 200ms var(--ease);
+}
+.gear-pip:hover {
+  transform: translateY(-2px);
+  color: var(--fg);
+}
+.gear-pip svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
 /* ---------- Advice ---------- */
 .advice {
   margin: 10px 0 0;
