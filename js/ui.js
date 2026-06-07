@@ -45,6 +45,7 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonNext: $("#moon-next"),
   sunRise: $("#sun-rise"),
   sunRiseDir: $("#sun-rise-dir"),
   sunSet: $("#sun-set"),
@@ -486,6 +487,7 @@ function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  renderMoonNext(moon);
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
@@ -502,6 +504,23 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+}
+
+function renderMoonNext(moon) {
+  if (!el.moonNext) return;
+  const SYNODIC = 29.5305882;
+  const phase = moon.phase; // 0..1, 0/1 = new, 0.5 = full
+  // Distance (in phase fraction) to each milestone, in the forward direction.
+  const toFull = ((0.5 - phase) + 1) % 1;
+  const toNew  = ((1.0 - phase) + 1) % 1;
+  const nextIsFull = toFull <= toNew;
+  const days = Math.round((nextIsFull ? toFull : toNew) * SYNODIC);
+  if (days <= 0) {
+    el.moonNext.textContent = nextIsFull ? "Full moon tonight" : "New moon tonight";
+    return;
+  }
+  const noun = nextIsFull ? "Full moon" : "New moon";
+  el.moonNext.textContent = days === 1 ? `${noun} tomorrow` : `${noun} in ${days} days`;
 }
 
 function fmtTime(ts) {
