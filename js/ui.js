@@ -195,6 +195,7 @@ export const ui = {
   setWeather(weather, { narrative } = {}) {
     state.weather = weather;
     state.sampledWeather = weather; // initially same as live
+    renderPlaceElevation(weather);
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
@@ -301,6 +302,20 @@ function renderLiveValues(w, { animate = true } = {}) {
   else el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderFeelsReason(w);
   renderDayRange(w);
+}
+
+function renderPlaceElevation(w) {
+  // Re-derive the place-sub from the place plus a "· X m" elevation suffix
+  // when we know an above-sea-level value worth surfacing.
+  const place = state.place;
+  if (!place) return;
+  const base = [place.admin1, place.country].filter(Boolean).join(", ");
+  const el_m = w?.elevation;
+  // Skip nonsensical values and trivial sea-level locations.
+  const showElev = el_m != null && Math.abs(el_m) > 5 && Math.abs(el_m) < 9000;
+  el.placeSub.textContent = showElev
+    ? `${base || "—"} · ${Math.round(el_m)} m`
+    : (base || "—");
 }
 
 function renderConditionChange(w) {
