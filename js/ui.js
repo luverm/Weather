@@ -57,6 +57,7 @@ const el = {
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  goldenHours: $("#golden-hours"),
   daylightTrend: $("#daylight-trend"),
   daylightSparkLine: $("#daylight-spark-line"),
   daylightSparkFill: $("#daylight-spark-fill"),
@@ -637,7 +638,26 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderGoldenHours(w);
   renderDaylightTrend(w);
+}
+
+function renderGoldenHours(w) {
+  if (!el.goldenHours) return;
+  if (!w?.sunrise || !w?.sunset) { el.goldenHours.hidden = true; return; }
+  // Approximate: 1 hour window after sunrise and 1 hour before sunset.
+  const dayLength = w.sunset - w.sunrise;
+  if (dayLength < 3 * 3600_000) { el.goldenHours.hidden = true; return; }
+  const morningEnd = w.sunrise + 60 * 60_000;
+  const eveningStart = w.sunset - 60 * 60_000;
+  el.goldenHours.hidden = false;
+  el.goldenHours.innerHTML = `
+    <span class="golden-chip">
+      <span class="golden-dot" aria-hidden="true"></span>
+      Golden
+    </span>
+    <span class="golden-times"><span class="golden-range">${fmtTime(w.sunrise)}–${fmtTime(morningEnd)}</span> · <span class="golden-range">${fmtTime(eveningStart)}–${fmtTime(w.sunset)}</span></span>
+  `;
 }
 
 function renderSunDirections(w) {
