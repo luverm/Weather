@@ -261,6 +261,15 @@ function setReducedMotion(on) {
   }
 }
 
+function cyclePlace(dir) {
+  const list = places.all();
+  if (list.length < 2) return;
+  const currentId = app.place ? places.idFor(app.place) : null;
+  const idx = Math.max(0, list.findIndex((p) => places.idFor(p) === currentId));
+  const next = list[(idx + dir + list.length) % list.length];
+  if (next) loadByCoords(next);
+}
+
 ui.init({
   onSearchSelect: (place) => { places.add(place); loadByCoords(place); },
   onLocate: () => useGeolocation(),
@@ -268,6 +277,7 @@ ui.init({
   onRefresh: () => refreshWeather(),
   onReduceMotion: (on) => setReducedMotion(on),
   onPlaceClick: (place) => loadByCoords(place),
+  onCyclePlace: (dir) => cyclePlace(dir),
   onHourClick: (ts) => {
     clock.setOffset(ts - Date.now());
     scrubber.sync();
@@ -290,14 +300,7 @@ installShortcuts({
   resetScrubber: () => scrubber.reset(),
   share: () => document.getElementById("share-btn")?.click(),
   speak: () => ui.speakSummary?.(),
-  cyclePlace: (dir) => {
-    const list = places.all();
-    if (list.length < 2) return;
-    const currentId = app.place ? places.idFor(app.place) : null;
-    const idx = Math.max(0, list.findIndex((p) => places.idFor(p) === currentId));
-    const next = list[(idx + dir + list.length) % list.length];
-    if (next) loadByCoords(next);
-  },
+  cyclePlace: (dir) => cyclePlace(dir),
   nudge: (hours) => {
     clock.setOffset(clock.offset() + hours * 3600_000);
     scrubber.sync();

@@ -156,6 +156,7 @@ export const ui = {
     bindRefresh();
     bindSettings();
     bindTilt();
+    bindSwipe();
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
@@ -1800,6 +1801,29 @@ function bindShare() {
       if (err?.name !== "AbortError") ui.showToast("Share failed");
     }
   });
+}
+
+function bindSwipe() {
+  if (!el.heroInner) return;
+  let startX = null, startY = null, startT = 0;
+  const TH_X = 60, MAX_DY = 50, MAX_T = 600;
+  el.heroInner.addEventListener("touchstart", (e) => {
+    if (e.touches.length !== 1) { startX = null; return; }
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    startT = Date.now();
+  }, { passive: true });
+  el.heroInner.addEventListener("touchend", (e) => {
+    if (startX == null) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - startX;
+    const dy = t.clientY - startY;
+    const dt = Date.now() - startT;
+    startX = null;
+    if (Math.abs(dx) < TH_X || Math.abs(dy) > MAX_DY || dt > MAX_T) return;
+    // Swipe left -> next city, swipe right -> previous.
+    state.handlers.onCyclePlace?.(dx < 0 ? 1 : -1);
+  }, { passive: true });
 }
 
 function bindTilt() {
