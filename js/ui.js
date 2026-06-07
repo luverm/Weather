@@ -425,14 +425,16 @@ function renderMetrics(w) {
     }
   }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
+  const visParts = [];
   if (w.visibility != null) {
     const km = w.visibility / 1000;
-    const tier = visibilityTier(km);
-    el.metricPressureSub.textContent =
-      `visibility ${Math.round(km * 10) / 10} km · ${tier}`;
+    visParts.push(`visibility ${Math.round(km * 10) / 10} km · ${visibilityTier(km)}`);
   } else {
-    el.metricPressureSub.textContent = "visibility —";
+    visParts.push("visibility —");
   }
+  const forecast = pressureForecastPhrase(w.pressureTrend);
+  if (forecast) visParts.push(forecast);
+  el.metricPressureSub.textContent = visParts.join(" · ");
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
@@ -499,6 +501,17 @@ function renderWindDirStrip(w) {
     return `<span class="wind-dir-arrow" style="--rot:${rot}deg;opacity:${opacity.toFixed(2)}"
              title="${fmtTime(h.time)} · ${cardinal(rot)} · ${Math.round(h.wind ?? 0)} km/h"></span>`;
   }).join("");
+}
+
+function pressureForecastPhrase(trend) {
+  if (!trend) return null;
+  const d = trend.delta;
+  // Folklore heuristics — useful when other signals are absent.
+  if (d <= -2.5) return "storm approaching";
+  if (d <= -1.0) return "deteriorating";
+  if (d >=  2.5) return "clearing soon";
+  if (d >=  1.0) return "improving";
+  return null; // steady — skip rather than say "stable" twice.
 }
 
 function visibilityTier(km) {
