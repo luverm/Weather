@@ -1755,6 +1755,20 @@ kbd {
   transition: background 200ms var(--ease);
 }
 .daily-item:hover { background: var(--glass); }
+.daily-item.today {
+  background: linear-gradient(90deg, rgba(154, 209, 255, 0.06), transparent 40%);
+  position: relative;
+}
+.daily-item.today::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 8px; bottom: 8px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
+.daily-item.today .daily-day { color: var(--fg); font-weight: 600; }
 .daily-day { font-size: 13px; font-weight: 500; }
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
 .daily-range {
