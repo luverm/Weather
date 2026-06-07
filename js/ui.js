@@ -1733,6 +1733,8 @@ function bindUnitToggle() {
     state.unit = state.unit === "C" ? "F" : "C";
     localStorage.setItem("aether:unit", state.unit);
     el.unitBtn.textContent = `°${state.unit}`;
+    el.unitBtn.classList.remove("flash"); void el.unitBtn.offsetWidth;
+    el.unitBtn.classList.add("flash");
     if (state.weather) ui.setWeather(state.weather);
   });
 }

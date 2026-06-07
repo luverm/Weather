@@ -422,6 +422,15 @@ html[data-reduce-motion="true"] *::after {
   transition: background 200ms var(--ease), color 200ms var(--ease);
 }
 .unit:hover { background: var(--glass); color: var(--fg); }
+.unit:active { transform: scale(0.94); }
+.unit.flash {
+  animation: unitFlash 480ms var(--ease);
+}
+@keyframes unitFlash {
+  0%   { background: var(--glass); }
+  40%  { background: rgba(154, 209, 255, 0.4); transform: scale(1.08); }
+  100% { background: var(--glass); transform: scale(1); }
+}
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
 .condition-change {
   margin: 2px 0 0;
