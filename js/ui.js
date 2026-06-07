@@ -31,6 +31,7 @@ const el = {
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
+  windDirStrip: $("#wind-dir-strip"),
   metricHumidity: $("#m-humidity"),
   metricHumiditySub: $("#m-humidity-sub"),
   metricPressure: $("#m-pressure"),
@@ -363,6 +364,7 @@ function renderMetrics(w) {
       el.windBft.textContent = "";
     }
   }
+  renderWindDirStrip(w);
   el.metricHumidity.textContent = Math.round(w.humidity ?? 0);
   el.metricHumiditySub.textContent = w.dewPoint != null
     ? `dew ${Math.round(convertTemp(w.dewPoint))}°`
@@ -427,6 +429,25 @@ function beaufort(kmh) {
   if (kmh < 103) return { label: "Storm", cls: "up" };
   if (kmh < 118) return { label: "Violent storm", cls: "up" };
   return { label: "Hurricane", cls: "up" };
+}
+
+function renderWindDirStrip(w) {
+  if (!el.windDirStrip) return;
+  const hrs = (w.hourly || []).filter((h) => h.windDir != null).slice(0, 12);
+  if (hrs.length < 4) { el.windDirStrip.innerHTML = ""; el.windDirStrip.hidden = true; return; }
+  el.windDirStrip.hidden = false;
+  const speeds = hrs.map((h) => h.wind ?? 0);
+  const maxSpd = Math.max(...speeds, 1);
+  el.windDirStrip.innerHTML = hrs.map((h) => {
+    // Wind direction is where wind comes FROM (meteorological convention).
+    // Arrow visually points TO direction the air is blowing toward, so we
+    // rotate by (dir + 180) — same convention as the compass needle's wedge.
+    const rot = h.windDir;
+    const intensity = Math.min(1, (h.wind ?? 0) / maxSpd);
+    const opacity = 0.35 + intensity * 0.65;
+    return `<span class="wind-dir-arrow" style="--rot:${rot}deg;opacity:${opacity.toFixed(2)}"
+             title="${fmtTime(h.time)} · ${cardinal(rot)} · ${Math.round(h.wind ?? 0)} km/h"></span>`;
+  }).join("");
 }
 
 function uvLevel(v) {
