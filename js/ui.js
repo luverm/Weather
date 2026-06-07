@@ -158,6 +158,7 @@ export const ui = {
     bindSettings();
     bindTilt();
     bindSwipe();
+    bindScrollTop();
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
@@ -1863,6 +1864,20 @@ function bindShare() {
       if (err?.name !== "AbortError") ui.showToast("Share failed");
     }
   });
+}
+
+function bindScrollTop() {
+  const btn = document.getElementById("scroll-top");
+  if (!btn) return;
+  const onScroll = () => {
+    const past = window.scrollY > 400;
+    btn.hidden = !past;
+  };
+  window.addEventListener("scroll", onScroll, { passive: true });
+  btn.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+  onScroll();
 }
 
 function bindSwipe() {

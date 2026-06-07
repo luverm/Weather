@@ -1830,6 +1830,32 @@ kbd {
   50% { opacity: 1; transform: scale(1.2); }
 }
 
+.scroll-top {
+  position: fixed;
+  right: calc(16px + var(--safe-right, 0px));
+  bottom: calc(70px + var(--safe-bottom));
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--glass-strong);
+  border: 1px solid var(--stroke);
+  color: var(--fg);
+  cursor: pointer;
+  backdrop-filter: blur(18px);
+  z-index: 19;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 240ms var(--ease), transform 240ms var(--ease);
+}
+.scroll-top:not([hidden]) {
+  opacity: 1;
+  transform: translateY(0);
+}
+.scroll-top svg { width: 18px; height: 18px; }
+.scroll-top:hover { background: rgba(255,255,255,0.18); }
+
 .toast {
   position: fixed;
   left: 50%;
