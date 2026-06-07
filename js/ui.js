@@ -1623,7 +1623,12 @@ function renderSearchResults(results) {
 
 function showRecentsIfAny() {
   const recents = places.all().slice(0, 5);
-  if (!recents.length) { el.searchResults.hidden = true; return; }
+  if (!recents.length) {
+    el.searchResults.innerHTML = `<li class="search-hint" aria-disabled="true">Try a city name, postcode hint, or lat,lon</li>`;
+    el.searchResults._items = [];
+    el.searchResults.hidden = false;
+    return;
+  }
   const itemsHtml = recents.map((r, i) => `
     <li role="option" data-index="${i}">
       <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
