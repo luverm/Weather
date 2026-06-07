@@ -84,6 +84,7 @@ const el = {
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
   dailyPrecipStrip: $("#daily-precip-strip"),
+  weeklyPrecipLabel: $("#weekly-precip-label"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -1110,6 +1111,7 @@ function renderDailyPrecip(days, w) {
   if (!isFinite(maxP) || maxP < 0.1) {
     el.dailyPrecipStrip.hidden = true;
     el.dailyPrecipStrip.innerHTML = "";
+    if (el.weeklyPrecipLabel) el.weeklyPrecipLabel.hidden = true;
     return;
   }
   const tz = w?.timezone;
@@ -1117,6 +1119,17 @@ function renderDailyPrecip(days, w) {
     weekday: "short",
     ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
   });
+  // Weekly summary: total + wettest day.
+  if (el.weeklyPrecipLabel) {
+    const total = precips.reduce((s, v) => s + v, 0);
+    const wettestIdx = precips.indexOf(maxP);
+    const parts = [`${total.toFixed(total >= 10 ? 0 : 1)} mm this week`];
+    if (maxP >= 1 && wettestIdx >= 0) {
+      parts.push(`wettest ${wd(days[wettestIdx].time, wettestIdx)} (${maxP.toFixed(maxP >= 10 ? 0 : 1)} mm)`);
+    }
+    el.weeklyPrecipLabel.textContent = parts.join(" · ");
+    el.weeklyPrecipLabel.hidden = false;
+  }
   el.dailyPrecipStrip.hidden = false;
   el.dailyPrecipStrip.innerHTML = days.map((d, i) => {
     const mm = precips[i];

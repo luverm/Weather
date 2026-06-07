@@ -1488,6 +1488,14 @@ kbd {
   padding: 0 10px;
   display: block;
 }
+.weekly-precip-label {
+  padding: 6px 10px 0;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+}
+.weekly-precip-label[hidden] { display: none; }
 .daily-precip-strip {
   display: grid;
   grid-auto-flow: column;
