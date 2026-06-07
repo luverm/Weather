@@ -289,6 +289,7 @@ installShortcuts({
   toggleRadar: () => document.getElementById("radar-play")?.click(),
   resetScrubber: () => scrubber.reset(),
   share: () => document.getElementById("share-btn")?.click(),
+  speak: () => ui.speakSummary?.(),
   cyclePlace: (dir) => {
     const list = places.all();
     if (list.length < 2) return;

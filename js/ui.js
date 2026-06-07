@@ -100,6 +100,7 @@ const el = {
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
   settingClearPlaces: $("#setting-clear-places"),
+  settingListen: $("#setting-listen"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
@@ -1700,7 +1701,40 @@ function bindSettings() {
     ui.showToast("Saved places cleared");
     close();
   });
+
+  el.settingListen?.addEventListener("click", () => {
+    ui.speakSummary();
+    close();
+  });
 }
+
+ui.speakSummary = function speakSummary() {
+  if (!("speechSynthesis" in window)) {
+    ui.showToast("Voice not available in this browser");
+    return;
+  }
+  // If already speaking, toggle off.
+  if (window.speechSynthesis.speaking) {
+    window.speechSynthesis.cancel();
+    return;
+  }
+  const w = state.weather;
+  if (!w) { ui.showToast("Weather not loaded yet"); return; }
+  const placeName = state.place?.name || "here";
+  const t = (v) => Math.round(state.unit === "F" ? v * 9 / 5 + 32 : v);
+  const today = w.daily?.[0];
+  const parts = [
+    `In ${placeName} it's ${t(w.temp)} degrees, ${(w.label || "").toLowerCase()}.`,
+    w.feelsLike != null && Math.abs(w.feelsLike - w.temp) >= 2
+      ? `Feels like ${t(w.feelsLike)}.` : "",
+    today ? `Today's range, ${t(today.tempMin)} to ${t(today.tempMax)}.` : "",
+    today?.pop >= 30 ? `${today.pop} percent chance of rain.` : "",
+  ].filter(Boolean);
+  const u = new SpeechSynthesisUtterance(parts.join(" "));
+  u.rate = 1.0;
+  u.pitch = 1.0;
+  window.speechSynthesis.speak(u);
+};
 
 function applyStoredPreferences() {
   const reduce = localStorage.getItem("aether:reduceMotion") === "1";
