@@ -300,6 +300,7 @@ installShortcuts({
   resetScrubber: () => scrubber.reset(),
   share: () => document.getElementById("share-btn")?.click(),
   speak: () => ui.speakSummary?.(),
+  refresh: () => refreshWeather(),
   cyclePlace: (dir) => cyclePlace(dir),
   nudge: (hours) => {
     clock.setOffset(clock.offset() + hours * 3600_000);
