@@ -313,6 +313,16 @@ installShortcuts({
 
 // ---------- Start ----------
 (async function init() {
+  // URL params take priority — lets a shared link open the right place even
+  // when the recipient has different saved cities.
+  const params = new URLSearchParams(window.location.search);
+  const lat = parseFloat(params.get("lat"));
+  const lon = parseFloat(params.get("lon"));
+  const linkName = params.get("name");
+  if (!isNaN(lat) && !isNaN(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180) {
+    await loadByCoords({ name: linkName || `${lat.toFixed(2)}, ${lon.toFixed(2)}`, lat, lon });
+    return;
+  }
   // Prefer the most recent saved place if we have one — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();

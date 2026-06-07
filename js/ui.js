@@ -102,6 +102,7 @@ const el = {
   settingUnitF: $("#setting-unit-f"),
   settingClearPlaces: $("#setting-clear-places"),
   settingListen: $("#setting-listen"),
+  settingCopyLink: $("#setting-copy-link"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
@@ -1777,6 +1778,26 @@ function bindSettings() {
 
   el.settingListen?.addEventListener("click", () => {
     ui.speakSummary();
+    close();
+  });
+
+  el.settingCopyLink?.addEventListener("click", async () => {
+    const p = state.place;
+    if (!p || p.lat == null || p.lon == null) {
+      ui.showToast("No place to share yet");
+      return;
+    }
+    const url = new URL(window.location.href);
+    url.searchParams.set("lat", p.lat.toFixed(4));
+    url.searchParams.set("lon", p.lon.toFixed(4));
+    if (p.name) url.searchParams.set("name", p.name);
+    const link = url.toString();
+    try {
+      await navigator.clipboard.writeText(link);
+      ui.showToast("Link copied — tap to dismiss");
+    } catch {
+      ui.showToast("Couldn't copy — copy URL manually");
+    }
     close();
   });
 }
