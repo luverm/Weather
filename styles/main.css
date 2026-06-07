@@ -1599,6 +1599,12 @@ kbd {
   color: var(--fg-muted);
 }
 .daily-icon-strip .strip-day {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
   display: grid; place-items: center;
   padding: 4px 4px 6px;
   opacity: 0.85;

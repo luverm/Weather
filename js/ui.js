@@ -1316,8 +1316,18 @@ function renderDailyIconStrip(days) {
   el.dailyIconStrip.innerHTML = days.map((d, i) => {
     const cls = i === 0 ? "strip-day today" : "strip-day";
     const wd = i === 0 ? "Today" : weekday(d.time);
-    return `<span class="${cls}" title="${escapeHtml(wd)} · ${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`;
+    return `<button class="${cls}" type="button" data-ts="${d.time}" title="${escapeHtml(wd)} · ${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</button>`;
   }).join("");
+  el.dailyIconStrip.querySelectorAll(".strip-day").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const ts = parseInt(btn.dataset.ts, 10);
+      const item = el.dailyTrack.querySelector(`.daily-item[data-ts="${ts}"]`);
+      if (item) {
+        item.scrollIntoView({ behavior: "smooth", block: "center" });
+        if (item.dataset.expanded !== "true") item.click();
+      }
+    });
+  });
 }
 
 function renderDailySpark(days) {
