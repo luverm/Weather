@@ -90,6 +90,9 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunWeek: $("#sun-week"),
+  sunWeekList: $("#sun-week-list"),
+  sunWeekDelta: $("#sun-week-delta"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -523,6 +526,90 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderSunWeek(w);
+}
+
+function renderSunWeek(w) {
+  if (!el.sunWeek || !el.sunWeekList) return;
+  const days = (w?.daily || []).filter((d) => d.sunrise && d.sunset).slice(0, 7);
+  if (days.length < 2) { el.sunWeek.hidden = true; return; }
+  el.sunWeek.hidden = false;
+
+  const tz = w.timezone && w.timezone !== "auto" ? w.timezone : undefined;
+  const dayFmt = new Intl.DateTimeFormat(undefined, { timeZone: tz, weekday: "short" });
+  const todayKey = ymd(new Date(), tz);
+
+  const minutesOf = (sr, ss) => Math.max(0, Math.round((ss - sr) / 60_000));
+  const fmtDuration = (mins) => `${Math.floor(mins / 60)}h ${String(mins % 60).padStart(2, "0")}m`;
+
+  // Position of a timestamp within its local day in the location's tz, as a 0..1 fraction.
+  const dayFrac = (ts) => {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: tz, hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+    }).formatToParts(new Date(ts));
+    const get = (type) => +parts.find((p) => p.type === type)?.value || 0;
+    let h = get("hour"); if (h === 24) h = 0;
+    return clamp01((h * 3600 + get("minute") * 60 + get("second")) / 86400);
+  };
+
+  el.sunWeekList.innerHTML = "";
+  days.forEach((d) => {
+    const li = document.createElement("li");
+    const dateForLabel = new Date(d.sunrise);
+    const key = ymd(dateForLabel, tz);
+    const isToday = key === todayKey;
+    li.className = "sun-week-row" + (isToday ? " is-today" : "");
+
+    const startFrac = dayFrac(d.sunrise);
+    const endFrac = dayFrac(d.sunset);
+    const left = (startFrac * 100).toFixed(2);
+    const width = Math.max(0, (endFrac - startFrac) * 100).toFixed(2);
+    const mins = minutesOf(d.sunrise, d.sunset);
+
+    const label = isToday ? "Today" : dayFmt.format(dateForLabel);
+    const nowMark = isToday
+      ? `<span class="sun-week-now" style="left:${(dayFrac(Date.now()) * 100).toFixed(2)}%"></span>`
+      : "";
+
+    li.innerHTML = `
+      <span class="sun-week-day">${label}</span>
+      <span class="sun-week-bar" aria-hidden="true">
+        <span class="sun-week-fill" style="left:${left}%;width:${width}%"></span>
+        ${nowMark}
+      </span>
+      <span class="sun-week-dur">${fmtDuration(mins)}</span>
+    `;
+    el.sunWeekList.appendChild(li);
+  });
+
+  // Delta vs. today over the 7-day window.
+  if (el.sunWeekDelta) {
+    const firstMins = minutesOf(days[0].sunrise, days[0].sunset);
+    const lastMins = minutesOf(days[days.length - 1].sunrise, days[days.length - 1].sunset);
+    const diff = lastMins - firstMins;
+    if (Math.abs(diff) < 1) {
+      el.sunWeekDelta.textContent = "steady";
+      el.sunWeekDelta.dataset.dir = "steady";
+    } else {
+      const sign = diff > 0 ? "+" : "−";
+      const abs = Math.abs(diff);
+      const txt = abs >= 60
+        ? `${sign}${Math.floor(abs / 60)}h ${abs % 60}m`
+        : `${sign}${abs}m`;
+      el.sunWeekDelta.textContent = `${txt} by +${days.length - 1}d`;
+      el.sunWeekDelta.dataset.dir = diff > 0 ? "gaining" : "losing";
+    }
+  }
+}
+
+function ymd(date, tz) {
+  try {
+    const fmt = new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" });
+    return fmt.format(date);
+  } catch {
+    const d = new Date(date);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }
 }
 
 function scheduleSunArc(w) {
