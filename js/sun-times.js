@@ -46,6 +46,36 @@ export function nextLightWindows(weather, now = Date.now()) {
   return result;
 }
 
+/**
+ * Approximate daylight length (in minutes) for a given latitude on a given
+ * date, using a simple solar-declination model. Accurate to ~1 minute over
+ * temperate latitudes — plenty for showing a "+X seconds vs yesterday" chip.
+ */
+function daylightMinutes(lat, date) {
+  const start = Date.UTC(date.getUTCFullYear(), 0, 0);
+  const N = Math.floor((date.getTime() - start) / 86400000);
+  const decl = (23.44 * Math.PI / 180) * Math.sin(2 * Math.PI * (N - 81) / 365.25);
+  const phi = lat * Math.PI / 180;
+  const cosH = -Math.tan(phi) * Math.tan(decl);
+  if (cosH >= 1) return 0;          // polar night
+  if (cosH <= -1) return 24 * 60;   // polar day
+  const H = Math.acos(cosH);         // half-arc, radians
+  return (2 * H * 180 / Math.PI) * 4;
+}
+
+/**
+ * Signed seconds of daylight gained (positive) or lost (negative) compared to
+ * yesterday at the same latitude. Returns null if lat is missing or near a
+ * pole where the model degenerates.
+ */
+export function daylightDeltaSeconds(lat, now = new Date()) {
+  if (lat == null || !isFinite(lat)) return null;
+  if (Math.abs(lat) > 66.5) return null;          // polar regions: not meaningful
+  const today = daylightMinutes(lat, now);
+  const yest = daylightMinutes(lat, new Date(now.getTime() - 86400000));
+  return Math.round((today - yest) * 60);
+}
+
 function isMorning(win, days) {
   // A window is "morning" if its end (or start) sits closer to a sunrise than
   // a sunset across the upcoming days.

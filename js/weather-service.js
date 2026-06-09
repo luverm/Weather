@@ -115,14 +115,14 @@ export async function getWeather(lat, lon) {
   try {
     const [forecast, air] = await Promise.allSettled([fetchJson(url), fetchJson(aqUrl)]);
     if (forecast.status !== "fulfilled") throw forecast.reason;
-    return normalize(forecast.value, air.status === "fulfilled" ? air.value : null);
+    return normalize(forecast.value, air.status === "fulfilled" ? air.value : null, { lat, lon });
   } catch (err) {
     console.warn("Weather fetch failed, using mock", err);
     return mock(lat, lon);
   }
 }
 
-function normalize(d, aq) {
+function normalize(d, aq, where = {}) {
   const c = d.current || {};
   const { condition, label } = mapWmo(c.weather_code);
   const daily = d.daily || {};
@@ -209,6 +209,8 @@ function normalize(d, aq) {
     uv: daily.uv_index_max?.[0] ?? null,
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
+    lat: d.latitude ?? where.lat ?? null,
+    lon: d.longitude ?? where.lon ?? null,
     hourly,
     daily: dailyForecast,
     nowcast,
@@ -365,6 +367,7 @@ function mock(lat, lon) {
     uv: 3,
     uvPeak: { time: new Date().setHours(13, 0, 0, 0), value: 5 },
     timezone: "UTC",
+    lat, lon,
     hourly: Array.from({ length: 24 }, (_, i) => ({
       time: now + (i + 1) * 3600_000,
       temp: 18 + Math.sin(i / 2) * 3,

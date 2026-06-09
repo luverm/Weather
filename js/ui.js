@@ -10,7 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
-import { nextLightWindows } from "./sun-times.js";
+import { nextLightWindows, daylightDeltaSeconds } from "./sun-times.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -98,6 +98,7 @@ const el = {
   chipBlue: $("#chip-blue"),
   chipBlueTime: $("#chip-blue-time"),
   chipBlueMeta: $("#chip-blue-meta"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -530,6 +531,7 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   scheduleSunChips(w);
@@ -595,6 +597,30 @@ function scheduleSunCountdown(w) {
   };
   update();
   state.sunTimer = setInterval(update, 30_000);
+}
+
+function renderDaylightDelta(w) {
+  if (!el.sunDaylightDelta) return;
+  const delta = daylightDeltaSeconds(w.lat);
+  if (delta == null) { el.sunDaylightDelta.hidden = true; return; }
+  const abs = Math.abs(delta);
+  if (abs < 5) {
+    // Right at the solstice — show "same as yesterday" rather than "+0s".
+    el.sunDaylightDelta.hidden = false;
+    el.sunDaylightDelta.textContent = "same as yesterday";
+    el.sunDaylightDelta.dataset.dir = "flat";
+    return;
+  }
+  const mins = Math.floor(abs / 60);
+  const secs = abs % 60;
+  const span = mins ? `${mins}m ${secs}s` : `${secs}s`;
+  const sign = delta > 0 ? "+" : "−";
+  el.sunDaylightDelta.hidden = false;
+  el.sunDaylightDelta.textContent = `${sign}${span} vs yesterday`;
+  el.sunDaylightDelta.dataset.dir = delta > 0 ? "gain" : "loss";
+  el.sunDaylightDelta.title = delta > 0
+    ? "Days are getting longer"
+    : "Days are getting shorter";
 }
 
 function scheduleSunChips(w) {

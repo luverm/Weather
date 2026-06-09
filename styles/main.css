@@ -977,6 +977,19 @@ kbd {
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
 
+/* Daylight delta vs yesterday (Round 23). */
+.sun-daylight-delta {
+  display: inline-block;
+  margin-top: 3px;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: var(--fg-dim);
+}
+.sun-daylight-delta[data-dir="gain"] { color: #ffd39a; }
+.sun-daylight-delta[data-dir="loss"] { color: #9ad1ff; }
+.sun-daylight-delta[hidden] { display: none; }
+
 /* Golden hour & blue hour chips (Round 22). */
 .sun-chips {
   display: grid;
