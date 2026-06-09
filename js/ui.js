@@ -56,6 +56,7 @@ const el = {
   adviceText: $("#advice-text"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
+  chartPrecipTotal: $("#chart-precip-total"),
   pollenCard: $("#pollen-card"),
   pollenLevel: $("#pollen-level"),
   pollenDominant: $("#pollen-dominant"),
@@ -910,7 +911,40 @@ function cardinal(deg) {
   return dirs[i];
 }
 
+function renderPrecipTotal(w) {
+  if (!el.chartPrecipTotal) return;
+  const hours = (w.hourly || []).slice(0, 24);
+  if (!hours.length) { el.chartPrecipTotal.hidden = true; return; }
+  let total = 0;
+  let firstWet = null;
+  for (const h of hours) {
+    const mm = h.precip ?? 0;
+    if (mm > 0 && firstWet == null && h.time > Date.now()) firstWet = h.time;
+    total += mm;
+  }
+  if (total < 0.1) {
+    el.chartPrecipTotal.hidden = true;
+    el.chartPrecipTotal.onclick = null;
+    return;
+  }
+  const value = total < 1 ? total.toFixed(1) : Math.round(total);
+  el.chartPrecipTotal.hidden = false;
+  el.chartPrecipTotal.innerHTML =
+    `<span class="cpt-arrow" aria-hidden="true">↓</span>` +
+    `<span class="cpt-value">${value}</span><span class="cpt-unit">mm</span>` +
+    `<span class="cpt-meta">next 24h</span>`;
+  el.chartPrecipTotal.title = firstWet
+    ? `~${value} mm expected — first wet hour at ${fmtTime(firstWet)}`
+    : `~${value} mm of precipitation expected in the next 24 hours`;
+  // Click to scrub to the first wet hour, if any.
+  el.chartPrecipTotal.onclick = firstWet
+    ? () => state.handlers.onHourClick?.(firstWet)
+    : null;
+  el.chartPrecipTotal.classList.toggle("clickable", !!firstWet);
+}
+
 function renderHourly(w) {
+  renderPrecipTotal(w);
   el.forecastTrack.innerHTML = "";
   for (const h of (w.hourly || []).slice(0, 24)) {
     const item = document.createElement("div");
