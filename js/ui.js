@@ -21,6 +21,10 @@ const el = {
   placeSub: $("#place-sub"),
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
+  conditionText: $("#condition-text"),
+  cloudCover: $("#cloud-cover"),
+  cloudCoverFill: $("#cloud-cover-fill"),
+  cloudCoverPct: $("#cloud-cover-pct"),
   feelsLike: $("#feels-like"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
@@ -286,9 +290,32 @@ function renderLiveValues(w, { animate = true } = {}) {
   const feels = convertTemp(w.feelsLike ?? w.temp);
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
-  el.conditionLabel.textContent = capitalize(w.label);
+  (el.conditionText || el.conditionLabel).textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  renderCloudCover(w);
+}
+
+function renderCloudCover(w) {
+  if (!el.cloudCover || !el.cloudCoverFill || !el.cloudCoverPct) return;
+  const v = w.cloudCover;
+  if (v == null || !isFinite(v)) { el.cloudCover.hidden = true; return; }
+  const pct = Math.max(0, Math.min(100, Math.round(v)));
+  el.cloudCover.hidden = false;
+  // Fill the cloud icon from the bottom up. The icon's viewBox is 0..14
+  // tall; the fill rect's y goes from 14 (empty) -> 0 (full).
+  const h = (pct / 100) * 14;
+  el.cloudCoverFill.setAttribute("y", String(14 - h));
+  el.cloudCoverFill.setAttribute("height", String(h));
+  el.cloudCoverPct.textContent = `${pct}%`;
+  el.cloudCover.title = pct >= 85 ? "Overcast"
+    : pct >= 60 ? "Mostly cloudy"
+    : pct >= 25 ? "Partly cloudy"
+    : pct >= 5 ? "Mostly clear"
+    : "Clear sky";
+  // Position the chip in the data attr so CSS can tint it.
+  el.cloudCover.dataset.level =
+    pct >= 70 ? "high" : pct >= 30 ? "mid" : "low";
 }
 
 function renderDayRange(w) {

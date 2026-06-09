@@ -134,7 +134,23 @@
             <span id="temp-value" class="temp-value">–</span>
             <button id="unit-toggle" class="unit" title="Toggle units" aria-label="Toggle temperature units">°C</button>
           </div>
-          <p id="condition-label" class="condition-label">—</p>
+          <p id="condition-label" class="condition-label">
+            <span id="condition-text">—</span>
+            <span id="cloud-cover" class="cloud-cover" hidden aria-label="Cloud cover">
+              <svg class="cloud-cover-icon" viewBox="0 0 24 14" aria-hidden="true">
+                <defs>
+                  <clipPath id="cloud-cover-clip">
+                    <path d="M7 13a4 4 0 010-8 5 5 0 019.9-1A4 4 0 0117 13H7z"/>
+                  </clipPath>
+                </defs>
+                <path d="M7 13a4 4 0 010-8 5 5 0 019.9-1A4 4 0 0117 13H7z"
+                      fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.55"/>
+                <rect id="cloud-cover-fill" x="0" y="14" width="24" height="0"
+                      fill="currentColor" opacity="0.85" clip-path="url(#cloud-cover-clip)"/>
+              </svg>
+              <span id="cloud-cover-pct" class="cloud-cover-pct">—%</span>
+            </span>
+          </p>
           <p id="feels-like" class="feels-like"><span id="temp-trend" class="temp-trend" aria-hidden="true"></span>Feels like —</p>
           <div id="day-range" class="day-range" hidden aria-label="Today's temperature range">
             <span class="day-range-end" id="day-range-min">—</span>
