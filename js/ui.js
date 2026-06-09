@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { nextLightWindows } from "./sun-times.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -90,6 +91,13 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunChips: $("#sun-chips"),
+  chipGolden: $("#chip-golden"),
+  chipGoldenTime: $("#chip-golden-time"),
+  chipGoldenMeta: $("#chip-golden-meta"),
+  chipBlue: $("#chip-blue"),
+  chipBlueTime: $("#chip-blue-time"),
+  chipBlueMeta: $("#chip-blue-meta"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -122,6 +130,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  sunChipTimer: null,
   localTimer: null,
 };
 
@@ -523,6 +532,7 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleSunChips(w);
 }
 
 function scheduleSunArc(w) {
@@ -585,6 +595,55 @@ function scheduleSunCountdown(w) {
   };
   update();
   state.sunTimer = setInterval(update, 30_000);
+}
+
+function scheduleSunChips(w) {
+  if (state.sunChipTimer) { clearInterval(state.sunChipTimer); state.sunChipTimer = null; }
+  if (!el.sunChips) return;
+  if (!w?.daily?.length) { el.sunChips.hidden = true; return; }
+
+  const update = () => {
+    const now = Date.now();
+    const { golden, blue } = nextLightWindows(w, now);
+    const anyShown = renderChip(el.chipGolden, el.chipGoldenTime, el.chipGoldenMeta, golden, now)
+                   | renderChip(el.chipBlue, el.chipBlueTime, el.chipBlueMeta, blue, now);
+    el.sunChips.hidden = !anyShown;
+  };
+  update();
+  // Refresh every minute so "in 4m" / "ends in" labels stay live.
+  state.sunChipTimer = setInterval(update, 60_000);
+}
+
+function renderChip(chipEl, timeEl, metaEl, win, now) {
+  if (!chipEl) return 0;
+  if (!win) { chipEl.hidden = true; chipEl.onclick = null; return 0; }
+  chipEl.hidden = false;
+  chipEl.classList.toggle("active", !!win.active);
+  chipEl.classList.toggle("morning", win.partOfDay === "morning");
+  chipEl.classList.toggle("evening", win.partOfDay === "evening");
+  // Click to scrub to the start of that window (or to "now" if it's already in
+  // progress — that's the most useful preview moment).
+  const seek = win.active ? Date.now() : win.start;
+  chipEl.onclick = () => state.handlers.onHourClick?.(seek);
+  chipEl.title = win.active
+    ? `${chipName(chipEl)} hour now — ends ${fmtTime(win.end)}`
+    : `${chipName(chipEl)} hour starts ${fmtTime(win.start)} (${win.partOfDay})`;
+  timeEl.textContent = win.active ? "now" : fmtTime(win.start);
+  metaEl.textContent = win.active
+    ? `ends in ${humanMins(win.end - now)}`
+    : `in ${humanMins(win.start - now)}`;
+  return 1;
+}
+
+function chipName(chipEl) {
+  return chipEl.classList.contains("sun-chip-golden") ? "Golden" : "Blue";
+}
+
+function humanMins(ms) {
+  const m = Math.max(0, Math.round(ms / 60_000));
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60), mm = m % 60;
+  return mm ? `${h}h ${mm}m` : `${h}h`;
 }
 
 function renderAdvice(w) {
