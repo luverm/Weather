@@ -93,6 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
+    past_days: 1,
     past_hours: 1,
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
@@ -151,10 +152,36 @@ function normalize(d, aq) {
     }
   }
 
-  // 7-day daily forecast.
+  // With past_days=1, the daily series starts at yesterday. Locate today's
+  // index by matching the location's local date so we can expose yesterday's
+  // daylight separately while keeping the public 7-day slice anchored to today.
+  let todayIdx = 0;
+  if (daily.time?.length) {
+    let todayStr;
+    try {
+      todayStr = new Intl.DateTimeFormat("sv-SE", {
+        timeZone: d.timezone || undefined,
+        year: "numeric", month: "2-digit", day: "2-digit",
+      }).format(new Date());
+    } catch {
+      todayStr = new Date().toISOString().slice(0, 10);
+    }
+    const found = daily.time.findIndex((t) => String(t).startsWith(todayStr));
+    if (found >= 0) todayIdx = found;
+  }
+
+  const yesterdayIdx = todayIdx - 1;
+  let yesterdayDaylightMin = null;
+  if (yesterdayIdx >= 0 && daily.sunrise?.[yesterdayIdx] && daily.sunset?.[yesterdayIdx]) {
+    const sr = new Date(daily.sunrise[yesterdayIdx]).getTime();
+    const ss = new Date(daily.sunset[yesterdayIdx]).getTime();
+    yesterdayDaylightMin = Math.round((ss - sr) / 60_000);
+  }
+
+  // 7-day daily forecast (today onward).
   const dailyForecast = [];
   if (daily.time) {
-    for (let i = 0; i < daily.time.length; i++) {
+    for (let i = todayIdx; i < daily.time.length; i++) {
       const ts = new Date(daily.time[i]).getTime();
       dailyForecast.push({
         time: ts,
@@ -204,9 +231,9 @@ function normalize(d, aq) {
     isDay: !!c.is_day,
     condition,
     label,
-    sunrise: daily.sunrise?.[0] ? new Date(daily.sunrise[0]).getTime() : null,
-    sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null,
-    uv: daily.uv_index_max?.[0] ?? null,
+    sunrise: daily.sunrise?.[todayIdx] ? new Date(daily.sunrise[todayIdx]).getTime() : null,
+    sunset: daily.sunset?.[todayIdx] ? new Date(daily.sunset[todayIdx]).getTime() : null,
+    uv: daily.uv_index_max?.[todayIdx] ?? null,
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
     hourly,
@@ -215,6 +242,7 @@ function normalize(d, aq) {
     moon,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
+    yesterdayDaylightMin,
     fetchedAt: now,
   };
 }
@@ -400,6 +428,7 @@ function mock(lat, lon) {
       level: "Moderate",
     },
     pressureTrend: { delta: -0.4, direction: "steady" },
+    yesterdayDaylightMin: 750 - 2,
     fetchedAt: now,
     offline: true,
   };

@@ -48,6 +48,7 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -515,14 +516,44 @@ function fmtTime(ts) {
 function renderSun(w) {
   el.sunRise.textContent = fmtTime(w.sunrise);
   el.sunSet.textContent = fmtTime(w.sunset);
+  let todayMins = null;
   if (w.sunrise && w.sunset) {
-    const mins = Math.round((w.sunset - w.sunrise) / 60_000);
-    const hh = Math.floor(mins / 60);
-    const mm = mins % 60;
+    todayMins = Math.round((w.sunset - w.sunrise) / 60_000);
+    const hh = Math.floor(todayMins / 60);
+    const mm = todayMins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(todayMins, w.yesterdayDaylightMin);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderDaylightDelta(todayMins, yesterdayMins) {
+  const node = el.sunDaylightDelta;
+  if (!node) return;
+  if (todayMins == null || yesterdayMins == null) {
+    node.hidden = true;
+    node.textContent = "";
+    node.removeAttribute("data-dir");
+    return;
+  }
+  const delta = todayMins - yesterdayMins;
+  const abs = Math.abs(delta);
+  let dir = "flat";
+  let text = "±0m";
+  if (delta > 0) { dir = "up"; text = `+${formatDeltaMinutes(abs)}`; }
+  else if (delta < 0) { dir = "down"; text = `−${formatDeltaMinutes(abs)}`; }
+  node.textContent = text;
+  node.setAttribute("data-dir", dir);
+  node.setAttribute("title", `${abs === 0 ? "Same" : (delta > 0 ? "Gained" : "Lost")} ${formatDeltaMinutes(abs)} of daylight vs yesterday`);
+  node.hidden = false;
+}
+
+function formatDeltaMinutes(mins) {
+  if (mins < 60) return `${mins}m`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return m ? `${h}h ${m}m` : `${h}h`;
 }
 
 function scheduleSunArc(w) {
