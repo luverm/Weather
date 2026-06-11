@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { detectNextChange } from "./next-change.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -102,6 +103,10 @@ const el = {
   nowcastHeadline: $("#nowcast-headline"),
   nowcastSub: $("#nowcast-sub"),
   nowcastBars: $("#nowcast-bars"),
+  nextChange: $("#next-change"),
+  nextChangeIcon: $("#next-change-icon"),
+  nextChangeHeadline: $("#next-change-headline"),
+  nextChangeDetail: $("#next-change-detail"),
   searchInput: $("#search-input"),
   searchResults: $("#search-results"),
   locateBtn: $("#locate-btn"),
@@ -192,6 +197,7 @@ export const ui = {
     renderInsights(weather);
     renderActivity(weather);
     renderAlerts(weather);
+    renderNextChange(weather);
     renderWeekend(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
@@ -1001,6 +1007,25 @@ function toggleDailyExpand(item, d, w) {
   }).join("");
   item.appendChild(box);
   item.dataset.expanded = "true";
+}
+
+function renderNextChange(w) {
+  if (!el.nextChange) return;
+  const change = detectNextChange(w);
+  if (!change) {
+    el.nextChange.hidden = true;
+    return;
+  }
+  el.nextChange.hidden = false;
+  el.nextChange.dataset.tone = change.tone || "calm";
+  el.nextChange.dataset.id = change.id;
+  el.nextChange.dataset.ts = change.ts ? String(change.ts) : "";
+  el.nextChangeIcon.innerHTML = change.icon || "";
+  el.nextChangeHeadline.textContent = change.headline;
+  el.nextChangeDetail.textContent = change.detail;
+  el.nextChange.onclick = () => {
+    if (change.ts) state.handlers.onHourClick?.(change.ts);
+  };
 }
 
 function renderNowcast(w) {
