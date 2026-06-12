@@ -64,6 +64,7 @@ const el = {
   adviceText: $("#advice-text"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
+  chartRainTotal: $("#chart-rain-total"),
   pollenCard: $("#pollen-card"),
   pollenLevel: $("#pollen-level"),
   pollenDominant: $("#pollen-dominant"),
@@ -204,6 +205,7 @@ export const ui = {
     renderHourly(weather);
     renderDaily(weather);
     renderNowcast(weather);
+    renderRainTotal(weather);
     renderAdvice(weather);
     renderPollen(weather.pollen);
     renderTrends(weather);
@@ -1126,7 +1128,9 @@ function renderDaily(w) {
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
-    const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const mmLabel = (d.precip ?? 0) >= 1 ? ` · ${d.precip.toFixed(d.precip < 10 ? 1 : 0)} mm` : "";
+    const extra = gustLabel || popLabel || mmLabel
+      ? `<span class="daily-gust">${popLabel}${mmLabel}${gustLabel}</span>` : "";
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
@@ -1250,6 +1254,25 @@ function toggleDailyExpand(item, d, w) {
   }).join("");
   item.appendChild(box);
   item.dataset.expanded = "true";
+}
+
+function renderRainTotal(w) {
+  if (!el.chartRainTotal) return;
+  const hours = (w.hourly || []).slice(0, 24);
+  let total = 0;
+  let hoursWithRain = 0;
+  for (const h of hours) {
+    if ((h.precip ?? 0) > 0.05) hoursWithRain++;
+    total += h.precip ?? 0;
+  }
+  if (total < 0.5) {
+    el.chartRainTotal.hidden = true;
+    return;
+  }
+  el.chartRainTotal.hidden = false;
+  const intensity = total < 5 ? "light" : total < 15 ? "moderate" : "heavy";
+  el.chartRainTotal.dataset.intensity = intensity;
+  el.chartRainTotal.textContent = `${total.toFixed(total < 10 ? 1 : 0)} mm · ${hoursWithRain}h wet`;
 }
 
 function renderNowcast(w) {

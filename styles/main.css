@@ -697,6 +697,23 @@ html[data-reduce-motion="true"] *::after {
   text-transform: uppercase;
   color: var(--fg-dim);
 }
+.chart-rain-total {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(154, 209, 255, 0.14);
+  color: #9ad1ff;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+.chart-rain-total[data-intensity="moderate"] {
+  background: rgba(120, 180, 255, 0.2);
+  color: #c5dcff;
+}
+.chart-rain-total[data-intensity="heavy"] {
+  background: rgba(180, 120, 255, 0.22);
+  color: #d8c4ff;
+}
 .chart-legend {
   display: inline-flex; align-items: center; gap: 8px;
   font-size: 11px; color: var(--fg-dim);
