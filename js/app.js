@@ -197,9 +197,44 @@ const scrubber = new Scrubber({
 });
 
 // ---------- Load flow ----------
+function syncPlaceToUrl(place) {
+  if (!place || place.lat == null || place.lon == null) return;
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set("lat", place.lat.toFixed(4));
+    url.searchParams.set("lon", place.lon.toFixed(4));
+    if (place.name && place.name !== "Current location") {
+      url.searchParams.set("name", place.name);
+    } else {
+      url.searchParams.delete("name");
+    }
+    if (place.country) url.searchParams.set("country", place.country);
+    else url.searchParams.delete("country");
+    if (place.admin1) url.searchParams.set("admin1", place.admin1);
+    else url.searchParams.delete("admin1");
+    window.history.replaceState(null, "", url.toString());
+  } catch { /* URL API not available — ignore */ }
+}
+
+function placeFromUrl() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const lat = parseFloat(params.get("lat"));
+    const lon = parseFloat(params.get("lon"));
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+    return {
+      lat, lon,
+      name: params.get("name") || `${lat.toFixed(2)}, ${lon.toFixed(2)}`,
+      country: params.get("country") || undefined,
+      admin1: params.get("admin1") || undefined,
+    };
+  } catch { return null; }
+}
+
 async function loadByCoords(place) {
   app.place = place;
   ui.setPlace(place);
+  syncPlaceToUrl(place);
   ui.setLoading(`Fetching weather for ${place.name}…`);
 
   // Drop any scrubber offset so we start live on each new city.
@@ -308,7 +343,14 @@ installShortcuts({
 
 // ---------- Start ----------
 (async function init() {
-  // Prefer the most recent saved place if we have one — avoids the geolocation
+  // A URL with ?lat=&lon= wins — shareable links should always land on the
+  // place they describe, not the last city the user opened.
+  const fromUrl = placeFromUrl();
+  if (fromUrl) {
+    await loadByCoords(fromUrl);
+    return;
+  }
+  // Otherwise prefer the most recent saved place — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();
   if (saved.length) {
