@@ -45,21 +45,31 @@ function activityScore(h) {
   const ww = windScore(h.wind ?? h.windSpeed) * 0.25;
   const pw = precipScore(h.pop, h.precip) * 0.40;
   const daytimeBonus = h.isDay ? 5 : -8;
-  return Math.round(tw + ww + pw + daytimeBonus - uvPenalty(h.uv));
+  // Slight bonus when daytime cloud cover is low — sunlit walks score higher.
+  const sunBonus = (h.isDay && h.cloudCover != null) ? Math.max(0, (60 - h.cloudCover) / 20) : 0;
+  return Math.round(tw + ww + pw + daytimeBonus + sunBonus - uvPenalty(h.uv));
 }
 
 function stargazeScore(h) {
   if (!h) return 0;
-  // Need: night, clear, dry. Cloud cover not in hourly — proxy via condition.
+  // Need: night, clear, dry.
   if (h.isDay) return 0;
-  const isClear = h.condition === "clear";
-  const isCloudy = h.condition === "clouds" || h.condition === "fog";
   const isWet = h.condition === "rain" || h.condition === "snow" || h.condition === "storm";
   if (isWet) return 0;
-  const base = isClear ? 95 : isCloudy ? 35 : 60;
+  // Prefer the actual cloud cover %; fall back to condition heuristic.
+  let base;
+  if (h.cloudCover != null) {
+    // Clear ≤10% → ~98; 50% clouds → ~60; 100% overcast → ~15
+    base = Math.max(15, 100 - h.cloudCover * 0.85);
+  } else {
+    const isClear = h.condition === "clear";
+    const isCloudy = h.condition === "clouds" || h.condition === "fog";
+    base = isClear ? 95 : isCloudy ? 35 : 60;
+  }
   const popPenalty = (h.pop ?? 0) * 0.6;
   const windPenalty = Math.max(0, ((h.wind ?? 0) - 18) * 2);
-  return Math.max(0, Math.round(base - popPenalty - windPenalty));
+  const fogPenalty = h.condition === "fog" ? 20 : 0;
+  return Math.max(0, Math.round(base - popPenalty - windPenalty - fogPenalty));
 }
 
 function rollingPeak(hours, scoreFn, span) {
@@ -80,18 +90,20 @@ function rollingPeak(hours, scoreFn, span) {
   return best;
 }
 
-function reasonsFor(window, hours) {
+function reasonsFor(window, hours, opts = {}) {
   if (!window) return [];
   const slice = hours.slice(window.startIdx, window.endIdx + 1);
   const avgT = avg(slice.map((h) => h.temp));
   const avgW = avg(slice.map((h) => h.wind ?? h.windSpeed));
   const maxPop = Math.max(...slice.map((h) => h.pop ?? 0));
   const maxUv = Math.max(...slice.map((h) => h.uv ?? 0));
+  const avgCloud = avg(slice.map((h) => h.cloudCover).filter((v) => v != null));
   const reasons = [];
   if (avgT != null) reasons.push(`${Math.round(avgT)}° feel`);
+  if (opts.cloud && avgCloud != null) reasons.push(`${Math.round(avgCloud)}% cloud`);
   if (avgW != null) reasons.push(`wind ${Math.round(avgW)} km/h`);
   if (maxPop > 0) reasons.push(`${Math.round(maxPop)}% rain`);
-  if (maxUv >= 6) reasons.push(`UV ${Math.round(maxUv)}`);
+  if (!opts.cloud && maxUv >= 6) reasons.push(`UV ${Math.round(maxUv)}`);
   return reasons;
 }
 
@@ -129,7 +141,7 @@ export function findActivityWindows(weather) {
       start: hours[stars.startIdx].time,
       end: hours[stars.endIdx].time + 60 * 60 * 1000,
       score: Math.round(stars.score),
-      why: reasonsFor(stars, hours),
+      why: reasonsFor(stars, hours, { cloud: true }),
     });
   }
 
