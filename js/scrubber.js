@@ -10,7 +10,7 @@ const RANGE_HOURS = 24;
 
 export class Scrubber {
   constructor({ trackEl, thumbEl, fillEl, timeEl, deltaEl, resetEl,
-                sunriseEl, sunsetEl, appEl, onScrub }) {
+                sunriseEl, sunsetEl, ticksEl, appEl, onScrub }) {
     this.track = trackEl;
     this.thumb = thumbEl;
     this.fill = fillEl;
@@ -19,6 +19,7 @@ export class Scrubber {
     this.resetEl = resetEl;
     this.sunriseEl = sunriseEl;
     this.sunsetEl = sunsetEl;
+    this.ticksEl = ticksEl;
     this.appEl = appEl; // receives data-scrubbing attribute
     this.onScrub = onScrub;
     this.dragging = false;
@@ -26,6 +27,7 @@ export class Scrubber {
     this.sunrise = null;
     this.sunset = null;
 
+    this._renderTicks();
     this._bind();
     // Keep the label updating while live (otherwise the clock would freeze
     // at the value it had when weather was last fetched).
@@ -38,7 +40,28 @@ export class Scrubber {
     this.sunset = sunset;
     this._placeMarker(this.sunriseEl, sunrise, "Sunrise");
     this._placeMarker(this.sunsetEl, sunset, "Sunset");
+    this._renderTicks();
     this._render(this._currentT());
+  }
+
+  // Hourly ticks across the scrubber range, with heavier ticks at midnight
+  // and noon. Re-rendered whenever the visible window starts.
+  _renderTicks() {
+    if (!this.ticksEl) return;
+    const startWindow = (this.start || Date.now()) - 3600_000;
+    const html = [];
+    for (let i = 0; i <= RANGE_HOURS; i++) {
+      const ts = startWindow + i * 3600_000;
+      const hour = new Date(ts).getHours();
+      const major = hour === 0;
+      const noon = hour === 12;
+      const cls = major ? "tick-major" : noon ? "tick-noon" : "";
+      const frac = i / RANGE_HOURS;
+      html.push(
+        `<span class="scrubber-tick ${cls}" style="left:${(frac * 100).toFixed(2)}%"></span>`
+      );
+    }
+    this.ticksEl.innerHTML = html.join("");
   }
 
   /** Called when we externally reset to "now" (e.g. search selected). */
