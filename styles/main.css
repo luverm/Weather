@@ -989,6 +989,19 @@ html[data-reduce-motion="true"] *::after {
   pointer-events: none;
   filter: drop-shadow(0 0 6px var(--accent));
 }
+.chart-now-cursor {
+  stroke: rgba(255, 240, 200, 0.55);
+  stroke-width: 1;
+  stroke-dasharray: 1.5 3;
+  pointer-events: none;
+}
+.chart-now-dot {
+  fill: rgba(255, 240, 200, 0.95);
+  stroke: rgba(0, 0, 0, 0.25);
+  stroke-width: 0.6;
+  pointer-events: none;
+  filter: drop-shadow(0 0 4px rgba(255, 235, 180, 0.7));
+}
 
 /* ---------- Wind compass (inside wind metric) ---------- */
 .metric-wind {

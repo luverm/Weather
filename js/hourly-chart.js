@@ -177,6 +177,25 @@ export class HourlyChart {
 
     this.points = this.hours.map((h, i) => ({ x: iToX(i), y: tToY(h.temp) }));
 
+    // Persistent 'now' marker — independent of the scrubber cursor so the
+    // user always sees where 'live' sits even while exploring future hours.
+    const now = Date.now();
+    let nowIdx = 0;
+    let nowDiff = Infinity;
+    for (let i = 0; i < this.hours.length; i++) {
+      const d = Math.abs(this.hours[i].time - now);
+      if (d < nowDiff) { nowDiff = d; nowIdx = i; }
+    }
+    const nowCursor = this.svg.querySelector("#chart-now-cursor");
+    const nowDot = this.svg.querySelector("#chart-now-dot");
+    if (nowCursor && nowDot && this.points[nowIdx]) {
+      const p = this.points[nowIdx];
+      nowCursor.setAttribute("x1", p.x.toFixed(1));
+      nowCursor.setAttribute("x2", p.x.toFixed(1));
+      nowDot.setAttribute("cx", p.x.toFixed(1));
+      nowDot.setAttribute("cy", p.y.toFixed(1));
+    }
+
     // Temp line path
     let linePath = "";
     this.points.forEach((p, i) => {
