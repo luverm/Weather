@@ -936,9 +936,15 @@ function renderHourly(w) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    const windArrow = h.windDir != null
+      ? `<span class="forecast-wind" style="transform:rotate(${(h.windDir + 180) % 360}deg)" title="Wind from ${cardinal(h.windDir)} · ${Math.round(h.wind ?? 0)} km/h" aria-hidden="true">
+          <svg viewBox="0 0 16 16" width="11" height="11"><path d="M8 2L4 11h2.5v3h3v-3H12L8 2z" fill="currentColor"/></svg>
+        </span>`
+      : "";
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
+      ${windArrow}
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
     `;
