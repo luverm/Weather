@@ -609,13 +609,14 @@ function renderSkyStrip(w) {
 
 // Cloud cover + day/night → cell background color.
 function skyTone(cv, isDay) {
-  // Day: bright sky-blue when clear, fading toward warm gray when overcast.
+  // Day: bright sky-blue (0x9a,0xd1,0xff) when clear, fading toward warm
+  // gray (0xc0,0xb8,0xb0) when overcast.
   // Night: deep navy when clear, fading toward charcoal when overcast.
   const t = Math.max(0, Math.min(1, cv / 100));
   if (isDay) {
-    const r = Math.round(0x9a + (0x9a - 0x9a) * t);
-    const g = Math.round(0xd1 + (0xaa - 0xd1) * t);
-    const b = Math.round(0xff + (0xb6 - 0xff) * t);
+    const r = Math.round(0x9a + (0xc0 - 0x9a) * t);
+    const g = Math.round(0xd1 + (0xb8 - 0xd1) * t);
+    const b = Math.round(0xff + (0xb0 - 0xff) * t);
     return `rgb(${r},${g},${b})`;
   }
   const r = Math.round(0x14 + (0x32 - 0x14) * t);
@@ -791,10 +792,10 @@ function nextAstroEvent(from) {
     events.push({ ts: Date.UTC(year, 11, 21), key: "decsolstice" }); // ~Dec 21
   }
   const upcoming = events
-    .filter((e) => e.ts > from.getTime() - 12 * 3600_000)
+    .filter((e) => e.ts > from.getTime())
     .sort((a, b) => a.ts - b.ts)[0];
   if (!upcoming) return null;
-  const days = Math.max(0, Math.round((upcoming.ts - from.getTime()) / 86400_000));
+  const days = Math.max(1, Math.round((upcoming.ts - from.getTime()) / 86400_000));
   const labels = {
     marequinox: "March equinox",
     junsolstice: "June solstice",
@@ -1265,7 +1266,7 @@ function renderDaily(w) {
     const vibe = dailyVibe(d);
     const vibeHtml = vibe
       ? `<span class="daily-vibe" data-tier="${vibe.tier}" title="Outdoor vibe ${vibe.score}/100${vibe.note ? ` · ${vibe.note}` : ""}">${vibe.score}</span>`
-      : "";
+      : `<span class="daily-vibe-spacer" aria-hidden="true"></span>`;
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>

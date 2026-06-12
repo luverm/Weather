@@ -28,6 +28,9 @@ export class Scrubber {
     this.sunrise = null;
     this.sunset = null;
 
+    // Render an initial set of ticks against the placeholder start so the
+    // scrubber isn't empty if the first weather fetch fails. setBounds will
+    // re-render with the real window start as soon as data lands.
     this._renderTicks();
     this._bind();
     // Keep the label updating while live (otherwise the clock would freeze
