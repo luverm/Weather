@@ -185,6 +185,7 @@ export const ui = {
       getUnit: () => state.unit,
     });
     bindInstallPrompt();
+    startHintRotation();
   },
   focusSearch() { el.searchInput?.focus(); el.searchInput?.select?.(); },
   toggleUnits() { el.unitBtn?.click(); },
@@ -256,10 +257,12 @@ export const ui = {
   },
   setScrubbing(on) {
     document.documentElement.setAttribute("data-scrubbing", on ? "true" : "false");
+    state.scrubbing = !!on;
     if (on) {
+      stopHintRotation();
       el.hintText.textContent = "Drag to explore future weather.";
     } else {
-      el.hintText.innerHTML = 'Drag the slider, hover the chart, or press <kbd>?</kbd> for shortcuts.';
+      startHintRotation();
     }
   },
   setAudioState(on) {
@@ -1775,6 +1778,46 @@ function applyStoredPreferences() {
 
 // Exposed so app.js can query the current preference on boot.
 ui.isReduceMotion = () => localStorage.getItem("aether:reduceMotion") === "1";
+
+// Rotating bottom hints — surface lesser-known features over time so the
+// app teaches itself without a big onboarding flow. Skipped entirely when
+// scrubbing (the scrubber owns the hint text) or when the user has
+// requested reduced motion.
+const HINT_TIPS = [
+  'Drag the slider, hover the chart, or press <kbd>?</kbd> for shortcuts.',
+  'Press <kbd>L</kbd> to jump to your current location.',
+  'Hover the chart to see hourly feels-like, wind and cloud cover.',
+  'Click any hour in the forecast strip to scrub to that moment.',
+  'Press <kbd>U</kbd> to flip between °C and °F.',
+  'The 7-day pills are clickable — tap to expand the day.',
+  '<kbd>Space</kbd> plays or pauses the radar loop.',
+  'The vibe pill is a 0-100 outdoor score — color matches the tier.',
+];
+
+function startHintRotation() {
+  stopHintRotation();
+  if (!el.hintText) return;
+  const reduce = (
+    localStorage.getItem("aether:reduceMotion") === "1" ||
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+  );
+  // Even with reduce-motion we still set the first tip; we just don't cycle.
+  if (state._hintIdx == null) state._hintIdx = 0;
+  el.hintText.innerHTML = HINT_TIPS[state._hintIdx % HINT_TIPS.length];
+  if (reduce || state.scrubbing) return;
+  state._hintTimer = setInterval(() => {
+    if (state.scrubbing) return;
+    state._hintIdx = (state._hintIdx + 1) % HINT_TIPS.length;
+    el.hintText.innerHTML = HINT_TIPS[state._hintIdx];
+  }, 9000);
+}
+
+function stopHintRotation() {
+  if (state._hintTimer) {
+    clearInterval(state._hintTimer);
+    state._hintTimer = null;
+  }
+}
 
 function startFetchedTicker() {
   const update = () => {
