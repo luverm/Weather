@@ -957,6 +957,46 @@ kbd {
   opacity: 0.85;
 }
 
+.sky-strip {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 2px;
+  margin-top: 6px;
+  height: 22px;
+}
+.sky-cell {
+  position: relative;
+  appearance: none;
+  background: transparent;
+  border: none;
+  padding: 0;
+  height: 100%;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  outline: none;
+  transition: transform 200ms var(--ease);
+}
+.sky-cell:hover { transform: translateY(-1px); }
+.sky-cell-bar {
+  position: absolute;
+  inset: 0;
+  background: var(--sky);
+  opacity: 0.85;
+  border-radius: 4px;
+}
+.sky-cell-tick {
+  position: absolute;
+  left: 2px; bottom: 1px;
+  font-size: 7.5px;
+  letter-spacing: 0.04em;
+  color: rgba(0, 0, 0, 0.55);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  filter: brightness(2);
+}
+
 .sky-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
 .sky-dial { position: relative; width: 48px; height: 48px; color: #9ad1ff; }
 .sky-dial svg { width: 48px; height: 48px; display: block; }

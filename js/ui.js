@@ -50,6 +50,7 @@ const el = {
   skyDetail: $("#sky-detail"),
   skySparkLine: $("#sky-spark-line"),
   skySparkFill: $("#sky-spark-fill"),
+  skyStrip: $("#sky-strip"),
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
@@ -514,6 +515,56 @@ function renderSky(w) {
       el.skyStatus.textContent = "";
     }
   }
+  renderSkyStrip(w);
+}
+
+function renderSkyStrip(w) {
+  if (!el.skyStrip) return;
+  const hours = (w.hourly || []).slice(0, 12);
+  const ready = hours.filter((h) => h.cloudCover != null);
+  if (ready.length < 4) {
+    el.skyStrip.innerHTML = "";
+    el.skyStrip.style.display = "none";
+    return;
+  }
+  el.skyStrip.style.display = "";
+  el.skyStrip.innerHTML = hours.map((h, i) => {
+    const cv = h.cloudCover ?? 0;
+    const top = skyTone(cv, h.isDay);
+    const showLabel = i % 3 === 0;
+    const hh = new Date(h.time).getHours().toString().padStart(2, "0");
+    return `
+      <button class="sky-cell" data-ts="${h.time}"
+              title="${hh}:00 · ${Math.round(cv)}% cloud${h.isDay ? "" : " · night"}"
+              style="--sky:${top}">
+        <span class="sky-cell-bar" style="--cv:${Math.round(cv)}%"></span>
+        ${showLabel ? `<span class="sky-cell-tick">${hh}</span>` : ""}
+      </button>
+    `;
+  }).join("");
+  el.skyStrip.querySelectorAll(".sky-cell").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const ts = parseInt(btn.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
+}
+
+// Cloud cover + day/night → cell background color.
+function skyTone(cv, isDay) {
+  // Day: bright sky-blue when clear, fading toward warm gray when overcast.
+  // Night: deep navy when clear, fading toward charcoal when overcast.
+  const t = Math.max(0, Math.min(1, cv / 100));
+  if (isDay) {
+    const r = Math.round(0x9a + (0x9a - 0x9a) * t);
+    const g = Math.round(0xd1 + (0xaa - 0xd1) * t);
+    const b = Math.round(0xff + (0xb6 - 0xff) * t);
+    return `rgb(${r},${g},${b})`;
+  }
+  const r = Math.round(0x14 + (0x32 - 0x14) * t);
+  const g = Math.round(0x1c + (0x36 - 0x1c) * t);
+  const b = Math.round(0x40 + (0x42 - 0x40) * t);
+  return `rgb(${r},${g},${b})`;
 }
 
 function cloudLabel(v) {
