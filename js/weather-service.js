@@ -90,6 +90,7 @@ export async function getWeather(lat, lon) {
       "temperature_2m_max", "temperature_2m_min",
       "weather_code", "precipitation_sum", "precipitation_probability_max",
       "wind_speed_10m_max", "wind_gusts_10m_max", "uv_index_max",
+      "snowfall_sum",
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
@@ -163,6 +164,7 @@ function normalize(d, aq) {
         tempMax: daily.temperature_2m_max?.[i],
         tempMin: daily.temperature_2m_min?.[i],
         precip: daily.precipitation_sum?.[i] ?? 0,
+        snowfall: daily.snowfall_sum?.[i] ?? 0, // cm
         pop: daily.precipitation_probability_max?.[i] ?? 0,
         windMax: daily.wind_speed_10m_max?.[i],
         gustsMax: daily.wind_gusts_10m_max?.[i],

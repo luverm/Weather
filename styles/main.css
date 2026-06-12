@@ -1797,6 +1797,7 @@ kbd {
   color: #ff9c92;
 }
 .daily-vibe-spacer { display: block; min-width: 26px; }
+.snow-tag { color: #c5dcff; font-variant-numeric: tabular-nums; }
 .daily-item:hover { background: var(--glass); }
 .daily-day { font-size: 13px; font-weight: 500; }
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }

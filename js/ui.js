@@ -1301,9 +1301,14 @@ function renderDaily(w) {
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
-    const mmLabel = (d.precip ?? 0) >= 1 ? ` · ${d.precip.toFixed(d.precip < 10 ? 1 : 0)} mm` : "";
-    const extra = gustLabel || popLabel || mmLabel
-      ? `<span class="daily-gust">${popLabel}${mmLabel}${gustLabel}</span>` : "";
+    const snowLabel = (d.snowfall ?? 0) >= 1
+      ? ` · <span class="snow-tag">❄ ${d.snowfall.toFixed(d.snowfall < 10 ? 1 : 0)} cm</span>`
+      : "";
+    const mmLabel = (d.precip ?? 0) >= 1 && !snowLabel
+      ? ` · ${d.precip.toFixed(d.precip < 10 ? 1 : 0)} mm`
+      : "";
+    const extra = gustLabel || popLabel || mmLabel || snowLabel
+      ? `<span class="daily-gust">${popLabel}${mmLabel}${snowLabel}${gustLabel}</span>` : "";
     const vibe = dailyVibe(d);
     const vibeHtml = vibe
       ? `<span class="daily-vibe" data-tier="${vibe.tier}" title="Outdoor vibe ${vibe.score}/100${vibe.note ? ` · ${vibe.note}` : ""}">${vibe.score}</span>`
