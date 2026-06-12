@@ -22,6 +22,10 @@ const el = {
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
   narrative: $("#narrative"),
+  vibe: $("#vibe"),
+  vibeScore: $("#vibe-score"),
+  vibeLabel: $("#vibe-label"),
+  vibeNote: $("#vibe-note"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
@@ -212,6 +216,7 @@ export const ui = {
     renderDaily(weather);
     renderNowcast(weather);
     renderRainTotal(weather);
+    renderVibe(weather);
     renderAdvice(weather);
     renderPollen(weather.pollen);
     renderTrends(weather);
@@ -1341,6 +1346,55 @@ function toggleDailyExpand(item, d, w) {
   }).join("");
   item.appendChild(box);
   item.dataset.expanded = "true";
+}
+
+// "Vibe" — a single 0..100 outdoor pleasantness score for *right now*.
+// Mixes temperature comfort, wind, precip, UV stress and air quality.
+function renderVibe(w) {
+  if (!el.vibe || !el.vibeScore || !el.vibeLabel) return;
+  if (w?.temp == null) { el.vibe.hidden = true; return; }
+  const t = w.feelsLike ?? w.temp;
+  const tempC = (() => {
+    // Inverted-V comfort curve centered on 19°C, half-width 18°C.
+    const d = Math.abs(t - 19);
+    return Math.max(0, 100 - d * 4);
+  })();
+  const wind = w.windSpeed ?? 0;
+  const windC = wind <= 10 ? 100 : Math.max(0, 100 - (wind - 10) * 3);
+  // Precip: pop in next hour + intensity of any active precip.
+  const pop = w.hourly?.[0]?.pop ?? 0;
+  const mm = w.hourly?.[0]?.precip ?? 0;
+  const precipC = Math.max(0, 100 - pop * 0.6 - Math.min(60, mm * 30));
+  const uv = w.uv ?? 0;
+  const uvC = uv < 6 ? 100 : uv < 8 ? 75 : uv < 11 ? 45 : 20;
+  const aqi = w.airQuality?.aqi ?? 0;
+  const aqC = aqi == null ? 80 : aqi <= 50 ? 100 : aqi <= 100 ? 80 : aqi <= 150 ? 55 : aqi <= 200 ? 30 : 10;
+  const score = Math.round(
+    tempC * 0.32 + windC * 0.16 + precipC * 0.26 + uvC * 0.12 + aqC * 0.14
+  );
+
+  // Pick the weakest component to surface as the "limiting factor".
+  const parts = [
+    { k: "Cold/heat", v: tempC, why: t < 5 ? "chilly" : t > 28 ? "hot" : null },
+    { k: "Wind", v: windC, why: wind > 25 ? "blustery" : wind > 15 ? "breezy" : null },
+    { k: "Rain", v: precipC, why: pop >= 50 ? "wet" : null },
+    { k: "UV", v: uvC, why: uv >= 8 ? "high UV" : null },
+    { k: "AQ", v: aqC, why: aqi > 100 ? "poor air" : null },
+  ].sort((a, b) => a.v - b.v);
+  const weakest = parts[0];
+  const note = (weakest.v < 60 && weakest.why) ? `${weakest.why}` : "";
+  const label = score >= 85 ? "Excellent"
+    : score >= 70 ? "Great"
+    : score >= 55 ? "Pleasant"
+    : score >= 40 ? "Okay"
+    : score >= 25 ? "Rough"
+    : "Stay in";
+
+  el.vibe.hidden = false;
+  el.vibeScore.textContent = String(score);
+  el.vibeLabel.textContent = label;
+  el.vibe.dataset.tier = score >= 70 ? "good" : score >= 40 ? "mid" : "low";
+  el.vibeNote.textContent = note ? `· ${note}` : "";
 }
 
 function renderRainTotal(w) {
