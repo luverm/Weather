@@ -1830,7 +1830,12 @@ function bindShare() {
 function bindTilt() {
   if (!el.heroInner) return;
   let frame = 0;
+  const reduce = () => (
+    localStorage.getItem("aether:reduceMotion") === "1" ||
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+  );
   const onMove = (e) => {
+    if (reduce()) return;
     if (frame) return;
     frame = requestAnimationFrame(() => {
       frame = 0;
