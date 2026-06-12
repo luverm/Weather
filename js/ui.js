@@ -1524,7 +1524,25 @@ function showRecentsIfAny() {
 }
 
 function bindSearch() {
+  let activeIdx = -1;
+  const setActive = (idx) => {
+    const lis = el.searchResults.querySelectorAll('li[data-index]');
+    if (!lis.length) { activeIdx = -1; return; }
+    activeIdx = ((idx % lis.length) + lis.length) % lis.length;
+    lis.forEach((li, i) => li.classList.toggle("active", i === activeIdx));
+    lis[activeIdx]?.scrollIntoView({ block: "nearest" });
+  };
+  const select = (item) => {
+    if (!item) return;
+    el.searchInput.value = item.name;
+    el.searchResults.hidden = true;
+    activeIdx = -1;
+    places.add(item);
+    state.handlers.onSearchSelect?.(item);
+  };
+
   el.searchInput.addEventListener("input", (e) => {
+    activeIdx = -1;
     const v = e.target.value.trim();
     if (v.length < 2) {
       showRecentsIfAny();
@@ -1536,22 +1554,36 @@ function bindSearch() {
     setTimeout(() => (el.searchResults.hidden = true), 150);
   });
   el.searchInput.addEventListener("focus", () => {
+    activeIdx = -1;
     if (el.searchInput.value.trim().length < 2) {
       showRecentsIfAny();
     } else if (el.searchResults._items?.length) {
       el.searchResults.hidden = false;
     }
   });
+  el.searchInput.addEventListener("keydown", (e) => {
+    if (el.searchResults.hidden) return;
+    const items = el.searchResults._items || [];
+    if (!items.length) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActive(activeIdx + 1);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActive(activeIdx - 1);
+    } else if (e.key === "Enter") {
+      const item = activeIdx >= 0 ? items[activeIdx] : items[0];
+      if (item) {
+        e.preventDefault();
+        select(item);
+      }
+    }
+  });
   el.searchResults.addEventListener("click", (e) => {
     const li = e.target.closest("li");
     if (!li) return;
     const i = parseInt(li.dataset.index, 10);
-    const item = el.searchResults._items?.[i];
-    if (!item) return;
-    el.searchInput.value = item.name;
-    el.searchResults.hidden = true;
-    places.add(item);
-    state.handlers.onSearchSelect?.(item);
+    select(el.searchResults._items?.[i]);
   });
 }
 
