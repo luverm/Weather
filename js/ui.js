@@ -62,6 +62,7 @@ const el = {
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
   moonNext: $("#moon-next"),
+  moonSky: $("#moon-sky"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -214,7 +215,7 @@ export const ui = {
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
     renderSky(weather);
-    renderMoon(weather.moon);
+    renderMoon(weather);
     renderSun(weather);
     renderHourly(weather);
     renderDaily(weather);
@@ -681,10 +682,12 @@ function renderAqTrend(aq) {
   drawSparkline(el.aqTrendLine, el.aqTrendFill, pts, { minSpan: 20 });
 }
 
-function renderMoon(moon) {
+function renderMoon(weather) {
+  const moon = weather?.moon;
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  renderMoonTonight(weather);
   if (el.moonNext) {
     // Whichever of full/new is sooner gets surfaced; ties go to full.
     const toFull = moon.daysToFull;
@@ -720,6 +723,30 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+}
+
+// Surface tonight's average cloud cover in the moon card as a quick
+// "Will I see the moon?" answer. Falls back gracefully when nights are
+// outside the 24-hour hourly window or the field is missing.
+function renderMoonTonight(weather) {
+  if (!el.moonSky) return;
+  const hours = (weather?.hourly || []).filter(
+    (h) => h && !h.isDay && h.cloudCover != null
+  );
+  if (hours.length < 2) { el.moonSky.textContent = ""; return; }
+  const avg = hours.reduce((s, h) => s + h.cloudCover, 0) / hours.length;
+  const max = Math.max(...hours.map((h) => h.cloudCover));
+  const v = Math.round(avg);
+  const label = v < 25 ? "Clear sky tonight"
+    : v < 55 ? "Partly cloudy tonight"
+    : v < 80 ? "Mostly cloudy tonight"
+    : "Overcast tonight";
+  el.moonSky.textContent = `${label} · ${v}%${max - avg >= 25 ? ` (peaks ${Math.round(max)}%)` : ""}`;
+  if (el.moonLit) {
+    // Dim the moon glyph proportionally to how blanketed the sky will be.
+    const visible = Math.max(0.25, 1 - v / 130);
+    el.moonLit.style.opacity = visible.toFixed(2);
+  }
 }
 
 function fmtTime(ts) {
