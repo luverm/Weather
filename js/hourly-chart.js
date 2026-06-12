@@ -234,6 +234,34 @@ export class HourlyChart {
       }
     }
 
+    // Reference lines: 0°C (frost) and 30°C (heat) when the chart's vertical
+    // range includes them. Helps users spot the threshold without reading
+    // each label.
+    const refG = this.svg.querySelector("#chart-ref");
+    if (refG) {
+      refG.innerHTML = "";
+      const addRef = (tempC, label, cls) => {
+        if (tempC <= tMin || tempC >= tMax) return;
+        const y = tToY(tempC);
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", PAD_LEFT);
+        line.setAttribute("x2", W - PAD_RIGHT);
+        line.setAttribute("y1", y.toFixed(1));
+        line.setAttribute("y2", y.toFixed(1));
+        line.setAttribute("class", `chart-ref-line ${cls}`);
+        refG.appendChild(line);
+        const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        txt.setAttribute("x", String(W - PAD_RIGHT - 2));
+        txt.setAttribute("y", (y - 2).toFixed(1));
+        txt.setAttribute("text-anchor", "end");
+        txt.setAttribute("class", `chart-ref-label ${cls}`);
+        txt.textContent = label;
+        refG.appendChild(txt);
+      };
+      addRef(0, "freezing", "ref-cold");
+      addRef(30, "hot", "ref-hot");
+    }
+
     // Precipitation probability bars (0-100% -> 0..12px height)
     const precipG = this.svg.querySelector("#chart-precip");
     precipG.innerHTML = "";

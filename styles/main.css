@@ -898,6 +898,21 @@ html[data-reduce-motion="true"] *::after {
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
 }
+.chart-ref-line {
+  stroke-width: 0.7;
+  stroke-dasharray: 4 4;
+  opacity: 0.45;
+}
+.chart-ref-line.ref-cold { stroke: #9ad1ff; }
+.chart-ref-line.ref-hot  { stroke: #ff9c7a; }
+.chart-ref-label {
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+.chart-ref-label.ref-cold { fill: #9ad1ff; }
+.chart-ref-label.ref-hot  { fill: #ff9c7a; }
 .chart-labels text {
   font-size: 9px;
   fill: var(--fg-dim);
