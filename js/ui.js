@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { hourlyVibe, dailyVibe } from "./vibe.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -1223,6 +1224,10 @@ function renderDaily(w) {
     const mmLabel = (d.precip ?? 0) >= 1 ? ` · ${d.precip.toFixed(d.precip < 10 ? 1 : 0)} mm` : "";
     const extra = gustLabel || popLabel || mmLabel
       ? `<span class="daily-gust">${popLabel}${mmLabel}${gustLabel}</span>` : "";
+    const vibe = dailyVibe(d);
+    const vibeHtml = vibe
+      ? `<span class="daily-vibe" data-tier="${vibe.tier}" title="Outdoor vibe ${vibe.score}/100${vibe.note ? ` · ${vibe.note}` : ""}">${vibe.score}</span>`
+      : "";
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
@@ -1231,6 +1236,7 @@ function renderDaily(w) {
       </div>
       <span class="daily-temp-min">${Math.round(convertTemp(d.tempMin))}°</span>
       <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°</span>
+      ${vibeHtml}
       ${extra}
     `;
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
@@ -1349,52 +1355,28 @@ function toggleDailyExpand(item, d, w) {
 }
 
 // "Vibe" — a single 0..100 outdoor pleasantness score for *right now*.
-// Mixes temperature comfort, wind, precip, UV stress and air quality.
 function renderVibe(w) {
   if (!el.vibe || !el.vibeScore || !el.vibeLabel) return;
-  if (w?.temp == null) { el.vibe.hidden = true; return; }
-  const t = w.feelsLike ?? w.temp;
-  const tempC = (() => {
-    // Inverted-V comfort curve centered on 19°C, half-width 18°C.
-    const d = Math.abs(t - 19);
-    return Math.max(0, 100 - d * 4);
-  })();
-  const wind = w.windSpeed ?? 0;
-  const windC = wind <= 10 ? 100 : Math.max(0, 100 - (wind - 10) * 3);
-  // Precip: pop in next hour + intensity of any active precip.
-  const pop = w.hourly?.[0]?.pop ?? 0;
-  const mm = w.hourly?.[0]?.precip ?? 0;
-  const precipC = Math.max(0, 100 - pop * 0.6 - Math.min(60, mm * 30));
-  const uv = w.uv ?? 0;
-  const uvC = uv < 6 ? 100 : uv < 8 ? 75 : uv < 11 ? 45 : 20;
-  const aqi = w.airQuality?.aqi ?? 0;
-  const aqC = aqi == null ? 80 : aqi <= 50 ? 100 : aqi <= 100 ? 80 : aqi <= 150 ? 55 : aqi <= 200 ? 30 : 10;
-  const score = Math.round(
-    tempC * 0.32 + windC * 0.16 + precipC * 0.26 + uvC * 0.12 + aqC * 0.14
-  );
-
-  // Pick the weakest component to surface as the "limiting factor".
-  const parts = [
-    { k: "Cold/heat", v: tempC, why: t < 5 ? "chilly" : t > 28 ? "hot" : null },
-    { k: "Wind", v: windC, why: wind > 25 ? "blustery" : wind > 15 ? "breezy" : null },
-    { k: "Rain", v: precipC, why: pop >= 50 ? "wet" : null },
-    { k: "UV", v: uvC, why: uv >= 8 ? "high UV" : null },
-    { k: "AQ", v: aqC, why: aqi > 100 ? "poor air" : null },
-  ].sort((a, b) => a.v - b.v);
-  const weakest = parts[0];
-  const note = (weakest.v < 60 && weakest.why) ? `${weakest.why}` : "";
-  const label = score >= 85 ? "Excellent"
-    : score >= 70 ? "Great"
-    : score >= 55 ? "Pleasant"
-    : score >= 40 ? "Okay"
-    : score >= 25 ? "Rough"
+  // Use the current live snapshot as a synthetic "hour" since the live
+  // values are already populated on `w`.
+  const synthetic = {
+    temp: w.temp, feelsLike: w.feelsLike,
+    wind: w.windSpeed, pop: w.hourly?.[0]?.pop, precip: w.hourly?.[0]?.precip,
+    uv: w.uv,
+  };
+  const vibe = hourlyVibe(synthetic, { aqi: w.airQuality?.aqi });
+  if (!vibe) { el.vibe.hidden = true; return; }
+  const label = vibe.score >= 85 ? "Excellent"
+    : vibe.score >= 70 ? "Great"
+    : vibe.score >= 55 ? "Pleasant"
+    : vibe.score >= 40 ? "Okay"
+    : vibe.score >= 25 ? "Rough"
     : "Stay in";
-
   el.vibe.hidden = false;
-  el.vibeScore.textContent = String(score);
+  el.vibeScore.textContent = String(vibe.score);
   el.vibeLabel.textContent = label;
-  el.vibe.dataset.tier = score >= 70 ? "good" : score >= 40 ? "mid" : "low";
-  el.vibeNote.textContent = note ? `· ${note}` : "";
+  el.vibe.dataset.tier = vibe.tier;
+  el.vibeNote.textContent = vibe.note ? `· ${vibe.note}` : "";
 }
 
 function renderRainTotal(w) {

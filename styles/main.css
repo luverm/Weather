@@ -1634,12 +1634,32 @@ kbd {
 }
 .daily-item {
   display: grid;
-  grid-template-columns: 72px 28px 1fr 60px 60px;
+  grid-template-columns: 72px 28px 1fr 60px 60px 28px;
   gap: 12px;
   align-items: center;
   padding: 10px 8px;
   border-radius: 10px;
   transition: background 200ms var(--ease);
+}
+.daily-vibe {
+  justify-self: end;
+  min-width: 26px;
+  text-align: center;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(120, 208, 106, 0.16);
+  color: #b9e4a5;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+.daily-vibe[data-tier="mid"] {
+  background: rgba(255, 211, 106, 0.16);
+  color: #ffd36a;
+}
+.daily-vibe[data-tier="low"] {
+  background: rgba(255, 106, 106, 0.16);
+  color: #ff9c92;
 }
 .daily-item:hover { background: var(--glass); }
 .daily-day { font-size: 13px; font-weight: 500; }
@@ -1726,7 +1746,7 @@ kbd {
   .metrics { grid-template-columns: repeat(2, 1fr); }
   .extras { grid-template-columns: 1fr; }
   .brand-name { display: none; }
-  .daily-item { grid-template-columns: 64px 24px 1fr 48px 48px; gap: 8px; }
+  .daily-item { grid-template-columns: 64px 24px 1fr 48px 48px 28px; gap: 8px; }
   .chart-svg { height: 120px; }
   .shortcuts-list { grid-template-columns: 1fr; }
 }
