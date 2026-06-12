@@ -599,6 +599,36 @@ html[data-reduce-motion="true"] *::after {
   width: 1px;
   background: rgba(150, 180, 255, 0.45);
 }
+.scrubber-tick.tick-now {
+  height: 16px;
+  margin-top: 2px;
+  width: 2px;
+  background: rgba(154, 209, 255, 0.95);
+  border-radius: 1px;
+  box-shadow: 0 0 6px rgba(154, 209, 255, 0.7);
+}
+.scrubber-tick-labels {
+  position: relative;
+  height: 12px;
+  margin-top: 2px;
+}
+.scrubber-tick-label {
+  position: absolute;
+  top: 0;
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+  color: rgba(246, 247, 251, 0.45);
+  transform: translateX(-50%);
+  pointer-events: none;
+  user-select: none;
+}
+.scrubber-tick-label.label-now {
+  color: rgba(154, 209, 255, 0.9);
+  text-transform: uppercase;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+}
 .scrubber-sunrise,
 .scrubber-sunset {
   position: absolute; top: 0; bottom: 0; width: 2px;

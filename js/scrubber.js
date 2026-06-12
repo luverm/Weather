@@ -10,7 +10,7 @@ const RANGE_HOURS = 24;
 
 export class Scrubber {
   constructor({ trackEl, thumbEl, fillEl, timeEl, deltaEl, resetEl,
-                sunriseEl, sunsetEl, ticksEl, appEl, onScrub }) {
+                sunriseEl, sunsetEl, ticksEl, tickLabelsEl, appEl, onScrub }) {
     this.track = trackEl;
     this.thumb = thumbEl;
     this.fill = fillEl;
@@ -20,6 +20,7 @@ export class Scrubber {
     this.sunriseEl = sunriseEl;
     this.sunsetEl = sunsetEl;
     this.ticksEl = ticksEl;
+    this.tickLabelsEl = tickLabelsEl;
     this.appEl = appEl; // receives data-scrubbing attribute
     this.onScrub = onScrub;
     this.dragging = false;
@@ -45,23 +46,39 @@ export class Scrubber {
   }
 
   // Hourly ticks across the scrubber range, with heavier ticks at midnight
-  // and noon. Re-rendered whenever the visible window starts.
+  // and noon, a distinctive "Now" tick at the live position, and a few
+  // hour-label texts so the user can aim at a time of day.
   _renderTicks() {
     if (!this.ticksEl) return;
     const startWindow = (this.start || Date.now()) - 3600_000;
-    const html = [];
+    const ticks = [];
+    const labels = [];
+    // The live moment sits one hour into the window (offset 0 → t = 1/24).
+    const nowIdx = 1;
     for (let i = 0; i <= RANGE_HOURS; i++) {
       const ts = startWindow + i * 3600_000;
       const hour = new Date(ts).getHours();
-      const major = hour === 0;
-      const noon = hour === 12;
-      const cls = major ? "tick-major" : noon ? "tick-noon" : "";
+      const classes = ["scrubber-tick"];
+      if (i === nowIdx) classes.push("tick-now");
+      else if (hour === 0) classes.push("tick-major");
+      else if (hour === 12) classes.push("tick-noon");
       const frac = i / RANGE_HOURS;
-      html.push(
-        `<span class="scrubber-tick ${cls}" style="left:${(frac * 100).toFixed(2)}%"></span>`
+      ticks.push(
+        `<span class="${classes.join(" ")}" style="left:${(frac * 100).toFixed(2)}%"></span>`
       );
+      const labelHour = i === nowIdx ? "Now"
+        : (hour % 6 === 0 && i !== 0 && i !== RANGE_HOURS)
+          ? `${hour.toString().padStart(2, "0")}h`
+          : null;
+      if (labelHour) {
+        labels.push(
+          `<span class="scrubber-tick-label${i === nowIdx ? " label-now" : ""}"` +
+          ` style="left:${(frac * 100).toFixed(2)}%">${labelHour}</span>`
+        );
+      }
     }
-    this.ticksEl.innerHTML = html.join("");
+    this.ticksEl.innerHTML = ticks.join("");
+    if (this.tickLabelsEl) this.tickLabelsEl.innerHTML = labels.join("");
   }
 
   /** Called when we externally reset to "now" (e.g. search selected). */
