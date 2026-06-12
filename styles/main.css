@@ -436,6 +436,29 @@ html[data-reduce-motion="true"] *::after {
 .vibe-peak:hover { background: var(--glass-strong); transform: translateY(-1px); }
 .vibe-peak strong { color: var(--fg); font-weight: 500; }
 .vibe-peak-icon { color: #b9e4a5; font-weight: 600; }
+
+.visibility-chip {
+  margin: 8px 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 4px;
+  border-radius: 999px;
+  background: rgba(200, 210, 230, 0.10);
+  border: 1px solid var(--stroke);
+  color: var(--fg-muted);
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.visibility-chip[data-tier="fog"] {
+  background: rgba(255, 211, 106, 0.12);
+  color: #ffd36a;
+}
+.visibility-chip[data-tier="mist"] {
+  background: rgba(154, 209, 255, 0.10);
+  color: #c5dcff;
+}
 .temp-wrap { text-align: right; }
 .temp {
   display: inline-flex; align-items: flex-start; gap: 6px;

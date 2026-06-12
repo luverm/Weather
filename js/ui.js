@@ -29,6 +29,8 @@ const el = {
   vibeLabel: $("#vibe-label"),
   vibeNote: $("#vibe-note"),
   vibePeak: $("#vibe-peak"),
+  visibilityChip: $("#visibility-chip"),
+  visibilityChipText: $("#visibility-chip-text"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
@@ -222,6 +224,7 @@ export const ui = {
     renderNowcast(weather);
     renderRainTotal(weather);
     renderVibe(weather);
+    renderVisibilityChip(weather);
     renderAdvice(weather);
     renderPollen(weather.pollen);
     renderTrends(weather);
@@ -1496,6 +1499,26 @@ function renderVibePeak(w, currentVibe) {
     const ts = parseInt(el.vibePeak.dataset.ts, 10);
     if (ts) state.handlers.onHourClick?.(ts);
   };
+}
+
+// Surface reduced visibility as a small advisory chip in the hero. Severe
+// fog (<500m) is already handled by the alerts strip, so this targets the
+// 'haze / mist' tier that warrants caution without being an alert.
+function renderVisibilityChip(w) {
+  if (!el.visibilityChip || !el.visibilityChipText) return;
+  const v = w?.visibility;
+  if (v == null || v >= 5000) {
+    el.visibilityChip.hidden = true;
+    return;
+  }
+  el.visibilityChip.hidden = false;
+  const km = v / 1000;
+  let label;
+  if (v < 1000) label = `Fog · ${Math.round(v)} m visibility`;
+  else if (v < 2000) label = `Mist · ${km.toFixed(1)} km visibility`;
+  else label = `Haze · ${km.toFixed(1)} km visibility`;
+  el.visibilityChip.dataset.tier = v < 1000 ? "fog" : v < 2000 ? "mist" : "haze";
+  el.visibilityChipText.textContent = label;
 }
 
 function renderRainTotal(w) {
