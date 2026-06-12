@@ -313,6 +313,25 @@ html[data-reduce-motion="true"] *::after {
 .place-chip-icon svg { width: 16px; height: 16px; }
 .place-chip.active .place-chip-icon { color: var(--accent); }
 .place-chip-name { white-space: nowrap; }
+.place-chip-vibe {
+  display: inline-block;
+  min-width: 22px;
+  text-align: center;
+  font-size: 10.5px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(120, 208, 106, 0.16);
+  color: #b9e4a5;
+  font-variant-numeric: tabular-nums;
+}
+.place-chip-vibe[data-tier="mid"] {
+  background: rgba(255, 211, 106, 0.16);
+  color: #ffd36a;
+}
+.place-chip-vibe[data-tier="low"] {
+  background: rgba(255, 106, 106, 0.16);
+  color: #ff9c92;
+}
 .place-chip .close {
   width: 16px; height: 16px; display: grid; place-items: center;
   border-radius: 50%; color: var(--fg-dim);

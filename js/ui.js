@@ -234,10 +234,18 @@ export const ui = {
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
-    // Save summary for the strip so chips can show current temp.
+    // Save summary for the strip so chips can show current temp + vibe.
     if (state.place) {
+      const synthetic = {
+        temp: weather.temp, feelsLike: weather.feelsLike,
+        wind: weather.windSpeed, pop: weather.hourly?.[0]?.pop,
+        precip: weather.hourly?.[0]?.precip, uv: weather.uv,
+      };
+      const v = hourlyVibe(synthetic, { aqi: weather.airQuality?.aqi });
       places.updateSummary(state.place, {
-        temp: weather.temp, condition: weather.condition,
+        temp: weather.temp,
+        condition: weather.condition,
+        vibe: v ? { score: v.score, tier: v.tier } : null,
       });
     }
     renderPlaces();
@@ -1573,11 +1581,15 @@ function renderPlaces() {
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
     const iconHtml = p.condition ? `<span class="place-chip-icon">${iconFor(p.condition)}</span>` : "";
+    const vibeHtml = p.vibe?.score != null
+      ? `<span class="place-chip-vibe" data-tier="${p.vibe.tier}" title="Outdoor vibe ${p.vibe.score}/100">${p.vibe.score}</span>`
+      : "";
     return `
       <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
         ${iconHtml}
         <span class="place-chip-name">${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
+        ${vibeHtml}
         <span class="close" data-action="remove" aria-label="Remove">
           <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
         </span>
