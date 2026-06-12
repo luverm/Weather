@@ -18,6 +18,7 @@ const el = {
   temp: $("#temp-value"),
   unitBtn: $("#unit-toggle"),
   placeName: $("#place-name"),
+  placeLabelText: $("#place-label-text"),
   placeSub: $("#place-sub"),
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
@@ -310,6 +311,42 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  updateGreeting(w);
+}
+
+// Pick the place-label prefix based on local hour + condition. Falls back
+// to "Now in" if we can't resolve the local time or weather state.
+function updateGreeting(w) {
+  if (!el.placeLabelText) return;
+  let hour = new Date().getHours();
+  const tz = w?.timezone;
+  if (tz && tz !== "auto") {
+    try {
+      const parts = new Intl.DateTimeFormat(undefined, {
+        timeZone: tz, hour: "2-digit", hour12: false,
+      }).formatToParts(new Date());
+      const h = parts.find((p) => p.type === "hour")?.value;
+      if (h != null) hour = parseInt(h, 10);
+    } catch { /* keep fallback */ }
+  }
+  const cond = w?.condition;
+  const isWet = cond === "rain" || cond === "storm" || cond === "snow";
+  const isClear = cond === "clear";
+  let label = "Now in";
+  if (hour >= 5 && hour < 11) {
+    label = isWet ? "Wet morning in"
+      : isClear ? "Bright morning in"
+      : "Morning in";
+  } else if (hour >= 11 && hour < 17) {
+    label = isWet ? "Wet afternoon in"
+      : isClear ? "Sunny afternoon in"
+      : "Afternoon in";
+  } else if (hour >= 17 && hour < 21) {
+    label = isClear ? "Clear evening in" : "Evening in";
+  } else {
+    label = isClear ? "Clear night in" : "Tonight in";
+  }
+  el.placeLabelText.textContent = label;
 }
 
 function renderDayRange(w) {
