@@ -257,9 +257,14 @@ export class HourlyChart {
     // Night shading: dim rectangles where !isDay
     const nightG = this.svg.querySelector("#chart-night");
     nightG.innerHTML = "";
+    const transitions = [];
     let runStart = null;
+    let prevDark = false;
     for (let i = 0; i <= this.hours.length; i++) {
       const dark = i < this.hours.length && !this.hours[i].isDay;
+      if (i > 0 && i < this.hours.length && dark !== prevDark) {
+        transitions.push({ idx: i, toDay: !dark });
+      }
       if (dark && runStart == null) runStart = i;
       if ((!dark || i === this.hours.length) && runStart != null) {
         const x1 = iToX(Math.max(0, runStart - 0.5));
@@ -271,6 +276,59 @@ export class HourlyChart {
         r.setAttribute("height", String(H));
         nightG.appendChild(r);
         runStart = null;
+      }
+      prevDark = dark;
+    }
+
+    // Sunrise / sunset glyphs at each day-night boundary.
+    const sunsG = this.svg.querySelector("#chart-suns");
+    if (sunsG) {
+      sunsG.innerHTML = "";
+      for (const t of transitions) {
+        const x = iToX(t.idx - 0.5);
+        const y = PAD_TOP + 4;
+        const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        g.setAttribute("class", t.toDay ? "chart-sun chart-sun-rise" : "chart-sun chart-sun-set");
+        g.setAttribute("transform", `translate(${x.toFixed(1)},${y.toFixed(1)})`);
+        const ts = this.hours[t.idx]?.time;
+        const ttl = `${t.toDay ? "Sunrise" : "Sunset"} ~${this._formatHour(ts)}`;
+        const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+        title.textContent = ttl;
+        g.appendChild(title);
+        if (t.toDay) {
+          // Small sun: circle with rays.
+          const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          c.setAttribute("r", "2.4"); c.setAttribute("cx", "0"); c.setAttribute("cy", "0");
+          c.setAttribute("fill", "#ffd58a");
+          g.appendChild(c);
+          for (const a of [0, 60, 120, 180, 240, 300]) {
+            const rad = a * Math.PI / 180;
+            const ln = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            ln.setAttribute("x1", (Math.cos(rad) * 3.4).toFixed(1));
+            ln.setAttribute("y1", (Math.sin(rad) * 3.4).toFixed(1));
+            ln.setAttribute("x2", (Math.cos(rad) * 5.2).toFixed(1));
+            ln.setAttribute("y2", (Math.sin(rad) * 5.2).toFixed(1));
+            ln.setAttribute("stroke", "#ffd58a");
+            ln.setAttribute("stroke-width", "0.9");
+            ln.setAttribute("stroke-linecap", "round");
+            g.appendChild(ln);
+          }
+        } else {
+          // Crescent moon glyph.
+          const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          p.setAttribute("d", "M -1.6 -3 A 3.2 3.2 0 1 0 -1.6 3 A 2.4 2.4 0 1 1 -1.6 -3 Z");
+          p.setAttribute("fill", "#dde3ff");
+          g.appendChild(p);
+        }
+        // Vertical dashed cue down to the chart base.
+        const cue = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        cue.setAttribute("x1", "0"); cue.setAttribute("x2", "0");
+        cue.setAttribute("y1", "6"); cue.setAttribute("y2", (H - PAD_TOP - PAD_BOT - 2).toFixed(1));
+        cue.setAttribute("stroke", t.toDay ? "rgba(255,213,138,0.35)" : "rgba(180,200,255,0.32)");
+        cue.setAttribute("stroke-dasharray", "1.5 3");
+        cue.setAttribute("stroke-width", "0.8");
+        g.appendChild(cue);
+        sunsG.appendChild(g);
       }
     }
 

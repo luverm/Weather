@@ -789,6 +789,13 @@ html[data-reduce-motion="true"] *::after {
   opacity: 0.75;
   pointer-events: none;
 }
+.chart-sun {
+  pointer-events: none;
+  filter: drop-shadow(0 0 4px rgba(255, 210, 140, 0.45));
+}
+.chart-sun-set {
+  filter: drop-shadow(0 0 4px rgba(180, 200, 255, 0.4));
+}
 .chart-dot {
   fill: #fff;
   stroke: var(--accent);
