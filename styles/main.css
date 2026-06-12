@@ -371,7 +371,11 @@ html[data-reduce-motion="true"] *::after {
   font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.02;
+  cursor: pointer;
+  transition: color 180ms var(--ease);
 }
+.place-name:hover { color: var(--accent); }
+.place-name:focus-visible { outline: none; color: var(--accent); }
 .place-sub { margin: 8px 0 0; color: var(--fg-muted); font-size: 14px; }
 .place-localtime {
   margin: 6px 0 0;

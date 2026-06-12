@@ -188,6 +188,7 @@ export const ui = {
       getUnit: () => state.unit,
     });
     bindInstallPrompt();
+    bindPlaceCopyLink();
     startHintRotation();
   },
   focusSearch() { el.searchInput?.focus(); el.searchInput?.select?.(); },
@@ -1936,6 +1937,31 @@ function bindShare() {
       setTimeout(() => el.shareBtn.classList.remove("just-copied"), 600);
     } catch (err) {
       if (err?.name !== "AbortError") ui.showToast("Share failed");
+    }
+  });
+}
+
+// Make the place name a one-tap "copy share link" target. The share button
+// still exists for the full summary text — this is the lazy path for users
+// who just want to send the URL.
+function bindPlaceCopyLink() {
+  if (!el.placeName) return;
+  el.placeName.setAttribute("role", "button");
+  el.placeName.setAttribute("tabindex", "0");
+  el.placeName.title = "Click to copy link to this city";
+  const doCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      ui.showToast("Link copied");
+    } catch {
+      ui.showToast("Couldn't copy link");
+    }
+  };
+  el.placeName.addEventListener("click", doCopy);
+  el.placeName.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      doCopy();
     }
   });
 }
