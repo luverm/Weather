@@ -1262,7 +1262,17 @@ function renderHourly(w) {
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
     `;
+    item.setAttribute("role", "button");
+    item.setAttribute("tabindex", "0");
+    item.setAttribute("aria-label",
+      `${fmtTime(h.time)}: ${capitalize(h.label || h.condition || "")}, ${Math.round(convertTemp(h.temp))} degrees, ${h.pop}% precipitation`);
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
+    item.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        state.handlers.onHourClick?.(h.time);
+      }
+    });
     el.forecastTrack.appendChild(item);
   }
 }
@@ -1314,6 +1324,10 @@ function renderDaily(w) {
     const vibeHtml = vibe
       ? `<span class="daily-vibe" data-tier="${vibe.tier}" title="Outdoor vibe ${vibe.score}/100${vibe.note ? ` · ${vibe.note}` : ""}">${vibe.score}</span>`
       : `<span class="daily-vibe-spacer" aria-hidden="true"></span>`;
+    item.setAttribute("role", "button");
+    item.setAttribute("tabindex", "0");
+    item.setAttribute("aria-label",
+      `${day}: ${capitalize(d.label || d.condition || "")}, ${Math.round(convertTemp(d.tempMin))} to ${Math.round(convertTemp(d.tempMax))} degrees`);
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
@@ -1326,6 +1340,12 @@ function renderDaily(w) {
       ${extra}
     `;
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
+    item.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        toggleDailyExpand(item, d, w);
+      }
+    });
     el.dailyTrack.appendChild(item);
   });
 }

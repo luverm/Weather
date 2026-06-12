@@ -1768,6 +1768,7 @@ kbd {
 }
 .forecast-item:hover .forecast-wind { color: var(--accent); opacity: 1; }
 .forecast-item:hover { background: var(--glass); transform: translateY(-2px); }
+.forecast-item:focus-visible { outline: 1px solid var(--accent); outline-offset: -2px; }
 .forecast-item.active { background: var(--glass-strong); }
 .forecast-time { font-size: 11px; letter-spacing: 0.08em; color: var(--fg-dim); text-transform: uppercase; }
 .forecast-icon { width: 26px; height: 26px; display: grid; place-items: center; color: var(--fg-muted); }
@@ -1816,6 +1817,7 @@ kbd {
 .daily-vibe-spacer { display: block; min-width: 26px; }
 .snow-tag { color: #c5dcff; font-variant-numeric: tabular-nums; }
 .daily-item:hover { background: var(--glass); }
+.daily-item:focus-visible { outline: 1px solid var(--accent); outline-offset: -2px; }
 .daily-day { font-size: 13px; font-weight: 500; }
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
 .daily-range {
