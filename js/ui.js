@@ -57,6 +57,9 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
+  sunAstro: $("#sun-astro"),
+  sunAstroText: $("#sun-astro-text"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -663,14 +666,71 @@ function fmtTime(ts) {
 function renderSun(w) {
   el.sunRise.textContent = fmtTime(w.sunrise);
   el.sunSet.textContent = fmtTime(w.sunset);
+  let todayMins = null;
   if (w.sunrise && w.sunset) {
-    const mins = Math.round((w.sunset - w.sunrise) / 60_000);
-    const hh = Math.floor(mins / 60);
-    const mm = mins % 60;
+    todayMins = Math.round((w.sunset - w.sunrise) / 60_000);
+    const hh = Math.floor(todayMins / 60);
+    const mm = todayMins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+
+  // Daylight delta vs tomorrow.
+  if (el.sunDaylightDelta) {
+    const tmrw = w?.daily?.[1];
+    if (todayMins != null && tmrw?.sunrise && tmrw?.sunset) {
+      const tMins = Math.round((tmrw.sunset - tmrw.sunrise) / 60_000);
+      const delta = tMins - todayMins;
+      if (Math.abs(delta) >= 1) {
+        const sign = delta > 0 ? "+" : "−";
+        el.sunDaylightDelta.textContent = `${sign}${Math.abs(delta)}m tomorrow`;
+        el.sunDaylightDelta.dataset.dir = delta > 0 ? "up" : "down";
+      } else {
+        el.sunDaylightDelta.textContent = "";
+      }
+    } else {
+      el.sunDaylightDelta.textContent = "";
+    }
+  }
+
+  // Next solstice / equinox.
+  if (el.sunAstro && el.sunAstroText) {
+    const next = nextAstroEvent(new Date());
+    if (next) {
+      el.sunAstro.hidden = false;
+      el.sunAstroText.textContent = `${next.label} in ${next.days} day${next.days === 1 ? "" : "s"}`;
+    } else {
+      el.sunAstro.hidden = true;
+    }
+  }
+
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+// Astronomically close-enough dates for the four major sun events. We pick
+// the next one after `from` and report a day countdown. Dates are northern-
+// hemisphere conventions; the label includes "north" / "south" so southern-
+// hemisphere users still get the right framing.
+function nextAstroEvent(from) {
+  const events = [];
+  for (const year of [from.getFullYear(), from.getFullYear() + 1]) {
+    events.push({ ts: Date.UTC(year, 2, 20), key: "marequinox" });   // ~Mar 20
+    events.push({ ts: Date.UTC(year, 5, 21), key: "junsolstice" });  // ~Jun 21
+    events.push({ ts: Date.UTC(year, 8, 23), key: "sepequinox" });   // ~Sep 23
+    events.push({ ts: Date.UTC(year, 11, 21), key: "decsolstice" }); // ~Dec 21
+  }
+  const upcoming = events
+    .filter((e) => e.ts > from.getTime() - 12 * 3600_000)
+    .sort((a, b) => a.ts - b.ts)[0];
+  if (!upcoming) return null;
+  const days = Math.max(0, Math.round((upcoming.ts - from.getTime()) / 86400_000));
+  const labels = {
+    marequinox: "March equinox",
+    junsolstice: "June solstice",
+    sepequinox: "September equinox",
+    decsolstice: "December solstice",
+  };
+  return { label: labels[upcoming.key], days };
 }
 
 // Quadratic Bezier sample for the sun arc (sunrise → sunset).

@@ -1065,6 +1065,28 @@ kbd {
 }
 .sun-arc-noon { transition: opacity 600ms var(--ease); }
 
+.sun-daylight-delta {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  margin-top: 1px;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-dim);
+}
+.sun-daylight-delta[data-dir="up"] { color: #b9e4a5; }
+.sun-daylight-delta[data-dir="down"] { color: #f0bfa4; }
+.sun-daylight-delta:empty { display: none; }
+
+.sun-astro {
+  margin: 6px 2px 0;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+  border-top: 1px solid var(--stroke);
+  padding-top: 6px;
+}
+
 .sun-photo {
   margin: 6px 2px 0;
   padding: 4px 10px;
