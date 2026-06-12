@@ -81,6 +81,8 @@ const el = {
   pressureSparkFill: $("#pressure-spark-fill"),
   humiditySparkLine: $("#humidity-spark-line"),
   humiditySparkFill: $("#humidity-spark-fill"),
+  windSparkLine: $("#wind-spark-line"),
+  windSparkFill: $("#wind-spark-fill"),
   dailySpark: $("#daily-spark"),
   dailyHi: $("#daily-hi"),
   dailyLo: $("#daily-lo"),
@@ -437,6 +439,11 @@ function renderPressureSparkline(w) {
     el.humiditySparkLine, el.humiditySparkFill,
     (w.hourly || []).map((h) => h.humidity).filter((v) => v != null).slice(0, 12),
     { minSpan: 10, fixedMin: 0, fixedMax: 100 }
+  );
+  drawSparkline(
+    el.windSparkLine, el.windSparkFill,
+    (w.hourly || []).map((h) => h.wind).filter((v) => v != null).slice(0, 12),
+    { minSpan: 6, fixedMin: 0 }
   );
 }
 
