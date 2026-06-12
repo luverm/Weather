@@ -976,6 +976,42 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+.sun-arc-golden {
+  filter: drop-shadow(0 0 5px rgba(255,180,110,0.55));
+  transition: opacity 600ms var(--ease);
+}
+.sun-arc-blue {
+  filter: drop-shadow(0 0 4px rgba(120,160,255,0.65));
+  transition: opacity 600ms var(--ease);
+}
+.sun-arc-noon { transition: opacity 600ms var(--ease); }
+
+.sun-photo {
+  margin: 6px 2px 0;
+  padding: 4px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  color: var(--fg-muted);
+  background: rgba(255, 200, 130, 0.08);
+  border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+}
+.sun-photo[data-kind="blue"] {
+  background: rgba(120, 160, 255, 0.10);
+  color: #c8d8ff;
+}
+.sun-photo-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #ffd58a;
+  box-shadow: 0 0 6px rgba(255, 200, 130, 0.85);
+}
+.sun-photo[data-kind="blue"] .sun-photo-dot {
+  background: #86b3ff;
+  box-shadow: 0 0 6px rgba(120, 160, 255, 0.85);
+}
 
 /* ---------- Radar map ---------- */
 .radar {

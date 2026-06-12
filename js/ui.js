@@ -90,6 +90,14 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcGoldenAm: $("#sun-arc-golden-am"),
+  sunArcGoldenPm: $("#sun-arc-golden-pm"),
+  sunArcBlueAm: $("#sun-arc-blue-am"),
+  sunArcBluePm: $("#sun-arc-blue-pm"),
+  sunArcNoon: $("#sun-arc-noon"),
+  sunPhoto: $("#sun-photo"),
+  sunPhotoText: $("#sun-photo-text"),
+  sunPhotoDot: $("#sun-photo-dot"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -525,10 +533,72 @@ function renderSun(w) {
   scheduleSunArc(w);
 }
 
+// Quadratic Bezier sample for the sun arc (sunrise → sunset).
+// Curve: M10 74 Q100 -26 190 74 — keep in sync with the SVG path.
+function sunArcPoint(t) {
+  const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
+  const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
+  return [x, y];
+}
+
+function sunArcSegmentPath(t1, t2, steps = 8) {
+  const a = clamp01(t1);
+  const b = clamp01(t2);
+  if (b <= a) return "";
+  let d = "";
+  for (let i = 0; i <= steps; i++) {
+    const t = a + (b - a) * (i / steps);
+    const [x, y] = sunArcPoint(t);
+    d += (i === 0 ? "M" : " L") + x.toFixed(1) + "," + y.toFixed(1);
+  }
+  return d;
+}
+
 function scheduleSunArc(w) {
   if (!el.sunArcMarker || !el.sunArcPath) return;
   if (state.sunArcTimer) { clearInterval(state.sunArcTimer); state.sunArcTimer = null; }
   if (!w?.sunrise || !w?.sunset) return;
+
+  // Compute golden/blue hour bands once per render. Static over a day, so
+  // we set the paths up-front rather than recomputing each tick.
+  const daylight = w.sunset - w.sunrise;
+  if (daylight > 0) {
+    const goldenMs = 60 * 60_000;      // 60-min golden hour windows
+    const blueMs = 30 * 60_000;        // 30-min blue hour, just off the arc
+    const goldFrac = Math.min(0.45, goldenMs / daylight);
+    const blueFrac = Math.min(0.2, blueMs / daylight);
+    el.sunArcGoldenAm?.setAttribute("d", sunArcSegmentPath(0, goldFrac));
+    el.sunArcGoldenPm?.setAttribute("d", sunArcSegmentPath(1 - goldFrac, 1));
+    if (el.sunArcGoldenAm) el.sunArcGoldenAm.style.opacity = "0.75";
+    if (el.sunArcGoldenPm) el.sunArcGoldenPm.style.opacity = "0.75";
+
+    // Blue-hour markers sit just outside the lit arc on the horizon line.
+    const blueAmFrac = -blueFrac;
+    const blueAmX = (1 - blueAmFrac) ** 2 * 10 + 2 * (1 - blueAmFrac) * blueAmFrac * 100 + blueAmFrac ** 2 * 190;
+    if (el.sunArcBlueAm) {
+      el.sunArcBlueAm.setAttribute("cx", Math.max(4, blueAmX).toFixed(1));
+      el.sunArcBlueAm.setAttribute("cy", "74");
+      el.sunArcBlueAm.style.opacity = "0.7";
+    }
+    const bluePmT = 1 + blueFrac;
+    const bluePmX = (1 - bluePmT) ** 2 * 10 + 2 * (1 - bluePmT) * bluePmT * 100 + bluePmT ** 2 * 190;
+    if (el.sunArcBluePm) {
+      el.sunArcBluePm.setAttribute("cx", Math.min(196, bluePmX).toFixed(1));
+      el.sunArcBluePm.setAttribute("cy", "74");
+      el.sunArcBluePm.style.opacity = "0.7";
+    }
+
+    // Solar noon tick — show only when daylight is long enough that the
+    // morning and afternoon bands don't overlap at the apex.
+    if (el.sunArcNoon) {
+      const showNoon = goldFrac < 0.45;
+      el.sunArcNoon.style.opacity = showNoon ? "1" : "0";
+    }
+  } else {
+    // Polar night-like case: hide the lot.
+    [el.sunArcGoldenAm, el.sunArcGoldenPm, el.sunArcBlueAm, el.sunArcBluePm, el.sunArcNoon]
+      .forEach((n) => { if (n) n.style.opacity = "0"; });
+  }
 
   const update = () => {
     const now = Date.now();
@@ -542,20 +612,55 @@ function scheduleSunArc(w) {
     } else {
       frac = (now - sr) / (ss - sr);
     }
-    // Quadratic Bezier from (10,74) to (190,74) via (100,-26). The midpoint
-    // (50% t) reaches y = 0.5*(74) + 0.5*(74 + 2*(-26-74)/2*(...)) — easier
-    // to evaluate the curve directly.
     const t = clamp01(frac);
-    const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
-    const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
+    const [x, y] = sunArcPoint(t);
     el.sunArcMarker.setAttribute("cx", x.toFixed(1));
     el.sunArcMarker.setAttribute("cy", y.toFixed(1));
-    // After sunset, dim the marker so it visually settles.
     const isUp = now >= sr && now <= ss;
     el.sunArcMarker.style.opacity = isUp ? "1" : "0.45";
+    updatePhotoHour(w, now);
   };
   update();
   state.sunArcTimer = setInterval(update, 60_000);
+}
+
+// Renders the small "Golden hour in 1h 12m" caption beneath the sun arc.
+// Picks the next photographic window (morning golden, evening golden, or
+// the bracketing blue hours) and shows time-until / time-remaining.
+function updatePhotoHour(w, now = Date.now()) {
+  if (!el.sunPhoto || !el.sunPhotoText) return;
+  const days = w?.daily || [];
+  if (!days.length) { el.sunPhoto.hidden = true; return; }
+
+  const GOLDEN = 60 * 60_000;
+  const BLUE = 30 * 60_000;
+  const windows = [];
+  for (const d of days) {
+    if (d.sunrise) {
+      windows.push({ kind: "blue",   start: d.sunrise - BLUE,   end: d.sunrise });
+      windows.push({ kind: "golden", start: d.sunrise,          end: d.sunrise + GOLDEN });
+      windows.push({ kind: "golden", start: d.sunset - GOLDEN,  end: d.sunset });
+      windows.push({ kind: "blue",   start: d.sunset,           end: d.sunset + BLUE });
+    }
+  }
+  // Active window first, otherwise the next future one.
+  const active = windows.find((win) => now >= win.start && now < win.end);
+  const next = windows.filter((win) => win.start > now).sort((a, b) => a.start - b.start)[0];
+  const target = active || next;
+  if (!target) { el.sunPhoto.hidden = true; return; }
+
+  el.sunPhoto.hidden = false;
+  el.sunPhoto.dataset.kind = target.kind;
+  if (active) {
+    const left = Math.max(1, Math.round((target.end - now) / 60_000));
+    const label = target.kind === "golden" ? "Golden hour" : "Blue hour";
+    el.sunPhotoText.textContent = `${label} now · ${left}m left · ${fmtTime(target.end)}`;
+  } else {
+    const until = Math.max(0, Math.round((target.start - now) / 60_000));
+    const human = until >= 60 ? `${Math.floor(until / 60)}h ${until % 60}m` : `${until}m`;
+    const label = target.kind === "golden" ? "Golden hour" : "Blue hour";
+    el.sunPhotoText.textContent = `${label} in ${human} · ${fmtTime(target.start)}`;
+  }
 }
 
 function clamp01(v) { return Math.max(0, Math.min(1, v)); }

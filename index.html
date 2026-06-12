@@ -333,8 +333,20 @@
             <line x1="10" y1="74" x2="190" y2="74" stroke="var(--stroke)" stroke-dasharray="2 4"/>
             <path id="sun-arc-path" d="M10 74 Q100 -26 190 74"
                   fill="none" stroke="url(#sun-arc-grad)" stroke-width="1.5" stroke-linecap="round"/>
+            <path id="sun-arc-golden-am" class="sun-arc-golden" fill="none"
+                  stroke="#ffd58a" stroke-width="3" stroke-linecap="round" opacity="0"></path>
+            <path id="sun-arc-golden-pm" class="sun-arc-golden" fill="none"
+                  stroke="#ff9d6a" stroke-width="3" stroke-linecap="round" opacity="0"></path>
+            <circle id="sun-arc-blue-am" class="sun-arc-blue" r="1.8" fill="#86b3ff" opacity="0"/>
+            <circle id="sun-arc-blue-pm" class="sun-arc-blue" r="1.8" fill="#86b3ff" opacity="0"/>
+            <line id="sun-arc-noon" class="sun-arc-noon" x1="100" y1="22" x2="100" y2="30"
+                  stroke="rgba(255,240,200,0.55)" stroke-width="0.8" stroke-linecap="round" opacity="0"/>
             <circle id="sun-arc-marker" cx="10" cy="74" r="4.5" fill="#fff1c9"/>
           </svg>
+          <p id="sun-photo" class="sun-photo" hidden>
+            <span id="sun-photo-dot" class="sun-photo-dot" aria-hidden="true"></span>
+            <span id="sun-photo-text">—</span>
+          </p>
           <div class="sun-row">
             <div class="sun-item">
               <span class="sun-label">Rises</span>
