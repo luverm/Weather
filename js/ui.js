@@ -42,6 +42,14 @@ const el = {
   aqCard: $("#aq-card"),
   aqTrendLine: $("#aq-trend-line"),
   aqTrendFill: $("#aq-trend-fill"),
+  skyCard: $("#sky-card"),
+  skyArc: $("#sky-arc"),
+  skyValue: $("#sky-value"),
+  skyLabel: $("#sky-label"),
+  skyStatus: $("#sky-status"),
+  skyDetail: $("#sky-detail"),
+  skySparkLine: $("#sky-spark-line"),
+  skySparkFill: $("#sky-spark-fill"),
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
@@ -189,6 +197,7 @@ export const ui = {
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
+    renderSky(weather);
     renderMoon(weather.moon);
     renderSun(weather);
     renderHourly(weather);
@@ -469,6 +478,84 @@ function renderAirQuality(aq) {
   el.aqDetail.textContent =
     `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
   renderAqTrend(aq);
+}
+
+function renderSky(w) {
+  if (!el.skyCard) return;
+  const series = (w.hourly || [])
+    .slice(0, 12)
+    .map((h) => h.cloudCover)
+    .filter((v) => v != null);
+  const current = w.cloudCover != null ? w.cloudCover : series[0];
+  if (current == null || series.length < 2) {
+    el.skyCard.hidden = true;
+    return;
+  }
+  el.skyCard.hidden = false;
+  const v = Math.round(current);
+  el.skyValue.textContent = `${v}%`;
+  const label = cloudLabel(current);
+  el.skyLabel.textContent = label.label;
+  el.skyCard.style.color = label.color;
+  if (el.skyArc) {
+    const frac = Math.max(0, Math.min(1, current / 100));
+    el.skyArc.setAttribute("stroke-dashoffset", String(126 * (1 - frac)));
+  }
+  el.skyDetail.textContent = skyNarrative(w, series);
+  drawSparkline(el.skySparkLine, el.skySparkFill, series, {
+    fixedMin: 0, fixedMax: 100, minSpan: 10,
+  });
+  if (el.skyStatus) {
+    const t = skyTrend(series);
+    if (t) {
+      el.skyStatus.className = `trend ${t.cls}`;
+      el.skyStatus.textContent = t.label;
+    } else {
+      el.skyStatus.textContent = "";
+    }
+  }
+}
+
+function cloudLabel(v) {
+  if (v == null) return { label: "—", color: "#9aa4b2" };
+  if (v < 12) return { label: "Clear", color: "#9ad1ff" };
+  if (v < 30) return { label: "Mostly clear", color: "#bcd9ff" };
+  if (v < 60) return { label: "Partly cloudy", color: "#dadee6" };
+  if (v < 85) return { label: "Mostly cloudy", color: "#aab1bd" };
+  return { label: "Overcast", color: "#8a8f99" };
+}
+
+function skyTrend(series) {
+  if (series.length < 3) return null;
+  const first = series.slice(0, 3).reduce((a, b) => a + b, 0) / 3;
+  const last = series.slice(-3).reduce((a, b) => a + b, 0) / 3;
+  const delta = last - first;
+  if (Math.abs(delta) < 15) return { label: "steady", cls: "flat" };
+  if (delta < 0) return { label: "clearing", cls: "down" };
+  return { label: "clouding", cls: "up" };
+}
+
+function skyNarrative(w, series) {
+  // Look ahead 12h for the next significant transition.
+  const hours = (w.hourly || []).slice(0, 12);
+  if (hours.length < 3) return "";
+  const cur = hours[0]?.cloudCover ?? 0;
+  // Find next hour where cloud cover crosses a meaningful threshold relative to now.
+  let cross = null;
+  for (let i = 1; i < hours.length; i++) {
+    const v = hours[i].cloudCover;
+    if (v == null) continue;
+    if (cur < 40 && v >= 65) { cross = { i, kind: "clouding" }; break; }
+    if (cur > 60 && v <= 30) { cross = { i, kind: "clearing" }; break; }
+  }
+  if (cross) {
+    const hr = fmtTime(hours[cross.i].time);
+    return cross.kind === "clearing" ? `Clearing by ${hr}` : `Clouding up by ${hr}`;
+  }
+  const min = Math.min(...series);
+  const max = Math.max(...series);
+  if (max - min < 20) return `Steady ${Math.round((min + max) / 2)}% cover`;
+  return `${Math.round(min)}–${Math.round(max)}% over next 12h`;
 }
 
 function renderAqTrend(aq) {

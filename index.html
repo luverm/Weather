@@ -318,6 +318,29 @@
           <ul id="activity-list" class="activity-list"></ul>
         </div>
 
+        <div class="extra-card glass" id="sky-card" hidden>
+          <span class="metric-label">Sky <span id="sky-status" class="trend" aria-hidden="true"></span></span>
+          <div class="sky-row">
+            <div class="sky-dial" aria-hidden="true">
+              <svg viewBox="0 0 48 48">
+                <circle cx="24" cy="24" r="20" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="4"/>
+                <circle id="sky-arc" cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="4"
+                        stroke-linecap="round" stroke-dasharray="126" stroke-dashoffset="126"
+                        transform="rotate(-90 24 24)"/>
+              </svg>
+              <span id="sky-value" class="aq-value">—</span>
+            </div>
+            <div class="sky-meta">
+              <strong id="sky-label">—</strong>
+              <span id="sky-detail" class="aq-detail">—</span>
+              <svg id="sky-spark" class="aq-trend" viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true">
+                <path id="sky-spark-fill" fill="currentColor" fill-opacity="0.16"></path>
+                <path id="sky-spark-line" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+
         <div class="extra-card glass" id="sun-card">
           <span class="metric-label"><span id="sun-next-label">Sun</span> <span id="sun-countdown" class="sun-countdown"></span></span>
           <svg id="sun-arc" class="sun-arc" viewBox="0 0 200 84" aria-hidden="true">

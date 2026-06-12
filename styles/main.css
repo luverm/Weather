@@ -957,6 +957,12 @@ kbd {
   opacity: 0.85;
 }
 
+.sky-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
+.sky-dial { position: relative; width: 48px; height: 48px; color: #9ad1ff; }
+.sky-dial svg { width: 48px; height: 48px; display: block; }
+.sky-meta { display: grid; gap: 2px; min-width: 0; }
+.sky-meta strong { font-size: 14px; font-weight: 500; color: var(--fg); }
+#sky-value { font-size: 12px; }
 .moon-row, .sun-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
 .moon-svg { width: 48px; height: 48px; }
 .moon-meta strong { display: block; font-size: 14px; font-weight: 500; }
