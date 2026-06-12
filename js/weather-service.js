@@ -327,7 +327,8 @@ function findUvPeak(hourly) {
 }
 
 // Conway's simplified moon-phase algorithm — accurate enough for UI glyphs.
-// Returns { phase: 0..1, name: "Waxing crescent", illum: 0..1 }
+// Returns { phase: 0..1, name: "Waxing crescent", illum: 0..1,
+//           daysToFull, daysToNew }
 function computeMoonPhase(date) {
   const year = date.getUTCFullYear();
   const month = date.getUTCMonth() + 1;
@@ -350,7 +351,14 @@ function computeMoonPhase(date) {
     phase < 0.72 ? "Waning gibbous" :
     phase < 0.78 ? "Last quarter" :
     "Waning crescent";
-  return { phase, illum, name };
+  const cycle = 29.5305882;
+  const daysToFull = ((0.5 - phase) + 1) % 1 * cycle;
+  const daysToNew = ((1 - phase) + 1) % 1 * cycle;
+  return {
+    phase, illum, name,
+    daysToFull: Math.round(daysToFull),
+    daysToNew: Math.round(daysToNew),
+  };
 }
 
 function mock(lat, lon) {
