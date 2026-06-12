@@ -28,6 +28,7 @@ const el = {
   vibeScore: $("#vibe-score"),
   vibeLabel: $("#vibe-label"),
   vibeNote: $("#vibe-note"),
+  vibePeak: $("#vibe-peak"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
@@ -1414,6 +1415,48 @@ function renderVibe(w) {
   el.vibeLabel.textContent = label;
   el.vibe.dataset.tier = vibe.tier;
   el.vibeNote.textContent = vibe.note ? `· ${vibe.note}` : "";
+
+  renderVibePeak(w, vibe);
+}
+
+// Finds the best 2-hour vibe window in the next ~12 hours and surfaces it
+// as a clickable pill so the user can jump there with the scrubber.
+function renderVibePeak(w, currentVibe) {
+  if (!el.vibePeak) return;
+  const hours = (w.hourly || []).slice(0, 14);
+  if (hours.length < 3) { el.vibePeak.hidden = true; return; }
+  const aqi = w.airQuality?.aqi;
+  // Score each hour; rolling 2-hour average to find a stable window.
+  const scores = hours.map((h) => hourlyVibe(h, { aqi })?.score ?? 0);
+  let best = { score: -1, idx: 0 };
+  for (let i = 0; i + 1 < scores.length; i++) {
+    const avg2 = (scores[i] + scores[i + 1]) / 2;
+    if (avg2 > best.score) best = { score: avg2, idx: i };
+  }
+  // Only surface a peak that's meaningfully better than now, ahead of now,
+  // and reasonably pleasant on its own.
+  const now = Date.now();
+  const peakStart = hours[best.idx]?.time;
+  const peakEnd = hours[best.idx + 1]?.time;
+  if (
+    !peakStart ||
+    peakStart < now + 30 * 60_000 ||
+    best.score < (currentVibe?.score ?? 0) + 8 ||
+    best.score < 55
+  ) {
+    el.vibePeak.hidden = true;
+    return;
+  }
+  el.vibePeak.hidden = false;
+  el.vibePeak.dataset.ts = String(peakStart);
+  el.vibePeak.innerHTML =
+    `<span class="vibe-peak-icon" aria-hidden="true">↑</span>` +
+    `Best later · <strong>${fmtTime(peakStart)}–${fmtTime(peakEnd)}</strong>` +
+    ` · ${Math.round(best.score)}`;
+  el.vibePeak.onclick = () => {
+    const ts = parseInt(el.vibePeak.dataset.ts, 10);
+    if (ts) state.handlers.onHourClick?.(ts);
+  };
 }
 
 function renderRainTotal(w) {
