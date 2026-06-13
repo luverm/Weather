@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { buildDayTimeline } from "./day-timeline.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -88,6 +89,12 @@ const el = {
   activityCard: $("#activity-card"),
   activityList: $("#activity-list"),
   alertsStrip: $("#alerts-strip"),
+  dayTimeline: $("#day-timeline"),
+  dayTimelineSub: $("#day-timeline-sub"),
+  dayTimelineDaylight: $("#day-timeline-daylight"),
+  dayTimelineNow: $("#day-timeline-now"),
+  dayTimelineEvents: $("#day-timeline-events"),
+  dayTimelineAxis: $("#day-timeline-axis"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
   comfortStrip: $("#comfort-strip"),
@@ -192,6 +199,7 @@ export const ui = {
     renderInsights(weather);
     renderActivity(weather);
     renderAlerts(weather);
+    renderDayTimeline(weather);
     renderWeekend(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
@@ -719,6 +727,95 @@ function renderAlerts(w) {
       if (ts) state.handlers.onHourClick?.(ts);
     });
   });
+}
+
+function renderDayTimeline(w) {
+  if (!el.dayTimeline || !el.dayTimelineEvents) return;
+  const tl = buildDayTimeline(w);
+  if (!tl || !tl.events.length) {
+    el.dayTimeline.hidden = true;
+    el.dayTimelineEvents.innerHTML = "";
+    el.dayTimelineAxis.innerHTML = "";
+    return;
+  }
+  el.dayTimeline.hidden = false;
+
+  // Daylight band(s): use the largest segment for the gradient sweep.
+  if (el.dayTimelineDaylight) {
+    const main = tl.daylight.reduce((best, d) =>
+      !best || (d.toPct - d.fromPct) > (best.toPct - best.fromPct) ? d : best, null);
+    if (main && main.toPct - main.fromPct > 4) {
+      el.dayTimelineDaylight.style.display = "";
+      el.dayTimelineDaylight.style.left = `${main.fromPct}%`;
+      el.dayTimelineDaylight.style.width = `${main.toPct - main.fromPct}%`;
+    } else {
+      el.dayTimelineDaylight.style.display = "none";
+    }
+  }
+
+  // "Now" marker.
+  if (el.dayTimelineNow) {
+    el.dayTimelineNow.style.left = `${tl.nowPct}%`;
+  }
+
+  // Tick axis.
+  if (el.dayTimelineAxis) {
+    el.dayTimelineAxis.innerHTML = tl.ticks.map(({ hour, pct }) => {
+      const label = hour === 0 ? "now" : `+${hour}h`;
+      return `<span style="left:${pct}%">${label}</span>`;
+    }).join("");
+  }
+
+  // Subhead summary.
+  if (el.dayTimelineSub) {
+    const types = new Set(tl.events.map((e) => e.kind));
+    const parts = [];
+    if (types.has("rain") || types.has("snow")) parts.push("rain ahead");
+    if (types.has("wind")) parts.push("windy");
+    if (types.has("uv")) parts.push("strong UV");
+    if (types.has("sun")) parts.push("light changes");
+    el.dayTimelineSub.textContent = parts.length
+      ? `${tl.events.length} moments · ${parts.join(" · ")}`
+      : `${tl.events.length} moments`;
+  }
+
+  // Events.
+  el.dayTimelineEvents.innerHTML = tl.events.map((e) => `
+    <button class="day-timeline-event" type="button"
+            data-ts="${e.ts}" data-kind="${e.kind}" data-lane="${e.lane}"
+            style="left:${e.pct}%"
+            title="${escapeHtml(e.label)} · ${escapeHtml(e.value)} (${shortClockLocal(e.ts)})"
+            aria-label="${escapeHtml(e.label)} ${escapeHtml(e.value)} at ${shortClockLocal(e.ts)}">
+      <span class="dt-glyph" aria-hidden="true">${timelineIcon(e.icon)}</span>
+      <span class="dt-pin" aria-hidden="true"></span>
+      <span class="dt-label"><strong>${escapeHtml(e.value)}</strong>${escapeHtml(shortClockLocal(e.ts))}</span>
+    </button>
+  `).join("");
+  el.dayTimelineEvents.querySelectorAll(".day-timeline-event").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const ts = parseInt(btn.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
+}
+
+function shortClockLocal(ts) {
+  if (!ts) return "";
+  return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+}
+
+function timelineIcon(name) {
+  switch (name) {
+    case "sunrise": return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="4"/><path d="M3 19h18M12 4v2M5.5 8l1.4 1.4M18.5 8l-1.4 1.4M8 18l4-4 4 4"/></svg>';
+    case "sunset":  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="4"/><path d="M3 19h18M12 4v2M5.5 8l1.4 1.4M18.5 8l-1.4 1.4M16 14l-4 4-4-4"/></svg>';
+    case "warm":    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.5 5.5L7 7M17 17l1.5 1.5M5.5 18.5L7 17M17 7l1.5-1.5"/></svg>';
+    case "cool":    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6l2-9 2 9h6M7 18c2-2 4-2 5 0s3 2 5 0"/></svg>';
+    case "uv":      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.5"/><path d="M12 4v2M12 18v2M4 12h2M18 12h2M6.5 6.5L8 8M16 16l1.5 1.5"/></svg>';
+    case "wind":    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h12a3 3 0 100-6M3 15h16a3 3 0 100-6M3 20h9a3 3 0 100-6"/></svg>';
+    case "rain":    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 14a4 4 0 010-8 5 5 0 019.9-1A4 4 0 0117 14H7z"/><path d="M9 18l-1 2M13 18l-1 2M17 18l-1 2"/></svg>';
+    case "snow":    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 7l14 10M19 7L5 17M3 12h18"/></svg>';
+    default:        return "";
+  }
 }
 
 function getDismissedAlerts() {

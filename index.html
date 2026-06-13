@@ -113,6 +113,21 @@
     <!-- Smart alerts strip (synthesized from forecast). -->
     <div id="alerts-strip" class="alerts-strip" role="region" aria-label="Weather alerts" hidden></div>
 
+    <!-- Today timeline: next 12h notable moments at a glance. -->
+    <section id="day-timeline" class="day-timeline glass" aria-label="Next 12 hours timeline" hidden>
+      <div class="day-timeline-head">
+        <span class="day-timeline-title">Next 12 hours</span>
+        <span id="day-timeline-sub" class="day-timeline-sub"></span>
+      </div>
+      <div class="day-timeline-track" id="day-timeline-track">
+        <div class="day-timeline-daylight" id="day-timeline-daylight"></div>
+        <div class="day-timeline-rail"></div>
+        <div class="day-timeline-now" id="day-timeline-now" aria-hidden="true"><span>now</span></div>
+        <div class="day-timeline-events" id="day-timeline-events"></div>
+        <div class="day-timeline-axis" id="day-timeline-axis" aria-hidden="true"></div>
+      </div>
+    </section>
+
     <section class="hero">
       <div class="hero-inner glass" data-tilt>
         <div class="place">
