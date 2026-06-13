@@ -881,6 +881,14 @@ html[data-reduce-motion="true"] *::after {
   color: var(--fg-dim);
   margin-left: 6px;
 }
+.chart-popover .hcp-comfort {
+  margin-left: 0;
+  font-weight: 600;
+}
+.chart-popover .hcp-comfort[data-tier="good"] { color: #78d06a; }
+.chart-popover .hcp-comfort[data-tier="ok"]   { color: #ffd36a; }
+.chart-popover .hcp-comfort[data-tier="low"]  { color: #ff9f5c; }
+.chart-popover .hcp-comfort[data-tier="bad"]  { color: #ff7a7a; }
 .chart-hover {
   font-size: 12px;
   color: var(--fg);

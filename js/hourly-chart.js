@@ -9,13 +9,14 @@ const PAD_TOP = 16;
 const PAD_BOT = 22;
 
 export class HourlyChart {
-  constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit, getTimezone }) {
+  constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit, getTimezone, getComfort }) {
     this.svg = svgEl;
     this.hoverEl = hoverEl;
     this.popover = popoverEl;
     this.onHoverHour = onHoverHour;
     this.getUnit = getUnit || (() => "C");
     this.getTimezone = getTimezone || (() => null);
+    this.getComfort = getComfort || (() => null);
     this.hours = [];
     this.points = [];
     this._bind();
@@ -181,9 +182,15 @@ export class HourlyChart {
       ? `<em>feels ${Math.round(feels)}°</em>` : "";
     const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
+    const comfort = this.getComfort?.(h);
+    const comfortRow = comfort != null
+      ? `<br><em class="hcp-comfort" data-tier="${
+          comfort >= 70 ? "good" : comfort >= 50 ? "ok" : comfort >= 30 ? "low" : "bad"
+        }">Comfort ${comfort}</em>`
+      : "";
     this.popover.innerHTML =
       `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
-      `<em>${h.pop}% precip${wind}${hum}</em>`;
+      `<em>${h.pop}% precip${wind}${hum}</em>${comfortRow}`;
     this.popover.style.left = `${pxX.toFixed(1)}px`;
     this.popover.style.top = `${pxY.toFixed(1)}px`;
     this.popover.hidden = false;

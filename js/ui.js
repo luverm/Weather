@@ -166,6 +166,16 @@ export const ui = {
       onHoverHour: (ts) => state.handlers.onHourClick?.(ts),
       getUnit: () => state.unit,
       getTimezone: () => state.weather?.timezone,
+      getComfort: (h) => {
+        const w = state.weather;
+        if (!w) return null;
+        return computeComfortScore({
+          temp: h.temp, feelsLike: h.feelsLike,
+          windSpeed: h.wind, windGusts: h.gusts,
+          dewPoint: w.dewPoint, humidity: h.humidity,
+          isDay: h.isDay, condition: h.condition, uv: h.uv,
+        })?.score ?? null;
+      },
     });
     state.comfortStrip = new ComfortStrip({
       rootEl: el.comfortStrip,
