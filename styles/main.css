@@ -1810,6 +1810,14 @@ kbd {
   transition: background 200ms var(--ease);
 }
 .daily-item:hover { background: var(--glass); }
+.daily-item.flash {
+  animation: daily-flash 1300ms var(--ease);
+}
+@keyframes daily-flash {
+  0%   { background: color-mix(in srgb, var(--accent) 36%, transparent); }
+  60%  { background: color-mix(in srgb, var(--accent) 16%, transparent); }
+  100% { background: transparent; }
+}
 .daily-day { font-size: 13px; font-weight: 500; }
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
 .daily-range {

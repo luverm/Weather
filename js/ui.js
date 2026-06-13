@@ -1110,7 +1110,22 @@ function renderRainBudget(days, w) {
   el.rainBudgetBar.querySelectorAll(".rain-budget-cell").forEach((btn) => {
     btn.addEventListener("click", () => {
       const ts = parseInt(btn.dataset.ts, 10);
-      if (ts) state.handlers.onHourClick?.(ts);
+      if (!ts) return;
+      // Today and tomorrow are still in the 24h hourly range, so scrubbing
+      // gives a real preview. Anything further would just clamp the scrubber
+      // at its far edge — for those days we scroll the user to the matching
+      // daily row and flash it instead.
+      const inScrubRange = ts < Date.now() + 28 * 3600_000;
+      if (inScrubRange) {
+        state.handlers.onHourClick?.(ts);
+        return;
+      }
+      const row = el.dailyTrack?.querySelector(`.daily-item[data-ts="${ts}"]`);
+      if (!row) return;
+      row.scrollIntoView({ behavior: "smooth", block: "center" });
+      row.classList.remove("flash"); void row.offsetWidth;
+      row.classList.add("flash");
+      setTimeout(() => row.classList.remove("flash"), 1400);
     });
   });
 
