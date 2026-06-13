@@ -195,7 +195,7 @@ const scrubber = new Scrubber({
 });
 
 // ---------- Load flow ----------
-async function loadByCoords(place) {
+async function loadByCoords(place, { updateUrl = true } = {}) {
   app.place = place;
   ui.setPlace(place);
   ui.setLoading(`Fetching weather for ${place.name}…`);
@@ -203,6 +203,8 @@ async function loadByCoords(place) {
   // Drop any scrubber offset so we start live on each new city.
   clock.reset();
   ui.setScrubbing(false);
+
+  if (updateUrl) syncUrl(place);
 
   const w = await getWeather(place.lat, place.lon);
   app.weather = w;
@@ -218,6 +220,35 @@ async function loadByCoords(place) {
 
   // Move the radar to the new location (fire-and-forget; resolves later).
   ensureRadar([place.lat, place.lon]).then((r) => r?.setCenter(place.lat, place.lon, place.name));
+}
+
+function syncUrl(place) {
+  if (!place || place.lat == null || place.lon == null) return;
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set("lat", place.lat.toFixed(3));
+    url.searchParams.set("lon", place.lon.toFixed(3));
+    if (place.name) url.searchParams.set("name", place.name);
+    else url.searchParams.delete("name");
+    if (place.country) url.searchParams.set("country", place.country);
+    else url.searchParams.delete("country");
+    window.history.replaceState({}, "", url.toString());
+  } catch { /* ignore */ }
+}
+
+function placeFromUrl() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const lat = parseFloat(params.get("lat"));
+    const lon = parseFloat(params.get("lon"));
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+    if (Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
+    return {
+      name: params.get("name") || "Pinned location",
+      country: params.get("country") || undefined,
+      lat, lon,
+    };
+  } catch { return null; }
 }
 
 async function useGeolocation() {
@@ -306,7 +337,14 @@ installShortcuts({
 
 // ---------- Start ----------
 (async function init() {
-  // Prefer the most recent saved place if we have one — avoids the geolocation
+  // Deep link wins over everything: a shared ?lat&lon URL should restore that
+  // exact view without overwriting it with the user's geolocation.
+  const linked = placeFromUrl();
+  if (linked) {
+    await loadByCoords(linked);
+    return;
+  }
+  // Otherwise prefer the most recent saved place — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();
   if (saved.length) {
@@ -320,6 +358,11 @@ installShortcuts({
     await loadByCoords({ name: "Reykjavík", country: "Iceland", lat: 64.1466, lon: -21.9426 });
   }
 })();
+
+window.addEventListener("popstate", () => {
+  const linked = placeFromUrl();
+  if (linked) loadByCoords(linked, { updateUrl: false });
+});
 
 // ---------- Lifecycle ----------
 document.addEventListener("visibilitychange", () => {
