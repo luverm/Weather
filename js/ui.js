@@ -11,6 +11,7 @@ import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { buildDayTimeline } from "./day-timeline.js";
+import { computeComfortScore } from "./comfort.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -55,6 +56,11 @@ const el = {
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
+  comfort: $("#comfort"),
+  comfortScore: $("#comfort-score"),
+  comfortLabel: $("#comfort-label"),
+  comfortDetail: $("#comfort-detail"),
+  comfortArc: $("#comfort-arc"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
   pollenCard: $("#pollen-card"),
@@ -204,6 +210,7 @@ export const ui = {
     renderDaily(weather);
     renderNowcast(weather);
     renderAdvice(weather);
+    renderComfort(weather);
     renderPollen(weather.pollen);
     renderTrends(weather);
     renderInsights(weather);
@@ -231,6 +238,7 @@ export const ui = {
     renderLiveValues(sampled, { animate: false });
     renderMetrics(sampled);
     renderAdvice(sampled);
+    renderComfort(sampled);
     highlightHour(highlightHourIndex);
     if (state.comfortStrip) state.comfortStrip.highlight(highlightHourIndex);
     if (state.chart && sampled._sampledTs != null) {
@@ -672,6 +680,30 @@ function renderAdvice(w) {
     el.advice.hidden = false;
   } else {
     el.advice.hidden = true;
+  }
+}
+
+function renderComfort(w) {
+  if (!el.comfort) return;
+  const r = computeComfortScore(w);
+  if (!r) { el.comfort.hidden = true; return; }
+  el.comfort.hidden = false;
+  el.comfort.dataset.tier =
+    r.score >= 70 ? "good" :
+    r.score >= 50 ? "ok"   :
+    r.score >= 30 ? "low"  : "bad";
+  if (el.comfortScore) el.comfortScore.textContent = String(r.score);
+  if (el.comfortLabel) el.comfortLabel.textContent = r.label;
+  if (el.comfortDetail) {
+    el.comfortDetail.textContent = r.weakest
+      ? `outdoors · weakest: ${r.weakest}`
+      : "outdoor comfort";
+  }
+  if (el.comfortArc) {
+    // r=9.5 → circumference ≈ 59.69; we round to 60 in the SVG dasharray.
+    const total = 60;
+    el.comfortArc.setAttribute("stroke-dashoffset",
+      String((total * (1 - r.score / 100)).toFixed(2)));
   }
 }
 

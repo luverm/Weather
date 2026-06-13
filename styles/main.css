@@ -717,6 +717,55 @@ html[data-reduce-motion="true"] *::after {
 }
 .advice-icon { color: var(--accent); flex: 0 0 auto; }
 
+/* ---------- Comfort score pill ---------- */
+.comfort-pill {
+  margin: 10px 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 12px 4px 4px;
+  border-radius: 999px;
+  background: var(--glass);
+  border: 1px solid var(--stroke);
+  animation: slideInUp 540ms var(--ease) both;
+  color: var(--fg);
+}
+.comfort-pill[hidden] { display: none; }
+.comfort-ring {
+  position: relative;
+  width: 32px; height: 32px;
+  display: inline-grid; place-items: center;
+  color: var(--accent);
+  transition: color 240ms var(--ease);
+}
+.comfort-ring svg { width: 32px; height: 32px; display: block; }
+.comfort-score {
+  position: absolute;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+.comfort-text {
+  display: inline-flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+.comfort-text strong {
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  font-weight: 600;
+}
+.comfort-detail {
+  font-size: 10.5px;
+  color: var(--fg-muted);
+  letter-spacing: 0.02em;
+}
+.comfort-pill[data-tier="good"] .comfort-ring { color: #78d06a; }
+.comfort-pill[data-tier="ok"]   .comfort-ring { color: #ffd36a; }
+.comfort-pill[data-tier="low"]  .comfort-ring { color: #ff9f5c; }
+.comfort-pill[data-tier="bad"]  .comfort-ring { color: #ff7a7a; }
+
 /* ---------- Hourly chart ---------- */
 .chart-card {
   padding: 12px 14px 10px;
