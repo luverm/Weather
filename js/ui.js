@@ -1028,6 +1028,7 @@ function renderDaily(w) {
     if (d.tempMax > gMax) gMax = d.tempMax;
   }
   const span = Math.max(1, gMax - gMin);
+  const bestIdx = pickBestDay(days);
   days.forEach((d, i) => {
     const dt = new Date(d.time);
     const tz = state.weather?.timezone;
@@ -1039,12 +1040,17 @@ function renderDaily(w) {
     const width = ((d.tempMax - d.tempMin) / span) * 100;
     const item = document.createElement("div");
     item.className = "daily-item";
+    if (i === bestIdx) item.classList.add("daily-best");
     item.dataset.ts = d.time;
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
-    const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const bestLabel = i === bestIdx
+      ? '<span class="daily-best-badge" aria-label="Best day this week"><svg viewBox="0 0 16 16" width="11" height="11" fill="currentColor" aria-hidden="true"><path d="M8 1.5l1.96 4.1 4.54.5-3.4 3.06.9 4.44L8 11.5l-3.99 2.1.9-4.44L1.5 6.1l4.54-.5z"/></svg> Pick of the week</span>'
+      : "";
+    const extra = bestLabel || gustLabel || popLabel
+      ? `<span class="daily-gust">${bestLabel}${popLabel}${gustLabel}</span>` : "";
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
@@ -1058,6 +1064,27 @@ function renderDaily(w) {
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+}
+
+// Score each upcoming day by comfort + dryness + brightness, then return the
+// index of the standout. Returns -1 if nothing stands out from the pack.
+function pickBestDay(days) {
+  if (!days?.length) return -1;
+  let best = -1, bestScore = -Infinity;
+  days.forEach((d, i) => {
+    if (d.tempMax == null) return;
+    const t = d.tempMax;
+    // Sweet-spot bell curve peaking around 22°C; ±10° penalises symmetrically.
+    const tempScore = Math.max(0, 1 - Math.abs(t - 22) / 18);
+    const dryScore = Math.max(0, 1 - Math.min(1, (d.precip ?? 0) / 6));
+    const popScore = Math.max(0, 1 - Math.min(1, (d.pop ?? 0) / 100));
+    const clearBonus = d.condition === "clear" ? 0.2 : d.condition === "clouds" ? 0.05 : 0;
+    const score = tempScore * 0.45 + dryScore * 0.25 + popScore * 0.2 + clearBonus;
+    if (score > bestScore) { bestScore = score; best = i; }
+  });
+  // Only surface the badge if it's meaningfully better than the average day.
+  if (bestScore < 0.55) return -1;
+  return best;
 }
 
 function renderDailyIconStrip(days) {

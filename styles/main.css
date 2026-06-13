@@ -1825,6 +1825,22 @@ kbd {
 .daily-item.flash {
   animation: daily-flash 1300ms var(--ease);
 }
+.daily-item.daily-best {
+  background: linear-gradient(90deg,
+    color-mix(in srgb, #ffd39a 14%, transparent),
+    transparent 70%);
+  box-shadow: inset 2px 0 0 0 #ffd39a;
+}
+.daily-best-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #ffd39a;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.daily-best-badge svg { flex: 0 0 auto; }
+.daily-best-badge + .daily-gust-text { color: var(--fg-muted); }
 @keyframes daily-flash {
   0%   { background: color-mix(in srgb, var(--accent) 36%, transparent); }
   60%  { background: color-mix(in srgb, var(--accent) 16%, transparent); }
