@@ -106,6 +106,8 @@ export class HourlyChart {
       }
       return best;
     };
+    let dragging = false;
+    let lastScrubbedIndex = -1;
     this.svg.addEventListener("pointermove", (e) => {
       if (!this.hours.length) return;
       const i = toHourIndex(e);
@@ -118,6 +120,12 @@ export class HourlyChart {
       cursor.setAttribute("x1", p.x); cursor.setAttribute("x2", p.x);
       dot.setAttribute("cx", p.x); dot.setAttribute("cy", p.y);
       this._positionPopover(p, h);
+      // Live scrub while dragging — only fire when the snapped hour changes
+      // so we don't spam handlers with same-index repeats.
+      if (dragging && i !== lastScrubbedIndex) {
+        lastScrubbedIndex = i;
+        this.onHoverHour?.(this.hours[i].time);
+      }
     });
     this.svg.addEventListener("pointerleave", () => {
       if (this.hoverEl) this.hoverEl.hidden = true;
@@ -126,11 +134,26 @@ export class HourlyChart {
         this.popover.hidden = true;
       }
     });
-    this.svg.addEventListener("click", (e) => {
+    this.svg.addEventListener("pointerdown", (e) => {
+      // Left button only; ignore right-click/middle-click.
+      if (e.button !== 0) return;
       const i = toHourIndex(e);
       if (i < 0) return;
+      dragging = true;
+      lastScrubbedIndex = i;
+      this.svg.setPointerCapture?.(e.pointerId);
+      this.svg.classList.add("dragging");
       this.onHoverHour?.(this.hours[i].time);
     });
+    const endDrag = (e) => {
+      if (!dragging) return;
+      dragging = false;
+      lastScrubbedIndex = -1;
+      this.svg.classList.remove("dragging");
+      this.svg.releasePointerCapture?.(e.pointerId);
+    };
+    this.svg.addEventListener("pointerup", endDrag);
+    this.svg.addEventListener("pointercancel", endDrag);
   }
 
   _showHover(h) {

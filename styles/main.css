@@ -884,6 +884,8 @@ html[data-reduce-motion="true"] *::after {
   cursor: crosshair;
   touch-action: pan-y;
 }
+.chart-svg.dragging { cursor: ew-resize; touch-action: none; }
+.chart-svg.dragging .chart-cursor { opacity: 1; stroke-dasharray: none; }
 .chart-temp-line { filter: drop-shadow(0 1px 3px rgba(154, 209, 255, 0.35)); }
 .chart-precip rect {
   fill: rgba(154, 209, 255, 0.42);
