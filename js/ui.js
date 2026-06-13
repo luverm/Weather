@@ -687,6 +687,22 @@ function renderAdvice(w) {
   }
 }
 
+function narrateDay(d) {
+  if (!d) return "";
+  const lo = d.tempMin != null ? `${Math.round(convertTemp(d.tempMin))}°` : "—";
+  const hi = d.tempMax != null ? `${Math.round(convertTemp(d.tempMax))}°` : "—";
+  const cond = d.label || capitalize(d.condition || "");
+  const bits = [];
+  bits.push(`${cond} from ${lo} to ${hi}.`);
+  if ((d.precip ?? 0) >= 8) bits.push(`Heavy ${(d.precip ?? 0).toFixed(1)} mm total.`);
+  else if ((d.precip ?? 0) >= 2) bits.push(`Around ${(d.precip ?? 0).toFixed(1)} mm of rain.`);
+  else if ((d.pop ?? 0) >= 50) bits.push(`Showers possible (${d.pop}%).`);
+  if ((d.gustsMax ?? 0) >= 50) bits.push(`Strong gusts to ${Math.round(d.gustsMax)} km/h.`);
+  else if ((d.gustsMax ?? 0) >= 30) bits.push(`Gusts to ${Math.round(d.gustsMax)} km/h.`);
+  if ((d.uvMax ?? 0) >= 8) bits.push(`Burning UV (${Math.round(d.uvMax)}).`);
+  return bits.slice(0, 2).join(" ");
+}
+
 function comfortTier(score) {
   if (score == null) return "none";
   if (score >= 70) return "good";
@@ -1366,9 +1382,13 @@ function toggleDailyExpand(item, d, w) {
   if (!hrs.length) {
     // For days beyond the 24h hourly range, just show summary text.
     const summary = document.createElement("div");
-    summary.className = "daily-expand";
+    summary.className = "daily-expand daily-expand-text";
     summary.style.gridTemplateColumns = "1fr";
-    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${Math.round(d.gustsMax ?? 0)} km/h · UV ${Math.round(d.uvMax ?? 0)}</span>`;
+    const story = narrateDay(d);
+    summary.innerHTML = `
+      ${story ? `<span class="daily-story">${escapeHtml(story)}</span>` : ""}
+      <span class="daily-summary-line">Pop ${d.pop}% · gust up to ${Math.round(d.gustsMax ?? 0)} km/h · UV ${Math.round(d.uvMax ?? 0)}</span>
+    `;
     item.appendChild(summary);
     item.dataset.expanded = "true";
     return;
