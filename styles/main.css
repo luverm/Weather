@@ -1907,7 +1907,18 @@ kbd {
   60%  { background: color-mix(in srgb, var(--accent) 16%, transparent); }
   100% { background: transparent; }
 }
-.daily-day { font-size: 13px; font-weight: 500; }
+.daily-day { font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 7px; }
+.daily-comfort-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: 0 0 auto;
+  box-shadow: 0 0 0 2px color-mix(in srgb, currentColor 24%, transparent);
+}
+.daily-comfort-dot[data-tier="good"] { color: #78d06a; }
+.daily-comfort-dot[data-tier="ok"]   { color: #ffd36a; }
+.daily-comfort-dot[data-tier="low"]  { color: #ff9f5c; }
+.daily-comfort-dot[data-tier="bad"]  { color: #ff7a7a; }
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
 .daily-range {
   position: relative;

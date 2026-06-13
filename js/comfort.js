@@ -84,3 +84,47 @@ export function computeComfortScore(weather) {
 
   return { score, label, weakest: weakest?.label };
 }
+
+// Rough daily comfort estimate from a day's summary stats. Less precise than
+// the hourly score above — we don't have humidity for each forecast day — but
+// good enough for the 7-day strip.
+export function computeDailyComfortScore(day) {
+  if (!day || day.tempMax == null || day.tempMin == null) return null;
+  const tMid = (day.tempMax + day.tempMin) / 2;
+  const tempScore = Math.exp(-Math.pow((tMid - 21) / 11, 2));
+
+  const gust = day.gustsMax ?? day.windMax ?? 0;
+  const windScore = gust <= 15 ? 1
+    : gust <= 30 ? 0.8
+    : gust <= 50 ? 0.5
+    : gust <= 70 ? 0.25
+    : 0.05;
+
+  const precip = day.precip ?? 0;
+  const pop = day.pop ?? 0;
+  const precipScore = precip < 0.5 && pop < 30 ? 1
+    : precip < 2 && pop < 60 ? 0.7
+    : precip < 8 ? 0.45
+    : precip < 20 ? 0.25
+    : 0.1;
+
+  const condScore =
+    day.condition === "storm" ? 0.1 :
+    day.condition === "snow"  ? 0.4 :
+    day.condition === "rain"  ? 0.55 :
+    day.condition === "fog"   ? 0.85 :
+    day.condition === "clouds" ? 0.95 :
+    1;
+
+  const uv = day.uvMax ?? 0;
+  const uvScore = uv <= 5 ? 1 : uv <= 8 ? 0.8 : uv <= 10 ? 0.55 : 0.3;
+
+  const blended =
+    tempScore  * 0.36 +
+    precipScore * 0.22 +
+    windScore  * 0.18 +
+    condScore  * 0.16 +
+    uvScore    * 0.08;
+  const severity = Math.min(windScore + 0.3, condScore + 0.3, precipScore + 0.3, 1);
+  return Math.round(Math.max(0, Math.min(1, blended * severity)) * 100);
+}

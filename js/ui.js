@@ -11,7 +11,7 @@ import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { buildDayTimeline } from "./day-timeline.js";
-import { computeComfortScore } from "./comfort.js";
+import { computeComfortScore, computeDailyComfortScore } from "./comfort.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -1094,8 +1094,12 @@ function renderDaily(w) {
       : "";
     const extra = bestLabel || gustLabel || popLabel
       ? `<span class="daily-gust">${bestLabel}${popLabel}${gustLabel}</span>` : "";
+    const dc = computeDailyComfortScore(d);
+    const dayDot = dc != null
+      ? `<span class="daily-comfort-dot" data-tier="${comfortTier(dc)}" title="Comfort ${dc}/100" aria-label="comfort score ${dc} out of 100"></span>`
+      : "";
     item.innerHTML = `
-      <span class="daily-day">${day}</span>
+      <span class="daily-day">${dayDot}${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
