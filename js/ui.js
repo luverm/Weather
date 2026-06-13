@@ -1206,9 +1206,25 @@ function pickBestDay(days) {
 
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
+  el.dailyIconStrip.removeAttribute("aria-hidden");
   el.dailyIconStrip.innerHTML = days.map((d) =>
-    `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
+    `<button class="strip-day" type="button" data-ts="${d.time}"
+             title="${escapeHtml(d.label || d.condition || "")} — tap to jump"
+             aria-label="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</button>`
   ).join("");
+  el.dailyIconStrip.querySelectorAll(".strip-day").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const ts = parseInt(btn.dataset.ts, 10);
+      const row = el.dailyTrack?.querySelector(`.daily-item[data-ts="${ts}"]`);
+      if (!row) return;
+      row.scrollIntoView({ behavior: "smooth", block: "center" });
+      // Auto-expand if not already.
+      if (row.dataset.expanded !== "true") row.click();
+      row.classList.remove("flash"); void row.offsetWidth;
+      row.classList.add("flash");
+      setTimeout(() => row.classList.remove("flash"), 1400);
+    });
+  });
 }
 
 function renderRainBudget(days, w) {
