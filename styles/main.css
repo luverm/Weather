@@ -347,6 +347,18 @@ html[data-reduce-motion="true"] *::after {
 .place-chip .pin:hover { background: rgba(255,255,255,0.12); color: var(--fg); transform: scale(1.08); }
 .place-chip.is-default .pin { color: #ffd39a; }
 .place-chip.is-default { border-color: color-mix(in srgb, #ffd39a 40%, var(--stroke)); }
+.place-chip-comfort {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 18%, transparent);
+  margin-left: -2px;
+}
+.place-chip-comfort[data-tier="good"] { color: #78d06a; }
+.place-chip-comfort[data-tier="ok"]   { color: #ffd36a; }
+.place-chip-comfort[data-tier="low"]  { color: #ff9f5c; }
+.place-chip-comfort[data-tier="bad"]  { color: #ff7a7a; }
 
 /* ---------- Hero ---------- */
 .hero { align-self: start; display: grid; gap: 14px; }

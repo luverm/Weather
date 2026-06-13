@@ -224,10 +224,13 @@ export const ui = {
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
-    // Save summary for the strip so chips can show current temp.
+    // Save summary for the strip so chips can show current temp + comfort.
     if (state.place) {
+      const comfort = computeComfortScore(weather);
       places.updateSummary(state.place, {
-        temp: weather.temp, condition: weather.condition,
+        temp: weather.temp,
+        condition: weather.condition,
+        comfortScore: comfort?.score ?? null,
       });
     }
     renderPlaces();
@@ -681,6 +684,14 @@ function renderAdvice(w) {
   } else {
     el.advice.hidden = true;
   }
+}
+
+function comfortTier(score) {
+  if (score == null) return "none";
+  if (score >= 70) return "good";
+  if (score >= 50) return "ok";
+  if (score >= 30) return "low";
+  return "bad";
 }
 
 function renderComfort(w) {
@@ -1389,10 +1400,11 @@ function renderPlaces() {
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
     return `
-      <div class="place-chip ${active ? "active" : ""} ${places.isDefault(p) ? "is-default" : ""}" data-id="${p.id}" title="${escapeHtml(p.name)}${p.country ? ", " + escapeHtml(p.country) : ""}${places.isDefault(p) ? " · default on launch" : ""}">
+      <div class="place-chip ${active ? "active" : ""} ${places.isDefault(p) ? "is-default" : ""}" data-id="${p.id}" title="${escapeHtml(p.name)}${p.country ? ", " + escapeHtml(p.country) : ""}${p.comfortScore != null ? ` · comfort ${p.comfortScore}/100` : ""}${places.isDefault(p) ? " · default on launch" : ""}">
         ${p.condition ? `<span class="place-chip-icon" aria-hidden="true">${iconFor(p.condition)}</span>` : ""}
         <span class="place-chip-name">${flagEmoji(p.countryCode) ? `<span class="place-chip-flag" aria-hidden="true">${flagEmoji(p.countryCode)}</span>` : ""}${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
+        ${p.comfortScore != null ? `<span class="place-chip-comfort" data-tier="${comfortTier(p.comfortScore)}" aria-hidden="true"></span>` : ""}
         <button class="pin" data-action="pin" type="button" aria-label="${places.isDefault(p) ? "Unset default" : "Pin as default"}" title="${places.isDefault(p) ? "Unset default" : "Pin as default"}">
           <svg viewBox="0 0 16 16" width="10" height="10" fill="${places.isDefault(p) ? "currentColor" : "none"}" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M8 1.6l1.96 4.1 4.54.5-3.4 3.06.9 4.44L8 11.5l-3.99 2.2.9-4.44L1.5 6.2l4.54-.5z"/></svg>
         </button>
