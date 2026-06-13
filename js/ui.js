@@ -1330,10 +1330,13 @@ function renderPlaces() {
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
     return `
-      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}" title="${escapeHtml(p.name)}${p.country ? ", " + escapeHtml(p.country) : ""}">
+      <div class="place-chip ${active ? "active" : ""} ${places.isDefault(p) ? "is-default" : ""}" data-id="${p.id}" title="${escapeHtml(p.name)}${p.country ? ", " + escapeHtml(p.country) : ""}${places.isDefault(p) ? " · default on launch" : ""}">
         ${p.condition ? `<span class="place-chip-icon" aria-hidden="true">${iconFor(p.condition)}</span>` : ""}
         <span class="place-chip-name">${flagEmoji(p.countryCode) ? `<span class="place-chip-flag" aria-hidden="true">${flagEmoji(p.countryCode)}</span>` : ""}${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
+        <button class="pin" data-action="pin" type="button" aria-label="${places.isDefault(p) ? "Unset default" : "Pin as default"}" title="${places.isDefault(p) ? "Unset default" : "Pin as default"}">
+          <svg viewBox="0 0 16 16" width="10" height="10" fill="${places.isDefault(p) ? "currentColor" : "none"}" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M8 1.6l1.96 4.1 4.54.5-3.4 3.06.9 4.44L8 11.5l-3.99 2.2.9-4.44L1.5 6.2l4.54-.5z"/></svg>
+        </button>
         <span class="close" data-action="remove" aria-label="Remove">
           <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
         </span>
@@ -1344,7 +1347,17 @@ function renderPlaces() {
     const item = all.find((p) => p.id === id);
     chip.addEventListener("click", (e) => {
       if (e.target.closest('[data-action="remove"]')) {
+        e.stopPropagation();
+        // Clear default if we're removing the default city.
+        if (places.isDefault(item)) places.setDefault(null);
         places.remove(item);
+        renderPlaces();
+        return;
+      }
+      if (e.target.closest('[data-action="pin"]')) {
+        e.stopPropagation();
+        places.setDefault(places.isDefault(item) ? null : item);
+        ui.showToast(places.isDefault(item) ? `${item.name} loads on launch` : "Default cleared");
         renderPlaces();
         return;
       }
@@ -1519,6 +1532,7 @@ function bindSettings() {
   el.settingClearPlaces?.addEventListener("click", () => {
     if (!confirm("Clear all saved places?")) return;
     for (const p of places.all()) places.remove(p);
+    places.setDefault(null);
     renderPlaces();
     ui.showToast("Saved places cleared");
     close();

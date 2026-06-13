@@ -344,6 +344,13 @@ installShortcuts({
     await loadByCoords(linked);
     return;
   }
+  // Pinned default takes precedence over the most-recent fallback so the user
+  // can pick which city they actually want on launch.
+  const pinned = places.getDefault();
+  if (pinned) {
+    await loadByCoords(pinned);
+    return;
+  }
   // Otherwise prefer the most recent saved place — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();

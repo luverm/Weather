@@ -5,6 +5,7 @@
 // chip strip can show a mini summary.
 
 const KEY = "aether:places";
+const DEFAULT_KEY = "aether:default-place";
 const MAX = 8;
 
 function read() {
@@ -51,6 +52,23 @@ export const places = {
   isSaved(place) {
     const id = idFor(place);
     return read().some((p) => idFor(p) === id);
+  },
+  getDefaultId() {
+    try { return localStorage.getItem(DEFAULT_KEY); } catch { return null; }
+  },
+  getDefault() {
+    const id = this.getDefaultId();
+    if (!id) return null;
+    return read().find((p) => idFor(p) === id) || null;
+  },
+  setDefault(place) {
+    try {
+      if (!place) localStorage.removeItem(DEFAULT_KEY);
+      else localStorage.setItem(DEFAULT_KEY, idFor(place));
+    } catch { /* ignore */ }
+  },
+  isDefault(place) {
+    return this.getDefaultId() === idFor(place);
   },
   idFor,
 };

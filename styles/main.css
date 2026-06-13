@@ -335,6 +335,18 @@ html[data-reduce-motion="true"] *::after {
   transition: background 150ms var(--ease), color 150ms var(--ease);
 }
 .place-chip .close:hover { background: rgba(255,255,255,0.12); color: var(--fg); }
+.place-chip .pin {
+  width: 16px; height: 16px;
+  display: grid; place-items: center;
+  border: 0; padding: 0; background: transparent;
+  border-radius: 50%;
+  color: var(--fg-dim);
+  cursor: pointer;
+  transition: background 150ms var(--ease), color 150ms var(--ease), transform 150ms var(--ease);
+}
+.place-chip .pin:hover { background: rgba(255,255,255,0.12); color: var(--fg); transform: scale(1.08); }
+.place-chip.is-default .pin { color: #ffd39a; }
+.place-chip.is-default { border-color: color-mix(in srgb, #ffd39a 40%, var(--stroke)); }
 
 /* ---------- Hero ---------- */
 .hero { align-self: start; display: grid; gap: 14px; }
