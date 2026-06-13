@@ -1928,6 +1928,13 @@ kbd {
     transparent 70%);
   box-shadow: inset 2px 0 0 0 #ffd39a;
 }
+.daily-item.daily-today .daily-day {
+  color: var(--accent);
+  font-weight: 600;
+}
+.daily-item.daily-today {
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--stroke));
+}
 .daily-best-badge {
   display: inline-flex;
   align-items: center;
