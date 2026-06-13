@@ -49,6 +49,7 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -533,8 +534,40 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderDaylightDelta(w) {
+  if (!el.sunDaylightDelta) return;
+  const days = w?.daily || [];
+  const today = days.find((d) => d.sunrise && d.sunset);
+  // Pick the next day after `today` with both timestamps.
+  const tomorrow = today
+    ? days.find((d) => d !== today && d.time > today.time && d.sunrise && d.sunset)
+    : null;
+  if (!today || !tomorrow) {
+    el.sunDaylightDelta.textContent = "";
+    el.sunDaylightDelta.className = "sun-delta";
+    return;
+  }
+  const todayMs = today.sunset - today.sunrise;
+  const tmrwMs = tomorrow.sunset - tomorrow.sunrise;
+  const diffSec = Math.round((tmrwMs - todayMs) / 1000);
+  // Below ~15 s of change isn't perceptible; suppress to avoid noise.
+  if (Math.abs(diffSec) < 15) {
+    el.sunDaylightDelta.textContent = "steady tomorrow";
+    el.sunDaylightDelta.className = "sun-delta";
+    return;
+  }
+  const sign = diffSec > 0 ? "+" : "−";
+  const abs = Math.abs(diffSec);
+  const m = Math.floor(abs / 60);
+  const s = abs % 60;
+  const num = m > 0 ? `${m}m ${s}s` : `${s}s`;
+  el.sunDaylightDelta.textContent = `${sign}${num} tomorrow`;
+  el.sunDaylightDelta.className = `sun-delta ${diffSec > 0 ? "gain" : "loss"}`;
 }
 
 function scheduleSunArc(w) {
