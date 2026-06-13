@@ -810,6 +810,30 @@ html[data-reduce-motion="true"] *::after {
 }
 [data-scrubbing="false"] .chart-now { opacity: 0; }
 .chart-now.scrub-active { opacity: 0.7; }
+.chart-extrema circle {
+  stroke-width: 1;
+  pointer-events: none;
+}
+.chart-extrema circle.ex-max {
+  fill: #ff9c7a;
+  stroke: rgba(0,0,0,0.18);
+}
+.chart-extrema circle.ex-min {
+  fill: #9ad1ff;
+  stroke: rgba(0,0,0,0.18);
+}
+.chart-extrema text {
+  font-size: 8.5px;
+  fill: var(--fg);
+  text-anchor: middle;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  pointer-events: none;
+  paint-order: stroke fill;
+  stroke: color-mix(in srgb, var(--bg) 70%, transparent);
+  stroke-width: 2px;
+  stroke-linejoin: round;
+}
 .chart-dot {
   fill: #fff;
   stroke: var(--accent);

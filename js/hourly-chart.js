@@ -283,8 +283,45 @@ export class HourlyChart {
       }
     }
 
-    // Labels: every ~3 hours
+    // Find extrema first so the periodic labels can skip those indices.
+    let iMax = -1, iMin = -1;
+    this.hours.forEach((h, i) => {
+      if (h.temp == null) return;
+      if (iMax < 0 || h.temp > this.hours[iMax].temp) iMax = i;
+      if (iMin < 0 || h.temp < this.hours[iMin].temp) iMin = i;
+    });
     const unit = this.getUnit();
+    const exG = this.svg.querySelector("#chart-extrema");
+    if (exG) {
+      exG.innerHTML = "";
+      const addMarker = (i, kind) => {
+        if (i < 0) return;
+        const p = this.points[i];
+        if (!p) return;
+        const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        c.setAttribute("cx", p.x.toFixed(1));
+        c.setAttribute("cy", p.y.toFixed(1));
+        c.setAttribute("r", "2.6");
+        c.setAttribute("class", `ex-${kind}`);
+        exG.appendChild(c);
+        const t = this.hours[i].temp;
+        const display = unit === "F" ? t * 9 / 5 + 32 : t;
+        const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        txt.setAttribute("x", p.x.toFixed(1));
+        // Max label sits above; min label sits below to avoid the precip bars.
+        txt.setAttribute("y", (kind === "max" ? p.y - 6 : p.y + 11).toFixed(1));
+        txt.textContent = `${Math.round(display)}°`;
+        exG.appendChild(txt);
+      };
+      // Only draw both when they actually differ.
+      if (iMax !== iMin) {
+        addMarker(iMax, "max");
+        addMarker(iMin, "min");
+      }
+    }
+
+    // Labels: every ~3 hours, skipping any hour we already labeled as extremum
+    // so we don't double-up at the same x.
     const labG = this.svg.querySelector("#chart-labels");
     labG.innerHTML = "";
     const labelStep = Math.max(3, Math.floor(this.hours.length / 8));
@@ -297,7 +334,7 @@ export class HourlyChart {
       txt.setAttribute("text-anchor", "middle");
       txt.textContent = `${hh}`;
       labG.appendChild(txt);
-      // Temp label above point
+      if (i === iMax || i === iMin) return;
       const tVal = unit === "F" ? h.temp * 9 / 5 + 32 : h.temp;
       const tTxt = document.createElementNS("http://www.w3.org/2000/svg", "text");
       tTxt.setAttribute("x", iToX(i).toFixed(1));
