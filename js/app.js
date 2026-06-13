@@ -164,9 +164,16 @@ function applyScene(weather) {
   // UI values reflect the sampled time.
   ui.setSampledWeather(sampled, { highlightHourIndex: sampled._sampledIndex });
 
-  document.documentElement.setAttribute("data-tone", sky.getTone());
+  // Respect the user's "Lock to dark theme" setting — otherwise the tone
+  // follows the sky scene.
+  if (!document.documentElement.hasAttribute("data-lock-dark")) {
+    document.documentElement.setAttribute("data-tone", sky.getTone());
+  }
   document.querySelector('meta[name="theme-color"]').setAttribute(
-    "content", toneToColor(sky.getTone())
+    "content",
+    document.documentElement.hasAttribute("data-lock-dark")
+      ? toneToColor("dark")
+      : toneToColor(sky.getTone())
   );
 
   // Update audio to match whatever the scene now shows.

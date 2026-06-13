@@ -94,6 +94,7 @@ const el = {
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
+  settingLockDark: $("#setting-lock-dark"),
   settingClearPlaces: $("#setting-clear-places"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
@@ -1729,6 +1730,14 @@ function bindSettings() {
     }
   });
 
+  el.settingLockDark?.addEventListener("change", () => {
+    const on = el.settingLockDark.checked;
+    try { localStorage.setItem("aether:lockDark", on ? "1" : "0"); } catch { /* ignore */ }
+    document.documentElement.toggleAttribute("data-lock-dark", on);
+    // Re-apply tone immediately if we have weather state so the change is visible.
+    if (on) document.documentElement.setAttribute("data-tone", "dark");
+  });
+
   el.settingClearPlaces?.addEventListener("click", () => {
     if (!confirm("Clear all saved places?")) return;
     for (const p of places.all()) places.remove(p);
@@ -1748,6 +1757,12 @@ function applyStoredPreferences() {
     queueMicrotask(() => state.handlers.onReduceMotion?.(true));
   }
   if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
+  const lockDark = localStorage.getItem("aether:lockDark") === "1";
+  if (lockDark) {
+    document.documentElement.setAttribute("data-lock-dark", "");
+    document.documentElement.setAttribute("data-tone", "dark");
+    if (el.settingLockDark) el.settingLockDark.checked = true;
+  }
 }
 
 // Exposed so app.js can query the current preference on boot.
