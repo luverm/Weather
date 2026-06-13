@@ -1586,12 +1586,18 @@ function bindSearch() {
 }
 
 function bindUnitToggle() {
-  el.unitBtn.addEventListener("click", () => {
-    state.unit = state.unit === "C" ? "F" : "C";
-    localStorage.setItem("aether:unit", state.unit);
-    el.unitBtn.textContent = `°${state.unit}`;
-    if (state.weather) ui.setWeather(state.weather);
-  });
+  el.unitBtn.addEventListener("click", flipUnit);
+  // The big hero temperature is also a unit switcher — generous touch target.
+  el.temp?.addEventListener("click", flipUnit);
+  el.temp?.style.setProperty("cursor", "pointer");
+  el.temp?.setAttribute("title", "Click to toggle °C / °F");
+}
+
+function flipUnit() {
+  state.unit = state.unit === "C" ? "F" : "C";
+  localStorage.setItem("aether:unit", state.unit);
+  el.unitBtn.textContent = `°${state.unit}`;
+  if (state.weather) ui.setWeather(state.weather);
 }
 
 function bindLocate() {
