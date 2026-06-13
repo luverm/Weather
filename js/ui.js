@@ -181,8 +181,13 @@ export const ui = {
     el.placeName.classList.remove("flip-in"); void el.placeName.offsetWidth;
     el.placeName.classList.add("flip-in");
     el.placeName.textContent = place.name || "Unknown";
-    const sub = [place.admin1, place.country].filter(Boolean).join(", ");
-    el.placeSub.textContent = sub || "—";
+    const adminCountry = [place.admin1, place.country].filter(Boolean).join(", ");
+    // Elevation is only interesting when the location is meaningfully up — we
+    // hide the noise for sea-level cities.
+    const elev = place.elevation != null && place.elevation >= 150
+      ? ` · ${Math.round(place.elevation)} m`
+      : "";
+    el.placeSub.textContent = (adminCountry + elev) || "—";
     // Reset alert dismissals so a fresh location can re-surface them.
     try { sessionStorage.removeItem("aether:dismissed-alerts"); } catch { /* ignore */ }
     renderPlaces();

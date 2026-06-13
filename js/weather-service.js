@@ -62,6 +62,7 @@ export async function searchCities(query) {
       lat: r.latitude,
       lon: r.longitude,
       timezone: r.timezone,
+      elevation: r.elevation,
     }));
   } catch {
     return [];
