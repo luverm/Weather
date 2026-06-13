@@ -773,6 +773,15 @@ html[data-reduce-motion="true"] *::after {
   color: var(--fg-muted);
   letter-spacing: 0.02em;
 }
+.comfort-trend {
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.comfort-trend[data-dir="up"]   { color: #78d06a; }
+.comfort-trend[data-dir="down"] { color: #ff9f5c; }
+.comfort-trend[data-dir="flat"] { color: var(--fg-dim); }
+.comfort-trend[hidden] { display: none; }
 .comfort-pill[data-tier="good"] .comfort-ring { color: #78d06a; }
 .comfort-pill[data-tier="ok"]   .comfort-ring { color: #ffd36a; }
 .comfort-pill[data-tier="low"]  .comfort-ring { color: #ff9f5c; }

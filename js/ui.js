@@ -60,6 +60,7 @@ const el = {
   comfortScore: $("#comfort-score"),
   comfortLabel: $("#comfort-label"),
   comfortDetail: $("#comfort-detail"),
+  comfortTrend: $("#comfort-trend"),
   comfortArc: $("#comfort-arc"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
@@ -715,6 +716,52 @@ function renderComfort(w) {
     const total = 60;
     el.comfortArc.setAttribute("stroke-dashoffset",
       String((total * (1 - r.score / 100)).toFixed(2)));
+  }
+  renderComfortTrend(w, r.score);
+}
+
+function renderComfortTrend(w, currentScore) {
+  if (!el.comfortTrend) return;
+  // Skip the trend hint while scrubbing — the comfort pill is showing the
+  // sampled hour's number, so "better in 3h" would be misleading.
+  if (document.documentElement.getAttribute("data-scrubbing") === "true") {
+    el.comfortTrend.hidden = true;
+    return;
+  }
+  const hours = (w?.hourly || []).filter((h) =>
+    h.time > Date.now() && h.time <= Date.now() + 12 * 3600_000);
+  if (hours.length < 3) {
+    el.comfortTrend.hidden = true;
+    return;
+  }
+  const scored = hours.map((h) => ({
+    time: h.time,
+    score: computeComfortScore({
+      temp: h.temp, feelsLike: h.feelsLike,
+      windSpeed: h.wind, windGusts: h.gusts,
+      dewPoint: w.dewPoint, // hourly dewpoint isn't available; carry current
+      humidity: h.humidity, isDay: h.isDay,
+      condition: h.condition, uv: h.uv,
+    })?.score ?? currentScore,
+  }));
+  const best = scored.reduce((b, x) => x.score > b.score ? x : b, scored[0]);
+  const worst = scored.reduce((b, x) => x.score < b.score ? x : b, scored[0]);
+  const fmt = (ts) => new Date(ts).toLocaleTimeString([], {
+    hour: "2-digit", minute: "2-digit", hour12: false,
+  });
+  // Significant improvements take precedence; otherwise warn about drops.
+  if (best.score - currentScore >= 12) {
+    el.comfortTrend.textContent = `↗ better around ${fmt(best.time)} (${best.score})`;
+    el.comfortTrend.dataset.dir = "up";
+    el.comfortTrend.hidden = false;
+  } else if (currentScore - worst.score >= 15 && worst.time > best.time) {
+    el.comfortTrend.textContent = `↘ worse around ${fmt(worst.time)} (${worst.score})`;
+    el.comfortTrend.dataset.dir = "down";
+    el.comfortTrend.hidden = false;
+  } else {
+    el.comfortTrend.textContent = "→ steady the next few hours";
+    el.comfortTrend.dataset.dir = "flat";
+    el.comfortTrend.hidden = false;
   }
 }
 
