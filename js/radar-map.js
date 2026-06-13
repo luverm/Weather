@@ -197,7 +197,16 @@ export class RadarMap {
   _renderTrack() {
     if (!this.frameTrack || !this.frames.length) return;
     this.frameTrack.innerHTML = "";
+    // Find the first future frame so we can drop a "now" separator before it.
+    const firstFuture = this.frames.findIndex((f) => f.time * 1000 > Date.now());
     this.frames.forEach((f, i) => {
+      if (i === firstFuture) {
+        const sep = document.createElement("span");
+        sep.className = "radar-now-sep";
+        sep.setAttribute("aria-hidden", "true");
+        sep.title = "now";
+        this.frameTrack.appendChild(sep);
+      }
       const tick = document.createElement("button");
       tick.type = "button";
       const isFuture = f.time * 1000 > Date.now();

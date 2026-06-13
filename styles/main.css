@@ -1155,6 +1155,24 @@ kbd {
 .radar-tick:hover { background: rgba(255,255,255,0.2); transform: scaleY(1.15); }
 .radar-tick.future { background: rgba(154, 209, 255, 0.22); }
 .radar-tick.active { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+.radar-now-sep {
+  flex: 0 0 auto;
+  width: 2px;
+  margin: 0 2px;
+  background: color-mix(in srgb, var(--accent) 70%, transparent);
+  border-radius: 2px;
+  box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 55%, transparent);
+  position: relative;
+}
+.radar-now-sep::before {
+  content: "";
+  position: absolute;
+  top: -2px; left: 50%;
+  transform: translateX(-50%);
+  width: 6px; height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+}
 
 /* Fullscreen radar */
 .radar[data-fullscreen="true"] {
