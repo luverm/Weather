@@ -1448,10 +1448,23 @@ function renderPlaces() {
   if (!all.length) { el.placesStrip.hidden = true; el.placesStrip.innerHTML = ""; return; }
   el.placesStrip.hidden = false;
   const activeId = state.place ? places.idFor(state.place) : null;
+  // The "best now" chip is the one with the highest comfort score that's both
+  // (a) genuinely pleasant and (b) at least 10 points better than its peers.
+  const scored = all.filter((p) => p.comfortScore != null);
+  let bestId = null;
+  if (scored.length >= 2) {
+    const winner = scored.reduce((b, p) => p.comfortScore > b.comfortScore ? p : b, scored[0]);
+    const runnerUp = scored.filter((p) => p !== winner)
+      .reduce((b, p) => !b || p.comfortScore > b.comfortScore ? p : b, null);
+    if (winner.comfortScore >= 70 && (runnerUp == null || winner.comfortScore - runnerUp.comfortScore >= 10)) {
+      bestId = places.idFor(winner);
+    }
+  }
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
+    const isBest = bestId && places.idFor(p) === bestId;
     return `
-      <div class="place-chip ${active ? "active" : ""} ${places.isDefault(p) ? "is-default" : ""}" data-id="${p.id}" title="${escapeHtml(p.name)}${p.country ? ", " + escapeHtml(p.country) : ""}${p.comfortScore != null ? ` · comfort ${p.comfortScore}/100` : ""}${places.isDefault(p) ? " · default on launch" : ""}">
+      <div class="place-chip ${active ? "active" : ""} ${places.isDefault(p) ? "is-default" : ""} ${isBest ? "is-best" : ""}" data-id="${p.id}" title="${escapeHtml(p.name)}${p.country ? ", " + escapeHtml(p.country) : ""}${p.comfortScore != null ? ` · comfort ${p.comfortScore}/100` : ""}${isBest ? " · best comfort right now" : ""}${places.isDefault(p) ? " · default on launch" : ""}">
         ${p.condition ? `<span class="place-chip-icon" aria-hidden="true">${iconFor(p.condition)}</span>` : ""}
         <span class="place-chip-name">${flagEmoji(p.countryCode) ? `<span class="place-chip-flag" aria-hidden="true">${flagEmoji(p.countryCode)}</span>` : ""}${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}

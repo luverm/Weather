@@ -347,6 +347,17 @@ html[data-reduce-motion="true"] *::after {
 .place-chip .pin:hover { background: rgba(255,255,255,0.12); color: var(--fg); transform: scale(1.08); }
 .place-chip.is-default .pin { color: #ffd39a; }
 .place-chip.is-default { border-color: color-mix(in srgb, #ffd39a 40%, var(--stroke)); }
+.place-chip.is-best {
+  box-shadow: 0 0 0 1px color-mix(in srgb, #78d06a 50%, transparent),
+              0 0 12px color-mix(in srgb, #78d06a 30%, transparent);
+}
+.place-chip.is-best .place-chip-comfort {
+  animation: chip-best-pulse 2.6s ease-in-out infinite;
+}
+@keyframes chip-best-pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.25); }
+}
 .place-chip-comfort {
   display: inline-block;
   width: 8px; height: 8px;
