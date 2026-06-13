@@ -1812,7 +1812,17 @@ function bindShare() {
 function bindTilt() {
   if (!el.heroInner) return;
   let frame = 0;
+  // Honor reduce-motion at runtime — the OS-level setting AND the in-app
+  // toggle. Both should stop the hero from tilting under the cursor.
+  const isReduced = () =>
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ||
+    document.documentElement.getAttribute("data-reduce-motion") === "true";
+  const reset = () => {
+    el.heroInner.style.setProperty("--rx", "0deg");
+    el.heroInner.style.setProperty("--ry", "0deg");
+  };
   const onMove = (e) => {
+    if (isReduced()) { reset(); return; }
     if (frame) return;
     frame = requestAnimationFrame(() => {
       frame = 0;
@@ -1822,10 +1832,6 @@ function bindTilt() {
       el.heroInner.style.setProperty("--rx", `${(-my * 3).toFixed(2)}deg`);
       el.heroInner.style.setProperty("--ry", `${(mx * 4).toFixed(2)}deg`);
     });
-  };
-  const reset = () => {
-    el.heroInner.style.setProperty("--rx", "0deg");
-    el.heroInner.style.setProperty("--ry", "0deg");
   };
   el.heroInner.addEventListener("pointermove", onMove);
   el.heroInner.addEventListener("pointerleave", reset);
