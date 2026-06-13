@@ -52,11 +52,30 @@ export class HourlyChart {
     this.hours = (hours || []).slice(0, 24);
     this._draw();
     this.setCursor(null);
+    this._drawNow();
   }
 
-  refresh() { this._draw(); }
+  refresh() { this._draw(); this._drawNow(); }
+
+  _drawNow() {
+    const nowLine = this.svg.querySelector("#chart-now");
+    if (!nowLine || !this.hours.length) return;
+    const t = Date.now();
+    const first = this.hours[0].time;
+    const last = this.hours[this.hours.length - 1].time;
+    if (t < first - 60_000 || t > last + 60_000) {
+      nowLine.setAttribute("x1", "-10"); nowLine.setAttribute("x2", "-10");
+      return;
+    }
+    const frac = (t - first) / Math.max(1, last - first);
+    const innerW = W - PAD_LEFT - PAD_RIGHT;
+    const x = PAD_LEFT + frac * innerW;
+    nowLine.setAttribute("x1", x.toFixed(1));
+    nowLine.setAttribute("x2", x.toFixed(1));
+  }
 
   setCursor(ts) {
+    this._drawNow();
     const cursor = this.svg.querySelector("#chart-cursor");
     const dot = this.svg.querySelector("#chart-dot");
     if (!ts || !this.points.length) {

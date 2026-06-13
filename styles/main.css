@@ -789,6 +789,14 @@ html[data-reduce-motion="true"] *::after {
   opacity: 0.75;
   pointer-events: none;
 }
+.chart-now {
+  stroke: #ff9c7a;
+  stroke-width: 1;
+  opacity: 0.55;
+  pointer-events: none;
+}
+[data-scrubbing="false"] .chart-now { opacity: 0; }
+.chart-now.scrub-active { opacity: 0.7; }
 .chart-dot {
   fill: #fff;
   stroke: var(--accent);
