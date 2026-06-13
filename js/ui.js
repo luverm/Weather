@@ -207,6 +207,7 @@ export const ui = {
     renderDayTimeline(weather);
     renderWeekend(weather);
     startLocaltime(weather);
+    updatePageTitle(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
@@ -232,6 +233,9 @@ export const ui = {
     } else if (state.chart) {
       state.chart.setCursor(sampled.hourly?.[highlightHourIndex]?.time);
     }
+    // Page title reflects whatever the user is currently looking at — live or
+    // scrubbed — so the browser tab keeps up.
+    updatePageTitle(sampled);
   },
   setScrubbing(on) {
     document.documentElement.setAttribute("data-scrubbing", on ? "true" : "false");
@@ -282,6 +286,29 @@ function animateNumber(node, target, format) {
 }
 
 function capitalize(s) { return (s || "").charAt(0).toUpperCase() + (s || "").slice(1); }
+
+function conditionEmoji(condition, isDay) {
+  switch (condition) {
+    case "clear":  return isDay === false ? "🌙" : "☀️";
+    case "clouds": return "☁️";
+    case "rain":   return "🌧";
+    case "snow":   return "❄️";
+    case "storm":  return "⛈";
+    case "fog":    return "🌫";
+    default:       return "🌡";
+  }
+}
+
+function updatePageTitle(w) {
+  if (!w) return;
+  const placeName = state.place?.name;
+  const temp = convertTemp(w.temp);
+  const emoji = conditionEmoji(w.condition, w.isDay);
+  const tempStr = Number.isFinite(temp) ? `${Math.round(temp)}°` : "—";
+  document.title = placeName
+    ? `${emoji} ${tempStr} ${placeName} · Aether`
+    : `${emoji} ${tempStr} · Aether — Interactive Weather`;
+}
 
 function renderLiveValues(w, { animate = true } = {}) {
   const temp = convertTemp(w.temp);
