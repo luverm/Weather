@@ -1722,6 +1722,13 @@ function bindShare() {
     const unit = state.unit;
     const t = (v) => `${Math.round(unit === "F" ? v * 9 / 5 + 32 : v)}°${unit}`;
     const today = w.daily?.[0];
+    const comfort = computeComfortScore(w);
+    const nextRainHour = (w.hourly || []).find((h) =>
+      h.time > Date.now() && h.time <= Date.now() + 12 * 3600_000
+      && ((h.pop ?? 0) >= 55 || (h.precip ?? 0) >= 0.4));
+    const rainHint = nextRainHour
+      ? `Rain expected around ${new Date(nextRainHour.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })} (${nextRainHour.pop}%)`
+      : null;
     const lines = [
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
@@ -1729,6 +1736,8 @@ function bindShare() {
       `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
+      comfort ? `Comfort ${comfort.score}/100 (${comfort.label})` : null,
+      rainHint,
     ].filter(Boolean);
     const url = window.location.href;
     const text = lines.join("\n");
