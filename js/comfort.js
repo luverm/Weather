@@ -82,7 +82,14 @@ export function computeComfortScore(weather) {
     score >= 25 ? "Rough"    :
     "Stay in";
 
-  return { score, label, weakest: weakest?.label };
+  const breakdown = [
+    { key: "Temp", pct: Math.round(tempScore * 100) },
+    { key: "Humidity", pct: Math.round(dewScore * 100) },
+    { key: "Wind", pct: Math.round(windScore * 100) },
+    { key: "Condition", pct: Math.round(condScore * 100) },
+    { key: "UV", pct: Math.round(uvScore * 100) },
+  ];
+  return { score, label, weakest: weakest?.label, breakdown };
 }
 
 // Rough daily comfort estimate from a day's summary stats. Less precise than

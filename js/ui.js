@@ -711,6 +711,12 @@ function renderComfort(w) {
       ? `outdoors · weakest: ${r.weakest}`
       : "outdoor comfort";
   }
+  // Hover the pill to inspect each factor.
+  if (r.breakdown?.length) {
+    el.comfort.title = "Comfort breakdown\n" + r.breakdown
+      .map((f) => `${f.key.padEnd(9)} ${String(f.pct).padStart(3)} / 100`)
+      .join("\n");
+  }
   if (el.comfortArc) {
     // r=9.5 → circumference ≈ 59.69; we round to 60 in the SVG dasharray.
     const total = 60;
