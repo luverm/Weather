@@ -1572,7 +1572,30 @@ kbd {
   transition: transform 160ms var(--ease);
 }
 .day-timeline-event:hover,
-.day-timeline-event:focus-visible { transform: translateX(-50%) translateY(-2px); outline: none; }
+.day-timeline-event:focus-visible {
+  transform: translateX(-50%) translateY(-2px);
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+
+/* ---------- Catch-all focus rings ---------- */
+.icon-btn:focus-visible,
+.place-chip:focus-visible,
+.alert-pill:focus-visible,
+.rain-budget-cell:focus-visible,
+.daily-item:focus-visible,
+.unit:focus-visible,
+.radar-btn:focus-visible,
+.scrubber-reset:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.temp-value:focus-visible {
+  outline: 2px dashed var(--accent);
+  outline-offset: 6px;
+  border-radius: 8px;
+}
 .day-timeline-event .dt-pin {
   width: 2px;
   height: 16px;

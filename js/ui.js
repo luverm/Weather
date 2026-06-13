@@ -1517,7 +1517,7 @@ function renderPlaces() {
     const active = places.idFor(p) === activeId;
     const isBest = bestId && places.idFor(p) === bestId;
     return `
-      <div class="place-chip ${active ? "active" : ""} ${places.isDefault(p) ? "is-default" : ""} ${isBest ? "is-best" : ""}" data-id="${p.id}" title="${escapeHtml(p.name)}${p.country ? ", " + escapeHtml(p.country) : ""}${p.comfortScore != null ? ` · comfort ${p.comfortScore}/100` : ""}${isBest ? " · best comfort right now" : ""}${places.isDefault(p) ? " · default on launch" : ""}">
+      <div class="place-chip ${active ? "active" : ""} ${places.isDefault(p) ? "is-default" : ""} ${isBest ? "is-best" : ""}" data-id="${p.id}" tabindex="0" role="button" title="${escapeHtml(p.name)}${p.country ? ", " + escapeHtml(p.country) : ""}${p.comfortScore != null ? ` · comfort ${p.comfortScore}/100` : ""}${isBest ? " · best comfort right now" : ""}${places.isDefault(p) ? " · default on launch" : ""}">
         ${p.condition ? `<span class="place-chip-icon" aria-hidden="true">${iconFor(p.condition)}</span>` : ""}
         <span class="place-chip-name">${flagEmoji(p.countryCode) ? `<span class="place-chip-flag" aria-hidden="true">${flagEmoji(p.countryCode)}</span>` : ""}${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
@@ -1533,6 +1533,12 @@ function renderPlaces() {
   el.placesStrip.querySelectorAll(".place-chip").forEach((chip) => {
     const id = chip.dataset.id;
     const item = all.find((p) => p.id === id);
+    chip.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        chip.click();
+      }
+    });
     chip.addEventListener("click", (e) => {
       if (e.target.closest('[data-action="remove"]')) {
         e.stopPropagation();
