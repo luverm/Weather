@@ -375,10 +375,15 @@ window.addEventListener("popstate", () => {
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
     engine.stop();
-  } else if (!app.reducedMotion) {
-    engine.start();
-  } else {
-    engine.tickOnce();
+    return;
+  }
+  if (!app.reducedMotion) engine.start(); else engine.tickOnce();
+  // Bring data back up to date if we've been away for a while. 12 min beats
+  // the 15-min auto-refresh interval slightly, so the first thing you see on
+  // return is fresh weather rather than the stale snapshot.
+  const fetchedAt = app.weather?.fetchedAt;
+  if (fetchedAt && Date.now() - fetchedAt > 12 * 60_000 && clock.isLive()) {
+    refreshWeather();
   }
 });
 
