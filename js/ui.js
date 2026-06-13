@@ -78,6 +78,10 @@ const el = {
   refreshBtn: $("#refresh-btn"),
   fetchedAgo: $("#fetched-ago"),
   dailyIconStrip: $("#daily-icon-strip"),
+  rainBudget: $("#rain-budget"),
+  rainBudgetBar: $("#rain-budget-bar"),
+  rainBudgetTotal: $("#rain-budget-total"),
+  rainBudgetAxis: $("#rain-budget-axis"),
   settingsBtn: $("#settings-btn"),
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
@@ -949,6 +953,7 @@ function renderDaily(w) {
   const days = (w.daily || []).slice(0, 7);
   if (!days.length) return;
   renderDailyIconStrip(days);
+  renderRainBudget(days, w);
   renderDailySpark(days);
   renderDailyDelta(days);
   // Global min/max for the range bar.
@@ -995,6 +1000,87 @@ function renderDailyIconStrip(days) {
   el.dailyIconStrip.innerHTML = days.map((d) =>
     `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
   ).join("");
+}
+
+function renderRainBudget(days, w) {
+  if (!el.rainBudget || !el.rainBudgetBar) return;
+  // No bar if nothing meaningful is forecast (under ~0.5 mm across the week).
+  const totals = days.map((d) => Math.max(0, d.precip ?? 0));
+  const total = totals.reduce((s, v) => s + v, 0);
+  if (total < 0.5) {
+    el.rainBudget.hidden = true;
+    return;
+  }
+  el.rainBudget.hidden = false;
+
+  // Scale each cell to the wettest day; ensure any non-zero day still shows.
+  const peak = Math.max(...totals);
+  const wettestIdx = totals.indexOf(peak);
+  const tz = state.weather?.timezone;
+  const today = new Date();
+
+  const cells = days.map((d, i) => {
+    const v = totals[i];
+    const isDry = v < 0.1;
+    const heightPct = v < 0.1 ? 0 : Math.max(12, (v / peak) * 100);
+    const isSnow = d.condition === "snow";
+    const isPeak = i === wettestIdx && v > 0;
+    const tsLabel = new Date(d.time).toLocaleDateString(undefined, {
+      weekday: "long",
+      ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    });
+    const valueLabel = v < 0.1 ? "dry" : `${v.toFixed(v >= 10 ? 0 : 1)} mm`;
+    return `
+      <button class="rain-budget-cell" type="button"
+              data-ts="${d.time}"
+              data-dry="${isDry}"
+              data-snow="${isSnow}"
+              data-peak="${isPeak}"
+              title="${escapeHtml(tsLabel)} · ${escapeHtml(valueLabel)}${d.pop != null ? ` · ${d.pop}% chance` : ""}"
+              aria-label="${escapeHtml(tsLabel)}: ${escapeHtml(valueLabel)}">
+        <span class="rb-fill" style="height:${heightPct}%"></span>
+      </button>`;
+  }).join("");
+  el.rainBudgetBar.innerHTML = cells;
+  el.rainBudgetBar.querySelectorAll(".rain-budget-cell").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const ts = parseInt(btn.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
+
+  // Axis: weekday letter per cell, today highlighted.
+  if (el.rainBudgetAxis) {
+    el.rainBudgetAxis.innerHTML = days.map((d, i) => {
+      const dt = new Date(d.time);
+      const letter = dt.toLocaleDateString(undefined, {
+        weekday: "narrow",
+        ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+      });
+      const isToday = sameLocalDay(dt, today, tz);
+      return `<span${isToday ? ' class="rb-today"' : ""}>${escapeHtml(letter)}</span>`;
+    }).join("");
+  }
+
+  // Total label: "23.4 mm this week · 3 wet days"
+  if (el.rainBudgetTotal) {
+    const wetDays = totals.filter((v) => v >= 0.5).length;
+    const totalLabel = total >= 10 ? Math.round(total) : total.toFixed(1);
+    const dry = totals.length - wetDays;
+    el.rainBudgetTotal.innerHTML =
+      `${totalLabel} mm · <span class="rb-dry">${wetDays} wet, ${dry} dry</span>`;
+  }
+}
+
+function sameLocalDay(a, b, tz) {
+  try {
+    const opt = { year: "numeric", month: "2-digit", day: "2-digit",
+      ...(tz && tz !== "auto" ? { timeZone: tz } : {}) };
+    return new Intl.DateTimeFormat("en-CA", opt).format(a)
+      === new Intl.DateTimeFormat("en-CA", opt).format(b);
+  } catch {
+    return a.toDateString() === b.toDateString();
+  }
 }
 
 function renderDailySpark(days) {

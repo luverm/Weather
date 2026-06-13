@@ -1596,6 +1596,86 @@ kbd {
 .daily-spark circle { transition: r 160ms var(--ease); }
 .daily-spark .dot-hi { fill: #ff9c7a; }
 .daily-spark .dot-lo { fill: #9ad1ff; }
+
+/* ---------- Rain budget ---------- */
+.rain-budget {
+  padding: 6px 12px 4px;
+  display: grid;
+  gap: 6px;
+}
+.rain-budget[hidden] { display: none; }
+.rain-budget-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+.rain-budget-total {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 12px;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+.rain-budget-total .rb-dry { color: var(--fg-muted); font-weight: 400; }
+.rain-budget-bar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  height: 16px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--stroke);
+}
+.rain-budget-cell {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  color: var(--fg);
+  transition: background 160ms var(--ease);
+}
+.rain-budget-cell:hover { background: rgba(255,255,255,0.08); }
+.rain-budget-cell .rb-fill {
+  width: 100%;
+  background: linear-gradient(180deg,
+    color-mix(in srgb, #7cc0ff 80%, transparent) 0%,
+    color-mix(in srgb, #4a8fcf 90%, transparent) 100%);
+  border-radius: 2px;
+  transition: height 320ms var(--ease);
+}
+.rain-budget-cell[data-snow="true"] .rb-fill {
+  background: linear-gradient(180deg,
+    color-mix(in srgb, #e3f0ff 90%, transparent) 0%,
+    color-mix(in srgb, #b6cae5 95%, transparent) 100%);
+}
+.rain-budget-cell[data-dry="true"] {
+  background: repeating-linear-gradient(45deg,
+    transparent 0 4px,
+    rgba(255,255,255,0.04) 4px 8px);
+}
+.rain-budget-axis {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  font-size: 10px;
+  color: var(--fg-muted);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.rain-budget-axis span.rb-today {
+  color: var(--accent);
+  font-weight: 600;
+}
 .forecast-track {
   display: grid;
   grid-auto-flow: column;
