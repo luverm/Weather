@@ -1285,7 +1285,7 @@ function renderPlaces() {
     return `
       <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}" title="${escapeHtml(p.name)}${p.country ? ", " + escapeHtml(p.country) : ""}">
         ${p.condition ? `<span class="place-chip-icon" aria-hidden="true">${iconFor(p.condition)}</span>` : ""}
-        <span class="place-chip-name">${escapeHtml(p.name)}</span>
+        <span class="place-chip-name">${flagEmoji(p.countryCode) ? `<span class="place-chip-flag" aria-hidden="true">${flagEmoji(p.countryCode)}</span>` : ""}${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
         <span class="close" data-action="remove" aria-label="Remove">
           <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
@@ -1319,12 +1319,7 @@ const runSearch = debounce(async (q) => {
 
 function renderSearchResults(results) {
   if (!results.length) { el.searchResults.hidden = true; el.searchResults.innerHTML = ""; return; }
-  el.searchResults.innerHTML = results.map((r, i) => `
-    <li role="option" data-index="${i}">
-      <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
-      <span class="sub">${escapeHtml(r.country || "")}</span>
-    </li>
-  `).join("");
+  el.searchResults.innerHTML = results.map((r, i) => searchRowHtml(r, i)).join("");
   el.searchResults.hidden = false;
   el.searchResults._items = results;
 }
@@ -1332,15 +1327,29 @@ function renderSearchResults(results) {
 function showRecentsIfAny() {
   const recents = places.all().slice(0, 5);
   if (!recents.length) { el.searchResults.hidden = true; return; }
-  const itemsHtml = recents.map((r, i) => `
-    <li role="option" data-index="${i}">
-      <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
-      <span class="sub">${escapeHtml(r.country || "")}</span>
-    </li>
-  `).join("");
+  const itemsHtml = recents.map((r, i) => searchRowHtml(r, i)).join("");
   el.searchResults.innerHTML = `<li class="recent-heading">Recent places</li>${itemsHtml}`;
   el.searchResults._items = recents;
   el.searchResults.hidden = false;
+}
+
+function searchRowHtml(r, i) {
+  const flag = flagEmoji(r.countryCode || r.country_code);
+  return `
+    <li role="option" data-index="${i}">
+      <span>${flag ? `<span class="search-flag" aria-hidden="true">${flag}</span>` : ""}${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
+      <span class="sub">${escapeHtml(r.country || "")}</span>
+    </li>
+  `;
+}
+
+// ISO 3166-1 alpha-2 → regional indicator emoji. Returns "" for unknown codes.
+function flagEmoji(code) {
+  if (!code || code.length !== 2) return "";
+  const upper = code.toUpperCase();
+  if (!/^[A-Z]{2}$/.test(upper)) return "";
+  const A = 0x1f1e6;
+  return String.fromCodePoint(A + upper.charCodeAt(0) - 65, A + upper.charCodeAt(1) - 65);
 }
 
 function bindSearch() {

@@ -316,6 +316,19 @@ html[data-reduce-motion="true"] *::after {
   white-space: nowrap;
 }
 .place-chip.active .place-chip-icon { color: var(--accent); }
+.place-chip-flag {
+  display: inline-block;
+  margin-right: 4px;
+  font-size: 0.9em;
+  line-height: 1;
+  vertical-align: -1px;
+}
+.search-flag {
+  display: inline-block;
+  margin-right: 6px;
+  font-size: 0.95em;
+  line-height: 1;
+}
 .place-chip .close {
   width: 16px; height: 16px; display: grid; place-items: center;
   border-radius: 50%; color: var(--fg-dim);
