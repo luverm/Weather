@@ -113,6 +113,7 @@ const el = {
   heroInner: document.querySelector(".hero-inner"),
   toast: $("#toast"),
   placesStrip: $("#places-strip"),
+  precipTotal: $("#precip-total"),
 };
 
 const state = {
@@ -199,6 +200,7 @@ export const ui = {
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
+    renderPrecipTotal(weather);
     if (el.narrative) {
       el.narrative.textContent = (narrative ?? narrate(weather, { unit: state.unit })) || "";
     }
@@ -654,6 +656,23 @@ function startLocaltime(w) {
   };
   update();
   state.localTimer = setInterval(update, 10_000);
+}
+
+function renderPrecipTotal(w) {
+  if (!el.precipTotal) return;
+  const hours = (w.hourly || []).slice(0, 12);
+  if (!hours.length) { el.precipTotal.hidden = true; return; }
+  const total = hours.reduce((acc, h) => acc + Math.max(0, h.precip || 0), 0);
+  const peakPop = hours.reduce((m, h) => Math.max(m, h.pop || 0), 0);
+  if (total < 0.1 && peakPop < 30) {
+    el.precipTotal.hidden = true;
+    return;
+  }
+  // Compact mm-or-cm string.
+  const value = total >= 10 ? `${(total / 10).toFixed(1)} cm` : `${total.toFixed(1)} mm`;
+  el.precipTotal.textContent = `${value} · next 12h`;
+  el.precipTotal.dataset.intensity = total >= 5 ? "heavy" : total >= 1 ? "moderate" : "light";
+  el.precipTotal.hidden = false;
 }
 
 function renderInsights(w) {

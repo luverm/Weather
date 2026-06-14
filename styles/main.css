@@ -729,6 +729,20 @@ html[data-reduce-motion="true"] *::after {
 }
 .legend-swatch.precip { background: rgba(154, 209, 255, 0.55); }
 
+.precip-total {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  color: #9ad1ff;
+  background: rgba(154, 209, 255, 0.13);
+  border: 1px solid rgba(154, 209, 255, 0.22);
+}
+.precip-total[data-intensity="moderate"] { color: #c7b4ff; background: rgba(199, 180, 255, 0.13); border-color: rgba(199, 180, 255, 0.22); }
+.precip-total[data-intensity="heavy"] { color: #ffb196; background: rgba(255, 156, 122, 0.13); border-color: rgba(255, 156, 122, 0.24); }
+.precip-total[hidden] { display: none; }
+
 .chart-wrap {
   position: relative;
 }
