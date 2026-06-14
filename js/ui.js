@@ -1190,6 +1190,28 @@ function bindSearch() {
       el.searchResults.hidden = false;
     }
   });
+  el.searchInput.addEventListener("keydown", (e) => {
+    if (el.searchResults.hidden) return;
+    const options = Array.from(el.searchResults.querySelectorAll('li[role="option"]'));
+    if (!options.length) return;
+    const cur = options.findIndex((li) => li.classList.contains("active"));
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      highlightSearchOption(options, (cur + 1) % options.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      highlightSearchOption(options, cur <= 0 ? options.length - 1 : cur - 1);
+    } else if (e.key === "Enter") {
+      const pick = cur >= 0 ? options[cur] : options[0];
+      if (pick) {
+        e.preventDefault();
+        pick.click();
+      }
+    } else if (e.key === "Escape") {
+      el.searchResults.hidden = true;
+      options.forEach((li) => li.classList.remove("active"));
+    }
+  });
   el.searchResults.addEventListener("click", (e) => {
     const li = e.target.closest("li");
     if (!li) return;
@@ -1201,6 +1223,14 @@ function bindSearch() {
     places.add(item);
     state.handlers.onSearchSelect?.(item);
   });
+}
+
+function highlightSearchOption(options, idx) {
+  options.forEach((li, i) => li.classList.toggle("active", i === idx));
+  const active = options[idx];
+  if (active && typeof active.scrollIntoView === "function") {
+    active.scrollIntoView({ block: "nearest" });
+  }
 }
 
 function bindUnitToggle() {
