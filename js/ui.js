@@ -836,10 +836,27 @@ function renderHourly(w) {
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
+      ${renderHourlyWind(h)}
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
   }
+}
+
+function renderHourlyWind(h) {
+  const speed = h.wind;
+  if (speed == null || speed < 1) {
+    return `<span class="forecast-wind calm" aria-hidden="true">—</span>`;
+  }
+  // Arrow points in the direction the wind is going (windDir is "from").
+  const rot = h.windDir != null ? (h.windDir + 180) % 360 : null;
+  const intensity = Math.min(1, speed / 40); // ~40 km/h saturates
+  const dirLabel = h.windDir != null ? ` ${cardinal(h.windDir)}` : "";
+  const title = `Wind ${Math.round(speed)} km/h${dirLabel}`;
+  const arrow = rot != null
+    ? `<svg class="forecast-wind-arrow" viewBox="0 0 12 12" style="transform:rotate(${rot.toFixed(0)}deg)" aria-hidden="true"><path d="M6 1.5 L9 9 L6 7.4 L3 9 Z" fill="currentColor"/></svg>`
+    : "";
+  return `<span class="forecast-wind" title="${title}" style="--w:${intensity.toFixed(2)}">${arrow}<span class="forecast-wind-speed">${Math.round(speed)}</span></span>`;
 }
 
 function highlightHour(index) {
