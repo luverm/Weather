@@ -2,11 +2,24 @@
 // with a rain-probability overlay. Each cell is clickable to scrub.
 
 export class ComfortStrip {
-  constructor({ rootEl, onCellClick, getUnit }) {
+  constructor({ rootEl, onCellClick, getUnit, getTimezone }) {
     this.root = rootEl;
     this.onCellClick = onCellClick;
     this.getUnit = getUnit || (() => "C");
+    this.getTimezone = getTimezone || (() => null);
     this.hours = [];
+  }
+
+  _hourOf(ts) {
+    const tz = this.getTimezone();
+    if (tz && tz !== "auto") {
+      try {
+        return parseInt(new Intl.DateTimeFormat(undefined, {
+          timeZone: tz, hour: "2-digit", hour12: false,
+        }).format(new Date(ts)), 10);
+      } catch { /* fall through */ }
+    }
+    return new Date(ts).getHours();
   }
 
   setHours(hours) {
@@ -34,7 +47,7 @@ export class ComfortStrip {
       const color = colorForFeels(t);
       const rainOpacity = clamp01((h.pop ?? 0) / 100) * 0.85;
       const display = t == null ? "—" : Math.round(unit === "F" ? t * 9 / 5 + 32 : t) + "°";
-      const tickHour = new Date(h.time).getHours();
+      const tickHour = this._hourOf(h.time);
       const showTick = tickHour % 6 === 0;
       const tickLabel = showTick ? `${tickHour.toString().padStart(2, "0")}:00` : "";
       return `
