@@ -120,6 +120,15 @@ export class Scrubber {
     clock.setOffset(offset);
     // Snap "close enough" to live — prevents 0.2 min drift when releasing.
     if (Math.abs(offset) < 5 * 60_000) clock.setOffset(0);
+    // Snap to sunrise/sunset within 10 minutes of dragging past them.
+    const snapWindow = 10 * 60_000;
+    const target = Date.now() + clock.offset();
+    for (const ts of [this.sunrise, this.sunset]) {
+      if (ts && Math.abs(target - ts) < snapWindow) {
+        clock.setOffset(ts - Date.now());
+        break;
+      }
+    }
     const scrubbing = !clock.isLive();
     this.appEl?.setAttribute("data-scrubbing", scrubbing ? "true" : "false");
     this._render(this._currentT());
