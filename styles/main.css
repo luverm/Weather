@@ -1536,6 +1536,23 @@ kbd {
   padding: 10px 8px;
   border-radius: 10px;
   transition: background 200ms var(--ease);
+  position: relative;
+}
+.daily-item::after {
+  content: "›";
+  position: absolute;
+  right: 6px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px; line-height: 1;
+  color: var(--fg-dim);
+  opacity: 0;
+  transition: opacity 200ms var(--ease), transform 220ms var(--ease);
+  pointer-events: none;
+}
+.daily-item:hover::after { opacity: 0.6; }
+.daily-item[data-expanded="true"]::after {
+  opacity: 0.85;
+  transform: translateY(-50%) rotate(90deg);
 }
 .daily-item:hover { background: var(--glass); }
 .daily-item[data-weekend="true"] .daily-day {
