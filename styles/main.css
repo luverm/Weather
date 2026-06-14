@@ -783,6 +783,16 @@ html[data-reduce-motion="true"] *::after {
   color: var(--fg-dim);
   margin-left: 6px;
 }
+.popover-cond {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--fg-muted);
+  letter-spacing: 0.02em;
+}
 .popover-wind-arrow {
   display: inline-block;
   width: 10px; height: 10px;

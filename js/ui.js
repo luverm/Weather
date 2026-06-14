@@ -334,6 +334,7 @@ function renderDayRange(w) {
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+  el.dayRangeMarker.title = `Now ${Math.round(convertTemp(t))}°`;
 }
 
 function renderMetrics(w) {
