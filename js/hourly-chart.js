@@ -52,9 +52,36 @@ export class HourlyChart {
     this.hours = (hours || []).slice(0, 24);
     this._draw();
     this.setCursor(null);
+    this.setNow(Date.now());
   }
 
   refresh() { this._draw(); }
+
+  /** Fixed "live" marker — independent of the hover cursor. */
+  setNow(ts) {
+    const line = this.svg.querySelector("#chart-now");
+    const dot = this.svg.querySelector("#chart-now-dot");
+    if (!line || !dot) return;
+    if (!ts || !this.points.length) return;
+    // Interpolate x from the timestamp so the marker doesn't jump between hours.
+    const hours = this.hours;
+    const lo = hours[0].time, hi = hours[hours.length - 1].time;
+    if (ts < lo || ts > hi) {
+      line.setAttribute("x1", "-10"); line.setAttribute("x2", "-10");
+      dot.setAttribute("cx", "-10");
+      return;
+    }
+    let lower = 0;
+    for (let i = 0; i < hours.length - 1; i++) {
+      if (hours[i].time <= ts && ts <= hours[i + 1].time) { lower = i; break; }
+    }
+    const span = hours[lower + 1].time - hours[lower].time;
+    const frac = span ? (ts - hours[lower].time) / span : 0;
+    const x = this.points[lower].x + (this.points[lower + 1].x - this.points[lower].x) * frac;
+    line.setAttribute("x1", x.toFixed(1));
+    line.setAttribute("x2", x.toFixed(1));
+    dot.setAttribute("cx", x.toFixed(1));
+  }
 
   setCursor(ts) {
     const cursor = this.svg.querySelector("#chart-cursor");

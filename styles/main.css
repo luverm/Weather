@@ -868,6 +868,17 @@ html[data-reduce-motion="true"] *::after {
   opacity: 0.75;
   pointer-events: none;
 }
+.chart-now {
+  stroke: rgba(255, 255, 255, 0.32);
+  stroke-width: 0.9;
+  stroke-dasharray: 1 4;
+  pointer-events: none;
+}
+.chart-now-dot {
+  fill: var(--accent);
+  opacity: 0.85;
+  pointer-events: none;
+}
 .chart-dot {
   fill: #fff;
   stroke: var(--accent);
