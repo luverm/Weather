@@ -1140,6 +1140,7 @@ function renderPlaces() {
     const active = places.idFor(p) === activeId;
     return `
       <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
+        ${active ? '<span class="chip-live-dot" aria-hidden="true"></span>' : ""}
         <span>${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
         <span class="close" data-action="remove" aria-label="Remove">

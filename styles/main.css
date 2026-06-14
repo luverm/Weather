@@ -304,6 +304,15 @@ html[data-reduce-motion="true"] *::after {
 }
 .place-chip:hover { background: var(--glass-strong); transform: translateY(-1px); }
 .place-chip.active { background: var(--glass-strong); border-color: rgba(255,255,255,0.35); }
+.place-chip .chip-live-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+  animation: pulse 2.4s ease-in-out infinite;
+}
+[data-scrubbing="true"] .place-chip.active .chip-live-dot {
+  background: #ffb86b; box-shadow: 0 0 6px #ffb86b; animation: none;
+}
 .place-chip .temp { color: var(--fg-muted); font-variant-numeric: tabular-nums; }
 .place-chip .close {
   width: 16px; height: 16px; display: grid; place-items: center;
