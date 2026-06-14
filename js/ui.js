@@ -21,6 +21,8 @@ const el = {
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
+  feelsText: $("#feels-text"),
+  feelsExplain: $("#feels-explain"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -276,8 +278,31 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  if (el.feelsText) el.feelsText.textContent = `Feels like ${Math.round(feels)}°`;
+  else el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  renderFeelsExplain(w);
   renderDayRange(w);
+}
+
+function renderFeelsExplain(w) {
+  if (!el.feelsExplain) return;
+  const t = w.temp, fl = w.feelsLike;
+  if (t == null || fl == null) { el.feelsExplain.hidden = true; return; }
+  const delta = fl - t;
+  if (Math.abs(delta) < 3) { el.feelsExplain.hidden = true; return; }
+  const wind = w.windSpeed ?? 0;
+  const humidity = w.humidity ?? 0;
+  let cause = "";
+  if (delta < 0) {
+    cause = wind >= 15 ? "wind chill" : "cool air";
+  } else {
+    cause = humidity >= 65 ? "humidity" : (w.uv ?? 0) >= 5 ? "strong sun" : "warm air";
+  }
+  const sign = delta > 0 ? "warmer" : "colder";
+  const cls = delta > 0 ? "warm" : "cold";
+  el.feelsExplain.className = `feels-explain ${cls}`;
+  el.feelsExplain.textContent = `· ${sign} from ${cause}`;
+  el.feelsExplain.hidden = false;
 }
 
 function renderDayRange(w) {

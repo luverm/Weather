@@ -634,6 +634,16 @@ html[data-reduce-motion="true"] *::after {
 .temp-trend.up { background: rgba(255, 156, 122, 0.18); color: #ffb196; }
 .temp-trend.down { background: rgba(154, 209, 255, 0.18); color: #9ad1ff; }
 .temp-trend.flat { background: rgba(255,255,255,0.08); color: var(--fg-dim); }
+.feels-explain {
+  margin-left: 6px;
+  font-size: 12px;
+  font-style: italic;
+  letter-spacing: 0.01em;
+  opacity: 0.85;
+}
+.feels-explain.warm { color: #ffb196; }
+.feels-explain.cold { color: #9ad1ff; }
+.feels-explain[hidden] { display: none; }
 
 /* ---------- Pollen card ---------- */
 #pollen-card[hidden] { display: none; }
