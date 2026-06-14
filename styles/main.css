@@ -792,6 +792,13 @@ html[data-reduce-motion="true"] *::after {
   fill: var(--fg-muted);
   font-size: 9.5px;
 }
+.chart-labels .chart-peak text {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.chart-labels .peak-hi text { fill: #ffb196; }
+.chart-labels .peak-lo text { fill: #9ad1ff; }
 .chart-cursor {
   stroke: var(--accent);
   stroke-width: 1.2;

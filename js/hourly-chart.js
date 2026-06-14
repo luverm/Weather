@@ -269,8 +269,10 @@ export class HourlyChart {
     const labG = this.svg.querySelector("#chart-labels");
     labG.innerHTML = "";
     const labelStep = Math.max(3, Math.floor(this.hours.length / 8));
+    const labeled = new Set();
     this.hours.forEach((h, i) => {
       if (i % labelStep !== 0) return;
+      labeled.add(i);
       const hh = this._hourOf(h.time);
       const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
       txt.setAttribute("x", iToX(i).toFixed(1));
@@ -288,5 +290,36 @@ export class HourlyChart {
       tTxt.textContent = `${Math.round(tVal)}°`;
       labG.appendChild(tTxt);
     });
+
+    // Peak high / low markers — only when not already labelled at that hour
+    // and only if the chart spans enough variation to make them meaningful.
+    if (span >= 3) {
+      let hiIdx = 0, loIdx = 0;
+      for (let i = 1; i < this.hours.length; i++) {
+        if (this.hours[i].temp > this.hours[hiIdx].temp) hiIdx = i;
+        if (this.hours[i].temp < this.hours[loIdx].temp) loIdx = i;
+      }
+      const drawPeak = (idx, dir) => {
+        if (labeled.has(idx)) return;
+        const h = this.hours[idx];
+        if (h.temp == null) return;
+        const tVal = unit === "F" ? h.temp * 9 / 5 + 32 : h.temp;
+        const x = iToX(idx);
+        const y = tToY(h.temp);
+        const offY = dir === "hi" ? -10 : 14;
+        const arrow = dir === "hi" ? "▲" : "▼";
+        const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        g.setAttribute("class", `chart-peak peak-${dir}`);
+        const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        txt.setAttribute("x", x.toFixed(1));
+        txt.setAttribute("y", (y + offY).toFixed(1));
+        txt.setAttribute("text-anchor", "middle");
+        txt.textContent = `${arrow}${Math.round(tVal)}°`;
+        g.appendChild(txt);
+        labG.appendChild(g);
+      };
+      drawPeak(hiIdx, "hi");
+      drawPeak(loIdx, "lo");
+    }
   }
 }
