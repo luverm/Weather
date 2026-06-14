@@ -12,7 +12,7 @@ const ICONS = {
   sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg>',
 };
 
-export function buildInsights(weather, { fmtTime, weekday } = {}) {
+export function buildInsights(weather, { fmtTime, weekday, unit } = {}) {
   const out = [];
   if (!weather) return out;
 
@@ -20,6 +20,8 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
   const days = weather.daily || [];
   const fmt = fmtTime || ((t) => new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
   const dow = weekday || ((t) => new Date(t).toLocaleDateString([], { weekday: "short" }));
+  const u = unit === "F" ? "F" : "C";
+  const t = (c) => Math.round(u === "F" ? c * 9 / 5 + 32 : c);
 
   // 1. Next rain in the week.
   const rainyDay = days.find((d) => (d.pop ?? 0) >= 55 || (d.precip ?? 0) >= 1.5);
@@ -63,12 +65,12 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
   if (coldest && warmest && warmest.t - coldest.t >= 4) {
     out.push({
       icon: ICONS.cold, label: "Coldest",
-      value: `${Math.round(coldest.t)}° at ${fmt(coldest.ts)}`,
+      value: `${t(coldest.t)}° at ${fmt(coldest.ts)}`,
       ts: coldest.ts,
     });
     out.push({
       icon: ICONS.warm, label: "Warmest",
-      value: `${Math.round(warmest.t)}° at ${fmt(warmest.ts)}`,
+      value: `${t(warmest.t)}° at ${fmt(warmest.ts)}`,
       ts: warmest.ts,
     });
   }
@@ -84,7 +86,7 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     if (hotDay && coolDay && hotDay !== coolDay) {
       out.push({
         icon: ICONS.warm, label: "Week high",
-        value: `${Math.round(hotDay.tempMax)}° on ${dow(hotDay.time)}`,
+        value: `${t(hotDay.tempMax)}° on ${dow(hotDay.time)}`,
         ts: hotDay.sunrise || hotDay.time,
       });
     }
@@ -97,6 +99,27 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
       value: `${Math.round(weather.uvPeak.value)} at ${fmt(weather.uvPeak.time)}`,
       ts: weather.uvPeak.time,
     });
+  }
+
+  // 6. Daylight gain/loss across the week.
+  if (days.length >= 4) {
+    const dayLen = (d) => (d.sunrise && d.sunset ? d.sunset - d.sunrise : null);
+    const first = dayLen(days[0]);
+    const last = dayLen(days[days.length - 1]);
+    if (first && last) {
+      const diffMin = Math.round((last - first) / 60000);
+      const abs = Math.abs(diffMin);
+      if (abs >= 4) {
+        const verb = diffMin > 0 ? "gain" : "lose";
+        const hh = Math.floor(abs / 60);
+        const mm = abs % 60;
+        const span = hh ? `${hh}h ${mm}m` : `${mm}m`;
+        out.push({
+          icon: ICONS.sun, label: `Daylight ${verb}`,
+          value: `${span} by ${dow(days[days.length - 1].time)}`,
+        });
+      }
+    }
   }
 
   return out.slice(0, 6);
