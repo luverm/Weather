@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { narrate } from "./narrative.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -198,7 +199,9 @@ export const ui = {
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
-    if (el.narrative) el.narrative.textContent = narrative || "";
+    if (el.narrative) {
+      el.narrative.textContent = (narrative ?? narrate(weather, { unit: state.unit })) || "";
+    }
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
     if (state.place) {

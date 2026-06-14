@@ -208,7 +208,7 @@ async function loadByCoords(place) {
   app.weather = w;
 
   // Render full UI (live + forecasts + narrative).
-  ui.setWeather(w, { narrative: narrate(w) });
+  ui.setWeather(w, { narrative: narrate(w, { unit: ui.getUnit?.() }) });
 
   // Apply to scenes at current (live) time.
   applyScene(w);
