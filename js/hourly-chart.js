@@ -294,6 +294,31 @@ export class HourlyChart {
       labG.appendChild(tTxt);
     });
 
+    // Day boundary marker — vertical tick at the first "00:xx" hour after now,
+    // with a "Tomorrow" label so the temp line's continuation reads naturally.
+    let crossedIdx = -1;
+    for (let i = 1; i < this.hours.length; i++) {
+      const cur = this._hourOf(this.hours[i].time);
+      const prev = this._hourOf(this.hours[i - 1].time);
+      if (cur === "00" && prev !== "00") { crossedIdx = i; break; }
+    }
+    if (crossedIdx > 0) {
+      const x = iToX(crossedIdx);
+      const ln = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      ln.setAttribute("class", "chart-day-boundary");
+      ln.setAttribute("x1", x.toFixed(1));
+      ln.setAttribute("x2", x.toFixed(1));
+      ln.setAttribute("y1", String(PAD_TOP - 4));
+      ln.setAttribute("y2", String(H - PAD_BOT + 4));
+      labG.appendChild(ln);
+      const lbl = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      lbl.setAttribute("x", (x + 4).toFixed(1));
+      lbl.setAttribute("y", String(PAD_TOP + 4));
+      lbl.setAttribute("class", "chart-day-label");
+      lbl.textContent = "Tomorrow";
+      labG.appendChild(lbl);
+    }
+
     // Peak high / low markers — only when not already labelled at that hour
     // and only if the chart spans enough variation to make them meaningful.
     if (span >= 3) {
