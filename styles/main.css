@@ -286,7 +286,19 @@ html[data-reduce-motion="true"] *::after {
 .icon-btn svg { width: 20px; height: 20px; }
 .icon-btn .sound-waves { opacity: 0; transition: opacity 240ms var(--ease); }
 .icon-btn.on { color: var(--accent); }
-.icon-btn.on .sound-waves { opacity: 1; }
+.icon-btn.on .sound-waves {
+  opacity: 1;
+  animation: sound-pulse 1.6s ease-in-out infinite;
+  transform-origin: 4px 12px;
+}
+@keyframes sound-pulse {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.08); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .icon-btn.on .sound-waves { animation: none; }
+}
+[data-reduce-motion="true"] .icon-btn.on .sound-waves { animation: none; }
 
 /* ---------- Saved locations strip ---------- */
 .places-strip {
