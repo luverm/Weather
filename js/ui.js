@@ -876,6 +876,9 @@ function cardinal(deg) {
 
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
+  // Reset overflow flag; re-evaluate after items are in.
+  const card = el.forecastTrack.parentElement;
+  if (card) card.dataset.overflow = "false";
   for (const h of (w.hourly || []).slice(0, 24)) {
     const item = document.createElement("div");
     item.className = "forecast-item";
@@ -889,6 +892,21 @@ function renderHourly(w) {
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
+  }
+  // After layout settles, mark overflow if the track scrolls horizontally
+  // and we aren't already at the right edge.
+  if (card) {
+    requestAnimationFrame(() => {
+      const t = el.forecastTrack;
+      const overflowing = t.scrollWidth - t.clientWidth > 8;
+      const atEnd = t.scrollLeft + t.clientWidth >= t.scrollWidth - 4;
+      card.dataset.overflow = overflowing && !atEnd ? "true" : "false";
+    });
+    el.forecastTrack.onscroll = () => {
+      const t = el.forecastTrack;
+      const atEnd = t.scrollLeft + t.clientWidth >= t.scrollWidth - 4;
+      card.dataset.overflow = atEnd ? "false" : "true";
+    };
   }
 }
 

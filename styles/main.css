@@ -1493,6 +1493,21 @@ kbd {
 .daily-spark circle { transition: r 160ms var(--ease); }
 .daily-spark .dot-hi { fill: #ff9c7a; }
 .daily-spark .dot-lo { fill: #9ad1ff; }
+.forecast {
+  position: relative;
+}
+.forecast::after {
+  content: "";
+  position: absolute;
+  right: 0; top: 28px; bottom: 8px;
+  width: 28px;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: linear-gradient(90deg, transparent, var(--glass) 60%, var(--glass-strong));
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 200ms var(--ease);
+}
+.forecast[data-overflow="true"]::after { opacity: 0.7; }
 .forecast-track {
   display: grid;
   grid-auto-flow: column;
