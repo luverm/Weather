@@ -937,6 +937,13 @@ function renderDaily(w) {
     const item = document.createElement("div");
     item.className = "daily-item";
     item.dataset.ts = d.time;
+    // Use the timezone-aware short-weekday string to detect Sat/Sun, so
+    // travel/remote locations highlight the *local* weekend.
+    const wd = dt.toLocaleDateString("en-US", {
+      weekday: "short",
+      ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    });
+    if (wd === "Sat" || wd === "Sun") item.dataset.weekend = "true";
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
