@@ -336,6 +336,8 @@ document.addEventListener("visibilitychange", () => {
 setInterval(() => {
   if (!app.weather || !clock.isLive()) return;
   applyScene(app.weather);
+  // Tick "in 2h" → "in 1h" on highlight chips without a full refresh.
+  ui.refreshClockyBits?.();
 }, 60_000);
 
 // Auto-refresh every 15 minutes (but only when live and visible).

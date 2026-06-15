@@ -244,6 +244,10 @@ export const ui = {
     el.toast._t = setTimeout(() => (el.toast.hidden = true), dur);
   },
   getUnit: () => state.unit,
+  /** Re-render time-sensitive widgets (used by the per-minute tick). */
+  refreshClockyBits() {
+    if (state.weather) renderHighlights(state.weather);
+  },
 };
 
 // ---------- Rendering ----------
