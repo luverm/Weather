@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { buildHighlights } from "./highlights.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -85,6 +86,7 @@ const el = {
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
+  highlights: $("#highlights"),
   activityCard: $("#activity-card"),
   activityList: $("#activity-list"),
   alertsStrip: $("#alerts-strip"),
@@ -193,6 +195,7 @@ export const ui = {
     renderActivity(weather);
     renderAlerts(weather);
     renderWeekend(weather);
+    renderHighlights(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -654,6 +657,40 @@ function renderInsights(w) {
   el.insightsList.querySelectorAll("li[data-ts]").forEach((li) => {
     li.addEventListener("click", () => {
       const ts = parseInt(li.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
+}
+
+function renderHighlights(w) {
+  if (!el.highlights) return;
+  const items = buildHighlights(w, { fmtTime });
+  if (!items.length) {
+    el.highlights.hidden = true;
+    el.highlights.innerHTML = "";
+    return;
+  }
+  el.highlights.hidden = false;
+  el.highlights.innerHTML = items.map((it) => {
+    // Re-format temperature-bearing values to honor °F when toggled.
+    let value = it.value;
+    if (state.unit === "F" && it._rawTemp != null) {
+      value = `${Math.round(it._rawTemp * 9 / 5 + 32)}° · ${value.split("· ")[1] || ""}`.trim();
+    }
+    return `
+      <button type="button" class="highlight-chip" data-tone="${it.tone || ""}"
+              data-ts="${it.ts}" title="${escapeHtml(it.label)} — ${escapeHtml(value)}">
+        <span class="highlight-icon" aria-hidden="true">${it.icon}</span>
+        <span class="highlight-meta">
+          <span class="highlight-label">${escapeHtml(it.label)}</span>
+          <span class="highlight-value">${escapeHtml(value)}</span>
+        </span>
+      </button>
+    `;
+  }).join("");
+  el.highlights.querySelectorAll(".highlight-chip").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const ts = parseInt(btn.dataset.ts, 10);
       if (ts) state.handlers.onHourClick?.(ts);
     });
   });

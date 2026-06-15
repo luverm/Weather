@@ -1257,6 +1257,89 @@ kbd {
   .alert-pill .alert-detail { display: none; }
 }
 
+/* ---------- Today's highlights strip ---------- */
+.highlights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  position: relative;
+}
+.highlights[hidden] { display: none; }
+.highlights::before {
+  content: "TODAY";
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  color: var(--fg-dim);
+  pointer-events: none;
+}
+.highlights {
+  padding-top: 26px;
+}
+.highlight-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px 7px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,0.05);
+  color: var(--fg);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  transition: transform 160ms var(--ease), background 160ms var(--ease), border-color 160ms var(--ease);
+  position: relative;
+}
+.highlight-chip:hover {
+  transform: translateY(-1px);
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.22);
+}
+.highlight-chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.highlight-icon {
+  font-size: 15px;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.35));
+}
+.highlight-meta {
+  display: grid;
+  gap: 1px;
+  text-align: left;
+  min-width: 0;
+}
+.highlight-label {
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+.highlight-value {
+  font-size: 12.5px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+  white-space: nowrap;
+}
+.highlight-chip[data-tone="warm"]  { border-color: rgba(255,185,120,0.28); }
+.highlight-chip[data-tone="warm"]:hover  { background: rgba(255,185,120,0.12); }
+.highlight-chip[data-tone="cool"]  { border-color: rgba(140,190,255,0.28); }
+.highlight-chip[data-tone="cool"]:hover  { background: rgba(140,190,255,0.12); }
+.highlight-chip[data-tone="dusk"]  { border-color: rgba(220,150,200,0.28); }
+.highlight-chip[data-tone="dusk"]:hover  { background: rgba(220,150,200,0.12); }
+
+@media (max-width: 540px) {
+  .highlight-label { display: none; }
+  .highlight-chip  { padding: 6px 10px; }
+}
+
 /* ---------- Activity windows ---------- */
 .activity-list {
   display: grid;
