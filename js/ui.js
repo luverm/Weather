@@ -222,6 +222,7 @@ export const ui = {
     } else if (state.chart) {
       state.chart.setCursor(sampled.hourly?.[highlightHourIndex]?.time);
     }
+    highlightNearestHighlightChip(sampled._sampledTs);
   },
   setScrubbing(on) {
     document.documentElement.setAttribute("data-scrubbing", on ? "true" : "false");
@@ -713,6 +714,24 @@ function renderHighlights(w) {
       state.chart.setCursor(restoreTs || null);
     });
   });
+}
+
+// Mark the highlight chip whose ts is within ~30 min of the cursor time
+// so the scrubber and the chips visibly track each other.
+function highlightNearestHighlightChip(cursorTs) {
+  if (!el.highlights || el.highlights.hidden) return;
+  const chips = el.highlights.querySelectorAll(".highlight-chip");
+  if (!chips.length) return;
+  chips.forEach((c) => c.classList.remove("scrubbed"));
+  if (cursorTs == null) return;
+  let best = null, bestDiff = 30 * 60_000; // only mark if within 30 min
+  chips.forEach((c) => {
+    const ts = parseInt(c.dataset.ts, 10);
+    if (!ts) return;
+    const d = Math.abs(ts - cursorTs);
+    if (d < bestDiff) { bestDiff = d; best = c; }
+  });
+  best?.classList.add("scrubbed");
 }
 
 function relativeWhen(ts) {
