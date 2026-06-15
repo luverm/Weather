@@ -670,30 +670,60 @@ function renderHighlights(w) {
     el.highlights.innerHTML = "";
     return;
   }
+  // Find the next-upcoming moment so we can softly pulse it.
+  const now = Date.now();
+  let nextIdx = -1, nextDelta = Infinity;
+  items.forEach((it, i) => {
+    const delta = it.ts - now;
+    if (delta > 0 && delta < nextDelta) { nextDelta = delta; nextIdx = i; }
+  });
   el.highlights.hidden = false;
-  el.highlights.innerHTML = items.map((it) => {
+  el.highlights.innerHTML = items.map((it, i) => {
     // Re-format temperature-bearing values to honor °F when toggled.
     let value = it.value;
     if (state.unit === "F" && it._rawTemp != null) {
       value = `${Math.round(it._rawTemp * 9 / 5 + 32)}° · ${value.split("· ")[1] || ""}`.trim();
     }
+    const isNext = i === nextIdx;
+    const rel = relativeWhen(it.ts);
     return `
-      <button type="button" class="highlight-chip" data-tone="${it.tone || ""}"
-              data-ts="${it.ts}" title="${escapeHtml(it.label)} — ${escapeHtml(value)}">
+      <button type="button" class="highlight-chip${isNext ? " upcoming-next" : ""}"
+              data-tone="${it.tone || ""}" data-ts="${it.ts}"
+              title="${escapeHtml(it.label)} — ${escapeHtml(value)}${rel ? ` (${rel})` : ""}">
         <span class="highlight-icon" aria-hidden="true">${it.icon}</span>
         <span class="highlight-meta">
-          <span class="highlight-label">${escapeHtml(it.label)}</span>
+          <span class="highlight-label">${escapeHtml(it.label)}${rel ? ` <span class="highlight-rel">· ${rel}</span>` : ""}</span>
           <span class="highlight-value">${escapeHtml(value)}</span>
         </span>
       </button>
     `;
   }).join("");
   el.highlights.querySelectorAll(".highlight-chip").forEach((btn) => {
+    const ts = parseInt(btn.dataset.ts, 10);
     btn.addEventListener("click", () => {
-      const ts = parseInt(btn.dataset.ts, 10);
       if (ts) state.handlers.onHourClick?.(ts);
     });
+    // Hover the chart cursor to that moment, then restore on leave.
+    btn.addEventListener("pointerenter", () => {
+      if (state.chart && ts) state.chart.setCursor(ts);
+    });
+    btn.addEventListener("pointerleave", () => {
+      if (!state.chart) return;
+      const restoreTs = state.sampledWeather?._sampledTs;
+      state.chart.setCursor(restoreTs || null);
+    });
   });
+}
+
+function relativeWhen(ts) {
+  const delta = ts - Date.now();
+  if (delta < -45 * 60_000) return null;            // already passed long ago
+  if (delta < 15 * 60_000 && delta > -15 * 60_000) return "now";
+  const mins = Math.round(delta / 60_000);
+  if (mins < 0) return null;
+  if (mins < 60) return `in ${mins}m`;
+  const h = Math.round(mins / 60);
+  return `in ${h}h`;
 }
 
 function renderWeekend(w) {
