@@ -139,9 +139,10 @@ export class HourlyChart {
       ? `<em>feels ${Math.round(feels)}°</em>` : "";
     const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
+    const sky = h.cloudCover != null ? ` · ${skyDescriptor(h.cloudCover)}` : "";
     this.popover.innerHTML =
       `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
-      `<em>${h.pop}% precip${wind}${hum}</em>`;
+      `<em>${h.pop}% precip${wind}${hum}${sky}</em>`;
     this.popover.style.left = `${pxX.toFixed(1)}px`;
     this.popover.style.top = `${pxY.toFixed(1)}px`;
     this.popover.hidden = false;
@@ -289,4 +290,12 @@ export class HourlyChart {
       labG.appendChild(tTxt);
     });
   }
+}
+
+function skyDescriptor(pct) {
+  if (pct < 12) return "clear sky";
+  if (pct < 35) return "mostly clear";
+  if (pct < 65) return "partly cloudy";
+  if (pct < 88) return "mostly cloudy";
+  return "overcast";
 }
