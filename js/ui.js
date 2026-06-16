@@ -5,6 +5,7 @@ import { searchCities } from "./weather-service.js";
 import { places } from "./places.js";
 import { HourlyChart } from "./hourly-chart.js";
 import { ComfortStrip } from "./comfort-strip.js";
+import { SkyCoverStrip } from "./sky-cover-strip.js";
 import { advise } from "./advice.js";
 import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
@@ -91,6 +92,7 @@ const el = {
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
   comfortStrip: $("#comfort-strip"),
+  skyCoverStrip: $("#sky-cover-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
   weekendDetail: $("#weekend-detail"),
@@ -120,6 +122,7 @@ const state = {
   handlers: {},
   chart: null,
   comfortStrip: null,
+  skyCoverStrip: null,
   sunTimer: null,
   sunArcTimer: null,
   localTimer: null,
@@ -152,6 +155,10 @@ export const ui = {
       rootEl: el.comfortStrip,
       onCellClick: (ts) => state.handlers.onHourClick?.(ts),
       getUnit: () => state.unit,
+    });
+    state.skyCoverStrip = new SkyCoverStrip({
+      rootEl: el.skyCoverStrip,
+      onCellClick: (ts) => state.handlers.onHourClick?.(ts),
     });
     bindInstallPrompt();
   },
@@ -196,6 +203,9 @@ export const ui = {
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
+    if (state.skyCoverStrip) state.skyCoverStrip.setHours(weather.hourly, {
+      sunrise: weather.sunrise, sunset: weather.sunset,
+    });
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
@@ -214,6 +224,7 @@ export const ui = {
     renderAdvice(sampled);
     highlightHour(highlightHourIndex);
     if (state.comfortStrip) state.comfortStrip.highlight(highlightHourIndex);
+    if (state.skyCoverStrip) state.skyCoverStrip.highlight(highlightHourIndex);
     if (state.chart && sampled._sampledTs != null) {
       state.chart.setCursor(sampled._sampledTs);
     } else if (state.chart) {

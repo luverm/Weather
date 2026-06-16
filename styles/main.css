@@ -1197,6 +1197,66 @@ kbd {
   font-variant-numeric: tabular-nums;
 }
 
+/* ---------- Sky-cover strip (24-cell cloud band) ---------- */
+.sky-cover-strip {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  gap: 1px;
+  margin-top: 4px;
+  padding: 0 4px 16px;
+  height: 22px;
+  position: relative;
+}
+.sky-cover-strip[hidden] { display: none; }
+.skystrip-cell {
+  position: relative;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 3px;
+  height: 8px;
+  cursor: pointer;
+  overflow: visible;
+  transition: transform 160ms var(--ease), filter 160ms var(--ease), height 160ms var(--ease);
+}
+.skystrip-cell .skystrip-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: 3px;
+  background: var(--c, rgba(255,255,255,0.06));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+}
+.skystrip-cell:hover { filter: brightness(1.18); transform: translateY(-1px); }
+.skystrip-cell.active {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  height: 12px;
+}
+.skystrip-cell.is-sunrise .skystrip-fill,
+.skystrip-cell.is-sunset .skystrip-fill {
+  box-shadow: inset 0 0 0 1px rgba(255,209,140,0.55);
+}
+.skystrip-glyph {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.35));
+}
+.skystrip-tick {
+  position: absolute;
+  bottom: -14px;
+  left: 0;
+  font-size: 9.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.04em;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---------- Alerts strip ---------- */
 .alerts-strip {
   display: flex;
