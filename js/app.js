@@ -345,6 +345,13 @@ setInterval(() => {
   refreshWeather();
 }, 15 * 60_000);
 
+// Nudge the saved-cities strip every 5 minutes so chips that have aged past
+// the 10-minute staleness window kick off their background quick-look refresh.
+setInterval(() => {
+  if (document.hidden) return;
+  ui.refreshPlaces?.();
+}, 5 * 60_000);
+
 // PWA service worker — optional, best-effort.
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
