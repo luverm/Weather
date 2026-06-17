@@ -1,8 +1,8 @@
 // Saved locations persisted to localStorage.
 //
-// Each entry: { id, name, country, admin1, lat, lon, temp?, condition? }
-// `temp` and `condition` are populated when that location is loaded so the
-// chip strip can show a mini summary.
+// Each entry: { id, name, country, admin1, lat, lon, temp?, condition?, tempAt? }
+// `temp`, `condition`, and `tempAt` are populated whenever a chip's quick-look
+// fetch resolves so the strip can show a fresh mini-summary.
 
 const KEY = "aether:places";
 const MAX = 8;
@@ -43,7 +43,7 @@ export const places = {
     const list = read();
     const i = list.findIndex((p) => idFor(p) === id);
     if (i < 0) return;
-    list[i] = { ...list[i], ...summary };
+    list[i] = { ...list[i], ...summary, tempAt: Date.now() };
     write(list);
   },
   isSaved(place) {

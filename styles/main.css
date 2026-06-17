@@ -302,7 +302,30 @@ html[data-reduce-motion="true"] *::after {
 }
 .place-chip:hover { background: var(--glass-strong); transform: translateY(-1px); }
 .place-chip.active { background: var(--glass-strong); border-color: rgba(255,255,255,0.35); }
-.place-chip .temp { color: var(--fg-muted); font-variant-numeric: tabular-nums; }
+.place-chip .chip-glyph {
+  width: 16px; height: 16px; display: inline-grid; place-items: center;
+  color: var(--fg-muted);
+  opacity: 0.95;
+}
+.place-chip .chip-glyph svg { width: 16px; height: 16px; display: block; }
+.place-chip .temp {
+  color: var(--fg-muted); font-variant-numeric: tabular-nums;
+  transition: color 200ms var(--ease), opacity 200ms var(--ease);
+}
+.place-chip.has-temp .temp { color: var(--fg); }
+.place-chip .temp.pending {
+  letter-spacing: 0.18em; opacity: 0.55;
+}
+.place-chip.stale .temp,
+.place-chip.stale .chip-glyph { opacity: 0.55; }
+.place-chip.loading .temp { animation: chip-pulse 1.6s ease-in-out infinite; }
+.place-chip.loading .chip-glyph { animation: chip-pulse 1.6s ease-in-out infinite; }
+@keyframes chip-pulse {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 1; }
+}
+[data-reduce-motion="true"] .place-chip.loading .temp,
+[data-reduce-motion="true"] .place-chip.loading .chip-glyph { animation: none; opacity: 0.6; }
 .place-chip .close {
   width: 16px; height: 16px; display: grid; place-items: center;
   border-radius: 50%; color: var(--fg-dim);

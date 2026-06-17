@@ -405,6 +405,32 @@ function mock(lat, lon) {
   };
 }
 
+// Minimal "current temp + condition" fetch used to keep saved-place chips
+// fresh without re-running the full forecast pipeline. Resolves to
+// { temp, condition, label, isDay } or null on failure.
+export async function getCityQuickLook(lat, lon) {
+  const params = new URLSearchParams({
+    latitude: lat,
+    longitude: lon,
+    current: ["temperature_2m", "weather_code", "is_day"].join(","),
+    timezone: "auto",
+  });
+  try {
+    const d = await fetchJson(`${FORECAST}?${params.toString()}`);
+    const c = d.current || {};
+    if (c.temperature_2m == null) return null;
+    const { condition, label } = mapWmo(c.weather_code);
+    return {
+      temp: c.temperature_2m,
+      condition,
+      label,
+      isDay: !!c.is_day,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function getLocation() {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) { reject(new Error("Geolocation not supported")); return; }

@@ -1,7 +1,7 @@
 // UI layer. Renders every data module and handles non-scene interactions
 // (search, unit toggle, saved places, tilt, audio toggle).
 
-import { searchCities } from "./weather-service.js";
+import { searchCities, getCityQuickLook } from "./weather-service.js";
 import { places } from "./places.js";
 import { HourlyChart } from "./hourly-chart.js";
 import { ComfortStrip } from "./comfort-strip.js";
@@ -1059,6 +1059,11 @@ function iconFor(condition) {
 }
 
 // ---------- Saved places strip ----------
+// A chip's temp+condition is considered fresh for STALE_MS; beyond that we
+// refresh it in the background via a lightweight quick-look fetch.
+const STALE_MS = 10 * 60_000;
+const quickLookInFlight = new Set();
+
 function renderPlaces() {
   const all = places.all();
   if (!all.length) { el.placesStrip.hidden = true; el.placesStrip.innerHTML = ""; return; }
@@ -1066,10 +1071,21 @@ function renderPlaces() {
   const activeId = state.place ? places.idFor(state.place) : null;
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
+    const stale = p.tempAt != null && Date.now() - p.tempAt > STALE_MS;
+    const loading = quickLookInFlight.has(p.id);
+    const hasTemp = p.temp != null;
+    const classes = [
+      "place-chip",
+      active ? "active" : "",
+      hasTemp ? "has-temp" : "",
+      stale && !loading ? "stale" : "",
+      loading ? "loading" : "",
+    ].filter(Boolean).join(" ");
     return `
-      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
-        <span>${escapeHtml(p.name)}</span>
-        ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
+      <div class="${classes}" data-id="${p.id}">
+        ${hasTemp ? `<span class="chip-glyph" aria-hidden="true">${iconFor(p.condition)}</span>` : ""}
+        <span class="chip-name">${escapeHtml(p.name)}</span>
+        ${hasTemp ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : `<span class="temp pending" aria-hidden="true">··</span>`}
         <span class="close" data-action="remove" aria-label="Remove">
           <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
         </span>
@@ -1087,6 +1103,49 @@ function renderPlaces() {
       state.handlers.onPlaceClick?.(item);
     });
   });
+  refreshStaleChips(all, activeId);
+}
+
+// Background refresh: any saved place that's missing a temp or whose temp is
+// older than STALE_MS gets a small quick-look fetch. The active chip is
+// skipped — it just received a full forecast. Concurrency is capped so we
+// don't blast the API when many chips are stale.
+function refreshStaleChips(all, activeId) {
+  const MAX_CONCURRENT = 2;
+  const candidates = all.filter((p) => {
+    if (p.id === activeId) return false;
+    if (quickLookInFlight.has(p.id)) return false;
+    if (p.temp == null) return true;
+    return p.tempAt == null || Date.now() - p.tempAt > STALE_MS;
+  });
+  if (!candidates.length) return;
+
+  let active = 0;
+  let i = 0;
+  const pump = () => {
+    while (active < MAX_CONCURRENT && i < candidates.length) {
+      const place = candidates[i++];
+      active++;
+      quickLookInFlight.add(place.id);
+      // Reflect the loading state without rebuilding the strip.
+      const chipEl = el.placesStrip.querySelector(`.place-chip[data-id="${place.id}"]`);
+      chipEl?.classList.add("loading");
+      chipEl?.classList.remove("stale");
+
+      getCityQuickLook(place.lat, place.lon).then((look) => {
+        if (look) {
+          places.updateSummary(place, { temp: look.temp, condition: look.condition });
+        }
+      }).catch(() => {}).finally(() => {
+        quickLookInFlight.delete(place.id);
+        active--;
+        // Re-render once this batch settles so chips animate to their fresh state.
+        if (active === 0 && i >= candidates.length) renderPlaces();
+        else pump();
+      });
+    }
+  };
+  pump();
 }
 
 // ---------- Bindings ----------
