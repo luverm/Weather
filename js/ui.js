@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { buildGear } from "./gear.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -87,6 +88,8 @@ const el = {
   insightsList: $("#insights-list"),
   activityCard: $("#activity-card"),
   activityList: $("#activity-list"),
+  gearCard: $("#gear-card"),
+  gearList: $("#gear-list"),
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
@@ -191,6 +194,7 @@ export const ui = {
     renderTrends(weather);
     renderInsights(weather);
     renderActivity(weather);
+    renderGear(weather);
     renderAlerts(weather);
     renderWeekend(weather);
     startLocaltime(weather);
@@ -768,6 +772,26 @@ function renderActivity(w) {
       if (ts) state.handlers.onHourClick?.(ts);
     });
   });
+}
+
+function renderGear(w) {
+  if (!el.gearCard || !el.gearList) return;
+  const items = buildGear(w);
+  if (!items.length) {
+    el.gearCard.hidden = true;
+    el.gearList.innerHTML = "";
+    return;
+  }
+  el.gearCard.hidden = false;
+  el.gearList.innerHTML = items.map((it) => `
+    <li class="gear-item" data-key="${escapeHtml(it.key)}">
+      <span class="gear-glyph" aria-hidden="true">${escapeHtml(it.glyph)}</span>
+      <span class="gear-meta">
+        <span class="gear-label">${escapeHtml(it.label)}</span>
+        <span class="gear-detail">${escapeHtml(it.detail)}</span>
+      </span>
+    </li>
+  `).join("");
 }
 
 function renderPollen(pollen) {
