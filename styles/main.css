@@ -635,6 +635,37 @@ html[data-reduce-motion="true"] *::after {
 .temp-trend.down { background: rgba(154, 209, 255, 0.18); color: #9ad1ff; }
 .temp-trend.flat { background: rgba(255,255,255,0.08); color: var(--fg-dim); }
 
+/* ---------- Vs yesterday chip ---------- */
+.vs-yesterday {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: var(--fg-muted);
+  background: var(--glass);
+  border: 1px solid var(--stroke);
+  width: fit-content;
+  animation: vy-in 380ms var(--ease) both;
+}
+.vs-yesterday[hidden] { display: none; }
+.vs-yesterday.up { color: #ffb196; background: rgba(255, 156, 122, 0.12); border-color: rgba(255, 156, 122, 0.22); }
+.vs-yesterday.down { color: #9ad1ff; background: rgba(154, 209, 255, 0.12); border-color: rgba(154, 209, 255, 0.22); }
+.vs-yesterday.flat { color: var(--fg-dim); }
+.vs-yesterday .vs-arrow { font-size: 9px; line-height: 1; }
+[data-scrubbing="true"] .vs-yesterday { opacity: 0; pointer-events: none; transition: opacity 200ms var(--ease); }
+@keyframes vy-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vs-yesterday { animation: none; }
+}
+
 /* ---------- Pollen card ---------- */
 #pollen-card[hidden] { display: none; }
 .pollen-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }

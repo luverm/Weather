@@ -61,6 +61,9 @@ const el = {
   pollenItems: $("#pollen-items"),
   pressureTrend: $("#m-pressure-trend"),
   tempTrend: $("#temp-trend"),
+  vsYesterday: $("#vs-yesterday"),
+  vsYesterdayArrow: $("#vs-yesterday-arrow"),
+  vsYesterdayText: $("#vs-yesterday-text"),
   uvLevel: $("#m-uv-level"),
   humidityComfort: $("#m-humidity-comfort"),
   pressureSparkLine: $("#pressure-spark-line"),
@@ -189,6 +192,7 @@ export const ui = {
     renderAdvice(weather);
     renderPollen(weather.pollen);
     renderTrends(weather);
+    renderVsYesterday(weather);
     renderInsights(weather);
     renderActivity(weather);
     renderAlerts(weather);
@@ -816,6 +820,33 @@ function renderTrends(w) {
       el.tempTrend.textContent = "";
     }
   }
+}
+
+function renderVsYesterday(w) {
+  if (!el.vsYesterday) return;
+  const vy = w.vsYesterday;
+  if (!vy || vy.delta == null) {
+    el.vsYesterday.hidden = true;
+    return;
+  }
+  const unit = state.unit;
+  // Delta is a difference, so convert by scale only (no offset).
+  const display = unit === "F" ? vy.delta * 9 / 5 : vy.delta;
+  const abs = Math.abs(display);
+  // Suppress trivial sub-degree noise; show "same as yesterday" pill instead.
+  if (abs < 0.5) {
+    el.vsYesterday.hidden = false;
+    el.vsYesterday.className = "vs-yesterday flat";
+    el.vsYesterdayArrow.textContent = "≈";
+    el.vsYesterdayText.textContent = "Same as yesterday";
+    return;
+  }
+  const rounded = Math.round(abs);
+  const warmer = display > 0;
+  el.vsYesterday.hidden = false;
+  el.vsYesterday.className = `vs-yesterday ${warmer ? "up" : "down"}`;
+  el.vsYesterdayArrow.textContent = warmer ? "▲" : "▼";
+  el.vsYesterdayText.textContent = `${rounded}° ${warmer ? "warmer" : "cooler"} than yesterday`;
 }
 
 function cardinal(deg) {
