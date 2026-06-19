@@ -26,6 +26,9 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  dayRangeTickMin: $("#day-range-tick-min"),
+  dayRangeTickMax: $("#day-range-tick-max"),
+  dayRangeTimes: $("#day-range-times"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -301,6 +304,7 @@ function renderDayRange(w) {
   }
   if (lo == null || hi == null || lo === hi) {
     el.dayRange.hidden = true;
+    if (el.dayRangeTimes) el.dayRangeTimes.hidden = true;
     return;
   }
   el.dayRange.hidden = false;
@@ -310,6 +314,50 @@ function renderDayRange(w) {
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+
+  // Tick marks at the actual hourly low/high times within today.
+  renderDayRangeTimes(w, lo, hi);
+}
+
+function renderDayRangeTimes(w, lo, hi) {
+  if (!el.dayRangeTimes) return;
+  const today = w.daily?.[0];
+  if (!today) { el.dayRangeTimes.hidden = true; return; }
+  // Find the daily slot whose center is closest to today.
+  const dayStart = today.sunrise ? today.sunrise - 6 * 3600_000 : today.time;
+  const dayEnd = dayStart + 24 * 3600_000;
+  const hrs = (w.hourly || []).filter((h) => h.time >= dayStart && h.time < dayEnd && h.temp != null);
+  if (hrs.length < 6) {
+    el.dayRangeTimes.hidden = true;
+    if (el.dayRangeTickMin) el.dayRangeTickMin.hidden = true;
+    if (el.dayRangeTickMax) el.dayRangeTickMax.hidden = true;
+    return;
+  }
+  let loHr = hrs[0], hiHr = hrs[0];
+  for (const h of hrs) {
+    if (h.temp < loHr.temp) loHr = h;
+    if (h.temp > hiHr.temp) hiHr = h;
+  }
+  if (loHr === hiHr) {
+    el.dayRangeTimes.hidden = true;
+    return;
+  }
+  const now = Date.now();
+  const loText = `Low ${fmtTime(loHr.time)}${loHr.time < now ? "" : " ↑"}`;
+  const hiText = `High ${fmtTime(hiHr.time)}${hiHr.time < now ? "" : " ↑"}`;
+  el.dayRangeTimes.hidden = false;
+  el.dayRangeTimes.textContent = `${loText} · ${hiText}`;
+
+  // Place tick marks along the range track by mapping low/high temps to position.
+  const span = Math.max(0.0001, hi - lo);
+  const placeTick = (tick, value) => {
+    if (!tick) return;
+    const frac = Math.max(0, Math.min(1, (value - lo) / span));
+    tick.style.left = `${(frac * 100).toFixed(1)}%`;
+    tick.hidden = false;
+  };
+  placeTick(el.dayRangeTickMin, loHr.temp);
+  placeTick(el.dayRangeTickMax, hiHr.temp);
 }
 
 function renderMetrics(w) {
