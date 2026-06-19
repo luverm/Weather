@@ -1464,10 +1464,18 @@ function bindShare() {
     const unit = state.unit;
     const t = (v) => `${Math.round(unit === "F" ? v * 9 / 5 + 32 : v)}°${unit}`;
     const today = w.daily?.[0];
+    const vy = w.vsYesterday;
+    let vyLine = null;
+    if (vy?.delta != null) {
+      const dDisplay = unit === "F" ? vy.delta * 9 / 5 : vy.delta;
+      const abs = Math.round(Math.abs(dDisplay));
+      if (abs >= 1) vyLine = `${abs}° ${dDisplay > 0 ? "warmer" : "cooler"} than yesterday`;
+    }
     const lines = [
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
       today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
+      vyLine,
       `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
