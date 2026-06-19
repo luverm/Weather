@@ -48,6 +48,8 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunSunshine: $("#sun-sunshine"),
+  sunSunshineText: $("#sun-sunshine-text"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -526,8 +528,58 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderSunshine(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+// "Clearness fraction" per WMO code — rough heuristic for how much direct
+// sun a given hour delivers. Anything precipitating or foggy is treated as
+// fully overcast; partly cloudy gets a partial credit.
+function clearnessFor(code) {
+  if (code == null) return null;
+  if (code === 0) return 1.0;        // clear
+  if (code === 1) return 0.85;       // mostly clear
+  if (code === 2) return 0.55;       // partly cloudy
+  if (code === 3) return 0.15;       // overcast
+  if (code === 45 || code === 48) return 0.05; // fog
+  return 0; // precip, storms, snow
+}
+
+function renderSunshine(w) {
+  if (!el.sunSunshine || !el.sunSunshineText) return;
+  if (!w.sunrise || !w.sunset || !w.hourly?.length) {
+    el.sunSunshine.hidden = true;
+    return;
+  }
+  // Sum clearness across hours overlapping today's daylight window.
+  let hoursSummed = 0;
+  let sunshineHours = 0;
+  const start = w.sunrise;
+  const end = w.sunset;
+  for (const h of w.hourly) {
+    if (h.time + 30 * 60_000 < start) continue;
+    if (h.time - 30 * 60_000 > end) break;
+    const c = clearnessFor(h.wmo);
+    if (c == null) continue;
+    sunshineHours += c;
+    hoursSummed += 1;
+  }
+  if (hoursSummed < 3) {
+    // Not enough samples to be meaningful — likely past sunset or partial day.
+    el.sunSunshine.hidden = true;
+    return;
+  }
+  const dayHours = Math.max(1, (end - start) / 3600_000);
+  const pct = Math.round((sunshineHours / dayHours) * 100);
+  const headline = pct >= 80 ? "Brilliant sun"
+    : pct >= 55 ? "Plenty of sun"
+    : pct >= 30 ? "Sun and clouds"
+    : pct >= 12 ? "Mostly cloudy"
+    : "Overcast day";
+  el.sunSunshine.hidden = false;
+  el.sunSunshine.dataset.intensity = pct >= 55 ? "high" : pct >= 25 ? "mid" : "low";
+  el.sunSunshineText.textContent = `${headline} · ~${sunshineHours.toFixed(1)}h of sun`;
 }
 
 function scheduleSunArc(w) {

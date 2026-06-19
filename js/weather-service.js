@@ -146,6 +146,7 @@ function normalize(d, aq) {
         uv: d.hourly.uv_index?.[i] ?? null,
         pressure: d.hourly.pressure_msl?.[i] ?? null,
         humidity: d.hourly.relative_humidity_2m?.[i] ?? null,
+        wmo: d.hourly.weather_code[i],
         ...mapWmo(d.hourly.weather_code[i]),
       });
     }
