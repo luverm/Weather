@@ -99,5 +99,31 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     });
   }
 
+  // 6. Multi-day streaks across the 7-day outlook.
+  if (days.length >= 3) {
+    const dryStreak = countLeadingStreak(days, (d) => (d.pop ?? 0) < 25 && (d.precip ?? 0) < 0.5);
+    const wetStreak = countLeadingStreak(days, (d) => (d.pop ?? 0) >= 55 || (d.precip ?? 0) >= 1.5);
+    if (dryStreak >= 4) {
+      out.push({
+        icon: ICONS.sun, label: "Dry stretch",
+        value: `${dryStreak} dry days ahead`,
+      });
+    } else if (wetStreak >= 3) {
+      out.push({
+        icon: ICONS.rain, label: "Wet stretch",
+        value: `${wetStreak} rainy days in a row`,
+      });
+    }
+  }
+
   return out.slice(0, 6);
+}
+
+function countLeadingStreak(days, predicate) {
+  let n = 0;
+  for (const d of days) {
+    if (!predicate(d)) break;
+    n++;
+  }
+  return n;
 }
