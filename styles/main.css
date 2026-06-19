@@ -729,14 +729,41 @@ html[data-reduce-motion="true"] *::after {
   color: var(--fg-dim);
 }
 .chart-legend {
-  display: inline-flex; align-items: center; gap: 8px;
+  display: inline-flex; align-items: center; gap: 4px;
   font-size: 11px; color: var(--fg-dim);
   margin-left: auto;
+  flex-wrap: wrap;
 }
+.legend-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--fg-muted);
+  font: inherit;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 180ms var(--ease), color 180ms var(--ease), border-color 180ms var(--ease), opacity 180ms var(--ease);
+}
+.legend-chip:hover { background: var(--glass); color: var(--fg); }
+.legend-chip:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+}
+.legend-chip.off { opacity: 0.42; }
+.legend-chip.off .legend-swatch { filter: grayscale(1) brightness(0.7); }
 .legend-swatch {
   display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle;
-  margin-right: 4px;
+  margin-right: 2px;
 }
+
+/* Hide individual chart series via card-level classes. */
+#chart-card.hide-temp #chart-temp-line,
+#chart-card.hide-temp #chart-temp-fill { display: none; }
+#chart-card.hide-feels #chart-feels-line { display: none; }
+#chart-card.hide-gust #chart-gust-line { display: none; }
+#chart-card.hide-precip #chart-precip { display: none; }
 .legend-swatch.temp { background: linear-gradient(90deg, #9ad1ff, #ffe6c7, #ff9c7a); }
 .legend-swatch.feels {
   background: linear-gradient(90deg, transparent 0 3px, var(--fg-dim) 3px 6px, transparent 6px 9px, var(--fg-dim) 9px 12px);

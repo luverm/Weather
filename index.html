@@ -184,11 +184,19 @@
       <div class="chart-card glass" id="chart-card" aria-label="Hourly forecast chart">
         <div class="chart-head">
           <span class="chart-title">Hourly trend</span>
-          <div class="chart-legend">
-            <span class="legend-swatch temp"></span><span>Temp</span>
-            <span class="legend-swatch feels"></span><span>Feels-like</span>
-            <span class="legend-swatch gust"></span><span>Gusts</span>
-            <span class="legend-swatch precip"></span><span>Precip</span>
+          <div class="chart-legend" role="group" aria-label="Toggle chart series">
+            <button type="button" class="legend-chip" data-series="temp" aria-pressed="true">
+              <span class="legend-swatch temp"></span>Temp
+            </button>
+            <button type="button" class="legend-chip" data-series="feels" aria-pressed="true">
+              <span class="legend-swatch feels"></span>Feels-like
+            </button>
+            <button type="button" class="legend-chip" data-series="gust" aria-pressed="true">
+              <span class="legend-swatch gust"></span>Gusts
+            </button>
+            <button type="button" class="legend-chip" data-series="precip" aria-pressed="true">
+              <span class="legend-swatch precip"></span>Precip
+            </button>
           </div>
           <span id="chart-hover" class="chart-hover" hidden></span>
         </div>

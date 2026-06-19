@@ -157,6 +157,7 @@ export const ui = {
       getUnit: () => state.unit,
     });
     bindInstallPrompt();
+    bindChartLegend();
   },
   focusSearch() { el.searchInput?.focus(); el.searchInput?.select?.(); },
   toggleUnits() { el.unitBtn?.click(); },
@@ -1200,6 +1201,37 @@ function bindUnitToggle() {
 
 function bindLocate() {
   el.locateBtn.addEventListener("click", () => state.handlers.onLocate?.());
+}
+
+function bindChartLegend() {
+  const card = document.getElementById("chart-card");
+  const chips = card?.querySelectorAll(".legend-chip");
+  if (!card || !chips?.length) return;
+  let stored = {};
+  try { stored = JSON.parse(localStorage.getItem("aether:chart-series") || "{}"); } catch { /* ignore */ }
+  const apply = (series, on) => {
+    card.classList.toggle(`hide-${series}`, !on);
+    const chip = card.querySelector(`.legend-chip[data-series="${series}"]`);
+    chip?.setAttribute("aria-pressed", on ? "true" : "false");
+    chip?.classList.toggle("off", !on);
+  };
+  for (const series of ["temp", "feels", "gust", "precip"]) {
+    apply(series, stored[series] !== false);
+  }
+  chips.forEach((chip) => {
+    chip.addEventListener("click", () => {
+      const series = chip.dataset.series;
+      const turningOff = chip.getAttribute("aria-pressed") === "true";
+      // Never let the user hide the temp series — it's the chart's anchor.
+      if (series === "temp" && turningOff) {
+        ui.showToast("Temperature line stays on");
+        return;
+      }
+      apply(series, !turningOff);
+      stored[series] = !turningOff;
+      try { localStorage.setItem("aether:chart-series", JSON.stringify(stored)); } catch { /* ignore */ }
+    });
+  });
 }
 
 function bindAudio() {
