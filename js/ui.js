@@ -321,43 +321,50 @@ function renderDayRange(w) {
 
 function renderDayRangeTimes(w, lo, hi) {
   if (!el.dayRangeTimes) return;
+  if (el.dayRangeTickMin) el.dayRangeTickMin.hidden = true;
+  if (el.dayRangeTickMax) el.dayRangeTickMax.hidden = true;
   const today = w.daily?.[0];
   if (!today) { el.dayRangeTimes.hidden = true; return; }
-  // Find the daily slot whose center is closest to today.
+  // Restrict to today's calendar window. Note: the hourly array is filtered
+  // to roughly "now onwards", so we only ever surface upcoming extremes.
   const dayStart = today.sunrise ? today.sunrise - 6 * 3600_000 : today.time;
   const dayEnd = dayStart + 24 * 3600_000;
-  const hrs = (w.hourly || []).filter((h) => h.time >= dayStart && h.time < dayEnd && h.temp != null);
-  if (hrs.length < 6) {
-    el.dayRangeTimes.hidden = true;
-    if (el.dayRangeTickMin) el.dayRangeTickMin.hidden = true;
-    if (el.dayRangeTickMax) el.dayRangeTickMax.hidden = true;
-    return;
-  }
+  const now = Date.now();
+  const hrs = (w.hourly || []).filter(
+    (h) => h.time >= Math.max(dayStart, now) && h.time < dayEnd && h.temp != null
+  );
+  if (hrs.length < 3) { el.dayRangeTimes.hidden = true; return; }
+
   let loHr = hrs[0], hiHr = hrs[0];
   for (const h of hrs) {
     if (h.temp < loHr.temp) loHr = h;
     if (h.temp > hiHr.temp) hiHr = h;
   }
-  if (loHr === hiHr) {
+  // Only label an extreme if it's actually meaningfully close to today's
+  // daily min/max — otherwise we'd label a noon dip on a heatwave.
+  const parts = [];
+  if (hiHr && Math.abs(hiHr.temp - hi) < 1.5) {
+    parts.push(`High ${fmtTime(hiHr.time)}`);
+    placeRangeTick(el.dayRangeTickMax, hiHr.temp, lo, hi);
+  }
+  if (loHr && loHr !== hiHr && Math.abs(loHr.temp - lo) < 1.5) {
+    parts.push(`Low ${fmtTime(loHr.time)}`);
+    placeRangeTick(el.dayRangeTickMin, loHr.temp, lo, hi);
+  }
+  if (!parts.length) {
     el.dayRangeTimes.hidden = true;
     return;
   }
-  const now = Date.now();
-  const loText = `Low ${fmtTime(loHr.time)}${loHr.time < now ? "" : " ↑"}`;
-  const hiText = `High ${fmtTime(hiHr.time)}${hiHr.time < now ? "" : " ↑"}`;
   el.dayRangeTimes.hidden = false;
-  el.dayRangeTimes.textContent = `${loText} · ${hiText}`;
+  el.dayRangeTimes.textContent = parts.join(" · ");
+}
 
-  // Place tick marks along the range track by mapping low/high temps to position.
+function placeRangeTick(tick, value, lo, hi) {
+  if (!tick) return;
   const span = Math.max(0.0001, hi - lo);
-  const placeTick = (tick, value) => {
-    if (!tick) return;
-    const frac = Math.max(0, Math.min(1, (value - lo) / span));
-    tick.style.left = `${(frac * 100).toFixed(1)}%`;
-    tick.hidden = false;
-  };
-  placeTick(el.dayRangeTickMin, loHr.temp);
-  placeTick(el.dayRangeTickMax, hiHr.temp);
+  const frac = Math.max(0, Math.min(1, (value - lo) / span));
+  tick.style.left = `${(frac * 100).toFixed(1)}%`;
+  tick.hidden = false;
 }
 
 function renderMetrics(w) {
