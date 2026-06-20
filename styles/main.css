@@ -390,7 +390,28 @@ html[data-reduce-motion="true"] *::after {
 }
 .unit:hover { background: var(--glass); color: var(--fg); }
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
-.feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
+.feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.feels-reason {
+  display: inline-flex; align-items: center;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  font-variant-numeric: tabular-nums;
+}
+.feels-reason.warm {
+  background: rgba(255, 156, 122, 0.16);
+  color: #ffb898;
+  border-color: rgba(255, 156, 122, 0.28);
+}
+.feels-reason.cold {
+  background: rgba(154, 209, 255, 0.16);
+  color: #b8d8ff;
+  border-color: rgba(154, 209, 255, 0.28);
+}
+.feels-reason[hidden] { display: none; }
 .day-range {
   margin-top: 10px;
   display: grid;
