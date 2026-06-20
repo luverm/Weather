@@ -913,9 +913,59 @@ function renderDaily(w) {
 
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
-  el.dailyIconStrip.innerHTML = days.map((d) =>
-    `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
-  ).join("");
+  const tz = state.weather?.timezone;
+  const todayKey = dateKeyFor(Date.now(), tz);
+  el.dailyIconStrip.innerHTML = days.map((d, i) => {
+    const isToday = dateKeyFor(d.time, tz) === todayKey;
+    const wd = i === 0
+      ? "Today"
+      : new Date(d.time).toLocaleDateString(undefined, {
+          weekday: "short",
+          ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+        });
+    const cond = escapeHtml(d.label || d.condition || "");
+    // Jump to local noon of that day so the scrubber lands on a real hour.
+    const noonTs = noonOf(d.time, tz);
+    return `
+      <button type="button" class="strip-day${isToday ? " is-today" : ""}"
+              data-ts="${noonTs}"
+              title="${escapeHtml(wd)} · ${cond}"
+              aria-label="Jump to ${escapeHtml(wd)}">
+        ${iconFor(d.condition)}
+        <span class="strip-day-label">${escapeHtml(wd)}</span>
+      </button>`;
+  }).join("");
+  el.dailyIconStrip.querySelectorAll(".strip-day").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const ts = parseInt(btn.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
+}
+
+function dateKeyFor(ts, tz) {
+  try {
+    return new Intl.DateTimeFormat("en-CA", {
+      ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+      year: "numeric", month: "2-digit", day: "2-digit",
+    }).format(new Date(ts));
+  } catch {
+    const d = new Date(ts);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }
+}
+
+function noonOf(ts, tz) {
+  // Build a Date at local noon for the day-of-ts (best-effort in tz).
+  try {
+    const key = dateKeyFor(ts, tz);
+    // 12:00 in the city's timezone; Intl can't parse so we approximate by
+    // constructing local noon and letting the scrubber sample the nearest hour.
+    return new Date(`${key}T12:00:00`).getTime();
+  } catch {
+    const d = new Date(ts); d.setHours(12, 0, 0, 0);
+    return d.getTime();
+  }
 }
 
 function renderDailySpark(days) {
