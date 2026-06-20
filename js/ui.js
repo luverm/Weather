@@ -210,7 +210,13 @@ export const ui = {
     // Narrative may be supplied by the caller (kept for backwards compat) but
     // we always re-narrate locally so wind units stay live across re-renders.
     if (el.narrative) {
-      const text = narrative != null ? narrative : narrate(weather, { fmtWind: currentFmtWind() });
+      const text = narrative != null
+        ? narrative
+        : narrate(weather, {
+            fmtWind: currentFmtWind(),
+            fmtTemp: currentFmtTemp(),
+            fmtTempDelta: currentFmtTempDelta(),
+          });
       el.narrative.textContent = text || "";
     }
     if (weather.offline) ui.showToast("Offline — showing sample weather");
@@ -654,7 +660,11 @@ function renderInsights(w) {
     weekday: "short",
     ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
   });
-  const items = buildInsights(w, { fmtTime: fmt, weekday, fmtWind: currentFmtWind() });
+  const items = buildInsights(w, {
+    fmtTime: fmt, weekday,
+    fmtWind: currentFmtWind(),
+    fmtTemp: currentFmtTemp(),
+  });
   if (!items.length) {
     el.insightsCard.hidden = true;
     return;
@@ -702,7 +712,10 @@ function renderWeekend(w) {
 
 function renderAlerts(w) {
   if (!el.alertsStrip) return;
-  const alerts = buildAlerts(w, { fmtWind: currentFmtWind() });
+  const alerts = buildAlerts(w, {
+    fmtWind: currentFmtWind(),
+    fmtTemp: currentFmtTemp(),
+  });
   // Respect per-place dismissals so the user isn't nagged.
   const dismissed = getDismissedAlerts();
   const visible = alerts.filter((a) => !dismissed.has(a.id));
@@ -1250,6 +1263,16 @@ function bindWindUnitToggle() {
 
 function currentFmtWind() {
   return (kmh) => fmtWind(kmh, state.windUnit);
+}
+
+function currentFmtTemp() {
+  return (c) => (c == null ? "—" : `${Math.round(convertTemp(c))}°`);
+}
+
+function currentFmtTempDelta() {
+  // Scale °C delta to display unit ( °F deltas are 1.8× the °C value).
+  const factor = state.unit === "F" ? 9 / 5 : 1;
+  return (c) => (c == null ? "—" : `${Math.round(c * factor)}°`);
 }
 
 function bindLocate() {

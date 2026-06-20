@@ -37,8 +37,9 @@ function findTempSwing(hourly) {
   if (max.v - min.v < 6) return null;
   const drop = nowTemp - min.v;
   const rise = max.v - nowTemp;
-  if (drop > 5 && min.t > Date.now()) return { kind: "drop", by: Math.round(drop), ts: min.t };
-  if (rise > 5 && max.t > Date.now()) return { kind: "rise", by: Math.round(rise), ts: max.t };
+  // Keep `byC` as the raw °C delta; the caller scales it for °F display.
+  if (drop > 5 && min.t > Date.now()) return { kind: "drop", byC: drop, ts: min.t };
+  if (rise > 5 && max.t > Date.now()) return { kind: "rise", byC: rise, ts: max.t };
   return null;
 }
 
@@ -56,17 +57,19 @@ function findGusts(hourly) {
 /**
  * Return a one or two-sentence narrative for the current weather.
  */
-export function narrate(weather, { fmtWind } = {}) {
+export function narrate(weather, { fmtWind, fmtTemp, fmtTempDelta } = {}) {
   if (!weather) return "";
   const bits = [];
   const { condition, label, temp, feelsLike, uvPeak, windSpeed } = weather;
   const wind = fmtWind || ((kmh) => `${Math.round(kmh)} km/h`);
+  const t = fmtTemp || ((c) => `${Math.round(c)}°`);
+  const dT = fmtTempDelta || ((c) => `${Math.round(c)}°`);
 
   // Lead: describe current state.
   const feels = Math.abs((feelsLike ?? temp) - temp) >= 3
-    ? ` — feels closer to ${Math.round(feelsLike)}°`
+    ? ` — feels closer to ${t(feelsLike)}`
     : "";
-  bits.push(`${label} at ${Math.round(temp)}°${feels}.`);
+  bits.push(`${label} at ${t(temp)}${feels}.`);
 
   // Precipitation arriving.
   const rain = findNextPrecip(weather.nowcast, weather.hourly);
@@ -85,8 +88,8 @@ export function narrate(weather, { fmtWind } = {}) {
     const swing = findTempSwing(weather.hourly);
     if (swing) {
       bits.push(swing.kind === "drop"
-        ? `Temperature drops ${swing.by}° by ${fmtHour(swing.ts)}.`
-        : `Warming ${swing.by}° by ${fmtHour(swing.ts)}.`);
+        ? `Temperature drops ${dT(swing.byC)} by ${fmtHour(swing.ts)}.`
+        : `Warming ${dT(swing.byC)} by ${fmtHour(swing.ts)}.`);
     }
   }
 
