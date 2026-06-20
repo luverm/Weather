@@ -267,6 +267,27 @@ export class HourlyChart {
       }
     }
 
+    // "Now" tick: pinned to the current real-time position along the chart.
+    const nowLine = this.svg.querySelector("#chart-now-line");
+    const nowLabel = this.svg.querySelector("#chart-now-label");
+    if (nowLine && nowLabel) {
+      const now = Date.now();
+      const first = this.hours[0]?.time;
+      const last = this.hours[this.hours.length - 1]?.time;
+      if (first != null && last != null && now >= first && now <= last) {
+        const totalSpan = last - first;
+        const fracX = totalSpan > 0 ? (now - first) / totalSpan : 0;
+        const xNow = PAD_LEFT + fracX * innerW;
+        nowLine.setAttribute("x1", xNow.toFixed(1));
+        nowLine.setAttribute("x2", xNow.toFixed(1));
+        nowLabel.setAttribute("x", xNow.toFixed(1));
+      } else {
+        nowLine.setAttribute("x1", "-10");
+        nowLine.setAttribute("x2", "-10");
+        nowLabel.setAttribute("x", "-10");
+      }
+    }
+
     // Labels: every ~3 hours
     const unit = this.getUnit();
     const labG = this.svg.querySelector("#chart-labels");
