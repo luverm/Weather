@@ -285,6 +285,7 @@ installShortcuts({
   locate: () => useGeolocation(),
   toggleUnits: () => ui.toggleUnits(),
   cycleWindUnit: () => ui.cycleWindUnit(),
+  refresh: () => refreshWeather(),
   toggleAudio: () => toggleAudio(),
   toggleFullscreenRadar: () => document.getElementById("radar-full")?.click(),
   toggleRadar: () => document.getElementById("radar-play")?.click(),
