@@ -272,8 +272,9 @@
 
       <!-- Extras row: air quality + moon -->
       <div class="extras">
-        <div class="extra-card glass" id="aq-card">
-          <span class="metric-label">Air quality</span>
+        <button class="extra-card glass" id="aq-card" type="button"
+                aria-expanded="false" aria-label="Air quality, tap for pollutant breakdown">
+          <span class="metric-label">Air quality <span class="aq-toggle" aria-hidden="true">▾</span></span>
           <div class="aq-row">
             <div class="aq-ring" aria-hidden="true">
               <svg viewBox="0 0 48 48">
@@ -293,7 +294,8 @@
               </svg>
             </div>
           </div>
-        </div>
+          <div id="aq-pollutants" class="aq-pollutants" hidden></div>
+        </button>
 
         <div class="extra-card glass" id="moon-card">
           <span class="metric-label">Moon</span>

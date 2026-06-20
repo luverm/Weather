@@ -1023,7 +1023,7 @@ kbd {
   border-radius: var(--radius-sm);
   display: grid; gap: 10px;
 }
-.aq-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
+.aq-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; grid-column: 1 / -1; }
 .aq-ring { position: relative; width: 48px; height: 48px; color: #78d06a; }
 .aq-ring svg { width: 48px; height: 48px; display: block; }
 .aq-value {
@@ -1039,6 +1039,63 @@ kbd {
   margin-top: 4px;
   color: currentColor;
   opacity: 0.85;
+}
+
+/* AQ card is now a button — strip default chrome and add expand affordance. */
+#aq-card {
+  font: inherit; color: inherit; text-align: left;
+  width: 100%;
+  cursor: pointer;
+  /* Explicitly single-column so the pollutant grid stacks below. */
+  grid-template-columns: 1fr;
+}
+.aq-toggle {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 10px;
+  color: var(--fg-dim);
+  transition: transform 200ms var(--ease);
+}
+#aq-card.expanded .aq-toggle { transform: rotate(180deg); }
+.aq-pollutants {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--stroke);
+  animation: aq-pollutants-in 220ms var(--ease);
+  /* Span every parent-grid column so it stretches across the whole card. */
+  grid-column: 1 / -1;
+}
+.aq-pollutants[hidden] { display: none; }
+@keyframes aq-pollutants-in {
+  from { opacity: 0; transform: translateY(-3px); }
+  to   { opacity: 1; transform: none; }
+}
+.aq-pollutant {
+  display: grid; gap: 1px;
+  padding: 5px 7px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  border: 1px solid var(--stroke);
+}
+.aq-pollutant-key {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+.aq-pollutant-val {
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.aq-pollutant-unit {
+  margin-left: 3px;
+  font-size: 9px;
+  font-weight: 400;
+  color: var(--fg-dim);
 }
 
 .moon-row, .sun-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }

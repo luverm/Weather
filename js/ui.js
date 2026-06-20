@@ -49,6 +49,7 @@ const el = {
   aqLabel: $("#aq-label"),
   aqDetail: $("#aq-detail"),
   aqCard: $("#aq-card"),
+  aqPollutants: $("#aq-pollutants"),
   aqTrendLine: $("#aq-trend-line"),
   aqTrendFill: $("#aq-trend-fill"),
   moonLit: $("#moon-lit"),
@@ -153,6 +154,7 @@ export const ui = {
     bindUnitToggle();
     bindWindUnitToggle();
     bindPressureUnitToggle();
+    bindAqExpand();
     bindLocate();
     bindAudio();
     bindShare();
@@ -531,6 +533,25 @@ function renderAirQuality(aq) {
   el.aqDetail.textContent =
     `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
   renderAqTrend(aq);
+  renderAqPollutants(aq);
+}
+
+function renderAqPollutants(aq) {
+  if (!el.aqPollutants) return;
+  // Open-Meteo returns all five in µg/m³ (CO included — values are typically
+  // in the hundreds, not the single-digit "mg/m³" range).
+  const items = [
+    { k: "PM2.5", v: aq.pm25 },
+    { k: "PM10",  v: aq.pm10 },
+    { k: "O₃",    v: aq.o3 },
+    { k: "NO₂",   v: aq.no2 },
+    { k: "CO",    v: aq.co },
+  ].filter((p) => p.v != null);
+  el.aqPollutants.innerHTML = items.map((p) => `
+    <div class="aq-pollutant">
+      <span class="aq-pollutant-key">${p.k}</span>
+      <span class="aq-pollutant-val">${Math.round(p.v)}<span class="aq-pollutant-unit">µg/m³</span></span>
+    </div>`).join("");
 }
 
 function renderAqTrend(aq) {
@@ -1330,6 +1351,17 @@ function bindWindUnitToggle() {
     el.metricWindUnit.classList.add("pulse");
     if (state.weather) ui.setWeather(state.weather);
     ui.showToast(`Wind units · ${windUnitLabel(state.windUnit)}`);
+  });
+}
+
+function bindAqExpand() {
+  if (!el.aqCard || !el.aqPollutants) return;
+  el.aqCard.addEventListener("click", () => {
+    const expanded = el.aqCard.getAttribute("aria-expanded") === "true";
+    const next = !expanded;
+    el.aqCard.setAttribute("aria-expanded", next ? "true" : "false");
+    el.aqPollutants.hidden = !next;
+    el.aqCard.classList.toggle("expanded", next);
   });
 }
 
