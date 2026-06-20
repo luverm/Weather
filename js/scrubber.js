@@ -10,7 +10,7 @@ const RANGE_HOURS = 24;
 
 export class Scrubber {
   constructor({ trackEl, thumbEl, fillEl, timeEl, deltaEl, resetEl,
-                sunriseEl, sunsetEl, appEl, onScrub }) {
+                sunriseEl, sunsetEl, jumpsEl, appEl, onScrub }) {
     this.track = trackEl;
     this.thumb = thumbEl;
     this.fill = fillEl;
@@ -19,6 +19,7 @@ export class Scrubber {
     this.resetEl = resetEl;
     this.sunriseEl = sunriseEl;
     this.sunsetEl = sunsetEl;
+    this.jumpsEl = jumpsEl;
     this.appEl = appEl; // receives data-scrubbing attribute
     this.onScrub = onScrub;
     this.dragging = false;
@@ -38,7 +39,42 @@ export class Scrubber {
     this.sunset = sunset;
     this._placeMarker(this.sunriseEl, sunrise, "Sunrise");
     this._placeMarker(this.sunsetEl, sunset, "Sunset");
+    this._renderJumps();
     this._render(this._currentT());
+  }
+
+  /** Jump the clock to an absolute timestamp (ms). */
+  jumpTo(ts) {
+    if (!ts) return;
+    this._setOffset(ts - Date.now());
+  }
+
+  _renderJumps() {
+    if (!this.jumpsEl) return;
+    const rangeStart = this.start - 3600_000;
+    const rangeEnd = rangeStart + RANGE_HOURS * 3600_000;
+    const inRange = (ts) => ts != null && ts >= rangeStart && ts <= rangeEnd;
+    const noon = this.sunrise && this.sunset
+      ? Math.round((this.sunrise + this.sunset) / 2)
+      : null;
+    const jumps = [
+      this.sunrise ? { id: "sunrise", label: "Sunrise", ts: this.sunrise, icon: "☀︎" } : null,
+      noon         ? { id: "noon",    label: "Noon",    ts: noon,         icon: "↑" } : null,
+      this.sunset  ? { id: "sunset",  label: "Sunset",  ts: this.sunset,  icon: "☾" } : null,
+    ].filter(Boolean).filter((j) => inRange(j.ts));
+
+    this.jumpsEl.innerHTML = jumps.map((j) =>
+      `<button type="button" class="jump-chip" data-ts="${j.ts}" data-id="${j.id}"
+               aria-label="Jump to ${j.label}">
+         <span class="jump-icon" aria-hidden="true">${j.icon}</span>${j.label}
+       </button>`
+    ).join("");
+    this.jumpsEl.querySelectorAll(".jump-chip").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const ts = parseInt(btn.dataset.ts, 10);
+        if (ts) this.jumpTo(ts);
+      });
+    });
   }
 
   /** Called when we externally reset to "now" (e.g. search selected). */
@@ -137,6 +173,7 @@ export class Scrubber {
       weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false,
     });
     if (this.timeEl) this.timeEl.textContent = label;
+    this._highlightJumps(time);
 
     const offMin = Math.round(clock.offset() / 60_000);
     if (this.deltaEl) {
@@ -147,5 +184,14 @@ export class Scrubber {
         this.deltaEl.textContent = `${h > 0 ? "+" : ""}${h}h`;
       }
     }
+  }
+
+  _highlightJumps(time) {
+    if (!this.jumpsEl) return;
+    this.jumpsEl.querySelectorAll(".jump-chip").forEach((btn) => {
+      const ts = parseInt(btn.dataset.ts, 10);
+      const near = ts && Math.abs(ts - time) < 30 * 60_000;
+      btn.classList.toggle("active", !!near);
+    });
   }
 }
