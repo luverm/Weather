@@ -913,11 +913,16 @@ function renderHourly(w) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    const mm = h.precip ?? 0;
+    const mmText = mm >= 0.1
+      ? `<span class="forecast-mm">${mm < 1 ? mm.toFixed(1) : Math.round(mm)} mm</span>`
+      : "";
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
+      ${mmText}
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
