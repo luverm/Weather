@@ -3,12 +3,13 @@
 // derive them locally. Each alert is { id, severity, title, detail, ts? }.
 // `ts` lets the UI scrub to the exact moment of the alert when clicked.
 
-export function buildAlerts(weather) {
+export function buildAlerts(weather, { fmtWind } = {}) {
   if (!weather) return [];
   const out = [];
   const hours = (weather.hourly || []).slice(0, 24);
   const today = (weather.daily || [])[0];
   const tomorrow = (weather.daily || [])[1];
+  const wind = fmtWind || ((kmh) => `${Math.round(kmh)} km/h`);
 
   // ---- Heat ----
   const hottest = hottestHour(hours);
@@ -57,7 +58,7 @@ export function buildAlerts(weather) {
       id: "storm-wind",
       severity: "danger",
       title: "Damaging wind",
-      detail: `Gusts to ${Math.round(gust.v)} km/h near ${shortClock(gust.ts)}.`,
+      detail: `Gusts to ${wind(gust.v)} near ${shortClock(gust.ts)}.`,
       ts: gust.ts,
     });
   } else if (gust && gust.v >= 50) {
@@ -65,7 +66,7 @@ export function buildAlerts(weather) {
       id: "gale",
       severity: "warn",
       title: "Gale-force gusts",
-      detail: `Up to ${Math.round(gust.v)} km/h around ${shortClock(gust.ts)}.`,
+      detail: `Up to ${wind(gust.v)} around ${shortClock(gust.ts)}.`,
       ts: gust.ts,
     });
   }

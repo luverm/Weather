@@ -57,6 +57,7 @@ export function installShortcuts(handlers) {
     if (key === "?" || (e.shiftKey && key === "/")) { e.preventDefault(); toggleOverlay(); return; }
     if (key === "l" || key === "L") { e.preventDefault(); handlers.locate?.(); return; }
     if (key === "u" || key === "U") { e.preventDefault(); handlers.toggleUnits?.(); return; }
+    if (key === "w" || key === "W") { e.preventDefault(); handlers.cycleWindUnit?.(); return; }
     if (key === "m" || key === "M") { e.preventDefault(); handlers.toggleAudio?.(); return; }
     if (key === "f" || key === "F") { e.preventDefault(); handlers.toggleFullscreenRadar?.(); return; }
     if (key === "n" || key === "N") { e.preventDefault(); handlers.resetScrubber?.(); return; }

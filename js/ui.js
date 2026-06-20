@@ -10,6 +10,8 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { narrate } from "./narrative.js";
+import { fmtWind, fmtWindValue, windUnitLabel, nextWindUnit, isWindUnit } from "./units.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -27,6 +29,7 @@ const el = {
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
   metricWind: $("#m-wind"),
+  metricWindUnit: $("#m-wind-unit"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
   metricHumidity: $("#m-humidity"),
@@ -114,6 +117,10 @@ const el = {
 
 const state = {
   unit: localStorage.getItem("aether:unit") || "C",
+  windUnit: (() => {
+    const saved = localStorage.getItem("aether:windUnit");
+    return isWindUnit(saved) ? saved : "kmh";
+  })(),
   weather: null,
   place: null,
   sampledWeather: null, // the weather values at the current scrubber time
@@ -129,8 +136,10 @@ export const ui = {
   init(handlers) {
     state.handlers = handlers || {};
     el.unitBtn.textContent = `°${state.unit}`;
+    if (el.metricWindUnit) el.metricWindUnit.textContent = windUnitLabel(state.windUnit);
     bindSearch();
     bindUnitToggle();
+    bindWindUnitToggle();
     bindLocate();
     bindAudio();
     bindShare();
@@ -146,6 +155,7 @@ export const ui = {
       popoverEl: el.chartPopover,
       onHoverHour: (ts) => state.handlers.onHourClick?.(ts),
       getUnit: () => state.unit,
+      getWindUnit: () => state.windUnit,
       getTimezone: () => state.weather?.timezone,
     });
     state.comfortStrip = new ComfortStrip({
@@ -157,6 +167,7 @@ export const ui = {
   },
   focusSearch() { el.searchInput?.focus(); el.searchInput?.select?.(); },
   toggleUnits() { el.unitBtn?.click(); },
+  cycleWindUnit() { el.metricWindUnit?.click(); },
   isSearchOpen() { return !el.searchResults.hidden; },
   closeSearch() { el.searchResults.hidden = true; el.searchInput?.blur(); },
   markRefreshSpin(on) {
@@ -196,7 +207,12 @@ export const ui = {
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
-    if (el.narrative) el.narrative.textContent = narrative || "";
+    // Narrative may be supplied by the caller (kept for backwards compat) but
+    // we always re-narrate locally so wind units stay live across re-renders.
+    if (el.narrative) {
+      const text = narrative != null ? narrative : narrate(weather, { fmtWind: currentFmtWind() });
+      el.narrative.textContent = text || "";
+    }
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
@@ -306,12 +322,14 @@ function renderDayRange(w) {
 }
 
 function renderMetrics(w) {
-  el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
+  el.metricWind.textContent = w.windSpeed != null ? fmtWindValue(w.windSpeed, state.windUnit) : "—";
+  if (el.metricWindUnit) el.metricWindUnit.textContent = windUnitLabel(state.windUnit);
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
+  const gustStr = w.windGusts != null ? fmtWind(w.windGusts, state.windUnit) : "—";
   el.metricWindSub.textContent = dirLabel
-    ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
-    : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+    ? `${dirLabel} · gust ${gustStr}`
+    : `gust ${gustStr}`;
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
@@ -636,7 +654,7 @@ function renderInsights(w) {
     weekday: "short",
     ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
   });
-  const items = buildInsights(w, { fmtTime: fmt, weekday });
+  const items = buildInsights(w, { fmtTime: fmt, weekday, fmtWind: currentFmtWind() });
   if (!items.length) {
     el.insightsCard.hidden = true;
     return;
@@ -684,7 +702,7 @@ function renderWeekend(w) {
 
 function renderAlerts(w) {
   if (!el.alertsStrip) return;
-  const alerts = buildAlerts(w);
+  const alerts = buildAlerts(w, { fmtWind: currentFmtWind() });
   // Respect per-place dismissals so the user isn't nagged.
   const dismissed = getDismissedAlerts();
   const visible = alerts.filter((a) => !dismissed.has(a.id));
@@ -740,7 +758,7 @@ function rememberDismissedAlert(id) {
 
 function renderActivity(w) {
   if (!el.activityCard || !el.activityList) return;
-  const items = findActivityWindows(w);
+  const items = findActivityWindows(w, { fmtWind: currentFmtWind() });
   if (!items.length) {
     el.activityCard.hidden = true;
     return;
@@ -874,7 +892,7 @@ function renderDaily(w) {
     item.className = "daily-item";
     item.dataset.ts = d.time;
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
-      ? ` · gusts ${Math.round(d.gustsMax)} km/h`
+      ? ` · gusts ${fmtWind(d.gustsMax, state.windUnit)}`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
@@ -978,7 +996,7 @@ function toggleDailyExpand(item, d, w) {
     const summary = document.createElement("div");
     summary.className = "daily-expand";
     summary.style.gridTemplateColumns = "1fr";
-    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${Math.round(d.gustsMax ?? 0)} km/h · UV ${Math.round(d.uvMax ?? 0)}</span>`;
+    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${fmtWind(d.gustsMax ?? 0, state.windUnit)} · UV ${Math.round(d.uvMax ?? 0)}</span>`;
     item.appendChild(summary);
     item.dataset.expanded = "true";
     return;
@@ -1167,6 +1185,23 @@ function bindUnitToggle() {
   });
 }
 
+function bindWindUnitToggle() {
+  if (!el.metricWindUnit) return;
+  el.metricWindUnit.addEventListener("click", (e) => {
+    e.stopPropagation();
+    state.windUnit = nextWindUnit(state.windUnit);
+    localStorage.setItem("aether:windUnit", state.windUnit);
+    el.metricWindUnit.classList.remove("pulse"); void el.metricWindUnit.offsetWidth;
+    el.metricWindUnit.classList.add("pulse");
+    if (state.weather) ui.setWeather(state.weather);
+    ui.showToast(`Wind units · ${windUnitLabel(state.windUnit)}`);
+  });
+}
+
+function currentFmtWind() {
+  return (kmh) => fmtWind(kmh, state.windUnit);
+}
+
 function bindLocate() {
   el.locateBtn.addEventListener("click", () => state.handlers.onLocate?.());
 }
@@ -1298,7 +1333,7 @@ function bindShare() {
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
       today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
-      `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
+      `Wind ${fmtWind(w.windSpeed, state.windUnit)}${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
     ].filter(Boolean);

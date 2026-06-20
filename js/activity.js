@@ -80,16 +80,17 @@ function rollingPeak(hours, scoreFn, span) {
   return best;
 }
 
-function reasonsFor(window, hours) {
+function reasonsFor(window, hours, fmtWind) {
   if (!window) return [];
   const slice = hours.slice(window.startIdx, window.endIdx + 1);
   const avgT = avg(slice.map((h) => h.temp));
   const avgW = avg(slice.map((h) => h.wind ?? h.windSpeed));
   const maxPop = Math.max(...slice.map((h) => h.pop ?? 0));
   const maxUv = Math.max(...slice.map((h) => h.uv ?? 0));
+  const wind = fmtWind || ((kmh) => `${Math.round(kmh)} km/h`);
   const reasons = [];
   if (avgT != null) reasons.push(`${Math.round(avgT)}° feel`);
-  if (avgW != null) reasons.push(`wind ${Math.round(avgW)} km/h`);
+  if (avgW != null) reasons.push(`wind ${wind(avgW)}`);
   if (maxPop > 0) reasons.push(`${Math.round(maxPop)}% rain`);
   if (maxUv >= 6) reasons.push(`UV ${Math.round(maxUv)}`);
   return reasons;
@@ -101,7 +102,7 @@ function avg(arr) {
   return xs.reduce((a, b) => a + b, 0) / xs.length;
 }
 
-export function findActivityWindows(weather) {
+export function findActivityWindows(weather, { fmtWind } = {}) {
   const hours = weather?.hourly || [];
   if (hours.length < 3) return [];
   const out = [];
@@ -115,7 +116,7 @@ export function findActivityWindows(weather) {
       start: hours[walk.startIdx].time,
       end: hours[walk.endIdx].time + 60 * 60 * 1000,
       score: Math.round(walk.score),
-      why: reasonsFor(walk, hours),
+      why: reasonsFor(walk, hours, fmtWind),
     });
   }
 
@@ -129,7 +130,7 @@ export function findActivityWindows(weather) {
       start: hours[stars.startIdx].time,
       end: hours[stars.endIdx].time + 60 * 60 * 1000,
       score: Math.round(stars.score),
-      why: reasonsFor(stars, hours),
+      why: reasonsFor(stars, hours, fmtWind),
     });
   }
 

@@ -49,17 +49,18 @@ function findGusts(hourly) {
     const g = h.gusts ?? h.wind ?? 0;
     if (g > peak.v) peak = { t: h.time, v: g };
   }
-  if (peak.v > 35) return { ts: peak.t, kmh: Math.round(peak.v) };
+  if (peak.v > 35) return { ts: peak.t, v: peak.v };
   return null;
 }
 
 /**
  * Return a one or two-sentence narrative for the current weather.
  */
-export function narrate(weather) {
+export function narrate(weather, { fmtWind } = {}) {
   if (!weather) return "";
   const bits = [];
   const { condition, label, temp, feelsLike, uvPeak, windSpeed } = weather;
+  const wind = fmtWind || ((kmh) => `${Math.round(kmh)} km/h`);
 
   // Lead: describe current state.
   const feels = Math.abs((feelsLike ?? temp) - temp) >= 3
@@ -92,7 +93,7 @@ export function narrate(weather) {
   // Wind gusts.
   if (bits.length < 2) {
     const gust = findGusts(weather.hourly);
-    if (gust) bits.push(`Gusts up to ${gust.kmh} km/h around ${fmtHour(gust.ts)}.`);
+    if (gust) bits.push(`Gusts up to ${wind(gust.v)} around ${fmtHour(gust.ts)}.`);
   }
 
   // UV warning.
