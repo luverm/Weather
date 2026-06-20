@@ -77,6 +77,7 @@ const el = {
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
+  dailyRainTotal: $("#daily-rain-total"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -919,6 +920,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderDailyRainTotal(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1051,6 +1053,21 @@ function renderDailySpark(days) {
       el.dailySparkDots.appendChild(c);
     }
   });
+}
+
+function renderDailyRainTotal(days) {
+  if (!el.dailyRainTotal) return;
+  const total = days.reduce((s, d) => s + (d.precip ?? 0), 0);
+  // Only show when the week is meaningfully wet to avoid noise.
+  if (!total || total < 3) {
+    el.dailyRainTotal.hidden = true;
+    el.dailyRainTotal.textContent = "";
+    return;
+  }
+  const wetDays = days.filter((d) => (d.precip ?? 0) >= 0.5).length;
+  const totalStr = total >= 10 ? `${Math.round(total)} mm` : `${total.toFixed(1)} mm`;
+  el.dailyRainTotal.hidden = false;
+  el.dailyRainTotal.textContent = `${totalStr} · ${wetDays}/${days.length} wet days`;
 }
 
 function renderDailyDelta(days) {

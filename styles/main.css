@@ -1474,6 +1474,25 @@ kbd {
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+.daily-rain-total {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+  color: #b8d8ff;
+  background: rgba(154, 209, 255, 0.14);
+  border: 1px solid rgba(154, 209, 255, 0.28);
+}
+.daily-rain-total[hidden] { display: none; }
+.daily-rain-total::before {
+  content: "☂";
+  margin-right: 5px;
+  opacity: 0.9;
+}
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;
