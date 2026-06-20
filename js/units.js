@@ -1,5 +1,5 @@
-// Shared unit helpers. Today this covers wind speed; temperature still lives
-// inside ui.js because every reader already has the active unit handy.
+// Shared unit helpers. Wind + pressure live here; temperature stays in ui.js
+// because every reader already has the active unit handy.
 
 const WIND_ORDER = ["kmh", "mph", "ms", "kn"];
 const WIND_FACTOR = {
@@ -43,4 +43,33 @@ export function fmtWindValue(kmh, unit) {
 export function fmtWind(kmh, unit) {
   if (kmh == null) return "—";
   return `${fmtWindValue(kmh, unit)} ${windUnitLabel(unit)}`;
+}
+
+// ---------- Pressure ----------
+// Source unit is hPa (== mb).
+const PRESSURE_ORDER = ["hPa", "inHg", "mmHg"];
+const PRESSURE_FACTOR = { hPa: 1, inHg: 0.02953, mmHg: 0.75006 };
+const PRESSURE_LABEL = { hPa: "hPa", inHg: "inHg", mmHg: "mmHg" };
+
+export function isPressureUnit(u) { return PRESSURE_ORDER.includes(u); }
+
+export function nextPressureUnit(unit) {
+  const i = PRESSURE_ORDER.indexOf(unit);
+  return PRESSURE_ORDER[(i + 1) % PRESSURE_ORDER.length];
+}
+
+export function pressureUnitLabel(unit) { return PRESSURE_LABEL[unit] ?? "hPa"; }
+
+export function convertPressure(hPa, unit) {
+  if (hPa == null || isNaN(hPa)) return null;
+  return hPa * (PRESSURE_FACTOR[unit] ?? 1);
+}
+
+export function fmtPressureValue(hPa, unit) {
+  const v = convertPressure(hPa, unit);
+  if (v == null) return "—";
+  // inHg is small (~30) and benefits from 2 decimals; mmHg gets 1.
+  if (unit === "inHg") return v.toFixed(2);
+  if (unit === "mmHg") return v.toFixed(1);
+  return String(Math.round(v));
 }

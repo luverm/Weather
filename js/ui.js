@@ -11,7 +11,10 @@ import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { narrate } from "./narrative.js";
-import { fmtWind, fmtWindValue, windUnitLabel, nextWindUnit, isWindUnit } from "./units.js";
+import {
+  fmtWind, fmtWindValue, windUnitLabel, nextWindUnit, isWindUnit,
+  fmtPressureValue, pressureUnitLabel, nextPressureUnit, isPressureUnit,
+} from "./units.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -37,6 +40,7 @@ const el = {
   metricHumidity: $("#m-humidity"),
   metricHumiditySub: $("#m-humidity-sub"),
   metricPressure: $("#m-pressure"),
+  metricPressureUnit: $("#m-pressure-unit"),
   metricPressureSub: $("#m-pressure-sub"),
   metricUV: $("#m-uv"),
   metricUVSub: $("#m-uv-sub"),
@@ -124,6 +128,10 @@ const state = {
     const saved = localStorage.getItem("aether:windUnit");
     return isWindUnit(saved) ? saved : "kmh";
   })(),
+  pressureUnit: (() => {
+    const saved = localStorage.getItem("aether:pressureUnit");
+    return isPressureUnit(saved) ? saved : "hPa";
+  })(),
   weather: null,
   place: null,
   sampledWeather: null, // the weather values at the current scrubber time
@@ -140,9 +148,11 @@ export const ui = {
     state.handlers = handlers || {};
     el.unitBtn.textContent = `°${state.unit}`;
     if (el.metricWindUnit) el.metricWindUnit.textContent = windUnitLabel(state.windUnit);
+    if (el.metricPressureUnit) el.metricPressureUnit.textContent = pressureUnitLabel(state.pressureUnit);
     bindSearch();
     bindUnitToggle();
     bindWindUnitToggle();
+    bindPressureUnitToggle();
     bindLocate();
     bindAudio();
     bindShare();
@@ -400,7 +410,8 @@ function renderMetrics(w) {
       el.humidityComfort.textContent = "";
     }
   }
-  el.metricPressure.textContent = Math.round(w.pressure ?? 0);
+  el.metricPressure.textContent = w.pressure != null ? fmtPressureValue(w.pressure, state.pressureUnit) : "—";
+  if (el.metricPressureUnit) el.metricPressureUnit.textContent = pressureUnitLabel(state.pressureUnit);
   el.metricPressureSub.textContent = w.visibility != null
     ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
     : "visibility —";
@@ -859,7 +870,12 @@ function renderTrends(w) {
       const arrow = direction === "rising" ? "▲" : direction === "falling" ? "▼" : "→";
       const cls = direction === "rising" ? "up" : direction === "falling" ? "down" : "flat";
       el.pressureTrend.className = `trend ${cls}`;
-      el.pressureTrend.textContent = `${arrow} ${delta >= 0 ? "+" : ""}${delta.toFixed(1)}`;
+      // delta is in hPa; show in the same unit currently displayed.
+      const u = state.pressureUnit;
+      const factor = u === "inHg" ? 0.02953 : u === "mmHg" ? 0.75006 : 1;
+      const places = u === "inHg" ? 2 : u === "mmHg" ? 1 : 1;
+      const scaled = (delta * factor).toFixed(places);
+      el.pressureTrend.textContent = `${arrow} ${delta >= 0 ? "+" : ""}${scaled}`;
     } else {
       el.pressureTrend.textContent = "";
     }
@@ -1309,6 +1325,19 @@ function bindWindUnitToggle() {
     el.metricWindUnit.classList.add("pulse");
     if (state.weather) ui.setWeather(state.weather);
     ui.showToast(`Wind units · ${windUnitLabel(state.windUnit)}`);
+  });
+}
+
+function bindPressureUnitToggle() {
+  if (!el.metricPressureUnit) return;
+  el.metricPressureUnit.addEventListener("click", (e) => {
+    e.stopPropagation();
+    state.pressureUnit = nextPressureUnit(state.pressureUnit);
+    localStorage.setItem("aether:pressureUnit", state.pressureUnit);
+    el.metricPressureUnit.classList.remove("pulse"); void el.metricPressureUnit.offsetWidth;
+    el.metricPressureUnit.classList.add("pulse");
+    if (state.weather) ui.setWeather(state.weather);
+    ui.showToast(`Pressure units · ${pressureUnitLabel(state.pressureUnit)}`);
   });
 }
 
