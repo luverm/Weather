@@ -1012,6 +1012,12 @@ kbd {
   border-radius: var(--radius-sm);
   display: grid; gap: 10px;
 }
+.extra-card[data-clickable] {
+  cursor: pointer;
+  transition: transform 160ms var(--ease), background 160ms var(--ease);
+}
+.extra-card[data-clickable]:hover { transform: translateY(-1px); background: var(--glass-strong); }
+.extra-card[data-clickable]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .aq-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
 .aq-ring { position: relative; width: 48px; height: 48px; color: #78d06a; }
 .aq-ring svg { width: 48px; height: 48px; display: block; }

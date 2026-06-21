@@ -498,7 +498,7 @@ function aqColor(aqi) {
 }
 
 function renderAirQuality(aq) {
-  if (!aq) { el.aqCard.style.opacity = 0.5; return; }
+  if (!aq) { el.aqCard.style.opacity = 0.5; el.aqCard.removeAttribute("data-clickable"); return; }
   el.aqCard.style.opacity = 1;
   const color = aqColor(aq.aqi);
   el.aqCard.style.color = color;
@@ -510,6 +510,30 @@ function renderAirQuality(aq) {
   el.aqDetail.textContent =
     `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
   renderAqTrend(aq);
+  // Wire a single click handler that jumps the scrubber to the worst hour
+  // in the upcoming AQ trend (so the scene reflects what that air feels like).
+  bindAqJumpToPeak(aq);
+}
+
+function bindAqJumpToPeak(aq) {
+  if (!el.aqCard || !aq?.trend?.length) {
+    el.aqCard?.removeAttribute("data-clickable");
+    return;
+  }
+  let peak = null;
+  for (const p of aq.trend) {
+    if (peak == null || p.aqi > peak.aqi) peak = p;
+  }
+  // Only worth highlighting if the peak is meaningfully worse than now.
+  if (!peak || (aq.aqi != null && peak.aqi <= aq.aqi + 8)) {
+    el.aqCard.removeAttribute("data-clickable");
+    el.aqCard.onclick = null;
+    return;
+  }
+  el.aqCard.setAttribute("data-clickable", "true");
+  el.aqCard.setAttribute("role", "button");
+  el.aqCard.setAttribute("aria-label", `Jump to peak AQI ${Math.round(peak.aqi)} at ${fmtTime(peak.time)}`);
+  el.aqCard.onclick = () => state.handlers.onHourClick?.(peak.time);
 }
 
 function renderAqTrend(aq) {
