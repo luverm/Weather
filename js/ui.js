@@ -862,15 +862,29 @@ function cardinal(deg) {
 
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
-  for (const h of (w.hourly || []).slice(0, 24)) {
+  const hours = (w.hourly || []).slice(0, 24);
+  // Mark the first hour that crosses day↔night so we can drop a small
+  // "sunrise"/"sunset" caption on it instead of a generic tile.
+  let prevDay = null;
+  for (let i = 0; i < hours.length; i++) {
+    const h = hours[i];
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    item.dataset.day = h.isDay ? "true" : "false";
+    let crossingHtml = "";
+    if (prevDay != null && prevDay !== h.isDay) {
+      const label = h.isDay ? "rises" : "sets";
+      crossingHtml = `<span class="forecast-sunmark">${label}</span>`;
+      item.dataset.crossing = h.isDay ? "rise" : "set";
+    }
+    prevDay = h.isDay;
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
+      ${crossingHtml}
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
