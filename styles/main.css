@@ -357,6 +357,19 @@ html[data-reduce-motion="true"] *::after {
   line-height: 1.02;
 }
 .place-sub { margin: 8px 0 0; color: var(--fg-muted); font-size: 14px; }
+.place-sub[data-offline]::after {
+  content: "Offline · sample data";
+  display: inline-block;
+  margin-left: 10px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(255, 196, 122, 0.18);
+  color: #ffd29c;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  vertical-align: 2px;
+}
 .place-localtime {
   margin: 6px 0 0;
   display: inline-flex; align-items: center; gap: 6px;
