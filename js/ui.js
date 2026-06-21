@@ -1085,7 +1085,16 @@ function renderDailyDelta(days) {
   if (Math.abs(dPop) >= 20) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
   }
-  el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
+  const tomorrowLine = `Tomorrow: ${parts.join(" · ")}`;
+  // Weekly rainfall total — gives a quick "wet week?" read at the top.
+  const weekRain = days.reduce((s, d) => s + (d.precip ?? 0), 0);
+  let weekHtml = "";
+  if (weekRain >= 1) {
+    const rainStr = weekRain >= 10 ? `${Math.round(weekRain)} mm` : `${weekRain.toFixed(1)} mm`;
+    const cls = weekRain >= 20 ? "wet" : "damp";
+    weekHtml = ` <span class="week-rain ${cls}" title="Total over the next ${days.length} days">${rainStr} this week</span>`;
+  }
+  el.dailyDelta.innerHTML = escapeHtml(tomorrowLine) + weekHtml;
 }
 
 function toggleDailyExpand(item, d, w) {

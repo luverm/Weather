@@ -1441,6 +1441,19 @@ kbd {
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+.week-rain {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  vertical-align: 1px;
+}
+.week-rain.damp { background: rgba(154, 209, 255, 0.16); color: #9ad1ff; }
+.week-rain.wet  { background: rgba(122, 156, 255, 0.22); color: #b8c4ff; }
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;
