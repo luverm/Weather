@@ -229,30 +229,57 @@ function placeFromUrl() {
 // from flashing over the user's new city B when they switch quickly.
 let _loadToken = 0;
 
+// Stale-while-revalidate cache. Re-opening a recently-viewed city paints the
+// last known weather instantly so the strip feels native, while a background
+// fetch updates everything once fresh data arrives.
+const CACHE_TTL_MS = 10 * 60_000;
+function cacheKey(place) {
+  return `aether:wcache:${place.lat?.toFixed?.(3)},${place.lon?.toFixed?.(3)}`;
+}
+function readCache(place) {
+  try {
+    const raw = sessionStorage.getItem(cacheKey(place));
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    if (!obj?.fetchedAt) return null;
+    if (Date.now() - obj.fetchedAt > CACHE_TTL_MS) return null;
+    return obj;
+  } catch { return null; }
+}
+function writeCache(place, w) {
+  try { sessionStorage.setItem(cacheKey(place), JSON.stringify(w)); } catch { /* quota */ }
+}
+
+function applyWeatherForPlace(place, w) {
+  app.weather = w;
+  ui.setWeather(w, { narrative: narrate(w) });
+  applyScene(w);
+  scrubber.setBounds({ start: Date.now(), sunrise: w.sunrise, sunset: w.sunset });
+}
+
 async function loadByCoords(place) {
   const token = ++_loadToken;
   app.place = place;
   updateUrlForPlace(place);
   ui.setPlace(place);
-  ui.setLoading(`Fetching weather for ${place.name}…`);
 
   // Drop any scrubber offset so we start live on each new city.
   clock.reset();
   ui.setScrubbing(false);
 
+  // Paint cached weather instantly if we have a recent copy.
+  const cached = readCache(place);
+  if (cached) {
+    applyWeatherForPlace(place, cached);
+  } else {
+    ui.setLoading(`Fetching weather for ${place.name}…`);
+  }
+
   const w = await getWeather(place.lat, place.lon);
   // If the user has since switched cities, drop this result on the floor.
   if (token !== _loadToken) return;
-  app.weather = w;
-
-  // Render full UI (live + forecasts + narrative).
-  ui.setWeather(w, { narrative: narrate(w) });
-
-  // Apply to scenes at current (live) time.
-  applyScene(w);
-
-  // Update scrubber bounds to this location's sunrise/sunset.
-  scrubber.setBounds({ start: Date.now(), sunrise: w.sunrise, sunset: w.sunset });
+  if (!w.offline) writeCache(place, w);
+  applyWeatherForPlace(place, w);
 
   // Move the radar to the new location (fire-and-forget; resolves later).
   ensureRadar([place.lat, place.lon]).then((r) => {
