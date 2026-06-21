@@ -194,9 +194,39 @@ const scrubber = new Scrubber({
   },
 });
 
+// ---------- URL state ----------
+// Round 32: persist the current place in the URL hash so a copied address
+// reopens to the same view. Hash (not querystring) so static hosts ignore it.
+function updateUrlForPlace(place) {
+  if (!place || place.lat == null || place.lon == null) return;
+  const params = new URLSearchParams();
+  params.set("lat", place.lat.toFixed(4));
+  params.set("lon", place.lon.toFixed(4));
+  if (place.name) params.set("name", place.name);
+  if (place.admin1) params.set("a1", place.admin1);
+  if (place.country) params.set("c", place.country);
+  try { history.replaceState(null, "", "#" + params.toString()); } catch { /* ignore */ }
+}
+
+function placeFromUrl() {
+  const hash = location.hash.startsWith("#") ? location.hash.slice(1) : "";
+  if (!hash) return null;
+  const params = new URLSearchParams(hash);
+  const lat = parseFloat(params.get("lat"));
+  const lon = parseFloat(params.get("lon"));
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  return {
+    lat, lon,
+    name: params.get("name") || "Pinned location",
+    admin1: params.get("a1") || undefined,
+    country: params.get("c") || undefined,
+  };
+}
+
 // ---------- Load flow ----------
 async function loadByCoords(place) {
   app.place = place;
+  updateUrlForPlace(place);
   ui.setPlace(place);
   ui.setLoading(`Fetching weather for ${place.name}…`);
 
@@ -306,6 +336,13 @@ installShortcuts({
 
 // ---------- Start ----------
 (async function init() {
+  // Hash-encoded place wins so shared links restore the correct view.
+  const fromUrl = placeFromUrl();
+  if (fromUrl) {
+    places.add(fromUrl);
+    await loadByCoords(fromUrl);
+    return;
+  }
   // Prefer the most recent saved place if we have one — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();
@@ -320,6 +357,14 @@ installShortcuts({
     await loadByCoords({ name: "Reykjavík", country: "Iceland", lat: 64.1466, lon: -21.9426 });
   }
 })();
+
+// React to manual hash edits / browser back/forward.
+window.addEventListener("hashchange", () => {
+  const p = placeFromUrl();
+  if (p && (p.lat !== app.place?.lat || p.lon !== app.place?.lon)) {
+    loadByCoords(p);
+  }
+});
 
 // ---------- Lifecycle ----------
 document.addEventListener("visibilitychange", () => {
