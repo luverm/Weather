@@ -1060,24 +1060,45 @@ function renderDailySpark(days) {
   const linePath = (arr) => arr.map((v, i) => (i === 0 ? "M" : "L") + x(i).toFixed(1) + "," + y(v).toFixed(1)).join(" ");
   el.dailyHi.setAttribute("d", linePath(days.map((d) => d.tempMax)));
   el.dailyLo.setAttribute("d", linePath(days.map((d) => d.tempMin)));
+  // Find the week's peak high + lowest low so we can tag them on the spark.
+  let peakHiIdx = -1, peakLoIdx = -1;
+  days.forEach((d, i) => {
+    if (d.tempMax != null && (peakHiIdx < 0 || d.tempMax > days[peakHiIdx].tempMax)) peakHiIdx = i;
+    if (d.tempMin != null && (peakLoIdx < 0 || d.tempMin < days[peakLoIdx].tempMin)) peakLoIdx = i;
+  });
   // Dots at each day + per-day temp labels above/below
   el.dailySparkDots.innerHTML = "";
+  const addText = (cx, cy, content, cls) => {
+    const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    t.setAttribute("x", cx.toFixed(1));
+    t.setAttribute("y", cy.toFixed(1));
+    t.setAttribute("text-anchor", "middle");
+    t.setAttribute("class", cls);
+    t.textContent = content;
+    el.dailySparkDots.appendChild(t);
+  };
   days.forEach((d, i) => {
     if (d.tempMax != null) {
       const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
       c.setAttribute("cx", x(i).toFixed(1));
       c.setAttribute("cy", y(d.tempMax).toFixed(1));
-      c.setAttribute("r", "2.5");
-      c.setAttribute("class", "dot-hi");
+      c.setAttribute("r", i === peakHiIdx ? "3.5" : "2.5");
+      c.setAttribute("class", i === peakHiIdx ? "dot-hi peak" : "dot-hi");
       el.dailySparkDots.appendChild(c);
+      if (i === peakHiIdx) {
+        addText(x(i), y(d.tempMax) - 6, `${Math.round(convertTemp(d.tempMax))}°`, "peak-hi-label");
+      }
     }
     if (d.tempMin != null) {
       const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
       c.setAttribute("cx", x(i).toFixed(1));
       c.setAttribute("cy", y(d.tempMin).toFixed(1));
-      c.setAttribute("r", "2.5");
-      c.setAttribute("class", "dot-lo");
+      c.setAttribute("r", i === peakLoIdx ? "3.5" : "2.5");
+      c.setAttribute("class", i === peakLoIdx ? "dot-lo peak" : "dot-lo");
       el.dailySparkDots.appendChild(c);
+      if (i === peakLoIdx) {
+        addText(x(i), y(d.tempMin) + 11, `${Math.round(convertTemp(d.tempMin))}°`, "peak-lo-label");
+      }
     }
   });
 }
