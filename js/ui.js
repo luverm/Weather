@@ -896,6 +896,12 @@ function renderDaily(w) {
     if (d.tempMax > gMax) gMax = d.tempMax;
   }
   const span = Math.max(1, gMax - gMin);
+  // Weekly mean high, used to surface "warmer/cooler than the week" pills on
+  // each daily row. Only meaningful if we have 4+ days to average over.
+  const validHi = days.map((d) => d.tempMax).filter((v) => v != null);
+  const meanHi = validHi.length >= 4
+    ? validHi.reduce((a, b) => a + b, 0) / validHi.length
+    : null;
   days.forEach((d, i) => {
     const dt = new Date(d.time);
     const tz = state.weather?.timezone;
@@ -913,6 +919,7 @@ function renderDaily(w) {
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const deltaHtml = renderDailyMeanDelta(d, meanHi);
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
@@ -920,12 +927,23 @@ function renderDaily(w) {
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
       </div>
       <span class="daily-temp-min">${Math.round(convertTemp(d.tempMin))}°</span>
-      <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°</span>
+      <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°${deltaHtml}</span>
       ${extra}
     `;
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+}
+
+function renderDailyMeanDelta(d, meanHi) {
+  if (meanHi == null || d.tempMax == null) return "";
+  const deltaC = d.tempMax - meanHi;
+  // Skip the noise of sub-2°C deltas — keeps the row uncluttered.
+  if (Math.abs(deltaC) < 2) return "";
+  const deltaDisp = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
+  const cls = deltaC > 0 ? "up" : "down";
+  const arrow = deltaC > 0 ? "▲" : "▼";
+  return `<span class="daily-mean-delta ${cls}" title="vs 7-day average high">${arrow}${Math.round(Math.abs(deltaDisp))}°</span>`;
 }
 
 function renderDailyIconStrip(days) {
