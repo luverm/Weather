@@ -923,9 +923,19 @@ function renderPollen(pollen) {
   el.pollenLevel.textContent = pollen.level;
   el.pollenLevel.setAttribute("data-level", pollen.level);
   el.pollenDominant.textContent = `${pollen.dominant.label} dominant`;
-  el.pollenItems.innerHTML = pollen.items.map((p) =>
-    `<span>${escapeHtml(p.label)} ${p.value.toFixed(1)}</span>`
-  ).join("");
+  // Scale bars by the largest observed value (clamped to a sensible ceiling
+  // so a single grain/m³ outlier doesn't crush the others to invisible).
+  const peak = Math.max(5, ...pollen.items.map((p) => p.value));
+  el.pollenItems.innerHTML = pollen.items.map((p) => {
+    const frac = Math.max(0.02, Math.min(1, p.value / peak));
+    return `
+      <span class="pollen-item" data-kind="${p.key}">
+        <span class="pollen-item-label">${escapeHtml(p.label)}</span>
+        <span class="pollen-item-bar"><span style="width:${(frac * 100).toFixed(0)}%"></span></span>
+        <span class="pollen-item-value">${p.value.toFixed(1)}</span>
+      </span>
+    `;
+  }).join("");
 }
 
 function renderTrends(w) {

@@ -723,11 +723,36 @@ html[data-loading="true"] .place-name {
 .pollen-level[data-level="Very high"] { background: rgba(255, 106, 106, 0.2); color: #ff9a9a; border-color: rgba(255, 106, 106, 0.35); }
 .pollen-meta strong { display: block; font-size: 14px; font-weight: 500; }
 .pollen-items {
-  display: flex; gap: 8px; flex-wrap: wrap;
-  margin-top: 3px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 4px;
+  margin-top: 6px;
   font-size: 11px; color: var(--fg-dim);
 }
-.pollen-items span { font-variant-numeric: tabular-nums; }
+.pollen-items .pollen-item {
+  display: grid;
+  grid-template-columns: 42px 1fr 36px;
+  align-items: center;
+  gap: 8px;
+}
+.pollen-items .pollen-item-label { letter-spacing: 0.04em; }
+.pollen-items .pollen-item-value { text-align: right; font-variant-numeric: tabular-nums; }
+.pollen-items .pollen-item-bar {
+  position: relative;
+  height: 4px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.pollen-items .pollen-item-bar > span {
+  position: absolute; inset: 0 auto 0 0;
+  background: linear-gradient(90deg, #b4e6a6, #ffdc8a 60%, #ffbb92);
+  border-radius: 999px;
+  transition: width 360ms var(--ease);
+}
+.pollen-items .pollen-item[data-kind="grass"] .pollen-item-bar > span { background: linear-gradient(90deg, #b4e6a6, #82c47a); }
+.pollen-items .pollen-item[data-kind="tree"]  .pollen-item-bar > span { background: linear-gradient(90deg, #ffdc8a, #ffbb6a); }
+.pollen-items .pollen-item[data-kind="weed"]  .pollen-item-bar > span { background: linear-gradient(90deg, #ffbb92, #ff8a6a); }
 
 /* ---------- Advice ---------- */
 .advice {
