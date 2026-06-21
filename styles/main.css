@@ -303,6 +303,19 @@ html[data-reduce-motion="true"] *::after {
 .place-chip:hover { background: var(--glass-strong); transform: translateY(-1px); }
 .place-chip.active { background: var(--glass-strong); border-color: rgba(255,255,255,0.35); }
 .place-chip .temp { color: var(--fg-muted); font-variant-numeric: tabular-nums; }
+.place-chip .chip-icon { display: inline-flex; width: 16px; height: 16px; color: var(--fg-muted); opacity: 0.85; }
+.place-chip .chip-icon svg { width: 16px; height: 16px; }
+.place-chip.active .chip-icon { color: var(--fg); opacity: 1; }
+.place-chip .chip-live-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #6ee7a3; box-shadow: 0 0 0 0 rgba(110, 231, 163, 0.55);
+  animation: chipPulse 1800ms var(--ease) infinite;
+}
+@keyframes chipPulse {
+  0% { box-shadow: 0 0 0 0 rgba(110, 231, 163, 0.55); }
+  70% { box-shadow: 0 0 0 6px rgba(110, 231, 163, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(110, 231, 163, 0); }
+}
 .place-chip .close {
   width: 16px; height: 16px; display: grid; place-items: center;
   border-radius: 50%; color: var(--fg-dim);
