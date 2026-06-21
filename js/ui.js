@@ -863,6 +863,16 @@ function cardinal(deg) {
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
   const hours = (w.hourly || []).slice(0, 24);
+  // Index closest to the wall-clock "now" so we can mark it with a subtle
+  // accent. Distinct from the scrubber's `.active` highlight so the user can
+  // tell which hour is live vs which they've scrubbed to.
+  const now = Date.now();
+  let nowIdx = -1;
+  let nowDiff = Infinity;
+  for (let i = 0; i < hours.length; i++) {
+    const d = Math.abs(hours[i].time - now);
+    if (d < nowDiff) { nowDiff = d; nowIdx = i; }
+  }
   // Mark the first hour that crosses day↔night so we can drop a small
   // "sunrise"/"sunset" caption on it instead of a generic tile.
   let prevDay = null;
@@ -872,6 +882,7 @@ function renderHourly(w) {
     item.className = "forecast-item";
     item.dataset.ts = h.time;
     item.dataset.day = h.isDay ? "true" : "false";
+    if (i === nowIdx) item.dataset.now = "true";
     let crossingHtml = "";
     if (prevDay != null && prevDay !== h.isDay) {
       const label = h.isDay ? "rises" : "sets";
@@ -879,8 +890,9 @@ function renderHourly(w) {
       item.dataset.crossing = h.isDay ? "rise" : "set";
     }
     prevDay = h.isDay;
+    const timeText = i === nowIdx ? "Now" : fmtTime(h.time);
     item.innerHTML = `
-      <span class="forecast-time">${fmtTime(h.time)}</span>
+      <span class="forecast-time">${timeText}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
