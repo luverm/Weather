@@ -901,11 +901,28 @@ function renderHourly(w) {
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
   }
+  // After painting the strip, center the "Now" tile so the user opens onto
+  // their current hour rather than midnight a week ago.
+  if (nowIdx >= 0) {
+    const nowEl = el.forecastTrack.children[nowIdx];
+    if (nowEl) scrollIntoTrack(nowEl, "auto");
+  }
+}
+
+function scrollIntoTrack(node, behavior = "smooth") {
+  const track = el.forecastTrack;
+  if (!track || !node) return;
+  // Use direct math instead of scrollIntoView so we only scroll the strip,
+  // not the whole page (scrollIntoView would jump the viewport on iOS).
+  const targetLeft = node.offsetLeft - track.clientWidth / 2 + node.offsetWidth / 2;
+  track.scrollTo({ left: Math.max(0, targetLeft), behavior });
 }
 
 function highlightHour(index) {
   const items = el.forecastTrack.querySelectorAll(".forecast-item");
   items.forEach((it, i) => it.classList.toggle("active", i === index));
+  const active = items[index];
+  if (active) scrollIntoTrack(active, "smooth");
 }
 
 function renderDaily(w) {
