@@ -303,6 +303,15 @@ html[data-reduce-motion="true"] *::after {
 .place-chip:hover { background: var(--glass-strong); transform: translateY(-1px); }
 .place-chip.active { background: var(--glass-strong); border-color: rgba(255,255,255,0.35); }
 .place-chip .temp { color: var(--fg-muted); font-variant-numeric: tabular-nums; }
+.place-chip .chip-clock {
+  font-size: 11px;
+  color: var(--fg-dim);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+}
 .place-chip .chip-icon { display: inline-flex; width: 16px; height: 16px; color: var(--fg-muted); opacity: 0.85; }
 .place-chip .chip-icon svg { width: 16px; height: 16px; }
 .place-chip.active .chip-icon { color: var(--fg); opacity: 1; }

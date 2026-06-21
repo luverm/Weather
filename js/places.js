@@ -31,6 +31,7 @@ export const places = {
       admin1: place.admin1,
       lat: place.lat,
       lon: place.lon,
+      timezone: place.timezone,
     });
     write(list);
   },

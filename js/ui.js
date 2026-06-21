@@ -213,10 +213,13 @@ export const ui = {
     } else {
       delete el.placeSub.dataset.offline;
     }
-    // Save summary for the strip so chips can show current temp.
+    // Save summary for the strip so chips can show current temp + a remote-
+    // city clock when the timezone differs from the user's by 2h+.
     if (state.place) {
       places.updateSummary(state.place, {
-        temp: weather.temp, condition: weather.condition,
+        temp: weather.temp,
+        condition: weather.condition,
+        timezone: weather.timezone,
       });
     }
     renderPlaces();
@@ -1347,11 +1350,27 @@ function renderPlaces() {
     const active = places.idFor(p) === activeId;
     const iconHtml = p.condition ? `<span class="chip-icon" aria-hidden="true">${iconFor(p.condition)}</span>` : "";
     const dot = active ? `<span class="chip-live-dot" aria-label="Currently viewing"></span>` : "";
+    // Tiny remote-city clock when the saved timezone differs from the user by
+    // 2h+. Skip on the active chip — that city already shows local time in
+    // the hero, so re-printing it on the strip is just noise.
+    let clockHtml = "";
+    if (!active && p.timezone && p.timezone !== "auto") {
+      const delta = tzDeltaHours(p.timezone, new Date());
+      if (delta != null && Math.abs(delta) >= 2) {
+        try {
+          const t = new Intl.DateTimeFormat([], {
+            timeZone: p.timezone, hour: "2-digit", minute: "2-digit", hour12: false,
+          }).format(new Date());
+          clockHtml = `<span class="chip-clock" title="Local time">${escapeHtml(t)}</span>`;
+        } catch { /* ignore unknown tz */ }
+      }
+    }
     return `
       <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
         ${dot}
         ${iconHtml}
         <span class="chip-name">${escapeHtml(p.name)}</span>
+        ${clockHtml}
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
         <span class="close" data-action="remove" aria-label="Remove">
           <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
