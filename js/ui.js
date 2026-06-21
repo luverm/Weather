@@ -50,6 +50,8 @@ const el = {
   moonNext: $("#moon-next"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
+  sunRiseBtn: $("#sun-rise-btn"),
+  sunSetBtn: $("#sun-set-btn"),
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
@@ -602,6 +604,8 @@ function fmtTime(ts) {
 function renderSun(w) {
   el.sunRise.textContent = fmtTime(w.sunrise);
   el.sunSet.textContent = fmtTime(w.sunset);
+  bindSunJump(el.sunRiseBtn, w.sunrise);
+  bindSunJump(el.sunSetBtn, w.sunset);
   if (w.sunrise && w.sunset) {
     const mins = Math.round((w.sunset - w.sunrise) / 60_000);
     const hh = Math.floor(mins / 60);
@@ -624,6 +628,14 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function bindSunJump(btn, ts) {
+  if (!btn) return;
+  btn.onclick = null;
+  if (!ts) { btn.disabled = true; return; }
+  btn.disabled = false;
+  btn.onclick = () => state.handlers.onHourClick?.(ts);
 }
 
 function scheduleSunArc(w) {
