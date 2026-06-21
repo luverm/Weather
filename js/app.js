@@ -224,7 +224,13 @@ function placeFromUrl() {
 }
 
 // ---------- Load flow ----------
+// Monotonic token: every loadByCoords gets a new id; only the latest one is
+// allowed to commit results to UI/scenes. Prevents a slow fetch for city A
+// from flashing over the user's new city B when they switch quickly.
+let _loadToken = 0;
+
 async function loadByCoords(place) {
+  const token = ++_loadToken;
   app.place = place;
   updateUrlForPlace(place);
   ui.setPlace(place);
@@ -235,6 +241,8 @@ async function loadByCoords(place) {
   ui.setScrubbing(false);
 
   const w = await getWeather(place.lat, place.lon);
+  // If the user has since switched cities, drop this result on the floor.
+  if (token !== _loadToken) return;
   app.weather = w;
 
   // Render full UI (live + forecasts + narrative).
@@ -247,7 +255,9 @@ async function loadByCoords(place) {
   scrubber.setBounds({ start: Date.now(), sunrise: w.sunrise, sunset: w.sunset });
 
   // Move the radar to the new location (fire-and-forget; resolves later).
-  ensureRadar([place.lat, place.lon]).then((r) => r?.setCenter(place.lat, place.lon, place.name));
+  ensureRadar([place.lat, place.lon]).then((r) => {
+    if (token === _loadToken) r?.setCenter(place.lat, place.lon, place.name);
+  });
 }
 
 async function useGeolocation() {
