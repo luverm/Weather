@@ -26,6 +26,7 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  yesterdayDelta: $("#yesterday-delta"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -278,6 +279,40 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  renderYesterdayDelta(w);
+}
+
+function renderYesterdayDelta(w) {
+  if (!el.yesterdayDelta) return;
+  // Only meaningful when we're at "live" time — scrubbing into the future
+  // makes a "vs yesterday" comparison nonsensical.
+  const isLive = state.sampledWeather === state.weather
+              || w._sampledTs == null
+              || Math.abs((w._sampledTs ?? Date.now()) - Date.now()) < 90 * 60_000;
+  const y = state.weather?.yesterday;
+  const cur = state.weather?.temp;
+  if (!isLive || !y || cur == null || y.temp == null) {
+    el.yesterdayDelta.hidden = true;
+    el.yesterdayDelta.textContent = "";
+    return;
+  }
+  const deltaC = cur - y.temp;
+  // Use the converted-unit delta so the number reads correctly in °F.
+  const deltaDisp = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
+  let cls, arrow, word;
+  if (Math.abs(deltaC) < 1) {
+    cls = "flat"; arrow = "→"; word = "about the same as yesterday";
+  } else if (deltaC > 0) {
+    cls = "up"; arrow = "▲"; word = "warmer than yesterday";
+  } else {
+    cls = "down"; arrow = "▼"; word = "cooler than yesterday";
+  }
+  el.yesterdayDelta.hidden = false;
+  el.yesterdayDelta.className = `yesterday-delta ${cls}`;
+  const mag = Math.round(Math.abs(deltaDisp));
+  el.yesterdayDelta.textContent = mag === 0
+    ? `${arrow} ${word}`
+    : `${arrow} ${mag}° ${word}`;
 }
 
 function renderDayRange(w) {

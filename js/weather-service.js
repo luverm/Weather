@@ -93,7 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
-    past_hours: 1,
+    past_hours: 24,
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -186,6 +186,10 @@ function normalize(d, aq) {
     }
   }
 
+  // Yesterday at this hour: find the past_hours entry exactly ~24h before now
+  // so we can render a "vs yesterday" pill. Requires `past_hours: 24` above.
+  const yesterday = findYesterdayTemp(d.hourly, now);
+
   // Moon phase is not in Open-Meteo's free tier — compute it locally.
   const moon = computeMoonPhase(new Date());
 
@@ -213,10 +217,27 @@ function normalize(d, aq) {
     daily: dailyForecast,
     nowcast,
     moon,
+    yesterday,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
     fetchedAt: now,
   };
+}
+
+function findYesterdayTemp(hourly, now) {
+  if (!hourly?.time || !hourly?.temperature_2m) return null;
+  const target = now - 24 * 3600_000;
+  let bestIdx = -1, bestDiff = Infinity;
+  for (let i = 0; i < hourly.time.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    const diff = Math.abs(t - target);
+    if (diff < bestDiff) { bestDiff = diff; bestIdx = i; }
+  }
+  // Only trust matches within 90 minutes of the target hour.
+  if (bestIdx < 0 || bestDiff > 90 * 60_000) return null;
+  const temp = hourly.temperature_2m[bestIdx];
+  if (temp == null) return null;
+  return { time: new Date(hourly.time[bestIdx]).getTime(), temp };
 }
 
 function computePressureTrend(hourly, now) {
@@ -388,6 +409,7 @@ function mock(lat, lon) {
     })),
     nowcast: [],
     moon: computeMoonPhase(new Date()),
+    yesterday: { time: now - 24 * 3600_000, temp: 16 },
     airQuality: { aqi: 42, pm25: 8, pm10: 14, o3: 40, no2: 15, co: 0.2, label: "Good" },
     pollen: {
       items: [
