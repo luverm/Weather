@@ -1570,6 +1570,12 @@ kbd {
   transition: background 200ms var(--ease);
 }
 .daily-item:hover { background: var(--glass); }
+.daily-item.pulse { animation: dailyPulse 900ms var(--ease) both; }
+@keyframes dailyPulse {
+  0%   { background: rgba(154, 209, 255, 0.30); transform: translateX(0); }
+  35%  { background: rgba(154, 209, 255, 0.18); transform: translateX(4px); }
+  100% { background: transparent;             transform: translateX(0); }
+}
 .daily-day { font-size: 13px; font-weight: 500; }
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
 .daily-range {

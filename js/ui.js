@@ -1036,10 +1036,20 @@ function renderDailyIconStrip(days) {
       : d.time + 12 * 3600_000;
     return `<button type="button" class="strip-day" data-ts="${noon}" title="${title}" aria-label="Jump to ${dayLabel}">${iconFor(d.condition)}<span class="strip-day-label">${dayLabel}</span></button>`;
   }).join("");
-  el.dailyIconStrip.querySelectorAll(".strip-day").forEach((btn) => {
+  el.dailyIconStrip.querySelectorAll(".strip-day").forEach((btn, i) => {
     btn.addEventListener("click", () => {
       const ts = parseInt(btn.dataset.ts, 10);
       if (Number.isFinite(ts)) state.handlers.onHourClick?.(ts);
+      // Briefly pulse the matching daily-track row so the click feels
+      // anchored to the list below.
+      const row = el.dailyTrack?.children?.[i];
+      if (row) {
+        row.classList.remove("pulse");
+        // Force reflow so the animation restarts on rapid clicks.
+        void row.offsetWidth;
+        row.classList.add("pulse");
+        setTimeout(() => row.classList.remove("pulse"), 900);
+      }
     });
   });
 }
