@@ -60,13 +60,17 @@ export function installShortcuts(handlers) {
     if (key === "m" || key === "M") { e.preventDefault(); handlers.toggleAudio?.(); return; }
     if (key === "f" || key === "F") { e.preventDefault(); handlers.toggleFullscreenRadar?.(); return; }
     if (key === "n" || key === "N") { e.preventDefault(); handlers.resetScrubber?.(); return; }
+    if (key === "r" || key === "R") { e.preventDefault(); handlers.refresh?.(); return; }
     if (key === " ") {
       e.preventDefault();
       handlers.toggleRadar?.();
       return;
     }
-    if (key === "ArrowLeft") { handlers.nudge?.(-1); e.preventDefault(); return; }
-    if (key === "ArrowRight") { handlers.nudge?.(1); e.preventDefault(); return; }
+    // Shift+Arrow = 6h jump (matches the scrubber's internal step), unshifted
+    // remains the gentle 1h nudge for fine-tuning.
+    const step = e.shiftKey ? 6 : 1;
+    if (key === "ArrowLeft") { handlers.nudge?.(-step); e.preventDefault(); return; }
+    if (key === "ArrowRight") { handlers.nudge?.(step); e.preventDefault(); return; }
     if (key === "[") { handlers.cyclePlace?.(-1); e.preventDefault(); return; }
     if (key === "]") { handlers.cyclePlace?.(1); e.preventDefault(); return; }
   });
