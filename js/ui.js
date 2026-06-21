@@ -167,7 +167,10 @@ export const ui = {
     if (!el.refreshBtn) return;
     el.refreshBtn.classList.toggle("spinning", !!on);
   },
-  setLoading(text) { el.placeSub.textContent = text; },
+  setLoading(text) {
+    el.placeSub.textContent = text;
+    document.documentElement.setAttribute("data-loading", "true");
+  },
   setPlace(place) {
     state.place = place;
     el.placeName.classList.remove("flip-in"); void el.placeName.offsetWidth;
@@ -182,6 +185,7 @@ export const ui = {
   setWeather(weather, { narrative } = {}) {
     state.weather = weather;
     state.sampledWeather = weather; // initially same as live
+    document.documentElement.removeAttribute("data-loading");
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);

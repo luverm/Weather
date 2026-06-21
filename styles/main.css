@@ -357,6 +357,18 @@ html[data-reduce-motion="true"] *::after {
   line-height: 1.02;
 }
 .place-sub { margin: 8px 0 0; color: var(--fg-muted); font-size: 14px; }
+/* Skeleton shimmer on initial fetch: pulse the hero placeholders so the user
+   knows we're working even before cached/fetched data arrives. */
+html[data-loading="true"] .temp-value,
+html[data-loading="true"] .condition-label,
+html[data-loading="true"] .place-name {
+  animation: skeletonPulse 1400ms var(--ease) infinite;
+}
+@keyframes skeletonPulse {
+  0%   { opacity: 0.55; }
+  50%  { opacity: 1; }
+  100% { opacity: 0.55; }
+}
 .place-sub[data-offline]::after {
   content: "Offline · sample data";
   display: inline-block;
