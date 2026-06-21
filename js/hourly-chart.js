@@ -224,10 +224,14 @@ export class HourlyChart {
       }
     }
 
-    // Precipitation probability bars (0-100% -> 0..12px height)
+    // Precipitation probability bars (0-100% -> 0..12px height). Pin a small
+    // "mm" label above any bar where the forecasted amount crosses 1 mm so
+    // the user can see actual volume, not just probability.
     const precipG = this.svg.querySelector("#chart-precip");
     precipG.innerHTML = "";
     const barW = Math.max(4, innerW / this.hours.length - 3);
+    // Suppress adjacent labels so they don't crowd each other.
+    let lastLabelIdx = -Infinity;
     this.hours.forEach((h, i) => {
       const pop = Math.max(0, Math.min(100, h.pop || 0));
       if (pop < 5) return;
@@ -242,6 +246,16 @@ export class HourlyChart {
       r.setAttribute("rx", "1.5");
       r.setAttribute("opacity", (0.35 + (pop / 100) * 0.55).toFixed(2));
       precipG.appendChild(r);
+      if (h.precip != null && h.precip >= 1 && i - lastLabelIdx >= 2) {
+        const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        txt.setAttribute("x", iToX(i).toFixed(1));
+        txt.setAttribute("y", (y - 2).toFixed(1));
+        txt.setAttribute("text-anchor", "middle");
+        txt.setAttribute("class", "precip-mm");
+        txt.textContent = `${h.precip < 10 ? h.precip.toFixed(1) : Math.round(h.precip)} mm`;
+        precipG.appendChild(txt);
+        lastLabelIdx = i;
+      }
     });
 
     // Night shading: dim rectangles where !isDay

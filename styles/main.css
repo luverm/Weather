@@ -801,6 +801,13 @@ html[data-reduce-motion="true"] *::after {
   fill: rgba(154, 209, 255, 0.42);
   transition: fill 150ms var(--ease);
 }
+.chart-precip text.precip-mm {
+  fill: rgba(154, 209, 255, 0.95);
+  font-size: 8.5px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+}
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
 }
