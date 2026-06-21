@@ -962,9 +962,27 @@ function renderDailyMeanDelta(d, meanHi) {
 
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
-  el.dailyIconStrip.innerHTML = days.map((d) =>
-    `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
-  ).join("");
+  el.dailyIconStrip.removeAttribute("aria-hidden");
+  el.dailyIconStrip.innerHTML = days.map((d, i) => {
+    const dt = new Date(d.time);
+    const tz = state.weather?.timezone;
+    const dayLabel = i === 0 ? "Today" : dt.toLocaleDateString(undefined, {
+      weekday: "short",
+      ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    });
+    const title = `${dayLabel} · ${escapeHtml(d.label || d.condition || "")} · ${Math.round(convertTemp(d.tempMax))}° / ${Math.round(convertTemp(d.tempMin))}°`;
+    // Scrub target: noon-ish of that day, so the user lands on a daytime hour.
+    const noon = d.sunrise && d.sunset
+      ? Math.round((d.sunrise + d.sunset) / 2)
+      : d.time + 12 * 3600_000;
+    return `<button type="button" class="strip-day" data-ts="${noon}" title="${title}" aria-label="Jump to ${dayLabel}">${iconFor(d.condition)}<span class="strip-day-label">${dayLabel}</span></button>`;
+  }).join("");
+  el.dailyIconStrip.querySelectorAll(".strip-day").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const ts = parseInt(btn.dataset.ts, 10);
+      if (Number.isFinite(ts)) state.handlers.onHourClick?.(ts);
+    });
+  });
 }
 
 function renderDailySpark(days) {
