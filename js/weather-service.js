@@ -369,7 +369,19 @@ function computeMoonPhase(date) {
     phase < 0.72 ? "Waning gibbous" :
     phase < 0.78 ? "Last quarter" :
     "Waning crescent";
-  return { phase, illum, name };
+  // Days until the next quarter milestone (0=new, 0.25=first, 0.5=full, 0.75=last).
+  const SYNODIC = 29.5305882;
+  const targets = [
+    { name: "New moon", phase: 0 },
+    { name: "First quarter", phase: 0.25 },
+    { name: "Full moon", phase: 0.5 },
+    { name: "Last quarter", phase: 0.75 },
+    { name: "New moon", phase: 1 },
+  ];
+  const next = targets.find((t) => t.phase - phase > 0.005) || targets[0];
+  const days = (next.phase - phase) * SYNODIC;
+  const nextTs = date.getTime() + days * 86400_000;
+  return { phase, illum, name, next: { name: next.name, time: nextTs, days } };
 }
 
 function mock(lat, lon) {

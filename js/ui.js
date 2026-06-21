@@ -46,6 +46,7 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonNext: $("#moon-next"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -513,6 +514,20 @@ function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  if (el.moonNext) {
+    if (moon.next && moon.next.days > 0.5) {
+      // Phrase as "in 3 days" if more than ~24h out, otherwise "tomorrow"
+      // / "tonight" feels more natural — but Open-Meteo doesn't give us a
+      // precise enough clock to claim "tonight", so stay with days.
+      const days = Math.round(moon.next.days);
+      const label = days <= 1 ? "tomorrow" : `in ${days} days`;
+      el.moonNext.textContent = `${moon.next.name} ${label}`;
+      el.moonNext.hidden = false;
+    } else {
+      el.moonNext.hidden = true;
+      el.moonNext.textContent = "";
+    }
+  }
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
