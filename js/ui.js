@@ -554,7 +554,21 @@ function renderSun(w) {
     const mins = Math.round((w.sunset - w.sunrise) / 60_000);
     const hh = Math.floor(mins / 60);
     const mm = mins % 60;
-    el.sunDaylight.textContent = `${hh}h ${mm}m`;
+    // Daylight delta vs tomorrow — surfaces whether days are growing or
+    // shrinking. Hidden when the swing is under a minute (around solstices).
+    const tomorrow = w.daily?.[1];
+    let deltaHtml = "";
+    if (tomorrow?.sunrise && tomorrow?.sunset) {
+      const tomMins = Math.round((tomorrow.sunset - tomorrow.sunrise) / 60_000);
+      const diff = tomMins - mins;
+      if (Math.abs(diff) >= 1) {
+        const abs = Math.abs(diff);
+        const arrow = diff > 0 ? "▲" : "▼";
+        const cls = diff > 0 ? "up" : "down";
+        deltaHtml = ` <span class="sun-delta ${cls}" title="vs tomorrow">${arrow}${abs}m</span>`;
+      }
+    }
+    el.sunDaylight.innerHTML = `${hh}h ${mm}m${deltaHtml}`;
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
