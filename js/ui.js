@@ -685,15 +685,45 @@ function startLocaltime(w) {
       const hour = parts.find((p) => p.type === "hour")?.value ?? "";
       const minute = parts.find((p) => p.type === "minute")?.value ?? "";
       const tzName = parts.find((p) => p.type === "timeZoneName")?.value ?? "";
+      // Diff vs the user's local zone — surfaces "viewing Sydney from London"
+      // moments. Skip the chip when within 30 min of the user's clock.
+      const deltaH = tzDeltaHours(tz, new Date());
+      let deltaHtml = "";
+      if (deltaH != null && Math.abs(deltaH) >= 0.5) {
+        const sign = deltaH > 0 ? "+" : "−";
+        const mag = Math.abs(deltaH);
+        const text = mag % 1 === 0 ? `${sign}${mag}h` : `${sign}${mag.toFixed(1)}h`;
+        deltaHtml = ` <span class="tz-delta" title="vs your local clock">${text}</span>`;
+      }
       el.placeLocaltime.innerHTML =
         `<span class="clock-dot" aria-hidden="true"></span>` +
-        `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>`;
+        `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>${deltaHtml}`;
     } catch {
       el.placeLocaltime.textContent = "";
     }
   };
   update();
   state.localTimer = setInterval(update, 10_000);
+}
+
+function tzDeltaHours(tz, ref) {
+  try {
+    const local = new Intl.DateTimeFormat("en-US", {
+      hour12: false, hour: "2-digit", minute: "2-digit",
+    }).format(ref);
+    const remote = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz, hour12: false, hour: "2-digit", minute: "2-digit",
+    }).format(ref);
+    const [lh, lm] = local.split(":").map(Number);
+    const [rh, rm] = remote.split(":").map(Number);
+    let diff = (rh * 60 + rm) - (lh * 60 + lm);
+    // Normalize to [-12*60, 12*60] so e.g. -22h becomes +2h.
+    if (diff > 12 * 60) diff -= 24 * 60;
+    if (diff < -12 * 60) diff += 24 * 60;
+    return diff / 60;
+  } catch {
+    return null;
+  }
 }
 
 function renderInsights(w) {
