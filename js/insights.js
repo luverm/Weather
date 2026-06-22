@@ -10,7 +10,20 @@ const ICONS = {
   uv: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M4 12H2M6 6l-2-2M12 18a6 6 0 006-6H6a6 6 0 006 6z"/></svg>',
   humid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c4 5 6 8 6 11a6 6 0 01-12 0c0-3 2-6 6-11z"/></svg>',
   sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg>',
+  smile: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 10h.01M15 10h.01M8 14c1 1.5 2.5 2.5 4 2.5S15 15.5 16 14"/></svg>',
 };
+
+// "Comfortable to be outside" heuristic — used by the pleasant-hours insight.
+// Tuned to feel reasonable for most people, not pedantic.
+function isPleasantHour(h) {
+  if (!h || h.temp == null) return false;
+  const t = h.feelsLike ?? h.temp;
+  if (t < 14 || t > 27) return false;
+  if ((h.pop ?? 0) >= 35) return false;
+  if ((h.precip ?? 0) >= 0.2) return false;
+  if ((h.wind ?? 0) >= 28) return false;
+  return true;
+}
 
 export function buildInsights(weather, { fmtTime, weekday } = {}) {
   const out = [];
@@ -99,5 +112,52 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     });
   }
 
+  // 6. Pleasant hours in the next 24h — gives a quick "how nice" cue.
+  const pleasant = hours.filter(isPleasantHour);
+  if (pleasant.length) {
+    // Compact value like "8 hours · 13:00–18:00" by stitching contiguous runs.
+    const runs = contiguousRuns(hours, isPleasantHour);
+    const biggest = runs.sort((a, b) => b.length - a.length)[0];
+    const range = biggest
+      ? `${fmt(biggest.start)}–${fmt(biggest.end)}`
+      : "";
+    out.push({
+      icon: ICONS.smile,
+      label: "Pleasant hours",
+      value: range
+        ? `${pleasant.length} hours · ${range}`
+        : `${pleasant.length} hours`,
+      ts: biggest?.start,
+    });
+  } else {
+    // Only surface "no pleasant hours" when conditions are notably off — keeps
+    // the insights list useful rather than gloomy.
+    const hasRain = hours.some((h) => (h.pop ?? 0) >= 60);
+    const hasExtreme = hours.some((h) => h.temp != null && (h.temp > 30 || h.temp < 5));
+    if (hasRain || hasExtreme) {
+      out.push({
+        icon: ICONS.smile,
+        label: "Pleasant hours",
+        value: "Tough day to be outside",
+      });
+    }
+  }
+
   return out.slice(0, 6);
+}
+
+function contiguousRuns(hours, predicate) {
+  const runs = [];
+  let curr = null;
+  for (let i = 0; i < hours.length; i++) {
+    const h = hours[i];
+    if (predicate(h)) {
+      if (!curr) curr = { start: h.time, end: h.time, length: 1, startIdx: i };
+      else { curr.end = h.time; curr.length++; }
+    } else if (curr) {
+      runs.push(curr); curr = null;
+    }
+  }
+  if (curr) runs.push(curr);
+  return runs;
 }
