@@ -547,6 +547,8 @@ function mock(lat, lon) {
       wind: 8 + Math.sin(i) * 3, gusts: 12 + Math.sin(i) * 4,
       isDay: (i + hour) % 24 >= 6 && (i + hour) % 24 < 19,
       uv: Math.max(0, Math.sin((i - 6) * Math.PI / 13) * 6),
+      humidity: 60 + Math.sin(i / 3) * 12,
+      cloudCover: 45 + Math.sin(i / 4) * 25,
       condition: CONDITIONS.CLOUDS, label: "Cloudy",
     })),
     daily: Array.from({ length: 7 }, (_, i) => ({
@@ -574,6 +576,25 @@ function mock(lat, lon) {
       level: "Moderate",
     },
     pressureTrend: { delta: -0.4, direction: "steady" },
+    // Round 22+: cross-day deltas so the offline shell exercises the new chips.
+    yesterdaySunrise: new Date(now - 86400_000).setHours(6, 32, 0, 0),
+    yesterdaySunset: new Date(now - 86400_000).setHours(18, 58, 0, 0),
+    daylightDelta: 4,
+    tempVsYesterday: 1.5,
+    sunsetQuality: {
+      kind: "sunset",
+      time: new Date().setHours(19, 0, 0, 0),
+      rating: "soft",
+      cloudCover: 45,
+      summary: "Soft sunset colors",
+    },
+    stargazing: {
+      rating: "fair",
+      label: "Fair",
+      summary: "partly cloudy · 35% moon",
+      avgCloudCover: 45,
+      moonIllum: 0.35,
+    },
     fetchedAt: now,
     offline: true,
   };
