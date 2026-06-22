@@ -21,6 +21,7 @@ const el = {
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
+  vsYesterday: $("#vs-yesterday"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -282,6 +283,34 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  renderVsYesterday(w);
+}
+
+function renderVsYesterday(w) {
+  if (!el.vsYesterday) return;
+  // Only meaningful when looking at live "now" data — hide while scrubbing.
+  if (document.documentElement.getAttribute("data-scrubbing") === "true") {
+    el.vsYesterday.hidden = true;
+    return;
+  }
+  const delta = w.tempVsYesterday;
+  if (delta == null || !Number.isFinite(delta)) {
+    el.vsYesterday.hidden = true;
+    return;
+  }
+  // Convert to display units; rounded difference of <1° reads as "same".
+  const displayDelta = state.unit === "F" ? delta * 9 / 5 : delta;
+  const rounded = Math.round(displayDelta);
+  if (rounded === 0) {
+    el.vsYesterday.textContent = "same as yesterday";
+    el.vsYesterday.dataset.dir = "flat";
+  } else {
+    const arrow = rounded > 0 ? "▲" : "▼";
+    const word = rounded > 0 ? "warmer" : "cooler";
+    el.vsYesterday.textContent = `${arrow} ${Math.abs(rounded)}° ${word} than yesterday`;
+    el.vsYesterday.dataset.dir = rounded > 0 ? "up" : "down";
+  }
+  el.vsYesterday.hidden = false;
 }
 
 function renderDayRange(w) {

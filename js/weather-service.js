@@ -201,6 +201,10 @@ function normalize(d, aq) {
     todaySunrise, todaySunset, yesterdaySunrise, yesterdaySunset
   );
 
+  // "vs yesterday at this hour" — uses raw d.hourly which still includes the
+  // past_days:1 entries, since our trimmed `hourly` array drops them.
+  const tempVsYesterday = computeTempVsYesterday(d.hourly, c.temperature_2m, now);
+
   return {
     temp: c.temperature_2m,
     feelsLike: c.apparent_temperature,
@@ -221,6 +225,7 @@ function normalize(d, aq) {
     yesterdaySunrise,
     yesterdaySunset,
     daylightDelta,
+    tempVsYesterday,
     uv: daily.uv_index_max?.[todayIdx] ?? null,
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
@@ -247,6 +252,23 @@ function findTodayIndex(dailyForecast, now) {
     if (delta < bestDelta) { bestDelta = delta; bestIdx = i; }
   }
   return bestIdx;
+}
+
+function computeTempVsYesterday(hourly, currentTemp, now) {
+  if (!hourly?.time || !hourly?.temperature_2m || currentTemp == null) return null;
+  const target = now - 24 * 3600_000;
+  let bestIdx = -1;
+  let bestDiff = Infinity;
+  for (let i = 0; i < hourly.time.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    const diff = Math.abs(t - target);
+    if (diff < bestDiff) { bestDiff = diff; bestIdx = i; }
+  }
+  // Bail if no entry is within 90 minutes of "24h ago".
+  if (bestIdx < 0 || bestDiff > 90 * 60_000) return null;
+  const yTemp = hourly.temperature_2m[bestIdx];
+  if (yTemp == null) return null;
+  return currentTemp - yTemp; // signed degrees Celsius
 }
 
 function computeDaylightDelta(sr1, ss1, sr0, ss0) {
