@@ -998,6 +998,32 @@ kbd {
 }
 
 .moon-row, .sun-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
+.stargazing {
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px 6px;
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  color: var(--fg-muted);
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,0.04);
+  justify-self: start;
+  line-height: 1.15;
+}
+.stargazing[hidden] { display: none; }
+.stargazing-icon { opacity: 0.7; flex-shrink: 0; }
+.stargazing-summary { color: var(--fg-dim); }
+.stargazing[data-rating="excellent"] {
+  color: #c8d8ff;
+  border-color: rgba(120,180,255,0.4);
+  background: rgba(80,140,255,0.10);
+}
+.stargazing[data-rating="excellent"] .stargazing-icon { color: #fffbcc; opacity: 0.95; }
+.stargazing[data-rating="good"] { color: #d4e0ff; }
+.stargazing[data-rating="poor"] { opacity: 0.7; }
 .moon-svg { width: 48px; height: 48px; }
 .moon-meta strong { display: block; font-size: 14px; font-weight: 500; }
 .moon-detail { font-size: 11.5px; color: var(--fg-dim); }

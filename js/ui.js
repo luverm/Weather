@@ -46,6 +46,9 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  stargazing: $("#stargazing"),
+  stargazingLabel: $("#stargazing-label"),
+  stargazingSummary: $("#stargazing-summary"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -189,6 +192,7 @@ export const ui = {
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
     renderMoon(weather.moon);
+    renderStargazing(weather.stargazing);
     renderSun(weather);
     renderHourly(weather);
     renderDaily(weather);
@@ -570,6 +574,15 @@ function renderSunsetQuality(q) {
   el.sunsetQuality.dataset.rating = q.rating;
   el.sunsetQuality.dataset.kind = q.kind;
   el.sunsetQuality.hidden = false;
+}
+
+function renderStargazing(s) {
+  if (!el.stargazing || !el.stargazingLabel) return;
+  if (!s) { el.stargazing.hidden = true; return; }
+  el.stargazingLabel.textContent = `Stargazing tonight: ${s.label}`;
+  if (el.stargazingSummary) el.stargazingSummary.textContent = ` — ${s.summary}`;
+  el.stargazing.dataset.rating = s.rating;
+  el.stargazing.hidden = false;
 }
 
 function renderDaylightDelta(deltaMin) {

@@ -210,6 +210,8 @@ function normalize(d, aq) {
     d.hourly, dailyForecast, todayIdx, now
   );
 
+  const stargazing = predictStargazing(d.hourly, dailyForecast, todayIdx, moon, now);
+
   return {
     temp: c.temperature_2m,
     feelsLike: c.apparent_temperature,
@@ -232,6 +234,7 @@ function normalize(d, aq) {
     daylightDelta,
     tempVsYesterday,
     sunsetQuality,
+    stargazing,
     uv: daily.uv_index_max?.[todayIdx] ?? null,
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
@@ -258,6 +261,56 @@ function findTodayIndex(dailyForecast, now) {
     if (delta < bestDelta) { bestDelta = delta; bestIdx = i; }
   }
   return bestIdx;
+}
+
+// Rate "tonight"'s stargazing window from average cloud cover between the
+// upcoming sunset and the next sunrise, with the moon phase mentioned for
+// context. Returns null if we can't bracket the night with the available
+// daily series.
+function predictStargazing(hourly, dailyForecast, todayIdx, moon, now) {
+  if (!hourly?.time || !hourly?.cloud_cover) return null;
+  // Pick the sunset that begins tonight, plus the next sunrise after it.
+  let sunset = null, sunrise = null;
+  for (let i = todayIdx; i < Math.min(todayIdx + 3, dailyForecast.length); i++) {
+    const d = dailyForecast[i];
+    if (!sunset && d.sunset && d.sunset > now - 30 * 60_000) sunset = d.sunset;
+    if (sunset && d.sunrise && d.sunrise > sunset) { sunrise = d.sunrise; break; }
+  }
+  if (!sunset || !sunrise || sunrise <= sunset) return null;
+
+  // Average cloud cover across the night window (1h grace at each end so the
+  // sample isn't dominated by twilight extremes).
+  const winStart = sunset + 60 * 60_000;
+  const winEnd = sunrise - 60 * 60_000;
+  let total = 0, count = 0;
+  for (let i = 0; i < hourly.time.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    if (t < winStart || t > winEnd) continue;
+    const cc = hourly.cloud_cover[i];
+    if (cc == null) continue;
+    total += cc; count++;
+  }
+  if (!count) return null;
+  const avg = total / count;
+
+  let rating, label;
+  if (avg < 15) { rating = "excellent"; label = "Excellent"; }
+  else if (avg < 40) { rating = "good"; label = "Good"; }
+  else if (avg < 70) { rating = "fair"; label = "Fair"; }
+  else { rating = "poor"; label = "Poor"; }
+
+  const moonPct = Math.round((moon?.illum ?? 0) * 100);
+  const moonHint =
+    moonPct >= 75 ? `bright ${moonPct}% moon` :
+    moonPct >= 30 ? `${moonPct}% moon` :
+    "dark sky";
+  const cloudHint =
+    avg < 15 ? "clear skies" :
+    avg < 40 ? "mostly clear" :
+    avg < 70 ? "partly cloudy" :
+    "overcast";
+  const summary = `${cloudHint} · ${moonHint}`;
+  return { rating, label, summary, avgCloudCover: avg, moonIllum: moon?.illum ?? null };
 }
 
 // Classify the upcoming sun event's color quality from cloud cover (and a
