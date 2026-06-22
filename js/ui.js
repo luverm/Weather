@@ -206,7 +206,10 @@ export const ui = {
     renderAlerts(weather);
     renderWeekend(weather);
     startLocaltime(weather);
-    if (state.chart) state.chart.setHours(weather.hourly);
+    if (state.chart) {
+      state.chart.setHours(weather.hourly);
+      state.chart.setSunEvents(collectSunEvents(weather));
+    }
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
@@ -286,6 +289,18 @@ function animateNumber(node, target, format) {
 }
 
 function capitalize(s) { return (s || "").charAt(0).toUpperCase() + (s || "").slice(1); }
+
+// Flatten the next two days' sunrise/sunset times into a list the chart can
+// plot directly, sorted in chronological order.
+function collectSunEvents(w) {
+  const out = [];
+  const days = (w.daily || []).slice(0, 2);
+  for (const d of days) {
+    if (d.sunrise) out.push({ time: d.sunrise, kind: "sunrise" });
+    if (d.sunset) out.push({ time: d.sunset, kind: "sunset" });
+  }
+  return out.sort((a, b) => a.time - b.time);
+}
 
 function renderLiveValues(w, { animate = true } = {}) {
   const actual = convertTemp(w.temp);

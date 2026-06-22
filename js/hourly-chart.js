@@ -51,7 +51,14 @@ export class HourlyChart {
   setHours(hours) {
     this.hours = (hours || []).slice(0, 24);
     this._draw();
+    this._drawSunEvents();
     this.setCursor(null);
+  }
+
+  setSunEvents(events) {
+    // [{ time, kind: "sunrise"|"sunset" }, ...]
+    this.sunEvents = events || [];
+    this._drawSunEvents();
   }
 
   refresh() { this._draw(); }
@@ -148,6 +155,37 @@ export class HourlyChart {
     this.popover.hidden = false;
     // Next frame to allow transition.
     requestAnimationFrame(() => this.popover.classList.add("show"));
+  }
+
+  _drawSunEvents() {
+    const g = this.svg.querySelector("#chart-sun-events");
+    if (!g) return;
+    g.innerHTML = "";
+    if (!this.hours.length || !this.sunEvents?.length) return;
+    const first = this.hours[0].time;
+    const last = this.hours[this.hours.length - 1].time;
+    const span = last - first;
+    if (span <= 0) return;
+    const innerW = W - PAD_LEFT - PAD_RIGHT;
+    for (const ev of this.sunEvents) {
+      if (!ev?.time) continue;
+      if (ev.time < first || ev.time > last) continue;
+      const x = PAD_LEFT + ((ev.time - first) / span) * innerW;
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("x1", x.toFixed(1));
+      line.setAttribute("x2", x.toFixed(1));
+      line.setAttribute("y1", String(PAD_TOP - 6));
+      line.setAttribute("y2", String(H - PAD_BOT + 2));
+      line.setAttribute("class", `sun-event sun-event-${ev.kind}`);
+      g.appendChild(line);
+      const glyph = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      glyph.setAttribute("x", x.toFixed(1));
+      glyph.setAttribute("y", String(PAD_TOP - 7));
+      glyph.setAttribute("text-anchor", "middle");
+      glyph.setAttribute("class", `sun-event-label sun-event-label-${ev.kind}`);
+      glyph.textContent = ev.kind === "sunrise" ? "↑" : "↓";
+      g.appendChild(glyph);
+    }
   }
 
   _draw() {
