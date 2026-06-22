@@ -93,6 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
+    past_days: 1,
     past_hours: 1,
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
@@ -189,6 +190,17 @@ function normalize(d, aq) {
   // Moon phase is not in Open-Meteo's free tier — compute it locally.
   const moon = computeMoonPhase(new Date());
 
+  // Today's sunrise/sunset live at the daily entry whose date matches today.
+  const todayIdx = findTodayIndex(dailyForecast, now);
+  const todaySunrise = dailyForecast[todayIdx]?.sunrise ?? null;
+  const todaySunset = dailyForecast[todayIdx]?.sunset ?? null;
+  const yIdx = todayIdx > 0 ? todayIdx - 1 : -1;
+  const yesterdaySunrise = yIdx >= 0 ? dailyForecast[yIdx]?.sunrise : null;
+  const yesterdaySunset = yIdx >= 0 ? dailyForecast[yIdx]?.sunset : null;
+  const daylightDelta = computeDaylightDelta(
+    todaySunrise, todaySunset, yesterdaySunrise, yesterdaySunset
+  );
+
   return {
     temp: c.temperature_2m,
     feelsLike: c.apparent_temperature,
@@ -204,19 +216,44 @@ function normalize(d, aq) {
     isDay: !!c.is_day,
     condition,
     label,
-    sunrise: daily.sunrise?.[0] ? new Date(daily.sunrise[0]).getTime() : null,
-    sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null,
-    uv: daily.uv_index_max?.[0] ?? null,
+    sunrise: todaySunrise,
+    sunset: todaySunset,
+    yesterdaySunrise,
+    yesterdaySunset,
+    daylightDelta,
+    uv: daily.uv_index_max?.[todayIdx] ?? null,
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
     hourly,
-    daily: dailyForecast,
+    daily: dailyForecast.slice(todayIdx),
     nowcast,
     moon,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
     fetchedAt: now,
   };
+}
+
+function findTodayIndex(dailyForecast, now) {
+  // The entry whose local mid-day (~sunrise + 6h) is closest to `now` is
+  // "today" — robust against timezone parsing quirks for daily.time strings.
+  // With past_days:1 + forecast_days:7 this usually resolves to index 1.
+  let bestIdx = 0;
+  let bestDelta = Infinity;
+  for (let i = 0; i < dailyForecast.length; i++) {
+    const sr = dailyForecast[i].sunrise;
+    if (sr == null) continue;
+    const delta = Math.abs(now - (sr + 6 * 3600_000));
+    if (delta < bestDelta) { bestDelta = delta; bestIdx = i; }
+  }
+  return bestIdx;
+}
+
+function computeDaylightDelta(sr1, ss1, sr0, ss0) {
+  if (!sr1 || !ss1 || !sr0 || !ss0) return null;
+  const today = ss1 - sr1;
+  const yesterday = ss0 - sr0;
+  return Math.round((today - yesterday) / 60_000); // signed minutes
 }
 
 function computePressureTrend(hourly, now) {
@@ -315,10 +352,13 @@ function aqiLabel(v) {
 
 function findUvPeak(hourly) {
   if (!hourly?.uv_index) return null;
+  const now = Date.now();
   let peak = { t: null, v: -Infinity };
   for (let i = 0; i < hourly.uv_index.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    if (t < now) continue; // ignore past_days entries — peak should be upcoming
     const v = hourly.uv_index[i];
-    if (v > peak.v) peak = { t: new Date(hourly.time[i]).getTime(), v };
+    if (v > peak.v) peak = { t, v };
   }
   if (peak.t == null) return null;
   return { time: peak.t, value: peak.v };

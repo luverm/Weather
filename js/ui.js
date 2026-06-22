@@ -48,8 +48,12 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  goldenRow: $("#golden-row"),
+  goldenAm: $("#golden-am"),
+  goldenPm: $("#golden-pm"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -521,8 +525,53 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w.daylightDelta);
+  renderGoldenHour(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderDaylightDelta(deltaMin) {
+  if (!el.sunDaylightDelta) return;
+  if (deltaMin == null || !Number.isFinite(deltaMin)) {
+    el.sunDaylightDelta.hidden = true;
+    return;
+  }
+  const abs = Math.abs(deltaMin);
+  if (abs === 0) {
+    el.sunDaylightDelta.textContent = "same as yesterday";
+    el.sunDaylightDelta.dataset.dir = "flat";
+  } else {
+    const arrow = deltaMin > 0 ? "▲" : "▼";
+    const word = deltaMin > 0 ? "longer" : "shorter";
+    el.sunDaylightDelta.textContent = `${arrow} ${abs}m ${word}`;
+    el.sunDaylightDelta.dataset.dir = deltaMin > 0 ? "up" : "down";
+  }
+  el.sunDaylightDelta.hidden = false;
+}
+
+function renderGoldenHour(w) {
+  if (!el.goldenRow) return;
+  if (!w.sunrise || !w.sunset) { el.goldenRow.hidden = true; return; }
+  const lat = state.place?.lat;
+  const minutes = goldenHourMinutes(lat);
+  const amStart = w.sunrise;
+  const amEnd = w.sunrise + minutes * 60_000;
+  const pmStart = w.sunset - minutes * 60_000;
+  const pmEnd = w.sunset;
+  el.goldenAm.textContent = `${fmtTime(amStart)} → ${fmtTime(amEnd)}`;
+  el.goldenPm.textContent = `${fmtTime(pmStart)} → ${fmtTime(pmEnd)}`;
+  el.goldenRow.hidden = false;
+}
+
+// Approximate golden-hour duration: the window from horizon to ~6° solar
+// altitude. Scales with 1/cos(latitude) — sun climbs more slowly at higher
+// latitudes, so the warm-light window is longer. Capped to keep it sensible
+// at extreme latitudes / polar regions.
+function goldenHourMinutes(lat) {
+  if (lat == null || !Number.isFinite(lat)) return 40;
+  const c = Math.cos(Math.min(80, Math.abs(lat)) * Math.PI / 180);
+  return Math.round(Math.min(120, Math.max(25, 40 / Math.max(0.18, c))));
 }
 
 function scheduleSunArc(w) {
