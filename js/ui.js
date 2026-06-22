@@ -124,6 +124,7 @@ const el = {
 
 const state = {
   unit: localStorage.getItem("aether:unit") || "C",
+  tempMode: localStorage.getItem("aether:temp-mode") || "actual", // "actual" | "feels"
   weather: null,
   place: null,
   sampledWeather: null, // the weather values at the current scrubber time
@@ -251,6 +252,11 @@ export const ui = {
     el.toast._t = setTimeout(() => (el.toast.hidden = true), dur);
   },
   getUnit: () => state.unit,
+  toggleTempMode() {
+    state.tempMode = state.tempMode === "feels" ? "actual" : "feels";
+    try { localStorage.setItem("aether:temp-mode", state.tempMode); } catch {}
+    if (state.sampledWeather) renderLiveValues(state.sampledWeather, { animate: false });
+  },
 };
 
 // ---------- Rendering ----------
@@ -282,12 +288,17 @@ function animateNumber(node, target, format) {
 function capitalize(s) { return (s || "").charAt(0).toUpperCase() + (s || "").slice(1); }
 
 function renderLiveValues(w, { animate = true } = {}) {
-  const temp = convertTemp(w.temp);
+  const actual = convertTemp(w.temp);
   const feels = convertTemp(w.feelsLike ?? w.temp);
-  if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
-  else el.temp.textContent = `${Math.round(temp)}°`;
+  const primary = state.tempMode === "feels" ? feels : actual;
+  const secondary = state.tempMode === "feels"
+    ? `Actual ${Math.round(actual)}°`
+    : `Feels like ${Math.round(feels)}°`;
+  if (animate) animateNumber(el.temp, primary, (v) => `${Math.round(v)}°`);
+  else el.temp.textContent = `${Math.round(primary)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  el.feelsLike.textContent = secondary;
+  el.temp?.parentElement?.setAttribute("data-temp-mode", state.tempMode);
   renderDayRange(w);
   renderVsYesterday(w);
 }
@@ -1268,6 +1279,23 @@ function bindUnitToggle() {
     el.unitBtn.textContent = `°${state.unit}`;
     if (state.weather) ui.setWeather(state.weather);
   });
+  // Tap the big temp value to flip between actual and feels-like.
+  if (el.temp) {
+    el.temp.style.cursor = "pointer";
+    el.temp.setAttribute("role", "button");
+    el.temp.setAttribute("tabindex", "0");
+    el.temp.title = "Flip between actual and feels-like";
+    el.temp.setAttribute("aria-label", "Flip displayed temperature between actual and feels-like");
+    const flip = () => {
+      state.tempMode = state.tempMode === "feels" ? "actual" : "feels";
+      try { localStorage.setItem("aether:temp-mode", state.tempMode); } catch {}
+      if (state.sampledWeather) renderLiveValues(state.sampledWeather, { animate: false });
+    };
+    el.temp.addEventListener("click", flip);
+    el.temp.addEventListener("keydown", (e) => {
+      if (e.key === " " || e.key === "Enter") { e.preventDefault(); flip(); }
+    });
+  }
 }
 
 function bindLocate() {
