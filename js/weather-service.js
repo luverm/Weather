@@ -83,7 +83,7 @@ export async function getWeather(lat, lon) {
       "precipitation_probability", "precipitation",
       "wind_speed_10m", "wind_gusts_10m",
       "is_day", "uv_index", "pressure_msl",
-      "relative_humidity_2m",
+      "relative_humidity_2m", "cloud_cover",
     ].join(","),
     daily: [
       "sunrise", "sunset",
@@ -205,6 +205,11 @@ function normalize(d, aq) {
   // past_days:1 entries, since our trimmed `hourly` array drops them.
   const tempVsYesterday = computeTempVsYesterday(d.hourly, c.temperature_2m, now);
 
+  // Predict the next sunset/sunrise color quality from cloud cover at the event.
+  const sunsetQuality = predictSunEventQuality(
+    d.hourly, dailyForecast, todayIdx, now
+  );
+
   return {
     temp: c.temperature_2m,
     feelsLike: c.apparent_temperature,
@@ -226,6 +231,7 @@ function normalize(d, aq) {
     yesterdaySunset,
     daylightDelta,
     tempVsYesterday,
+    sunsetQuality,
     uv: daily.uv_index_max?.[todayIdx] ?? null,
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
@@ -252,6 +258,58 @@ function findTodayIndex(dailyForecast, now) {
     if (delta < bestDelta) { bestDelta = delta; bestIdx = i; }
   }
   return bestIdx;
+}
+
+// Classify the upcoming sun event's color quality from cloud cover (and a
+// light humidity dampener). Returns { kind: "sunset"|"sunrise", time,
+// rating: "vivid"|"soft"|"clear"|"muted"|"blocked", cloudCover, summary }.
+function predictSunEventQuality(hourly, dailyForecast, todayIdx, now) {
+  if (!hourly?.time || !hourly?.cloud_cover) return null;
+  // Pick the next upcoming sunset or sunrise across the next ~36h.
+  const events = [];
+  for (let i = todayIdx; i < Math.min(todayIdx + 2, dailyForecast.length); i++) {
+    const d = dailyForecast[i];
+    if (d.sunset) events.push({ kind: "sunset", time: d.sunset });
+    if (d.sunrise) events.push({ kind: "sunrise", time: d.sunrise });
+  }
+  const next = events
+    .filter((e) => e.time > now - 5 * 60_000)
+    .sort((a, b) => a.time - b.time)[0];
+  if (!next) return null;
+
+  // Find hourly entry closest to the event.
+  let bestIdx = -1;
+  let bestDiff = Infinity;
+  for (let i = 0; i < hourly.time.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    const diff = Math.abs(t - next.time);
+    if (diff < bestDiff) { bestDiff = diff; bestIdx = i; }
+  }
+  if (bestIdx < 0 || bestDiff > 90 * 60_000) return null;
+
+  const cc = hourly.cloud_cover[bestIdx];
+  const hum = hourly.relative_humidity_2m?.[bestIdx];
+  if (cc == null) return null;
+
+  // Cloud cover sweet-spot for vivid color: 30–65%.
+  let rating;
+  if (cc >= 30 && cc <= 65) rating = "vivid";
+  else if (cc >= 10 && cc < 30) rating = "soft";
+  else if (cc < 10) rating = "clear";
+  else if (cc <= 85) rating = "muted";
+  else rating = "blocked";
+
+  // Very humid air saturates colors less — downgrade vivid → soft.
+  if (rating === "vivid" && hum != null && hum > 85) rating = "soft";
+
+  const verb = next.kind === "sunset" ? "Sunset" : "Sunrise";
+  const summary =
+    rating === "vivid" ? `Vivid ${verb.toLowerCase()} likely` :
+    rating === "soft" ? `Soft ${verb.toLowerCase()} colors` :
+    rating === "clear" ? `Clear ${verb.toLowerCase()} — minimal colors` :
+    rating === "muted" ? `Muted ${verb.toLowerCase()}` :
+    `${verb} blocked by cloud`;
+  return { kind: next.kind, time: next.time, rating, cloudCover: cc, summary };
 }
 
 function computeTempVsYesterday(hourly, currentTemp, now) {

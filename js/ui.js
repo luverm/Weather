@@ -55,6 +55,8 @@ const el = {
   goldenRow: $("#golden-row"),
   goldenAm: $("#golden-am"),
   goldenPm: $("#golden-pm"),
+  sunsetQuality: $("#sunset-quality"),
+  sunsetQualityText: $("#sunset-quality-text"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -556,8 +558,18 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   renderDaylightDelta(w.daylightDelta);
   renderGoldenHour(w);
+  renderSunsetQuality(w.sunsetQuality);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderSunsetQuality(q) {
+  if (!el.sunsetQuality || !el.sunsetQualityText) return;
+  if (!q) { el.sunsetQuality.hidden = true; return; }
+  el.sunsetQualityText.textContent = q.summary;
+  el.sunsetQuality.dataset.rating = q.rating;
+  el.sunsetQuality.dataset.kind = q.kind;
+  el.sunsetQuality.hidden = false;
 }
 
 function renderDaylightDelta(deltaMin) {

@@ -1042,6 +1042,37 @@ kbd {
   color: #ffd9a8;
   letter-spacing: -0.02em;
 }
+
+.sunset-quality {
+  margin-top: 8px;
+  padding: 6px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  color: var(--fg-muted);
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,0.04);
+  justify-self: start;
+}
+.sunset-quality[hidden] { display: none; }
+.sunset-quality-icon { opacity: 0.85; }
+.sunset-quality[data-kind="sunrise"] .sunset-quality-icon { transform: rotate(180deg); }
+.sunset-quality[data-rating="vivid"] {
+  color: #ffd28a;
+  border-color: rgba(255,180,120,0.4);
+  background: linear-gradient(90deg, rgba(255,150,100,0.14), rgba(255,80,140,0.10));
+}
+.sunset-quality[data-rating="soft"] {
+  color: #ffd6b0;
+  border-color: rgba(255,200,160,0.28);
+  background: rgba(255,170,130,0.08);
+}
+.sunset-quality[data-rating="clear"],
+.sunset-quality[data-rating="muted"] { color: var(--fg-dim); }
+.sunset-quality[data-rating="blocked"] { color: var(--fg-dim); opacity: 0.7; }
 .sun-arc {
   width: 100%;
   height: 76px;
