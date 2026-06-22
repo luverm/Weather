@@ -139,9 +139,10 @@ export class HourlyChart {
       ? `<em>feels ${Math.round(feels)}°</em>` : "";
     const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
+    const cc = h.cloudCover != null ? ` · ${Math.round(h.cloudCover)}% cloud` : "";
     this.popover.innerHTML =
       `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
-      `<em>${h.pop}% precip${wind}${hum}</em>`;
+      `<em>${h.pop}% precip${wind}${hum}${cc}</em>`;
     this.popover.style.left = `${pxX.toFixed(1)}px`;
     this.popover.style.top = `${pxY.toFixed(1)}px`;
     this.popover.hidden = false;
@@ -243,6 +244,31 @@ export class HourlyChart {
       r.setAttribute("opacity", (0.35 + (pop / 100) * 0.55).toFixed(2));
       precipG.appendChild(r);
     });
+
+    // Cloud cover ribbon along the top of the chart. Per-hour rectangles
+    // whose opacity scales with cloud cover (0% = clear sky → invisible,
+    // 100% = overcast → solid). Quick "when will it be sunny" glance.
+    const cloudG = this.svg.querySelector("#chart-clouds");
+    if (cloudG) {
+      cloudG.innerHTML = "";
+      const cellW = innerW / this.hours.length;
+      const ribbonH = 6;
+      const ribbonY = 2;
+      this.hours.forEach((h, i) => {
+        const cc = h.cloudCover;
+        if (cc == null) return;
+        const x = iToX(i) - cellW / 2;
+        const op = Math.max(0, Math.min(1, cc / 100)) * 0.55;
+        if (op < 0.04) return;
+        const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        r.setAttribute("x", x.toFixed(1));
+        r.setAttribute("y", String(ribbonY));
+        r.setAttribute("width", cellW.toFixed(1));
+        r.setAttribute("height", String(ribbonH));
+        r.setAttribute("opacity", op.toFixed(2));
+        cloudG.appendChild(r);
+      });
+    }
 
     // Night shading: dim rectangles where !isDay
     const nightG = this.svg.querySelector("#chart-night");
