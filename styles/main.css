@@ -562,6 +562,29 @@ html[data-reduce-motion="true"] *::after {
   pointer-events: none;
 }
 .scrubber-track:active .scrubber-thumb { transform: translate(-50%, -50%) scale(1.15); }
+.time-jumps {
+  display: flex;
+  gap: 6px;
+  justify-content: space-between;
+  margin-top: 2px;
+}
+.time-jump {
+  flex: 1;
+  padding: 5px 8px 6px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--stroke);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 200ms var(--ease), background 200ms var(--ease), border-color 200ms var(--ease);
+  font-family: inherit;
+}
+.time-jump:hover,
+.time-jump:focus-visible { color: var(--fg); background: var(--glass-strong); border-color: rgba(255,255,255,0.18); outline: none; }
+.time-jump:active { transform: translateY(1px); }
 
 /* ---------- Pressure sparkline ---------- */
 .metric-pressure,

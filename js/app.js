@@ -304,6 +304,34 @@ installShortcuts({
   },
 });
 
+// ---------- Time-of-day quick jumps ----------
+// Each pill jumps the scrubber to the next occurrence (within the next 24h)
+// of a target hour: morning=8, noon=12, evening=18, night=21. If "now" is
+// already past that hour today, we land on tomorrow's instance.
+const TIME_JUMP_HOURS = { morning: 8, noon: 12, evening: 18, night: 21 };
+function jumpToTimeOfDay(kind) {
+  const targetHour = TIME_JUMP_HOURS[kind];
+  if (targetHour == null) return;
+  const now = new Date();
+  const target = new Date(now);
+  target.setHours(targetHour, 0, 0, 0);
+  // Scrubber covers [-1h, +23h] from real now — if target is already in the
+  // past or right at "now", roll forward to tomorrow's instance.
+  if (target.getTime() - Date.now() < -30 * 60_000) {
+    target.setDate(target.getDate() + 1);
+  }
+  const offset = target.getTime() - Date.now();
+  clock.setOffset(offset);
+  scrubber.sync();
+  if (app.weather) applyScene(app.weather);
+  ui.setScrubbing(!clock.isLive());
+}
+document.getElementById("time-jumps")?.addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-jump]");
+  if (!btn) return;
+  jumpToTimeOfDay(btn.dataset.jump);
+});
+
 // ---------- Start ----------
 (async function init() {
   // Prefer the most recent saved place if we have one — avoids the geolocation
