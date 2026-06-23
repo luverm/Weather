@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { pickOutfit } from "./outfit.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -88,6 +89,8 @@ const el = {
   activityCard: $("#activity-card"),
   activityList: $("#activity-list"),
   alertsStrip: $("#alerts-strip"),
+  outfitRow: $("#outfit-row"),
+  outfitList: $("#outfit-list"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
   comfortStrip: $("#comfort-strip"),
@@ -187,6 +190,7 @@ export const ui = {
     renderDaily(weather);
     renderNowcast(weather);
     renderAdvice(weather);
+    renderOutfit(weather);
     renderPollen(weather.pollen);
     renderTrends(weather);
     renderInsights(weather);
@@ -212,6 +216,7 @@ export const ui = {
     renderLiveValues(sampled, { animate: false });
     renderMetrics(sampled);
     renderAdvice(sampled);
+    renderOutfit(sampled);
     highlightHour(highlightHourIndex);
     if (state.comfortStrip) state.comfortStrip.highlight(highlightHourIndex);
     if (state.chart && sampled._sampledTs != null) {
@@ -768,6 +773,33 @@ function renderActivity(w) {
       if (ts) state.handlers.onHourClick?.(ts);
     });
   });
+}
+
+function renderOutfit(w) {
+  if (!el.outfitRow || !el.outfitList) return;
+  const items = pickOutfit(w);
+  if (!items.length) {
+    el.outfitRow.hidden = true;
+    el.outfitList.innerHTML = "";
+    return;
+  }
+  // Keep the strip uncluttered.
+  const trimmed = items.slice(0, 6);
+  const html = trimmed.map((it) => `
+    <li data-id="${it.id}" title="${escapeHtml(it.why || "")}" aria-label="${escapeHtml(it.label + (it.why ? " — " + it.why : ""))}">
+      ${it.icon}<span>${escapeHtml(it.label)}</span>
+    </li>
+  `).join("");
+  // Only re-render when the visible set actually changed — avoids re-playing
+  // the pop-in animation every time the scrubber ticks.
+  const sig = trimmed.map((it) => it.id + ":" + (it.why || "")).join("|");
+  if (el.outfitList.dataset.sig === sig) {
+    el.outfitRow.hidden = false;
+    return;
+  }
+  el.outfitList.dataset.sig = sig;
+  el.outfitList.innerHTML = html;
+  el.outfitRow.hidden = false;
 }
 
 function renderPollen(pollen) {

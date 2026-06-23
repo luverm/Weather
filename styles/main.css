@@ -427,6 +427,78 @@ html[data-reduce-motion="true"] *::after {
   transition: left 380ms var(--ease);
 }
 
+/* ---------- Outfit row ---------- */
+.outfit-row {
+  padding: 10px 14px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  align-items: center;
+  border-radius: var(--radius-sm);
+  animation: slideInUp 500ms var(--ease) both;
+}
+.outfit-row[hidden] { display: none; }
+.outfit-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--fg-dim);
+  white-space: nowrap;
+}
+.outfit-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+.outfit-list li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px 5px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--stroke);
+  color: var(--fg);
+  font-size: 12px;
+  line-height: 1;
+  cursor: default;
+  transition: background 160ms var(--ease), transform 160ms var(--ease), border-color 160ms var(--ease);
+  animation: outfitPop 360ms var(--ease) both;
+}
+.outfit-list li:hover {
+  background: rgba(154,209,255,0.12);
+  border-color: rgba(154,209,255,0.32);
+  transform: translateY(-1px);
+}
+.outfit-list li svg {
+  width: 16px;
+  height: 16px;
+  color: var(--accent);
+  flex: 0 0 auto;
+}
+.outfit-list li[data-id="umbrella"] svg,
+.outfit-list li[data-id="boots"] svg { color: #9ad1ff; }
+.outfit-list li[data-id="sunglasses"] svg,
+.outfit-list li[data-id="sunscreen"] svg,
+.outfit-list li[data-id="sunhat"] svg,
+.outfit-list li[data-id="shorts"] svg { color: #ffd28c; }
+.outfit-list li[data-id="beanie"] svg,
+.outfit-list li[data-id="gloves"] svg,
+.outfit-list li[data-id="scarf"] svg,
+.outfit-list li[data-id="coat"] svg { color: #c7b4ff; }
+@keyframes outfitPop {
+  from { opacity: 0; transform: translateY(4px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (max-width: 480px) {
+  .outfit-row { grid-template-columns: 1fr; gap: 8px; }
+  .outfit-label { letter-spacing: 0.12em; }
+}
+
 /* ---------- Nowcast banner ---------- */
 .nowcast {
   padding: 14px 18px;
