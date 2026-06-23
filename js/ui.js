@@ -93,6 +93,10 @@ const el = {
   outfitList: $("#outfit-list"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunFoot: $("#sun-foot"),
+  sunProgressFill: $("#sun-progress-fill"),
+  sunProgressLabel: $("#sun-progress-label"),
+  sunDelta: $("#sun-delta"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -125,6 +129,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  sunProgressTimer: null,
   localTimer: null,
 };
 
@@ -528,6 +533,70 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderSunFoot(w);
+}
+
+function renderSunFoot(w) {
+  if (!el.sunFoot) return;
+  const today = w?.daily?.[0];
+  const tomorrow = w?.daily?.[1];
+  if (!today?.sunrise || !today?.sunset) {
+    el.sunFoot.hidden = true;
+    return;
+  }
+  el.sunFoot.hidden = false;
+
+  // Daylight delta vs tomorrow.
+  if (tomorrow?.sunrise && tomorrow?.sunset && el.sunDelta) {
+    const todayLen = today.sunset - today.sunrise;
+    const tmrwLen = tomorrow.sunset - tomorrow.sunrise;
+    const deltaSec = Math.round((tmrwLen - todayLen) / 1000);
+    const absSec = Math.abs(deltaSec);
+    const mins = Math.floor(absSec / 60);
+    const secs = absSec % 60;
+    const dur = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+    if (absSec < 5) {
+      el.sunDelta.textContent = "Same as tomorrow";
+      el.sunDelta.dataset.dir = "";
+    } else if (deltaSec > 0) {
+      el.sunDelta.textContent = `+${dur} tomorrow`;
+      el.sunDelta.dataset.dir = "gain";
+    } else {
+      el.sunDelta.textContent = `−${dur} tomorrow`;
+      el.sunDelta.dataset.dir = "loss";
+    }
+  } else if (el.sunDelta) {
+    el.sunDelta.textContent = "";
+    el.sunDelta.dataset.dir = "";
+  }
+
+  // Daylight progress — clears any prior timer, ticks every minute.
+  if (state.sunProgressTimer) {
+    clearInterval(state.sunProgressTimer);
+    state.sunProgressTimer = null;
+  }
+  const tick = () => {
+    const now = Date.now();
+    const sr = today.sunrise, ss = today.sunset;
+    let pct, label;
+    if (now < sr) {
+      pct = 0;
+      const mins = Math.max(0, Math.round((sr - now) / 60_000));
+      label = mins >= 60 ? `Sunrise in ${Math.floor(mins / 60)}h ${mins % 60}m` : `Sunrise in ${mins}m`;
+    } else if (now > ss) {
+      pct = 100;
+      label = "Night";
+    } else {
+      pct = Math.round(((now - sr) / (ss - sr)) * 100);
+      const left = Math.max(0, Math.round((ss - now) / 60_000));
+      const leftStr = left >= 60 ? `${Math.floor(left / 60)}h ${left % 60}m` : `${left}m`;
+      label = `${pct}% of daylight · ${leftStr} left`;
+    }
+    if (el.sunProgressFill) el.sunProgressFill.style.width = `${pct}%`;
+    if (el.sunProgressLabel) el.sunProgressLabel.textContent = label;
+  };
+  tick();
+  state.sunProgressTimer = setInterval(tick, 60_000);
 }
 
 function scheduleSunArc(w) {
