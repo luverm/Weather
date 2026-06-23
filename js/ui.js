@@ -286,8 +286,30 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°${feelsLikeReason(w)}`;
   renderDayRange(w);
+}
+
+// Why the apparent temp differs from the dry-bulb reading. Returns "" when
+// the gap is too small to call out (avoids "Feels like 18° · — " noise).
+function feelsLikeReason(w) {
+  const t = w.temp;
+  const f = w.feelsLike;
+  if (t == null || f == null) return "";
+  const delta = f - t;
+  if (Math.abs(delta) < 1.2) return "";
+  if (delta < 0) {
+    const wind = w.windSpeed ?? 0;
+    const gust = w.windGusts ?? wind;
+    if (gust >= 20 || wind >= 14) return " · wind chill";
+    if ((w.humidity ?? 0) <= 30 && t >= 15) return " · dry air";
+    return " · breeze";
+  }
+  // delta > 0
+  if ((w.humidity ?? 0) >= 65 && t >= 22) return " · humidity";
+  if (t >= 26) return " · heat";
+  if ((w.humidity ?? 0) >= 80) return " · humid";
+  return " · sun";
 }
 
 function renderDayRange(w) {
