@@ -91,6 +91,7 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   outfitRow: $("#outfit-row"),
   outfitList: $("#outfit-list"),
+  windHistory: $("#wind-history"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
   sunFoot: $("#sun-foot"),
@@ -360,6 +361,7 @@ function renderMetrics(w) {
       el.windBft.textContent = "";
     }
   }
+  renderWindHistory(w);
   el.metricHumidity.textContent = Math.round(w.humidity ?? 0);
   el.metricHumiditySub.textContent = w.dewPoint != null
     ? `dew ${Math.round(convertTemp(w.dewPoint))}°`
@@ -393,6 +395,44 @@ function renderMetrics(w) {
     el.metricUVSub.textContent = "peak —";
   }
   renderPressureSparkline(w);
+}
+
+// Paint each of the last 12 hourly wind samples as a tick on the perimeter
+// of the compass: length scales with speed, opacity fades with age.
+function renderWindHistory(w) {
+  if (!el.windHistory) return;
+  const history = w?.windHistory || [];
+  if (!history.length) { el.windHistory.replaceChildren(); return; }
+  const NS = "http://www.w3.org/2000/svg";
+  const maxSpeed = Math.max(8, ...history.map((h) => h.speed ?? 0));
+  // Clear and rebuild (cheap: 12 nodes).
+  const lines = [];
+  const recentTime = history[history.length - 1]?.time ?? Date.now();
+  history.forEach((h) => {
+    if (h.dir == null || h.speed == null) return;
+    // Direction is "from"; tick points outward FROM that compass bearing
+    // (matches how the needle works).
+    const rad = ((h.dir - 90) * Math.PI) / 180;
+    const inner = 19;
+    const outer = inner + 1.5 + Math.min(3.5, (h.speed / maxSpeed) * 4);
+    const x1 = Math.cos(rad) * inner;
+    const y1 = Math.sin(rad) * inner;
+    const x2 = Math.cos(rad) * outer;
+    const y2 = Math.sin(rad) * outer;
+    const ageHours = Math.max(0, (recentTime - h.time) / 3600_000);
+    const opacity = Math.max(0.18, 1 - ageHours / 11);
+    const line = document.createElementNS(NS, "line");
+    line.setAttribute("x1", x1.toFixed(2));
+    line.setAttribute("y1", y1.toFixed(2));
+    line.setAttribute("x2", x2.toFixed(2));
+    line.setAttribute("y2", y2.toFixed(2));
+    line.setAttribute("stroke", "currentColor");
+    line.setAttribute("stroke-width", "1.1");
+    line.setAttribute("stroke-linecap", "round");
+    line.setAttribute("opacity", opacity.toFixed(2));
+    lines.push(line);
+  });
+  el.windHistory.replaceChildren(...lines);
 }
 
 function humidityComfort(rh, dew, temp) {

@@ -897,6 +897,13 @@ html[data-reduce-motion="true"] *::after {
   transform-origin: 0 0;
   transition: transform 900ms var(--ease);
 }
+.wind-history {
+  color: rgba(154, 209, 255, 0.85);
+  pointer-events: none;
+}
+.wind-history line {
+  transition: opacity 400ms var(--ease);
+}
 
 /* ---------- Sun countdown ---------- */
 .sun-countdown {

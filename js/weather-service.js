@@ -81,7 +81,7 @@ export async function getWeather(lat, lon) {
     hourly: [
       "temperature_2m", "apparent_temperature", "weather_code",
       "precipitation_probability", "precipitation",
-      "wind_speed_10m", "wind_gusts_10m",
+      "wind_speed_10m", "wind_gusts_10m", "wind_direction_10m",
       "is_day", "uv_index", "pressure_msl",
       "relative_humidity_2m",
     ].join(","),
@@ -93,7 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
-    past_hours: 1,
+    past_hours: 12,
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -148,6 +148,21 @@ function normalize(d, aq) {
         humidity: d.hourly.relative_humidity_2m?.[i] ?? null,
         ...mapWmo(d.hourly.weather_code[i]),
       });
+    }
+  }
+
+  // Wind history: last 12 hours from now, oldest first. Used for the
+  // compass rose in the wind metric.
+  const windHistory = [];
+  if (d.hourly?.time) {
+    for (let i = 0; i < d.hourly.time.length; i++) {
+      const t = new Date(d.hourly.time[i]).getTime();
+      if (t > now) break;
+      if (t < now - 12 * 3600_000) continue;
+      const speed = d.hourly.wind_speed_10m?.[i];
+      const dir = d.hourly.wind_direction_10m?.[i];
+      if (speed == null || dir == null) continue;
+      windHistory.push({ time: t, speed, dir });
     }
   }
 
@@ -210,6 +225,7 @@ function normalize(d, aq) {
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
     hourly,
+    windHistory,
     daily: dailyForecast,
     nowcast,
     moon,
@@ -387,6 +403,11 @@ function mock(lat, lon) {
       condition: CONDITIONS.CLOUDS, label: "Cloudy",
     })),
     nowcast: [],
+    windHistory: Array.from({ length: 12 }, (_, i) => ({
+      time: now - (12 - i) * 3600_000,
+      speed: 6 + Math.sin(i / 2) * 3,
+      dir: (220 + Math.sin(i / 3) * 30) % 360,
+    })),
     moon: computeMoonPhase(new Date()),
     airQuality: { aqi: 42, pm25: 8, pm10: 14, o3: 40, no2: 15, co: 0.2, label: "Good" },
     pollen: {
