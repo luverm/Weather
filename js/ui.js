@@ -96,6 +96,10 @@ const el = {
   weekendDetail: $("#weekend-detail"),
   weekendIconSat: $("#weekend-icon-sat"),
   weekendIconSun: $("#weekend-icon-sun"),
+  rainSummary: $("#rain-summary"),
+  rainSummaryTotal: $("#rain-summary-total"),
+  rainSummaryDays: $("#rain-summary-days"),
+  rainSummaryBars: $("#rain-summary-bars"),
   forecastTrack: $("#forecast-track"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
@@ -854,6 +858,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderRainSummary(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -936,6 +941,40 @@ function renderDailySpark(days) {
       el.dailySparkDots.appendChild(c);
     }
   });
+}
+
+function renderRainSummary(days) {
+  if (!el.rainSummary) return;
+  const valid = days.filter((d) => d.precip != null);
+  if (valid.length < 2) { el.rainSummary.hidden = true; return; }
+  const total = valid.reduce((s, d) => s + (d.precip || 0), 0);
+  const wet = valid.filter((d) => d.precip >= 0.5).length;
+  const maxMm = Math.max(0.5, ...valid.map((d) => d.precip || 0));
+  el.rainSummaryTotal.textContent = total < 0.5
+    ? "Dry week"
+    : `${total < 10 ? total.toFixed(1) : Math.round(total)} mm`;
+  el.rainSummaryDays.textContent = total < 0.5
+    ? "next 7 days"
+    : (wet === 0
+      ? "· trace amounts"
+      : `· ${wet} wet day${wet === 1 ? "" : "s"}`);
+  el.rainSummaryBars.innerHTML = "";
+  days.forEach((d, i) => {
+    const bar = document.createElement("div");
+    bar.className = "rain-bar";
+    const mm = d.precip || 0;
+    const pct = Math.min(100, (mm / maxMm) * 100);
+    bar.style.setProperty("--h", `${pct.toFixed(0)}%`);
+    bar.dataset.wet = mm >= 0.5 ? "true" : "false";
+    const dayLabel = i === 0 ? "Today" : new Date(d.time).toLocaleDateString(undefined, {
+      weekday: "short",
+      ...(state.weather?.timezone && state.weather.timezone !== "auto"
+        ? { timeZone: state.weather.timezone } : {}),
+    });
+    bar.title = mm < 0.1 ? `${dayLabel} · dry` : `${dayLabel} · ${mm.toFixed(1)} mm`;
+    el.rainSummaryBars.appendChild(bar);
+  });
+  el.rainSummary.hidden = false;
 }
 
 function renderDailyDelta(days) {
