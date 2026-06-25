@@ -21,6 +21,8 @@ const el = {
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
+  feelsValue: $("#feels-value"),
+  feelsWhy: $("#feels-why"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -279,8 +281,54 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  // Write only into the inner value span — the temp-trend sibling must not be
+  // wiped (it's a child of #feels-like, and a bare textContent assign would
+  // detach it).
+  if (el.feelsValue) el.feelsValue.textContent = `${Math.round(feels)}°`;
+  else el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  renderFeelsExplain(w);
   renderDayRange(w);
+}
+
+// Tiny "wind chill" / "humidity" tag after the feels-like value. Shows the
+// dominant cause of the gap between actual and apparent temperature so the
+// number stops looking like a guess.
+function renderFeelsExplain(w) {
+  if (!el.feelsWhy) return;
+  if (w.feelsLike == null || w.temp == null) { hideFeelsWhy(); return; }
+  // Compare in °C; the rounded display gets the same delta sign regardless of
+  // unit choice (1°C ≈ 1.8°F, both round to "1°" at the threshold).
+  const delta = w.feelsLike - w.temp;
+  const absDelta = Math.abs(delta);
+  if (absDelta < 1.5) { hideFeelsWhy(); return; }
+
+  const rounded = Math.round(absDelta);
+  let cause = null;
+  let tone = delta < 0 ? "cool" : "warm";
+  // Cold + below-actual feels-like → wind chill is the textbook driver.
+  if (delta < 0 && w.temp <= 12 && (w.windSpeed ?? 0) >= 8) {
+    cause = "wind chill";
+  } else if (delta > 0 && w.temp >= 22 && (w.humidity ?? 0) >= 55) {
+    cause = "humidity";
+  } else if (delta > 0 && (w.humidity ?? 0) >= 70) {
+    cause = "muggy air";
+  } else if (delta < 0 && (w.windSpeed ?? 0) >= 12) {
+    cause = "wind";
+  } else if (delta > 0) {
+    cause = "sun + still air";
+  } else {
+    cause = "cool air";
+  }
+  el.feelsWhy.textContent = `· ${rounded}° ${delta < 0 ? "cooler" : "warmer"} from ${cause}`;
+  el.feelsWhy.dataset.tone = tone;
+  el.feelsWhy.hidden = false;
+}
+
+function hideFeelsWhy() {
+  if (!el.feelsWhy) return;
+  el.feelsWhy.hidden = true;
+  el.feelsWhy.textContent = "";
+  el.feelsWhy.removeAttribute("data-tone");
 }
 
 function renderDayRange(w) {

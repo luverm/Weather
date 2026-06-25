@@ -390,7 +390,16 @@ html[data-reduce-motion="true"] *::after {
 }
 .unit:hover { background: var(--glass); color: var(--fg); }
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
-.feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
+.feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); display: inline-flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.feels-prefix { opacity: 0.85; }
+.feels-why {
+  font-size: 11.5px;
+  letter-spacing: 0.01em;
+  color: var(--fg-dim);
+  opacity: 0.95;
+}
+.feels-why[data-tone="cool"] { color: #9ad1ff; }
+.feels-why[data-tone="warm"] { color: #ffb196; }
 .day-range {
   margin-top: 10px;
   display: grid;
