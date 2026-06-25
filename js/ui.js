@@ -112,6 +112,7 @@ const el = {
   searchInput: $("#search-input"),
   searchResults: $("#search-results"),
   locateBtn: $("#locate-btn"),
+  pinBtn: $("#pin-btn"),
   audioBtn: $("#audio-btn"),
   hintText: $("#hint-text"),
   heroInner: document.querySelector(".hero-inner"),
@@ -162,6 +163,7 @@ export const ui = {
     });
     bindInstallPrompt();
     bindPrecipSummary();
+    bindPin();
   },
   focusSearch() { el.searchInput?.focus(); el.searchInput?.select?.(); },
   toggleUnits() { el.unitBtn?.click(); },
@@ -181,6 +183,7 @@ export const ui = {
     el.placeSub.textContent = sub || "—";
     // Reset alert dismissals so a fresh location can re-surface them.
     try { sessionStorage.removeItem("aether:dismissed-alerts"); } catch { /* ignore */ }
+    refreshPinState();
     renderPlaces();
   },
   setWeather(weather, { narrative } = {}) {
@@ -380,6 +383,40 @@ function bindPrecipSummary() {
     const ts = Number(el.precipSummary.dataset.peakTs);
     if (ts) state.handlers.onHourClick?.(ts);
   });
+}
+
+function bindPin() {
+  if (!el.pinBtn) return;
+  el.pinBtn.addEventListener("click", () => {
+    const place = state.place;
+    if (!place || place.lat == null || place.lon == null) return;
+    if (places.isSaved(place)) {
+      places.remove(place);
+      ui.showToast(`Removed ${place.name || "place"} from pinned`);
+    } else {
+      places.add(place);
+      // Re-attach the summary we already know so the chip strip is populated
+      // without waiting for the next refresh.
+      if (state.weather) {
+        places.updateSummary(place, { temp: state.weather.temp, condition: state.weather.condition });
+      }
+      ui.showToast(`Pinned ${place.name || "place"}`);
+    }
+    refreshPinState();
+    renderPlaces();
+  });
+}
+
+function refreshPinState() {
+  if (!el.pinBtn) return;
+  const place = state.place;
+  const saveable = !!(place && place.lat != null && place.lon != null);
+  el.pinBtn.disabled = !saveable;
+  const saved = saveable && places.isSaved(place);
+  el.pinBtn.setAttribute("aria-pressed", saved ? "true" : "false");
+  el.pinBtn.classList.toggle("on", saved);
+  el.pinBtn.setAttribute("title", saved ? "Unpin this location" : "Pin this location");
+  el.pinBtn.setAttribute("aria-label", saved ? "Unpin this location" : "Pin this location");
 }
 
 function renderDayRange(w) {

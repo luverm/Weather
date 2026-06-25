@@ -285,6 +285,11 @@ html[data-reduce-motion="true"] *::after {
 .icon-btn .sound-waves { opacity: 0; transition: opacity 240ms var(--ease); }
 .icon-btn.on { color: var(--accent); }
 .icon-btn.on .sound-waves { opacity: 1; }
+#pin-btn .pin-fill { opacity: 0; transition: opacity 240ms var(--ease); }
+#pin-btn.on .pin-fill { opacity: 1; }
+#pin-btn.on .pin-outline { opacity: 0; }
+#pin-btn.on .pin-dot { fill: var(--bg, #0b1020); }
+#pin-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* ---------- Saved locations strip ---------- */
 .places-strip {
