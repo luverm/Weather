@@ -767,6 +767,27 @@ html[data-reduce-motion="true"] *::after {
   border-radius: 999px;
   background: rgba(255,255,255,0.08);
 }
+.precip-summary {
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(154, 209, 255, 0.12);
+  color: #c9e1ff;
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  transition: background 160ms var(--ease), transform 160ms var(--ease);
+}
+.precip-summary:hover, .precip-summary:focus-visible {
+  background: rgba(154, 209, 255, 0.22);
+  outline: none;
+  transform: translateY(-1px);
+}
+.precip-summary svg { opacity: 0.85; }
 .chart-svg {
   width: 100%;
   height: 140px;

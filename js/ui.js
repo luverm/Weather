@@ -23,6 +23,8 @@ const el = {
   feelsLike: $("#feels-like"),
   feelsValue: $("#feels-value"),
   feelsWhy: $("#feels-why"),
+  precipSummary: $("#precip-summary"),
+  precipSummaryText: $("#precip-summary-text"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -159,6 +161,7 @@ export const ui = {
       getUnit: () => state.unit,
     });
     bindInstallPrompt();
+    bindPrecipSummary();
   },
   focusSearch() { el.searchInput?.focus(); el.searchInput?.select?.(); },
   toggleUnits() { el.unitBtn?.click(); },
@@ -201,6 +204,7 @@ export const ui = {
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
+    renderPrecipSummary(weather);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
@@ -329,6 +333,53 @@ function hideFeelsWhy() {
   el.feelsWhy.hidden = true;
   el.feelsWhy.textContent = "";
   el.feelsWhy.removeAttribute("data-tone");
+}
+
+// "4.2 mm next 24h · peaks 4 PM" — a precip-only summary chip in the chart
+// head. Click jumps the scrubber to the heaviest hour. Hidden when the next
+// 24h sums to less than half a millimetre (negligible).
+function renderPrecipSummary(weather) {
+  if (!el.precipSummary || !el.precipSummaryText) return;
+  const hours = (weather?.hourly || []).slice(0, 24);
+  let total = 0, peak = null;
+  for (const h of hours) {
+    const p = h.precip ?? 0;
+    total += p;
+    if (p > 0 && (!peak || p > peak.precip)) peak = h;
+  }
+  if (total < 0.5 || !peak || (peak.precip ?? 0) < 0.2) {
+    el.precipSummary.hidden = true;
+    el.precipSummary.removeAttribute("data-peak-ts");
+    return;
+  }
+  const totalStr = total >= 10 ? `${total.toFixed(0)} mm` : `${total.toFixed(1)} mm`;
+  el.precipSummaryText.textContent = `${totalStr} next 24h · peaks ${fmtClockHour(peak.time, weather.timezone)}`;
+  el.precipSummary.dataset.peakTs = String(peak.time);
+  el.precipSummary.hidden = false;
+}
+
+function fmtClockHour(ts, tz) {
+  if (!ts) return "—";
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      timeZone: tz && tz !== "auto" ? tz : undefined,
+      hour: "numeric", hour12: true,
+    }).format(new Date(ts));
+  } catch {
+    const d = new Date(ts);
+    const h = d.getHours();
+    const suffix = h >= 12 ? "PM" : "AM";
+    const h12 = ((h + 11) % 12) + 1;
+    return `${h12} ${suffix}`;
+  }
+}
+
+function bindPrecipSummary() {
+  if (!el.precipSummary) return;
+  el.precipSummary.addEventListener("click", () => {
+    const ts = Number(el.precipSummary.dataset.peakTs);
+    if (ts) state.handlers.onHourClick?.(ts);
+  });
 }
 
 function renderDayRange(w) {
