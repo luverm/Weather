@@ -48,6 +48,9 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunRiseDelta: $("#sun-rise-delta"),
+  sunSetDelta: $("#sun-set-delta"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -521,8 +524,46 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderSunDeltas(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+// Tiny "+2m vs yesterday" hints under each sun stat. Gaining daylight reads as
+// warm (lengthening day); losing reads as cool. Sunrise/sunset shifts get a
+// directional verb (earlier/later) so the meaning is obvious without a legend.
+function renderSunDeltas(w) {
+  const dl = w?.daylight;
+  setSunDelta(el.sunDaylightDelta, dl?.deltaMin, {
+    formatter: (m) => `${m > 0 ? "+" : "−"}${Math.abs(m)}m vs yesterday`,
+    tone: (m) => (m > 0 ? "gain" : m < 0 ? "loss" : "flat"),
+    showZero: false,
+  });
+  setSunDelta(el.sunRiseDelta, dl?.sunriseDeltaMin, {
+    formatter: (m) => `${Math.abs(m)}m ${m < 0 ? "earlier" : "later"}`,
+    // Earlier sunrise = more morning light => warm; later = cool.
+    tone: (m) => (m < 0 ? "gain" : m > 0 ? "loss" : "flat"),
+    showZero: false,
+  });
+  setSunDelta(el.sunSetDelta, dl?.sunsetDeltaMin, {
+    formatter: (m) => `${Math.abs(m)}m ${m > 0 ? "later" : "earlier"}`,
+    // Later sunset = more evening light => warm; earlier = cool.
+    tone: (m) => (m > 0 ? "gain" : m < 0 ? "loss" : "flat"),
+    showZero: false,
+  });
+}
+
+function setSunDelta(node, minutes, { formatter, tone, showZero }) {
+  if (!node) return;
+  if (minutes == null || (!showZero && Math.abs(minutes) < 1)) {
+    node.hidden = true;
+    node.textContent = "";
+    node.removeAttribute("data-tone");
+    return;
+  }
+  node.textContent = formatter(minutes);
+  node.dataset.tone = tone(minutes);
+  node.hidden = false;
 }
 
 function scheduleSunArc(w) {

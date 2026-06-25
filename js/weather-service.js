@@ -94,6 +94,7 @@ export async function getWeather(lat, lon) {
     timezone: "auto",
     forecast_days: 7,
     past_hours: 1,
+    past_days: 1,            // need yesterday's sunrise/sunset for the daylight delta
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -151,13 +152,18 @@ function normalize(d, aq) {
     }
   }
 
-  // 7-day daily forecast.
-  const dailyForecast = [];
+  // 7-day daily forecast. We requested past_days=1, so the first entry can be
+  // yesterday — split it out so downstream code can keep treating daily[0] as
+  // "today" (sky.js, alerts.js, ui.js, etc. all rely on that).
+  const fullDaily = [];
   if (daily.time) {
     for (let i = 0; i < daily.time.length; i++) {
       const ts = new Date(daily.time[i]).getTime();
-      dailyForecast.push({
+      fullDaily.push({
         time: ts,
+        // Raw YYYY-MM-DD from the API, preserved verbatim so "which entry is
+        // today?" can match without parsing-and-reformatting through a tz.
+        dateKey: typeof daily.time[i] === "string" ? daily.time[i].slice(0, 10) : null,
         tempMax: daily.temperature_2m_max?.[i],
         tempMin: daily.temperature_2m_min?.[i],
         precip: daily.precipitation_sum?.[i] ?? 0,
@@ -171,6 +177,13 @@ function normalize(d, aq) {
       });
     }
   }
+  // "Today" is the daily entry whose sunset hasn't passed yet (or, failing that,
+  // the entry whose calendar date matches today in the forecast timezone). This
+  // avoids fragile assumptions like "today is always index 1 when past_days=1".
+  const todayIdx = findTodayIndex(fullDaily, now, d.timezone);
+  const dailyForecast = fullDaily.slice(todayIdx);
+  const yesterday = todayIdx > 0 ? fullDaily[todayIdx - 1] : null;
+  const today = dailyForecast[0] || null;
 
   // 15-min nowcast for the next ~2h — used for "rain in 12 min" banner.
   const nowcast = [];
@@ -204,9 +217,9 @@ function normalize(d, aq) {
     isDay: !!c.is_day,
     condition,
     label,
-    sunrise: daily.sunrise?.[0] ? new Date(daily.sunrise[0]).getTime() : null,
-    sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null,
-    uv: daily.uv_index_max?.[0] ?? null,
+    sunrise: today?.sunrise ?? null,
+    sunset: today?.sunset ?? null,
+    uv: today?.uvMax ?? null,
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
     hourly,
@@ -215,8 +228,59 @@ function normalize(d, aq) {
     moon,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
+    daylight: computeDaylight(today, yesterday),
     fetchedAt: now,
   };
+}
+
+// Locate "today" inside a daily array that may include past days. Match by
+// the API's own date string (in the forecast's timezone) — parsing the date
+// to ms and reformatting drifts by a day in westward tz, and "sunset is in
+// the future" misfires after sunset.
+function findTodayIndex(days, now, tz) {
+  if (!days?.length) return 0;
+  const todayKey = formatDateKey(now, tz);
+  for (let i = 0; i < days.length; i++) {
+    if (days[i].dateKey && days[i].dateKey === todayKey) return i;
+  }
+  // Last-ditch fallback: first entry whose sunrise is later than 18h ago.
+  for (let i = 0; i < days.length; i++) {
+    if (days[i].sunrise && days[i].sunrise > now - 18 * 3600_000) return i;
+  }
+  return 0;
+}
+
+function formatDateKey(ts, tz) {
+  try {
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz && tz !== "auto" ? tz : undefined,
+      year: "numeric", month: "2-digit", day: "2-digit",
+    }).format(new Date(ts));
+  } catch {
+    const d = new Date(ts);
+    return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, "0")}-${d.getDate().toString().padStart(2, "0")}`;
+  }
+}
+
+function computeDaylight(today, yesterday) {
+  if (!today?.sunrise || !today?.sunset) return null;
+  const todayLen = today.sunset - today.sunrise;
+  const out = { length: todayLen, lengthMin: Math.round(todayLen / 60_000) };
+  if (yesterday?.sunrise && yesterday?.sunset) {
+    const yLen = yesterday.sunset - yesterday.sunrise;
+    out.deltaMs = todayLen - yLen;
+    out.deltaMin = Math.round(out.deltaMs / 60_000);
+    out.sunriseDeltaMin = Math.round((minutesOfDay(today.sunrise) - minutesOfDay(yesterday.sunrise)));
+    out.sunsetDeltaMin = Math.round((minutesOfDay(today.sunset) - minutesOfDay(yesterday.sunset)));
+  }
+  return out;
+}
+
+// Minutes since local midnight (uses host TZ — close enough since the API
+// already returns sunrise/sunset in the location's local time).
+function minutesOfDay(ts) {
+  const d = new Date(ts);
+  return d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60;
 }
 
 function computePressureTrend(hourly, now) {
@@ -400,6 +464,7 @@ function mock(lat, lon) {
       level: "Moderate",
     },
     pressureTrend: { delta: -0.4, direction: "steady" },
+    daylight: { length: 12.5 * 3600_000, lengthMin: 750, deltaMs: 2 * 60_000, deltaMin: 2, sunriseDeltaMin: -1, sunsetDeltaMin: 1 },
     fetchedAt: now,
     offline: true,
   };
