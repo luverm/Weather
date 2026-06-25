@@ -30,6 +30,7 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  dayRangeAvg: $("#day-range-avg"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -443,6 +444,17 @@ function renderDayRange(w) {
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+  // Average tick: prefer the mean of the next-24h hourly temps (more accurate
+  // than (hi+lo)/2 for skewed days), fall back to the midpoint otherwise.
+  if (el.dayRangeAvg) {
+    const hours24 = (w.hourly || []).slice(0, 24).map((h) => h.temp).filter((v) => v != null);
+    const avg = hours24.length >= 6
+      ? hours24.reduce((s, v) => s + v, 0) / hours24.length
+      : (lo + hi) / 2;
+    const avgFrac = Math.max(0, Math.min(1, (avg - lo) / (hi - lo)));
+    el.dayRangeAvg.style.left = `${(avgFrac * 100).toFixed(1)}%`;
+    el.dayRangeAvg.title = `Today's average ${Math.round(convertTemp(avg))}°`;
+  }
 }
 
 function renderMetrics(w) {
