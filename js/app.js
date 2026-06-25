@@ -284,6 +284,7 @@ installShortcuts({
   focusSearch: () => ui.focusSearch(),
   locate: () => useGeolocation(),
   toggleUnits: () => ui.toggleUnits(),
+  togglePin: () => ui.togglePin(),
   toggleAudio: () => toggleAudio(),
   toggleFullscreenRadar: () => document.getElementById("radar-full")?.click(),
   toggleRadar: () => document.getElementById("radar-play")?.click(),

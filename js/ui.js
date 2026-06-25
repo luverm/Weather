@@ -167,6 +167,7 @@ export const ui = {
   },
   focusSearch() { el.searchInput?.focus(); el.searchInput?.select?.(); },
   toggleUnits() { el.unitBtn?.click(); },
+  togglePin() { el.pinBtn?.click(); },
   isSearchOpen() { return !el.searchResults.hidden; },
   closeSearch() { el.searchResults.hidden = true; el.searchInput?.blur(); },
   markRefreshSpin(on) {
