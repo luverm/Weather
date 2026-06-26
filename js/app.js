@@ -302,6 +302,26 @@ installShortcuts({
     if (app.weather) applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
   },
+  jumpExtreme: (kind) => {
+    const hours = app.weather?.hourly;
+    if (!hours?.length) return;
+    // Scan only the upcoming 24h so "today's warmest" doesn't drift into
+    // tomorrow's heat wave; if everything is in the past, fall through to all.
+    const now = Date.now();
+    const window = hours.filter((h) => h.time >= now - 60 * 60_000).slice(0, 24);
+    const pool = window.length ? window : hours;
+    let best = pool[0];
+    for (const h of pool) {
+      if (kind === "hi" && h.temp > best.temp) best = h;
+      if (kind === "lo" && h.temp < best.temp) best = h;
+    }
+    if (!best) return;
+    clock.setOffset(best.time - Date.now());
+    scrubber.sync();
+    applyScene(app.weather);
+    ui.setScrubbing(!clock.isLive());
+    ui.showToast(`${kind === "hi" ? "Warmest" : "Coldest"} hour — ${Math.round(best.temp)}°`);
+  },
 });
 
 // ---------- Start ----------
