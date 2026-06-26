@@ -788,6 +788,20 @@ html[data-reduce-motion="true"] *::after {
   font-weight: 600;
 }
 
+/* Small range chip in the 7-day outlook heading */
+.weekly-range {
+  display: inline-block;
+  font-size: 11px;
+  color: var(--fg-dim);
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(154, 209, 255, 0.10);
+  margin-left: 4px;
+}
+.weekly-range[hidden] { display: none; }
+
 /* ---------- Next-change chip ---------- */
 .next-change {
   display: flex;

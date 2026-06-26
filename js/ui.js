@@ -73,6 +73,7 @@ const el = {
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
+  weeklyRange: $("#weekly-range"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -939,6 +940,21 @@ function highlightHour(index) {
   items.forEach((it, i) => it.classList.toggle("active", i === index));
 }
 
+function renderWeeklyRange(days) {
+  if (!el.weeklyRange) return;
+  const highs = days.map((d) => d.tempMax).filter((v) => v != null);
+  const lows = days.map((d) => d.tempMin).filter((v) => v != null);
+  if (highs.length < 2 || lows.length < 2) {
+    el.weeklyRange.hidden = true;
+    return;
+  }
+  const hi = Math.max(...highs);
+  const lo = Math.min(...lows);
+  el.weeklyRange.hidden = false;
+  el.weeklyRange.textContent =
+    `This week ${Math.round(convertTemp(lo))}° → ${Math.round(convertTemp(hi))}°`;
+}
+
 function renderDaily(w) {
   el.dailyTrack.innerHTML = "";
   const days = (w.daily || []).slice(0, 7);
@@ -946,6 +962,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderWeeklyRange(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
