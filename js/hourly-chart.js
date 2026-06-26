@@ -292,6 +292,55 @@ export class HourlyChart {
     // Hi/Lo markers — highlight the warmest and coldest hour in the 24-hour
     // window so the eye lands on them without needing the cursor.
     this._drawHiLo(unit, iToX, tToY);
+
+    // Comfort window — shade the longest run of consecutive daytime hours
+    // where conditions are most comfortable.
+    this._drawComfort(iToX);
+  }
+
+  _drawComfort(iToX) {
+    const g = this.svg.querySelector("#chart-comfort");
+    if (!g) return;
+    g.innerHTML = "";
+    if (this.hours.length < 4) return;
+    const now = Date.now();
+    const score = (h) => {
+      if (h.time < now - 30 * 60_000) return false;       // skip the past
+      if (!h.isDay) return false;
+      const fl = h.feelsLike ?? h.temp;
+      if (fl == null || fl < 12 || fl > 27) return false;
+      if ((h.pop ?? 0) > 30) return false;
+      if ((h.wind ?? 0) > 28) return false;
+      return true;
+    };
+    let best = null, runStart = -1, runLen = 0;
+    for (let i = 0; i < this.hours.length; i++) {
+      if (score(this.hours[i])) {
+        if (runStart === -1) runStart = i;
+        runLen++;
+        if (!best || runLen > best.len) best = { start: runStart, len: runLen };
+      } else {
+        runStart = -1; runLen = 0;
+      }
+    }
+    if (!best || best.len < 2) return;
+    const x1 = iToX(Math.max(0, best.start - 0.5));
+    const x2 = iToX(Math.min(this.hours.length - 1, best.start + best.len - 0.5));
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    rect.setAttribute("x", x1.toFixed(1));
+    rect.setAttribute("y", String(PAD_TOP - 4));
+    rect.setAttribute("width", Math.max(0, x2 - x1).toFixed(1));
+    rect.setAttribute("height", String(H - PAD_TOP - PAD_BOT + 6));
+    rect.setAttribute("rx", "4");
+    rect.setAttribute("class", "chart-comfort-band");
+    g.appendChild(rect);
+    // Tiny "comfy" leaf in the top-left of the band to label intent.
+    const tag = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    tag.setAttribute("x", (x1 + 4).toFixed(1));
+    tag.setAttribute("y", String(PAD_TOP + 4));
+    tag.setAttribute("class", "chart-comfort-tag");
+    tag.textContent = "comfy";
+    g.appendChild(tag);
   }
 
   _drawHiLo(unit, iToX, tToY) {
