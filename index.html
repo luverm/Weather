@@ -330,6 +330,20 @@
           <ul id="activity-list" class="activity-list"></ul>
         </div>
 
+        <div class="extra-card glass" id="rain-card" hidden>
+          <span class="metric-label">Next 24 h rain <span id="rain-pill" class="trend"></span></span>
+          <div class="rain-row">
+            <div class="rain-total">
+              <strong id="rain-total">—</strong>
+              <span class="rain-total-unit">mm</span>
+            </div>
+            <div class="rain-meta">
+              <span id="rain-peak" class="rain-peak">—</span>
+              <div id="rain-bars" class="rain-bars" aria-hidden="true"></div>
+            </div>
+          </div>
+        </div>
+
         <div class="extra-card glass" id="sun-card">
           <span class="metric-label"><span id="sun-next-label">Sun</span> <span id="sun-countdown" class="sun-countdown"></span></span>
           <svg id="sun-arc" class="sun-arc" viewBox="0 0 200 84" aria-hidden="true">

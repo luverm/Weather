@@ -115,6 +115,11 @@ const el = {
   nextChangeIcon: $("#next-change-icon"),
   nextChangeHeadline: $("#next-change-headline"),
   nextChangeDetail: $("#next-change-detail"),
+  rainCard: $("#rain-card"),
+  rainTotal: $("#rain-total"),
+  rainPeak: $("#rain-peak"),
+  rainPill: $("#rain-pill"),
+  rainBars: $("#rain-bars"),
 };
 
 const state = {
@@ -200,6 +205,7 @@ export const ui = {
     renderAlerts(weather);
     renderWeekend(weather);
     renderNextChange(weather);
+    renderRainForecast(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -602,6 +608,49 @@ function renderAdvice(w) {
     el.advice.hidden = false;
   } else {
     el.advice.hidden = true;
+  }
+}
+
+function renderRainForecast(w) {
+  if (!el.rainCard) return;
+  const hours = (w.hourly || []).slice(0, 24);
+  if (hours.length < 6) { el.rainCard.hidden = true; return; }
+  let total = 0;
+  let peak = null;
+  for (const h of hours) {
+    const mm = h.precip ?? 0;
+    total += mm;
+    if (!peak || mm > peak.mm) peak = { mm, time: h.time };
+  }
+  // Hide the card entirely when the day is dry.
+  if (total < 0.4) { el.rainCard.hidden = true; return; }
+  el.rainCard.hidden = false;
+  el.rainTotal.textContent = total >= 10 ? total.toFixed(0) : total.toFixed(1);
+  if (peak && peak.mm > 0.1) {
+    el.rainPeak.textContent = `peak ${peak.mm.toFixed(1)}mm · ${fmtTime(peak.time)}`;
+  } else {
+    el.rainPeak.textContent = "light, scattered";
+  }
+  // Severity pill summarising the day.
+  if (el.rainPill) {
+    let pill = null;
+    if (total >= 25) pill = { label: "Heavy", cls: "up" };
+    else if (total >= 10) pill = { label: "Soaking", cls: "up" };
+    else if (total >= 3) pill = { label: "Showers", cls: "flat" };
+    else pill = { label: "Light", cls: "down" };
+    el.rainPill.className = `trend ${pill.cls}`;
+    el.rainPill.textContent = pill.label;
+  }
+  // Render the 24-hour stacked precip bar (height ∝ mm).
+  if (el.rainBars) {
+    const maxMm = Math.max(0.5, ...hours.map((h) => h.precip ?? 0));
+    const html = hours.map((h) => {
+      const mm = h.precip ?? 0;
+      const pct = Math.round((mm / maxMm) * 100);
+      const op = 0.18 + (mm > 0 ? Math.min(0.82, (mm / maxMm) * 0.82) : 0);
+      return `<span class="rain-bar" style="height:${pct}%; opacity:${op.toFixed(2)};" title="${escapeHtml(fmtTime(h.time))}: ${mm.toFixed(1)}mm"></span>`;
+    }).join("");
+    el.rainBars.innerHTML = html;
   }
 }
 
