@@ -113,6 +113,16 @@
     <!-- Smart alerts strip (synthesized from forecast). -->
     <div id="alerts-strip" class="alerts-strip" role="region" aria-label="Weather alerts" hidden></div>
 
+    <!-- Next-change chip (synthesised "what's about to happen") -->
+    <button id="next-change" class="next-change glass" type="button" hidden aria-label="Jump to this moment in the timeline">
+      <span class="next-change-icon" id="next-change-icon" aria-hidden="true"></span>
+      <span class="next-change-body">
+        <span class="next-change-headline" id="next-change-headline">—</span>
+        <span class="next-change-detail" id="next-change-detail">—</span>
+      </span>
+      <span class="next-change-cta" aria-hidden="true">↗</span>
+    </button>
+
     <section class="hero">
       <div class="hero-inner glass" data-tilt>
         <div class="place">

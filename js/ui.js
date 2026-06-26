@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { nextChange, nextChangeIconSVG } from "./next-change.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -110,6 +111,10 @@ const el = {
   heroInner: document.querySelector(".hero-inner"),
   toast: $("#toast"),
   placesStrip: $("#places-strip"),
+  nextChange: $("#next-change"),
+  nextChangeIcon: $("#next-change-icon"),
+  nextChangeHeadline: $("#next-change-headline"),
+  nextChangeDetail: $("#next-change-detail"),
 };
 
 const state = {
@@ -154,6 +159,7 @@ export const ui = {
       getUnit: () => state.unit,
     });
     bindInstallPrompt();
+    bindNextChange();
   },
   focusSearch() { el.searchInput?.focus(); el.searchInput?.select?.(); },
   toggleUnits() { el.unitBtn?.click(); },
@@ -193,6 +199,7 @@ export const ui = {
     renderActivity(weather);
     renderAlerts(weather);
     renderWeekend(weather);
+    renderNextChange(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -596,6 +603,26 @@ function renderAdvice(w) {
   } else {
     el.advice.hidden = true;
   }
+}
+
+function renderNextChange(w) {
+  if (!el.nextChange) return;
+  const c = nextChange(w);
+  if (!c) {
+    el.nextChange.hidden = true;
+    el.nextChange.dataset.ts = "";
+    return;
+  }
+  el.nextChange.hidden = false;
+  el.nextChangeIcon.innerHTML = nextChangeIconSVG[c.icon] || nextChangeIconSVG.peak;
+  el.nextChangeHeadline.textContent = c.headline;
+  el.nextChangeDetail.textContent = c.detail || "";
+  el.nextChange.dataset.icon = c.icon;
+  el.nextChange.dataset.ts = String(c.ts || "");
+  // Re-trigger the slide-in animation when content changes.
+  el.nextChange.classList.remove("flash-in");
+  void el.nextChange.offsetWidth;
+  el.nextChange.classList.add("flash-in");
 }
 
 function startLocaltime(w) {
@@ -1200,6 +1227,14 @@ function bindInstallPrompt() {
 function bindRefresh() {
   if (!el.refreshBtn) return;
   el.refreshBtn.addEventListener("click", () => state.handlers.onRefresh?.());
+}
+
+function bindNextChange() {
+  if (!el.nextChange) return;
+  el.nextChange.addEventListener("click", () => {
+    const ts = parseInt(el.nextChange.dataset.ts || "", 10);
+    if (Number.isFinite(ts) && ts > 0) state.handlers.onHourClick?.(ts);
+  });
 }
 
 function bindSettings() {
