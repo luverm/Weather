@@ -288,5 +288,54 @@ export class HourlyChart {
       tTxt.textContent = `${Math.round(tVal)}°`;
       labG.appendChild(tTxt);
     });
+
+    // Hi/Lo markers — highlight the warmest and coldest hour in the 24-hour
+    // window so the eye lands on them without needing the cursor.
+    this._drawHiLo(unit, iToX, tToY);
+  }
+
+  _drawHiLo(unit, iToX, tToY) {
+    const hiloG = this.svg.querySelector("#chart-hilo");
+    if (!hiloG) return;
+    hiloG.innerHTML = "";
+    if (this.hours.length < 3) return;
+    const temps = this.hours.map((h) => h.temp);
+    let hiIdx = 0, loIdx = 0;
+    for (let i = 1; i < temps.length; i++) {
+      if (temps[i] > temps[hiIdx]) hiIdx = i;
+      if (temps[i] < temps[loIdx]) loIdx = i;
+    }
+    if (hiIdx === loIdx) return;
+    const add = (i, kind) => {
+      const h = this.hours[i];
+      const x = iToX(i);
+      const y = tToY(h.temp);
+      const tVal = unit === "F" ? h.temp * 9 / 5 + 32 : h.temp;
+      const hh = this._hourOf(h.time);
+      const halo = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      halo.setAttribute("cx", x.toFixed(1));
+      halo.setAttribute("cy", y.toFixed(1));
+      halo.setAttribute("r", "5.6");
+      halo.setAttribute("class", `chart-hilo-halo chart-hilo-${kind}`);
+      hiloG.appendChild(halo);
+      const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      dot.setAttribute("cx", x.toFixed(1));
+      dot.setAttribute("cy", y.toFixed(1));
+      dot.setAttribute("r", "2.6");
+      dot.setAttribute("class", `chart-hilo-dot chart-hilo-${kind}`);
+      hiloG.appendChild(dot);
+      const lbl = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      // Push hi label above the point and lo label below so they don't
+      // collide with the gust/feels-like lines.
+      const labelY = kind === "hi" ? Math.max(10, y - 11) : Math.min(H - 26, y + 14);
+      lbl.setAttribute("x", x.toFixed(1));
+      lbl.setAttribute("y", labelY.toFixed(1));
+      lbl.setAttribute("text-anchor", "middle");
+      lbl.setAttribute("class", `chart-hilo-label chart-hilo-${kind}`);
+      lbl.textContent = `${kind === "hi" ? "▲" : "▼"} ${Math.round(tVal)}° · ${hh}`;
+      hiloG.appendChild(lbl);
+    };
+    add(hiIdx, "hi");
+    add(loIdx, "lo");
   }
 }

@@ -796,6 +796,31 @@ html[data-reduce-motion="true"] *::after {
   pointer-events: none;
   filter: drop-shadow(0 0 6px var(--accent));
 }
+.chart-hilo { pointer-events: none; }
+.chart-hilo-halo {
+  fill: none;
+  stroke-width: 1.2;
+  opacity: 0.55;
+  animation: hiloPulse 2400ms ease-in-out infinite;
+  transform-origin: center;
+}
+.chart-hilo-halo.chart-hilo-hi { stroke: #ff9c7a; }
+.chart-hilo-halo.chart-hilo-lo { stroke: #9ad1ff; }
+.chart-hilo-dot.chart-hilo-hi { fill: #ff9c7a; }
+.chart-hilo-dot.chart-hilo-lo { fill: #9ad1ff; }
+.chart-hilo-label {
+  font-size: 8.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+.chart-hilo-label.chart-hilo-hi { fill: #ffc4a8; }
+.chart-hilo-label.chart-hilo-lo { fill: #bcdcff; }
+@keyframes hiloPulse {
+  0%, 100% { opacity: 0.55; r: 5.6; }
+  50%      { opacity: 0.18; r: 7.5; }
+}
+html[data-reduce-motion="true"] .chart-hilo-halo { animation: none; }
 
 /* ---------- Wind compass (inside wind metric) ---------- */
 .metric-wind {
