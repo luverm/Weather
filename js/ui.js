@@ -133,6 +133,7 @@ const state = {
   sunTimer: null,
   sunArcTimer: null,
   localTimer: null,
+  nextChangeTimer: null,
 };
 
 export const ui = {
@@ -205,6 +206,7 @@ export const ui = {
     renderAlerts(weather);
     renderWeekend(weather);
     renderNextChange(weather);
+    startNextChangeTicker();
     renderRainForecast(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
@@ -654,24 +656,38 @@ function renderRainForecast(w) {
   }
 }
 
-function renderNextChange(w) {
+function renderNextChange(w, { animate = true } = {}) {
   if (!el.nextChange) return;
   const c = nextChange(w);
   if (!c) {
     el.nextChange.hidden = true;
     el.nextChange.dataset.ts = "";
+    el.nextChange.dataset.icon = "";
     return;
   }
+  const prevIcon = el.nextChange.dataset.icon || "";
+  const prevHeadline = el.nextChangeHeadline.textContent;
   el.nextChange.hidden = false;
   el.nextChangeIcon.innerHTML = nextChangeIconSVG[c.icon] || nextChangeIconSVG.peak;
   el.nextChangeHeadline.textContent = c.headline;
   el.nextChangeDetail.textContent = c.detail || "";
   el.nextChange.dataset.icon = c.icon;
   el.nextChange.dataset.ts = String(c.ts || "");
-  // Re-trigger the slide-in animation when content changes.
-  el.nextChange.classList.remove("flash-in");
-  void el.nextChange.offsetWidth;
-  el.nextChange.classList.add("flash-in");
+  // Re-trigger the slide-in animation only when the *content* actually changes,
+  // otherwise the minute ticker would flash the pill every 60s.
+  const changed = animate && (prevIcon !== c.icon || prevHeadline !== c.headline);
+  if (changed) {
+    el.nextChange.classList.remove("flash-in");
+    void el.nextChange.offsetWidth;
+    el.nextChange.classList.add("flash-in");
+  }
+}
+
+function startNextChangeTicker() {
+  if (state.nextChangeTimer) clearInterval(state.nextChangeTimer);
+  state.nextChangeTimer = setInterval(() => {
+    if (state.weather) renderNextChange(state.weather, { animate: false });
+  }, 60_000);
 }
 
 function startLocaltime(w) {
