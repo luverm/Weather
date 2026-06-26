@@ -334,10 +334,11 @@ export class HourlyChart {
     rect.setAttribute("rx", "4");
     rect.setAttribute("class", "chart-comfort-band");
     g.appendChild(rect);
-    // Tiny "comfy" leaf in the top-left of the band to label intent.
+    // Tiny "comfy" tag at the bottom-left of the band — leaves the top free
+    // for the hi/lo markers which want the canopy.
     const tag = document.createElementNS("http://www.w3.org/2000/svg", "text");
     tag.setAttribute("x", (x1 + 4).toFixed(1));
-    tag.setAttribute("y", String(PAD_TOP + 4));
+    tag.setAttribute("y", String(H - PAD_BOT - 4));
     tag.setAttribute("class", "chart-comfort-tag");
     tag.textContent = "comfy";
     g.appendChild(tag);
@@ -377,9 +378,14 @@ export class HourlyChart {
       // Push hi label above the point and lo label below so they don't
       // collide with the gust/feels-like lines.
       const labelY = kind === "hi" ? Math.max(10, y - 11) : Math.min(H - 26, y + 14);
-      lbl.setAttribute("x", x.toFixed(1));
+      // Anchor flips near edges so the label never clips out of the SVG.
+      const innerW = W - PAD_LEFT - PAD_RIGHT;
+      const frac = (x - PAD_LEFT) / innerW;
+      const anchor = frac < 0.08 ? "start" : frac > 0.92 ? "end" : "middle";
+      const labelX = anchor === "start" ? x + 6 : anchor === "end" ? x - 6 : x;
+      lbl.setAttribute("x", labelX.toFixed(1));
       lbl.setAttribute("y", labelY.toFixed(1));
-      lbl.setAttribute("text-anchor", "middle");
+      lbl.setAttribute("text-anchor", anchor);
       lbl.setAttribute("class", `chart-hilo-label chart-hilo-${kind}`);
       lbl.textContent = `${kind === "hi" ? "▲" : "▼"} ${Math.round(tVal)}° · ${hh}`;
       hiloG.appendChild(lbl);
