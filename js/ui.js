@@ -47,7 +47,9 @@ const el = {
   moonIllum: $("#moon-illum"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
+  sunNoon: $("#sun-noon"),
   sunDaylight: $("#sun-daylight"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -515,14 +517,43 @@ function fmtTime(ts) {
 function renderSun(w) {
   el.sunRise.textContent = fmtTime(w.sunrise);
   el.sunSet.textContent = fmtTime(w.sunset);
+  if (el.sunNoon) {
+    el.sunNoon.textContent = w.solarNoon ? fmtTime(w.solarNoon) : "—";
+  }
   if (w.sunrise && w.sunset) {
     const mins = Math.round((w.sunset - w.sunrise) / 60_000);
     const hh = Math.floor(mins / 60);
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w.daylightDelta);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderDaylightDelta(delta) {
+  if (!el.sunDaylightDelta) return;
+  if (!delta || delta.deltaSec == null) {
+    el.sunDaylightDelta.hidden = true;
+    return;
+  }
+  const sec = delta.deltaSec;
+  const abs = Math.abs(sec);
+  if (abs < 30) {
+    el.sunDaylightDelta.className = "sun-daylight-delta flat";
+    el.sunDaylightDelta.textContent = "≈ no change";
+  } else {
+    const arrow = sec > 0 ? "▲" : "▼";
+    const m = Math.floor(abs / 60);
+    const s = abs % 60;
+    const body = m ? `${m}m ${s.toString().padStart(2, "0")}s` : `${s}s`;
+    el.sunDaylightDelta.className = `sun-daylight-delta ${sec > 0 ? "up" : "down"}`;
+    el.sunDaylightDelta.textContent = `${arrow} ${body}`;
+  }
+  el.sunDaylightDelta.title = sec >= 0
+    ? `Today gains ${Math.abs(sec)}s of daylight vs yesterday`
+    : `Today loses ${Math.abs(sec)}s of daylight vs yesterday`;
+  el.sunDaylightDelta.hidden = false;
 }
 
 function scheduleSunArc(w) {

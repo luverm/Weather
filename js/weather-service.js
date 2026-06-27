@@ -93,6 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
+    past_days: 1,        // yesterday too — used for daylight-Δ
     past_hours: 1,
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
@@ -151,13 +152,13 @@ function normalize(d, aq) {
     }
   }
 
-  // 7-day daily forecast.
-  const dailyForecast = [];
+  // Build all returned daily rows; we then split into "yesterday" (the one
+  // past day we ask Open-Meteo for) and the 7-day forecast.
+  const allDays = [];
   if (daily.time) {
     for (let i = 0; i < daily.time.length; i++) {
-      const ts = new Date(daily.time[i]).getTime();
-      dailyForecast.push({
-        time: ts,
+      allDays.push({
+        time: new Date(daily.time[i]).getTime(),
         tempMax: daily.temperature_2m_max?.[i],
         tempMin: daily.temperature_2m_min?.[i],
         precip: daily.precipitation_sum?.[i] ?? 0,
@@ -171,6 +172,16 @@ function normalize(d, aq) {
       });
     }
   }
+  // Open-Meteo with past_days=1 returns [yesterday, today, ...next 6].
+  // If the API ever omits past_days (mock / error path), fall back to "no yesterday".
+  const yesterday = allDays.length >= 8 ? allDays[0] : null;
+  const dailyForecast = yesterday ? allDays.slice(1) : allDays;
+
+  const todayDay = dailyForecast[0] || null;
+  const daylightDelta = computeDaylightDelta(yesterday, todayDay);
+  const solarNoon = todayDay?.sunrise && todayDay?.sunset
+    ? (todayDay.sunrise + todayDay.sunset) / 2
+    : null;
 
   // 15-min nowcast for the next ~2h — used for "rain in 12 min" banner.
   const nowcast = [];
@@ -204,9 +215,11 @@ function normalize(d, aq) {
     isDay: !!c.is_day,
     condition,
     label,
-    sunrise: daily.sunrise?.[0] ? new Date(daily.sunrise[0]).getTime() : null,
-    sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null,
-    uv: daily.uv_index_max?.[0] ?? null,
+    sunrise: todayDay?.sunrise ?? null,
+    sunset: todayDay?.sunset ?? null,
+    solarNoon,
+    daylightDelta,
+    uv: todayDay?.uvMax ?? null,
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
     hourly,
@@ -217,6 +230,15 @@ function normalize(d, aq) {
     pollen: normalizePollen(aq),
     fetchedAt: now,
   };
+}
+
+function computeDaylightDelta(yesterday, today) {
+  if (!yesterday?.sunrise || !yesterday?.sunset) return null;
+  if (!today?.sunrise || !today?.sunset) return null;
+  const todaySec = Math.round((today.sunset - today.sunrise) / 1000);
+  const yesterdaySec = Math.round((yesterday.sunset - yesterday.sunrise) / 1000);
+  const deltaSec = todaySec - yesterdaySec;
+  return { todaySec, yesterdaySec, deltaSec };
 }
 
 function computePressureTrend(hourly, now) {
@@ -362,6 +384,8 @@ function mock(lat, lon) {
     isDay, condition: CONDITIONS.CLOUDS, label: "Partly cloudy (offline)",
     sunrise: new Date().setHours(6, 30, 0, 0),
     sunset: new Date().setHours(19, 0, 0, 0),
+    solarNoon: new Date().setHours(12, 45, 0, 0),
+    daylightDelta: { todaySec: 45_000, yesterdaySec: 44_866, deltaSec: 134 },
     uv: 3,
     uvPeak: { time: new Date().setHours(13, 0, 0, 0), value: 5 },
     timezone: "UTC",
