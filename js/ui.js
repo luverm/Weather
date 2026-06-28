@@ -1059,6 +1059,29 @@ function renderDailySpark(days) {
       el.dailySparkDots.appendChild(c);
     }
   });
+
+  // Live "now" marker on today's column, only when temp falls inside the
+  // hi/lo band — otherwise it would float outside the spark and look broken.
+  const nowTemp = state.weather?.temp;
+  if (nowTemp != null && days[0]?.tempMin != null && days[0]?.tempMax != null) {
+    const lo0 = days[0].tempMin, hi0 = days[0].tempMax;
+    if (nowTemp >= lo0 - 1 && nowTemp <= hi0 + 1) {
+      const clamped = Math.max(tMin, Math.min(tMax, nowTemp));
+      const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      dot.setAttribute("cx", x(0).toFixed(1));
+      dot.setAttribute("cy", y(clamped).toFixed(1));
+      dot.setAttribute("r", "3.5");
+      dot.setAttribute("class", "dot-now");
+      el.dailySparkDots.appendChild(dot);
+      // Soft halo for the live dot.
+      const halo = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      halo.setAttribute("cx", x(0).toFixed(1));
+      halo.setAttribute("cy", y(clamped).toFixed(1));
+      halo.setAttribute("r", "6.5");
+      halo.setAttribute("class", "dot-now-halo");
+      el.dailySparkDots.insertBefore(halo, dot);
+    }
+  }
 }
 
 function renderDailyDelta(days) {
