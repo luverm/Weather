@@ -595,11 +595,27 @@ function renderSun(w) {
     const mins = Math.round((w.sunset - w.sunrise) / 60_000);
     const hh = Math.floor(mins / 60);
     const mm = mins % 60;
-    el.sunDaylight.textContent = `${hh}h ${mm}m`;
+    el.sunDaylight.innerHTML =
+      `${hh}h ${mm}m${renderDaylightDelta(w)}`;
   } else el.sunDaylight.textContent = "—";
   renderGoldenHour(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderDaylightDelta(w) {
+  if (!w.yesterday?.sunrise || !w.yesterday?.sunset || !w.sunrise || !w.sunset) return "";
+  const today = w.sunset - w.sunrise;
+  const yest = w.yesterday.sunset - w.yesterday.sunrise;
+  const deltaSec = Math.round((today - yest) / 1000);
+  if (Math.abs(deltaSec) < 30) return "";
+  const sign = deltaSec > 0 ? "+" : "−";
+  const mag = Math.abs(deltaSec);
+  const m = Math.floor(mag / 60);
+  const s = mag % 60;
+  const label = m > 0 ? `${m}m ${s}s` : `${s}s`;
+  const cls = deltaSec > 0 ? "up" : "down";
+  return ` <span class="daylight-delta ${cls}">${sign}${label}</span>`;
 }
 
 // Golden hour: the soft-light window photographers chase. We approximate it

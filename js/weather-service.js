@@ -94,6 +94,7 @@ export async function getWeather(lat, lon) {
     timezone: "auto",
     forecast_days: 7,
     past_hours: 24,
+    past_days: 1,
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -152,13 +153,13 @@ function normalize(d, aq) {
     }
   }
 
-  // 7-day daily forecast.
-  const dailyForecast = [];
+  // 7-day daily forecast — past_days=1 prepends yesterday, which we pull off
+  // into its own field so daily[0] continues to mean "today" for renderers.
+  const dailyAll = [];
   if (daily.time) {
     for (let i = 0; i < daily.time.length; i++) {
-      const ts = new Date(daily.time[i]).getTime();
-      dailyForecast.push({
-        time: ts,
+      dailyAll.push({
+        time: new Date(daily.time[i]).getTime(),
         tempMax: daily.temperature_2m_max?.[i],
         tempMin: daily.temperature_2m_min?.[i],
         precip: daily.precipitation_sum?.[i] ?? 0,
@@ -172,6 +173,9 @@ function normalize(d, aq) {
       });
     }
   }
+  // past_days=1 means dailyAll[0] is yesterday; the rest is forecast.
+  const yesterdayDaily = dailyAll.length > 7 ? dailyAll[0] : null;
+  const dailyForecast = yesterdayDaily ? dailyAll.slice(1) : dailyAll;
 
   // 15-min nowcast for the next ~2h — used for "rain in 12 min" banner.
   const nowcast = [];
@@ -210,13 +214,14 @@ function normalize(d, aq) {
     isDay: !!c.is_day,
     condition,
     label,
-    sunrise: daily.sunrise?.[0] ? new Date(daily.sunrise[0]).getTime() : null,
-    sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null,
-    uv: daily.uv_index_max?.[0] ?? null,
+    sunrise: dailyForecast[0]?.sunrise ?? null,
+    sunset: dailyForecast[0]?.sunset ?? null,
+    uv: dailyForecast[0]?.uvMax ?? null,
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
     hourly,
     daily: dailyForecast,
+    yesterday: yesterdayDaily,
     nowcast,
     moon,
     tempYesterday,
