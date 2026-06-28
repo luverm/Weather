@@ -5,6 +5,7 @@ import { searchCities } from "./weather-service.js";
 import { places } from "./places.js";
 import { HourlyChart } from "./hourly-chart.js";
 import { ComfortStrip } from "./comfort-strip.js";
+import { CloudRibbon } from "./cloud-ribbon.js";
 import { advise } from "./advice.js";
 import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
@@ -93,6 +94,9 @@ const el = {
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
   comfortStrip: $("#comfort-strip"),
+  cloudRibbon: $("#cloud-ribbon"),
+  cloudRibbonGrad: $("#cloud-ribbon-grad"),
+  cloudRibbonTicks: $("#cloud-ribbon-ticks"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
   weekendDetail: $("#weekend-detail"),
@@ -122,6 +126,7 @@ const state = {
   handlers: {},
   chart: null,
   comfortStrip: null,
+  cloudRibbon: null,
   sunTimer: null,
   sunArcTimer: null,
   localTimer: null,
@@ -154,6 +159,11 @@ export const ui = {
       rootEl: el.comfortStrip,
       onCellClick: (ts) => state.handlers.onHourClick?.(ts),
       getUnit: () => state.unit,
+    });
+    state.cloudRibbon = new CloudRibbon({
+      svgEl: el.cloudRibbon,
+      gradEl: el.cloudRibbonGrad,
+      ticksEl: el.cloudRibbonTicks,
     });
     bindInstallPrompt();
   },
@@ -198,6 +208,7 @@ export const ui = {
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
+    if (state.cloudRibbon) state.cloudRibbon.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
