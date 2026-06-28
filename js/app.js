@@ -213,8 +213,14 @@ async function loadByCoords(place) {
   // Apply to scenes at current (live) time.
   applyScene(w);
 
-  // Update scrubber bounds to this location's sunrise/sunset.
-  scrubber.setBounds({ start: Date.now(), sunrise: w.sunrise, sunset: w.sunset });
+  // Update scrubber bounds to this location's sunrise/sunset (today + tomorrow
+  // so the night band spans midnight correctly).
+  scrubber.setBounds({
+    start: Date.now(),
+    sunrise: w.sunrise,
+    sunset: w.sunset,
+    dailyEvents: (w.daily || []).map((d) => ({ sunrise: d.sunrise, sunset: d.sunset })),
+  });
 
   // Move the radar to the new location (fire-and-forget; resolves later).
   ensureRadar([place.lat, place.lon]).then((r) => r?.setCenter(place.lat, place.lon, place.name));

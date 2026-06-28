@@ -32,13 +32,48 @@ export class Scrubber {
     setInterval(() => { if (clock.isLive()) this._render(0); }, 30_000);
   }
 
-  setBounds({ start, sunrise, sunset }) {
+  setBounds({ start, sunrise, sunset, dailyEvents }) {
     this.start = start || Date.now();
     this.sunrise = sunrise;
     this.sunset = sunset;
+    this.dailyEvents = dailyEvents || null;
     this._placeMarker(this.sunriseEl, sunrise, "Sunrise");
     this._placeMarker(this.sunsetEl, sunset, "Sunset");
+    this._placeNightBands();
     this._render(this._currentT());
+  }
+
+  _placeNightBands() {
+    const bands = [
+      document.getElementById("scrubber-night-1"),
+      document.getElementById("scrubber-night-2"),
+    ];
+    bands.forEach((b) => { if (b) b.hidden = true; });
+    if (!this.dailyEvents) return;
+    const totalMs = RANGE_HOURS * 3600_000;
+    const trackStart = this.start - 3600_000; // matches _placeMarker
+    const trackEnd = trackStart + totalMs;
+
+    // Collect [setTs, nextSunriseTs] pairs and intersect with the visible range.
+    const segments = [];
+    for (let i = 0; i < this.dailyEvents.length - 1; i++) {
+      const setTs = this.dailyEvents[i].sunset;
+      const nextRise = this.dailyEvents[i + 1].sunrise;
+      if (!setTs || !nextRise) continue;
+      const a = Math.max(setTs, trackStart);
+      const b = Math.min(nextRise, trackEnd);
+      if (b <= a) continue;
+      segments.push([a, b]);
+    }
+    segments.slice(0, 2).forEach(([a, b], idx) => {
+      const el = bands[idx];
+      if (!el) return;
+      const left = ((a - trackStart) / totalMs) * 100;
+      const width = ((b - a) / totalMs) * 100;
+      el.style.left = `${left.toFixed(2)}%`;
+      el.style.width = `${width.toFixed(2)}%`;
+      el.hidden = false;
+    });
   }
 
   /** Called when we externally reset to "now" (e.g. search selected). */

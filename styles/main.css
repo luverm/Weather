@@ -521,6 +521,16 @@ html[data-reduce-motion="true"] *::after {
   transition: width 120ms linear;
   pointer-events: none;
 }
+.scrubber-night {
+  position: absolute; top: 0; bottom: 0;
+  background: linear-gradient(180deg, rgba(8,12,30,0.55), rgba(8,12,30,0.30));
+  pointer-events: none;
+  z-index: 0;
+}
+.scrubber-night[hidden] { display: none; }
+.scrubber-fill { z-index: 1; }
+.scrubber-sunrise, .scrubber-sunset { z-index: 2; }
+.scrubber-thumb { z-index: 3; }
 .scrubber-sunrise,
 .scrubber-sunset {
   position: absolute; top: 0; bottom: 0; width: 2px;
