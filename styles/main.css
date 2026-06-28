@@ -1265,11 +1265,13 @@ kbd {
   display: grid;
   grid-template-columns: repeat(24, 1fr);
   gap: 1px;
-  margin-top: 22px;
+  margin-top: 6px;
   padding: 0 4px 18px;
   height: 30px;
   position: relative;
+  transition: margin-top 200ms var(--ease);
 }
+.comfort-strip.has-markers { margin-top: 22px; }
 .comfort-strip[hidden] { display: none; }
 .cstrip-cell {
   position: relative;

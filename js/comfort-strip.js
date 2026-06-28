@@ -40,6 +40,7 @@ export class ComfortStrip {
     }
     // Don't decorate if the swing is too small to be meaningful.
     if (span < 4) { peakIdx = -1; troughIdx = -1; }
+    this.root.classList.toggle("has-markers", peakIdx >= 0 || troughIdx >= 0);
 
     const cells = this.hours.map((h, i) => {
       const t = h.feelsLike ?? h.temp;
