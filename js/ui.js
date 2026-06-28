@@ -81,6 +81,7 @@ const el = {
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
+  dailyPrecip: $("#daily-precip"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -975,6 +976,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderDailyPrecipTotal(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1079,6 +1081,26 @@ function renderDailyDelta(days) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
   }
   el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
+}
+
+function renderDailyPrecipTotal(days) {
+  if (!el.dailyPrecip) return;
+  const sum = days.reduce((a, d) => a + (d.precip ?? 0), 0);
+  const wetDays = days.filter((d) => (d.precip ?? 0) > 0.2).length;
+  if (sum < 0.5) {
+    el.dailyPrecip.hidden = false;
+    el.dailyPrecip.className = "daily-precip dry";
+    el.dailyPrecip.innerHTML = `<svg class="dp-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5" fill="currentColor"/></svg>Dry week`;
+    return;
+  }
+  el.dailyPrecip.hidden = false;
+  el.dailyPrecip.className = "daily-precip wet";
+  const mm = sum < 10 ? sum.toFixed(1) : Math.round(sum);
+  const noun = wetDays === 1 ? "day" : "days";
+  el.dailyPrecip.innerHTML =
+    `<svg class="dp-icon" viewBox="0 0 24 24" aria-hidden="true">` +
+    `<path d="M12 3c4 5 6 8 6 11a6 6 0 01-12 0c0-3 2-6 6-11z" fill="currentColor" opacity="0.85"/>` +
+    `</svg>${mm} mm · ${wetDays} wet ${noun}`;
 }
 
 function toggleDailyExpand(item, d, w) {

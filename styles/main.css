@@ -1490,6 +1490,21 @@ kbd {
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+.daily-precip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+  text-transform: none;
+}
+.daily-precip[hidden] { display: none; }
+.daily-precip.wet { background: rgba(120, 180, 255, 0.16); color: #9ad1ff; }
+.daily-precip.dry { background: rgba(255, 196, 110, 0.12); color: #ffd28a; }
+.daily-precip .dp-icon { width: 11px; height: 11px; }
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;
