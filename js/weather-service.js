@@ -93,7 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
-    past_hours: 1,
+    past_hours: 24,
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -189,6 +189,11 @@ function normalize(d, aq) {
   // Moon phase is not in Open-Meteo's free tier — compute it locally.
   const moon = computeMoonPhase(new Date());
 
+  // Look up temperature 24h ago from the raw hourly series so the hero can
+  // render a "vs. yesterday" delta. past_hours=24 above ensures this point
+  // is present in the response.
+  const tempYesterday = findHourlyValueAt(d.hourly, now - 24 * 3600_000);
+
   return {
     temp: c.temperature_2m,
     feelsLike: c.apparent_temperature,
@@ -213,10 +218,28 @@ function normalize(d, aq) {
     daily: dailyForecast,
     nowcast,
     moon,
+    tempYesterday,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
     fetchedAt: now,
   };
+}
+
+// Find the temperature reading nearest to a given timestamp in the raw
+// Open-Meteo hourly series. Returns null if no entry lands within 90 minutes.
+function findHourlyValueAt(hourly, ts) {
+  if (!hourly?.time || !hourly?.temperature_2m) return null;
+  let bestDiff = Infinity, bestVal = null;
+  for (let i = 0; i < hourly.time.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    const diff = Math.abs(t - ts);
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      bestVal = hourly.temperature_2m[i];
+    }
+  }
+  if (bestDiff > 90 * 60_000 || bestVal == null) return null;
+  return bestVal;
 }
 
 function computePressureTrend(hourly, now) {
@@ -363,6 +386,7 @@ function mock(lat, lon) {
     sunrise: new Date().setHours(6, 30, 0, 0),
     sunset: new Date().setHours(19, 0, 0, 0),
     uv: 3,
+    tempYesterday: 16,
     uvPeak: { time: new Date().setHours(13, 0, 0, 0), value: 5 },
     timezone: "UTC",
     hourly: Array.from({ length: 24 }, (_, i) => ({

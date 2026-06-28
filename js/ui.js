@@ -21,6 +21,8 @@ const el = {
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
+  feelsText: $("#feels-text"),
+  vsYesterday: $("#vs-yesterday"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -221,12 +223,15 @@ export const ui = {
     }
   },
   setScrubbing(on) {
+    state.isScrubbing = !!on;
     document.documentElement.setAttribute("data-scrubbing", on ? "true" : "false");
     if (on) {
       el.hintText.textContent = "Drag to explore future weather.";
     } else {
       el.hintText.innerHTML = 'Drag the slider, hover the chart, or press <kbd>?</kbd> for shortcuts.';
     }
+    // Re-render the vs-yesterday pill: it hides while scrubbing.
+    if (state.weather) renderVsYesterday();
   },
   setAudioState(on) {
     el.audioBtn.classList.toggle("on", !!on);
@@ -276,8 +281,34 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  if (el.feelsText) el.feelsText.textContent = `Feels like ${Math.round(feels)}°`;
+  renderVsYesterday();
   renderDayRange(w);
+}
+
+function renderVsYesterday() {
+  if (!el.vsYesterday) return;
+  // Always sourced from the live snapshot; hides during scrubbing.
+  const live = state.weather;
+  if (!live || state.isScrubbing || live.tempYesterday == null || live.temp == null) {
+    el.vsYesterday.hidden = true;
+    return;
+  }
+  const deltaC = live.temp - live.tempYesterday;
+  const deltaUnit = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
+  if (Math.abs(deltaUnit) < 0.5) {
+    el.vsYesterday.hidden = false;
+    el.vsYesterday.className = "vs-yesterday flat";
+    el.vsYesterday.textContent = "same as yesterday";
+    return;
+  }
+  const sign = deltaUnit > 0 ? "+" : "−";
+  const mag = Math.round(Math.abs(deltaUnit));
+  const word = deltaUnit > 0 ? "warmer" : "cooler";
+  const cls = deltaUnit > 0 ? "up" : "down";
+  el.vsYesterday.hidden = false;
+  el.vsYesterday.className = `vs-yesterday ${cls}`;
+  el.vsYesterday.textContent = `${sign}${mag}° ${word} than yesterday`;
 }
 
 function renderDayRange(w) {

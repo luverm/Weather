@@ -635,6 +635,31 @@ html[data-reduce-motion="true"] *::after {
 .temp-trend.down { background: rgba(154, 209, 255, 0.18); color: #9ad1ff; }
 .temp-trend.flat { background: rgba(255,255,255,0.08); color: var(--fg-dim); }
 
+/* "vs. yesterday" pill — sits after the feels-like text. */
+.vs-yesterday {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  padding: 1px 8px;
+  border-radius: 999px;
+  vertical-align: baseline;
+  opacity: 0;
+  transform: translateY(-2px);
+  animation: vsyFadeIn 480ms ease forwards 120ms;
+}
+.vs-yesterday[hidden] { display: none; animation: none; }
+.vs-yesterday.up { background: rgba(255, 156, 122, 0.18); color: #ffb196; }
+.vs-yesterday.down { background: rgba(154, 209, 255, 0.18); color: #9ad1ff; }
+.vs-yesterday.flat { background: rgba(255,255,255,0.08); color: var(--fg-dim); }
+@keyframes vsyFadeIn {
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vs-yesterday { animation: none; opacity: 1; transform: none; }
+}
+
 /* ---------- Pollen card ---------- */
 #pollen-card[hidden] { display: none; }
 .pollen-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
