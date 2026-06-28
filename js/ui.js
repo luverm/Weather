@@ -73,6 +73,9 @@ const el = {
   pressureSparkFill: $("#pressure-spark-fill"),
   humiditySparkLine: $("#humidity-spark-line"),
   humiditySparkFill: $("#humidity-spark-fill"),
+  windSparkLine: $("#wind-spark-line"),
+  windSparkFill: $("#wind-spark-fill"),
+  windSparkGust: $("#wind-spark-gust"),
   dailySpark: $("#daily-spark"),
   dailyHi: $("#daily-hi"),
   dailyLo: $("#daily-lo"),
@@ -459,13 +462,39 @@ function renderPressureSparkline(w) {
     (w.hourly || []).map((h) => h.humidity).filter((v) => v != null).slice(0, 12),
     { minSpan: 10, fixedMin: 0, fixedMax: 100 }
   );
+  renderWindSparkline(w);
+}
+
+function renderWindSparkline(w) {
+  if (!el.windSparkLine || !el.windSparkFill) return;
+  const hours = (w.hourly || []).slice(0, 12);
+  const winds = hours.map((h) => h.wind).filter((v) => v != null);
+  const gusts = hours.map((h) => h.gusts).filter((v) => v != null);
+  if (winds.length < 2) {
+    el.windSparkLine.setAttribute("d", "");
+    el.windSparkFill.setAttribute("d", "");
+    if (el.windSparkGust) el.windSparkGust.setAttribute("d", "");
+    return;
+  }
+  // Share the y-scale across wind + gusts so the dashed gust line sits above the
+  // solid mean-wind line in the same visual frame.
+  const min = 0;
+  const max = Math.max(...winds, ...(gusts.length ? gusts : [0]));
+  drawSparkline(el.windSparkLine, el.windSparkFill, winds, {
+    minSpan: 6, fixedMin: min, fixedMax: max,
+  });
+  if (el.windSparkGust && gusts.length >= 2) {
+    drawSparkline(el.windSparkGust, null, gusts, {
+      minSpan: 6, fixedMin: min, fixedMax: max,
+    });
+  }
 }
 
 function drawSparkline(lineEl, fillEl, series, { minSpan = 1, fixedMin, fixedMax } = {}) {
-  if (!lineEl || !fillEl) return;
+  if (!lineEl) return;
   if (series.length < 2) {
     lineEl.setAttribute("d", "");
-    fillEl.setAttribute("d", "");
+    if (fillEl) fillEl.setAttribute("d", "");
     return;
   }
   const min = fixedMin != null ? fixedMin : Math.min(...series);
@@ -478,9 +507,11 @@ function drawSparkline(lineEl, fillEl, series, { minSpan = 1, fixedMin, fixedMax
   const y = (v) => PAD + innerH - ((v - min) / span) * innerH;
   let line = "";
   series.forEach((v, i) => { line += (i === 0 ? "M" : "L") + x(i).toFixed(1) + "," + y(v).toFixed(1) + " "; });
-  const fill = `${line}L${x(series.length - 1).toFixed(1)},${(H - PAD).toFixed(1)} L${x(0).toFixed(1)},${(H - PAD).toFixed(1)} Z`;
   lineEl.setAttribute("d", line.trim());
-  fillEl.setAttribute("d", fill);
+  if (fillEl) {
+    const fill = `${line}L${x(series.length - 1).toFixed(1)},${(H - PAD).toFixed(1)} L${x(0).toFixed(1)},${(H - PAD).toFixed(1)} Z`;
+    fillEl.setAttribute("d", fill);
+  }
 }
 
 function aqColor(aqi) {
