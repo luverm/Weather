@@ -49,6 +49,9 @@ const el = {
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
   sunRise: $("#sun-rise"),
+  goldenRow: $("#golden-row"),
+  goldenAmTime: $("#golden-am-time"),
+  goldenPmTime: $("#golden-pm-time"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
@@ -563,8 +566,37 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderGoldenHour(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+// Golden hour: the soft-light window photographers chase. We approximate it
+// as the first / last 60 minutes of direct sunlight, which is close enough
+// outside high-latitude winters where the sun barely climbs above the horizon.
+function renderGoldenHour(w) {
+  if (!el.goldenRow) return;
+  if (!w?.sunrise || !w?.sunset || w.sunset - w.sunrise < 90 * 60_000) {
+    el.goldenRow.hidden = true;
+    return;
+  }
+  const amEnd = w.sunrise + 60 * 60_000;
+  const pmStart = w.sunset - 60 * 60_000;
+  el.goldenRow.hidden = false;
+  if (el.goldenAmTime) el.goldenAmTime.textContent = `${fmtTime(w.sunrise)}–${fmtTime(amEnd)}`;
+  if (el.goldenPmTime) el.goldenPmTime.textContent = `${fmtTime(pmStart)}–${fmtTime(w.sunset)}`;
+  // Highlight whichever window is closest to (or currently inside) "now".
+  const now = Date.now();
+  const am = document.getElementById("golden-am");
+  const pm = document.getElementById("golden-pm");
+  if (am && pm) {
+    am.classList.remove("now", "next");
+    pm.classList.remove("now", "next");
+    if (now >= w.sunrise && now <= amEnd) am.classList.add("now");
+    else if (now >= pmStart && now <= w.sunset) pm.classList.add("now");
+    else if (now < w.sunrise) am.classList.add("next");
+    else if (now < pmStart) pm.classList.add("next");
+  }
 }
 
 function scheduleSunArc(w) {

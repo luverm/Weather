@@ -991,6 +991,54 @@ kbd {
 .sun-item { display: grid; gap: 2px; }
 .sun-label { font-size: 10.5px; color: var(--fg-dim); letter-spacing: 0.14em; text-transform: uppercase; }
 .sun-item strong { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
+
+.golden-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.golden-row[hidden] { display: none; }
+.golden-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(255, 196, 110, 0.10);
+  color: #ffd6a3;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  border: 1px solid rgba(255, 196, 110, 0.18);
+  transition: background 220ms var(--ease), border-color 220ms var(--ease);
+}
+.golden-pill .golden-icon {
+  width: 14px;
+  height: 14px;
+  color: #ffd28a;
+  flex-shrink: 0;
+}
+.golden-pill .golden-label {
+  color: var(--fg-dim);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  font-size: 9.5px;
+}
+.golden-pill strong {
+  font-weight: 500;
+  color: var(--fg);
+}
+.golden-pill.now {
+  background: rgba(255, 196, 110, 0.22);
+  border-color: rgba(255, 196, 110, 0.42);
+  box-shadow: 0 0 16px rgba(255, 196, 110, 0.18);
+}
+.golden-pill.next {
+  background: rgba(255, 196, 110, 0.14);
+  border-color: rgba(255, 196, 110, 0.28);
+}
+
 .sun-arc {
   width: 100%;
   height: 76px;
