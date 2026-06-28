@@ -29,6 +29,18 @@ export class ComfortStrip {
     const tMax = Math.max(...temps);
     const span = Math.max(4, tMax - tMin);
 
+    // Find peak (warmest) and trough (coolest) indices — first match wins so
+    // adjacent equal-temp hours don't all get the marker.
+    let peakIdx = -1, troughIdx = -1;
+    for (let i = 0; i < this.hours.length; i++) {
+      const t = this.hours[i].feelsLike ?? this.hours[i].temp;
+      if (t == null) continue;
+      if (peakIdx < 0 || t > (this.hours[peakIdx].feelsLike ?? this.hours[peakIdx].temp)) peakIdx = i;
+      if (troughIdx < 0 || t < (this.hours[troughIdx].feelsLike ?? this.hours[troughIdx].temp)) troughIdx = i;
+    }
+    // Don't decorate if the swing is too small to be meaningful.
+    if (span < 4) { peakIdx = -1; troughIdx = -1; }
+
     const cells = this.hours.map((h, i) => {
       const t = h.feelsLike ?? h.temp;
       const color = colorForFeels(t);
@@ -37,11 +49,14 @@ export class ComfortStrip {
       const tickHour = new Date(h.time).getHours();
       const showTick = tickHour % 6 === 0;
       const tickLabel = showTick ? `${tickHour.toString().padStart(2, "0")}:00` : "";
+      const marker = i === peakIdx ? "peak" : i === troughIdx ? "trough" : "";
+      const markerLabel = i === peakIdx ? `Peak ${display}` : i === troughIdx ? `Low ${display}` : "";
       return `
-        <button class="cstrip-cell" data-i="${i}" data-ts="${h.time}"
+        <button class="cstrip-cell ${marker ? "cstrip-" + marker : ""}" data-i="${i}" data-ts="${h.time}"
                 title="${tickHour}:00 · ${display} feels · ${h.pop ?? 0}% rain"
                 style="--c:${color}">
           <span class="cstrip-bar" style="--rain:${rainOpacity}"></span>
+          ${marker ? `<span class="cstrip-marker">${markerLabel}</span>` : ""}
           ${showTick ? `<span class="cstrip-tick">${tickLabel}</span>` : ""}
         </button>
       `;

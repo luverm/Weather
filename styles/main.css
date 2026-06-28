@@ -1255,7 +1255,7 @@ kbd {
   display: grid;
   grid-template-columns: repeat(24, 1fr);
   gap: 1px;
-  margin-top: 6px;
+  margin-top: 22px;
   padding: 0 4px 18px;
   height: 30px;
   position: relative;
@@ -1296,6 +1296,34 @@ kbd {
   pointer-events: none;
   font-variant-numeric: tabular-nums;
 }
+.cstrip-peak::after,
+.cstrip-trough::after {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  transform: translateX(-50%);
+}
+.cstrip-peak::after { background: #ffc878; box-shadow: 0 0 6px rgba(255,200,120,0.7); }
+.cstrip-trough::after { background: #9ad1ff; box-shadow: 0 0 6px rgba(154,209,255,0.7); }
+.cstrip-marker {
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  color: var(--fg-muted);
+  white-space: nowrap;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+}
+.cstrip-peak .cstrip-marker { color: #ffc89a; }
+.cstrip-trough .cstrip-marker { color: #b6d9f7; }
 
 /* ---------- Alerts strip ---------- */
 .alerts-strip {
