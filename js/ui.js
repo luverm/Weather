@@ -299,9 +299,20 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  if (el.feelsText) el.feelsText.textContent = `Feels like ${Math.round(feels)}°`;
+  if (el.feelsText) el.feelsText.innerHTML = composeFeelsText(temp, feels);
   renderVsYesterday();
   renderDayRange(w);
+}
+
+function composeFeelsText(temp, feels) {
+  const base = `Feels like ${Math.round(feels)}°`;
+  const gap = feels - temp;
+  // Sub-3° gaps are typical and not worth surfacing as a chip.
+  if (!isFinite(gap) || Math.abs(gap) < 3) return base;
+  const mag = Math.round(Math.abs(gap));
+  const word = gap > 0 ? "warmer" : "cooler";
+  const cls = gap > 0 ? "up" : "down";
+  return `${base}<span class="feels-gap ${cls}"> · ${mag}° ${word}</span>`;
 }
 
 function renderVsYesterday() {

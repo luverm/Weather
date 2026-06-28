@@ -645,6 +645,15 @@ html[data-reduce-motion="true"] *::after {
 .temp-trend.down { background: rgba(154, 209, 255, 0.18); color: #9ad1ff; }
 .temp-trend.flat { background: rgba(255,255,255,0.08); color: var(--fg-dim); }
 
+/* Feels-like gap chip — only shown when feels differs from air by ≥3°. */
+.feels-gap {
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+.feels-gap.up { color: #ffb196; }
+.feels-gap.down { color: #9ad1ff; }
+
 /* "vs. yesterday" pill — sits after the feels-like text. */
 .vs-yesterday {
   display: inline-block;
