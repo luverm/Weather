@@ -1081,6 +1081,26 @@ function renderDailySpark(days) {
       el.dailySparkDots.appendChild(c);
     }
   });
+  // "Now" marker for the live temperature at index 0.
+  const liveTemp = state.weather?.temp;
+  if (liveTemp != null) {
+    const clamped = Math.max(tMin, Math.min(tMax, liveTemp));
+    const cx = x(0);
+    const cy = y(clamped);
+    const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    c.setAttribute("cx", cx.toFixed(1));
+    c.setAttribute("cy", cy.toFixed(1));
+    c.setAttribute("r", "3.4");
+    c.setAttribute("class", "dot-now");
+    el.dailySparkDots.appendChild(c);
+    const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    t.setAttribute("x", cx.toFixed(1));
+    t.setAttribute("y", (cy - 6).toFixed(1));
+    t.setAttribute("class", "dot-now-label");
+    t.setAttribute("text-anchor", "start");
+    t.textContent = "now";
+    el.dailySparkDots.appendChild(t);
+  }
 }
 
 function renderDailyDelta(days) {
