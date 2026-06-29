@@ -1380,6 +1380,10 @@ function bindUnitToggle() {
     state.unit = state.unit === "C" ? "F" : "C";
     localStorage.setItem("aether:unit", state.unit);
     el.unitBtn.textContent = `°${state.unit}`;
+    el.unitBtn.classList.remove("flipped");
+    // Force reflow so the animation restarts on consecutive clicks.
+    void el.unitBtn.offsetWidth;
+    el.unitBtn.classList.add("flipped");
     if (state.weather) ui.setWeather(state.weather);
   });
 }
