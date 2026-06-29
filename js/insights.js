@@ -99,5 +99,26 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     });
   }
 
+  // 6. Week rainfall summary — surfaces when the upcoming week is notably wet.
+  if (days.length >= 4) {
+    let weekRain = 0;
+    let wettest = null;
+    let wetDays = 0;
+    for (const d of days) {
+      const p = d.precip ?? 0;
+      weekRain += p;
+      if (p >= 1) wetDays += 1;
+      if (!wettest || p > wettest.precip) wettest = d;
+    }
+    if (weekRain >= 3) {
+      const wetLabel = `${wetDays} wet day${wetDays === 1 ? "" : "s"}`;
+      out.push({
+        icon: ICONS.rain, label: "Week rainfall",
+        value: `${Math.round(weekRain)} mm · ${wetLabel}`,
+        ts: wettest?.sunrise || wettest?.time,
+      });
+    }
+  }
+
   return out.slice(0, 6);
 }
