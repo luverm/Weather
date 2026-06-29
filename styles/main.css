@@ -1027,6 +1027,14 @@ kbd {
 .sun-item { display: grid; gap: 2px; }
 .sun-label { font-size: 10.5px; color: var(--fg-dim); letter-spacing: 0.14em; text-transform: uppercase; }
 .sun-item strong { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.sun-delta {
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-dim);
+  letter-spacing: 0.04em;
+}
+.sun-delta[data-dir="up"] { color: #9be0a3; }
+.sun-delta[data-dir="down"] { color: #ffb09b; }
 .sun-arc {
   width: 100%;
   height: 76px;

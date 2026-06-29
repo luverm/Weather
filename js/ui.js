@@ -52,6 +52,7 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDelta: $("#sun-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -549,8 +550,33 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderDaylightDelta(w) {
+  if (!el.sunDelta) return;
+  const today = w.daily?.[0];
+  const tmrw = w.daily?.[1];
+  if (!today?.sunrise || !today?.sunset || !tmrw?.sunrise || !tmrw?.sunset) {
+    el.sunDelta.hidden = true;
+    return;
+  }
+  const todayMins = Math.round((today.sunset - today.sunrise) / 60_000);
+  const tmrwMins = Math.round((tmrw.sunset - tmrw.sunrise) / 60_000);
+  const delta = tmrwMins - todayMins;
+  if (delta === 0) {
+    el.sunDelta.hidden = false;
+    el.sunDelta.dataset.dir = "flat";
+    el.sunDelta.textContent = "same tomorrow";
+    return;
+  }
+  el.sunDelta.hidden = false;
+  el.sunDelta.dataset.dir = delta > 0 ? "up" : "down";
+  const arrow = delta > 0 ? "▲" : "▼";
+  const abs = Math.abs(delta);
+  el.sunDelta.textContent = `${arrow} ${abs}m tomorrow`;
 }
 
 function scheduleSunArc(w) {
