@@ -269,8 +269,10 @@ export class HourlyChart {
     const labG = this.svg.querySelector("#chart-labels");
     labG.innerHTML = "";
     const labelStep = Math.max(3, Math.floor(this.hours.length / 8));
+    const labelledIndices = new Set();
     this.hours.forEach((h, i) => {
       if (i % labelStep !== 0) return;
+      labelledIndices.add(i);
       const hh = this._hourOf(h.time);
       const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
       txt.setAttribute("x", iToX(i).toFixed(1));
@@ -288,5 +290,42 @@ export class HourlyChart {
       tTxt.textContent = `${Math.round(tVal)}°`;
       labG.appendChild(tTxt);
     });
+
+    // Extrema pins: warmest + coolest in the next 24h, but only when they
+    // aren't already labelled by the every-Nth-hour pass and are notably
+    // separated from each other.
+    const extG = this.svg.querySelector("#chart-extrema");
+    if (extG) {
+      extG.innerHTML = "";
+      let maxI = 0, minI = 0;
+      for (let i = 1; i < this.hours.length; i++) {
+        if (this.hours[i].temp > this.hours[maxI].temp) maxI = i;
+        if (this.hours[i].temp < this.hours[minI].temp) minI = i;
+      }
+      const significant = (this.hours[maxI].temp - this.hours[minI].temp) >= 3;
+      const pin = (i, isMax) => {
+        const x = iToX(i);
+        const y = tToY(this.hours[i].temp);
+        const tVal = unit === "F" ? this.hours[i].temp * 9 / 5 + 32 : this.hours[i].temp;
+        const hh = this._hourOf(this.hours[i].time);
+        const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        dot.setAttribute("cx", x.toFixed(1));
+        dot.setAttribute("cy", y.toFixed(1));
+        dot.setAttribute("r", "2.6");
+        dot.setAttribute("class", isMax ? "extrema-dot peak" : "extrema-dot trough");
+        extG.appendChild(dot);
+        const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        txt.setAttribute("x", x.toFixed(1));
+        txt.setAttribute("y", (isMax ? (y - 10) : (y + 14)).toFixed(1));
+        txt.setAttribute("text-anchor", "middle");
+        txt.setAttribute("class", isMax ? "extrema-label peak" : "extrema-label trough");
+        txt.textContent = `${isMax ? "▲" : "▼"} ${Math.round(tVal)}° · ${hh}`;
+        extG.appendChild(txt);
+      };
+      if (significant) {
+        if (!labelledIndices.has(maxI)) pin(maxI, true);
+        if (!labelledIndices.has(minI) && minI !== maxI) pin(minI, false);
+      }
+    }
   }
 }
