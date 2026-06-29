@@ -1016,8 +1016,10 @@ function renderDaily(w) {
     const item = document.createElement("div");
     item.className = "daily-item";
     item.dataset.ts = d.time;
+    const dirSuffix = (d.windDirDom != null && d.gustsMax && d.gustsMax >= 25)
+      ? ` ${cardinal8(d.windDirDom)}` : "";
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
-      ? ` · gusts ${Math.round(d.gustsMax)} km/h`
+      ? ` · gusts ${Math.round(d.gustsMax)} km/h${dirSuffix}`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
