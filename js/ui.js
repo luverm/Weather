@@ -1303,11 +1303,17 @@ function debounce(fn, ms) {
 
 const runSearch = debounce(async (q) => {
   const results = await searchCities(q);
-  renderSearchResults(results);
+  renderSearchResults(results, q);
 }, 200);
 
-function renderSearchResults(results) {
-  if (!results.length) { el.searchResults.hidden = true; el.searchResults.innerHTML = ""; return; }
+function renderSearchResults(results, query = "") {
+  if (!results.length) {
+    el.searchResults._items = [];
+    el.searchResults.innerHTML =
+      `<li class="empty-results">No matches${query ? ` for "${escapeHtml(query)}"` : ""}</li>`;
+    el.searchResults.hidden = false;
+    return;
+  }
   el.searchResults.innerHTML = results.map((r, i) => `
     <li role="option" data-index="${i}">
       <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>

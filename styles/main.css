@@ -267,6 +267,13 @@ html[data-reduce-motion="true"] *::after {
   color: var(--fg-dim);
   pointer-events: none;
 }
+.search-results .empty-results {
+  padding: 14px 14px;
+  font-size: 13px;
+  color: var(--fg-dim);
+  pointer-events: none;
+  background: transparent;
+}
 
 .icon-btn {
   width: 42px; height: 42px;
