@@ -286,8 +286,24 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  const cause = feelsLikeCause(w);
+  const trailing = `Feels like ${Math.round(feels)}°${cause ? ` · ${cause}` : ""}`;
+  // Preserve the #temp-trend span — assigning textContent on a parent would
+  // wipe it out and detach our cached element reference.
+  el.feelsLike.innerHTML =
+    '<span id="temp-trend" class="temp-trend" aria-hidden="true"></span>' +
+    escapeHtml(trailing);
+  el.tempTrend = el.feelsLike.querySelector("#temp-trend");
   renderDayRange(w);
+}
+
+function feelsLikeCause(w) {
+  if (w.feelsLike == null || w.temp == null) return null;
+  const gap = w.feelsLike - w.temp;
+  if (Math.abs(gap) < 3) return null;
+  if (gap < 0 && w.windSpeed != null && w.windSpeed >= 15) return "wind chill";
+  if (gap > 0 && w.humidity != null && w.humidity >= 65 && w.temp >= 22) return "humidex";
+  return gap < 0 ? "feels colder" : "feels warmer";
 }
 
 function renderDayRange(w) {
