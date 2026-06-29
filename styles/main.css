@@ -1601,6 +1601,34 @@ kbd {
   transition: background 200ms var(--ease);
 }
 .daily-item:hover { background: var(--glass); }
+.daily-item[data-week-role="warmest"] .daily-day::after {
+  content: "warmest";
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(255,156,122,0.16);
+  color: #ff9c7a;
+  vertical-align: 1px;
+}
+.daily-item[data-week-role="coolest"] .daily-day::after {
+  content: "coolest";
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(154,209,255,0.16);
+  color: #9ad1ff;
+  vertical-align: 1px;
+}
 .daily-day { font-size: 13px; font-weight: 500; }
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
 .daily-range {

@@ -999,10 +999,14 @@ function renderDaily(w) {
   renderDailyDelta(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
-  for (const d of days) {
+  let warmestIdx = -1, coolestIdx = -1;
+  days.forEach((d, i) => {
     if (d.tempMin < gMin) gMin = d.tempMin;
-    if (d.tempMax > gMax) gMax = d.tempMax;
-  }
+    if (d.tempMax > gMax) { gMax = d.tempMax; warmestIdx = i; }
+    if (coolestIdx < 0 || d.tempMin < days[coolestIdx].tempMin) coolestIdx = i;
+  });
+  // Only highlight when there's a meaningful spread.
+  const showHighlights = (gMax - gMin) >= 4 && warmestIdx !== coolestIdx;
   const span = Math.max(1, gMax - gMin);
   days.forEach((d, i) => {
     const dt = new Date(d.time);
@@ -1015,6 +1019,8 @@ function renderDaily(w) {
     const width = ((d.tempMax - d.tempMin) / span) * 100;
     const item = document.createElement("div");
     item.className = "daily-item";
+    if (showHighlights && i === warmestIdx) item.dataset.weekRole = "warmest";
+    else if (showHighlights && i === coolestIdx) item.dataset.weekRole = "coolest";
     item.dataset.ts = d.time;
     const dirSuffix = (d.windDirDom != null && d.gustsMax && d.gustsMax >= 25)
       ? ` ${cardinal8(d.windDirDom)}` : "";
