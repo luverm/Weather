@@ -314,9 +314,12 @@ function renderMetrics(w) {
   el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
-  el.metricWindSub.textContent = dirLabel
-    ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
-    : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+  const shift = detectWindShift(w, dir);
+  const dirPart = dirLabel
+    ? (shift ? `${dirLabel} → ${shift}` : dirLabel)
+    : null;
+  const gustPart = `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+  el.metricWindSub.textContent = dirPart ? `${dirPart} · ${gustPart}` : gustPart;
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
@@ -877,6 +880,27 @@ function cardinal(deg) {
                 "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
   const i = Math.round(((deg % 360) + 360) % 360 / 22.5) % 16;
   return dirs[i];
+}
+
+function detectWindShift(w, currentDir) {
+  if (currentDir == null || !w?.hourly?.length) return null;
+  // Look 4–6 hours into the live future; surface only meaningful shifts (>= 45°).
+  const target = w.hourly.find((h) => h.time > Date.now() + 4 * 3600_000 && h.windDir != null);
+  if (!target) return null;
+  const diff = angularDiff(currentDir, target.windDir);
+  if (diff < 45) return null;
+  return cardinal8(target.windDir);
+}
+
+function cardinal8(deg) {
+  const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  const i = Math.round(((deg % 360) + 360) % 360 / 45) % 8;
+  return dirs[i];
+}
+
+function angularDiff(a, b) {
+  const d = Math.abs(((a - b) % 360 + 540) % 360 - 180);
+  return d;
 }
 
 function renderHourly(w) {
