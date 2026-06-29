@@ -238,6 +238,10 @@ async function toggleAudio() {
   if (audio.isEnabled()) await audio.disable();
   else {
     await audio.enable();
+    if (!audio.isEnabled()) {
+      ui.showToast("Audio isn't supported in this browser");
+      return;
+    }
     if (app.sampled) audio.setWeather(app.sampled, app.bucket);
   }
   ui.setAudioState(audio.isEnabled());
