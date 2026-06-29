@@ -561,6 +561,19 @@ function renderSkyTonight() {
   };
 }
 
+function hourInTz(ts) {
+  const tz = state.weather?.timezone;
+  if (tz && tz !== "auto") {
+    try {
+      const parts = new Intl.DateTimeFormat(undefined, {
+        timeZone: tz, hour: "2-digit", hour12: false,
+      }).formatToParts(new Date(ts));
+      return (parts.find((p) => p.type === "hour")?.value ?? "00").padStart(2, "0");
+    } catch { /* fall through */ }
+  }
+  return new Date(ts).getHours().toString().padStart(2, "0");
+}
+
 function fmtTime(ts) {
   if (!ts) return "—";
   const tz = state.weather?.timezone;
@@ -1206,7 +1219,7 @@ function toggleDailyExpand(item, d, w) {
     const pct = ((h.temp - tMin) / tSpan) * 100;
     const height = 10 + (pct / 100) * 36;
     const precipLevel = h.pop >= 60 ? 2 : h.pop >= 25 ? 1 : 0;
-    const hh = new Date(h.time).getHours().toString().padStart(2, "0");
+    const hh = hourInTz(h.time);
     return `<div class="daily-expand-bar" data-precip="${precipLevel}" style="height:${height.toFixed(1)}px" title="${hh}:00 · ${Math.round(convertTemp(h.temp))}° · ${h.pop}%"><span>${Math.round(convertTemp(h.temp))}°</span></div>`;
   }).join("");
   item.appendChild(box);
