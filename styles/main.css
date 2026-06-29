@@ -289,9 +289,17 @@ html[data-reduce-motion="true"] *::after {
 .icon-btn:hover { color: var(--fg); transform: translateY(-1px); background: var(--glass-strong); }
 .icon-btn:active { transform: translateY(0) scale(0.97); }
 .icon-btn svg { width: 20px; height: 20px; }
-.icon-btn .sound-waves { opacity: 0; transition: opacity 240ms var(--ease); }
+.icon-btn .sound-waves { opacity: 0; transition: opacity 240ms var(--ease); transform-origin: 12px 12px; }
 .icon-btn.on { color: var(--accent); }
-.icon-btn.on .sound-waves { opacity: 1; }
+.icon-btn.on .sound-waves {
+  opacity: 1;
+  animation: sound-pulse 2.4s ease-in-out infinite;
+}
+@keyframes sound-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+:root[data-reduce-motion="true"] .icon-btn.on .sound-waves { animation: none; opacity: 1; }
 
 /* ---------- Saved locations strip ---------- */
 .places-strip {
