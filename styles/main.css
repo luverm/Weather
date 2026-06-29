@@ -962,6 +962,67 @@ kbd {
 .moon-meta strong { display: block; font-size: 14px; font-weight: 500; }
 .moon-detail { font-size: 11.5px; color: var(--fg-dim); }
 
+.sky-tonight {
+  margin-top: 2px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  display: grid;
+  gap: 4px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--stroke);
+  text-align: left;
+  color: var(--fg);
+  cursor: pointer;
+  font: inherit;
+  transition: background 200ms var(--ease), border-color 200ms var(--ease), transform 200ms var(--ease);
+}
+.sky-tonight:hover { background: rgba(255,255,255,0.07); }
+.sky-tonight:active { transform: scale(0.99); }
+.sky-tonight:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sky-tonight-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.sky-tonight-label {
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.sky-tonight-score {
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(154,209,255,0.14);
+  color: var(--accent);
+  white-space: nowrap;
+}
+.sky-tonight[data-tone="great"] .sky-tonight-score {
+  background: rgba(143, 224, 161, 0.18);
+  color: #9be0a3;
+}
+.sky-tonight[data-tone="good"] .sky-tonight-score {
+  background: rgba(154,209,255,0.18);
+  color: #9ad1ff;
+}
+.sky-tonight[data-tone="fair"] .sky-tonight-score {
+  background: rgba(255,210,140,0.18);
+  color: #ffd28c;
+}
+.sky-tonight[data-tone="poor"] .sky-tonight-score {
+  background: rgba(255,140,150,0.18);
+  color: #ff8c96;
+}
+.sky-tonight-detail {
+  font-size: 11px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+}
+
 .sun-row { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .sun-item { display: grid; gap: 2px; }
 .sun-label { font-size: 10.5px; color: var(--fg-dim); letter-spacing: 0.14em; text-transform: uppercase; }

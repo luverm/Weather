@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { skyTonight } from "./stargazing.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -45,6 +46,9 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  skyTonight: $("#sky-tonight"),
+  skyTonightScore: $("#sky-tonight-score"),
+  skyTonightDetail: $("#sky-tonight-detail"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -478,6 +482,7 @@ function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  renderSkyTonight();
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
@@ -494,6 +499,29 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+}
+
+function renderSkyTonight() {
+  if (!el.skyTonight) return;
+  const sky = state.weather ? skyTonight(state.weather) : null;
+  if (!sky) {
+    el.skyTonight.hidden = true;
+    return;
+  }
+  el.skyTonight.hidden = false;
+  el.skyTonight.dataset.tone = sky.tone;
+  el.skyTonightScore.textContent = `${sky.label} · ${sky.overall}`;
+  const parts = [];
+  if (sky.window) {
+    parts.push(`Best ${fmtTime(sky.window.start)}–${fmtTime(sky.window.end)}`);
+  }
+  if (sky.avgClouds != null) parts.push(`${sky.avgClouds}% cloud`);
+  parts.push(`moon ${Math.round(sky.moonIllum * 100)}%`);
+  el.skyTonightDetail.textContent = parts.join(" · ");
+  const jumpTo = sky.window?.start ?? sky.windowStart;
+  el.skyTonight.onclick = () => {
+    if (jumpTo) state.handlers.onHourClick?.(jumpTo);
+  };
 }
 
 function fmtTime(ts) {
