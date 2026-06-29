@@ -55,6 +55,8 @@ const el = {
   sunDaylight: $("#sun-daylight"),
   sunDelta: $("#sun-delta"),
   sunShine: $("#sun-shine"),
+  goldenHour: $("#golden-hour"),
+  goldenText: $("#golden-text"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -129,6 +131,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  goldenTimer: null,
   localTimer: null,
 };
 
@@ -559,6 +562,52 @@ function renderSun(w) {
   renderSunshine(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleGoldenHour(w);
+}
+
+function scheduleGoldenHour(w) {
+  if (state.goldenTimer) { clearInterval(state.goldenTimer); state.goldenTimer = null; }
+  if (!el.goldenHour) return;
+  const events = collectGoldenEvents(w);
+  if (!events.length) { el.goldenHour.hidden = true; return; }
+
+  const update = () => {
+    const now = Date.now();
+    // Active window (we're inside one)?
+    const inside = events.find((e) => now >= e.start && now <= e.end);
+    if (inside) {
+      el.goldenHour.hidden = false;
+      el.goldenHour.dataset.state = "active";
+      const minsLeft = Math.max(0, Math.round((inside.end - now) / 60_000));
+      el.goldenText.textContent = `${inside.label} now · ${minsLeft}m left`;
+      return;
+    }
+    // Next upcoming within 3h?
+    const upcoming = events.find((e) => e.start > now && e.start - now <= 3 * 3600_000);
+    if (upcoming) {
+      el.goldenHour.hidden = false;
+      el.goldenHour.dataset.state = "soon";
+      const minsTo = Math.round((upcoming.start - now) / 60_000);
+      el.goldenText.textContent = minsTo >= 60
+        ? `${upcoming.label} in ${Math.floor(minsTo / 60)}h ${minsTo % 60}m`
+        : `${upcoming.label} in ${minsTo}m`;
+      return;
+    }
+    el.goldenHour.hidden = true;
+  };
+  update();
+  state.goldenTimer = setInterval(update, 60_000);
+}
+
+function collectGoldenEvents(w) {
+  const out = [];
+  const days = w?.daily || [];
+  for (const d of days) {
+    if (d.sunrise) out.push({ label: "Golden hour", start: d.sunrise, end: d.sunrise + 60 * 60_000, kind: "rise" });
+    if (d.sunset) out.push({ label: "Golden hour", start: d.sunset - 60 * 60_000, end: d.sunset, kind: "set" });
+  }
+  out.sort((a, b) => a.start - b.start);
+  return out;
 }
 
 function renderSunshine(w) {
