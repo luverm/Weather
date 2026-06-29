@@ -1637,6 +1637,20 @@ kbd {
   color: #9ad1ff;
   vertical-align: 1px;
 }
+.daily-item[data-week-role="wettest"] .daily-day::after {
+  content: "wettest";
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(126, 198, 255, 0.18);
+  color: #7ec6ff;
+  vertical-align: 1px;
+}
 .daily-day { font-size: 13px; font-weight: 500; }
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
 .daily-range {
