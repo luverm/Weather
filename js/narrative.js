@@ -1,6 +1,8 @@
 // Build a short natural-language summary from the weather data.
 // Picks the most noteworthy signal: rain arrival, cold snap, heat, wind, etc.
 
+import { skyTonight } from "./stargazing.js";
+
 function fmtHour(ts) {
   const d = new Date(ts);
   const m = d.getMinutes();
@@ -107,6 +109,15 @@ export function narrate(weather) {
       bits.push("Pressure is rising — skies tend to clear soon.");
     } else if (direction === "falling" && Math.abs(delta) >= 1.5) {
       bits.push("Pressure is falling — watch for weather moving in.");
+    }
+  }
+
+  // Stargazing tonight — only when the score is excellent and we have room.
+  if (bits.length < 2) {
+    const sky = skyTonight(weather);
+    if (sky && sky.overall >= 78 && sky.window) {
+      const fmt = fmtHour;
+      bits.push(`Stargazing tonight: ${sky.label.toLowerCase()} ${fmt(sky.window.start)}–${fmt(sky.window.end)}.`);
     }
   }
 
