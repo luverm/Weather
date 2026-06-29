@@ -1072,9 +1072,16 @@ function renderDaily(w) {
 
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
-  el.dailyIconStrip.innerHTML = days.map((d) =>
-    `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
-  ).join("");
+  el.dailyIconStrip.innerHTML = days.map((d) => {
+    const ts = d.sunrise || d.time;
+    return `<button type="button" class="strip-day" data-ts="${ts}" title="${escapeHtml(d.label || d.condition || "")}" aria-label="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</button>`;
+  }).join("");
+  el.dailyIconStrip.querySelectorAll(".strip-day").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const ts = parseInt(btn.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
 }
 
 function renderDailySpark(days) {
