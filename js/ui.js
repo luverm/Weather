@@ -11,6 +11,7 @@ import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { skyTonight } from "./stargazing.js";
+import { estimateSunshineHours } from "./sunshine.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -53,6 +54,7 @@ const el = {
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
   sunDelta: $("#sun-delta"),
+  sunShine: $("#sun-shine"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -554,8 +556,22 @@ function renderSun(w) {
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
   renderDaylightDelta(w);
+  renderSunshine(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderSunshine(w) {
+  if (!el.sunShine) return;
+  const sun = estimateSunshineHours(w);
+  if (!sun || sun.samples < 4) {
+    el.sunShine.hidden = true;
+    return;
+  }
+  el.sunShine.hidden = false;
+  // Round to nearest 0.5h for a friendlier number.
+  const total = Math.round(sun.total * 2) / 2;
+  el.sunShine.textContent = `≈ ${total}h sun`;
 }
 
 function renderDaylightDelta(w) {
