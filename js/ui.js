@@ -524,6 +524,12 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+  // In the southern hemisphere, the lit side of the moon is mirrored.
+  if (state.place?.lat != null && state.place.lat < 0) {
+    el.moonLit.setAttribute("transform", "scale(-1,1)");
+  } else {
+    el.moonLit.removeAttribute("transform");
+  }
 }
 
 function renderSkyTonight() {
