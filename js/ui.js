@@ -240,7 +240,7 @@ export const ui = {
     if (on) {
       el.hintText.textContent = "Drag to explore future weather.";
     } else {
-      el.hintText.innerHTML = 'Drag the slider, hover the chart, or press <kbd>?</kbd> for shortcuts.';
+      el.hintText.innerHTML = 'Drag the slider, hover the chart, or press <kbd>?</kbd> for the full shortcut list.';
     }
   },
   setAudioState(on) {
