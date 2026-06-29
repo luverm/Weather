@@ -222,12 +222,15 @@ async function loadByCoords(place) {
 
 async function useGeolocation() {
   ui.setLoading("Locating…");
+  ui.markLocateBusy(true);
   try {
     const { lat, lon } = await getLocation();
     await loadByCoords({ name: "Current location", lat, lon });
   } catch {
     ui.showToast("Location denied — pick a city");
     await loadByCoords({ name: "Reykjavík", country: "Iceland", lat: 64.1466, lon: -21.9426 });
+  } finally {
+    ui.markLocateBusy(false);
   }
 }
 

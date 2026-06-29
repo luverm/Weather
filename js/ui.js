@@ -173,6 +173,11 @@ export const ui = {
     if (!el.refreshBtn) return;
     el.refreshBtn.classList.toggle("spinning", !!on);
   },
+  markLocateBusy(on) {
+    if (!el.locateBtn) return;
+    el.locateBtn.classList.toggle("locating", !!on);
+    el.locateBtn.disabled = !!on;
+  },
   setLoading(text) { el.placeSub.textContent = text; },
   setPlace(place) {
     state.place = place;
