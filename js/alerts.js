@@ -132,6 +132,18 @@ export function buildAlerts(weather) {
     });
   }
 
+  // ---- Big temperature swing ----
+  const swing = bigSwing(hours);
+  if (swing) {
+    out.push({
+      id: "temp-swing",
+      severity: "info",
+      title: swing.dir === "drop" ? "Big drop ahead" : "Big rise ahead",
+      detail: `${Math.round(swing.size)}° ${swing.dir} by ${shortClock(swing.ts)}.`,
+      ts: swing.ts,
+    });
+  }
+
   // ---- UV (only if not already mentioned by heat) ----
   if (!out.some((a) => a.id === "severe-heat" || a.id === "heat")
       && weather.uvPeak?.value >= 9) {
@@ -149,6 +161,25 @@ export function buildAlerts(weather) {
   return dedupe(out)
     .sort((a, b) => (SEV[b.severity] ?? 0) - (SEV[a.severity] ?? 0))
     .slice(0, 4);
+}
+
+function bigSwing(hours) {
+  if (!hours.length) return null;
+  const now = hours[0]?.temp;
+  if (now == null) return null;
+  let drop = { size: 0, ts: null };
+  let rise = { size: 0, ts: null };
+  for (const h of hours) {
+    if (h.temp == null) continue;
+    const delta = h.temp - now;
+    if (delta < -drop.size) drop = { size: -delta, ts: h.time };
+    if (delta > rise.size) rise = { size: delta, ts: h.time };
+  }
+  // Only report dramatic swings.
+  const THRESHOLD = 12;
+  if (drop.size >= THRESHOLD && drop.size >= rise.size) return { dir: "drop", size: drop.size, ts: drop.ts };
+  if (rise.size >= THRESHOLD) return { dir: "rise", size: rise.size, ts: rise.ts };
+  return null;
 }
 
 function hottestHour(hours) {
