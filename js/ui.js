@@ -90,6 +90,12 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcGoldAm: $("#sun-arc-gold-am"),
+  sunArcGoldPm: $("#sun-arc-gold-pm"),
+  sunArcBlueAm: $("#sun-arc-blue-am"),
+  sunArcBluePm: $("#sun-arc-blue-pm"),
+  goldenLine: $("#golden-line"),
+  goldenText: $("#golden-text"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -122,6 +128,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  goldenTimer: null,
   localTimer: null,
 };
 
@@ -523,6 +530,129 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleGoldenHour(w);
+}
+
+// Golden / blue hour ribbons on the sun arc + a live text line below it.
+//
+// We approximate the golden window as the 45 min on either side of the
+// horizon (sunrise → +45m and sunset − 45m → sunset). The blue window is the
+// 30 min on the night side of each transition. These are conservative single
+// values — true durations vary with latitude/season, but the approximation is
+// good enough for planning and matches what photographers expect at most
+// latitudes outside the polar regions.
+const GOLD_MIN = 45 * 60_000;
+const BLUE_MIN = 30 * 60_000;
+
+function bezierPoint(t) {
+  // Quadratic Bezier (10,74) → (100,-26) → (190,74), matches scheduleSunArc.
+  const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
+  const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
+  return { x, y };
+}
+
+function arcBandPath(fStart, fEnd) {
+  // Sample 8 points across the bezier segment for a smooth polyline.
+  const f0 = clamp01(Math.min(fStart, fEnd));
+  const f1 = clamp01(Math.max(fStart, fEnd));
+  if (f1 - f0 < 0.001) return "";
+  const steps = 8;
+  let d = "";
+  for (let i = 0; i <= steps; i++) {
+    const t = f0 + ((f1 - f0) * i) / steps;
+    const { x, y } = bezierPoint(t);
+    d += (i === 0 ? "M" : "L") + x.toFixed(2) + "," + y.toFixed(2) + " ";
+  }
+  return d.trim();
+}
+
+function scheduleGoldenHour(w) {
+  if (state.goldenTimer) { clearInterval(state.goldenTimer); state.goldenTimer = null; }
+  if (!el.goldenLine) return;
+  if (!w?.sunrise || !w?.sunset || w.sunset <= w.sunrise) {
+    setBandPaths({});
+    el.goldenLine.hidden = true;
+    return;
+  }
+
+  const sr = w.sunrise, ss = w.sunset;
+  // Fractions along the arc — clamped to [0, 1] to keep ribbons on-arc.
+  const dayLen = ss - sr;
+  const goldFracAm = Math.min(0.5, GOLD_MIN / dayLen);
+  const goldFracPm = Math.min(0.5, GOLD_MIN / dayLen);
+  setBandPaths({
+    goldAm: arcBandPath(0, goldFracAm),
+    goldPm: arcBandPath(1 - goldFracPm, 1),
+    // Blue bands sit just off either horizon — represented as a thin segment
+    // hugging x=10 / x=190 along the baseline.
+    blueAm: blueBandPath("am"),
+    bluePm: blueBandPath("pm"),
+  });
+
+  const windows = buildGoldenWindows(w);
+
+  const update = () => {
+    const now = Date.now();
+    // Find the next active or upcoming window.
+    const active = windows.find((win) => now >= win.start && now <= win.end);
+    const upcoming = windows.find((win) => win.start > now);
+    const win = active || upcoming;
+    if (!win) { el.goldenLine.hidden = true; return; }
+    el.goldenLine.hidden = false;
+    el.goldenLine.dataset.kind = win.kind;
+    el.goldenLine.dataset.now = active ? "true" : "false";
+    el.goldenText.textContent = formatGoldenLine(win, active, now);
+    // Highlight whichever band on the arc is currently live.
+    for (const id of ["goldAm", "goldPm", "blueAm", "bluePm"]) {
+      const node = el[`sunArc${id[0].toUpperCase() + id.slice(1)}`];
+      if (node) node.classList.toggle("is-now", !!active && active.bandId === id);
+    }
+  };
+  update();
+  state.goldenTimer = setInterval(update, 30_000);
+}
+
+function setBandPaths({ goldAm = "", goldPm = "", blueAm = "", bluePm = "" }) {
+  if (el.sunArcGoldAm) el.sunArcGoldAm.setAttribute("d", goldAm);
+  if (el.sunArcGoldPm) el.sunArcGoldPm.setAttribute("d", goldPm);
+  if (el.sunArcBlueAm) el.sunArcBlueAm.setAttribute("d", blueAm);
+  if (el.sunArcBluePm) el.sunArcBluePm.setAttribute("d", bluePm);
+}
+
+function blueBandPath(side) {
+  // A short hint of band just below the horizon on the night side of each
+  // transition — sits along y=74 hugging the relevant horizon endpoint.
+  if (side === "am") return "M3 74 L10 74";
+  return "M190 74 L197 74";
+}
+
+function buildGoldenWindows(w) {
+  // Collect golden + blue windows across today + a couple of upcoming days so
+  // "next window" can roll past midnight.
+  const out = [];
+  const days = (w.daily || []).filter((d) => d.sunrise && d.sunset);
+  for (const d of days) {
+    out.push({ kind: "blue", side: "am", bandId: "blueAm", start: d.sunrise - BLUE_MIN, end: d.sunrise });
+    out.push({ kind: "gold", side: "am", bandId: "goldAm", start: d.sunrise, end: d.sunrise + GOLD_MIN });
+    out.push({ kind: "gold", side: "pm", bandId: "goldPm", start: d.sunset - GOLD_MIN, end: d.sunset });
+    out.push({ kind: "blue", side: "pm", bandId: "bluePm", start: d.sunset, end: d.sunset + BLUE_MIN });
+  }
+  out.sort((a, b) => a.start - b.start);
+  return out;
+}
+
+function formatGoldenLine(win, active, now) {
+  const name = win.kind === "gold" ? "Golden hour" : "Blue hour";
+  const range = `${fmtTime(win.start)} → ${fmtTime(win.end)}`;
+  if (active) {
+    const left = Math.max(0, Math.round((win.end - now) / 60_000));
+    return `${name} now · ends in ${left}m · ${range}`;
+  }
+  const until = Math.max(0, Math.round((win.start - now) / 60_000));
+  const inLabel = until >= 60
+    ? `${Math.floor(until / 60)}h ${until % 60}m`
+    : `${until}m`;
+  return `${name} in ${inLabel} · ${range}`;
 }
 
 function scheduleSunArc(w) {
