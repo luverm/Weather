@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { computeLightHours, nextLightWindow } from "./light-hours.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -90,6 +91,10 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  lightCard: $("#light-card"),
+  lightList: $("#light-list"),
+  lightTitle: $("#light-title"),
+  lightCountdown: $("#light-countdown"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -123,6 +128,7 @@ const state = {
   sunTimer: null,
   sunArcTimer: null,
   localTimer: null,
+  lightTimer: null,
 };
 
 export const ui = {
@@ -183,6 +189,7 @@ export const ui = {
     renderAirQuality(weather.airQuality);
     renderMoon(weather.moon);
     renderSun(weather);
+    renderLightHours(weather);
     renderHourly(weather);
     renderDaily(weather);
     renderNowcast(weather);
@@ -585,6 +592,84 @@ function scheduleSunCountdown(w) {
   };
   update();
   state.sunTimer = setInterval(update, 30_000);
+}
+
+function renderLightHours(w) {
+  if (!el.lightCard || !el.lightList) return;
+  // We compute from today's sunrise/sunset and — once yesterday's dusk is
+  // behind us — roll forward into tomorrow's dawn so the "next" pointer
+  // never dead-ends.
+  const daily = w?.daily || [];
+  if (!daily.length) { el.lightCard.hidden = true; return; }
+  const lat = state.place?.lat;
+  const today = computeLightHours(daily[0]?.sunrise, daily[0]?.sunset, lat);
+  const tomorrow = computeLightHours(daily[1]?.sunrise, daily[1]?.sunset, lat);
+  if (!today) { el.lightCard.hidden = true; return; }
+  el.lightCard.hidden = false;
+  // Windows we show: today's four, plus tomorrow's dawn pair when today's
+  // dusk has already ended (so users still see an actionable upcoming window).
+  let windows = today.windows.slice();
+  if (tomorrow) {
+    const lastDusk = today.windows[today.windows.length - 1].end;
+    if (Date.now() > lastDusk) windows = tomorrow.windows.slice();
+  }
+  el.lightList.innerHTML = windows.map((wnd) => {
+    const range = `${fmtTime(wnd.start)}–${fmtTime(wnd.end)}`;
+    const tomorrowLabel = wnd.start > Date.now() + 20 * 3600_000 ? " · tomorrow" : "";
+    return `
+      <button type="button" class="light-row" data-tone="${wnd.tone}" data-ts="${Math.round((wnd.start + wnd.end) / 2)}">
+        <span class="light-swatch"></span>
+        <span class="light-label">${escapeHtml(wnd.label)} <span class="light-phase">${escapeHtml(wnd.phase)}${tomorrowLabel}</span></span>
+        <span class="light-times">${escapeHtml(range)}</span>
+      </button>
+    `;
+  }).join("");
+  el.lightList.querySelectorAll(".light-row[data-ts]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const ts = parseInt(btn.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
+  scheduleLightCountdown(today, tomorrow);
+}
+
+function scheduleLightCountdown(today, tomorrow) {
+  if (state.lightTimer) { clearInterval(state.lightTimer); state.lightTimer = null; }
+  if (!el.lightCountdown || !el.lightTitle) return;
+  const update = () => {
+    const now = Date.now();
+    // Prefer today's next window; fall back to tomorrow's if today's dusk passed.
+    let picked = nextLightWindow(today, now);
+    if (!picked && tomorrow) picked = nextLightWindow(tomorrow, now);
+    // Also highlight the active row.
+    el.lightList?.querySelectorAll(".light-row").forEach((row) => {
+      const mid = parseInt(row.dataset.ts, 10);
+      row.classList.remove("active", "upcoming");
+      if (!picked || !mid) return;
+      const half = 20 * 60_000;
+      if (Math.abs(mid - (picked.start + picked.end) / 2) < half) {
+        row.classList.add(picked.active ? "active" : "upcoming");
+      }
+    });
+    if (!picked) {
+      el.lightTitle.textContent = "Golden hour";
+      el.lightCountdown.textContent = "";
+      return;
+    }
+    const label = `${picked.label} (${picked.phase})`;
+    if (picked.active) {
+      const mins = Math.max(0, Math.round(picked.msRemaining / 60_000));
+      el.lightTitle.textContent = label;
+      el.lightCountdown.textContent = mins > 0 ? `ends in ${mins}m` : "ending";
+    } else {
+      const mins = Math.max(0, Math.round(picked.msUntil / 60_000));
+      const pretty = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
+      el.lightTitle.textContent = `${label} in`;
+      el.lightCountdown.textContent = pretty;
+    }
+  };
+  update();
+  state.lightTimer = setInterval(update, 30_000);
 }
 
 function renderAdvice(w) {

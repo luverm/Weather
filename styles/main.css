@@ -977,6 +977,71 @@ kbd {
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
 
+/* ---------- Light-hours card (golden + blue) ---------- */
+#light-card { position: relative; }
+#light-card[hidden] { display: none; }
+#light-card .light-list {
+  display: grid;
+  gap: 6px;
+}
+#light-card .light-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  color: var(--fg);
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  transition: background 160ms var(--ease), transform 160ms var(--ease);
+  cursor: pointer;
+  min-width: 0;
+}
+#light-card .light-row:hover { background: rgba(255,255,255,0.05); transform: translateX(1px); }
+#light-card .light-row.upcoming { background: rgba(255,255,255,0.05); }
+#light-card .light-row.active {
+  background: linear-gradient(90deg, rgba(255,210,140,0.14), rgba(255,210,140,0));
+  box-shadow: inset 0 0 0 1px rgba(255,210,140,0.35);
+}
+#light-card .light-swatch {
+  width: 10px; height: 10px; border-radius: 50%;
+  box-shadow: 0 0 8px currentColor;
+}
+#light-card .light-row[data-tone="golden"] .light-swatch {
+  background: linear-gradient(135deg, #ffe0a3, #ff9c6a);
+  color: rgba(255,180,110,0.55);
+}
+#light-card .light-row[data-tone="blue"] .light-swatch {
+  background: linear-gradient(135deg, #8fb0ff, #a48bff);
+  color: rgba(140,160,255,0.55);
+}
+#light-card .light-label {
+  min-width: 0;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#light-card .light-phase {
+  color: var(--fg-dim);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
+  margin-left: 4px;
+}
+#light-card .light-times {
+  font-variant-numeric: tabular-nums;
+  font-size: 12.5px;
+  color: var(--fg-muted);
+}
+#light-card .light-row.active .light-times { color: var(--fg); }
+[data-tone="warm"] #light-card .light-row.active {
+  background: linear-gradient(90deg, rgba(255,225,190,0.22), rgba(255,225,190,0));
+  box-shadow: inset 0 0 0 1px rgba(255,225,190,0.4);
+}
+
 /* ---------- Radar map ---------- */
 .radar {
   padding: 12px;
