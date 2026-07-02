@@ -976,6 +976,41 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+#sun-arc-golden {
+  filter: drop-shadow(0 0 4px rgba(255,180,110,0.55));
+  transition: opacity 400ms var(--ease);
+}
+.sun-arc-golden-mark {
+  filter: drop-shadow(0 0 3px rgba(255,190,120,0.9));
+  transition: cx 600ms var(--ease), cy 600ms var(--ease), opacity 400ms var(--ease);
+}
+.golden-hour-status {
+  margin: -2px 0 6px;
+  font-size: 11px;
+  color: #ffcf9f;
+  letter-spacing: 0.06em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-self: center;
+  justify-self: center;
+  align-items: center;
+  gap: 6px;
+}
+.golden-hour-status::before {
+  content: "";
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #ffcf7a;
+  box-shadow: 0 0 6px rgba(255,207,122,0.7);
+}
+.golden-hour-status[data-state="upcoming"] {
+  color: rgba(255,207,159,0.72);
+}
+.golden-hour-status[data-state="upcoming"]::before {
+  background: rgba(255,207,122,0.55);
+  box-shadow: none;
+}
+.golden-hour-status[hidden] { display: none; }
 
 /* ---------- Radar map ---------- */
 .radar {

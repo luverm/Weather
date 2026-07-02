@@ -90,6 +90,10 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcGolden: $("#sun-arc-golden"),
+  sunArcGoldenDawn: $("#sun-arc-golden-dawn"),
+  sunArcGoldenDusk: $("#sun-arc-golden-dusk"),
+  goldenHourStatus: $("#golden-hour-status"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -530,9 +534,50 @@ function scheduleSunArc(w) {
   if (state.sunArcTimer) { clearInterval(state.sunArcTimer); state.sunArcTimer = null; }
   if (!w?.sunrise || !w?.sunset) return;
 
+  // Quadratic Bezier from (10,74) via (100,-26) to (190,74). Evaluate at t∈[0,1].
+  const bez = (t) => ({
+    x: (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190,
+    y: (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74,
+  });
+
+  // Layout golden-hour markers + band once per weather load — daylight length
+  // doesn't change per minute.
+  const sr = w.sunrise, ss = w.sunset;
+  const daylight = ss - sr;
+  // Golden hour window is loosely ~1h after sunrise / ~1h before sunset;
+  // scale down for polar days where daylight is short so we always show *something*.
+  const goldenSpan = Math.min(3600_000, daylight * 0.25);
+  const dawnEnd = sr + goldenSpan;
+  const duskStart = ss - goldenSpan;
+  const tDawn = clamp01(goldenSpan / daylight);
+  const tDusk = clamp01(1 - goldenSpan / daylight);
+  if (el.sunArcGoldenDawn) {
+    const p = bez(tDawn);
+    el.sunArcGoldenDawn.setAttribute("cx", p.x.toFixed(1));
+    el.sunArcGoldenDawn.setAttribute("cy", p.y.toFixed(1));
+    el.sunArcGoldenDawn.style.opacity = daylight > 3600_000 ? "0.9" : "0";
+  }
+  if (el.sunArcGoldenDusk) {
+    const p = bez(tDusk);
+    el.sunArcGoldenDusk.setAttribute("cx", p.x.toFixed(1));
+    el.sunArcGoldenDusk.setAttribute("cy", p.y.toFixed(1));
+    el.sunArcGoldenDusk.style.opacity = daylight > 3600_000 ? "0.9" : "0";
+  }
+  if (el.sunArcGolden) {
+    // Use pathLength=100 so dashes map cleanly to percentages. Draw two
+    // segments: [0..tDawn*100] (dawn window) and [tDusk*100..100] (dusk window).
+    const dawnPct = tDawn * 100;
+    const duskPct = tDusk * 100;
+    const dashes = [
+      dawnPct.toFixed(2), (duskPct - dawnPct).toFixed(2),
+      (100 - duskPct).toFixed(2), 0,
+    ].join(" ");
+    el.sunArcGolden.setAttribute("stroke-dasharray", dashes);
+    el.sunArcGolden.style.opacity = daylight > 3600_000 ? "1" : "0";
+  }
+
   const update = () => {
     const now = Date.now();
-    const sr = w.sunrise, ss = w.sunset;
     let frac;
     if (now < sr) {
       // Before sunrise: ride the night arc fraction toward 0 (left horizon).
@@ -542,20 +587,61 @@ function scheduleSunArc(w) {
     } else {
       frac = (now - sr) / (ss - sr);
     }
-    // Quadratic Bezier from (10,74) to (190,74) via (100,-26). The midpoint
-    // (50% t) reaches y = 0.5*(74) + 0.5*(74 + 2*(-26-74)/2*(...)) — easier
-    // to evaluate the curve directly.
-    const t = clamp01(frac);
-    const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
-    const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
-    el.sunArcMarker.setAttribute("cx", x.toFixed(1));
-    el.sunArcMarker.setAttribute("cy", y.toFixed(1));
+    const p = bez(clamp01(frac));
+    el.sunArcMarker.setAttribute("cx", p.x.toFixed(1));
+    el.sunArcMarker.setAttribute("cy", p.y.toFixed(1));
     // After sunset, dim the marker so it visually settles.
     const isUp = now >= sr && now <= ss;
     el.sunArcMarker.style.opacity = isUp ? "1" : "0.45";
+    updateGoldenHourStatus(now, sr, ss, dawnEnd, duskStart, goldenSpan);
   };
   update();
   state.sunArcTimer = setInterval(update, 60_000);
+}
+
+function updateGoldenHourStatus(now, sr, ss, dawnEnd, duskStart, goldenSpan) {
+  const node = el.goldenHourStatus;
+  if (!node) return;
+  // No visible golden hour when daylight is very short.
+  const daylight = ss - sr;
+  if (daylight <= 3600_000) { node.hidden = true; return; }
+
+  const inDawn = now >= sr && now < dawnEnd;
+  const inDusk = now >= duskStart && now < ss;
+  if (inDawn || inDusk) {
+    const endsIn = Math.max(0, (inDawn ? dawnEnd : ss) - now);
+    node.hidden = false;
+    node.dataset.state = "active";
+    node.textContent = `Golden hour now · ends in ${humanMinutes(endsIn)}`;
+    return;
+  }
+  // Next upcoming window (dawn today, dusk today, dawn tomorrow…).
+  const upcoming = [
+    { kind: "dawn", ts: sr,        endsAt: dawnEnd  },
+    { kind: "dusk", ts: duskStart, endsAt: ss       },
+  ].filter((x) => x.ts > now).sort((a, b) => a.ts - b.ts)[0];
+  if (!upcoming) {
+    // Same-day windows are done — announce tomorrow's dawn if we can guess it.
+    const tomorrow = sr + 24 * 3600_000;
+    node.hidden = false;
+    node.dataset.state = "upcoming";
+    node.textContent = `Golden hour returns in ${humanMinutes(tomorrow - now)}`;
+    return;
+  }
+  node.hidden = false;
+  node.dataset.state = "upcoming";
+  const label = upcoming.kind === "dawn" ? "Golden hour begins" : "Evening golden hour";
+  node.textContent = `${label} in ${humanMinutes(upcoming.ts - now)}`;
+}
+
+function humanMinutes(ms) {
+  const mins = Math.max(0, Math.round(ms / 60_000));
+  if (mins >= 60) {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return m ? `${h}h ${m}m` : `${h}h`;
+  }
+  return `${mins}m`;
 }
 
 function clamp01(v) { return Math.max(0, Math.min(1, v)); }
