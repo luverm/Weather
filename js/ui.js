@@ -55,6 +55,7 @@ const el = {
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
+  perfectChip: $("#perfect-chip"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
   pollenCard: $("#pollen-card"),
@@ -769,6 +770,30 @@ function renderAdvice(w) {
   } else {
     el.advice.hidden = true;
   }
+  renderPerfectChip(w);
+}
+
+// A little celebration when the current moment is genuinely lovely: mild
+// air, calm wind, no imminent rain, moderate UV in daylight. Kept strict
+// enough that it feels earned rather than routine.
+function renderPerfectChip(w) {
+  if (!el.perfectChip) return;
+  const feels = w?.feelsLike ?? w?.temp;
+  const wind = w?.windSpeed ?? 0;
+  const gust = w?.windGusts ?? wind;
+  const humidity = w?.humidity ?? 50;
+  const uv = w?.uv ?? 0;
+  const pop = w?.hourly?.[0]?.pop ?? 0;
+  const bad = w?.condition === "rain" || w?.condition === "snow" ||
+              w?.condition === "storm" || w?.condition === "fog";
+  const perfect =
+    !bad &&
+    feels != null && feels >= 16 && feels <= 24 &&
+    wind < 15 && gust < 25 &&
+    humidity >= 30 && humidity <= 70 &&
+    pop < 20 &&
+    (!w?.isDay || uv < 8);
+  el.perfectChip.hidden = !perfect;
 }
 
 function startLocaltime(w) {

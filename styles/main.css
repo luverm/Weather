@@ -756,6 +756,28 @@ html[data-reduce-motion="true"] *::after {
 }
 .advice-icon { color: var(--accent); flex: 0 0 auto; }
 
+.perfect-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 8px 0 0;
+  padding: 4px 10px 4px 6px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  background: linear-gradient(90deg, rgba(255,215,120,0.20), rgba(255,180,90,0.10) 80%, transparent);
+  border: 1px solid rgba(255,215,120,0.35);
+  color: #ffe1a8;
+  animation: slideInUp 500ms var(--ease) both;
+}
+.perfect-chip[hidden] { display: none; }
+.perfect-chip svg {
+  width: 14px; height: 14px;
+  color: #ffd06a;
+  filter: drop-shadow(0 0 4px rgba(255,215,120,0.6));
+}
+
 /* ---------- Hourly chart ---------- */
 .chart-card {
   padding: 12px 14px 10px;
