@@ -321,7 +321,7 @@ function renderLiveValues(w, { animate = true } = {}) {
   else el.temp.textContent = `${Math.round(temp)}°`;
   applyTempTint(w.temp);
   el.conditionLabel.innerHTML =
-    `<span class="condition-icon">${iconFor(w.condition)}</span>` +
+    `<span class="condition-icon">${iconFor(w.condition, w.isDay)}</span>` +
     `<span class="condition-text">${capitalize(w.label)}</span>`;
   if (el.feelsLikeText) el.feelsLikeText.textContent = `Feels like ${Math.round(feels)}°`;
   else el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
@@ -1008,7 +1008,7 @@ function renderHourly(w) {
     item.dataset.cond = h.condition;
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
-      <span class="forecast-icon">${iconFor(h.condition)}</span>
+      <span class="forecast-icon">${iconFor(h.condition, h.isDay)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
     `;
@@ -1271,10 +1271,14 @@ function renderNowcast(w) {
 }
 
 // ---------- Icons ----------
-function iconFor(condition) {
+function iconFor(condition, isDay = true) {
   const common = 'fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"';
   switch (condition) {
     case "clear":
+      if (!isDay) {
+        // Crescent moon (Boolean union expressed as a single path).
+        return `<svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6 6 0 0 0 10.5 10.5z" ${common}/></svg>`;
+      }
       return `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" ${common}/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5" ${common}/></svg>`;
     case "clouds":
       return `<svg viewBox="0 0 24 24"><path d="M7 17a4 4 0 010-8 5 5 0 019.9-1A4 4 0 0117 17H7z" ${common}/></svg>`;
