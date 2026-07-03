@@ -57,6 +57,7 @@ const el = {
   adviceText: $("#advice-text"),
   perfectChip: $("#perfect-chip"),
   topbarClock: $("#topbar-clock"),
+  placeLabelText: $("#place-label-text"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
   pollenCard: $("#pollen-card"),
@@ -329,6 +330,33 @@ function renderLiveValues(w, { animate = true } = {}) {
   else el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderFeelsCause(w);
   renderDayRange(w);
+  updatePlaceLabel(w);
+}
+
+// The hero label ("Now in") shifts to match the wall clock in the loaded
+// city's timezone: morning / afternoon / evening / tonight. When the user
+// scrubs into a future hour, the sampled time drives the label too, so it
+// reads coherently while exploring.
+function updatePlaceLabel(w) {
+  if (!el.placeLabelText) return;
+  const ts = w?._sampledTs ?? Date.now();
+  const tz = w?.timezone;
+  let hour = new Date(ts).getHours();
+  if (tz && tz !== "auto") {
+    try {
+      const p = new Intl.DateTimeFormat([], { timeZone: tz, hour: "2-digit", hour12: false })
+        .formatToParts(new Date(ts));
+      hour = parseInt(p.find((x) => x.type === "hour")?.value ?? "0", 10);
+    } catch { /* browser fallback */ }
+  }
+  const scrubbing = Math.abs((w?._sampledTs ?? Date.now()) - Date.now()) > 30 * 60_000;
+  let label;
+  if (hour < 5) label = scrubbing ? "Overnight in" : "Late night in";
+  else if (hour < 12) label = scrubbing ? "Morning in" : "This morning in";
+  else if (hour < 17) label = scrubbing ? "Afternoon in" : "This afternoon in";
+  else if (hour < 21) label = scrubbing ? "Evening in" : "This evening in";
+  else label = "Tonight in";
+  el.placeLabelText.textContent = label;
 }
 
 // Explain why feels-like diverges from the actual temp when the gap is
