@@ -84,6 +84,27 @@ ul { list-style: none; margin: 0; padding: 0; }
 }
 [data-tone="bright"] .vignette { opacity: 0.18; }
 
+.rainbow {
+  position: absolute;
+  top: 4vh;
+  right: -6vw;
+  width: min(60vw, 620px);
+  height: auto;
+  opacity: 0;
+  transform: translateY(20px) scale(0.98);
+  transition: opacity 1200ms var(--ease), transform 1400ms var(--ease);
+  filter: drop-shadow(0 8px 24px rgba(120, 100, 200, 0.25));
+  pointer-events: none;
+}
+html[data-rainbow] .rainbow {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .rainbow { transition: opacity 400ms linear; transform: none; }
+  html[data-rainbow] .rainbow { transform: none; }
+}
+
 /* ---------- Glass primitive ---------- */
 .glass {
   background: var(--glass);

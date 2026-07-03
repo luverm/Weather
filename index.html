@@ -32,6 +32,22 @@
     <canvas id="rain"></canvas>
     <canvas id="snow"></canvas>
     <canvas id="lightning"></canvas>
+    <svg class="rainbow" viewBox="0 0 320 200" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
+      <defs>
+        <linearGradient id="rainbow-grad" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0"    stop-color="#ff5c5c"/>
+          <stop offset="0.16" stop-color="#ff9a4a"/>
+          <stop offset="0.33" stop-color="#ffd857"/>
+          <stop offset="0.5"  stop-color="#7ee582"/>
+          <stop offset="0.66" stop-color="#5ab7ff"/>
+          <stop offset="0.83" stop-color="#6a6cff"/>
+          <stop offset="1"    stop-color="#b46bff"/>
+        </linearGradient>
+      </defs>
+      <path d="M20 200 A140 140 0 0 1 300 200" fill="none"
+            stroke="url(#rainbow-grad)" stroke-width="14"
+            stroke-linecap="round" opacity="0.55"/>
+    </svg>
     <div class="vignette"></div>
   </div>
 

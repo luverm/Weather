@@ -169,6 +169,10 @@ function applyScene(weather) {
     "content", toneToColor(sky.getTone())
   );
 
+  // Sunshower easter egg: rainbow arc when it's raining while the sun is up.
+  const isSunshower = sampled.condition === "rain" && sampled.isDay;
+  document.documentElement.toggleAttribute("data-rainbow", isSunshower);
+
   // Update audio to match whatever the scene now shows.
   audio.setWeather(sampled, bucket);
 
