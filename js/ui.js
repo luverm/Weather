@@ -486,6 +486,12 @@ function renderPressureSparkline(w) {
     (w.hourly || []).map((h) => h.pressure).filter((v) => v != null).slice(0, 12),
     { minSpan: 1.5 }
   );
+  // Tint pressure spark by trend direction so the sparkline visually agrees
+  // with the ▲/▼ badge above it.
+  const dir = w?.pressureTrend?.direction;
+  const parent = el.pressureSparkLine?.closest("svg");
+  if (parent) parent.dataset.trend = dir || "steady";
+
   drawSparkline(
     el.humiditySparkLine, el.humiditySparkFill,
     (w.hourly || []).map((h) => h.humidity).filter((v) => v != null).slice(0, 12),
