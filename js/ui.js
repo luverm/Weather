@@ -396,6 +396,18 @@ function renderMetrics(w) {
   } else if (el.windNeedle) {
     el.windNeedle.style.opacity = "0.3";
   }
+  // Tint the wind card by intensity so glance-scanning the metric row makes
+  // strong wind pop. Uses km/h; scales through Beaufort bands.
+  const windCard = document.querySelector(".metric-wind");
+  if (windCard) {
+    const kmh = w.windSpeed ?? 0;
+    let tint = "var(--accent)";
+    if (kmh >= 62) tint = "#ff6b6b";      // storm / hurricane
+    else if (kmh >= 39) tint = "#ff8f5a"; // gale
+    else if (kmh >= 20) tint = "#ffc47a"; // fresh
+    else if (kmh >= 6)  tint = "#c7d9ff"; // light breeze
+    windCard.style.setProperty("--wind-tint", tint);
+  }
   if (el.windBft) {
     const bft = beaufort(w.windSpeed);
     if (bft) {
