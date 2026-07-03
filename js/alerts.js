@@ -132,6 +132,33 @@ export function buildAlerts(weather) {
     });
   }
 
+  // ---- Air quality ----
+  const aqi = weather.airQuality?.aqi;
+  if (aqi != null) {
+    if (aqi >= 200) {
+      out.push({
+        id: "aq-very-unhealthy",
+        severity: "danger",
+        title: "Very unhealthy air",
+        detail: `AQI ${Math.round(aqi)} — limit outdoor activity, wear a mask.`,
+      });
+    } else if (aqi >= 150) {
+      out.push({
+        id: "aq-unhealthy",
+        severity: "warn",
+        title: "Unhealthy air",
+        detail: `AQI ${Math.round(aqi)} — sensitive groups stay in.`,
+      });
+    } else if (aqi >= 100) {
+      out.push({
+        id: "aq-sensitive",
+        severity: "info",
+        title: "Air quality alert",
+        detail: `AQI ${Math.round(aqi)} — unhealthy for sensitive groups.`,
+      });
+    }
+  }
+
   // ---- UV (only if not already mentioned by heat) ----
   if (!out.some((a) => a.id === "severe-heat" || a.id === "heat")
       && weather.uvPeak?.value >= 9) {
@@ -213,5 +240,7 @@ function dedupe(items) {
   if (ids.has("severe-heat")) drop.add("heat");
   if (ids.has("hard-freeze")) drop.add("frost");
   if (ids.has("heavy-rain") || ids.has("soaking-rain")) drop.add("wet-day");
+  if (ids.has("aq-very-unhealthy")) { drop.add("aq-unhealthy"); drop.add("aq-sensitive"); }
+  if (ids.has("aq-unhealthy")) drop.add("aq-sensitive");
   return items.filter((x) => !drop.has(x.id));
 }
