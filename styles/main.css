@@ -1756,6 +1756,17 @@ kbd {
 }
 .daily-temp-min { color: var(--fg-muted); text-align: right; }
 .daily-temp-max { color: var(--fg); text-align: right; font-weight: 500; }
+.daily-vs-today {
+  font-size: 10.5px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  margin-left: 4px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  vertical-align: 1px;
+}
+.daily-vs-today[data-dir="warmer"] { color: #ffb196; background: rgba(255,156,122,0.14); }
+.daily-vs-today[data-dir="cooler"] { color: #9ad1ff; background: rgba(154,209,255,0.14); }
 
 /* ---------- Hint + toast ---------- */
 .hint {

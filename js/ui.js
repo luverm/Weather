@@ -1126,6 +1126,7 @@ function renderDaily(w) {
     if (d.tempMax > gMax) gMax = d.tempMax;
   }
   const span = Math.max(1, gMax - gMin);
+  const todayMax = days[0]?.tempMax;
   days.forEach((d, i) => {
     const dt = new Date(d.time);
     const tz = state.weather?.timezone;
@@ -1143,6 +1144,17 @@ function renderDaily(w) {
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    // Warmer/cooler badge vs. today, °-scaled to the active unit. Rendered
+    // inside the max cell so the extra glyph lives on the same row.
+    let deltaChip = "";
+    if (i > 0 && todayMax != null && d.tempMax != null) {
+      const rawC = d.tempMax - todayMax;
+      const delta = Math.round(state.unit === "F" ? rawC * 9 / 5 : rawC);
+      if (delta !== 0) {
+        const dir = delta > 0 ? "warmer" : "cooler";
+        deltaChip = `<span class="daily-vs-today" data-dir="${dir}">${delta > 0 ? "+" : ""}${delta}°</span>`;
+      }
+    }
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
@@ -1150,7 +1162,7 @@ function renderDaily(w) {
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
       </div>
       <span class="daily-temp-min">${Math.round(convertTemp(d.tempMin))}°</span>
-      <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°</span>
+      <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°${deltaChip}</span>
       ${extra}
     `;
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
