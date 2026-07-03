@@ -276,11 +276,48 @@ function animateNumber(node, target, format) {
 
 function capitalize(s) { return (s || "").charAt(0).toUpperCase() + (s || "").slice(1); }
 
+// Tint the huge hero temperature so it visually reads hot or cold at a
+// glance. Cool blue below 5 °C, neutral in a mild 10 – 20 °C band, warmer
+// oranges up through 30 °C+. Always uses °C for the classification so the
+// scale doesn't shift when the user toggles °F.
+function applyTempTint(tempC) {
+  if (!el.temp) return;
+  if (tempC == null || !Number.isFinite(tempC)) {
+    el.temp.style.removeProperty("--temp-tint");
+    return;
+  }
+  // Anchor tones: freezing → chilly → mild → warm → hot.
+  const stops = [
+    { t: -10, c: [138, 200, 255] }, // cold blue
+    { t:   5, c: [180, 218, 255] }, // brisk sky
+    { t:  15, c: [239, 232, 220] }, // neutral warm-white
+    { t:  22, c: [255, 210, 178] }, // warm peach
+    { t:  30, c: [255, 156, 122] }, // hot coral
+    { t:  38, c: [255, 108, 108] }, // very hot
+  ];
+  let lo = stops[0], hi = stops[stops.length - 1];
+  for (let i = 0; i < stops.length - 1; i++) {
+    if (tempC >= stops[i].t && tempC <= stops[i + 1].t) {
+      lo = stops[i]; hi = stops[i + 1]; break;
+    }
+    if (tempC < stops[0].t) { lo = hi = stops[0]; break; }
+    if (tempC > stops[stops.length - 1].t) { lo = hi = stops[stops.length - 1]; break; }
+  }
+  const span = Math.max(0.001, hi.t - lo.t);
+  const f = Math.max(0, Math.min(1, (tempC - lo.t) / span));
+  const mix = (a, b) => Math.round(a + (b - a) * f);
+  const r = mix(lo.c[0], hi.c[0]);
+  const g = mix(lo.c[1], hi.c[1]);
+  const b = mix(lo.c[2], hi.c[2]);
+  el.temp.style.setProperty("--temp-tint", `rgb(${r}, ${g}, ${b})`);
+}
+
 function renderLiveValues(w, { animate = true } = {}) {
   const temp = convertTemp(w.temp);
   const feels = convertTemp(w.feelsLike ?? w.temp);
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
+  applyTempTint(w.temp);
   el.conditionLabel.innerHTML =
     `<span class="condition-icon">${iconFor(w.condition)}</span>` +
     `<span class="condition-text">${capitalize(w.label)}</span>`;

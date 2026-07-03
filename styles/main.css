@@ -373,11 +373,18 @@ html[data-reduce-motion="true"] *::after {
 }
 .temp-value {
   display: inline-block;
-  background: linear-gradient(180deg, var(--fg) 0%, color-mix(in oklab, var(--fg) 70%, transparent) 100%);
+  background: linear-gradient(
+    180deg,
+    var(--temp-tint, var(--fg)) 0%,
+    color-mix(in oklab, var(--temp-tint, var(--fg)) 70%, transparent) 100%
+  );
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent;
   font-variant-numeric: tabular-nums;
-  transition: opacity 200ms var(--ease);
+  transition: opacity 200ms var(--ease), filter 400ms var(--ease);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .temp-value { filter: drop-shadow(0 0 24px color-mix(in oklab, var(--temp-tint, transparent) 40%, transparent)); }
 }
 .unit {
   font-size: clamp(16px, 2vw, 24px);
