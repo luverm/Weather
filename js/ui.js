@@ -1404,7 +1404,33 @@ function showRecentsIfAny() {
   el.searchResults.hidden = false;
 }
 
+const PLACEHOLDER_CITIES = [
+  "Search any city…",
+  "Try Reykjavík",
+  "Try Kyoto",
+  "Try Cape Town",
+  "Try Buenos Aires",
+  "Try Marrakech",
+  "Try Wellington",
+  "Try Ushuaia",
+  "Try Reykjahlíð",
+];
+
+function startPlaceholderRotation() {
+  if (!el.searchInput) return;
+  // Skip when the user is actively engaging with the input.
+  let i = 0;
+  const rotate = () => {
+    if (document.activeElement === el.searchInput) return;
+    if (el.searchInput.value.length) return;
+    i = (i + 1) % PLACEHOLDER_CITIES.length;
+    el.searchInput.placeholder = PLACEHOLDER_CITIES[i];
+  };
+  setInterval(rotate, 4500);
+}
+
 function bindSearch() {
+  startPlaceholderRotation();
   el.searchInput.addEventListener("input", (e) => {
     const v = e.target.value.trim();
     if (v.length < 2) {
