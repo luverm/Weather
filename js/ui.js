@@ -200,6 +200,7 @@ export const ui = {
     renderAlerts(weather);
     renderWeekend(weather);
     startLocaltime(weather);
+    updateFetchedBadge();
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
@@ -1461,23 +1462,26 @@ function applyStoredPreferences() {
 // Exposed so app.js can query the current preference on boot.
 ui.isReduceMotion = () => localStorage.getItem("aether:reduceMotion") === "1";
 
+function updateFetchedBadge() {
+  if (!el.fetchedAgo || !state.weather?.fetchedAt) {
+    if (el.fetchedAgo) el.fetchedAgo.textContent = "";
+    return;
+  }
+  const ms = Date.now() - state.weather.fetchedAt;
+  const minutes = Math.max(0, Math.floor(ms / 60_000));
+  const label =
+    minutes < 1 ? "Just now" :
+    minutes < 60 ? `Updated ${minutes}m ago` :
+    `Updated ${Math.floor(minutes / 60)}h ago`;
+  el.fetchedAgo.textContent = "· " + label;
+  el.fetchedAgo.classList.toggle("stale", minutes >= 30 && minutes < 120);
+  el.fetchedAgo.classList.toggle("very-stale", minutes >= 120);
+  el.fetchedAgo.title = `Fetched at ${new Date(state.weather.fetchedAt).toLocaleTimeString()}`;
+}
+
 function startFetchedTicker() {
-  const update = () => {
-    if (!el.fetchedAgo || !state.weather?.fetchedAt) {
-      if (el.fetchedAgo) el.fetchedAgo.textContent = "";
-      return;
-    }
-    const ms = Date.now() - state.weather.fetchedAt;
-    const minutes = Math.max(0, Math.floor(ms / 60_000));
-    const label =
-      minutes < 1 ? "Just now" :
-      minutes < 60 ? `Updated ${minutes}m ago` :
-      `Updated ${Math.floor(minutes / 60)}h ago`;
-    el.fetchedAgo.textContent = "· " + label;
-    el.fetchedAgo.classList.toggle("stale", minutes >= 20);
-  };
-  update();
-  setInterval(update, 30_000);
+  updateFetchedBadge();
+  setInterval(updateFetchedBadge, 30_000);
 }
 
 function bindShare() {

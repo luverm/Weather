@@ -1717,6 +1717,11 @@ kbd {
 }
 .fetched-ago:empty { display: none; }
 .fetched-ago.stale { color: #ffb86b; }
+.fetched-ago.very-stale {
+  color: #ff8b8b;
+  text-decoration: underline dotted #ff8b8b60;
+  text-underline-offset: 3px;
+}
 
 #refresh-btn.spinning svg { animation: spin 700ms var(--ease) both; }
 @keyframes spin { from { transform: rotate(0) } to { transform: rotate(360deg) } }
