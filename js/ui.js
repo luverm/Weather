@@ -1501,6 +1501,28 @@ function bindSearch() {
     places.add(item);
     state.handlers.onSearchSelect?.(item);
   });
+  // Enter picks the first result so keyboard users don't have to mouse over
+  // the dropdown. Waits briefly if the debounced search is still in flight so
+  // typing fast + Enter still works.
+  el.searchInput.addEventListener("keydown", async (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    const q = el.searchInput.value.trim();
+    if (q.length < 2) return;
+    // Give the debounced search a moment to settle when the user hits Enter
+    // right after typing.
+    for (let i = 0; i < 8; i++) {
+      if (el.searchResults._items?.length) break;
+      await new Promise((r) => setTimeout(r, 60));
+    }
+    const first = el.searchResults._items?.[0];
+    if (!first) return;
+    el.searchInput.value = first.name;
+    el.searchResults.hidden = true;
+    places.add(first);
+    state.handlers.onSearchSelect?.(first);
+    el.searchInput.blur();
+  });
 }
 
 function bindUnitToggle() {
