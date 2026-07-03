@@ -1610,6 +1610,7 @@ function updateFetchedBadge() {
     minutes < 60 ? `Updated ${minutes}m ago` :
     `Updated ${Math.floor(minutes / 60)}h ago`;
   el.fetchedAgo.textContent = "· " + label;
+  el.fetchedAgo.classList.toggle("fresh", minutes < 2);
   el.fetchedAgo.classList.toggle("stale", minutes >= 30 && minutes < 120);
   el.fetchedAgo.classList.toggle("very-stale", minutes >= 120);
   el.fetchedAgo.title = `Fetched at ${new Date(state.weather.fetchedAt).toLocaleTimeString()}`;

@@ -1777,6 +1777,28 @@ kbd {
 }
 .fetched-ago:empty { display: none; }
 .fetched-ago.stale { color: #ffb86b; }
+.fetched-ago.fresh {
+  color: #a5d99a;
+  position: relative;
+}
+.fetched-ago.fresh::before {
+  content: "";
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #78d06a;
+  margin-right: 6px;
+  vertical-align: baseline;
+  animation: freshPulse 1800ms ease-in-out infinite;
+  box-shadow: 0 0 6px rgba(120,208,106,0.6);
+}
+@keyframes freshPulse {
+  0%, 100% { opacity: 0.9; transform: scale(1); }
+  50%      { opacity: 0.55; transform: scale(1.35); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fetched-ago.fresh::before { animation: none; }
+}
 .fetched-ago.very-stale {
   color: #ff8b8b;
   text-decoration: underline dotted #ff8b8b60;
