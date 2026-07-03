@@ -984,6 +984,8 @@ function renderHourly(w) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    item.dataset.bucket = h.isDay ? "day" : "night";
+    item.dataset.cond = h.condition;
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
