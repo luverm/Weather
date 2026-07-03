@@ -205,6 +205,7 @@ export const ui = {
     renderWeekend(weather);
     startLocaltime(weather);
     updateFetchedBadge();
+    updateTabTitle(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
@@ -1609,6 +1610,21 @@ function applyStoredPreferences() {
 
 // Exposed so app.js can query the current preference on boot.
 ui.isReduceMotion = () => localStorage.getItem("aether:reduceMotion") === "1";
+
+// Keep the browser tab title in sync with live weather so a user browsing
+// several cities in separate tabs can see them at a glance.
+function updateTabTitle(w) {
+  if (!w) { document.title = "Aether — Interactive Weather"; return; }
+  const t = w.temp != null ? Math.round(convertTemp(w.temp)) : null;
+  const city = state.place?.name;
+  const label = capitalize(w.label || w.condition || "");
+  const parts = [];
+  if (t != null) parts.push(`${t}°`);
+  if (label) parts.push(label);
+  if (city) parts.push(city);
+  const head = parts.length ? parts.join(" · ") + " — " : "";
+  document.title = `${head}Aether`;
+}
 
 function updateFetchedBadge() {
   if (!el.fetchedAgo || !state.weather?.fetchedAt) {
