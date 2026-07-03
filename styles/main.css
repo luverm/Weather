@@ -389,7 +389,20 @@ html[data-reduce-motion="true"] *::after {
   transition: background 200ms var(--ease), color 200ms var(--ease);
 }
 .unit:hover { background: var(--glass); color: var(--fg); }
-.condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
+.condition-label {
+  margin: 6px 0 0;
+  font-size: 17px;
+  letter-spacing: 0.01em;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.condition-icon {
+  display: inline-flex;
+  color: var(--fg-muted);
+}
+.condition-icon svg { width: 22px; height: 22px; display: block; }
 .feels-like {
   margin: 4px 0 0;
   font-size: 13px;
