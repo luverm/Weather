@@ -222,6 +222,30 @@ async function loadByCoords(place) {
 
   // Move the radar to the new location (fire-and-forget; resolves later).
   ensureRadar([place.lat, place.lon]).then((r) => r?.setCenter(place.lat, place.lon, place.name));
+
+  // Reflect the place in location.hash so a reload restores it and users can
+  // bookmark specific cities. Only lat/lon are needed; name is a nicety.
+  try {
+    const hash = `#${encodeURIComponent(place.name || "here")},${place.lat.toFixed(4)},${place.lon.toFixed(4)}`;
+    if (hash !== location.hash) {
+      history.replaceState(null, "", location.pathname + location.search + hash);
+    }
+  } catch { /* pathological browser envs */ }
+}
+
+// Parse a "#name,lat,lon" hash into a place. Returns null when malformed or
+// out of range so callers can fall through to the usual load flow.
+function placeFromHash() {
+  const raw = (location.hash || "").replace(/^#/, "");
+  if (!raw) return null;
+  const parts = raw.split(",");
+  if (parts.length < 3) return null;
+  const lat = parseFloat(parts[parts.length - 2]);
+  const lon = parseFloat(parts[parts.length - 1]);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  if (Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
+  const name = decodeURIComponent(parts.slice(0, -2).join(",")) || "Bookmarked place";
+  return { name, lat, lon };
 }
 
 async function useGeolocation() {
@@ -310,7 +334,13 @@ installShortcuts({
 
 // ---------- Start ----------
 (async function init() {
-  // Prefer the most recent saved place if we have one — avoids the geolocation
+  // URL hash beats saved places — lets users share/bookmark cities.
+  const bookmarked = placeFromHash();
+  if (bookmarked) {
+    await loadByCoords(bookmarked);
+    return;
+  }
+  // Otherwise prefer the most recent saved place — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();
   if (saved.length) {
@@ -324,6 +354,15 @@ installShortcuts({
     await loadByCoords({ name: "Reykjavík", country: "Iceland", lat: 64.1466, lon: -21.9426 });
   }
 })();
+
+// If the user navigates via back/forward through hashchange history entries,
+// keep the app in sync.
+window.addEventListener("hashchange", () => {
+  const p = placeFromHash();
+  if (p && (!app.place || app.place.lat !== p.lat || app.place.lon !== p.lon)) {
+    loadByCoords(p);
+  }
+});
 
 // ---------- Lifecycle ----------
 document.addEventListener("visibilitychange", () => {
