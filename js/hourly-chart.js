@@ -264,6 +264,64 @@ export class HourlyChart {
       }
     }
 
+    // Peak & low markers within the 24h window. Skip if the two happen to
+    // fall on the same hour (fully flat day) — nothing meaningful to point
+    // at.
+    let extremaG = this.svg.querySelector("#chart-extrema");
+    if (!extremaG) {
+      extremaG = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      extremaG.setAttribute("id", "chart-extrema");
+      extremaG.setAttribute("class", "chart-extrema");
+      // Insert before the cursor line so the cursor stays on top.
+      this.svg.insertBefore(extremaG, this.svg.querySelector("#chart-cursor"));
+    }
+    extremaG.innerHTML = "";
+    const unitEarly = this.getUnit();
+    let hotI = -1, coldI = -1;
+    if (this.hours.length > 3) {
+      hotI = 0; coldI = 0;
+      for (let i = 1; i < this.hours.length; i++) {
+        if (this.hours[i].temp > this.hours[hotI].temp) hotI = i;
+        if (this.hours[i].temp < this.hours[coldI].temp) coldI = i;
+      }
+      if (hotI !== coldI) {
+        const drawExtremum = (i, kind) => {
+          const p = this.points[i];
+          const tVal = unitEarly === "F"
+            ? this.hours[i].temp * 9 / 5 + 32
+            : this.hours[i].temp;
+          const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          c.setAttribute("cx", p.x.toFixed(1));
+          c.setAttribute("cy", p.y.toFixed(1));
+          c.setAttribute("r", "3.4");
+          c.setAttribute("class", `chart-extremum-dot ${kind}`);
+          extremaG.appendChild(c);
+          // Compact label: "▲ 21°" above the high, "▼ 15°" below the low.
+          // Sits well clear of the periodic temp-point labels above the line.
+          const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          // Sit just above the peak / just below the low. The periodic
+          // temp-point labels at these hours are suppressed above.
+          const glyph = kind === "high" ? "▲" : "▼";
+          const rawY = p.y + (kind === "high" ? -8 : 14);
+          // Clamp inside the plot area so a temp at the very top/bottom of
+          // the range still shows a legible label.
+          const labelY = kind === "high"
+            ? Math.max(9, rawY)
+            : Math.min(H - 3, rawY);
+          txt.setAttribute("x", p.x.toFixed(1));
+          txt.setAttribute("y", labelY.toFixed(1));
+          txt.setAttribute("text-anchor", "middle");
+          txt.setAttribute("class", `chart-extremum-label ${kind}`);
+          txt.textContent = `${glyph} ${Math.round(tVal)}°`;
+          extremaG.appendChild(txt);
+        };
+        drawExtremum(hotI, "high");
+        drawExtremum(coldI, "low");
+      } else {
+        hotI = coldI = -1;
+      }
+    }
+
     // Labels: every ~3 hours
     const unit = this.getUnit();
     const labG = this.svg.querySelector("#chart-labels");
@@ -278,7 +336,9 @@ export class HourlyChart {
       txt.setAttribute("text-anchor", "middle");
       txt.textContent = `${hh}`;
       labG.appendChild(txt);
-      // Temp label above point
+      // Skip the temp-point label at the extremum hours — the ▲/▼ label
+      // already carries the number there.
+      if (i === hotI || i === coldI) return;
       const tVal = unit === "F" ? h.temp * 9 / 5 + 32 : h.temp;
       const tTxt = document.createElementNS("http://www.w3.org/2000/svg", "text");
       tTxt.setAttribute("x", iToX(i).toFixed(1));
