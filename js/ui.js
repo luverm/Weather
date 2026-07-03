@@ -589,17 +589,50 @@ function fmtTime(ts) {
 }
 
 function renderSun(w) {
-  el.sunRise.textContent = fmtTime(w.sunrise);
-  el.sunSet.textContent = fmtTime(w.sunset);
-  if (w.sunrise && w.sunset) {
-    const mins = Math.round((w.sunset - w.sunrise) / 60_000);
-    const hh = Math.floor(mins / 60);
-    const mm = mins % 60;
-    el.sunDaylight.textContent = `${hh}h ${mm}m`;
-  } else el.sunDaylight.textContent = "—";
+  const sunCard = document.getElementById("sun-card");
+  const polar = classifyPolar(w);
+  if (sunCard) {
+    if (polar) sunCard.dataset.polar = polar.kind;
+    else delete sunCard.dataset.polar;
+  }
+  if (polar) {
+    // Extreme latitudes: sunrise/sunset can be null. Show a friendly
+    // badge in place of numeric fields.
+    el.sunRise.textContent = polar.kind === "day" ? "up all day" : "no sunrise";
+    el.sunSet.textContent  = polar.kind === "day" ? "no sunset"  : "no sunset";
+    el.sunDaylight.textContent = polar.kind === "day" ? "midnight sun" : "polar night";
+  } else {
+    el.sunRise.textContent = fmtTime(w.sunrise);
+    el.sunSet.textContent = fmtTime(w.sunset);
+    if (w.sunrise && w.sunset) {
+      const mins = Math.round((w.sunset - w.sunrise) / 60_000);
+      const hh = Math.floor(mins / 60);
+      const mm = mins % 60;
+      el.sunDaylight.textContent = `${hh}h ${mm}m`;
+    } else el.sunDaylight.textContent = "—";
+  }
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   scheduleGoldenHour(w);
+}
+
+// Detect midnight-sun (24 h daylight) or polar night (24 h dark) using
+// today's daily entry. Open-Meteo returns null sunrise/sunset for full
+// polar day/night; when we have both times we can also infer by the
+// daylight span.
+function classifyPolar(w) {
+  const today = w?.daily?.[0];
+  if (!today) return null;
+  if (today.sunrise == null && today.sunset == null) {
+    // Ambiguous without more context — infer from current isDay flag.
+    return w.isDay ? { kind: "day" } : { kind: "night" };
+  }
+  if (w.sunrise && w.sunset) {
+    const hours = (w.sunset - w.sunrise) / 3600_000;
+    if (hours >= 23.5) return { kind: "day" };
+    if (hours <= 0.5) return { kind: "night" };
+  }
+  return null;
 }
 
 // Golden hour: ~45 minutes after sunrise and ~45 minutes before sunset.

@@ -1065,6 +1065,20 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+#sun-card[data-polar="day"] .sun-item strong {
+  color: #ffe1b8;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+#sun-card[data-polar="night"] .sun-item strong {
+  color: #b8caf5;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+#sun-card[data-polar="day"] #sun-arc-marker,
+#sun-card[data-polar="night"] #sun-arc-marker {
+  opacity: 0;
+}
 
 .golden-hour {
   display: flex; align-items: center; gap: 8px;
