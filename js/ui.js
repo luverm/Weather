@@ -21,6 +21,8 @@ const el = {
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
+  feelsLikeText: $("#feels-like-text"),
+  feelsCause: $("#feels-cause"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -280,8 +282,39 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  if (el.feelsLikeText) el.feelsLikeText.textContent = `Feels like ${Math.round(feels)}°`;
+  else el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  renderFeelsCause(w);
   renderDayRange(w);
+}
+
+// Explain why feels-like diverges from the actual temp when the gap is
+// meaningful. Cause priority reflects perceived driver: wind chill first
+// when it's chilly and breezy, humidity when the air is heavy and warm,
+// intense sun when UV is high and skies clear during the day.
+function renderFeelsCause(w) {
+  if (!el.feelsCause) return;
+  const t = w.temp, f = w.feelsLike;
+  if (t == null || f == null) { el.feelsCause.hidden = true; return; }
+  const diffC = f - t;
+  if (Math.abs(diffC) < 2) { el.feelsCause.hidden = true; return; }
+  const diffDisplay = Math.round(state.unit === "F" ? diffC * 9 / 5 : diffC);
+  const cooler = diffC < 0;
+  let cause = cooler ? "cool wind" : "warm sun";
+  if (cooler) {
+    if ((w.windSpeed ?? 0) >= 12) cause = "wind chill";
+    else if ((w.humidity ?? 0) >= 75) cause = "damp air";
+    else cause = "still air";
+  } else {
+    if ((w.humidity ?? 0) >= 65) cause = "humidity";
+    else if ((w.uv ?? 0) >= 5 && w.isDay) cause = "direct sun";
+    else cause = "sun & calm";
+  }
+  const arrow = cooler ? "↓" : "↑";
+  const magnitude = Math.abs(diffDisplay);
+  el.feelsCause.textContent = `${arrow} ${magnitude}° · ${cause}`;
+  el.feelsCause.dataset.dir = cooler ? "cool" : "warm";
+  el.feelsCause.hidden = false;
 }
 
 function renderDayRange(w) {
