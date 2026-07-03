@@ -151,6 +151,17 @@ html[data-rainbow] .rainbow {
   text-transform: uppercase; letter-spacing: 0.22em;
   color: var(--fg-muted);
 }
+.topbar-clock {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+  color: var(--fg-dim);
+}
+.topbar-clock[hidden] { display: none; }
 @keyframes breathe {
   0%, 100% { transform: scale(1); filter: brightness(1); }
   50% { transform: scale(1.08); filter: brightness(1.15); }

@@ -56,6 +56,7 @@ const el = {
   advice: $("#advice"),
   adviceText: $("#advice-text"),
   perfectChip: $("#perfect-chip"),
+  topbarClock: $("#topbar-clock"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
   pollenCard: $("#pollen-card"),
@@ -805,6 +806,8 @@ function startLocaltime(w) {
     el.placeLocaltime.textContent = "";
     return;
   }
+  const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const sameTz = tz === localTz;
   const update = () => {
     try {
       const parts = new Intl.DateTimeFormat([], {
@@ -818,8 +821,21 @@ function startLocaltime(w) {
       el.placeLocaltime.innerHTML =
         `<span class="clock-dot" aria-hidden="true"></span>` +
         `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>`;
+      // Topbar mini-clock: only shows when the loaded city is in a different
+      // timezone from the viewer's — otherwise it would just repeat the
+      // browser clock.
+      if (el.topbarClock) {
+        if (sameTz) {
+          el.topbarClock.hidden = true;
+        } else {
+          el.topbarClock.hidden = false;
+          el.topbarClock.textContent = `${hour}:${minute} · ${tzName}`;
+          el.topbarClock.title = `Local time in the loaded city (${tz})`;
+        }
+      }
     } catch {
       el.placeLocaltime.textContent = "";
+      if (el.topbarClock) el.topbarClock.hidden = true;
     }
   };
   update();
