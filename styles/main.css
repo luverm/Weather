@@ -1439,8 +1439,8 @@ kbd {
   color: var(--fg-muted);
 }
 .daily-icon-strip .strip-day {
-  display: grid; place-items: center;
-  padding: 4px;
+  display: grid; place-items: center; gap: 3px;
+  padding: 4px 4px 2px;
   opacity: 0.85;
   transition: opacity 160ms var(--ease), transform 160ms var(--ease);
 }
@@ -1448,6 +1448,34 @@ kbd {
 .daily-icon-strip .strip-day svg {
   width: 22px; height: 22px;
   display: block;
+}
+.strip-precip {
+  display: block;
+  width: 60%;
+  max-width: 22px;
+  height: 8px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.06);
+  position: relative;
+  overflow: hidden;
+}
+.strip-precip::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: var(--h, 0%);
+  min-height: 0;
+  background: currentColor;
+  border-radius: inherit;
+  transition: height 340ms var(--ease);
+}
+.strip-precip-trace    { color: rgba(140,190,255,0.35); }
+.strip-precip-light    { color: rgba(120,180,255,0.75); }
+.strip-precip-moderate { color: rgba(90,150,255,0.9); }
+.strip-precip-heavy    { color: rgba(120,120,255,1); box-shadow: 0 0 6px rgba(120,120,255,0.5); }
+.strip-precip-trace::after { min-height: 1px; }
+@media (prefers-reduced-motion: reduce) {
+  .strip-precip::after { transition: none; }
 }
 
 .daily-spark {

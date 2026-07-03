@@ -943,9 +943,29 @@ function renderDaily(w) {
 
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
-  el.dailyIconStrip.innerHTML = days.map((d) =>
-    `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
-  ).join("");
+  // Scale precip bars: cap at 10 mm/day (a heavy day) so a mild week reads
+  // as a mild week and doesn't visually redline against the strongest bar.
+  const CAP_MM = 10;
+  const precipClass = (mm) => {
+    if (mm >= 8) return "heavy";
+    if (mm >= 3) return "moderate";
+    if (mm >= 0.5) return "light";
+    return "trace";
+  };
+  el.dailyIconStrip.innerHTML = days.map((d) => {
+    const mm = d.precip || 0;
+    const pct = Math.min(1, mm / CAP_MM);
+    const barLabel = mm >= 0.1
+      ? `${mm.toFixed(mm >= 1 ? 1 : 2)} mm expected`
+      : `no measurable rain`;
+    const title = `${d.label || d.condition || ""} · ${barLabel}`;
+    return `<span class="strip-day" title="${escapeHtml(title)}">
+      ${iconFor(d.condition)}
+      <span class="strip-precip strip-precip-${precipClass(mm)}"
+            style="--h:${(pct * 100).toFixed(0)}%"
+            aria-hidden="true"></span>
+    </span>`;
+  }).join("");
 }
 
 function renderDailySpark(days) {
