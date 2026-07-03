@@ -572,8 +572,21 @@ html[data-reduce-motion="true"] *::after {
   transition: color 200ms var(--ease), background 200ms var(--ease), opacity 200ms var(--ease);
   opacity: 0;
 }
-[data-scrubbing="true"] .scrubber-reset { opacity: 1; }
+[data-scrubbing="true"] .scrubber-reset {
+  opacity: 1;
+  color: #ffe1a8;
+  background: rgba(255,190,120,0.14);
+  border-color: rgba(255,190,120,0.35);
+  animation: nowPulse 2400ms ease-in-out infinite;
+}
 .scrubber-reset:hover { color: var(--fg); background: var(--glass-strong); }
+@keyframes nowPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,190,120,0.35); }
+  50%      { box-shadow: 0 0 0 6px rgba(255,190,120,0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-scrubbing="true"] .scrubber-reset { animation: none; }
+}
 .scrubber-time {
   font-variant-numeric: tabular-nums;
   color: var(--fg);
