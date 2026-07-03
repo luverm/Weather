@@ -999,7 +999,27 @@ function renderHourly(w) {
 
 function highlightHour(index) {
   const items = el.forecastTrack.querySelectorAll(".forecast-item");
-  items.forEach((it, i) => it.classList.toggle("active", i === index));
+  let active = null;
+  items.forEach((it, i) => {
+    const on = i === index;
+    it.classList.toggle("active", on);
+    if (on) active = it;
+  });
+  // Slide the strip so the active hour sits near the middle. Uses smooth
+  // scroll unless the user prefers reduced motion, in which case the
+  // scroll snaps instantly.
+  if (active) {
+    const prefersReduced = localStorage.getItem("aether:reduceMotion") === "1"
+      || matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const behavior = prefersReduced ? "instant" : "smooth";
+    const trackRect = el.forecastTrack.getBoundingClientRect();
+    const itemRect = active.getBoundingClientRect();
+    const offset = (itemRect.left + itemRect.width / 2) -
+                   (trackRect.left + trackRect.width / 2);
+    if (Math.abs(offset) > 2) {
+      el.forecastTrack.scrollBy({ left: offset, behavior });
+    }
+  }
 }
 
 function renderDaily(w) {
