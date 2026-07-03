@@ -322,6 +322,46 @@ export class HourlyChart {
       }
     }
 
+    // Midnight separators + weekday labels so a 24h horizon that spans two
+    // calendar days reads at a glance.
+    let dayBoundaryG = this.svg.querySelector("#chart-day-boundary");
+    if (!dayBoundaryG) {
+      dayBoundaryG = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      dayBoundaryG.setAttribute("id", "chart-day-boundary");
+      dayBoundaryG.setAttribute("class", "chart-day-boundary");
+      this.svg.insertBefore(dayBoundaryG, this.svg.querySelector("#chart-cursor"));
+    }
+    dayBoundaryG.innerHTML = "";
+    for (let i = 1; i < this.hours.length; i++) {
+      const prev = this._hourOf(this.hours[i - 1].time);
+      const curr = this._hourOf(this.hours[i].time);
+      // Boundary when hour rolls over past 23 back to 00 (or any decrease).
+      if (parseInt(curr, 10) < parseInt(prev, 10)) {
+        const bx = (iToX(i - 1) + iToX(i)) / 2;
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", bx.toFixed(1));
+        line.setAttribute("x2", bx.toFixed(1));
+        line.setAttribute("y1", String(PAD_TOP - 2));
+        line.setAttribute("y2", String(H - PAD_BOT + 4));
+        line.setAttribute("class", "chart-day-line");
+        dayBoundaryG.appendChild(line);
+        const tz = this.getTimezone();
+        let dayLabel;
+        try {
+          dayLabel = new Intl.DateTimeFormat(undefined, {
+            weekday: "short",
+            ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+          }).format(new Date(this.hours[i].time));
+        } catch { dayLabel = ""; }
+        const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        txt.setAttribute("x", (bx + 4).toFixed(1));
+        txt.setAttribute("y", String(PAD_TOP + 4));
+        txt.setAttribute("class", "chart-day-label");
+        txt.textContent = dayLabel;
+        dayBoundaryG.appendChild(txt);
+      }
+    }
+
     // Labels: every ~3 hours
     const unit = this.getUnit();
     const labG = this.svg.querySelector("#chart-labels");
