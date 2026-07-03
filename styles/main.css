@@ -1550,6 +1550,25 @@ kbd {
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+.week-precip {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+  background: rgba(255,255,255,0.06);
+  color: var(--fg-muted);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.week-precip[hidden] { display: none; }
+.daily-delta:not(:empty) ~ .week-precip { margin-left: 8px; }
+.week-precip + .daily-delta { margin-left: 8px; }
+.week-precip[data-level="dry"]   { color: #a5d99a; background: rgba(120,208,106,0.10); border-color: rgba(120,208,106,0.20); }
+.week-precip[data-level="damp"]  { color: #a2c8ff; background: rgba(120,180,255,0.10); border-color: rgba(120,180,255,0.20); }
+.week-precip[data-level="wet"]   { color: #85b0ff; background: rgba(120,180,255,0.16); border-color: rgba(120,180,255,0.28); }
+.week-precip[data-level="heavy"] { color: #a48bff; background: rgba(150,140,255,0.16); border-color: rgba(150,140,255,0.28); }
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;
