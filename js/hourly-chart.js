@@ -158,7 +158,9 @@ export class HourlyChart {
       const yh = idx >= 0 ? this.yesterdayHours[idx] : null;
       if (yh?.temp != null) {
         const yT = unit === "F" ? yh.temp * 9 / 5 + 32 : yh.temp;
-        const diff = Math.round(t) - Math.round(yT);
+        // Round the raw delta once (not diff-of-rounded) so this matches the
+        // hero chip's number for the same hour.
+        const diff = Math.round(t - yT);
         const sign = diff > 0 ? "+" : diff < 0 ? "−" : "±";
         const cls = diff > 0 ? "warmer" : diff < 0 ? "cooler" : "same";
         yLine = `<br><em class="pop-y ${cls}">Yesterday ${Math.round(yT)}° · ${sign}${Math.abs(diff)}°</em>`;
@@ -213,7 +215,8 @@ export class HourlyChart {
     // Yesterday ghost line (dashed, muted). Segments break at gaps.
     const yLine = this.svg.querySelector("#chart-yesterday-line");
     if (yLine) {
-      if (this.showYesterday && yTemps.length >= 2) {
+      const show = this.showYesterday && yTemps.length >= 2;
+      if (show) {
         let yPath = "";
         let penDown = false;
         this.yesterdayHours.forEach((h, i) => {
@@ -230,6 +233,7 @@ export class HourlyChart {
       } else {
         yLine.setAttribute("d", "");
         yLine.setAttribute("opacity", "0");
+        yLine.setAttribute("hidden", "");
       }
     }
 

@@ -152,15 +152,16 @@ function normalize(d, aq) {
   }
 
   // 7-day daily forecast + yesterday split out.
+  // With past_days=1, Open-Meteo prepends exactly one past day, so daily
+  // index 0 is yesterday and index 1 is today. Split by index rather than
+  // timestamp to avoid TZ-boundary bugs (Open-Meteo returns dates in the
+  // location's TZ but JS parses YYYY-MM-DD as UTC).
   const dailyForecast = [];
   let yesterdayDaily = null;
-  const todayMidnight = new Date(); todayMidnight.setHours(0, 0, 0, 0);
-  const todayMidnightTs = todayMidnight.getTime();
   if (daily.time) {
     for (let i = 0; i < daily.time.length; i++) {
-      const ts = new Date(daily.time[i]).getTime();
       const day = {
-        time: ts,
+        time: daily.time[i] ? new Date(daily.time[i]).getTime() : null,
         tempMax: daily.temperature_2m_max?.[i],
         tempMin: daily.temperature_2m_min?.[i],
         precip: daily.precipitation_sum?.[i] ?? 0,
@@ -172,10 +173,11 @@ function normalize(d, aq) {
         sunset: daily.sunset?.[i] ? new Date(daily.sunset[i]).getTime() : null,
         ...mapWmo(daily.weather_code[i]),
       };
-      if (ts < todayMidnightTs) yesterdayDaily = day;
+      if (i === 0) yesterdayDaily = day;
       else dailyForecast.push(day);
     }
   }
+  const today = dailyForecast[0];
 
   // "Vs yesterday" — build a temp lookup keyed by timestamp so we can match
   // each of today's forecast hours to the same wall-clock hour 24 h earlier.
@@ -213,10 +215,10 @@ function normalize(d, aq) {
     isDay: !!c.is_day,
     condition,
     label,
-    sunrise: daily.sunrise?.[0] ? new Date(daily.sunrise[0]).getTime() : null,
-    sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null,
-    uv: daily.uv_index_max?.[0] ?? null,
-    uvPeak: findUvPeak(d.hourly),
+    sunrise: today?.sunrise ?? null,
+    sunset: today?.sunset ?? null,
+    uv: today?.uvMax ?? null,
+    uvPeak: findUvPeak(d.hourly, now),
     timezone: d.timezone,
     hourly,
     daily: dailyForecast,
@@ -372,12 +374,16 @@ function aqiLabel(v) {
   return "Hazardous";
 }
 
-function findUvPeak(hourly) {
+function findUvPeak(hourly, now) {
   if (!hourly?.uv_index) return null;
+  const cutoff = (now ?? Date.now()) - 30 * 60_000;
   let peak = { t: null, v: -Infinity };
   for (let i = 0; i < hourly.uv_index.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    if (t < cutoff) continue; // stay in today/future — past_days=1 puts 24 h behind us
     const v = hourly.uv_index[i];
-    if (v > peak.v) peak = { t: new Date(hourly.time[i]).getTime(), v };
+    if (v == null) continue;
+    if (v > peak.v) peak = { t, v };
   }
   if (peak.t == null) return null;
   return { time: peak.t, value: peak.v };
