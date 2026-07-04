@@ -110,6 +110,10 @@ const el = {
   heroInner: document.querySelector(".hero-inner"),
   toast: $("#toast"),
   placesStrip: $("#places-strip"),
+  yesterdayChip: $("#yesterday-chip"),
+  yesterdayChipLabel: $("#yesterday-chip-label"),
+  legendYesterday: $("#legend-yesterday"),
+  legendYesterdayLabel: $("#legend-yesterday-label"),
 };
 
 const state = {
@@ -123,6 +127,7 @@ const state = {
   sunTimer: null,
   sunArcTimer: null,
   localTimer: null,
+  showYesterday: localStorage.getItem("aether:show-yesterday") !== "0",
 };
 
 export const ui = {
@@ -137,6 +142,7 @@ export const ui = {
     bindRefresh();
     bindSettings();
     bindTilt();
+    bindYesterdayChip();
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
@@ -194,8 +200,13 @@ export const ui = {
     renderAlerts(weather);
     renderWeekend(weather);
     startLocaltime(weather);
-    if (state.chart) state.chart.setHours(weather.hourly);
+    if (state.chart) {
+      state.chart.setShowYesterday(state.showYesterday);
+      state.chart.setYesterdayHours(weather.yesterday?.hourly || []);
+      state.chart.setHours(weather.hourly);
+    }
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
+    renderYesterday(weather);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
@@ -1200,6 +1211,69 @@ function bindInstallPrompt() {
 function bindRefresh() {
   if (!el.refreshBtn) return;
   el.refreshBtn.addEventListener("click", () => state.handlers.onRefresh?.());
+}
+
+function bindYesterdayChip() {
+  if (!el.yesterdayChip) return;
+  el.yesterdayChip.addEventListener("click", () => {
+    state.showYesterday = !state.showYesterday;
+    localStorage.setItem("aether:show-yesterday", state.showYesterday ? "1" : "0");
+    el.yesterdayChip.classList.toggle("is-off", !state.showYesterday);
+    if (state.chart) state.chart.setShowYesterday(state.showYesterday);
+    updateYesterdayLegend();
+  });
+}
+
+function updateYesterdayLegend() {
+  const shown = !!(state.weather?.yesterday && state.showYesterday);
+  if (el.legendYesterday) el.legendYesterday.hidden = !shown;
+  if (el.legendYesterdayLabel) el.legendYesterdayLabel.hidden = !shown;
+}
+
+function renderYesterday(w) {
+  if (!el.yesterdayChip || !el.yesterdayChipLabel) return;
+  const y = w?.yesterday;
+  const hasData = y && (y.delta != null || y.daily?.tempMax != null);
+  if (!hasData) {
+    el.yesterdayChip.hidden = true;
+    updateYesterdayLegend();
+    return;
+  }
+  el.yesterdayChip.hidden = false;
+  el.yesterdayChip.classList.toggle("is-off", !state.showYesterday);
+
+  // Prefer the current-vs-same-hour delta; fall back to today-high vs yesterday-high.
+  let delta = y.delta;
+  let basis = "vs same hour";
+  if (delta == null && y.daily?.tempMax != null && w.daily?.[0]?.tempMax != null) {
+    delta = w.daily[0].tempMax - y.daily.tempMax;
+    basis = "vs yesterday's high";
+  }
+  if (delta == null) {
+    el.yesterdayChip.hidden = true;
+    updateYesterdayLegend();
+    return;
+  }
+
+  const displayDelta = state.unit === "F" ? delta * 9 / 5 : delta;
+  const rounded = Math.round(displayDelta);
+  const abs = Math.abs(rounded);
+  let word;
+  if (abs === 0) word = "same";
+  else if (rounded > 0) word = `+${rounded}°`;
+  else word = `−${abs}°`;
+
+  const trend = rounded > 0 ? "warmer" : rounded < 0 ? "cooler" : "same";
+  el.yesterdayChip.classList.remove("warmer", "cooler", "same");
+  el.yesterdayChip.classList.add(trend);
+  el.yesterdayChip.title = `${basis}: ${word}. Click to toggle chart overlay.`;
+
+  const noun = trend === "same" ? "as yesterday" : `${trend} than yesterday`;
+  el.yesterdayChipLabel.textContent = abs === 0
+    ? "same as yesterday"
+    : `${word} ${noun}`;
+
+  updateYesterdayLegend();
 }
 
 function bindSettings() {

@@ -18,7 +18,19 @@ export class HourlyChart {
     this.getTimezone = getTimezone || (() => null);
     this.hours = [];
     this.points = [];
+    this.yesterdayHours = [];
+    this.showYesterday = true;
     this._bind();
+  }
+
+  setYesterdayHours(yesterdayHours) {
+    this.yesterdayHours = (yesterdayHours || []).slice(0, 24);
+    this._draw();
+  }
+
+  setShowYesterday(on) {
+    this.showYesterday = !!on;
+    this._draw();
   }
 
   _formatHour(ts) {
@@ -139,9 +151,22 @@ export class HourlyChart {
       ? `<em>feels ${Math.round(feels)}°</em>` : "";
     const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
+    // Yesterday delta at this same hour, if available.
+    let yLine = "";
+    if (this.showYesterday && this.yesterdayHours?.length) {
+      const idx = this.hours.indexOf(h);
+      const yh = idx >= 0 ? this.yesterdayHours[idx] : null;
+      if (yh?.temp != null) {
+        const yT = unit === "F" ? yh.temp * 9 / 5 + 32 : yh.temp;
+        const diff = Math.round(t) - Math.round(yT);
+        const sign = diff > 0 ? "+" : diff < 0 ? "−" : "±";
+        const cls = diff > 0 ? "warmer" : diff < 0 ? "cooler" : "same";
+        yLine = `<br><em class="pop-y ${cls}">Yesterday ${Math.round(yT)}° · ${sign}${Math.abs(diff)}°</em>`;
+      }
+    }
     this.popover.innerHTML =
       `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
-      `<em>${h.pop}% precip${wind}${hum}</em>`;
+      `<em>${h.pop}% precip${wind}${hum}</em>${yLine}`;
     this.popover.style.left = `${pxX.toFixed(1)}px`;
     this.popover.style.top = `${pxY.toFixed(1)}px`;
     this.popover.hidden = false;
@@ -155,8 +180,11 @@ export class HourlyChart {
     const innerH = H - PAD_TOP - PAD_BOT;
 
     const temps = this.hours.map((h) => h.temp).filter((v) => v != null);
-    let tMin = Math.min(...temps);
-    let tMax = Math.max(...temps);
+    const yTemps = this.showYesterday
+      ? (this.yesterdayHours || []).map((h) => h?.temp).filter((v) => v != null)
+      : [];
+    let tMin = Math.min(...temps, ...(yTemps.length ? yTemps : temps));
+    let tMax = Math.max(...temps, ...(yTemps.length ? yTemps : temps));
     if (tMax - tMin < 4) {
       const mid = (tMin + tMax) / 2;
       tMin = mid - 2; tMax = mid + 2;
@@ -181,6 +209,29 @@ export class HourlyChart {
       `L${firstX.toFixed(1)},${(PAD_TOP + innerH).toFixed(1)} Z`;
     this.svg.querySelector("#chart-temp-line").setAttribute("d", linePath.trim());
     this.svg.querySelector("#chart-temp-fill").setAttribute("d", fillPath);
+
+    // Yesterday ghost line (dashed, muted). Segments break at gaps.
+    const yLine = this.svg.querySelector("#chart-yesterday-line");
+    if (yLine) {
+      if (this.showYesterday && yTemps.length >= 2) {
+        let yPath = "";
+        let penDown = false;
+        this.yesterdayHours.forEach((h, i) => {
+          if (i >= this.hours.length) return;
+          if (h?.temp == null) { penDown = false; return; }
+          const x = iToX(i);
+          const y = tToY(h.temp);
+          yPath += (penDown ? "L" : "M") + x.toFixed(1) + "," + y.toFixed(1) + " ";
+          penDown = true;
+        });
+        yLine.setAttribute("d", yPath.trim());
+        yLine.removeAttribute("hidden");
+        yLine.setAttribute("opacity", "0.55");
+      } else {
+        yLine.setAttribute("d", "");
+        yLine.setAttribute("opacity", "0");
+      }
+    }
 
     // Gust dashed line — mapped onto the lower half of the plot so it
     // doesn't collide with the temperature line. Shows relative magnitude.

@@ -93,7 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
-    past_hours: 1,
+    past_days: 1, // yesterday's hourly + daily for the "vs yesterday" chip
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -151,12 +151,15 @@ function normalize(d, aq) {
     }
   }
 
-  // 7-day daily forecast.
+  // 7-day daily forecast + yesterday split out.
   const dailyForecast = [];
+  let yesterdayDaily = null;
+  const todayMidnight = new Date(); todayMidnight.setHours(0, 0, 0, 0);
+  const todayMidnightTs = todayMidnight.getTime();
   if (daily.time) {
     for (let i = 0; i < daily.time.length; i++) {
       const ts = new Date(daily.time[i]).getTime();
-      dailyForecast.push({
+      const day = {
         time: ts,
         tempMax: daily.temperature_2m_max?.[i],
         tempMin: daily.temperature_2m_min?.[i],
@@ -168,9 +171,15 @@ function normalize(d, aq) {
         sunrise: daily.sunrise?.[i] ? new Date(daily.sunrise[i]).getTime() : null,
         sunset: daily.sunset?.[i] ? new Date(daily.sunset[i]).getTime() : null,
         ...mapWmo(daily.weather_code[i]),
-      });
+      };
+      if (ts < todayMidnightTs) yesterdayDaily = day;
+      else dailyForecast.push(day);
     }
   }
+
+  // "Vs yesterday" — build a temp lookup keyed by timestamp so we can match
+  // each of today's forecast hours to the same wall-clock hour 24 h earlier.
+  const yesterday = buildYesterday(d.hourly, hourly, c.temperature_2m, now, yesterdayDaily);
 
   // 15-min nowcast for the next ~2h — used for "rain in 12 min" banner.
   const nowcast = [];
@@ -215,7 +224,57 @@ function normalize(d, aq) {
     moon,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
+    yesterday,
     fetchedAt: now,
+  };
+}
+
+function buildYesterday(rawHourly, forecastHours, currentTemp, now, yesterdayDaily) {
+  if (!rawHourly?.time) return null;
+  const DAY = 24 * 3600_000;
+  const tempByTs = new Map();
+  const feelsByTs = new Map();
+  for (let i = 0; i < rawHourly.time.length; i++) {
+    const t = new Date(rawHourly.time[i]).getTime();
+    const temp = rawHourly.temperature_2m?.[i];
+    if (temp != null) tempByTs.set(t, temp);
+    const feels = rawHourly.apparent_temperature?.[i];
+    if (feels != null) feelsByTs.set(t, feels);
+  }
+
+  // Yesterday hourly aligned to today's forecast timeline (24 entries).
+  const hourly = (forecastHours || []).map((h) => ({
+    time: h.time,
+    temp: tempByTs.get(h.time - DAY) ?? null,
+    feelsLike: feelsByTs.get(h.time - DAY) ?? null,
+  }));
+  const anyPoints = hourly.some((h) => h.temp != null);
+
+  // "Now vs. yesterday-at-this-hour" delta — snap to the nearest available
+  // yesterday sample so we still show a chip when hours don't line up.
+  let sampleTemp = null;
+  let sampleFeels = null;
+  let sampleTime = null;
+  let bestDiff = Infinity;
+  for (const [t, temp] of tempByTs) {
+    if (t >= now) continue; // strictly in the past
+    const diff = Math.abs((now - DAY) - t);
+    if (diff < bestDiff && diff < 90 * 60_000) {
+      bestDiff = diff; sampleTemp = temp; sampleTime = t;
+      sampleFeels = feelsByTs.get(t) ?? null;
+    }
+  }
+  if (sampleTemp == null && !anyPoints && !yesterdayDaily) return null;
+
+  const delta = (sampleTemp != null && currentTemp != null)
+    ? currentTemp - sampleTemp : null;
+  return {
+    hourly,
+    sampleTemp,
+    sampleFeels,
+    sampleTime,
+    delta,
+    daily: yesterdayDaily,
   };
 }
 
@@ -400,6 +459,22 @@ function mock(lat, lon) {
       level: "Moderate",
     },
     pressureTrend: { delta: -0.4, direction: "steady" },
+    yesterday: {
+      hourly: Array.from({ length: 24 }, (_, i) => ({
+        time: now + (i + 1) * 3600_000,
+        temp: 16 + Math.sin((i + 1) / 2) * 3,
+        feelsLike: 15 + Math.sin((i + 1) / 2) * 3,
+      })),
+      sampleTemp: 16.4,
+      sampleFeels: 15.2,
+      sampleTime: now - 3600_000,
+      delta: 1.6,
+      daily: {
+        time: now - 86400_000,
+        tempMax: 19, tempMin: 11,
+        condition: CONDITIONS.CLOUDS, label: "Cloudy",
+      },
+    },
     fetchedAt: now,
     offline: true,
   };
