@@ -333,6 +333,7 @@
             <line x1="10" y1="74" x2="190" y2="74" stroke="var(--stroke)" stroke-dasharray="2 4"/>
             <path id="sun-arc-path" d="M10 74 Q100 -26 190 74"
                   fill="none" stroke="url(#sun-arc-grad)" stroke-width="1.5" stroke-linecap="round"/>
+            <g id="sun-arc-golden" class="sun-arc-golden" aria-hidden="true"></g>
             <circle id="sun-arc-marker" cx="10" cy="74" r="4.5" fill="#fff1c9"/>
           </svg>
           <div class="sun-row">
@@ -348,6 +349,23 @@
               <span class="sun-label">Daylight</span>
               <strong id="sun-daylight">—</strong>
             </div>
+          </div>
+          <div id="golden-row" class="golden-row" hidden>
+            <div class="golden-header">Golden hour</div>
+            <button id="golden-am" type="button" class="golden-chip" data-kind="morning" aria-label="Jump to morning golden hour">
+              <span class="golden-swatch" aria-hidden="true">
+                <svg viewBox="0 0 12 12"><path d="M4 8 L6 5 L8 8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              <span class="golden-times" id="golden-am-times">—</span>
+              <span class="golden-status" id="golden-am-status"></span>
+            </button>
+            <button id="golden-pm" type="button" class="golden-chip" data-kind="evening" aria-label="Jump to evening golden hour">
+              <span class="golden-swatch" aria-hidden="true">
+                <svg viewBox="0 0 12 12"><path d="M4 5 L6 8 L8 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              <span class="golden-times" id="golden-pm-times">—</span>
+              <span class="golden-status" id="golden-pm-status"></span>
+            </button>
           </div>
         </div>
       </div>

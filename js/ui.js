@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { todaysGoldenPair } from "./golden-hour.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -90,6 +91,14 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcGolden: $("#sun-arc-golden"),
+  goldenRow: $("#golden-row"),
+  goldenAm: $("#golden-am"),
+  goldenPm: $("#golden-pm"),
+  goldenAmTimes: $("#golden-am-times"),
+  goldenPmTimes: $("#golden-pm-times"),
+  goldenAmStatus: $("#golden-am-status"),
+  goldenPmStatus: $("#golden-pm-status"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -122,6 +131,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  goldenTimer: null,
   localTimer: null,
 };
 
@@ -523,6 +533,7 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleGoldenHour(w);
 }
 
 function scheduleSunArc(w) {
@@ -559,6 +570,101 @@ function scheduleSunArc(w) {
 }
 
 function clamp01(v) { return Math.max(0, Math.min(1, v)); }
+
+function scheduleGoldenHour(w) {
+  if (state.goldenTimer) { clearInterval(state.goldenTimer); state.goldenTimer = null; }
+  if (!el.goldenRow) return;
+  const pair = todaysGoldenPair(w.daily);
+  if (!pair) { el.goldenRow.hidden = true; renderGoldenArcTicks(null, null); return; }
+  el.goldenRow.hidden = false;
+
+  const times = (win) => `${fmtTime(win.start)}–${fmtTime(win.end)}`;
+  if (el.goldenAmTimes) el.goldenAmTimes.textContent = times(pair.morning);
+  if (el.goldenPmTimes) el.goldenPmTimes.textContent = times(pair.evening);
+
+  const rewire = (btn, win) => {
+    if (!btn) return;
+    btn.onclick = () => {
+      const mid = win.start + (win.end - win.start) / 2;
+      state.handlers.onHourClick?.(mid);
+    };
+  };
+  rewire(el.goldenAm, pair.morning);
+  rewire(el.goldenPm, pair.evening);
+
+  // Ticks on the sun arc for today's evening + morning golden windows so the
+  // arc reads at a glance ("we're in the gold band right now").
+  renderGoldenArcTicks(w, pair);
+
+  const update = () => {
+    const now = Date.now();
+    setGoldenStatus(el.goldenAm, el.goldenAmStatus, pair.morning, now);
+    setGoldenStatus(el.goldenPm, el.goldenPmStatus, pair.evening, now);
+  };
+  update();
+  state.goldenTimer = setInterval(update, 30_000);
+}
+
+function setGoldenStatus(btn, statusEl, win, now) {
+  if (!btn || !statusEl) return;
+  btn.classList.remove("active", "past");
+  if (now >= win.start && now < win.end) {
+    btn.classList.add("active");
+    const minsLeft = Math.max(1, Math.round((win.end - now) / 60_000));
+    statusEl.textContent = `now · ${minsLeft}m left`;
+  } else if (now >= win.end) {
+    btn.classList.add("past");
+    statusEl.textContent = "ended";
+  } else {
+    const mins = Math.max(0, Math.round((win.start - now) / 60_000));
+    if (mins < 60) statusEl.textContent = `in ${mins}m`;
+    else if (mins < 24 * 60) {
+      const h = Math.floor(mins / 60), m = mins % 60;
+      statusEl.textContent = m ? `in ${h}h ${m}m` : `in ${h}h`;
+    } else statusEl.textContent = "tomorrow";
+  }
+}
+
+function renderGoldenArcTicks(w, pair) {
+  const g = el.sunArcGolden;
+  if (!g) return;
+  g.innerHTML = "";
+  if (!w?.sunrise || !w?.sunset || !pair) return;
+  const sr = w.sunrise, ss = w.sunset;
+  const dayMs = ss - sr;
+  if (dayMs <= 0) return;
+  // Bezier point on the sun arc at param t.
+  const P = (t) => ({
+    x: (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190,
+    y: (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74,
+  });
+  const addTick = (frac, hue) => {
+    if (frac < 0 || frac > 1) return;
+    const p = P(clamp01(frac));
+    // Perpendicular to the tangent — approx via numerical derivative.
+    const p2 = P(clamp01(frac + 0.01));
+    const dx = p2.x - p.x, dy = p2.y - p.y;
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = -dy / len, ny = dx / len;
+    const half = 4;
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", (p.x - nx * half).toFixed(1));
+    line.setAttribute("y1", (p.y - ny * half).toFixed(1));
+    line.setAttribute("x2", (p.x + nx * half).toFixed(1));
+    line.setAttribute("y2", (p.y + ny * half).toFixed(1));
+    line.setAttribute("stroke", hue);
+    line.setAttribute("stroke-width", "2");
+    line.setAttribute("stroke-linecap", "round");
+    line.setAttribute("opacity", "0.9");
+    g.appendChild(line);
+  };
+  const gold = "#ffd08a";
+  // Only draw ticks that land on today's daylit arc.
+  const amEnd = (pair.morning.end - sr) / dayMs;
+  const pmStart = (pair.evening.start - sr) / dayMs;
+  addTick(amEnd, gold);
+  addTick(pmStart, gold);
+}
 
 function scheduleSunCountdown(w) {
   if (state.sunTimer) { clearInterval(state.sunTimer); state.sunTimer = null; }
