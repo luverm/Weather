@@ -1269,12 +1269,7 @@ function renderDailyHighlights(days) {
   el.dailyHighlights.querySelectorAll(".daily-highlight").forEach((btn) => {
     btn.addEventListener("click", () => {
       const idx = parseInt(btn.dataset.idx, 10);
-      const rows = el.dailyTrack?.querySelectorAll(".daily-item");
-      const row = rows?.[idx];
-      if (!row) return;
-      row.scrollIntoView({ behavior: "smooth", block: "center" });
-      row.classList.remove("flash"); void row.offsetWidth; row.classList.add("flash");
-      if (row.dataset.expanded !== "true") row.click();
+      scrollToDailyRow(idx);
     });
   });
 }
