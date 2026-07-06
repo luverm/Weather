@@ -105,6 +105,7 @@ const el = {
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
   settingFocusMode: $("#setting-focus-mode"),
+  settingPrint: $("#setting-print"),
   settingUnitF: $("#setting-unit-f"),
   settingClearPlaces: $("#setting-clear-places"),
   chartPopover: $("#chart-popover"),
@@ -1864,6 +1865,13 @@ function bindSettings() {
       localStorage.setItem("aether:pressureUnit", u);
       if (state.weather) ui.setWeather(state.weather);
     }
+  });
+
+  el.settingPrint?.addEventListener("click", () => {
+    // Close the menu so it doesn't show up in the print output.
+    close();
+    // Wait for the animation to settle, then invoke print.
+    setTimeout(() => window.print(), 120);
   });
 
   el.settingClearPlaces?.addEventListener("click", () => {
