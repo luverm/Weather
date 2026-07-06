@@ -1516,6 +1516,9 @@ function applyStoredPreferences() {
 // Exposed so app.js can query the current preference on boot.
 ui.isReduceMotion = () => localStorage.getItem("aether:reduceMotion") === "1";
 
+// Kept in sync with the auto-refresh interval in app.js (15 min while live).
+const REFRESH_INTERVAL_MS = 15 * 60_000;
+
 function startFetchedTicker() {
   const update = () => {
     if (!el.fetchedAgo || !state.weather?.fetchedAt) {
@@ -1528,7 +1531,18 @@ function startFetchedTicker() {
       minutes < 1 ? "Just now" :
       minutes < 60 ? `Updated ${minutes}m ago` :
       `Updated ${Math.floor(minutes / 60)}h ago`;
-    el.fetchedAgo.textContent = "· " + label;
+
+    // Show "next in Xm" if we're still inside the auto-refresh window and
+    // it's less than 10m away — earlier than that isn't interesting.
+    let suffix = "";
+    const remaining = REFRESH_INTERVAL_MS - ms;
+    if (remaining > 0 && remaining <= 10 * 60_000) {
+      const minsLeft = Math.max(1, Math.ceil(remaining / 60_000));
+      suffix = ` · next in ${minsLeft}m`;
+    } else if (remaining <= 0 && minutes < 60) {
+      suffix = " · refreshing…";
+    }
+    el.fetchedAgo.textContent = "· " + label + suffix;
     el.fetchedAgo.classList.toggle("stale", minutes >= 20);
   };
   update();
