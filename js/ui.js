@@ -11,6 +11,7 @@ import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { summarizePrecip } from "./precip.js";
+import { suggestOutfit } from "./outfit.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -54,6 +55,10 @@ const el = {
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
+  outfit: $("#outfit"),
+  outfitIcons: $("#outfit-icons"),
+  outfitLabel: $("#outfit-label"),
+  outfitHint: $("#outfit-hint"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
   pollenCard: $("#pollen-card"),
@@ -604,6 +609,18 @@ function renderAdvice(w) {
   } else {
     el.advice.hidden = true;
   }
+  renderOutfit(w);
+}
+
+function renderOutfit(w) {
+  if (!el.outfit) return;
+  const s = suggestOutfit(w);
+  if (!s) { el.outfit.hidden = true; return; }
+  el.outfit.hidden = false;
+  el.outfit.setAttribute("data-tier", s.tier);
+  el.outfitIcons.textContent = s.icons;
+  el.outfitLabel.textContent = s.label;
+  el.outfitHint.textContent = s.hint;
 }
 
 function startLocaltime(w) {
