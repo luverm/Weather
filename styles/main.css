@@ -227,6 +227,16 @@ html[data-reduce-motion="true"] *::after {
   transition-duration: 0ms !important;
 }
 
+/* Night auto-dim: 22:00 – 06:00 in the forecast's timezone. Just a small
+   drop in glass panel saturation + text opacity, not a full theme swap. */
+html[data-night="true"] .glass {
+  filter: brightness(0.94) saturate(0.92);
+}
+html[data-night="true"] .hero-inner {
+  filter: brightness(0.96) saturate(0.95);
+}
+html[data-night="true"] body { color-scheme: dark; }
+
 /* Focus mode: hero + scrubber + chart only. */
 html[data-focus="true"] #chart-card ~ .metrics,
 html[data-focus="true"] .extras,

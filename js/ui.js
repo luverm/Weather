@@ -388,6 +388,27 @@ function renderLiveValues(w, { animate = true } = {}) {
   renderDayRange(w);
   renderDayparts(w);
   updateTabTitle(w);
+  updateNightMode(w);
+}
+
+function updateNightMode(w) {
+  // Reflect nighttime at the current place with a light UI dim. Read the
+  // current time in the forecast's timezone so it stays honest when the
+  // reader's browser is somewhere else on the globe.
+  const tz = w?.timezone;
+  let hour;
+  try {
+    if (tz && tz !== "auto") {
+      const parts = new Intl.DateTimeFormat("en-GB", {
+        timeZone: tz, hour: "2-digit", hour12: false,
+      }).formatToParts(new Date());
+      hour = parseInt(parts.find((p) => p.type === "hour")?.value ?? "-1", 10);
+    } else {
+      hour = new Date().getHours();
+    }
+  } catch { hour = new Date().getHours(); }
+  const isNight = hour >= 22 || hour < 6;
+  document.documentElement.setAttribute("data-night", isNight ? "true" : "false");
 }
 
 function updateTabTitle(w) {
