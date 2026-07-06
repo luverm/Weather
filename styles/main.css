@@ -1783,12 +1783,28 @@ kbd {
   color: var(--fg-muted);
 }
 .daily-icon-strip .strip-day {
+  appearance: none;
+  background: transparent;
+  border: 1px solid transparent;
+  color: inherit;
+  border-radius: 8px;
   display: grid; place-items: center;
-  padding: 4px;
+  padding: 4px 2px;
   opacity: 0.85;
-  transition: opacity 160ms var(--ease), transform 160ms var(--ease);
+  cursor: pointer;
+  transition: opacity 160ms var(--ease), transform 160ms var(--ease),
+              background 160ms var(--ease), border-color 160ms var(--ease);
 }
-.daily-icon-strip .strip-day:hover { opacity: 1; transform: translateY(-1px); }
+.daily-icon-strip .strip-day:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+  background: rgba(255,255,255,0.06);
+  border-color: var(--stroke);
+}
+.daily-icon-strip .strip-day:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+}
 .daily-icon-strip .strip-day svg {
   width: 22px; height: 22px;
   display: block;

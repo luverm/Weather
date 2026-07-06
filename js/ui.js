@@ -1281,9 +1281,39 @@ function renderDaily(w) {
 
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
-  el.dailyIconStrip.innerHTML = days.map((d) =>
-    `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
-  ).join("");
+  const tz = state.weather?.timezone;
+  const dayName = (d, i) => {
+    if (i === 0) return "Today";
+    if (i === 1) return "Tomorrow";
+    return new Date(d.time).toLocaleDateString(undefined, {
+      weekday: "long", ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    });
+  };
+  el.dailyIconStrip.innerHTML = days.map((d, i) => {
+    const title = `${dayName(d, i)}${d.label ? " · " + d.label : ""}${d.tempMax != null ? " · " + Math.round(convertTemp(d.tempMax)) + "°" : ""}`;
+    return `<button class="strip-day" type="button" data-idx="${i}" title="${escapeHtml(title)}">${iconFor(d.condition)}</button>`;
+  }).join("");
+  el.dailyIconStrip.querySelectorAll(".strip-day").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const idx = parseInt(btn.dataset.idx, 10);
+      const d = days[idx];
+      if (!d) return;
+      // Scrubber has a 24 h horizon — jumping "to noon" only makes sense
+      // for today or tomorrow. Everyone else scrolls to their detail row.
+      if (idx <= 1) {
+        const noon = new Date(d.time);
+        noon.setHours(12, 0, 0, 0);
+        const delta = noon.getTime() - Date.now();
+        // Scrubber only spans [-1 h, +23 h]. If tomorrow noon overshoots
+        // that (early-morning viewing), fall through to the detail row.
+        if (delta > -3600_000 && delta < 23 * 3600_000) {
+          state.handlers.onHourClick?.(noon.getTime());
+          return;
+        }
+      }
+      scrollToDailyRow(idx);
+    });
+  });
 }
 
 function renderDailySpark(days) {
