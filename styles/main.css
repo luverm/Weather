@@ -1424,6 +1424,23 @@ kbd {
   border: 1px solid rgba(154,209,255,0.25);
 }
 
+/* ---------- Cloud cover card ---------- */
+#cloud-card { color: #bcd0e6; }
+#cloud-card[data-tone="clear"]  { color: #ffd591; }
+#cloud-card[data-tone="mixed"]  { color: #cfe5ff; }
+#cloud-card[data-tone="cloudy"] { color: #b0b8c8; }
+.cloud-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
+.cloud-ring { position: relative; width: 48px; height: 48px; }
+.cloud-ring svg { width: 48px; height: 48px; display: block; }
+.cloud-value {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+.cloud-meta { display: grid; gap: 2px; min-width: 0; }
+.cloud-meta strong { font-size: 14px; font-weight: 500; color: var(--fg); }
+.cloud-detail { font-size: 11px; color: var(--fg-muted); }
+
 /* ---------- Precipitation outlook card ---------- */
 #precip-card { display: grid; gap: 10px; }
 .precip-hero {

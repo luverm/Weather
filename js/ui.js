@@ -95,6 +95,14 @@ const el = {
   activityCard: $("#activity-card"),
   activityList: $("#activity-list"),
   pinBtn: $("#pin-place"),
+  cloudCard: $("#cloud-card"),
+  cloudArc: $("#cloud-arc"),
+  cloudValue: $("#cloud-value"),
+  cloudLabel: $("#cloud-label"),
+  cloudHeadline: $("#cloud-headline"),
+  cloudDetail: $("#cloud-detail"),
+  cloudSparkLine: $("#cloud-spark-line"),
+  cloudSparkFill: $("#cloud-spark-fill"),
   precipCard: $("#precip-card"),
   precip24h: $("#precip-24h"),
   precipWeek: $("#precip-week"),
@@ -207,6 +215,7 @@ export const ui = {
     renderTrends(weather);
     renderInsights(weather);
     renderActivity(weather);
+    renderCloudCover(weather);
     renderPrecipSummary(weather);
     renderAlerts(weather);
     renderWeekend(weather);
@@ -813,6 +822,36 @@ function renderActivity(w) {
       const ts = parseInt(li.dataset.ts, 10);
       if (ts) state.handlers.onHourClick?.(ts);
     });
+  });
+}
+
+function renderCloudCover(w) {
+  if (!el.cloudCard) return;
+  const c = w?.cloudCover;
+  if (c == null || isNaN(c)) { el.cloudCard.style.opacity = 0.5; return; }
+  el.cloudCard.style.opacity = 1;
+  const pct = Math.max(0, Math.min(100, Math.round(c)));
+  el.cloudValue.textContent = `${pct}%`;
+  el.cloudArc.setAttribute("stroke-dashoffset", String(126 * (1 - pct / 100)));
+
+  let headline, tone, detail;
+  if (pct < 15)      { headline = "Clear";           tone = "clear";    detail = "Blue sky, no cloud deck."; }
+  else if (pct < 40) { headline = "Mostly clear";    tone = "clear";    detail = "Scattered high clouds."; }
+  else if (pct < 70) { headline = "Partly cloudy";   tone = "mixed";    detail = "Broken cloud cover."; }
+  else if (pct < 90) { headline = "Mostly cloudy";   tone = "cloudy";   detail = "Thick deck overhead."; }
+  else               { headline = "Overcast";        tone = "cloudy";   detail = "Full grey ceiling."; }
+
+  el.cloudCard.setAttribute("data-tone", tone);
+  el.cloudHeadline.textContent = headline;
+  el.cloudDetail.textContent = detail;
+  if (el.cloudLabel) el.cloudLabel.textContent = w.isDay ? "☀ day" : "🌙 night";
+
+  const series = (w.hourly || [])
+    .map((h) => h.cloudCover)
+    .filter((v) => v != null)
+    .slice(0, 12);
+  drawSparkline(el.cloudSparkLine, el.cloudSparkFill, series, {
+    minSpan: 20, fixedMin: 0, fixedMax: 100,
   });
 }
 

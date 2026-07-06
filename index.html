@@ -338,6 +338,29 @@
           <ul id="activity-list" class="activity-list"></ul>
         </div>
 
+        <div class="extra-card glass" id="cloud-card">
+          <span class="metric-label">Cloud cover <span id="cloud-label" class="trend" aria-hidden="true"></span></span>
+          <div class="cloud-row">
+            <div class="cloud-ring" aria-hidden="true">
+              <svg viewBox="0 0 48 48">
+                <circle cx="24" cy="24" r="20" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="4"/>
+                <circle id="cloud-arc" cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="4"
+                        stroke-linecap="round" stroke-dasharray="126" stroke-dashoffset="126"
+                        transform="rotate(-90 24 24)"/>
+              </svg>
+              <span id="cloud-value" class="cloud-value">—</span>
+            </div>
+            <div class="cloud-meta">
+              <strong id="cloud-headline">—</strong>
+              <span id="cloud-detail" class="cloud-detail">—</span>
+              <svg id="cloud-spark" class="pressure-spark" viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true">
+                <path id="cloud-spark-fill" fill="currentColor" fill-opacity="0.14"></path>
+                <path id="cloud-spark-line" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+
         <div class="extra-card glass" id="precip-card" hidden>
           <span class="metric-label">Precipitation outlook <span id="precip-week-days" class="trend" aria-hidden="true"></span></span>
           <div class="precip-hero">
