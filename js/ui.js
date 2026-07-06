@@ -52,6 +52,7 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonProgression: $("#moon-progression"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -557,6 +558,7 @@ function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  renderMoonProgression(moon);
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
@@ -573,6 +575,26 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+}
+
+function renderMoonProgression(moon) {
+  if (!el.moonProgression) return;
+  // Distance in cycle to the next 0 (new) and 0.5 (full).
+  const CYCLE_DAYS = 29.5305882;
+  const phase = moon.phase;
+  const toNew  = ((1 - phase) % 1) * CYCLE_DAYS;
+  const toFull = ((0.5 - phase + 1) % 1) * CYCLE_DAYS;
+  const closer = toNew < toFull ? { kind: "new", days: toNew }
+                                : { kind: "full", days: toFull };
+  const other  = toNew < toFull ? { kind: "full", days: toFull }
+                                : { kind: "new", days: toNew };
+  const fmt = (label, days) => {
+    if (days < 1) return `${label} within a day`;
+    const rounded = Math.round(days);
+    return `${label} in ${rounded}d`;
+  };
+  el.moonProgression.textContent =
+    `${fmt(closer.kind === "new" ? "New" : "Full", closer.days)} · ${fmt(other.kind === "new" ? "New" : "Full", other.days)}`;
 }
 
 function fmtTime(ts) {
