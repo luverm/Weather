@@ -34,6 +34,8 @@ const el = {
   windBft: $("#m-wind-bft"),
   settingWindUnit: $("#setting-wind-unit"),
   settingTimeFormat: $("#setting-time-format"),
+  settingPressureUnit: $("#setting-pressure-unit"),
+  metricPressureUnit: $("#m-pressure-unit"),
   metricHumidity: $("#m-humidity"),
   metricHumiditySub: $("#m-humidity-sub"),
   metricPressure: $("#m-pressure"),
@@ -141,6 +143,7 @@ const state = {
   unit: localStorage.getItem("aether:unit") || "C",
   windUnit: localStorage.getItem("aether:windUnit") || "kmh",
   timeFormat: localStorage.getItem("aether:timeFormat") || "24",
+  pressureUnit: localStorage.getItem("aether:pressureUnit") || "hpa",
   weather: null,
   place: null,
   sampledWeather: null, // the weather values at the current scrubber time
@@ -299,6 +302,25 @@ function fmtWind(kmh) {
   return v.toFixed(p);
 }
 
+function convertPressure(hpa) {
+  if (hpa == null) return null;
+  switch (state.pressureUnit) {
+    case "inhg": return hpa * 0.0295299830714;
+    case "mmhg": return hpa * 0.75006157584566;
+    default:     return hpa;
+  }
+}
+function pressureUnitLabel() {
+  return { inhg: "inHg", mmhg: "mmHg" }[state.pressureUnit] || "hPa";
+}
+function fmtPressure(hpa) {
+  const v = convertPressure(hpa);
+  if (v == null) return "—";
+  if (state.pressureUnit === "inhg") return v.toFixed(2);
+  if (state.pressureUnit === "mmhg") return Math.round(v).toString();
+  return Math.round(v).toString();
+}
+
 function animateNumber(node, target, format) {
   if (target == null || isNaN(target)) { node.textContent = "–"; return; }
   const prev = parseFloat(node.dataset.v ?? NaN);
@@ -396,7 +418,8 @@ function renderMetrics(w) {
       el.humidityComfort.textContent = "";
     }
   }
-  el.metricPressure.textContent = Math.round(w.pressure ?? 0);
+  el.metricPressure.textContent = w.pressure != null ? fmtPressure(w.pressure) : "—";
+  if (el.metricPressureUnit) el.metricPressureUnit.textContent = pressureUnitLabel();
   el.metricPressureSub.textContent = w.visibility != null
     ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
     : "visibility —";
@@ -971,7 +994,11 @@ function renderTrends(w) {
       const arrow = direction === "rising" ? "▲" : direction === "falling" ? "▼" : "→";
       const cls = direction === "rising" ? "up" : direction === "falling" ? "down" : "flat";
       el.pressureTrend.className = `trend ${cls}`;
-      el.pressureTrend.textContent = `${arrow} ${delta >= 0 ? "+" : ""}${delta.toFixed(1)}`;
+      // Show delta in the user's active pressure unit.
+      const convDelta = convertPressure(delta);
+      const p = state.pressureUnit === "inhg" ? 2
+              : state.pressureUnit === "mmhg" ? 1 : 1;
+      el.pressureTrend.textContent = `${arrow} ${convDelta >= 0 ? "+" : ""}${convDelta.toFixed(p)}`;
     } else {
       el.pressureTrend.textContent = "";
     }
@@ -1576,6 +1603,15 @@ function bindSettings() {
     }
   });
 
+  el.settingPressureUnit?.addEventListener("change", () => {
+    const u = el.settingPressureUnit.value;
+    if (["hpa", "inhg", "mmhg"].includes(u) && state.pressureUnit !== u) {
+      state.pressureUnit = u;
+      localStorage.setItem("aether:pressureUnit", u);
+      if (state.weather) ui.setWeather(state.weather);
+    }
+  });
+
   el.settingClearPlaces?.addEventListener("click", () => {
     if (!confirm("Clear all saved places?")) return;
     for (const p of places.all()) places.remove(p);
@@ -1596,6 +1632,7 @@ function applyStoredPreferences() {
   if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
   if (el.settingWindUnit) el.settingWindUnit.value = state.windUnit;
   if (el.settingTimeFormat) el.settingTimeFormat.value = state.timeFormat;
+  if (el.settingPressureUnit) el.settingPressureUnit.value = state.pressureUnit;
 }
 
 // Exposed so app.js can query the current preference on boot.

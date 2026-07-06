@@ -84,6 +84,14 @@
               <option value="12">12-hour</option>
             </select>
           </label>
+          <label class="settings-row">
+            <span>Pressure unit</span>
+            <select id="setting-pressure-unit" class="settings-select" aria-label="Pressure unit">
+              <option value="hpa">hPa</option>
+              <option value="inhg">inHg</option>
+              <option value="mmhg">mmHg</option>
+            </select>
+          </label>
           <button id="setting-clear-places" class="settings-btn-inline" type="button">Clear saved places</button>
           <div class="settings-foot">Aether · Open-Meteo + RainViewer</div>
         </div>
@@ -286,7 +294,7 @@
         <div class="metric glass metric-pressure">
           <span class="metric-label">Pressure <span id="m-pressure-trend" class="trend" aria-hidden="true"></span></span>
           <span id="m-pressure" class="metric-value">—</span>
-          <span class="metric-unit">hPa</span>
+          <span id="m-pressure-unit" class="metric-unit">hPa</span>
           <svg id="pressure-spark" class="pressure-spark" viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true">
             <path id="pressure-spark-fill" fill="currentColor" fill-opacity="0.14"></path>
             <path id="pressure-spark-line" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"></path>
