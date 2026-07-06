@@ -825,6 +825,27 @@ html[data-reduce-motion="true"] *::after {
   fill: var(--fg-muted);
   font-size: 9.5px;
 }
+.chart-extreme {
+  fill: transparent;
+  stroke-width: 1.6;
+  pointer-events: none;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+.chart-extreme-max { stroke: #ff9c7a; }
+.chart-extreme-min { stroke: #9ad1ff; }
+.chart-extreme-label {
+  font-size: 8.5px;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  fill: var(--fg);
+  paint-order: stroke;
+  stroke: rgba(11,16,32,0.65);
+  stroke-width: 2.4;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+.chart-extreme-label-max { fill: #ffe6c7; }
+.chart-extreme-label-min { fill: #cfe5ff; }
 .chart-cursor {
   stroke: var(--accent);
   stroke-width: 1.2;

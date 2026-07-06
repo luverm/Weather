@@ -288,5 +288,46 @@ export class HourlyChart {
       tTxt.textContent = `${Math.round(tVal)}°`;
       labG.appendChild(tTxt);
     });
+
+    // Extremes: mark the coldest + warmest hour so the eye can find them.
+    const extG = this.svg.querySelector("#chart-extremes");
+    if (extG) {
+      extG.innerHTML = "";
+      let minIdx = 0, maxIdx = 0;
+      for (let i = 1; i < this.hours.length; i++) {
+        if (this.hours[i].temp < this.hours[minIdx].temp) minIdx = i;
+        if (this.hours[i].temp > this.hours[maxIdx].temp) maxIdx = i;
+      }
+      // Only render if the swing is meaningful.
+      if (Math.abs(this.hours[maxIdx].temp - this.hours[minIdx].temp) >= 2) {
+        this._drawExtreme(extG, minIdx, "min", tToY, iToX);
+        this._drawExtreme(extG, maxIdx, "max", tToY, iToX);
+      }
+    }
+  }
+
+  _drawExtreme(g, i, kind, tToY, iToX) {
+    const h = this.hours[i];
+    if (!h) return;
+    const unit = this.getUnit();
+    const val = unit === "F" ? h.temp * 9 / 5 + 32 : h.temp;
+    const x = iToX(i);
+    const y = tToY(h.temp);
+    // Ring around the point.
+    const ring = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    ring.setAttribute("cx", x.toFixed(1));
+    ring.setAttribute("cy", y.toFixed(1));
+    ring.setAttribute("r", "3.5");
+    ring.setAttribute("class", `chart-extreme chart-extreme-${kind}`);
+    g.appendChild(ring);
+    // Label above (max) or below (min) so it doesn't collide with the line.
+    const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    const label = kind === "max" ? `HI ${Math.round(val)}°` : `LO ${Math.round(val)}°`;
+    txt.setAttribute("x", x.toFixed(1));
+    txt.setAttribute("y", (kind === "max" ? y - 10 : y + 14).toFixed(1));
+    txt.setAttribute("text-anchor", "middle");
+    txt.setAttribute("class", `chart-extreme-label chart-extreme-label-${kind}`);
+    txt.textContent = label;
+    g.appendChild(txt);
   }
 }
