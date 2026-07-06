@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { summarizePrecip } from "./precip.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -87,6 +88,12 @@ const el = {
   insightsList: $("#insights-list"),
   activityCard: $("#activity-card"),
   activityList: $("#activity-list"),
+  precipCard: $("#precip-card"),
+  precip24h: $("#precip-24h"),
+  precipWeek: $("#precip-week"),
+  precipWeekDays: $("#precip-week-days"),
+  precipPeak: $("#precip-peak"),
+  precipWeekBars: $("#precip-week-bars"),
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
@@ -191,6 +198,7 @@ export const ui = {
     renderTrends(weather);
     renderInsights(weather);
     renderActivity(weather);
+    renderPrecipSummary(weather);
     renderAlerts(weather);
     renderWeekend(weather);
     startLocaltime(weather);
@@ -768,6 +776,65 @@ function renderActivity(w) {
       if (ts) state.handlers.onHourClick?.(ts);
     });
   });
+}
+
+function renderPrecipSummary(w) {
+  if (!el.precipCard) return;
+  const s = summarizePrecip(w);
+  if (!s.hasAny) { el.precipCard.hidden = true; return; }
+  el.precipCard.hidden = false;
+
+  const fmt24 = s.next24 < 1 && s.next24 > 0 ? s.next24.toFixed(1) : Math.round(s.next24);
+  const fmtWeek = s.weekTotal < 1 && s.weekTotal > 0 ? s.weekTotal.toFixed(1) : Math.round(s.weekTotal);
+  el.precip24h.textContent = fmt24;
+  el.precipWeek.textContent = fmtWeek;
+  if (el.precipWeekDays) {
+    if (s.wetDays === 0) {
+      el.precipWeekDays.textContent = "· dry week";
+      el.precipWeekDays.className = "trend flat";
+    } else {
+      el.precipWeekDays.textContent = `· ${s.wetDays} wet ${s.wetDays === 1 ? "day" : "days"}`;
+      el.precipWeekDays.className = "trend";
+    }
+  }
+
+  // Peak line: prefer "starts at X" if it's currently dry, else "heaviest at X".
+  if (el.precipPeak) {
+    if (s.next24 <= 0.05 && s.weekTotal > 0 && s.wettest) {
+      const day = new Date(s.wettest.time).toLocaleDateString(undefined, { weekday: "long" });
+      const amt = s.wettest.precip < 1 ? s.wettest.precip.toFixed(1) : Math.round(s.wettest.precip);
+      el.precipPeak.textContent = `Wettest day: ${day} · ${amt} mm`;
+    } else if (s.firstWetHour && s.firstWetHour.time > Date.now() + 30 * 60_000) {
+      el.precipPeak.textContent = `Starts around ${fmtTime(s.firstWetHour.time)} · peak ${fmtTime(s.peak?.time)}`;
+    } else if (s.peak && s.peak.precip > 0) {
+      const p = s.peak.precip < 1 ? s.peak.precip.toFixed(1) : Math.round(s.peak.precip);
+      el.precipPeak.textContent = `Peak intensity ${p} mm at ${fmtTime(s.peak.time)}`;
+    } else {
+      el.precipPeak.textContent = "Light showers expected — nothing sustained.";
+    }
+  }
+
+  // Weekly bars: normalize to the wettest day.
+  if (el.precipWeekBars) {
+    const max = Math.max(0.1, ...s.week.map((d) => d.precip));
+    el.precipWeekBars.innerHTML = s.week.map((d) => {
+      const pct = Math.max(4, Math.round((d.precip / max) * 100));
+      const label = d.time
+        ? new Date(d.time).toLocaleDateString(undefined, { weekday: "narrow" })
+        : "";
+      const amt = d.precip < 1 && d.precip > 0
+        ? d.precip.toFixed(1)
+        : Math.round(d.precip);
+      const isDry = d.precip < 0.1;
+      const title = `${new Date(d.time || Date.now()).toLocaleDateString(undefined, { weekday: "long" })} · ${amt} mm · ${Math.round(d.pop)}% chance`;
+      return `
+        <div class="precip-bar${isDry ? " dry" : ""}" title="${escapeHtml(title)}">
+          <span class="precip-bar-fill" style="height:${pct}%"></span>
+          <span class="precip-bar-label">${escapeHtml(label)}</span>
+        </div>
+      `;
+    }).join("");
+  }
 }
 
 function renderPollen(pollen) {

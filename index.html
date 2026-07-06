@@ -318,6 +318,22 @@
           <ul id="activity-list" class="activity-list"></ul>
         </div>
 
+        <div class="extra-card glass" id="precip-card" hidden>
+          <span class="metric-label">Precipitation outlook <span id="precip-week-days" class="trend" aria-hidden="true"></span></span>
+          <div class="precip-hero">
+            <div class="precip-num">
+              <strong id="precip-24h">—</strong>
+              <span class="precip-unit">mm · next 24 h</span>
+            </div>
+            <div class="precip-num precip-week">
+              <strong id="precip-week">—</strong>
+              <span class="precip-unit">mm · next 7 days</span>
+            </div>
+          </div>
+          <p id="precip-peak" class="precip-peak">—</p>
+          <div id="precip-week-bars" class="precip-week-bars" aria-label="Precipitation by day"></div>
+        </div>
+
         <div class="extra-card glass" id="sun-card">
           <span class="metric-label"><span id="sun-next-label">Sun</span> <span id="sun-countdown" class="sun-countdown"></span></span>
           <svg id="sun-arc" class="sun-arc" viewBox="0 0 200 84" aria-hidden="true">
