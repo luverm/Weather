@@ -9,13 +9,14 @@ const PAD_TOP = 16;
 const PAD_BOT = 22;
 
 export class HourlyChart {
-  constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit, getTimezone }) {
+  constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit, getTimezone, getHour12 }) {
     this.svg = svgEl;
     this.hoverEl = hoverEl;
     this.popover = popoverEl;
     this.onHoverHour = onHoverHour;
     this.getUnit = getUnit || (() => "C");
     this.getTimezone = getTimezone || (() => null);
+    this.getHour12 = getHour12 || (() => false);
     this.hours = [];
     this.points = [];
     this._bind();
@@ -23,14 +24,21 @@ export class HourlyChart {
 
   _formatHour(ts) {
     const tz = this.getTimezone();
+    const hour12 = this.getHour12();
     if (tz && tz !== "auto") {
       try {
         return new Intl.DateTimeFormat(undefined, {
-          timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
+          timeZone: tz, hour: hour12 ? "numeric" : "2-digit",
+          minute: "2-digit", hour12,
         }).format(new Date(ts));
       } catch { /* */ }
     }
     const d = new Date(ts);
+    if (hour12) {
+      let h = d.getHours(); const suffix = h < 12 ? "am" : "pm";
+      h = h % 12 || 12;
+      return `${h}:${d.getMinutes().toString().padStart(2, "0")}${suffix}`;
+    }
     return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
   }
 

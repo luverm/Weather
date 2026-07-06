@@ -33,6 +33,7 @@ const el = {
   metricWindUnit: $("#m-wind-unit"),
   windBft: $("#m-wind-bft"),
   settingWindUnit: $("#setting-wind-unit"),
+  settingTimeFormat: $("#setting-time-format"),
   metricHumidity: $("#m-humidity"),
   metricHumiditySub: $("#m-humidity-sub"),
   metricPressure: $("#m-pressure"),
@@ -139,6 +140,7 @@ const el = {
 const state = {
   unit: localStorage.getItem("aether:unit") || "C",
   windUnit: localStorage.getItem("aether:windUnit") || "kmh",
+  timeFormat: localStorage.getItem("aether:timeFormat") || "24",
   weather: null,
   place: null,
   sampledWeather: null, // the weather values at the current scrubber time
@@ -173,6 +175,7 @@ export const ui = {
       onHoverHour: (ts) => state.handlers.onHourClick?.(ts),
       getUnit: () => state.unit,
       getTimezone: () => state.weather?.timezone,
+      getHour12: () => state.timeFormat === "12",
     });
     state.comfortStrip = new ComfortStrip({
       rootEl: el.comfortStrip,
@@ -551,14 +554,21 @@ function renderMoon(moon) {
 function fmtTime(ts) {
   if (!ts) return "—";
   const tz = state.weather?.timezone;
+  const hour12 = state.timeFormat === "12";
   if (tz && tz !== "auto") {
     try {
       return new Intl.DateTimeFormat(undefined, {
-        timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
+        timeZone: tz, hour: hour12 ? "numeric" : "2-digit",
+        minute: "2-digit", hour12,
       }).format(new Date(ts));
     } catch { /* fall through */ }
   }
   const d = new Date(ts);
+  if (hour12) {
+    let h = d.getHours(); const suffix = h < 12 ? "am" : "pm";
+    h = h % 12 || 12;
+    return `${h}:${d.getMinutes().toString().padStart(2, "0")}${suffix}`;
+  }
   const hh = d.getHours().toString().padStart(2, "0");
   const mm = d.getMinutes().toString().padStart(2, "0");
   return `${hh}:${mm}`;
@@ -1526,6 +1536,15 @@ function bindSettings() {
     }
   });
 
+  el.settingTimeFormat?.addEventListener("change", () => {
+    const f = el.settingTimeFormat.value;
+    if ((f === "12" || f === "24") && state.timeFormat !== f) {
+      state.timeFormat = f;
+      localStorage.setItem("aether:timeFormat", f);
+      if (state.weather) ui.setWeather(state.weather);
+    }
+  });
+
   el.settingClearPlaces?.addEventListener("click", () => {
     if (!confirm("Clear all saved places?")) return;
     for (const p of places.all()) places.remove(p);
@@ -1545,6 +1564,7 @@ function applyStoredPreferences() {
   }
   if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
   if (el.settingWindUnit) el.settingWindUnit.value = state.windUnit;
+  if (el.settingTimeFormat) el.settingTimeFormat.value = state.timeFormat;
 }
 
 // Exposed so app.js can query the current preference on boot.
