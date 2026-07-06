@@ -30,7 +30,9 @@ const el = {
   dayRangeMarker: $("#day-range-marker"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
+  metricWindUnit: $("#m-wind-unit"),
   windBft: $("#m-wind-bft"),
+  settingWindUnit: $("#setting-wind-unit"),
   metricHumidity: $("#m-humidity"),
   metricHumiditySub: $("#m-humidity-sub"),
   metricPressure: $("#m-pressure"),
@@ -136,6 +138,7 @@ const el = {
 
 const state = {
   unit: localStorage.getItem("aether:unit") || "C",
+  windUnit: localStorage.getItem("aether:windUnit") || "kmh",
   weather: null,
   place: null,
   sampledWeather: null, // the weather values at the current scrubber time
@@ -274,6 +277,25 @@ export const ui = {
 
 function convertTemp(c) { return state.unit === "F" ? c * 9 / 5 + 32 : c; }
 
+function convertWind(kmh) {
+  if (kmh == null) return null;
+  switch (state.windUnit) {
+    case "mph": return kmh * 0.621371;
+    case "ms":  return kmh / 3.6;
+    case "kt":  return kmh * 0.539957;
+    default:    return kmh;
+  }
+}
+function windUnitLabel() {
+  return { mph: "mph", ms: "m/s", kt: "kt" }[state.windUnit] || "km/h";
+}
+function fmtWind(kmh) {
+  const v = convertWind(kmh);
+  if (v == null) return "—";
+  const p = state.windUnit === "ms" || state.windUnit === "kt" ? 1 : 0;
+  return v.toFixed(p);
+}
+
 function animateNumber(node, target, format) {
   if (target == null || isNaN(target)) { node.textContent = "–"; return; }
   const prev = parseFloat(node.dataset.v ?? NaN);
@@ -334,12 +356,14 @@ function renderDayRange(w) {
 }
 
 function renderMetrics(w) {
-  el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
+  el.metricWind.textContent = w.windSpeed != null ? fmtWind(w.windSpeed) : "—";
+  if (el.metricWindUnit) el.metricWindUnit.textContent = windUnitLabel();
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
+  const gustStr = w.windGusts != null ? `${fmtWind(w.windGusts)} ${windUnitLabel()}` : "—";
   el.metricWindSub.textContent = dirLabel
-    ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
-    : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+    ? `${dirLabel} · gust ${gustStr}`
+    : `gust ${gustStr}`;
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
@@ -975,13 +999,13 @@ function renderHourly(w) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
-    const windKmh = h.wind != null ? Math.round(h.wind) : null;
-    const windPart = h.windDir != null && windKmh != null
-      ? `<span class="forecast-wind" title="Wind ${windKmh} km/h from ${cardinal(h.windDir)}">
+    const windDisplay = h.wind != null ? fmtWind(h.wind) : null;
+    const windPart = h.windDir != null && windDisplay != null
+      ? `<span class="forecast-wind" title="Wind ${windDisplay} ${windUnitLabel()} from ${cardinal(h.windDir)}">
            <svg class="forecast-wind-arrow" viewBox="-6 -6 12 12" aria-hidden="true" style="transform:rotate(${h.windDir}deg)">
              <path d="M 0 -4 L 2 3 L 0 1 L -2 3 Z" fill="currentColor"/>
            </svg>
-           <span class="forecast-wind-val">${windKmh}</span>
+           <span class="forecast-wind-val">${windDisplay}</span>
          </span>`
       : `<span class="forecast-wind forecast-wind-empty" aria-hidden="true"></span>`;
     item.innerHTML = `
@@ -1029,7 +1053,7 @@ function renderDaily(w) {
     item.className = "daily-item";
     item.dataset.ts = d.time;
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
-      ? ` · gusts ${Math.round(d.gustsMax)} km/h`
+      ? ` · gusts ${fmtWind(d.gustsMax)} ${windUnitLabel()}`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
@@ -1204,7 +1228,7 @@ function toggleDailyExpand(item, d, w) {
     const summary = document.createElement("div");
     summary.className = "daily-expand";
     summary.style.gridTemplateColumns = "1fr";
-    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${Math.round(d.gustsMax ?? 0)} km/h · UV ${Math.round(d.uvMax ?? 0)}</span>`;
+    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${fmtWind(d.gustsMax ?? 0)} ${windUnitLabel()} · UV ${Math.round(d.uvMax ?? 0)}</span>`;
     item.appendChild(summary);
     item.dataset.expanded = "true";
     return;
@@ -1493,6 +1517,15 @@ function bindSettings() {
     }
   });
 
+  el.settingWindUnit?.addEventListener("change", () => {
+    const u = el.settingWindUnit.value;
+    if (["kmh", "mph", "ms", "kt"].includes(u) && state.windUnit !== u) {
+      state.windUnit = u;
+      localStorage.setItem("aether:windUnit", u);
+      if (state.weather) ui.setWeather(state.weather);
+    }
+  });
+
   el.settingClearPlaces?.addEventListener("click", () => {
     if (!confirm("Clear all saved places?")) return;
     for (const p of places.all()) places.remove(p);
@@ -1511,6 +1544,7 @@ function applyStoredPreferences() {
     queueMicrotask(() => state.handlers.onReduceMotion?.(true));
   }
   if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
+  if (el.settingWindUnit) el.settingWindUnit.value = state.windUnit;
 }
 
 // Exposed so app.js can query the current preference on boot.
@@ -1562,7 +1596,7 @@ function bindShare() {
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
       today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
-      `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
+      `Wind ${fmtWind(w.windSpeed)} ${windUnitLabel()}${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
     ].filter(Boolean);
