@@ -227,6 +227,18 @@ html[data-reduce-motion="true"] *::after {
   transition-duration: 0ms !important;
 }
 
+/* Focus mode: hero + scrubber + chart only. */
+html[data-focus="true"] #chart-card ~ .metrics,
+html[data-focus="true"] .extras,
+html[data-focus="true"] #radar-card,
+html[data-focus="true"] #insights-card,
+html[data-focus="true"] .forecast,
+html[data-focus="true"] .daily,
+html[data-focus="true"] .places-strip,
+html[data-focus="true"] .alerts-strip {
+  display: none !important;
+}
+
 .search {
   position: relative;
   display: flex; align-items: center; gap: 10px;

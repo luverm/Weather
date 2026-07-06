@@ -92,6 +92,7 @@ const el = {
   settingsBtn: $("#settings-btn"),
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
+  settingFocusMode: $("#setting-focus-mode"),
   settingUnitF: $("#setting-unit-f"),
   settingClearPlaces: $("#setting-clear-places"),
   chartPopover: $("#chart-popover"),
@@ -1574,6 +1575,12 @@ function bindSettings() {
     state.handlers.onReduceMotion?.(on);
   });
 
+  el.settingFocusMode?.addEventListener("change", () => {
+    const on = el.settingFocusMode.checked;
+    document.documentElement.setAttribute("data-focus", on ? "true" : "false");
+    localStorage.setItem("aether:focus", on ? "1" : "0");
+  });
+
   el.settingUnitF?.addEventListener("change", () => {
     const wantF = el.settingUnitF.checked;
     const desired = wantF ? "F" : "C";
@@ -1628,6 +1635,11 @@ function applyStoredPreferences() {
     if (el.settingReduceMotion) el.settingReduceMotion.checked = true;
     // Defer so app.js has time to install the handler.
     queueMicrotask(() => state.handlers.onReduceMotion?.(true));
+  }
+  const focus = localStorage.getItem("aether:focus") === "1";
+  if (focus) {
+    document.documentElement.setAttribute("data-focus", "true");
+    if (el.settingFocusMode) el.settingFocusMode.checked = true;
   }
   if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
   if (el.settingWindUnit) el.settingWindUnit.value = state.windUnit;
