@@ -78,6 +78,7 @@ const el = {
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
+  dailyHighlights: $("#daily-highlights"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -948,6 +949,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderDailyHighlights(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1052,6 +1054,77 @@ function renderDailyDelta(days) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
   }
   el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
+}
+
+function renderDailyHighlights(days) {
+  if (!el.dailyHighlights) return;
+  if (!days || days.length < 3) { el.dailyHighlights.hidden = true; return; }
+  const tz = state.weather?.timezone;
+  const dayName = (ts, i) => i === 0 ? "Today" : new Date(ts).toLocaleDateString(undefined, {
+    weekday: "short", ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+
+  let warmest = 0, coolest = 0, swingIdx = 0;
+  let bestSwing = -Infinity;
+  for (let i = 0; i < days.length; i++) {
+    const d = days[i];
+    if (d.tempMax != null && d.tempMax > days[warmest].tempMax) warmest = i;
+    if (d.tempMin != null && d.tempMin < days[coolest].tempMin) coolest = i;
+    const swing = (d.tempMax ?? 0) - (d.tempMin ?? 0);
+    if (swing > bestSwing) { bestSwing = swing; swingIdx = i; }
+  }
+
+  const chips = [];
+  const wDay = days[warmest], cDay = days[coolest], sDay = days[swingIdx];
+  const warmSpread = (wDay.tempMax ?? 0) - (cDay.tempMax ?? 0);
+  const coolSpread = (cDay.tempMin ?? 0) - (wDay.tempMin ?? 0);
+
+  // Only surface warmest/coolest chips when they're actually distinct.
+  if (wDay.tempMax != null && warmest !== coolest && warmSpread >= 1.5) {
+    chips.push({
+      icon: "🔆", kind: "warmest",
+      text: `Warmest ${dayName(wDay.time, warmest)} · ${Math.round(convertTemp(wDay.tempMax))}°`,
+      idx: warmest,
+    });
+  }
+  if (cDay.tempMin != null && warmest !== coolest && Math.abs(coolSpread) >= 1.5) {
+    chips.push({
+      icon: "❄️", kind: "coolest",
+      text: `Coolest ${dayName(cDay.time, coolest)} · ${Math.round(convertTemp(cDay.tempMin))}°`,
+      idx: coolest,
+    });
+  }
+  // Biggest swing only shows if it's notable AND not a duplicate of warmest.
+  if (bestSwing >= 12 && swingIdx !== warmest && swingIdx !== coolest) {
+    chips.push({
+      icon: "↕️", kind: "swing",
+      text: `${dayName(sDay.time, swingIdx)} swings ${Math.round(convertTemp(sDay.tempMin))}° → ${Math.round(convertTemp(sDay.tempMax))}°`,
+      idx: swingIdx,
+    });
+  }
+
+  if (!chips.length) {
+    el.dailyHighlights.hidden = true;
+    return;
+  }
+  el.dailyHighlights.hidden = false;
+  el.dailyHighlights.innerHTML = chips.map((c) =>
+    `<button class="daily-highlight" type="button" data-idx="${c.idx}" data-kind="${c.kind}">
+      <span class="daily-highlight-icon" aria-hidden="true">${c.icon}</span>
+      <span class="daily-highlight-text">${escapeHtml(c.text)}</span>
+    </button>`
+  ).join("");
+  el.dailyHighlights.querySelectorAll(".daily-highlight").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const idx = parseInt(btn.dataset.idx, 10);
+      const rows = el.dailyTrack?.querySelectorAll(".daily-item");
+      const row = rows?.[idx];
+      if (!row) return;
+      row.scrollIntoView({ behavior: "smooth", block: "center" });
+      row.classList.remove("flash"); void row.offsetWidth; row.classList.add("flash");
+      if (row.dataset.expanded !== "true") row.click();
+    });
+  });
 }
 
 function toggleDailyExpand(item, d, w) {
