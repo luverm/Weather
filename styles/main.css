@@ -2024,3 +2024,56 @@ kbd {
   .temp { font-size: 78px; }
   .narrative { font-size: 13px; }
 }
+
+/* ---------- Print ---------- */
+@media print {
+  :root { color-scheme: light; }
+  html, body {
+    background: #fff !important;
+    color: #111 !important;
+  }
+  /* Kill animated scenes + interactive chrome. */
+  .stage, .vignette,
+  .topbar .toolbar, .search, .brand-mark,
+  .scrubber, .radar, .forecast-track, .comfort-strip,
+  #pin-place, .weekend-chip, #install-btn, #share-btn,
+  #settings-menu, #shortcuts, #toast,
+  .places-strip .close, .dayparts, .daily-icon-strip,
+  #transition-chip, .refresh-btn, #refresh-btn,
+  .radar-legend, .radar-time, .radar-track, .radar-attrib {
+    display: none !important;
+  }
+  .glass {
+    background: #fff !important;
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  .app {
+    max-width: none !important;
+    padding: 12mm 10mm !important;
+    color: #111 !important;
+  }
+  .hero-inner { grid-template-columns: 1fr auto !important; padding: 6mm !important; }
+  .place-name { font-size: 24pt !important; color: #111 !important; }
+  .temp-value, .condition-label, .feels-like { color: #111 !important; }
+  .metric-label, .metric-sub, .fetched-ago, .place-sub, .place-localtime {
+    color: #444 !important;
+  }
+  .metrics { grid-template-columns: repeat(4, 1fr) !important; page-break-inside: avoid; }
+  .extras { grid-template-columns: repeat(3, 1fr) !important; page-break-inside: avoid; }
+  .daily-item {
+    color: #111 !important;
+    page-break-inside: avoid;
+  }
+  .daily-highlights { display: none !important; }
+  /* Force color-preserving printing so the sparkline gradients survive. */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  /* Repurpose the footer as a print byline. */
+  .hint { color: #666 !important; border-top: 1px solid #ddd; padding-top: 6px; margin-top: 12px; }
+  .hint .dot { display: none !important; }
+}
