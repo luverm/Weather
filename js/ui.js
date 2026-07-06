@@ -356,6 +356,16 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  updateTabTitle(w);
+}
+
+function updateTabTitle(w) {
+  if (w?.temp == null) return;
+  const temp = `${Math.round(convertTemp(w.temp))}°${state.unit}`;
+  const cond = capitalize(w.label || "");
+  const place = state.place?.name;
+  const parts = [`${temp}${cond ? " " + cond : ""}`, place, "Aether"].filter(Boolean);
+  document.title = parts.join(" · ");
 }
 
 function renderDayRange(w) {
