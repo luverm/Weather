@@ -117,7 +117,19 @@
       <div class="hero-inner glass" data-tilt>
         <div class="place">
           <p class="place-label"><span id="place-live-dot" class="live-dot"></span><span id="place-label-text">Now in</span></p>
-          <h1 id="place-name" class="place-name">—</h1>
+          <div class="place-name-row">
+            <h1 id="place-name" class="place-name">—</h1>
+            <button id="pin-place" class="pin-btn" type="button" aria-label="Save this location" title="Save this location" hidden>
+              <svg class="pin-icon-empty" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 3l2.9 6 6.5.9-4.7 4.6 1.1 6.5L12 17.9 6.2 21l1.1-6.5L2.6 9.9 9.1 9z"
+                      fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+              </svg>
+              <svg class="pin-icon-filled" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 3l2.9 6 6.5.9-4.7 4.6 1.1 6.5L12 17.9 6.2 21l1.1-6.5L2.6 9.9 9.1 9z"
+                      fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
           <p id="place-sub" class="place-sub">Fetching atmosphere…</p>
           <p id="place-localtime" class="place-localtime"></p>
           <p id="narrative" class="narrative"></p>

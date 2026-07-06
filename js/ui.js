@@ -94,6 +94,7 @@ const el = {
   insightsList: $("#insights-list"),
   activityCard: $("#activity-card"),
   activityList: $("#activity-list"),
+  pinBtn: $("#pin-place"),
   precipCard: $("#precip-card"),
   precip24h: $("#precip-24h"),
   precipWeek: $("#precip-week"),
@@ -150,6 +151,7 @@ export const ui = {
     bindRefresh();
     bindSettings();
     bindTilt();
+    bindPin();
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
@@ -187,6 +189,7 @@ export const ui = {
     // Reset alert dismissals so a fresh location can re-surface them.
     try { sessionStorage.removeItem("aether:dismissed-alerts"); } catch { /* ignore */ }
     renderPlaces();
+    renderPinButton();
   },
   setWeather(weather, { narrative } = {}) {
     state.weather = weather;
@@ -1226,6 +1229,19 @@ function iconFor(condition) {
 }
 
 // ---------- Saved places strip ----------
+function renderPinButton() {
+  if (!el.pinBtn) return;
+  const p = state.place;
+  const canPin = !!(p && p.name && p.lat != null && p.lon != null);
+  if (!canPin) { el.pinBtn.hidden = true; return; }
+  const isSaved = places.isSaved(p);
+  el.pinBtn.hidden = false;
+  el.pinBtn.classList.toggle("saved", isSaved);
+  el.pinBtn.setAttribute("aria-pressed", isSaved ? "true" : "false");
+  el.pinBtn.setAttribute("title", isSaved ? "Unsave this location" : "Save this location");
+  el.pinBtn.setAttribute("aria-label", isSaved ? "Unsave this location" : "Save this location");
+}
+
 function renderPlaces() {
   const all = places.all();
   if (!all.length) { el.placesStrip.hidden = true; el.placesStrip.innerHTML = ""; return; }
@@ -1482,6 +1498,28 @@ function bindShare() {
     } catch (err) {
       if (err?.name !== "AbortError") ui.showToast("Share failed");
     }
+  });
+}
+
+function bindPin() {
+  if (!el.pinBtn) return;
+  el.pinBtn.addEventListener("click", () => {
+    const p = state.place;
+    if (!p) return;
+    if (places.isSaved(p)) {
+      places.remove(p);
+      ui.showToast(`Removed ${p.name} from saved`);
+    } else {
+      places.add(p);
+      if (state.weather?.temp != null) {
+        places.updateSummary(p, {
+          temp: state.weather.temp, condition: state.weather.condition,
+        });
+      }
+      ui.showToast(`Saved ${p.name}`);
+    }
+    renderPinButton();
+    renderPlaces();
   });
 }
 
