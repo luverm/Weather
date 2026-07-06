@@ -362,9 +362,12 @@ function renderLiveValues(w, { animate = true } = {}) {
 }
 
 function updateTabTitle(w) {
-  if (w?.temp == null) return;
-  const temp = `${Math.round(convertTemp(w.temp))}°${state.unit}`;
-  const cond = capitalize(w.label || "");
+  // Only reflect the live weather in the tab title — showing a scrubbed
+  // future temperature would confuse readers glancing at the tab strip.
+  const live = state.weather;
+  if (!live || live.temp == null) return;
+  const temp = `${Math.round(convertTemp(live.temp))}°${state.unit}`;
+  const cond = capitalize(live.label || "");
   const place = state.place?.name;
   const parts = [`${temp}${cond ? " " + cond : ""}`, place, "Aether"].filter(Boolean);
   document.title = parts.join(" · ");
