@@ -25,6 +25,7 @@ const el = {
   feelsLike: $("#feels-like"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
+  dayparts: $("#dayparts"),
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
@@ -356,6 +357,7 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  renderDayparts(w);
   updateTabTitle(w);
 }
 
@@ -366,6 +368,61 @@ function updateTabTitle(w) {
   const place = state.place?.name;
   const parts = [`${temp}${cond ? " " + cond : ""}`, place, "Aether"].filter(Boolean);
   document.title = parts.join(" · ");
+}
+
+function renderDayparts(w) {
+  if (!el.dayparts) return;
+  const hrs = w?.hourly || [];
+  if (hrs.length < 6) { el.dayparts.hidden = true; return; }
+  // Pick a representative hour for each band. Use the sample nearest to the
+  // target hour (in the forecast timezone if available).
+  const tz = w?.timezone;
+  const hourOf = (ts) => {
+    if (tz && tz !== "auto") {
+      try {
+        const parts = new Intl.DateTimeFormat("en-GB", {
+          timeZone: tz, hour: "2-digit", hour12: false,
+        }).formatToParts(new Date(ts));
+        return parseInt(parts.find((p) => p.type === "hour")?.value ?? "0", 10);
+      } catch { /* */ }
+    }
+    return new Date(ts).getHours();
+  };
+  const bands = [
+    { key: "morning", label: "Morning", target: 8,  icon: "🌅" },
+    { key: "noon",    label: "Noon",    target: 13, icon: "☀️" },
+    { key: "evening", label: "Evening", target: 18, icon: "🌆" },
+    { key: "night",   label: "Night",   target: 22, icon: "🌙" },
+  ];
+  // Sunrise-anchored day: use today's daily entry for the anchor hour.
+  const items = bands.map((b) => {
+    let best = null, bestDist = Infinity;
+    for (const h of hrs) {
+      if (h.temp == null) continue;
+      const dist = Math.abs(hourOf(h.time) - b.target);
+      if (dist < bestDist) { best = h; bestDist = dist; }
+    }
+    return best ? { ...b, hour: best } : null;
+  }).filter(Boolean);
+
+  if (items.length < 2) { el.dayparts.hidden = true; return; }
+  el.dayparts.hidden = false;
+  el.dayparts.innerHTML = items.map((it) => {
+    const t = Math.round(convertTemp(it.hour.temp));
+    return `
+      <button class="daypart" type="button" data-ts="${it.hour.time}">
+        <span class="daypart-icon" aria-hidden="true">${it.icon}</span>
+        <span class="daypart-label">${it.label}</span>
+        <span class="daypart-temp">${t}°</span>
+      </button>
+    `;
+  }).join("");
+  el.dayparts.querySelectorAll(".daypart").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const ts = parseInt(btn.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
 }
 
 function renderDayRange(w) {
