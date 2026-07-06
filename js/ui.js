@@ -13,6 +13,7 @@ import { weekendSnapshot } from "./weekend.js";
 import { summarizePrecip } from "./precip.js";
 import { suggestOutfit } from "./outfit.js";
 import { nextTransition } from "./transition.js";
+import { skyClarity } from "./clarity.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -71,6 +72,9 @@ const el = {
   transitionChip: $("#transition-chip"),
   transitionText: $("#transition-text"),
   transitionArrow: $("#transition-arrow"),
+  clarityChip: $("#clarity-chip"),
+  clarityLabel: $("#clarity-label"),
+  clarityHint: $("#clarity-hint"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
   pollenCard: $("#pollen-card"),
@@ -253,6 +257,7 @@ export const ui = {
     renderCloudCover(weather);
     renderPrecipSummary(weather);
     renderTransition(weather);
+    renderClarity(weather);
     renderAlerts(weather);
     renderWeekend(weather);
     startLocaltime(weather);
@@ -836,6 +841,16 @@ function renderAdvice(w) {
     el.advice.hidden = true;
   }
   renderOutfit(w);
+}
+
+function renderClarity(w) {
+  if (!el.clarityChip) return;
+  const c = skyClarity(w);
+  if (!c) { el.clarityChip.hidden = true; return; }
+  el.clarityChip.hidden = false;
+  el.clarityChip.setAttribute("data-tier", c.tier);
+  el.clarityLabel.textContent = c.label;
+  el.clarityHint.textContent = c.hint;
 }
 
 function renderTransition(w) {

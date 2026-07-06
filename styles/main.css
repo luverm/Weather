@@ -805,6 +805,45 @@ html[data-focus="true"] .alerts-strip {
 }
 .advice-icon { color: var(--accent); flex: 0 0 auto; }
 
+/* ---------- Sky clarity chip ---------- */
+.clarity-chip {
+  margin: 10px 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px 6px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--glass);
+  border: 1px solid var(--stroke);
+  color: var(--fg-muted);
+  font-size: 12.5px;
+}
+.clarity-chip[hidden] { display: none; }
+.clarity-chip[data-tier="excellent"] {
+  background: rgba(154,209,255,0.14);
+  border-color: rgba(154,209,255,0.30);
+  color: #dcefff;
+}
+.clarity-chip[data-tier="great"] {
+  background: rgba(139,224,160,0.12);
+  border-color: rgba(139,224,160,0.28);
+  color: #d6f2df;
+}
+.clarity-chip[data-tier="fair"] {
+  background: rgba(255,206,145,0.10);
+  border-color: rgba(255,206,145,0.24);
+  color: #ffd7a8;
+}
+.clarity-chip[data-tier="poor"] {
+  background: rgba(255,138,138,0.10);
+  border-color: rgba(255,138,138,0.26);
+  color: #ffcccc;
+}
+.clarity-eye { font-size: 14px; line-height: 1; }
+.clarity-text { display: grid; gap: 1px; }
+.clarity-text strong { font-size: 12.5px; font-weight: 600; color: var(--fg); }
+.clarity-hint { font-size: 10.5px; color: var(--fg-muted); font-variant-numeric: tabular-nums; }
+
 /* ---------- Transition chip ---------- */
 .transition-chip {
   margin: 10px 0 0;
