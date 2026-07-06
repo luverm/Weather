@@ -10,7 +10,8 @@ const RANGE_HOURS = 24;
 
 export class Scrubber {
   constructor({ trackEl, thumbEl, fillEl, timeEl, deltaEl, resetEl,
-                sunriseEl, sunsetEl, appEl, onScrub }) {
+                sunriseEl, sunsetEl, goldenRiseEl, goldenSetEl,
+                appEl, onScrub }) {
     this.track = trackEl;
     this.thumb = thumbEl;
     this.fill = fillEl;
@@ -19,6 +20,8 @@ export class Scrubber {
     this.resetEl = resetEl;
     this.sunriseEl = sunriseEl;
     this.sunsetEl = sunsetEl;
+    this.goldenRiseEl = goldenRiseEl;
+    this.goldenSetEl = goldenSetEl;
     this.appEl = appEl; // receives data-scrubbing attribute
     this.onScrub = onScrub;
     this.dragging = false;
@@ -38,7 +41,28 @@ export class Scrubber {
     this.sunset = sunset;
     this._placeMarker(this.sunriseEl, sunrise, "Sunrise");
     this._placeMarker(this.sunsetEl, sunset, "Sunset");
+    // Golden hour band: 30 min before sunrise + 30 min after (kind: "rise")
+    // and 60 min before sunset + 15 min after (kind: "set").
+    this._placeGoldenBand(this.goldenRiseEl, sunrise, -30, +30);
+    this._placeGoldenBand(this.goldenSetEl, sunset, -60, +15);
     this._render(this._currentT());
+  }
+
+  _placeGoldenBand(el, ts, startMin, endMin) {
+    if (!el) return;
+    if (!ts) { el.style.display = "none"; return; }
+    const totalMs = RANGE_HOURS * 3600_000;
+    const trackStart = this.start - 3600_000;
+    const from = ts + startMin * 60_000;
+    const to = ts + endMin * 60_000;
+    const relFrom = Math.max(0, (from - trackStart) / totalMs);
+    const relTo = Math.min(1, (to - trackStart) / totalMs);
+    if (relTo <= 0 || relFrom >= 1 || relTo <= relFrom) {
+      el.style.display = "none"; return;
+    }
+    el.style.display = "block";
+    el.style.left = `${(relFrom * 100).toFixed(2)}%`;
+    el.style.width = `${((relTo - relFrom) * 100).toFixed(2)}%`;
   }
 
   /** Called when we externally reset to "now" (e.g. search selected). */
