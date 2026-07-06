@@ -5,6 +5,7 @@
 
 const ICONS = {
   walk: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4" r="2"/><path d="M9 21l3-7 4 3 2-4M7 13l3-3 3 4"/></svg>',
+  bike: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="M5 17l4-8h4l4 8M13 9l-1-4h-3"/></svg>',
   stars: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 4.5L18 9l-4.4 1.5L12 15l-1.6-4.5L6 9l4.4-1.5L12 3z"/><path d="M19 14l.7 1.8L21 17l-1.3.6L19 19l-.7-1.4L17 17l1.3-1.2z"/></svg>',
 };
 
@@ -46,6 +47,18 @@ function activityScore(h) {
   const pw = precipScore(h.pop, h.precip) * 0.40;
   const daytimeBonus = h.isDay ? 5 : -8;
   return Math.round(tw + ww + pw + daytimeBonus - uvPenalty(h.uv));
+}
+
+function bikeScore(h) {
+  if (!h) return 0;
+  // Cycling: wind matters much more, temperature comfort band shifts a
+  // little cooler (headwind + effort). Wet roads are a bigger no.
+  const tw = tempScore(h.temp - 2) * 0.22;
+  const ww = windScore(h.wind ?? h.windSpeed) * 0.42;
+  const pw = precipScore(h.pop, (h.precip ?? 0) * 1.4) * 0.36;
+  const gustPenalty = h.gusts != null && h.gusts >= 45 ? 15 : 0;
+  const daytimeBonus = h.isDay ? 6 : -20;
+  return Math.round(tw + ww + pw + daytimeBonus - uvPenalty(h.uv) - gustPenalty);
 }
 
 function stargazeScore(h) {
@@ -117,6 +130,26 @@ export function findActivityWindows(weather) {
       score: Math.round(walk.score),
       why: reasonsFor(walk, hours),
     });
+  }
+
+  // Cycling: 2h window, wind-sensitive scoring.
+  const bike = rollingPeak(hours, bikeScore, 2);
+  if (bike && bike.score >= 60) {
+    const start = hours[bike.startIdx].time;
+    const end = hours[bike.endIdx].time + 60 * 60 * 1000;
+    // Skip if we'd repeat the same window as "walk" — a bike chip on top of
+    // the walk chip with the same times reads as duplicated advice.
+    const dup = out.find((x) => x.kind === "walk" && x.start === start && x.end === end);
+    if (!dup) {
+      out.push({
+        kind: "bike",
+        icon: ICONS.bike,
+        label: "Good for cycling",
+        start, end,
+        score: Math.round(bike.score),
+        why: reasonsFor(bike, hours),
+      });
+    }
   }
 
   // Stargazing: 2h window.
