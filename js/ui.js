@@ -54,6 +54,7 @@ const el = {
   moonIllum: $("#moon-illum"),
   moonProgression: $("#moon-progression"),
   sunRise: $("#sun-rise"),
+  sunTomorrow: $("#sun-tomorrow"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
@@ -629,8 +630,45 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderSunTomorrow(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderSunTomorrow(w) {
+  if (!el.sunTomorrow) return;
+  const today = w?.daily?.[0];
+  const tmrw  = w?.daily?.[1];
+  if (!today?.sunrise || !today?.sunset || !tmrw?.sunrise || !tmrw?.sunset) {
+    el.sunTomorrow.textContent = "";
+    return;
+  }
+  // Compare "clock time" of the events, not the timestamps (a whole day
+  // separates them). Reduce each to seconds-since-midnight in the local
+  // (or forecast) day; the timezone lives on the weather object.
+  const tz = w?.timezone;
+  const minOf = (ts) => {
+    try {
+      const parts = new Intl.DateTimeFormat("en-GB", {
+        timeZone: tz && tz !== "auto" ? tz : undefined,
+        hour: "2-digit", minute: "2-digit", hour12: false,
+      }).formatToParts(new Date(ts));
+      const h = parseInt(parts.find((p) => p.type === "hour")?.value ?? "0", 10);
+      const m = parseInt(parts.find((p) => p.type === "minute")?.value ?? "0", 10);
+      return h * 60 + m;
+    } catch {
+      const d = new Date(ts); return d.getHours() * 60 + d.getMinutes();
+    }
+  };
+  const dRise = minOf(tmrw.sunrise) - minOf(today.sunrise);
+  const dSet  = minOf(tmrw.sunset)  - minOf(today.sunset);
+  const fmt = (delta, kind) => {
+    if (Math.abs(delta) < 1) return `${kind} unchanged`;
+    const abs = Math.abs(delta);
+    const dir = delta > 0 ? "later" : "earlier";
+    return `${kind} ${abs}m ${dir}`;
+  };
+  el.sunTomorrow.textContent = `Tomorrow: ${fmt(dRise, "sunrise")} · ${fmt(dSet, "sunset")}`;
 }
 
 function scheduleSunArc(w) {
