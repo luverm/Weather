@@ -45,6 +45,6 @@ export function summarizePrecip(weather) {
     firstWetHour,    // when it starts raining (if it does)
     wettest,         // wettest day in the week
     week,            // per-day distribution (for the bar chart)
-    hasAny: next24 > 0 || weekTotal > 0,
+    hasAny: next24 >= 0.1 || weekTotal >= 0.5,
   };
 }

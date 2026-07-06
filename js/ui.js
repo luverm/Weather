@@ -817,17 +817,17 @@ function renderPrecipSummary(w) {
 
   // Peak line: prefer "starts at X" if it's currently dry, else "heaviest at X".
   if (el.precipPeak) {
-    if (s.next24 <= 0.05 && s.weekTotal > 0 && s.wettest) {
+    if (s.next24 < 0.5 && s.weekTotal >= 0.5 && s.wettest) {
       const day = new Date(s.wettest.time).toLocaleDateString(undefined, { weekday: "long" });
       const amt = s.wettest.precip < 1 ? s.wettest.precip.toFixed(1) : Math.round(s.wettest.precip);
       el.precipPeak.textContent = `Wettest day: ${day} · ${amt} mm`;
-    } else if (s.firstWetHour && s.firstWetHour.time > Date.now() + 30 * 60_000) {
-      el.precipPeak.textContent = `Starts around ${fmtTime(s.firstWetHour.time)} · peak ${fmtTime(s.peak?.time)}`;
-    } else if (s.peak && s.peak.precip > 0) {
+    } else if (s.firstWetHour && s.firstWetHour.time > Date.now() + 30 * 60_000 && s.peak?.time) {
+      el.precipPeak.textContent = `Starts around ${fmtTime(s.firstWetHour.time)} · peak ${fmtTime(s.peak.time)}`;
+    } else if (s.peak && s.peak.precip >= 0.1) {
       const p = s.peak.precip < 1 ? s.peak.precip.toFixed(1) : Math.round(s.peak.precip);
       el.precipPeak.textContent = `Peak intensity ${p} mm at ${fmtTime(s.peak.time)}`;
     } else {
-      el.precipPeak.textContent = "Light showers expected — nothing sustained.";
+      el.precipPeak.textContent = "Passing sprinkles — nothing sustained.";
     }
   }
 
