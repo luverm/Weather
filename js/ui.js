@@ -35,6 +35,7 @@ const el = {
   metricWindSub: $("#m-wind-sub"),
   metricWindUnit: $("#m-wind-unit"),
   windBft: $("#m-wind-bft"),
+  windGustNeedle: $("#wind-gust-needle"),
   settingWindUnit: $("#setting-wind-unit"),
   settingTimeFormat: $("#setting-time-format"),
   settingPressureUnit: $("#setting-pressure-unit"),
@@ -496,6 +497,22 @@ function renderMetrics(w) {
     el.windNeedle.style.opacity = "1";
   } else if (el.windNeedle) {
     el.windNeedle.style.opacity = "0.3";
+  }
+  // Gust ghost: shown when gusts are meaningfully stronger than sustained
+  // wind. Scales up with the gust factor so gusty conditions look agitated.
+  if (el.windGustNeedle) {
+    const sustained = w.windSpeed ?? 0;
+    const gust = w.windGusts ?? 0;
+    const factor = sustained > 1 ? gust / sustained : 0;
+    if (dir != null && gust > 0 && factor >= 1.2) {
+      const scale = Math.min(1.6, 1 + Math.min(0.6, (factor - 1) * 0.8));
+      el.windGustNeedle.setAttribute(
+        "transform", `rotate(${dir}) scale(${scale.toFixed(2)})`
+      );
+      el.windGustNeedle.style.opacity = "1";
+    } else {
+      el.windGustNeedle.style.opacity = "0";
+    }
   }
   if (el.windBft) {
     const bft = beaufort(w.windSpeed);

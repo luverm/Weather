@@ -1089,10 +1089,12 @@ html[data-focus="true"] .alerts-strip {
 .wind-compass .compass-card {
   font-size: 8px; fill: var(--fg-dim); letter-spacing: 0.04em;
 }
-.wind-needle {
+.wind-needle,
+.wind-gust-needle {
   transform-origin: 0 0;
-  transition: transform 900ms var(--ease);
+  transition: transform 900ms var(--ease), opacity 400ms var(--ease);
 }
+.wind-gust-needle { pointer-events: none; }
 
 /* ---------- Sun countdown ---------- */
 .sun-countdown {
