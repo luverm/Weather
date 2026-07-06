@@ -59,6 +59,7 @@ export function installShortcuts(handlers) {
     if (key === "u" || key === "U") { e.preventDefault(); handlers.toggleUnits?.(); return; }
     if (key === "m" || key === "M") { e.preventDefault(); handlers.toggleAudio?.(); return; }
     if (key === "f" || key === "F") { e.preventDefault(); handlers.toggleFullscreenRadar?.(); return; }
+    if (key === "z" || key === "Z") { e.preventDefault(); handlers.toggleFocusMode?.(); return; }
     if (key === "n" || key === "N") { e.preventDefault(); handlers.resetScrubber?.(); return; }
     if (key === " ") {
       e.preventDefault();

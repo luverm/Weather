@@ -289,6 +289,7 @@ installShortcuts({
   toggleAudio: () => toggleAudio(),
   toggleFullscreenRadar: () => document.getElementById("radar-full")?.click(),
   toggleRadar: () => document.getElementById("radar-play")?.click(),
+  toggleFocusMode: () => document.getElementById("setting-focus-mode")?.click(),
   resetScrubber: () => scrubber.reset(),
   cyclePlace: (dir) => {
     const list = places.all();
