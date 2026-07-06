@@ -143,11 +143,29 @@ const el = {
   placesStrip: $("#places-strip"),
 };
 
+// Guess sensible defaults from the browser locale for first-time visitors.
+// US, Liberia, and Myanmar use Fahrenheit; the US also runs on mph, inHg,
+// and prefers 12-hour clocks by default.
+const localeDefaults = (() => {
+  let region = "";
+  try {
+    // "en-US" → "US"; also handles "en" (no region) → "".
+    region = (Intl.DateTimeFormat().resolvedOptions().locale || "").split("-")[1] || "";
+  } catch { /* ignore */ }
+  const isImperial = ["US", "LR", "MM"].includes(region.toUpperCase());
+  return {
+    unit: isImperial ? "F" : "C",
+    windUnit: region === "US" ? "mph" : "kmh",
+    pressureUnit: region === "US" ? "inhg" : "hpa",
+    timeFormat: region === "US" ? "12" : "24",
+  };
+})();
+
 const state = {
-  unit: localStorage.getItem("aether:unit") || "C",
-  windUnit: localStorage.getItem("aether:windUnit") || "kmh",
-  timeFormat: localStorage.getItem("aether:timeFormat") || "24",
-  pressureUnit: localStorage.getItem("aether:pressureUnit") || "hpa",
+  unit: localStorage.getItem("aether:unit") || localeDefaults.unit,
+  windUnit: localStorage.getItem("aether:windUnit") || localeDefaults.windUnit,
+  timeFormat: localStorage.getItem("aether:timeFormat") || localeDefaults.timeFormat,
+  pressureUnit: localStorage.getItem("aether:pressureUnit") || localeDefaults.pressureUnit,
   weather: null,
   place: null,
   sampledWeather: null, // the weather values at the current scrubber time
