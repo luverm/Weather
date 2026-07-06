@@ -633,12 +633,10 @@ function startLocaltime(w) {
   if (state.localTimer) { clearInterval(state.localTimer); state.localTimer = null; }
   if (!el.placeLocaltime) return;
   const tz = w?.timezone;
-  if (!tz || tz === "auto") {
-    // Fall back to browser — still useful.
-    el.placeLocaltime.textContent = "";
-    return;
-  }
+  const hasTz = !!tz && tz !== "auto";
+  if (!hasTz) el.placeLocaltime.textContent = "";
   const update = () => {
+    if (!hasTz) return;
     try {
       const parts = new Intl.DateTimeFormat([], {
         timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
@@ -656,6 +654,8 @@ function startLocaltime(w) {
     }
   };
   update();
+  // Tick every 10 s regardless of hero tz so chip times keep pace when the
+  // active place has no timezone but saved chips do.
   state.localTimer = setInterval(() => { update(); tickPlaceChipTimes(); }, 10_000);
 }
 
@@ -1541,7 +1541,9 @@ function bindPin() {
       places.add(p);
       if (state.weather?.temp != null) {
         places.updateSummary(p, {
-          temp: state.weather.temp, condition: state.weather.condition,
+          temp: state.weather.temp,
+          condition: state.weather.condition,
+          timezone: state.weather.timezone,
         });
       }
       ui.showToast(`Saved ${p.name}`);
