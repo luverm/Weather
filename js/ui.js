@@ -12,6 +12,7 @@ import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { summarizePrecip } from "./precip.js";
 import { suggestOutfit } from "./outfit.js";
+import { nextTransition } from "./transition.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -67,6 +68,9 @@ const el = {
   outfitIcons: $("#outfit-icons"),
   outfitLabel: $("#outfit-label"),
   outfitHint: $("#outfit-hint"),
+  transitionChip: $("#transition-chip"),
+  transitionText: $("#transition-text"),
+  transitionArrow: $("#transition-arrow"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
   pollenCard: $("#pollen-card"),
@@ -248,6 +252,7 @@ export const ui = {
     renderActivity(weather);
     renderCloudCover(weather);
     renderPrecipSummary(weather);
+    renderTransition(weather);
     renderAlerts(weather);
     renderWeekend(weather);
     startLocaltime(weather);
@@ -831,6 +836,22 @@ function renderAdvice(w) {
     el.advice.hidden = true;
   }
   renderOutfit(w);
+}
+
+function renderTransition(w) {
+  if (!el.transitionChip || !el.transitionText) return;
+  const t = nextTransition(w, 12);
+  if (!t) { el.transitionChip.hidden = true; return; }
+  el.transitionChip.hidden = false;
+  el.transitionText.textContent = `${t.label} · ${fmtTime(t.time)}`;
+  el.transitionChip.setAttribute("data-to", t.to);
+  if (el.transitionArrow) {
+    const symbols = { rain: "🌧", snow: "❄", storm: "⛈", fog: "🌫", clouds: "☁", clear: "☀" };
+    el.transitionArrow.textContent = symbols[t.to] || "→";
+  }
+  el.transitionChip.onclick = () => {
+    state.handlers.onHourClick?.(t.time);
+  };
 }
 
 function renderOutfit(w) {

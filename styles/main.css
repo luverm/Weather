@@ -805,6 +805,45 @@ html[data-focus="true"] .alerts-strip {
 }
 .advice-icon { color: var(--accent); flex: 0 0 auto; }
 
+/* ---------- Transition chip ---------- */
+.transition-chip {
+  margin: 10px 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 10px;
+  border-radius: 999px;
+  background: var(--glass);
+  border: 1px solid var(--stroke);
+  color: var(--fg-muted);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background 160ms var(--ease), transform 160ms var(--ease), color 160ms var(--ease);
+}
+.transition-chip:hover {
+  background: rgba(255,255,255,0.10);
+  color: var(--fg);
+  transform: translateY(-1px);
+}
+.transition-chip[hidden] { display: none; }
+.transition-chip[data-to="rain"], .transition-chip[data-to="storm"] {
+  background: rgba(154,209,255,0.10);
+  border-color: rgba(154,209,255,0.28);
+  color: #cfe5ff;
+}
+.transition-chip[data-to="snow"] {
+  background: rgba(220,230,255,0.10);
+  border-color: rgba(220,230,255,0.28);
+  color: #e8eeff;
+}
+.transition-chip[data-to="clear"] {
+  background: rgba(255,206,145,0.10);
+  border-color: rgba(255,206,145,0.28);
+  color: #ffd7a8;
+}
+.transition-arrow { font-size: 14px; line-height: 1; }
+
 /* ---------- Outfit chip ---------- */
 .outfit {
   margin: 10px 0 0;
