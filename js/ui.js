@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { computeRainOutlook, renderRainOutlook } from "./rain-outlook.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -102,6 +103,7 @@ const el = {
   nowcastHeadline: $("#nowcast-headline"),
   nowcastSub: $("#nowcast-sub"),
   nowcastBars: $("#nowcast-bars"),
+  rainOutlook: $("#rain-outlook"),
   searchInput: $("#search-input"),
   searchResults: $("#search-results"),
   locateBtn: $("#locate-btn"),
@@ -186,6 +188,7 @@ export const ui = {
     renderHourly(weather);
     renderDaily(weather);
     renderNowcast(weather);
+    renderRainOutlookBanner(weather);
     renderAdvice(weather);
     renderPollen(weather.pollen);
     renderTrends(weather);
@@ -1001,6 +1004,15 @@ function toggleDailyExpand(item, d, w) {
   }).join("");
   item.appendChild(box);
   item.dataset.expanded = "true";
+}
+
+function renderRainOutlookBanner(w) {
+  if (!el.rainOutlook) return;
+  const outlook = computeRainOutlook(w);
+  renderRainOutlook(el.rainOutlook, outlook, {
+    onHourClick: (ts) => state.handlers.onHourClick?.(ts),
+    timezone: w.timezone,
+  });
 }
 
 function renderNowcast(w) {
