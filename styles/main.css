@@ -1036,6 +1036,23 @@ kbd {
 }
 .sun-golden-slot { color: var(--fg); font-weight: 500; }
 .sun-golden-sep { color: var(--fg-dim); opacity: 0.6; }
+.sun-golden[data-active] {
+  background: linear-gradient(90deg, rgba(255,205,145,0.22), rgba(255,155,120,0.18));
+  border-color: rgba(255,210,150,0.42);
+  box-shadow: 0 0 12px rgba(255,205,140,0.28);
+  animation: sun-golden-pulse 3.2s var(--ease) infinite;
+}
+.sun-golden-slot.is-live {
+  color: #ffe6c7;
+  text-shadow: 0 0 8px rgba(255,215,155,0.55);
+}
+@keyframes sun-golden-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(255,205,140,0.20); }
+  50%      { box-shadow: 0 0 18px rgba(255,205,140,0.42); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sun-golden[data-active] { animation: none; }
+}
 
 /* ---------- Radar map ---------- */
 .radar {

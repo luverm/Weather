@@ -131,6 +131,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  goldenTimer: null,
   localTimer: null,
 };
 
@@ -573,6 +574,7 @@ function renderSun(w) {
 // Fixed-width golden hour approximation (accurate to a few minutes at mid-latitudes).
 const GOLDEN_MIN = 40;
 function renderSunGolden(w) {
+  if (state.goldenTimer) { clearInterval(state.goldenTimer); state.goldenTimer = null; }
   if (!el.sunGolden) return;
   if (!w?.sunrise || !w?.sunset) { el.sunGolden.hidden = true; return; }
   const daylightMin = (w.sunset - w.sunrise) / 60_000;
@@ -583,6 +585,20 @@ function renderSunGolden(w) {
   el.sunGoldenMorning.textContent = `${fmtTime(w.sunrise)}–${fmtTime(morningEnd)}`;
   el.sunGoldenEvening.textContent = `${fmtTime(eveningStart)}–${fmtTime(w.sunset)}`;
   el.sunGolden.hidden = false;
+
+  const applyActive = () => {
+    const now = Date.now();
+    const morning = now >= w.sunrise && now <= morningEnd;
+    const evening = now >= eveningStart && now <= w.sunset;
+    if (morning) el.sunGolden.dataset.active = "morning";
+    else if (evening) el.sunGolden.dataset.active = "evening";
+    else el.sunGolden.removeAttribute("data-active");
+    // Highlight whichever slot is live.
+    el.sunGoldenMorning.classList.toggle("is-live", morning);
+    el.sunGoldenEvening.classList.toggle("is-live", evening);
+  };
+  applyActive();
+  state.goldenTimer = setInterval(applyActive, 30_000);
 }
 
 function renderDaylightDelta(w) {
