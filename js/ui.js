@@ -1136,7 +1136,8 @@ function toggleDailyExpand(item, d, w) {
     const summary = document.createElement("div");
     summary.className = "daily-expand";
     summary.style.gridTemplateColumns = "1fr";
-    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${Math.round(d.gustsMax ?? 0)} km/h · UV ${Math.round(d.uvMax ?? 0)}</span>`;
+    const rainBit = d.precip >= 0.5 ? ` · ${fmtPrecipDaily(d)}` : "";
+    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}%${rainBit} · gust up to ${Math.round(d.gustsMax ?? 0)} km/h · UV ${Math.round(d.uvMax ?? 0)}</span>`;
     item.appendChild(summary);
     item.dataset.expanded = "true";
     return;
