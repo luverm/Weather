@@ -79,6 +79,8 @@ const el = {
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
+  weekRain: $("#week-rain"),
+  weekRainValue: $("#week-rain-value"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -938,6 +940,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderWeekRain(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1020,6 +1023,22 @@ function renderDailySpark(days) {
       el.dailySparkDots.appendChild(c);
     }
   });
+}
+
+function renderWeekRain(days) {
+  if (!el.weekRain) return;
+  const values = days.map((d) => d.precip).filter((v) => v != null);
+  if (!values.length) { el.weekRain.hidden = true; return; }
+  const total = values.reduce((a, b) => a + b, 0);
+  if (total < 0.3) {
+    el.weekRainValue.textContent = "dry week";
+    el.weekRain.dataset.level = "dry";
+  } else {
+    const rounded = total < 10 ? total.toFixed(1) : Math.round(total);
+    el.weekRainValue.textContent = `${rounded} mm this week`;
+    el.weekRain.dataset.level = total < 10 ? "dry" : total < 40 ? "wet" : "soaked";
+  }
+  el.weekRain.hidden = false;
 }
 
 function renderDailyDelta(days) {

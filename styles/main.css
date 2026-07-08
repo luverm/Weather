@@ -1450,6 +1450,25 @@ kbd {
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+.week-rain {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px 2px 6px;
+  border-radius: 999px;
+  background: rgba(155,205,255,0.10);
+  color: var(--fg-muted);
+  letter-spacing: 0.04em;
+  font-size: 11px;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+}
+.week-rain[hidden] { display: none; }
+.week-rain-icon { width: 12px; height: 12px; color: #9ad1ff; flex-shrink: 0; }
+.week-rain[data-level="dry"] { background: rgba(255,255,255,0.05); }
+.week-rain[data-level="dry"] .week-rain-icon { color: var(--fg-dim); }
+.week-rain[data-level="wet"] { background: rgba(155,205,255,0.16); }
+.week-rain[data-level="soaked"] { background: rgba(155,205,255,0.24); color: var(--fg); }
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;
