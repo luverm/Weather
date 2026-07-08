@@ -1532,6 +1532,13 @@ kbd {
   opacity: 0.9;
 }
 .forecast-pop.dim { opacity: 0; }
+.forecast-mm {
+  font-size: 10px;
+  font-weight: 500;
+  color: #9ad1ff;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
 
 .daily-track {
   display: grid;

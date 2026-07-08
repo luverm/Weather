@@ -920,11 +920,18 @@ function renderHourly(w) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    // When actual precipitation is expected, mm carries more signal than the
+    // pop % (60% of 0.1mm ≠ 60% of 5mm). Show mm and dim the pop below it.
+    const showMm = (h.precip ?? 0) >= 0.3;
+    const popCls = h.pop < 20 ? "dim" : "";
+    const bottom = showMm
+      ? `<span class="forecast-mm">${fmtRainMm(h.precip)}</span>`
+      : `<span class="forecast-pop ${popCls}">${h.pop}%</span>`;
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
-      <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
+      ${bottom}
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
