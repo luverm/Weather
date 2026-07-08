@@ -285,6 +285,15 @@ function fmtRainMm(mm) {
   return mm < 10 ? `${mm.toFixed(1)} mm` : `${Math.round(mm)} mm`;
 }
 
+// Snow depth ≈ 10× the liquid-equivalent mm that Open-Meteo reports for snowy days.
+function fmtPrecipDaily(d) {
+  if (d?.condition === "snow" && d.precip != null) {
+    const cm = d.precip; // mm liquid × 10mm snow/mm liquid ÷ 10mm/cm = cm.
+    return cm < 1 ? `${Math.round(cm * 10)} mm snow` : `${cm.toFixed(1)} cm snow`;
+  }
+  return `${fmtRainMm(d?.precip)} rain`;
+}
+
 function renderLiveValues(w, { animate = true } = {}) {
   const temp = convertTemp(w.temp);
   const feels = convertTemp(w.feelsLike ?? w.temp);
@@ -990,7 +999,7 @@ function renderDaily(w) {
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
     const rainLabel = d.precip >= 0.5
-      ? ` · ${fmtRainMm(d.precip)} rain`
+      ? ` · ${fmtPrecipDaily(d)}`
       : d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || rainLabel ? `<span class="daily-gust">${rainLabel}${gustLabel}</span>` : "";
     item.innerHTML = `
