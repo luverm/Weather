@@ -48,8 +48,12 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  sunGolden: $("#sun-golden"),
+  sunGoldenMorning: $("#sun-golden-morning"),
+  sunGoldenEvening: $("#sun-golden-evening"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -521,8 +525,54 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderSunGolden(w);
+  renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+// Fixed-width golden hour approximation (accurate to a few minutes at mid-latitudes).
+const GOLDEN_MIN = 40;
+function renderSunGolden(w) {
+  if (!el.sunGolden) return;
+  if (!w?.sunrise || !w?.sunset) { el.sunGolden.hidden = true; return; }
+  const daylightMin = (w.sunset - w.sunrise) / 60_000;
+  // Suppress when day is too short for two non-overlapping golden windows.
+  if (daylightMin < 2 * GOLDEN_MIN + 30) { el.sunGolden.hidden = true; return; }
+  const morningEnd = w.sunrise + GOLDEN_MIN * 60_000;
+  const eveningStart = w.sunset - GOLDEN_MIN * 60_000;
+  el.sunGoldenMorning.textContent = `${fmtTime(w.sunrise)}–${fmtTime(morningEnd)}`;
+  el.sunGoldenEvening.textContent = `${fmtTime(eveningStart)}–${fmtTime(w.sunset)}`;
+  el.sunGolden.hidden = false;
+}
+
+function renderDaylightDelta(w) {
+  const node = el.sunDaylightDelta;
+  if (!node) return;
+  const today = w?.daily?.[0];
+  const tomorrow = w?.daily?.[1];
+  if (!today?.sunrise || !today?.sunset || !tomorrow?.sunrise || !tomorrow?.sunset) {
+    node.hidden = true;
+    return;
+  }
+  const todayMs = today.sunset - today.sunrise;
+  const tomorrowMs = tomorrow.sunset - tomorrow.sunrise;
+  const deltaSec = Math.round((tomorrowMs - todayMs) / 1000);
+  if (Math.abs(deltaSec) < 20) {
+    // Solstice — call it out explicitly.
+    node.textContent = "no change";
+    node.removeAttribute("data-dir");
+    node.hidden = false;
+    return;
+  }
+  const abs = Math.abs(deltaSec);
+  const m = Math.floor(abs / 60);
+  const s = abs % 60;
+  const dur = m ? `${m}m ${s.toString().padStart(2, "0")}s` : `${s}s`;
+  const sign = deltaSec > 0 ? "+" : "−";
+  node.textContent = `${sign}${dur} tomorrow`;
+  node.dataset.dir = deltaSec > 0 ? "up" : "down";
+  node.hidden = false;
 }
 
 function scheduleSunArc(w) {
