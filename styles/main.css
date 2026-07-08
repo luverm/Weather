@@ -390,7 +390,26 @@ html[data-reduce-motion="true"] *::after {
 }
 .unit:hover { background: var(--glass); color: var(--fg); }
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
-.feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
+.condition-cover {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  padding: 2px 8px 2px 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  color: var(--fg-muted);
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.condition-cover[hidden] { display: none; }
+.condition-cover-icon {
+  width: 18px;
+  height: 12px;
+  flex-shrink: 0;
+}
+#condition-cover-fill { transition: fill-opacity 400ms var(--ease); }
 .day-range {
   margin-top: 10px;
   display: grid;

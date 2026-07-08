@@ -20,6 +20,9 @@ const el = {
   placeSub: $("#place-sub"),
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
+  conditionCover: $("#condition-cover"),
+  conditionCoverFill: $("#condition-cover-fill"),
+  conditionCoverPct: $("#condition-cover-pct"),
   feelsLike: $("#feels-like"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
@@ -281,7 +284,20 @@ function renderLiveValues(w, { animate = true } = {}) {
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  renderCloudCover(w);
   renderDayRange(w);
+}
+
+function renderCloudCover(w) {
+  if (!el.conditionCover) return;
+  const cover = w.cloudCover;
+  if (cover == null) { el.conditionCover.hidden = true; return; }
+  const pct = Math.round(cover);
+  el.conditionCoverPct.textContent = `${pct}% cloud`;
+  if (el.conditionCoverFill) {
+    el.conditionCoverFill.setAttribute("fill-opacity", (0.15 + (pct / 100) * 0.7).toFixed(2));
+  }
+  el.conditionCover.hidden = false;
 }
 
 function renderDayRange(w) {
