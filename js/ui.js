@@ -24,6 +24,7 @@ const el = {
   conditionCoverFill: $("#condition-cover-fill"),
   conditionCoverPct: $("#condition-cover-pct"),
   feelsLike: $("#feels-like"),
+  feelsText: $("#feels-text"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -300,10 +301,18 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  el.feelsText.textContent = `Feels like ${Math.round(feels)}°${feelsHint(temp, feels)}`;
   renderCloudCover(w);
   renderDayRange(w);
   updateDocTitle(w);
+}
+
+function feelsHint(temp, feels) {
+  if (temp == null || feels == null) return "";
+  const delta = feels - temp;
+  if (Math.abs(delta) < 3) return "";
+  const word = delta < 0 ? "cooler" : "warmer";
+  return ` · ${Math.round(Math.abs(delta))}° ${word}`;
 }
 
 function updateDocTitle(w) {
