@@ -279,6 +279,11 @@ function animateNumber(node, target, format) {
 
 function capitalize(s) { return (s || "").charAt(0).toUpperCase() + (s || "").slice(1); }
 
+function fmtRainMm(mm) {
+  if (mm == null) return "—";
+  return mm < 10 ? `${mm.toFixed(1)} mm` : `${Math.round(mm)} mm`;
+}
+
 function renderLiveValues(w, { animate = true } = {}) {
   const temp = convertTemp(w.temp);
   const feels = convertTemp(w.feelsLike ?? w.temp);
@@ -381,9 +386,7 @@ function renderMetrics(w) {
   renderPressureSparkline(w);
 }
 
-// Sunburn minutes for average skin (Fitzpatrick II) at UV `v`.
-// Uses the ISO-standard MED / (UV·2.5·MPF) approximation with MED=200 J/m²
-// and MPF=1 (no sunscreen), then bucketed into readable steps.
+// Rough minutes-to-erythema for average (Fitzpatrick II) skin, no sunscreen.
 function burnMinutes(v) {
   if (v == null || v < 3) return null;
   const mins = 200 / v;
@@ -963,8 +966,10 @@ function renderDaily(w) {
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
-    const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
-    const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const rainLabel = d.precip >= 0.5
+      ? ` · ${fmtRainMm(d.precip)} rain`
+      : d.pop >= 30 ? ` · ${d.pop}% rain` : "";
+    const extra = gustLabel || rainLabel ? `<span class="daily-gust">${rainLabel}${gustLabel}</span>` : "";
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
