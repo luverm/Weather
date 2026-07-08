@@ -303,6 +303,15 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderCloudCover(w);
   renderDayRange(w);
+  updateDocTitle(w);
+}
+
+function updateDocTitle(w) {
+  const place = state.place?.name;
+  const t = w?.temp != null ? `${Math.round(convertTemp(w.temp))}°${state.unit}` : null;
+  if (t && place) document.title = `${t} · ${place} — Aether`;
+  else if (place) document.title = `${place} — Aether`;
+  else document.title = "Aether — Interactive Weather";
 }
 
 function renderCloudCover(w) {
