@@ -135,7 +135,7 @@
             <button id="unit-toggle" class="unit" title="Toggle units" aria-label="Toggle temperature units">°C</button>
           </div>
           <p id="condition-label" class="condition-label">—</p>
-          <span id="condition-cover" class="condition-cover" hidden>
+          <span id="condition-cover" class="condition-cover" aria-label="Sky coverage" hidden>
             <svg class="condition-cover-icon" viewBox="0 0 24 16" aria-hidden="true">
               <path d="M6 12.5a3.6 3.6 0 010-7.2 4.2 4.2 0 018 -1 3.6 3.6 0 011.4 8.2H6z"
                     fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
@@ -357,10 +357,10 @@
             <div class="sun-item">
               <span class="sun-label">Daylight</span>
               <strong id="sun-daylight">—</strong>
-              <span id="sun-daylight-delta" class="sun-daylight-delta" hidden></span>
+              <span id="sun-daylight-delta" class="sun-daylight-delta" aria-label="Change in daylight length from today to tomorrow" hidden></span>
             </div>
           </div>
-          <div id="sun-golden" class="sun-golden" hidden>
+          <div id="sun-golden" class="sun-golden" role="group" aria-label="Golden hour times" hidden>
             <svg class="sun-golden-icon" viewBox="0 0 24 24" aria-hidden="true">
               <circle cx="12" cy="12" r="4" fill="currentColor"/>
               <path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4l1.4-1.4M17 7l1.4-1.4"
@@ -429,7 +429,7 @@
       <div class="daily glass" aria-label="7-day forecast">
         <div class="forecast-heading">
           <span>7-day outlook</span>
-          <span id="week-rain" class="week-rain" hidden>
+          <span id="week-rain" class="week-rain" aria-label="Total precipitation forecast for the next 7 days" hidden>
             <svg class="week-rain-icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M7 14a4 4 0 010-8 5 5 0 019.9-1A4 4 0 0117 14H7z"
                     fill="none" stroke="currentColor" stroke-width="1.4"/>
