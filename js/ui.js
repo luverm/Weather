@@ -359,12 +359,30 @@ function renderMetrics(w) {
       el.uvLevel.textContent = "";
     }
   }
-  if (w.uvPeak?.time) {
-    el.metricUVSub.textContent = `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`;
-  } else {
-    el.metricUVSub.textContent = "peak —";
-  }
+  el.metricUVSub.textContent = uvSubText(w);
   renderPressureSparkline(w);
+}
+
+// Sunburn minutes for average skin (Fitzpatrick II) at UV `v`.
+// Uses the ISO-standard MED / (UV·2.5·MPF) approximation with MED=200 J/m²
+// and MPF=1 (no sunscreen), then bucketed into readable steps.
+function burnMinutes(v) {
+  if (v == null || v < 3) return null;
+  const mins = 200 / v;
+  if (mins < 12) return Math.round(mins);
+  if (mins < 45) return Math.round(mins / 5) * 5;
+  return Math.round(mins / 10) * 10;
+}
+
+function uvSubText(w) {
+  const peakBit = w.uvPeak?.time
+    ? `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`
+    : "peak —";
+  const canBurn = w.isDay && w.uv != null && w.uv >= 3;
+  if (!canBurn) return peakBit;
+  const b = burnMinutes(w.uv);
+  if (b == null) return peakBit;
+  return `burn ~${b}m · ${peakBit}`;
 }
 
 function humidityComfort(rh, dew, temp) {
