@@ -104,6 +104,8 @@ const el = {
   dayScoreNum: $("#day-score-num"),
   dayScoreLabel: $("#day-score-label"),
   dayScoreDetail: $("#day-score-detail"),
+  stargaze: $("#stargaze"),
+  stargazeText: $("#stargaze-text"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -196,6 +198,7 @@ export const ui = {
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
     renderMoon(weather.moon);
+    renderStargaze(weather);
     renderSun(weather);
     renderHourly(weather);
     renderChartSummary(weather);
@@ -488,6 +491,40 @@ function renderAqTrend(aq) {
     return;
   }
   drawSparkline(el.aqTrendLine, el.aqTrendFill, pts, { minSpan: 20 });
+}
+
+// Stargazing chip — reads cloud cover across the coming night hours and the
+// moon illumination to hint at whether tonight is worth stepping outside for.
+function renderStargaze(w) {
+  if (!el.stargaze || !el.stargazeText) return;
+  const hours = w?.hourly || [];
+  if (!hours.length) { el.stargaze.hidden = true; return; }
+  // "Night hours" = next 12 h that mark isDay=false.
+  const night = hours.slice(0, 12).filter((h) => h.isDay === false && h.cloud != null);
+  if (night.length < 2) { el.stargaze.hidden = true; return; }
+  const avgCloud = night.reduce((a, h) => a + h.cloud, 0) / night.length;
+  const clearHours = night.filter((h) => h.cloud <= 30).length;
+  const moonIllum = w?.moon?.illum ?? 0.5;
+  const dark = moonIllum < 0.35;
+
+  let tier = "meh", label = "";
+  if (avgCloud <= 25 && clearHours >= 2) {
+    tier = "great";
+    label = dark
+      ? `Stargazing tonight · ${Math.round(avgCloud)}% cloud, dark moon`
+      : `Clear night · ${Math.round(avgCloud)}% cloud`;
+  } else if (avgCloud <= 55) {
+    tier = "okay";
+    label = clearHours >= 1
+      ? `Partly clear night · ${clearHours} clear h`
+      : `Mostly cloudy night · ${Math.round(avgCloud)}% cloud`;
+  } else {
+    tier = "okay";
+    label = `Overcast night · ${Math.round(avgCloud)}% cloud`;
+  }
+  el.stargaze.hidden = false;
+  el.stargaze.dataset.tier = tier;
+  el.stargazeText.textContent = label;
 }
 
 function renderMoon(moon) {
