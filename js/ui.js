@@ -1741,8 +1741,12 @@ function renderPlaces() {
   const activeId = state.place ? places.idFor(state.place) : null;
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
+    const emoji = p.condition
+      ? (CONDITION_EMOJI[p.condition]?.day || "")
+      : "";
     return `
       <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
+        ${emoji ? `<span class="place-chip-emoji" aria-hidden="true">${emoji}</span>` : ""}
         <span>${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
         <span class="close" data-action="remove" aria-label="Remove">

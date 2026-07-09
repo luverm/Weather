@@ -319,6 +319,13 @@ html[data-reduce-motion="true"] *::after {
   border-radius: 50%; color: var(--fg-dim);
   transition: background 150ms var(--ease), color 150ms var(--ease);
 }
+.place-chip-emoji {
+  display: inline-block;
+  font-size: 14px;
+  line-height: 1;
+  vertical-align: middle;
+  filter: drop-shadow(0 0 4px rgba(255,255,255,0.15));
+}
 .place-chip .close:hover { background: rgba(255,255,255,0.12); color: var(--fg); }
 
 /* ---------- Hero ---------- */
