@@ -38,7 +38,41 @@ export class Scrubber {
     this.sunset = sunset;
     this._placeMarker(this.sunriseEl, sunrise, "Sunrise");
     this._placeMarker(this.sunsetEl, sunset, "Sunset");
+    this._placeGoldenBands();
     this._render(this._currentT());
+  }
+
+  _placeGoldenBands() {
+    // Overlays a warm gradient band for the ~1-hour golden hour after sunrise
+    // and before sunset. Draws to a <div class="scrubber-band"> hooked in the
+    // track (created lazily so old HTML without it still works).
+    const track = this.track;
+    if (!track) return;
+    let container = track.querySelector(".scrubber-bands");
+    if (!container) {
+      container = document.createElement("div");
+      container.className = "scrubber-bands";
+      container.setAttribute("aria-hidden", "true");
+      // Insert as the first child so it sits behind the thumb & markers.
+      track.insertBefore(container, track.firstChild);
+    }
+    container.innerHTML = "";
+    const totalMs = RANGE_HOURS * 3600_000;
+    const winStart = this.start - 3600_000;
+    const addBand = (t0, t1, cls) => {
+      if (t0 == null || t1 == null) return;
+      const a = Math.max(0, (t0 - winStart) / totalMs);
+      const b = Math.min(1, (t1 - winStart) / totalMs);
+      if (b <= a) return;
+      const band = document.createElement("div");
+      band.className = `scrubber-band ${cls}`;
+      band.style.left = `${(a * 100).toFixed(2)}%`;
+      band.style.width = `${((b - a) * 100).toFixed(2)}%`;
+      container.appendChild(band);
+    };
+    const GH = 60 * 60_000;
+    if (this.sunrise) addBand(this.sunrise, this.sunrise + GH, "morning");
+    if (this.sunset)  addBand(this.sunset - GH, this.sunset,   "evening");
   }
 
   /** Called when we externally reset to "now" (e.g. search selected). */
