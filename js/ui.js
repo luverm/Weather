@@ -108,6 +108,9 @@ const el = {
   dayScoreNum: $("#day-score-num"),
   dayScoreLabel: $("#day-score-label"),
   dayScoreDetail: $("#day-score-detail"),
+  tempAnomaly: $("#temp-anomaly"),
+  tempAnomalyText: $("#temp-anomaly-text"),
+  tempAnomalyArrow: $("#temp-anomaly-arrow"),
   stargaze: $("#stargaze"),
   stargazeText: $("#stargaze-text"),
   comfortStrip: $("#comfort-strip"),
@@ -301,6 +304,35 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  renderTempAnomaly(w);
+}
+
+function renderTempAnomaly(w) {
+  if (!el.tempAnomaly || !el.tempAnomalyText || !el.tempAnomalyArrow) return;
+  const days = (w?.daily || []).filter((d) => d.tempMax != null && d.tempMin != null);
+  const today = days[0];
+  if (!today || days.length < 3) { el.tempAnomaly.hidden = true; return; }
+  const others = days.slice(1);
+  const avgMid = others.reduce((a, d) => a + (d.tempMax + d.tempMin) / 2, 0) / others.length;
+  const todayMid = (today.tempMax + today.tempMin) / 2;
+  const rawDeltaC = todayMid - avgMid;
+  const displayed = state.unit === "F" ? rawDeltaC * 9 / 5 : rawDeltaC;
+  const rounded = Math.round(displayed);
+  const unit = state.unit === "F" ? "°F" : "°";
+  if (Math.abs(rounded) < 1) {
+    el.tempAnomaly.dataset.dir = "flat";
+    el.tempAnomaly.hidden = false;
+    el.tempAnomalyArrow.textContent = "→";
+    el.tempAnomalyText.textContent = `Typical for this week`;
+    return;
+  }
+  const dir = rounded > 0 ? "up" : "down";
+  const arrow = rounded > 0 ? "▲" : "▼";
+  const word = rounded > 0 ? "warmer" : "cooler";
+  el.tempAnomaly.dataset.dir = dir;
+  el.tempAnomaly.hidden = false;
+  el.tempAnomalyArrow.textContent = arrow;
+  el.tempAnomalyText.textContent = `${Math.abs(rounded)}${unit} ${word} than the week`;
 }
 
 function renderDayRange(w) {

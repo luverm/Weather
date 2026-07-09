@@ -427,6 +427,28 @@ html[data-reduce-motion="true"] *::after {
   transition: left 380ms var(--ease);
 }
 
+.temp-anomaly {
+  margin: 6px 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--fg-dim);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  max-width: 240px;
+  margin-left: auto;
+  justify-content: flex-end;
+}
+.temp-anomaly[hidden] { display: none; }
+.temp-anomaly-arrow { font-size: 12px; line-height: 1; }
+.temp-anomaly[data-dir="up"]   { color: #ff9c7a; }
+.temp-anomaly[data-dir="down"] { color: #9ad1ff; }
+.temp-anomaly[data-dir="flat"] { color: var(--fg-dim); }
+@media (max-width: 640px) {
+  .temp-anomaly { margin-left: 0; justify-content: flex-start; }
+}
+
 .day-score {
   margin: 10px 0 0 auto;
   display: inline-grid;
