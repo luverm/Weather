@@ -114,6 +114,9 @@ const el = {
   connStatus: $("#conn-status"),
   connStatusText: $("#conn-status-text"),
   refreshProgress: $("#refresh-progress"),
+  rainbowChip: $("#rainbow-chip"),
+  rainbowTitle: $("#rainbow-title"),
+  rainbowDetail: $("#rainbow-detail"),
   windRoseCard: $("#wind-rose-card"),
   windRoseSub: $("#wind-rose-sub"),
   windRosePetals: $("#wind-rose-petals"),
@@ -224,6 +227,7 @@ export const ui = {
     renderHourly(weather);
     renderChartSummary(weather);
     renderDayScore(weather);
+    renderRainbow(weather);
     renderDaily(weather);
     renderNowcast(weather);
     renderAdvice(weather);
@@ -1355,6 +1359,43 @@ function bindDayScorePopup() {
   el.dayScore.addEventListener("keydown", (e) => {
     if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); }
   });
+}
+
+// Rainbow chance chip — surfaces when the next few daytime hours pair rain
+// with clearing skies, which is when a rainbow actually forms. Silent when
+// conditions don't line up, so it only appears as a moment of delight.
+function renderRainbow(w) {
+  if (!el.rainbowChip || !el.rainbowDetail) return;
+  const hours = (w?.hourly || []).slice(0, 6);
+  if (hours.length < 3) { el.rainbowChip.hidden = true; return; }
+  // Look for a bucket that's (1) daytime, (2) has real precip or POP >= 40,
+  // AND (3) surrounded by nearby low-cloud hours (opening in the sky).
+  let bestHour = null;
+  for (let i = 0; i < hours.length; i++) {
+    const h = hours[i];
+    if (h.isDay === false) continue;
+    const wet = (h.precip ?? 0) >= 0.3 || (h.pop ?? 0) >= 40;
+    if (!wet) continue;
+    // Look at cloud cover 1-2 hours away.
+    const nearCloud = [hours[i - 1], hours[i + 1], hours[i + 2]]
+      .filter((x) => x && x.cloud != null)
+      .map((x) => x.cloud);
+    if (!nearCloud.length) continue;
+    const minCloud = Math.min(...nearCloud);
+    // "Sun breaking through the shower" — some clear neighbour.
+    if (minCloud <= 45) {
+      const score = (h.pop ?? 0) + (45 - minCloud);
+      if (!bestHour || score > bestHour.score) {
+        bestHour = { time: h.time, cloud: minCloud, pop: h.pop ?? 0, score };
+      }
+    }
+  }
+  if (!bestHour) { el.rainbowChip.hidden = true; return; }
+  el.rainbowChip.hidden = false;
+  el.rainbowTitle.textContent = "Rainbow watch";
+  const when = fmtTime(bestHour.time);
+  el.rainbowDetail.textContent =
+    `Sun + shower around ${when} · ${bestHour.pop}% rain, ${bestHour.cloud}% cloud`;
 }
 
 function renderChartSummary(w) {
