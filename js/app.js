@@ -199,6 +199,7 @@ async function loadByCoords(place) {
   app.place = place;
   ui.setPlace(place);
   ui.setLoading(`Fetching weather for ${place.name}…`);
+  writeHash(place);
 
   // Drop any scrubber offset so we start live on each new city.
   clock.reset();
@@ -219,6 +220,35 @@ async function loadByCoords(place) {
   // Move the radar to the new location (fire-and-forget; resolves later).
   ensureRadar([place.lat, place.lon]).then((r) => r?.setCenter(place.lat, place.lon, place.name));
 }
+
+// URL hash serialization for shareable links: #p=name|country|lat|lon.
+function placeToHash(place) {
+  if (!place || place.lat == null || place.lon == null) return "";
+  const safe = (v) => encodeURIComponent((v || "").toString().replace(/\|/g, ""));
+  return `#p=${safe(place.name)}|${safe(place.country || place.admin1 || "")}|${place.lat.toFixed(4)}|${place.lon.toFixed(4)}`;
+}
+function hashToPlace(hash) {
+  if (!hash || !hash.startsWith("#p=")) return null;
+  const parts = hash.slice(3).split("|");
+  if (parts.length < 4) return null;
+  const [name, country, latStr, lonStr] = parts.map(decodeURIComponent);
+  const lat = parseFloat(latStr), lon = parseFloat(lonStr);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  return { name: name || "Shared place", country: country || undefined, lat, lon };
+}
+function writeHash(place) {
+  const h = placeToHash(place);
+  if (!h) return;
+  if (h === window.location.hash) return;
+  try { history.replaceState(null, "", h); } catch { /* ignore */ }
+}
+window.addEventListener("hashchange", () => {
+  const p = hashToPlace(window.location.hash);
+  if (!p) return;
+  // Avoid a redundant reload when the hash we just wrote fires this event.
+  if (app.place && Math.abs(p.lat - app.place.lat) < 0.01 && Math.abs(p.lon - app.place.lon) < 0.01) return;
+  loadByCoords(p);
+});
 
 async function useGeolocation() {
   ui.setLoading("Locating…");
@@ -306,6 +336,13 @@ installShortcuts({
 
 // ---------- Start ----------
 (async function init() {
+  // Shared link (#p=...) wins over any prior saved place — the user just
+  // clicked into a specific city and expects to see it.
+  const hashPlace = hashToPlace(window.location.hash);
+  if (hashPlace) {
+    await loadByCoords(hashPlace);
+    return;
+  }
   // Prefer the most recent saved place if we have one — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();

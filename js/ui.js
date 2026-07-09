@@ -1860,12 +1860,16 @@ function bindShare() {
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
     ].filter(Boolean);
     const text = lines.join("\n");
+    // Include a shareable URL so recipients land on the same place.
+    const shareUrl = state.place
+      ? `${location.origin}${location.pathname}${location.search}#p=${encodeURIComponent(state.place.name || "")}|${encodeURIComponent(state.place.country || state.place.admin1 || "")}|${state.place.lat.toFixed(4)}|${state.place.lon.toFixed(4)}`
+      : location.href;
     try {
       if (navigator.share) {
-        await navigator.share({ title: `Aether — ${placeName}`, text });
+        await navigator.share({ title: `Aether — ${placeName}`, text, url: shareUrl });
       } else {
-        await navigator.clipboard.writeText(text);
-        ui.showToast("Summary copied to clipboard");
+        await navigator.clipboard.writeText(`${text}\n${shareUrl}`);
+        ui.showToast("Summary + link copied to clipboard");
       }
       el.shareBtn.classList.add("just-copied");
       setTimeout(() => el.shareBtn.classList.remove("just-copied"), 600);
