@@ -111,6 +111,8 @@ const el = {
   tempAnomaly: $("#temp-anomaly"),
   tempAnomalyText: $("#temp-anomaly-text"),
   tempAnomalyArrow: $("#temp-anomaly-arrow"),
+  connStatus: $("#conn-status"),
+  connStatusText: $("#conn-status-text"),
   stargaze: $("#stargaze"),
   stargazeText: $("#stargaze-text"),
   comfortStrip: $("#comfort-strip"),
@@ -163,6 +165,7 @@ export const ui = {
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
+    bindConnStatus();
     state.chart = new HourlyChart({
       svgEl: el.chartSvg,
       hoverEl: el.chartHover,
@@ -224,6 +227,7 @@ export const ui = {
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
+    state._updateConnStatus?.();
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
       places.updateSummary(state.place, {
@@ -1669,6 +1673,35 @@ function startFetchedTicker() {
   };
   update();
   setInterval(update, 30_000);
+}
+
+function bindConnStatus() {
+  if (!el.connStatus) return;
+  const update = () => {
+    const online = navigator.onLine !== false;
+    const mock = state.weather?.offline === true;
+    let stateName, text, title;
+    if (!online) {
+      stateName = "offline";
+      text = "Offline";
+      title = "No network — showing whatever was cached";
+    } else if (mock) {
+      stateName = "mock";
+      text = "Sample data";
+      title = "Open-Meteo unreachable — showing a mock forecast";
+    } else {
+      stateName = "online";
+      text = "Open-Meteo · live";
+      title = "Connected to Open-Meteo";
+    }
+    el.connStatus.dataset.state = stateName;
+    el.connStatus.title = title;
+    if (el.connStatusText) el.connStatusText.textContent = text;
+  };
+  update();
+  window.addEventListener("online", update);
+  window.addEventListener("offline", update);
+  state._updateConnStatus = update;
 }
 
 function bindShare() {

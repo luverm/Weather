@@ -1796,6 +1796,43 @@ kbd {
 .fetched-ago:empty { display: none; }
 .fetched-ago.stale { color: #ffb86b; }
 
+.conn-status {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  color: var(--fg-dim);
+  padding: 2px 8px 2px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,0.03);
+}
+.conn-status .conn-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #8be0a0;
+  box-shadow: 0 0 6px rgba(139,224,160,0.6);
+}
+.conn-status[data-state="offline"] {
+  color: #ffb86b;
+  border-color: rgba(255,184,107,0.35);
+  background: rgba(255,184,107,0.08);
+}
+.conn-status[data-state="offline"] .conn-dot {
+  background: #ffb86b;
+  box-shadow: 0 0 6px rgba(255,184,107,0.6);
+  animation: pulse 2.2s ease-in-out infinite;
+}
+.conn-status[data-state="mock"] {
+  color: #c7b4ff;
+  border-color: rgba(199,180,255,0.35);
+  background: rgba(199,180,255,0.08);
+}
+.conn-status[data-state="mock"] .conn-dot {
+  background: #c7b4ff; box-shadow: 0 0 6px rgba(199,180,255,0.6);
+}
+@media (max-width: 640px) {
+  .conn-status { display: none; }
+}
+
 #refresh-btn.spinning svg { animation: spin 700ms var(--ease) both; }
 @keyframes spin { from { transform: rotate(0) } to { transform: rotate(360deg) } }
 @keyframes pulse {
