@@ -1088,6 +1088,20 @@ function renderHourly(w) {
 function highlightHour(index) {
   const items = el.forecastTrack.querySelectorAll(".forecast-item");
   items.forEach((it, i) => it.classList.toggle("active", i === index));
+  // Auto-scroll the hourly track so the active hour stays visible when the
+  // user scrubs. Only when the track is horizontally scrollable and off-screen.
+  const active = items[index];
+  const track = el.forecastTrack;
+  if (!active || !track) return;
+  const trackRect = track.getBoundingClientRect();
+  const activeRect = active.getBoundingClientRect();
+  const margin = 24;
+  const outLeft = activeRect.left < trackRect.left + margin;
+  const outRight = activeRect.right > trackRect.right - margin;
+  if (outLeft || outRight) {
+    const targetLeft = active.offsetLeft - track.clientWidth / 2 + active.clientWidth / 2;
+    track.scrollTo({ left: Math.max(0, targetLeft), behavior: "smooth" });
+  }
 }
 
 function renderDaily(w) {
