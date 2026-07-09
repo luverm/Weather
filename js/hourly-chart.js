@@ -288,6 +288,46 @@ export class HourlyChart {
       });
     }
 
+    // Min/max markers — small triangles anchored on the temperature curve
+    // at the day's coldest and warmest points.
+    const extG = this.svg.querySelector("#chart-extremes");
+    if (extG) {
+      extG.innerHTML = "";
+      let hiIdx = 0, loIdx = 0;
+      for (let i = 1; i < this.hours.length; i++) {
+        if (this.hours[i].temp > this.hours[hiIdx].temp) hiIdx = i;
+        if (this.hours[i].temp < this.hours[loIdx].temp) loIdx = i;
+      }
+      const drawMark = (idx, kind) => {
+        const p = this.points[idx];
+        if (!p) return;
+        const dy = kind === "hi" ? -9 : 9;
+        const t = this.getUnit() === "F" ? this.hours[idx].temp * 9 / 5 + 32 : this.hours[idx].temp;
+        // Triangle marker.
+        const tri = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        const y = p.y + dy;
+        tri.setAttribute("class", kind === "hi" ? "hi-mark" : "lo-mark");
+        tri.setAttribute("d", kind === "hi"
+          ? `M ${p.x} ${y - 4} L ${p.x - 3} ${y + 1} L ${p.x + 3} ${y + 1} Z`
+          : `M ${p.x} ${y + 4} L ${p.x - 3} ${y - 1} L ${p.x + 3} ${y - 1} Z`);
+        extG.appendChild(tri);
+        // Text label.
+        const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        txt.setAttribute("x", p.x.toFixed(1));
+        txt.setAttribute("y", (y + (kind === "hi" ? -7 : 12)).toFixed(1));
+        txt.setAttribute("text-anchor", "middle");
+        txt.setAttribute("class", kind === "hi" ? "hi" : "lo");
+        txt.textContent = `${Math.round(t)}°`;
+        extG.appendChild(txt);
+      };
+      // Only annotate when there's meaningful spread; otherwise the labels
+      // collide with the regular hourly stubs.
+      if (this.hours[hiIdx].temp - this.hours[loIdx].temp >= 2 && hiIdx !== loIdx) {
+        drawMark(hiIdx, "hi");
+        drawMark(loIdx, "lo");
+      }
+    }
+
     // Labels: every ~3 hours
     const unit = this.getUnit();
     const labG = this.svg.querySelector("#chart-labels");

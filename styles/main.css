@@ -893,6 +893,18 @@ html[data-reduce-motion="true"] *::after {
   fill: var(--fg-muted);
   font-size: 9.5px;
 }
+.chart-extremes text {
+  font-size: 9.5px;
+  fill: var(--fg);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.chart-extremes text.lo { fill: #9ad1ff; }
+.chart-extremes text.hi { fill: #ff9c7a; }
+.chart-extremes path { stroke: currentColor; fill: currentColor; opacity: 0.9; }
+.chart-extremes .lo-mark { color: #9ad1ff; }
+.chart-extremes .hi-mark { color: #ff9c7a; }
 .chart-cursor {
   stroke: var(--accent);
   stroke-width: 1.2;
