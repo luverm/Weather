@@ -72,6 +72,12 @@
           <div class="settings-foot">Aether · Open-Meteo + RainViewer</div>
         </div>
         <button id="refresh-btn" class="icon-btn" title="Refresh weather" aria-label="Refresh">
+          <svg class="refresh-ring" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="10.5" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.16"/>
+            <circle id="refresh-progress" cx="12" cy="12" r="10.5" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.9"
+                    stroke-linecap="round" stroke-dasharray="65.97" stroke-dashoffset="65.97"
+                    transform="rotate(-90 12 12)"/>
+          </svg>
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M4 12a8 8 0 0115-4M20 12a8 8 0 01-15 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
             <path d="M19 3v5h-5M5 21v-5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>

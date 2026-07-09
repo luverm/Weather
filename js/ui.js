@@ -113,6 +113,7 @@ const el = {
   tempAnomalyArrow: $("#temp-anomaly-arrow"),
   connStatus: $("#conn-status"),
   connStatusText: $("#conn-status-text"),
+  refreshProgress: $("#refresh-progress"),
   windRoseCard: $("#wind-rose-card"),
   windRoseSub: $("#wind-rose-sub"),
   windRosePetals: $("#wind-rose-petals"),
@@ -1876,6 +1877,8 @@ function applyStoredPreferences() {
 ui.isReduceMotion = () => localStorage.getItem("aether:reduceMotion") === "1";
 
 function startFetchedTicker() {
+  const REFRESH_MS = 15 * 60_000; // matches the auto-refresh cadence in app.js
+  const CIRC = 65.97; // 2πr for r=10.5
   const update = () => {
     if (!el.fetchedAgo || !state.weather?.fetchedAt) {
       if (el.fetchedAgo) el.fetchedAgo.textContent = "";
@@ -1889,9 +1892,15 @@ function startFetchedTicker() {
       `Updated ${Math.floor(minutes / 60)}h ago`;
     el.fetchedAgo.textContent = "· " + label;
     el.fetchedAgo.classList.toggle("stale", minutes >= 20);
+    // Refresh-ring: full circle just after fetch, drains toward empty as
+    // the auto-refresh cadence approaches.
+    if (el.refreshProgress) {
+      const frac = Math.max(0, Math.min(1, 1 - ms / REFRESH_MS));
+      el.refreshProgress.setAttribute("stroke-dashoffset", (CIRC * (1 - frac)).toFixed(2));
+    }
   };
   update();
-  setInterval(update, 30_000);
+  setInterval(update, 15_000);
 }
 
 function bindConnStatus() {

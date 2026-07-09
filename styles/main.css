@@ -284,6 +284,15 @@ html[data-reduce-motion="true"] *::after {
 .icon-btn:hover { color: var(--fg); transform: translateY(-1px); background: var(--glass-strong); }
 .icon-btn:active { transform: translateY(0) scale(0.97); }
 .icon-btn svg { width: 20px; height: 20px; }
+#refresh-btn { position: relative; }
+#refresh-btn .refresh-ring {
+  position: absolute; inset: 0; margin: auto;
+  width: 32px; height: 32px;
+  color: var(--accent);
+  pointer-events: none;
+}
+#refresh-btn #refresh-progress { transition: stroke-dashoffset 1s linear; }
+#refresh-btn:hover .refresh-ring { color: var(--fg); }
 .icon-btn .sound-waves { opacity: 0; transition: opacity 240ms var(--ease); }
 .icon-btn.on { color: var(--accent); }
 .icon-btn.on .sound-waves { opacity: 1; }
