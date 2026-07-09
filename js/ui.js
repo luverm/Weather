@@ -314,6 +314,39 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
   renderTempAnomaly(w);
+  updateTabIdentity(w);
+}
+
+// Live-updating browser tab identity: emoji picked from condition/day-night
+// plus the temperature shown in the tab title so tab switchers can see it.
+const CONDITION_EMOJI = {
+  clear: { day: "☀️", night: "🌙" },
+  clouds: { day: "⛅", night: "☁️" },
+  rain: { day: "🌧️", night: "🌧️" },
+  snow: { day: "❄️", night: "❄️" },
+  storm: { day: "⛈️", night: "⛈️" },
+  fog: { day: "🌫️", night: "🌫️" },
+};
+function updateTabIdentity(w) {
+  if (!w) return;
+  const cond = CONDITION_EMOJI[w.condition] || CONDITION_EMOJI.clouds;
+  const emoji = w.isDay === false ? cond.night : cond.day;
+  const t = Math.round(convertTemp(w.temp ?? 0));
+  const name = state.place?.name || "Aether";
+  document.title = `${emoji} ${t}° · ${name}`;
+  // Rebuild the favicon as an SVG data URI so the tab icon reflects the
+  // current condition + rough temperature colour.
+  const bg = w.isDay === false ? "#0b1020" : "#7cc0ff";
+  const tempColor = t >= 25 ? "#ff9c7a" : t <= 5 ? "#9ad1ff" : "#fff1c9";
+  const svg =
+    `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>` +
+    `<rect width='64' height='64' rx='14' fill='${bg}'/>` +
+    `<text x='50%' y='55%' text-anchor='middle' dominant-baseline='middle' font-size='40' font-family='sans-serif'>${emoji}</text>` +
+    `<circle cx='50' cy='14' r='9' fill='${tempColor}'/>` +
+    `</svg>`;
+  const href = "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+  const link = document.querySelector("link[rel='icon']");
+  if (link) link.setAttribute("href", href);
 }
 
 function renderTempAnomaly(w) {
