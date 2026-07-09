@@ -144,6 +144,19 @@
             </div>
             <span class="day-range-end" id="day-range-max">—</span>
           </div>
+          <div id="day-score" class="day-score" hidden aria-label="Outdoor comfort score">
+            <svg class="day-score-ring" viewBox="0 0 44 44" aria-hidden="true">
+              <circle cx="22" cy="22" r="18" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="3.5"/>
+              <circle id="day-score-arc" cx="22" cy="22" r="18" fill="none" stroke="currentColor" stroke-width="3.5"
+                      stroke-linecap="round" stroke-dasharray="113.1" stroke-dashoffset="113.1"
+                      transform="rotate(-90 22 22)"/>
+              <text id="day-score-num" x="22" y="26" text-anchor="middle" font-size="15" font-weight="600" fill="currentColor">–</text>
+            </svg>
+            <span class="day-score-meta">
+              <strong id="day-score-label">Comfort</strong>
+              <span id="day-score-detail" class="day-score-detail">—</span>
+            </span>
+          </div>
         </div>
       </div>
 

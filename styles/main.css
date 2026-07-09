@@ -427,6 +427,59 @@ html[data-reduce-motion="true"] *::after {
   transition: left 380ms var(--ease);
 }
 
+.day-score {
+  margin: 10px 0 0 auto;
+  display: inline-grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 10px 4px 4px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--stroke);
+  color: var(--fg);
+  max-width: 240px;
+}
+.day-score[hidden] { display: none; }
+.day-score-ring { width: 36px; height: 36px; display: block; color: #8be0a0; }
+#day-score-arc { transition: stroke-dashoffset 620ms var(--ease), stroke 300ms var(--ease); }
+#day-score-num {
+  font-variant-numeric: tabular-nums;
+  font-family: inherit;
+  paint-order: stroke fill;
+}
+.day-score-meta {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  text-align: left;
+}
+.day-score-meta strong {
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  font-weight: 500;
+}
+.day-score-detail {
+  font-size: 12px;
+  color: var(--fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.day-score[data-tier="great"] { border-color: rgba(139,224,160,0.35); background: rgba(139,224,160,0.10); }
+.day-score[data-tier="great"] .day-score-ring { color: #8be0a0; }
+.day-score[data-tier="good"]  { border-color: rgba(255,212,123,0.35); background: rgba(255,212,123,0.10); }
+.day-score[data-tier="good"]  .day-score-ring { color: #ffd47b; }
+.day-score[data-tier="okay"]  { border-color: rgba(255,156,122,0.35); background: rgba(255,156,122,0.10); }
+.day-score[data-tier="okay"]  .day-score-ring { color: #ff9c7a; }
+.day-score[data-tier="rough"] { border-color: rgba(199,180,255,0.35); background: rgba(199,180,255,0.10); }
+.day-score[data-tier="rough"] .day-score-ring { color: #c7b4ff; }
+@media (max-width: 640px) {
+  .day-score { margin-left: 0; }
+}
+
 /* ---------- Nowcast banner ---------- */
 .nowcast {
   padding: 14px 18px;

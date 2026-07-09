@@ -96,6 +96,11 @@ const el = {
   goldenCount: $("#golden-count"),
   chartSummary: $("#chart-summary"),
   chartSummaryText: $("#chart-summary-text"),
+  dayScore: $("#day-score"),
+  dayScoreArc: $("#day-score-arc"),
+  dayScoreNum: $("#day-score-num"),
+  dayScoreLabel: $("#day-score-label"),
+  dayScoreDetail: $("#day-score-detail"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -191,6 +196,7 @@ export const ui = {
     renderSun(weather);
     renderHourly(weather);
     renderChartSummary(weather);
+    renderDayScore(weather);
     renderDaily(weather);
     renderNowcast(weather);
     renderAdvice(weather);
@@ -886,6 +892,75 @@ function cardinal(deg) {
                 "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
   const i = Math.round(((deg % 360) + 360) % 360 / 22.5) % 16;
   return dirs[i];
+}
+
+// Small 0–10 "outdoor comfort" score. Weighted mix of temperature, wetness,
+// wind, humidity, and UV — with the biggest driver named in the caption.
+function renderDayScore(w) {
+  if (!el.dayScore || !el.dayScoreArc || !el.dayScoreNum) return;
+  if (!w) { el.dayScore.hidden = true; return; }
+  const factors = [];
+  const push = (name, value, weight) => factors.push({ name, value, weight });
+
+  // Temperature comfort — peak at ~20 °C, drops off both sides.
+  const t = w.feelsLike ?? w.temp;
+  if (t != null) {
+    const dev = Math.abs(t - 20);
+    const s = Math.max(0, 1 - dev / 22);
+    push(dev >= 12 ? (t < 20 ? "chilly" : "hot") : "temperature", s, 0.28);
+  }
+
+  // Wetness — combine current hourly precip + next-6h POP so it reflects imminent rain.
+  const soon = (w.hourly || []).slice(0, 6);
+  const popNext = soon.length ? Math.max(...soon.map((h) => h.pop ?? 0)) : 0;
+  const precipNow = soon[0]?.precip ?? 0;
+  const wetness = Math.max(precipNow, popNext / 100 * 4);
+  const rainScore = Math.max(0, 1 - wetness / 6);
+  push(rainScore < 0.55 ? "rain risk" : "dry", rainScore, 0.28);
+
+  // Wind — calm to breezy is fine, gusty drops the score.
+  const gusts = w.windGusts ?? w.windSpeed ?? 0;
+  const windScore = Math.max(0, 1 - Math.max(0, gusts - 12) / 40);
+  push(gusts >= 30 ? "gusty" : "wind", windScore, 0.18);
+
+  // Humidity — sweet spot 35–65 %.
+  if (w.humidity != null) {
+    const dev = Math.max(0, Math.abs(w.humidity - 50) - 15);
+    const s = Math.max(0, 1 - dev / 35);
+    push(w.humidity > 75 ? "humid" : (w.humidity < 25 ? "dry air" : "humidity"), s, 0.14);
+  }
+
+  // UV — 3–5 ideal; above 7 penalises.
+  if (w.uv != null) {
+    const uv = w.uv;
+    const s = uv <= 6 ? 1 - Math.abs(uv - 4) / 8 : Math.max(0, 1 - (uv - 6) / 6);
+    push(uv >= 8 ? "high UV" : "UV", Math.max(0, s), 0.12);
+  }
+
+  if (!factors.length) { el.dayScore.hidden = true; return; }
+  const weightSum = factors.reduce((a, f) => a + f.weight, 0);
+  const raw = factors.reduce((a, f) => a + f.value * f.weight, 0) / weightSum;
+  const score10 = Math.max(0, Math.min(10, Math.round(raw * 10)));
+
+  const tier = score10 >= 8 ? "great" : score10 >= 6 ? "good" : score10 >= 4 ? "okay" : "rough";
+  const label = { great: "Great day", good: "Nice out", okay: "So-so", rough: "Rough" }[tier];
+
+  // Worst-scoring factor drives the caption when it drags the score down.
+  const worst = factors.reduce((a, f) => (a && a.value < f.value ? a : f), null);
+  const detail = worst && worst.value < 0.55
+    ? `${label} · ${worst.name} concerns`
+    : `${label} · ${tier === "great" ? "hard to complain" : tier === "good" ? "pleasant overall" : tier === "okay" ? "manageable" : "consider indoors"}`;
+
+  el.dayScore.hidden = false;
+  el.dayScore.dataset.tier = tier;
+  el.dayScoreNum.textContent = String(score10);
+  el.dayScoreLabel.textContent = "Comfort";
+  el.dayScoreDetail.textContent = detail;
+  // Arc: full circle at 10/10.
+  const c = 2 * Math.PI * 18;
+  const dash = c * (score10 / 10);
+  el.dayScoreArc.setAttribute("stroke-dasharray", c.toFixed(2));
+  el.dayScoreArc.setAttribute("stroke-dashoffset", (c - dash).toFixed(2));
 }
 
 function renderChartSummary(w) {
