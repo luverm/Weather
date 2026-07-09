@@ -94,6 +94,8 @@ const el = {
   goldenLabel: $("#golden-label"),
   goldenRange: $("#golden-range"),
   goldenCount: $("#golden-count"),
+  chartSummary: $("#chart-summary"),
+  chartSummaryText: $("#chart-summary-text"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -188,6 +190,7 @@ export const ui = {
     renderMoon(weather.moon);
     renderSun(weather);
     renderHourly(weather);
+    renderChartSummary(weather);
     renderDaily(weather);
     renderNowcast(weather);
     renderAdvice(weather);
@@ -883,6 +886,39 @@ function cardinal(deg) {
                 "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
   const i = Math.round(((deg % 360) + 360) % 360 / 22.5) % 16;
   return dirs[i];
+}
+
+function renderChartSummary(w) {
+  if (!el.chartSummary || !el.chartSummaryText) return;
+  const hours = (w?.hourly || []).slice(0, 24);
+  if (!hours.length) { el.chartSummary.hidden = true; return; }
+  let totalMm = 0;
+  let wetHours = 0;
+  let peakHour = null;
+  for (const h of hours) {
+    const p = h.precip ?? 0;
+    if (p > 0) totalMm += p;
+    if (p >= 0.2 || (h.pop ?? 0) >= 50) wetHours++;
+    if (!peakHour || p > peakHour.p) peakHour = { p, ts: h.time };
+  }
+  el.chartSummary.hidden = false;
+  if (totalMm < 0.1 && wetHours === 0) {
+    el.chartSummary.dataset.wet = "dry";
+    el.chartSummaryText.textContent = "Dry next 24 h";
+    return;
+  }
+  const isImperial = state.unit === "F";
+  const val = isImperial
+    ? `${(totalMm / 25.4).toFixed(totalMm >= 25 ? 1 : 2)}″`
+    : `${totalMm >= 10 ? totalMm.toFixed(0) : totalMm.toFixed(1)} mm`;
+  const label = wetHours > 0
+    ? `${val} · ${wetHours} wet h`
+    : `${val} expected`;
+  el.chartSummary.dataset.wet = totalMm >= 1 ? "true" : "false";
+  el.chartSummary.title = peakHour && peakHour.p > 0
+    ? `24 h precipitation total · peak ${fmtTime(peakHour.ts)}`
+    : "24 h precipitation total";
+  el.chartSummaryText.textContent = label;
 }
 
 function renderHourly(w) {
