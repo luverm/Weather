@@ -1074,7 +1074,8 @@ kbd {
   font-family: inherit;
 }
 #wind-rose-petals path {
-  transition: opacity 320ms var(--ease);
+  transition: opacity 320ms var(--ease), filter 200ms var(--ease);
+  cursor: crosshair;
 }
 .wind-rose-sub {
   font-size: 10px;

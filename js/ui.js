@@ -662,6 +662,17 @@ function renderWindRose(w) {
     path.setAttribute("stroke", `hsla(${hue.toFixed(0)}, 80%, 75%, 0.4)`);
     path.setAttribute("stroke-width", "0.5");
     path.setAttribute("data-avg", avg.toFixed(1));
+    path.setAttribute("data-peak", b.peak.toFixed(1));
+    path.setAttribute("data-count", String(b.count));
+    // Cardinal at this sector — used for tooltip and click-to-emphasise.
+    const sectorDeg = s * sectorArc;
+    path.setAttribute("data-dir", cardinal(sectorDeg));
+    path.setAttribute("data-deg", sectorDeg.toFixed(0));
+    // <title> gives native tooltips on hover.
+    const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+    title.textContent =
+      `From ${cardinal(sectorDeg)} (${sectorDeg.toFixed(0)}°) · avg ${avg.toFixed(1)} km/h · peak ${b.peak.toFixed(1)} km/h · ${b.count}h`;
+    path.appendChild(title);
     el.windRosePetals.appendChild(path);
   }
 
@@ -673,8 +684,40 @@ function renderWindRose(w) {
   const avgMax = Math.round(maxAvg);
   const peakMax = Math.round(maxPeak);
   if (el.windRoseSub) el.windRoseSub.textContent = "· next 24 h";
-  if (el.windRoseCaption) el.windRoseCaption.textContent =
-    `Dominant from ${dirName} · peak ${peakMax} km/h · avg ${avgMax} km/h`;
+  state.windRoseSummary = `Dominant from ${dirName} · peak ${peakMax} km/h · avg ${avgMax} km/h`;
+  if (el.windRoseCaption) el.windRoseCaption.textContent = state.windRoseSummary;
+  bindWindRoseHover();
+}
+
+function bindWindRoseHover() {
+  if (!el.windRosePetals || state._windRoseBound) return;
+  state._windRoseBound = true;
+  const petalsHost = el.windRosePetals;
+  petalsHost.addEventListener("pointermove", (e) => {
+    const p = e.target.closest("path");
+    if (!p || !el.windRoseCaption) return;
+    const dir = p.getAttribute("data-dir");
+    const deg = p.getAttribute("data-deg");
+    const avg = parseFloat(p.getAttribute("data-avg") || "0");
+    const peak = parseFloat(p.getAttribute("data-peak") || "0");
+    const count = p.getAttribute("data-count");
+    el.windRoseCaption.textContent =
+      `From ${dir} (${deg}°) · ${avg.toFixed(1)} km/h avg · peak ${peak.toFixed(0)} km/h · ${count}h`;
+    p.style.filter = "brightness(1.25) saturate(1.3)";
+    // Fade the others so the hovered petal reads clearly.
+    for (const other of petalsHost.querySelectorAll("path")) {
+      if (other !== p) other.style.opacity = "0.4";
+    }
+  });
+  petalsHost.addEventListener("pointerleave", () => {
+    for (const p of petalsHost.querySelectorAll("path")) {
+      p.style.opacity = "";
+      p.style.filter = "";
+    }
+    if (el.windRoseCaption && state.windRoseSummary) {
+      el.windRoseCaption.textContent = state.windRoseSummary;
+    }
+  });
 }
 
 function renderMoon(moon) {
