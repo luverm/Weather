@@ -113,6 +113,10 @@ const el = {
   tempAnomalyArrow: $("#temp-anomaly-arrow"),
   connStatus: $("#conn-status"),
   connStatusText: $("#conn-status-text"),
+  windRoseCard: $("#wind-rose-card"),
+  windRoseSub: $("#wind-rose-sub"),
+  windRosePetals: $("#wind-rose-petals"),
+  windRoseCaption: $("#wind-rose-caption"),
   stargaze: $("#stargaze"),
   stargazeText: $("#stargaze-text"),
   comfortStrip: $("#comfort-strip"),
@@ -210,6 +214,7 @@ export const ui = {
     renderMoon(weather.moon);
     renderStargaze(weather);
     renderSun(weather);
+    renderWindRose(weather);
     renderHourly(weather);
     renderChartSummary(weather);
     renderDayScore(weather);
@@ -565,6 +570,73 @@ function renderStargaze(w) {
   el.stargaze.hidden = false;
   el.stargaze.dataset.tier = tier;
   el.stargazeText.textContent = label;
+}
+
+// Draw a small wind rose showing the distribution of hourly wind directions
+// over the next 24 h. Each of 16 petals is a wedge sized to average speed
+// coming from that sector; hue tracks speed (soft blue -> punchy accent).
+function renderWindRose(w) {
+  if (!el.windRoseCard || !el.windRosePetals) return;
+  const hours = (w?.hourly || []).slice(0, 24);
+  const withDir = hours.filter((h) => h.windDir != null && h.wind != null);
+  if (withDir.length < 6) { el.windRoseCard.hidden = true; return; }
+
+  const SECTORS = 16;
+  const bins = Array.from({ length: SECTORS }, () => ({ sum: 0, count: 0, peak: 0 }));
+  for (const h of withDir) {
+    const s = Math.round((((h.windDir % 360) + 360) % 360) / (360 / SECTORS)) % SECTORS;
+    bins[s].sum += h.wind;
+    bins[s].count += 1;
+    bins[s].peak = Math.max(bins[s].peak, h.gusts ?? h.wind);
+  }
+  const filled = bins.filter((b) => b.count > 0);
+  if (!filled.length) { el.windRoseCard.hidden = true; return; }
+  const maxAvg = Math.max(...filled.map((b) => b.sum / b.count));
+  const maxPeak = Math.max(...filled.map((b) => b.peak));
+
+  el.windRosePetals.innerHTML = "";
+  const rMax = 42;
+  const sectorArc = 360 / SECTORS;
+  for (let s = 0; s < SECTORS; s++) {
+    const b = bins[s];
+    if (!b.count) continue;
+    const avg = b.sum / b.count;
+    const rInner = 3;
+    const rOuter = rInner + (avg / maxAvg) * (rMax - rInner);
+    // Angle 0 = pointing from north (wind coming from north drawn upward).
+    const a0 = (s - 0.5) * sectorArc - 90;
+    const a1 = (s + 0.5) * sectorArc - 90;
+    const rad = (deg) => deg * Math.PI / 180;
+    const [x0i, y0i] = [rInner * Math.cos(rad(a0)), rInner * Math.sin(rad(a0))];
+    const [x1i, y1i] = [rInner * Math.cos(rad(a1)), rInner * Math.sin(rad(a1))];
+    const [x0o, y0o] = [rOuter * Math.cos(rad(a0)), rOuter * Math.sin(rad(a0))];
+    const [x1o, y1o] = [rOuter * Math.cos(rad(a1)), rOuter * Math.sin(rad(a1))];
+    const d = `M ${x0i.toFixed(1)} ${y0i.toFixed(1)}
+               L ${x0o.toFixed(1)} ${y0o.toFixed(1)}
+               A ${rOuter.toFixed(1)} ${rOuter.toFixed(1)} 0 0 1 ${x1o.toFixed(1)} ${y1o.toFixed(1)}
+               L ${x1i.toFixed(1)} ${y1i.toFixed(1)}
+               A ${rInner.toFixed(1)} ${rInner.toFixed(1)} 0 0 0 ${x0i.toFixed(1)} ${y0i.toFixed(1)} Z`;
+    const hue = 210 + (avg / maxAvg) * -60; // 210 (cool blue) -> 150 (green)
+    const strength = Math.min(1, avg / Math.max(20, maxAvg));
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", d);
+    path.setAttribute("fill", `hsla(${hue.toFixed(0)}, 70%, ${(55 - strength * 8).toFixed(0)}%, ${(0.35 + strength * 0.5).toFixed(2)})`);
+    path.setAttribute("stroke", `hsla(${hue.toFixed(0)}, 80%, 75%, 0.4)`);
+    path.setAttribute("stroke-width", "0.5");
+    path.setAttribute("data-avg", avg.toFixed(1));
+    el.windRosePetals.appendChild(path);
+  }
+
+  el.windRoseCard.hidden = false;
+  const dominantIdx = bins.reduce((best, b, i) =>
+    (b.count > (bins[best]?.count ?? 0) ? i : best), 0);
+  const dominantDeg = dominantIdx * sectorArc;
+  const dirName = cardinal(dominantDeg);
+  const avgMax = Math.round(maxAvg);
+  const peakMax = Math.round(maxPeak);
+  if (el.windRoseSub) el.windRoseSub.textContent = "· next 24 h";
+  if (el.windRoseCaption) el.windRoseCaption.textContent =
+    `Dominant from ${dirName} · peak ${peakMax} km/h · avg ${avgMax} km/h`;
 }
 
 function renderMoon(moon) {

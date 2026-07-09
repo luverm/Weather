@@ -353,6 +353,22 @@
           <ul id="activity-list" class="activity-list"></ul>
         </div>
 
+        <div class="extra-card glass" id="wind-rose-card" hidden>
+          <span class="metric-label">Wind rose <span id="wind-rose-sub" class="wind-rose-sub"></span></span>
+          <svg id="wind-rose" class="wind-rose" viewBox="-52 -52 104 104" aria-hidden="true">
+            <circle cx="0" cy="0" r="46" fill="none" stroke="var(--stroke)" stroke-width="1"/>
+            <circle cx="0" cy="0" r="30" fill="none" stroke="var(--stroke)" stroke-width="1" stroke-dasharray="1 3"/>
+            <line x1="-46" y1="0" x2="46" y2="0" stroke="var(--stroke)" stroke-width="1" stroke-dasharray="1 3"/>
+            <line x1="0" y1="-46" x2="0" y2="46" stroke="var(--stroke)" stroke-width="1" stroke-dasharray="1 3"/>
+            <text x="0"   y="-49" text-anchor="middle" class="wind-rose-cardinal">N</text>
+            <text x="50"  y="4"   text-anchor="middle" class="wind-rose-cardinal">E</text>
+            <text x="0"   y="52"  text-anchor="middle" class="wind-rose-cardinal">S</text>
+            <text x="-50" y="4"   text-anchor="middle" class="wind-rose-cardinal">W</text>
+            <g id="wind-rose-petals"></g>
+          </svg>
+          <p id="wind-rose-caption" class="wind-rose-caption">—</p>
+        </div>
+
         <div class="extra-card glass" id="sun-card">
           <span class="metric-label"><span id="sun-next-label">Sun</span> <span id="sun-countdown" class="sun-countdown"></span></span>
           <svg id="sun-arc" class="sun-arc" viewBox="0 0 200 84" aria-hidden="true">

@@ -1062,6 +1062,32 @@ kbd {
   border-radius: var(--radius-sm);
   display: grid; gap: 10px;
 }
+
+#wind-rose-card { justify-items: center; text-align: center; }
+.wind-rose { width: 132px; height: 132px; display: block; }
+.wind-rose-cardinal {
+  font-size: 10px;
+  fill: var(--fg-dim);
+  letter-spacing: 0.06em;
+  font-family: inherit;
+}
+#wind-rose-petals path {
+  transition: opacity 320ms var(--ease);
+}
+.wind-rose-sub {
+  font-size: 10px;
+  color: var(--fg-dim);
+  letter-spacing: 0.08em;
+  margin-left: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.wind-rose-caption {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
 .aq-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
 .aq-ring { position: relative; width: 48px; height: 48px; color: #78d06a; }
 .aq-ring svg { width: 48px; height: 48px; display: block; }
