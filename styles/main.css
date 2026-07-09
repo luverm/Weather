@@ -871,6 +871,19 @@ html[data-reduce-motion="true"] *::after {
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
 }
+.chart-grid line {
+  stroke: rgba(255, 255, 255, 0.06);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.chart-grid line.at-midnight { stroke: rgba(154, 209, 255, 0.14); }
+.chart-grid line.at-noon     { stroke: rgba(255, 210, 140, 0.14); }
+.chart-grid text {
+  font-size: 8.5px;
+  fill: var(--fg-dim);
+  opacity: 0.55;
+  font-variant-numeric: tabular-nums;
+}
 .chart-labels text {
   font-size: 9px;
   fill: var(--fg-dim);

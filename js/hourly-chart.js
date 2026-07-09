@@ -264,6 +264,30 @@ export class HourlyChart {
       }
     }
 
+    // Grid: subtle vertical lines every 6 local hours to give the eye a
+    // rhythm on long time spans; the midnight/noon lines get a cool/warm tint.
+    const gridG = this.svg.querySelector("#chart-grid");
+    if (gridG) {
+      gridG.innerHTML = "";
+      const seen = new Set();
+      this.hours.forEach((h, i) => {
+        const hh = parseInt(this._hourOf(h.time), 10);
+        if (isNaN(hh) || hh % 6 !== 0) return;
+        // Guard against duplicates when the sampling doesn't align cleanly.
+        const key = `${hh}:${Math.floor(iToX(i))}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", iToX(i).toFixed(1));
+        line.setAttribute("x2", iToX(i).toFixed(1));
+        line.setAttribute("y1", String(PAD_TOP));
+        line.setAttribute("y2", String(H - PAD_BOT));
+        if (hh === 0) line.setAttribute("class", "at-midnight");
+        else if (hh === 12) line.setAttribute("class", "at-noon");
+        gridG.appendChild(line);
+      });
+    }
+
     // Labels: every ~3 hours
     const unit = this.getUnit();
     const labG = this.svg.querySelector("#chart-labels");
