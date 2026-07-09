@@ -467,7 +467,24 @@ function renderMetrics(w) {
   } else {
     el.metricUVSub.textContent = "peak —";
   }
+  // Attach a recommendation strip under the sub-text.
+  if (el.metricUVSub && w.uv != null) {
+    const rec = uvRecommendation(w.uv);
+    // Reuse the metric-sub as two lines with a small pill on line 2.
+    if (rec) {
+      el.metricUVSub.innerHTML = `${el.metricUVSub.textContent} <span class="uv-rec" data-tier="${rec.tier}">${escapeHtml(rec.text)}</span>`;
+    }
+  }
   renderPressureSparkline(w);
+}
+
+function uvRecommendation(uv) {
+  if (uv == null) return null;
+  if (uv < 3) return { tier: "low", text: "SPF optional" };
+  if (uv < 6) return { tier: "med", text: "SPF 30+" };
+  if (uv < 8) return { tier: "high", text: "SPF 50 + shade" };
+  if (uv < 11) return { tier: "vhigh", text: "Cover up" };
+  return { tier: "extreme", text: "Avoid midday sun" };
 }
 
 function humidityComfort(rh, dew, temp) {
