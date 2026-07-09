@@ -1591,6 +1591,7 @@ function renderSearchResults(results) {
   `).join("");
   el.searchResults.hidden = false;
   el.searchResults._items = results;
+  setSearchHover(0);
 }
 
 function showRecentsIfAny() {
@@ -1605,6 +1606,7 @@ function showRecentsIfAny() {
   el.searchResults.innerHTML = `<li class="recent-heading">Recent places</li>${itemsHtml}`;
   el.searchResults._items = recents;
   el.searchResults.hidden = false;
+  setSearchHover(0);
 }
 
 function bindSearch() {
@@ -1626,17 +1628,62 @@ function bindSearch() {
       el.searchResults.hidden = false;
     }
   });
+  el.searchInput.addEventListener("keydown", (e) => {
+    if (el.searchResults.hidden) return;
+    const items = el.searchResults._items;
+    if (!items?.length) return;
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      const cur = state.searchHoverIdx ?? -1;
+      const next = (cur + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length;
+      setSearchHover(next);
+    } else if (e.key === "Enter") {
+      const idx = state.searchHoverIdx ?? 0;
+      const item = items[idx];
+      if (item) {
+        e.preventDefault();
+        pickSearchItem(item);
+      }
+    } else if (e.key === "Escape") {
+      el.searchResults.hidden = true;
+    }
+  });
   el.searchResults.addEventListener("click", (e) => {
     const li = e.target.closest("li");
     if (!li) return;
     const i = parseInt(li.dataset.index, 10);
     const item = el.searchResults._items?.[i];
     if (!item) return;
-    el.searchInput.value = item.name;
-    el.searchResults.hidden = true;
-    places.add(item);
-    state.handlers.onSearchSelect?.(item);
+    pickSearchItem(item);
   });
+  el.searchResults.addEventListener("pointermove", (e) => {
+    const li = e.target.closest("li");
+    if (!li || !li.dataset.index) return;
+    const i = parseInt(li.dataset.index, 10);
+    if (!Number.isNaN(i)) setSearchHover(i);
+  });
+}
+
+function setSearchHover(idx) {
+  state.searchHoverIdx = idx;
+  const items = el.searchResults.querySelectorAll("li[data-index]");
+  items.forEach((li) => {
+    const i = parseInt(li.dataset.index, 10);
+    if (i === idx) {
+      li.classList.add("hover");
+      if (li.scrollIntoView) li.scrollIntoView({ block: "nearest" });
+    } else {
+      li.classList.remove("hover");
+    }
+  });
+}
+
+function pickSearchItem(item) {
+  el.searchInput.value = item.name;
+  el.searchResults.hidden = true;
+  state.searchHoverIdx = -1;
+  places.add(item);
+  state.handlers.onSearchSelect?.(item);
 }
 
 function bindUnitToggle() {
