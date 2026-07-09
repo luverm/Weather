@@ -891,10 +891,25 @@ function renderHourly(w) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    const windKmh = Math.round(h.wind ?? 0);
+    const strong = windKmh >= 25;
+    // Meteorological convention: wind_direction_10m is where wind is *coming
+    // from*, so an arrow that points where it's *going* rotates by dir + 180°.
+    const dirNum = h.windDir;
+    const rot = dirNum == null ? null : ((dirNum + 180) % 360);
+    const windHTML = dirNum == null
+      ? `<span class="forecast-wind" data-strong="${strong}">${windKmh}</span>`
+      : `<span class="forecast-wind" data-strong="${strong}" title="Wind from ${cardinal(dirNum)} · ${windKmh} km/h">
+           <svg viewBox="0 0 12 12" aria-hidden="true" style="transform:rotate(${rot}deg)">
+             <path d="M6 1 L6 10 M6 1 L3.5 4 M6 1 L8.5 4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+           </svg>
+           <span>${windKmh}</span>
+         </span>`;
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
+      ${windHTML}
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
