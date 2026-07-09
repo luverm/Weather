@@ -410,6 +410,25 @@ function renderDayRange(w) {
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+  // Freezing-point tick (0°C / 32°F), shown only when it falls inside the
+  // day's range — otherwise the tick would just be pinned to the edge.
+  const track = el.dayRange.querySelector(".day-range-track");
+  if (track) {
+    let freeze = track.querySelector(".day-range-freeze");
+    if (lo < 0 && hi > 0) {
+      const freezeFrac = Math.max(0, Math.min(1, (0 - lo) / (hi - lo)));
+      if (!freeze) {
+        freeze = document.createElement("div");
+        freeze.className = "day-range-freeze";
+        freeze.title = "Freezing (0°C / 32°F)";
+        track.appendChild(freeze);
+      }
+      freeze.style.left = `${(freezeFrac * 100).toFixed(1)}%`;
+      freeze.hidden = false;
+    } else if (freeze) {
+      freeze.hidden = true;
+    }
+  }
 }
 
 function renderMetrics(w) {

@@ -444,6 +444,26 @@ html[data-reduce-motion="true"] *::after {
   box-shadow: 0 2px 8px rgba(0,0,0,0.35);
   transition: left 380ms var(--ease);
 }
+.day-range-freeze {
+  position: absolute;
+  top: -3px; bottom: -3px;
+  width: 2px;
+  margin-left: -1px;
+  background: rgba(220, 240, 255, 0.85);
+  box-shadow: 0 0 6px rgba(200, 230, 255, 0.6);
+  border-radius: 1px;
+  pointer-events: auto;
+  transition: left 380ms var(--ease);
+}
+.day-range-freeze::after {
+  content: "0°";
+  position: absolute;
+  top: -14px; left: 50%; transform: translateX(-50%);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: rgba(220, 240, 255, 0.85);
+  white-space: nowrap;
+}
 
 .uv-rec {
   display: inline-block;
