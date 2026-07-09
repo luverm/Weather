@@ -1965,6 +1965,20 @@ kbd {
   transition: background 200ms var(--ease);
 }
 .daily-item:hover { background: var(--glass); }
+.daily-item[data-weekend="true"] {
+  background: linear-gradient(90deg, rgba(255,225,170,0.06), transparent 60%);
+}
+.daily-item[data-weekend="true"] .daily-day {
+  color: #ffe6c7;
+  text-shadow: 0 0 8px rgba(255, 220, 170, 0.15);
+}
+.daily-item[data-weekend="true"] .daily-day::after {
+  content: " ★";
+  font-size: 8.5px;
+  color: rgba(255, 225, 170, 0.75);
+  letter-spacing: 0;
+  vertical-align: super;
+}
 .daily-day-cell { display: grid; gap: 1px; min-width: 0; }
 .daily-day { font-size: 13px; font-weight: 500; }
 .daily-sun-line {

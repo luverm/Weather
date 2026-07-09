@@ -1538,6 +1538,10 @@ function renderDaily(w) {
     const item = document.createElement("div");
     item.className = "daily-item";
     item.dataset.ts = d.time;
+    // Weekend rows (Saturday=6, Sunday=0) get a subtle emphasis so the eye
+    // finds the weekend at a glance in the 7-day list.
+    const dow = dt.getDay();
+    if (dow === 0 || dow === 6) item.dataset.weekend = "true";
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
