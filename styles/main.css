@@ -501,8 +501,68 @@ html[data-reduce-motion="true"] *::after {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.day-score { cursor: pointer; position: relative; }
+.day-score:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .day-score[data-tier="great"] { border-color: rgba(139,224,160,0.35); background: rgba(139,224,160,0.10); }
 .day-score[data-tier="great"] .day-score-ring { color: #8be0a0; }
+.day-score-popup {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
+  min-width: 240px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  color: var(--fg);
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.45);
+  animation: dsp-in 220ms var(--ease);
+  cursor: default;
+  text-align: left;
+}
+.day-score-popup .dsp-head {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  margin-bottom: 8px;
+}
+.day-score-popup .dsp-row {
+  display: grid;
+  grid-template-columns: 68px 1fr 34px;
+  gap: 8px;
+  align-items: center;
+  padding: 3px 0;
+  font-variant-numeric: tabular-nums;
+}
+.day-score-popup .dsp-name { color: var(--fg); text-transform: capitalize; font-size: 11.5px; }
+.day-score-popup .dsp-val  { color: var(--fg-dim); font-size: 11px; text-align: right; }
+.day-score-popup .dsp-bar {
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.08);
+  overflow: hidden;
+}
+.day-score-popup .dsp-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff8a6a, #ffd47b, #8be0a0);
+  border-radius: 3px;
+  transition: width 480ms var(--ease);
+}
+.day-score-popup .dsp-foot {
+  margin-top: 8px;
+  font-size: 10px;
+  color: var(--fg-dim);
+  letter-spacing: 0.06em;
+}
+@keyframes dsp-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 640px) {
+  .day-score-popup { right: auto; left: 0; }
+}
 .day-score[data-tier="good"]  { border-color: rgba(255,212,123,0.35); background: rgba(255,212,123,0.10); }
 .day-score[data-tier="good"]  .day-score-ring { color: #ffd47b; }
 .day-score[data-tier="okay"]  { border-color: rgba(255,156,122,0.35); background: rgba(255,156,122,0.10); }

@@ -1305,6 +1305,56 @@ function renderDayScore(w) {
   const dash = c * (score10 / 10);
   el.dayScoreArc.setAttribute("stroke-dasharray", c.toFixed(2));
   el.dayScoreArc.setAttribute("stroke-dashoffset", (c - dash).toFixed(2));
+  // Persist factor breakdown for the click-to-expand popup.
+  state.dayScoreFactors = factors.map((f) => ({
+    name: f.name,
+    pct: Math.round(f.value * 100),
+    weight: Math.round(f.weight * 100),
+  }));
+  state.dayScoreTitle = `${label} — ${score10}/10`;
+  bindDayScorePopup();
+}
+
+function bindDayScorePopup() {
+  if (!el.dayScore || state._dayScoreBound) return;
+  state._dayScoreBound = true;
+  el.dayScore.setAttribute("role", "button");
+  el.dayScore.setAttribute("tabindex", "0");
+  const toggle = () => {
+    let pop = document.getElementById("day-score-popup");
+    if (pop) { pop.remove(); return; }
+    pop = document.createElement("div");
+    pop.id = "day-score-popup";
+    pop.className = "day-score-popup glass";
+    const rows = (state.dayScoreFactors || []).map((f) => `
+      <div class="dsp-row">
+        <span class="dsp-name">${escapeHtml(f.name)}</span>
+        <div class="dsp-bar"><div class="dsp-bar-fill" style="width:${f.pct}%"></div></div>
+        <span class="dsp-val">${f.pct}%</span>
+      </div>
+    `).join("");
+    pop.innerHTML = `
+      <div class="dsp-head">${escapeHtml(state.dayScoreTitle || "Comfort factors")}</div>
+      ${rows}
+      <div class="dsp-foot">Weighted: temp 28% · rain 28% · wind 18% · humidity 14% · UV 12%</div>
+    `;
+    el.dayScore.appendChild(pop);
+    // Dismiss on outside click.
+    const off = (e) => {
+      if (!pop.contains(e.target) && e.target !== el.dayScore) {
+        pop.remove();
+        document.removeEventListener("click", off, true);
+      }
+    };
+    setTimeout(() => document.addEventListener("click", off, true), 0);
+  };
+  el.dayScore.addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggle();
+  });
+  el.dayScore.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); }
+  });
 }
 
 function renderChartSummary(w) {
