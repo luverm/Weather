@@ -199,8 +199,13 @@ export const ui = {
     el.placeName.classList.remove("flip-in"); void el.placeName.offsetWidth;
     el.placeName.classList.add("flip-in");
     el.placeName.textContent = place.name || "Unknown";
-    const sub = [place.admin1, place.country].filter(Boolean).join(", ");
-    el.placeSub.textContent = sub || "—";
+    const parts = [place.admin1, place.country].filter(Boolean);
+    if (place.elevation != null && Number.isFinite(place.elevation)) {
+      const e = Math.round(place.elevation);
+      // Only surface elevation when it's meaningful (avoid the noise of "0 m").
+      if (Math.abs(e) >= 30) parts.push(`${e >= 0 ? e + " m" : "-" + Math.abs(e) + " m"} elev.`);
+    }
+    el.placeSub.textContent = parts.join(" · ") || "—";
     // Reset alert dismissals so a fresh location can re-surface them.
     try { sessionStorage.removeItem("aether:dismissed-alerts"); } catch { /* ignore */ }
     renderPlaces();
