@@ -1340,8 +1340,14 @@ function renderDaily(w) {
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const sunLine = (d.sunrise && d.sunset)
+      ? `<span class="daily-sun-line">☀︎ ${fmtTime(d.sunrise)}–${fmtTime(d.sunset)}</span>`
+      : "";
     item.innerHTML = `
-      <span class="daily-day">${day}</span>
+      <span class="daily-day-cell">
+        <span class="daily-day">${day}</span>
+        ${sunLine}
+      </span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
