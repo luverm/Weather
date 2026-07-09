@@ -90,6 +90,9 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunRiseBearing: $("#sun-rise-bearing"),
+  sunSetBearing: $("#sun-set-bearing"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   goldenHour: $("#golden-hour"),
   goldenLabel: $("#golden-label"),
   goldenRange: $("#golden-range"),
@@ -534,9 +537,63 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderSunBearings(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   scheduleGoldenHour(w);
+}
+
+// Approximate solar declination + sunrise azimuth at the given date/latitude.
+// Uses NOAA's low-precision formulae — good to ±1° for a horizon-flat model.
+function sunriseAzimuth(latDeg, date) {
+  if (latDeg == null) return null;
+  const N = Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 86400_000);
+  // Declination δ in radians.
+  const decl = 23.44 * Math.PI / 180 * Math.sin(2 * Math.PI * (284 + N) / 365);
+  const lat = latDeg * Math.PI / 180;
+  const c = Math.sin(decl) / Math.cos(lat);
+  if (c < -1 || c > 1) return null; // polar day/night
+  const az = Math.acos(c) * 180 / Math.PI;
+  return az; // measured from north, sunrise side
+}
+
+function bearingCardinal(az) {
+  const dirs = ["N","NNE","NE","ENE","E","ESE","SE","SSE",
+                "S","SSW","SW","WSW","W","WNW","NW","NNW"];
+  const i = Math.round(((az % 360) + 360) % 360 / 22.5) % 16;
+  return dirs[i];
+}
+
+function renderSunBearings(w) {
+  const lat = state.place?.lat;
+  if (!el.sunRiseBearing || !el.sunSetBearing) return;
+  const day = w?.sunrise ? new Date(w.sunrise) : new Date();
+  const az = sunriseAzimuth(lat, day);
+  if (az == null) {
+    el.sunRiseBearing.hidden = true;
+    el.sunSetBearing.hidden = true;
+  } else {
+    // Sunset azimuth mirrors sunrise around north–south (360 - az).
+    const setAz = (360 - az + 360) % 360;
+    el.sunRiseBearing.hidden = false;
+    el.sunRiseBearing.textContent = `${Math.round(az)}° ${bearingCardinal(az)}`;
+    el.sunSetBearing.hidden = false;
+    el.sunSetBearing.textContent = `${Math.round(setAz)}° ${bearingCardinal(setAz)}`;
+  }
+
+  // Daylight trend heading into tomorrow (Open-Meteo returns today first).
+  if (!el.sunDaylightDelta) return;
+  const days = (w?.daily || []).filter((d) => d.sunrise && d.sunset);
+  if (days.length < 2) { el.sunDaylightDelta.hidden = true; return; }
+  const todayLen = days[0].sunset - days[0].sunrise;
+  const tmrLen = days[1].sunset - days[1].sunrise;
+  const deltaMin = Math.round((tmrLen - todayLen) / 60_000);
+  if (Math.abs(deltaMin) < 1) { el.sunDaylightDelta.hidden = true; return; }
+  const dir = deltaMin > 0 ? "up" : "down";
+  const sign = deltaMin > 0 ? "+" : "−";
+  el.sunDaylightDelta.hidden = false;
+  el.sunDaylightDelta.dataset.dir = dir;
+  el.sunDaylightDelta.textContent = `${sign}${Math.abs(deltaMin)}m tmr`;
 }
 
 // Approximate golden hour (soft warm light shortly after sunrise / before
