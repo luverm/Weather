@@ -90,6 +90,10 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  goldenHour: $("#golden-hour"),
+  goldenLabel: $("#golden-label"),
+  goldenRange: $("#golden-range"),
+  goldenCount: $("#golden-count"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -523,6 +527,62 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleGoldenHour(w);
+}
+
+// Approximate golden hour (soft warm light shortly after sunrise / before
+// sunset) and blue hour (the ~30-minute dawn/dusk twilight window). Uses the
+// classic photography rule-of-thumb bands, since we don't have solar altitude:
+//   Golden hour AM: sunrise → sunrise + 60m
+//   Golden hour PM: sunset - 60m → sunset
+//   Blue hour AM:   sunrise - 30m → sunrise
+//   Blue hour PM:   sunset → sunset + 30m
+function computeGoldenWindows(daily) {
+  const out = [];
+  const GH = 60 * 60_000, BH = 30 * 60_000;
+  for (const d of daily || []) {
+    if (d.sunrise) {
+      out.push({ kind: "blue",   phase: "dawn", start: d.sunrise - BH, end: d.sunrise });
+      out.push({ kind: "golden", phase: "morn", start: d.sunrise,      end: d.sunrise + GH });
+    }
+    if (d.sunset) {
+      out.push({ kind: "golden", phase: "eve",  start: d.sunset - GH,  end: d.sunset });
+      out.push({ kind: "blue",   phase: "dusk", start: d.sunset,       end: d.sunset + BH });
+    }
+  }
+  return out.sort((a, b) => a.start - b.start);
+}
+
+function scheduleGoldenHour(w) {
+  if (state.goldenTimer) { clearInterval(state.goldenTimer); state.goldenTimer = null; }
+  if (!el.goldenHour) return;
+  const windows = computeGoldenWindows(w?.daily);
+  if (!windows.length) { el.goldenHour.hidden = true; return; }
+  const update = () => {
+    const now = Date.now();
+    let target = windows.find((wd) => now >= wd.start && now <= wd.end);
+    let active = !!target;
+    if (!target) target = windows.find((wd) => wd.start > now);
+    if (!target) { el.goldenHour.hidden = true; return; }
+    el.goldenHour.hidden = false;
+    el.goldenHour.dataset.kind = target.kind;
+    el.goldenHour.dataset.active = String(active);
+    const phaseName = target.kind === "blue" ? "Blue hour" : "Golden hour";
+    const phaseWhen = { dawn: "· dawn", morn: "· morning", eve: "· evening", dusk: "· dusk" }[target.phase] || "";
+    el.goldenLabel.textContent = `${phaseName} ${phaseWhen}`.trim();
+    el.goldenRange.textContent = `${fmtTime(target.start)} – ${fmtTime(target.end)}`;
+    if (active) {
+      const mins = Math.max(0, Math.round((target.end - now) / 60_000));
+      el.goldenCount.textContent = mins > 0 ? `${mins}m left` : "ending";
+    } else {
+      const mins = Math.max(0, Math.round((target.start - now) / 60_000));
+      el.goldenCount.textContent = mins >= 60
+        ? `in ${Math.floor(mins / 60)}h ${mins % 60}m`
+        : `in ${mins}m`;
+    }
+  };
+  update();
+  state.goldenTimer = setInterval(update, 30_000);
 }
 
 function scheduleSunArc(w) {
