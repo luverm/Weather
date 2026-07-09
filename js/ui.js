@@ -1260,10 +1260,23 @@ function renderChartSummary(w) {
 
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
-  for (const h of (w.hourly || []).slice(0, 24)) {
+  // Mark the hour that best matches "right now" — stays highlighted even when
+  // the user scrubs to a different point on the timeline.
+  const now = Date.now();
+  let nowIdx = -1, nowDiff = Infinity;
+  const hours = (w.hourly || []).slice(0, 24);
+  hours.forEach((h, i) => {
+    const diff = Math.abs(h.time - now);
+    if (diff < nowDiff) { nowDiff = diff; nowIdx = i; }
+  });
+  // Only mark the "now" hour if it's within 90 minutes of the actual clock —
+  // otherwise the badge would attach to something that isn't really "now".
+  if (nowDiff > 90 * 60_000) nowIdx = -1;
+  for (const [i, h] of hours.entries()) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    if (i === nowIdx) item.dataset.now = "true";
     const windKmh = Math.round(h.wind ?? 0);
     const strong = windKmh >= 25;
     // Meteorological convention: wind_direction_10m is where wind is *coming

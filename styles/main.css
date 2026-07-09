@@ -1769,6 +1769,30 @@ kbd {
 .forecast-wind[data-strong="true"] svg { color: var(--accent); }
 .forecast-item:hover { background: var(--glass); transform: translateY(-2px); }
 .forecast-item.active { background: var(--glass-strong); }
+.forecast-item[data-now="true"] {
+  position: relative;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 0 0 1px rgba(255,225,170,0.28);
+}
+.forecast-item[data-now="true"]::before {
+  content: "NOW";
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 8.5px;
+  letter-spacing: 0.18em;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(255, 225, 170, 0.85);
+  color: #2a1a08;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(255,180,90,0.35);
+}
+.forecast-item[data-now="true"].active {
+  background: var(--glass-strong);
+  box-shadow: inset 0 0 0 1px rgba(255,225,170,0.55);
+}
 .forecast-time { font-size: 11px; letter-spacing: 0.08em; color: var(--fg-dim); text-transform: uppercase; }
 .forecast-icon { width: 26px; height: 26px; display: grid; place-items: center; color: var(--fg-muted); }
 .forecast-temp { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
