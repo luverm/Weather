@@ -1157,6 +1157,66 @@ kbd {
   50% { transform: scale(1.08); }
 }
 
+.sunset-quality {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 6px 10px 6px 8px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, rgba(255,120,80,0.10), rgba(180,80,140,0.06));
+  border: 1px solid rgba(255,140,110,0.20);
+}
+.sunset-quality[data-tier="great"]  { border-color: rgba(255,140,110,0.45); background: linear-gradient(90deg, rgba(255,120,80,0.18), rgba(210,90,140,0.10)); }
+.sunset-quality[data-tier="okay"]   { border-color: rgba(255,180,140,0.28); }
+.sunset-quality[data-tier="poor"]   {
+  background: rgba(255,255,255,0.04);
+  border-color: var(--stroke);
+  color: var(--fg-dim);
+}
+.sunset-swatches {
+  display: inline-flex;
+  gap: 2px;
+  height: 20px;
+}
+.sunset-swatches span {
+  width: 6px; border-radius: 2px;
+  background: currentColor;
+}
+.sunset-swatches span:nth-child(1) { background: #ffca6b; }
+.sunset-swatches span:nth-child(2) { background: #ff8a52; }
+.sunset-swatches span:nth-child(3) { background: #d64d7a; }
+.sunset-swatches span:nth-child(4) { background: #8f4d9f; }
+.sunset-quality[data-tier="poor"] .sunset-swatches span {
+  background: rgba(255,255,255,0.14);
+}
+.sunset-meta { display: grid; gap: 1px; min-width: 0; }
+.sunset-meta strong {
+  font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--fg-dim); font-weight: 500;
+}
+.sunset-quality-detail {
+  font-size: 12px; color: var(--fg);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sunset-quality[data-tier="poor"] .sunset-quality-detail { color: var(--fg-dim); }
+.sunset-quality-score {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--stroke);
+  color: var(--fg-dim);
+  white-space: nowrap;
+}
+.sunset-quality[data-tier="great"] .sunset-quality-score {
+  color: var(--fg);
+  background: rgba(255,140,110,0.18);
+  border-color: rgba(255,140,110,0.35);
+}
+
 /* ---------- Radar map ---------- */
 .radar {
   padding: 12px;

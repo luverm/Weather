@@ -97,6 +97,10 @@ const el = {
   goldenLabel: $("#golden-label"),
   goldenRange: $("#golden-range"),
   goldenCount: $("#golden-count"),
+  sunsetQuality: $("#sunset-quality"),
+  sunsetQualityLabel: $("#sunset-quality-label"),
+  sunsetQualityDetail: $("#sunset-quality-detail"),
+  sunsetQualityScore: $("#sunset-quality-score"),
   chartSummary: $("#chart-summary"),
   chartSummaryText: $("#chart-summary-text"),
   dayScore: $("#day-score"),
@@ -578,6 +582,62 @@ function renderSun(w) {
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   scheduleGoldenHour(w);
+  renderSunsetQuality(w);
+}
+
+// Predict how photogenic tonight's sunset will be. Rule of thumb from sky
+// photographers: mid-level clouds catch fire when the low horizon is clearer.
+// So we look at cloud cover in the hour before sunset (mid-high is ideal at
+// 30-70 %), penalise haze (humidity / low air quality), and reward dry air.
+function renderSunsetQuality(w) {
+  if (!el.sunsetQuality) return;
+  const hours = w?.hourly || [];
+  const days = w?.daily || [];
+  const now = Date.now();
+  // Find the next upcoming sunset (today's, else tomorrow's).
+  const sunset = days.find((d) => d.sunset && d.sunset > now - 60 * 60_000)?.sunset;
+  if (!sunset) { el.sunsetQuality.hidden = true; return; }
+  // Hourly bucket closest to (sunset - 45 min).
+  const target = sunset - 45 * 60_000;
+  const near = hours.find((h) => Math.abs(h.time - target) <= 60 * 60_000)
+            || hours.find((h) => h.time >= target)
+            || hours[hours.length - 1];
+  if (!near) { el.sunsetQuality.hidden = true; return; }
+  const cloud = near.cloud ?? w.cloudCover ?? 40;
+  const humidity = near.humidity ?? w.humidity ?? 60;
+  const aqi = w.airQuality?.aqi ?? 50;
+
+  // Cloud score: peaks at ~50 %, drops toward 0/100.
+  const cloudScore = Math.max(0, 1 - Math.abs(cloud - 50) / 40);
+  // Humidity score: dry air = better colours.
+  const humidityScore = Math.max(0, 1 - Math.max(0, humidity - 45) / 55);
+  // Air quality score: cleaner = punchier saturation.
+  const aqScore = Math.max(0, 1 - Math.max(0, aqi - 30) / 120);
+  // Weighted mix.
+  const raw = cloudScore * 0.55 + humidityScore * 0.25 + aqScore * 0.20;
+  const score10 = Math.max(0, Math.min(10, Math.round(raw * 10)));
+
+  let tier = "poor";
+  if (score10 >= 7) tier = "great";
+  else if (score10 >= 5) tier = "okay";
+
+  const detail = score10 >= 8
+    ? "Fiery colours expected"
+    : score10 >= 6
+      ? "Nice colours likely"
+      : score10 >= 4
+        ? "Mellow tones tonight"
+        : cloud >= 85
+          ? "Too overcast for colour"
+          : cloud <= 8
+            ? "Clear — muted colours"
+            : "Muted colours likely";
+
+  el.sunsetQuality.hidden = false;
+  el.sunsetQuality.dataset.tier = tier;
+  if (el.sunsetQualityLabel) el.sunsetQualityLabel.textContent = "Sunset outlook";
+  if (el.sunsetQualityDetail) el.sunsetQualityDetail.textContent = detail;
+  if (el.sunsetQualityScore) el.sunsetQualityScore.textContent = `${score10}/10 · ${fmtTime(sunset)}`;
 }
 
 // Approximate solar declination + sunrise azimuth at the given date/latitude.
