@@ -21,6 +21,8 @@ const el = {
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
+  feelsText: $("#feels-text"),
+  feelsDriver: $("#feels-driver"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -276,8 +278,56 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  if (el.feelsText) el.feelsText.textContent = `Feels like ${Math.round(feels)}°`;
+  else el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  renderFeelsDriver(w);
   renderDayRange(w);
+}
+
+// Round 22: explain what's driving the feels-like delta from the real temp.
+// Classification uses the classic dominant-effect heuristics:
+// wind chill in the cold (temp ≤ ~12°C, breeze), heat index in the humid
+// warmth (temp ≥ ~22°C, RH ≥ 55%), sun-added warmth for mild days with UV.
+function renderFeelsDriver(w) {
+  if (!el.feelsDriver) return;
+  const temp = w.temp;
+  const feels = w.feelsLike;
+  if (temp == null || feels == null) { el.feelsDriver.hidden = true; return; }
+  const rawDelta = feels - temp;
+  // Show delta in the user's chosen unit, but keep detection thresholds in °C.
+  const unitDelta = state.unit === "F" ? rawDelta * 9 / 5 : rawDelta;
+  if (Math.abs(rawDelta) < 1) { el.feelsDriver.hidden = true; return; }
+
+  const wind = w.windSpeed ?? 0;
+  const humidity = w.humidity ?? null;
+  const uv = w.uv ?? 0;
+  const isDay = !!w.isDay;
+
+  let driver = rawDelta > 0 ? "warmer" : "cooler";
+  let label = rawDelta > 0 ? "warmer air" : "cooler air";
+  if (rawDelta < 0 && temp <= 12 && wind >= 8) {
+    driver = "wind";
+    label = "wind chill";
+  } else if (rawDelta > 0 && temp >= 22 && humidity != null && humidity >= 55) {
+    driver = "humidity";
+    label = "muggy";
+  } else if (rawDelta > 0 && isDay && uv >= 3) {
+    driver = "sun";
+    label = "sun-warmed";
+  } else if (rawDelta < 0 && humidity != null && humidity < 35) {
+    driver = "dry";
+    label = "dry air";
+  }
+
+  const arrow = rawDelta > 0 ? "↑" : "↓";
+  const rounded = Math.max(1, Math.round(Math.abs(unitDelta)));
+  el.feelsDriver.hidden = false;
+  el.feelsDriver.dataset.driver = driver;
+  el.feelsDriver.textContent = `${arrow} ${rounded}° · ${label}`;
+  el.feelsDriver.setAttribute(
+    "title",
+    `Apparent temperature ${rawDelta > 0 ? "above" : "below"} the measured air temperature`,
+  );
 }
 
 function renderDayRange(w) {
