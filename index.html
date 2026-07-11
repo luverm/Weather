@@ -319,7 +319,18 @@
         </div>
 
         <div class="extra-card glass" id="sun-card">
-          <span class="metric-label"><span id="sun-next-label">Sun</span> <span id="sun-countdown" class="sun-countdown"></span></span>
+          <span class="metric-label">
+            <span id="sun-next-label">Sun</span>
+            <span id="sun-countdown" class="sun-countdown"></span>
+            <span id="sun-golden-pill" class="sun-golden-pill" hidden>
+              <svg viewBox="0 0 24 24" aria-hidden="true" width="10" height="10">
+                <path d="M12 3v3M12 18v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M3 12h3M18 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"
+                      stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <circle cx="12" cy="12" r="4" fill="currentColor"/>
+              </svg>
+              <span id="sun-golden-pill-text">Golden hour</span>
+            </span>
+          </span>
           <svg id="sun-arc" class="sun-arc" viewBox="0 0 200 84" aria-hidden="true">
             <defs>
               <linearGradient id="sun-arc-grad" x1="0" x2="1" y1="0" y2="0">
@@ -329,10 +340,18 @@
                 <stop offset="80%" stop-color="rgba(255,170,120,0.85)"/>
                 <stop offset="100%" stop-color="rgba(255,170,120,0)"/>
               </linearGradient>
+              <linearGradient id="sun-golden-grad" x1="0" x2="1" y1="0" y2="0">
+                <stop offset="0%" stop-color="#ffb057"/>
+                <stop offset="50%" stop-color="#ffd48a"/>
+                <stop offset="100%" stop-color="#ff8a55"/>
+              </linearGradient>
             </defs>
             <line x1="10" y1="74" x2="190" y2="74" stroke="var(--stroke)" stroke-dasharray="2 4"/>
             <path id="sun-arc-path" d="M10 74 Q100 -26 190 74"
                   fill="none" stroke="url(#sun-arc-grad)" stroke-width="1.5" stroke-linecap="round"/>
+            <path id="sun-arc-golden" d=""
+                  fill="none" stroke="url(#sun-golden-grad)" stroke-width="3.2"
+                  stroke-linecap="round" opacity="0"/>
             <circle id="sun-arc-marker" cx="10" cy="74" r="4.5" fill="#fff1c9"/>
           </svg>
           <div class="sun-row">
@@ -349,6 +368,13 @@
               <strong id="sun-daylight">—</strong>
             </div>
           </div>
+          <p id="sun-golden-note" class="sun-golden-note" hidden>
+            <span class="sun-golden-dot" aria-hidden="true"></span>
+            <span class="sun-golden-key">Golden hour</span>
+            <strong id="sun-golden-am">—</strong>
+            <span class="sun-golden-sep">·</span>
+            <strong id="sun-golden-pm">—</strong>
+          </p>
         </div>
       </div>
 

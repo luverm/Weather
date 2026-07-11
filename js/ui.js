@@ -90,6 +90,13 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcGolden: $("#sun-arc-golden"),
+  sunGoldenPill: $("#sun-golden-pill"),
+  sunGoldenPillText: $("#sun-golden-pill-text"),
+  sunGoldenNote: $("#sun-golden-note"),
+  sunGoldenAm: $("#sun-golden-am"),
+  sunGoldenPm: $("#sun-golden-pm"),
+  sunCard: $("#sun-card"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -122,6 +129,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  goldenTimer: null,
   localTimer: null,
 };
 
@@ -523,6 +531,98 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderGoldenHour(w);
+}
+
+// Sub-quadratic-Bezier control points for the sun arc, restricted to
+// parameter range [t_a, t_b]. Used to draw the golden hour overlay so it
+// visually hugs the same curve the sun marker rides.
+const SUN_ARC_P = { P0: [10, 74], P1: [100, -26], P2: [190, 74] };
+function subArcPath(t_a, t_b) {
+  const { P0, P1, P2 } = SUN_ARC_P;
+  const bez = (t) => [
+    (1 - t) * (1 - t) * P0[0] + 2 * (1 - t) * t * P1[0] + t * t * P2[0],
+    (1 - t) * (1 - t) * P0[1] + 2 * (1 - t) * t * P1[1] + t * t * P2[1],
+  ];
+  const Q0 = bez(t_a);
+  const Q2 = bez(t_b);
+  const cP0 = (1 - t_a) * (1 - t_b);
+  const cP1 = (1 - t_a) * t_b + (1 - t_b) * t_a;
+  const cP2 = t_a * t_b;
+  const Q1 = [
+    cP0 * P0[0] + cP1 * P1[0] + cP2 * P2[0],
+    cP0 * P0[1] + cP1 * P1[1] + cP2 * P2[1],
+  ];
+  return `M${Q0[0].toFixed(2)} ${Q0[1].toFixed(2)} Q${Q1[0].toFixed(2)} ${Q1[1].toFixed(2)} ${Q2[0].toFixed(2)} ${Q2[1].toFixed(2)}`;
+}
+
+// Compute + render golden hour bands, times, and the "now" pill.
+// Duration heuristic: min(45 min, 18% of daylight). This gracefully
+// shortens near the poles where the sun grazes the horizon.
+function renderGoldenHour(w) {
+  const hide = () => {
+    if (el.sunGoldenNote) el.sunGoldenNote.hidden = true;
+    if (el.sunGoldenPill) el.sunGoldenPill.hidden = true;
+    if (el.sunArcGolden) {
+      el.sunArcGolden.setAttribute("d", "");
+      el.sunArcGolden.setAttribute("opacity", "0");
+    }
+    if (el.sunCard) el.sunCard.removeAttribute("data-golden");
+  };
+  if (state.goldenTimer) { clearInterval(state.goldenTimer); state.goldenTimer = null; }
+  if (!w?.sunrise || !w?.sunset || w.sunset <= w.sunrise) { hide(); return; }
+
+  const daylightMs = w.sunset - w.sunrise;
+  const goldenMs = Math.min(45 * 60_000, daylightMs * 0.18);
+  const blueMs = Math.min(20 * 60_000, goldenMs * 0.55);
+  if (goldenMs <= 0) { hide(); return; }
+
+  const amStart = w.sunrise;
+  const amEnd = w.sunrise + goldenMs;
+  const pmStart = w.sunset - goldenMs;
+  const pmEnd = w.sunset;
+  const blueAmStart = w.sunrise - blueMs;
+  const blueAmEnd = w.sunrise;
+  const bluePmStart = w.sunset;
+  const bluePmEnd = w.sunset + blueMs;
+
+  const fracEnd = goldenMs / daylightMs;      // AM golden: 0 → fracEnd
+  const fracStart = 1 - fracEnd;              // PM golden: fracStart → 1
+
+  if (el.sunArcGolden) {
+    // Compose the two arc segments as a single path.
+    const d = subArcPath(0, fracEnd) + " " + subArcPath(fracStart, 1);
+    el.sunArcGolden.setAttribute("d", d);
+    el.sunArcGolden.setAttribute("opacity", "0.85");
+  }
+
+  if (el.sunGoldenAm) el.sunGoldenAm.textContent = `${fmtTime(amStart)}–${fmtTime(amEnd)}`;
+  if (el.sunGoldenPm) el.sunGoldenPm.textContent = `${fmtTime(pmStart)}–${fmtTime(pmEnd)}`;
+  if (el.sunGoldenNote) el.sunGoldenNote.hidden = false;
+
+  const updatePill = () => {
+    if (!el.sunGoldenPill) return;
+    const now = Date.now();
+    let kind = null, mins = null;
+    if (now >= amStart && now <= amEnd) { kind = "golden"; mins = Math.round((amEnd - now) / 60_000); }
+    else if (now >= pmStart && now <= pmEnd) { kind = "golden"; mins = Math.round((pmEnd - now) / 60_000); }
+    else if (now >= blueAmStart && now < amStart) { kind = "blue"; mins = Math.round((amStart - now) / 60_000); }
+    else if (now > pmEnd && now <= bluePmEnd) { kind = "blue"; mins = Math.round((bluePmEnd - now) / 60_000); }
+    if (kind) {
+      el.sunGoldenPill.hidden = false;
+      el.sunGoldenPill.dataset.kind = kind;
+      const label = kind === "golden" ? "Golden hour" : "Blue hour";
+      const suffix = mins > 0 ? ` · ${mins}m left` : "";
+      if (el.sunGoldenPillText) el.sunGoldenPillText.textContent = label + suffix;
+      if (el.sunCard) el.sunCard.setAttribute("data-golden", kind);
+    } else {
+      el.sunGoldenPill.hidden = true;
+      el.sunGoldenPill.removeAttribute("data-kind");
+      if (el.sunCard) el.sunCard.removeAttribute("data-golden");
+    }
+  };
+  updatePill();
+  state.goldenTimer = setInterval(updatePill, 60_000);
 }
 
 function scheduleSunArc(w) {

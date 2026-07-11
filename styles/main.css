@@ -840,6 +840,78 @@ html[data-reduce-motion="true"] *::after {
 }
 .sun-countdown:empty { display: none; }
 
+/* ---------- Golden hour ---------- */
+.sun-golden-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255, 176, 87, 0.22), rgba(255, 138, 85, 0.18));
+  color: #ffd9a8;
+  border: 1px solid rgba(255, 176, 87, 0.35);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+  animation: goldenPulse 3.6s ease-in-out infinite;
+}
+.sun-golden-pill[data-kind="blue"] {
+  background: linear-gradient(90deg, rgba(120, 148, 255, 0.22), rgba(85, 108, 200, 0.16));
+  color: #cbd7ff;
+  border-color: rgba(140, 168, 255, 0.35);
+}
+.sun-golden-pill[hidden] { display: none; }
+.sun-golden-pill svg { flex: 0 0 auto; }
+@keyframes goldenPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 176, 87, 0.28); }
+  50% { box-shadow: 0 0 10px 2px rgba(255, 176, 87, 0.28); }
+}
+#sun-card[data-golden="golden"] .sun-arc {
+  filter: drop-shadow(0 0 12px rgba(255, 200, 120, 0.35));
+}
+#sun-card[data-golden="blue"] .sun-arc {
+  filter: drop-shadow(0 0 12px rgba(140, 168, 255, 0.32));
+}
+#sun-arc-golden {
+  transition: opacity 500ms var(--ease), d 800ms var(--ease);
+  filter: drop-shadow(0 0 4px rgba(255, 180, 90, 0.55));
+}
+.sun-golden-note {
+  margin: 8px 0 0;
+  padding-top: 8px;
+  border-top: 1px dashed var(--stroke);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--fg-dim);
+  letter-spacing: 0.02em;
+  flex-wrap: wrap;
+}
+.sun-golden-note[hidden] { display: none; }
+.sun-golden-note strong {
+  color: rgba(255, 217, 168, 0.95);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+.sun-golden-key {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 10px;
+  color: var(--fg-dim);
+}
+.sun-golden-sep { opacity: 0.55; }
+.sun-golden-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff2cf, #ffb057 65%, #ff8a55 100%);
+  box-shadow: 0 0 8px rgba(255, 176, 87, 0.6);
+  flex: 0 0 auto;
+}
+
 /* ---------- Keyboard shortcuts overlay ---------- */
 .shortcuts {
   position: fixed;
