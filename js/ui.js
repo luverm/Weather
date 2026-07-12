@@ -199,11 +199,15 @@ export const ui = {
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp + local time.
+    // Only persist the timezone when it looks like a real IANA identifier
+    // ("Region/City") — the offline mock returns "UTC" which would clobber a
+    // correctly-geocoded tz on the saved place otherwise.
     if (state.place) {
-      places.updateSummary(state.place, {
-        temp: weather.temp, condition: weather.condition,
-        timezone: weather.timezone,
-      });
+      const summary = { temp: weather.temp, condition: weather.condition };
+      if (!weather.offline && weather.timezone && weather.timezone.includes("/")) {
+        summary.timezone = weather.timezone;
+      }
+      places.updateSummary(state.place, summary);
     }
     renderPlaces();
   },
@@ -1149,12 +1153,26 @@ const runSearch = debounce(async (q) => {
   renderSearchResults(results);
 }, 200);
 
+function localTimeChip(r) {
+  // Small "3:14 pm · dusk" tag shown next to each search result.
+  const hour = places.localHour(r);
+  if (!Number.isFinite(hour)) return "";
+  const tod = todFor(hour);
+  const label = fmtLocalTime(r, hour);
+  return `<span class="sub result-time" data-tod="${tod}">
+    <span class="chip-tod" aria-hidden="true">${todGlyph(tod)}</span>
+    <span>${escapeHtml(label)}</span>
+  </span>`;
+}
+
 function renderSearchResults(results) {
   if (!results.length) { el.searchResults.hidden = true; el.searchResults.innerHTML = ""; return; }
   el.searchResults.innerHTML = results.map((r, i) => `
     <li role="option" data-index="${i}">
-      <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
-      <span class="sub">${escapeHtml(r.country || "")}</span>
+      <span class="result-name">${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}
+        <span class="result-country">${escapeHtml(r.country || "")}</span>
+      </span>
+      ${localTimeChip(r)}
     </li>
   `).join("");
   el.searchResults.hidden = false;
@@ -1166,8 +1184,10 @@ function showRecentsIfAny() {
   if (!recents.length) { el.searchResults.hidden = true; return; }
   const itemsHtml = recents.map((r, i) => `
     <li role="option" data-index="${i}">
-      <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
-      <span class="sub">${escapeHtml(r.country || "")}</span>
+      <span class="result-name">${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}
+        <span class="result-country">${escapeHtml(r.country || "")}</span>
+      </span>
+      ${localTimeChip(r)}
     </li>
   `).join("");
   el.searchResults.innerHTML = `<li class="recent-heading">Recent places</li>${itemsHtml}`;

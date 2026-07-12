@@ -259,6 +259,20 @@ html[data-reduce-motion="true"] *::after {
 .search-results li:hover,
 .search-results li[aria-selected="true"] { background: rgba(255, 255, 255, 0.08); }
 .search-results .sub { color: rgba(246, 247, 251, 0.55); font-size: 13px; }
+.search-results .result-name { display: flex; flex-direction: column; gap: 1px; }
+.search-results .result-country { color: rgba(246, 247, 251, 0.5); font-size: 11px; }
+.search-results .result-time {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+  padding: 3px 8px; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.search-results .result-time[data-tod="day"]   { color: #ffd88a; }
+.search-results .result-time[data-tod="dawn"]  { color: #ffb27a; }
+.search-results .result-time[data-tod="dusk"]  { color: #ff9a7a; }
+.search-results .result-time[data-tod="night"] { color: #b7c8ff; }
+.search-results .result-time .chip-tod { width: 12px; height: 12px; }
 .search-results .recent-heading {
   padding: 8px 12px 4px;
   font-size: 10px;
