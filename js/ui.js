@@ -198,10 +198,11 @@ export const ui = {
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
-    // Save summary for the strip so chips can show current temp.
+    // Save summary for the strip so chips can show current temp + local time.
     if (state.place) {
       places.updateSummary(state.place, {
         temp: weather.temp, condition: weather.condition,
+        timezone: weather.timezone,
       });
     }
     renderPlaces();
@@ -1059,6 +1060,38 @@ function iconFor(condition) {
 }
 
 // ---------- Saved places strip ----------
+function todFor(hour) {
+  // dawn: 5–7:30, day: 7:30–17.5, dusk: 17.5–20, night: else
+  if (hour >= 5 && hour < 7.5) return "dawn";
+  if (hour >= 7.5 && hour < 17.5) return "day";
+  if (hour >= 17.5 && hour < 20) return "dusk";
+  return "night";
+}
+
+function todGlyph(tod) {
+  // A very small SVG glyph (sun / crescent moon / horizon-sun).
+  switch (tod) {
+    case "day":
+      return `<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><circle cx="8" cy="8" r="3.2" fill="currentColor"/><g stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><path d="M8 1.4v1.8M8 12.8v1.8M1.4 8h1.8M12.8 8h1.8M3.2 3.2l1.3 1.3M11.5 11.5l1.3 1.3M3.2 12.8l1.3-1.3M11.5 4.5l1.3-1.3"/></g></svg>`;
+    case "night":
+      return `<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M12.5 10.8A5 5 0 016.2 3.5a5.4 5.4 0 108.8 6.5 6 6 0 01-2.5.8z" fill="currentColor"/></svg>`;
+    case "dawn":
+      return `<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M2 11h12" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M4.5 11a3.5 3.5 0 017 0" fill="currentColor" opacity="0.9"/><path d="M8 4v1.6M3.6 6.4l1.1 1.1M12.4 6.4l-1.1 1.1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>`;
+    case "dusk":
+      return `<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M2 11h12" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M4.5 11a3.5 3.5 0 017 0" fill="currentColor" opacity="0.9"/><path d="M8 8V6M13 9l-1.3-.6M3 9l1.3-.6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>`;
+    default:
+      return "";
+  }
+}
+
+function fmtLocalTime(place, hour) {
+  const h24 = Math.floor(hour);
+  const mm = Math.floor((hour - h24) * 60).toString().padStart(2, "0");
+  const suffix = h24 >= 12 ? "pm" : "am";
+  const h12 = ((h24 + 11) % 12) + 1;
+  return `${h12}:${mm} ${suffix}`;
+}
+
 function renderPlaces() {
   const all = places.all();
   if (!all.length) { el.placesStrip.hidden = true; el.placesStrip.innerHTML = ""; return; }
@@ -1066,8 +1099,13 @@ function renderPlaces() {
   const activeId = state.place ? places.idFor(state.place) : null;
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
+    const hour = places.localHour(p);
+    const tod = todFor(hour);
+    const timeLabel = fmtLocalTime(p, hour);
+    const title = `${p.name}${p.admin1 ? ", " + p.admin1 : ""} · ${timeLabel} local`;
     return `
-      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
+      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}" data-tod="${tod}" title="${escapeHtml(title)}">
+        <span class="chip-tod" aria-hidden="true">${todGlyph(tod)}</span>
         <span>${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
         <span class="close" data-action="remove" aria-label="Remove">
@@ -1087,6 +1125,17 @@ function renderPlaces() {
       state.handlers.onPlaceClick?.(item);
     });
   });
+  schedulePlacesRefresh();
+}
+
+let placesRefreshTimer = null;
+function schedulePlacesRefresh() {
+  if (placesRefreshTimer) clearTimeout(placesRefreshTimer);
+  // Re-render every 5 minutes so chip time-of-day drifts with real time.
+  placesRefreshTimer = setTimeout(() => {
+    // Guard against re-entrancy if the strip has been hidden.
+    if (!el.placesStrip.hidden) renderPlaces();
+  }, 5 * 60_000);
 }
 
 // ---------- Bindings ----------

@@ -31,8 +31,28 @@ export const places = {
       admin1: place.admin1,
       lat: place.lat,
       lon: place.lon,
+      timezone: place.timezone,
     });
     write(list);
+  },
+  /** Local hour (0..23.99) for a saved place, timezone-aware with lon fallback. */
+  localHour(place, now = Date.now()) {
+    const tz = place?.timezone;
+    if (tz && tz !== "auto") {
+      try {
+        const parts = new Intl.DateTimeFormat("en-US", {
+          timeZone: tz, hour: "numeric", minute: "numeric", hour12: false,
+        }).formatToParts(new Date(now));
+        const h = parseInt(parts.find((p) => p.type === "hour")?.value ?? "", 10);
+        const m = parseInt(parts.find((p) => p.type === "minute")?.value ?? "", 10);
+        if (!Number.isNaN(h)) return (h % 24) + (Number.isNaN(m) ? 0 : m / 60);
+      } catch { /* fall through */ }
+    }
+    // Fallback: rough 15° = 1h from longitude.
+    const d = new Date(now);
+    const utc = d.getUTCHours() + d.getUTCMinutes() / 60;
+    const lon = Number.isFinite(place?.lon) ? place.lon : 0;
+    return ((utc + lon / 15) % 24 + 24) % 24;
   },
   remove(place) {
     const id = idFor(place);

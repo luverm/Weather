@@ -309,6 +309,32 @@ html[data-reduce-motion="true"] *::after {
   transition: background 150ms var(--ease), color 150ms var(--ease);
 }
 .place-chip .close:hover { background: rgba(255,255,255,0.12); color: var(--fg); }
+/* Time-of-day glyph on saved-city chips (Round 22) */
+.place-chip .chip-tod {
+  display: inline-grid; place-items: center;
+  width: 18px; height: 18px; border-radius: 50%;
+  margin-right: -2px;
+  color: var(--fg-muted);
+  transition: color 200ms var(--ease), background 200ms var(--ease);
+}
+.place-chip[data-tod="day"] .chip-tod {
+  color: #ffd88a;
+  background: radial-gradient(circle at center, rgba(255,210,120,0.22), rgba(255,210,120,0) 70%);
+}
+.place-chip[data-tod="dawn"] .chip-tod {
+  color: #ffb27a;
+  background: radial-gradient(circle at center, rgba(255,160,110,0.24), rgba(255,160,110,0) 70%);
+}
+.place-chip[data-tod="dusk"] .chip-tod {
+  color: #ff9a7a;
+  background: radial-gradient(circle at center, rgba(255,140,110,0.24), rgba(255,140,110,0) 70%);
+}
+.place-chip[data-tod="night"] .chip-tod {
+  color: #b7c8ff;
+  background: radial-gradient(circle at center, rgba(150,175,255,0.18), rgba(150,175,255,0) 70%);
+}
+.place-chip[data-tod="night"] { background: rgba(20,26,54,0.42); }
+.place-chip[data-tod="night"]:hover { background: rgba(28,34,62,0.55); }
 
 /* ---------- Hero ---------- */
 .hero { align-self: start; display: grid; gap: 14px; }
