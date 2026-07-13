@@ -49,6 +49,9 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunTomorrow: $("#sun-tomorrow"),
+  sunTomorrowText: $("#sun-tomorrow-text"),
+  sunTomorrowArrow: $("#sun-tomorrow-arrow"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -530,8 +533,51 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderTomorrowDaylight(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderTomorrowDaylight(w) {
+  if (!el.sunTomorrow) return;
+  const daily = w?.daily;
+  const today = daily?.[0];
+  const tomorrow = daily?.[1];
+  if (!today?.sunrise || !today?.sunset || !tomorrow?.sunrise || !tomorrow?.sunset) {
+    el.sunTomorrow.hidden = true;
+    return;
+  }
+  const todayMs = today.sunset - today.sunrise;
+  const tomorrowMs = tomorrow.sunset - tomorrow.sunrise;
+  if (todayMs <= 0 || tomorrowMs <= 0) {
+    el.sunTomorrow.hidden = true;
+    return;
+  }
+  const deltaMin = Math.round((tomorrowMs - todayMs) / 60_000);
+  let dir, arrow, label;
+  if (deltaMin > 0) {
+    dir = "up"; arrow = "↑";
+    label = `Tomorrow · ${formatMinDelta(deltaMin)} longer`;
+  } else if (deltaMin < 0) {
+    dir = "down"; arrow = "↓";
+    label = `Tomorrow · ${formatMinDelta(-deltaMin)} shorter`;
+  } else {
+    dir = "same"; arrow = "→";
+    label = "Tomorrow · same length";
+  }
+  el.sunTomorrow.dataset.dir = dir;
+  el.sunTomorrowArrow.textContent = arrow;
+  el.sunTomorrowText.textContent = label;
+  el.sunTomorrow.hidden = false;
+}
+
+function formatMinDelta(mins) {
+  if (mins >= 60) {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return m ? `${h}h ${m}m` : `${h}h`;
+  }
+  return `${mins} min`;
 }
 
 function scheduleSunArc(w) {
