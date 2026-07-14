@@ -50,6 +50,8 @@ const el = {
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  sunGolden: $("#sun-golden"),
+  sunGoldenText: $("#sun-golden-text"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -122,6 +124,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  goldenTimer: null,
   localTimer: null,
 };
 
@@ -523,6 +526,56 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleGoldenHour(w);
+}
+
+// Golden hour: the ~60 min after sunrise and before sunset. Show "in window"
+// with remaining minutes, or a countdown to the next one. Falls back to the
+// next day's sunrise once tonight's sunset has passed.
+function scheduleGoldenHour(w) {
+  if (state.goldenTimer) { clearInterval(state.goldenTimer); state.goldenTimer = null; }
+  if (!el.sunGolden || !el.sunGoldenText) return;
+  const days = w?.daily || [];
+  const WIN = 60 * 60 * 1000;
+
+  const windows = [];
+  for (const d of days) {
+    if (d.sunrise) windows.push({ start: d.sunrise, end: d.sunrise + WIN, kind: "morning" });
+    if (d.sunset)  windows.push({ start: d.sunset - WIN, end: d.sunset, kind: "evening" });
+  }
+  windows.sort((a, b) => a.start - b.start);
+  if (!windows.length) { el.sunGolden.hidden = true; return; }
+
+  const update = () => {
+    const now = Date.now();
+    const current = windows.find((x) => now >= x.start && now <= x.end);
+    if (current) {
+      const mins = Math.max(1, Math.round((current.end - now) / 60_000));
+      el.sunGoldenText.textContent = `Golden hour · ${mins}m left`;
+      el.sunGolden.dataset.active = "true";
+      el.sunGolden.hidden = false;
+      return;
+    }
+    const next = windows.find((x) => x.start > now);
+    if (!next) { el.sunGolden.hidden = true; return; }
+    const dt = next.start - now;
+    const prefix = next.kind === "morning" ? "Morning golden hour" : "Evening golden hour";
+    let label;
+    if (dt < 60 * 60_000) {
+      label = `in ${Math.max(1, Math.round(dt / 60_000))}m`;
+    } else if (dt < 10 * 3600_000) {
+      const h = Math.floor(dt / 3600_000);
+      const m = Math.round((dt - h * 3600_000) / 60_000);
+      label = m ? `in ${h}h ${m}m` : `in ${h}h`;
+    } else {
+      label = `at ${fmtTime(next.start)}`;
+    }
+    el.sunGoldenText.textContent = `${prefix} ${label}`;
+    el.sunGolden.dataset.active = "false";
+    el.sunGolden.hidden = false;
+  };
+  update();
+  state.goldenTimer = setInterval(update, 30_000);
 }
 
 function scheduleSunArc(w) {
