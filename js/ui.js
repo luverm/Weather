@@ -22,6 +22,8 @@ const el = {
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
+  feelsValue: $("#feels-value"),
+  feelsReason: $("#feels-reason"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -282,8 +284,35 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  if (el.feelsValue) {
+    el.feelsValue.textContent = `${Math.round(feels)}°`;
+  } else {
+    // Defensive: keep working if the DOM structure regresses.
+    el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  }
+  if (el.feelsReason) {
+    const reason = feelsLikeReason(w);
+    el.feelsReason.textContent = reason ? ` · ${reason}` : "";
+  }
   renderDayRange(w);
+}
+
+// Explain the feels-like delta in a short human phrase, or return "" when
+// the delta is small enough that nothing meaningful is happening.
+function feelsLikeReason(w) {
+  if (w?.temp == null || w?.feelsLike == null) return "";
+  const delta = w.feelsLike - w.temp;
+  const rounded = Math.round(delta);
+  if (Math.abs(rounded) < 1) return "";
+  const abs = Math.abs(rounded);
+  if (rounded < 0) {
+    const wind = w.windSpeed ?? 0;
+    const cause = wind >= 8 ? "wind" : "cold air";
+    return `${abs}° colder from ${cause}`;
+  }
+  const humidity = w.humidity ?? 0;
+  const cause = humidity >= 65 ? "humidity" : "sun";
+  return `${abs}° warmer from ${cause}`;
 }
 
 function renderDayRange(w) {

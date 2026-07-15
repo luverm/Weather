@@ -391,6 +391,12 @@ html[data-reduce-motion="true"] *::after {
 .unit:hover { background: var(--glass); color: var(--fg); }
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
+.feels-reason {
+  color: var(--fg-dim);
+  font-size: 12px;
+  letter-spacing: 0.01em;
+}
+.feels-reason:empty { display: none; }
 .day-range {
   margin-top: 10px;
   display: grid;
