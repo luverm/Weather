@@ -195,10 +195,11 @@ const scrubber = new Scrubber({
 });
 
 // ---------- Load flow ----------
-async function loadByCoords(place) {
+async function loadByCoords(place, { updateHash = true } = {}) {
   app.place = place;
   ui.setPlace(place);
   ui.setLoading(`Fetching weather for ${place.name}…`);
+  if (updateHash) writeLocationHash(place);
 
   // Drop any scrubber offset so we start live on each new city.
   clock.reset();
@@ -218,6 +219,38 @@ async function loadByCoords(place) {
 
   // Move the radar to the new location (fire-and-forget; resolves later).
   ensureRadar([place.lat, place.lon]).then((r) => r?.setCenter(place.lat, place.lon, place.name));
+}
+
+// Encode the current place into location.hash so users can copy the URL and
+// share it. Format: #lat=51.5&lon=-0.12&name=London&country=UK. Skipped when
+// the place is a device geolocation (no name we'd want in a URL).
+function writeLocationHash(place) {
+  if (!place || place.lat == null || place.lon == null) return;
+  if (place.name === "Current location") {
+    history.replaceState(null, "", location.pathname + location.search);
+    return;
+  }
+  const params = new URLSearchParams();
+  params.set("lat", place.lat.toFixed(4));
+  params.set("lon", place.lon.toFixed(4));
+  if (place.name) params.set("name", place.name);
+  if (place.country) params.set("country", place.country);
+  const next = `#${params.toString()}`;
+  if (location.hash !== next) history.replaceState(null, "", next);
+}
+
+function readLocationHash() {
+  const raw = location.hash.slice(1);
+  if (!raw) return null;
+  const params = new URLSearchParams(raw);
+  const lat = parseFloat(params.get("lat"));
+  const lon = parseFloat(params.get("lon"));
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  return {
+    lat, lon,
+    name: params.get("name") || "Shared location",
+    country: params.get("country") || undefined,
+  };
 }
 
 async function useGeolocation() {
@@ -306,6 +339,13 @@ installShortcuts({
 
 // ---------- Start ----------
 (async function init() {
+  // A pasted share link takes priority — the user asked to see *that* place.
+  const shared = readLocationHash();
+  if (shared) {
+    places.add(shared);
+    await loadByCoords(shared);
+    return;
+  }
   // Prefer the most recent saved place if we have one — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();
@@ -320,6 +360,12 @@ installShortcuts({
     await loadByCoords({ name: "Reykjavík", country: "Iceland", lat: 64.1466, lon: -21.9426 });
   }
 })();
+
+// Back/forward through history should reload the corresponding place.
+window.addEventListener("hashchange", () => {
+  const p = readLocationHash();
+  if (p) loadByCoords(p, { updateHash: false });
+});
 
 // ---------- Lifecycle ----------
 document.addEventListener("visibilitychange", () => {
