@@ -291,6 +291,42 @@ function updateDocumentTitle(w) {
   const label = w.label ? ` ${capitalize(w.label)}` : "";
   const place = state.place?.name ? ` · ${state.place.name}` : "";
   document.title = `${t}°${label}${place} — Aether`;
+  updateFavicon(w);
+}
+
+// Swap the favicon to an emoji that reflects the current condition. Uses an
+// SVG data URI so no image asset ships with the app.
+const FAVICON_EMOJI = {
+  clear_day: "☀️", clear_night: "🌙",
+  clouds_day: "⛅", clouds_night: "☁️",
+  rain: "🌧️", storm: "⛈️", snow: "❄️", fog: "🌫️",
+};
+function conditionEmoji(w) {
+  const isDay = w.isDay !== false;
+  switch (w.condition) {
+    case "clear": return isDay ? FAVICON_EMOJI.clear_day : FAVICON_EMOJI.clear_night;
+    case "clouds": return isDay ? FAVICON_EMOJI.clouds_day : FAVICON_EMOJI.clouds_night;
+    case "rain": return FAVICON_EMOJI.rain;
+    case "storm": return FAVICON_EMOJI.storm;
+    case "snow": return FAVICON_EMOJI.snow;
+    case "fog": return FAVICON_EMOJI.fog;
+    default: return isDay ? FAVICON_EMOJI.clouds_day : FAVICON_EMOJI.clouds_night;
+  }
+}
+function updateFavicon(w) {
+  const emoji = conditionEmoji(w);
+  const svg =
+    `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>` +
+    `<text y='52' font-size='56'>${emoji}</text>` +
+    `</svg>`;
+  const href = "data:image/svg+xml," + encodeURIComponent(svg);
+  let link = document.querySelector('link[rel="icon"]');
+  if (!link) {
+    link = document.createElement("link");
+    link.rel = "icon";
+    document.head.appendChild(link);
+  }
+  if (link.getAttribute("href") !== href) link.setAttribute("href", href);
 }
 
 function renderLiveValues(w, { animate = true } = {}) {
