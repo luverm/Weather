@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { nextTwilightWindow, formatMinutes as fmtMin } from "./golden.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -90,6 +91,10 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunTwilight: $("#sun-twilight"),
+  sunTwilightLabel: $("#sun-twilight-label"),
+  sunTwilightWindow: $("#sun-twilight-window"),
+  sunTwilightEta: $("#sun-twilight-eta"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -122,6 +127,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  twilightTimer: null,
   localTimer: null,
 };
 
@@ -523,6 +529,37 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleTwilight(w);
+}
+
+function scheduleTwilight(w) {
+  if (state.twilightTimer) { clearInterval(state.twilightTimer); state.twilightTimer = null; }
+  if (!el.sunTwilight) return;
+  const update = () => {
+    const win = nextTwilightWindow(w?.daily);
+    if (!win) {
+      el.sunTwilight.hidden = true;
+      el.sunTwilight.removeAttribute("data-active");
+      el.sunTwilight.setAttribute("data-kind", "");
+      return;
+    }
+    el.sunTwilight.hidden = false;
+    el.sunTwilight.setAttribute("data-kind", win.kind);
+    el.sunTwilight.setAttribute("data-active", win.active ? "true" : "false");
+    el.sunTwilightLabel.textContent = `${win.label} · ${win.subLabel}`;
+    el.sunTwilightWindow.textContent = `${fmtTime(win.start)} – ${fmtTime(win.end)}`;
+    if (win.active) {
+      el.sunTwilightEta.textContent = win.minutesRemaining > 0
+        ? `${fmtMin(win.minutesRemaining)} left`
+        : "ends now";
+    } else if (win.minutesUntilStart > 0) {
+      el.sunTwilightEta.textContent = `in ${fmtMin(win.minutesUntilStart)}`;
+    } else {
+      el.sunTwilightEta.textContent = "";
+    }
+  };
+  update();
+  state.twilightTimer = setInterval(update, 60_000);
 }
 
 function scheduleSunArc(w) {

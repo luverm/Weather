@@ -977,6 +977,78 @@ kbd {
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
 
+/* Twilight chip — golden hour / blue hour hint under the sun row. */
+.sun-twilight {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, rgba(255,180,90,0.16), rgba(255,120,90,0.06));
+  border: 1px solid rgba(255,190,130,0.22);
+  color: #ffd9a8;
+  transition: background 400ms var(--ease), border-color 400ms var(--ease), color 400ms var(--ease);
+}
+.sun-twilight[hidden] { display: none; }
+.sun-twilight[data-kind="blue-am"],
+.sun-twilight[data-kind="blue-pm"] {
+  background: linear-gradient(90deg, rgba(120,170,255,0.18), rgba(120,120,220,0.08));
+  border-color: rgba(150,190,255,0.28);
+  color: #cadcff;
+}
+.sun-twilight[data-active="true"] {
+  box-shadow: 0 0 0 1px rgba(255,220,170,0.25) inset;
+  animation: twilightPulse 3.6s ease-in-out infinite;
+}
+.sun-twilight[data-kind="blue-am"][data-active="true"],
+.sun-twilight[data-kind="blue-pm"][data-active="true"] {
+  box-shadow: 0 0 0 1px rgba(180,210,255,0.28) inset;
+}
+@keyframes twilightPulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.15); }
+}
+.sun-twilight-glyph {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, currentColor 0%, currentColor 40%, transparent 72%);
+  opacity: 0.9;
+  flex-shrink: 0;
+}
+.sun-twilight[data-kind^="blue"] .sun-twilight-glyph {
+  background: radial-gradient(circle at 35% 35%, currentColor 0%, transparent 65%),
+              linear-gradient(180deg, rgba(120,170,255,0.6), rgba(90,90,220,0.2));
+}
+.sun-twilight-body {
+  display: grid; gap: 1px; min-width: 0;
+}
+.sun-twilight-label {
+  font-size: 12.5px; font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.sun-twilight-window {
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.sun-twilight-eta {
+  font-size: 10.5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.28);
+  color: inherit;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.sun-twilight-eta:empty { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .sun-twilight[data-active="true"] { animation: none; }
+}
+
 /* ---------- Radar map ---------- */
 .radar {
   padding: 12px;
