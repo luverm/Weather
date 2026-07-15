@@ -213,6 +213,7 @@ export const ui = {
       });
     }
     renderPlaces();
+    updateDocumentTitle(weather);
   },
   /** Called by the scrubber whenever simulated time moves. */
   setSampledWeather(sampled, { highlightHourIndex } = {}) {
@@ -227,6 +228,7 @@ export const ui = {
     } else if (state.chart) {
       state.chart.setCursor(sampled.hourly?.[highlightHourIndex]?.time);
     }
+    updateDocumentTitle(sampled);
   },
   setScrubbing(on) {
     document.documentElement.setAttribute("data-scrubbing", on ? "true" : "false");
@@ -277,6 +279,19 @@ function animateNumber(node, target, format) {
 }
 
 function capitalize(s) { return (s || "").charAt(0).toUpperCase() + (s || "").slice(1); }
+
+// Reflect current temp + place in the browser tab so multi-tab users can spot
+// the weather at a glance. Falls back to the static title when data is missing.
+function updateDocumentTitle(w) {
+  if (!w || w.temp == null) {
+    document.title = "Aether — Interactive Weather";
+    return;
+  }
+  const t = Math.round(convertTemp(w.temp));
+  const label = w.label ? ` ${capitalize(w.label)}` : "";
+  const place = state.place?.name ? ` · ${state.place.name}` : "";
+  document.title = `${t}°${label}${place} — Aether`;
+}
 
 function renderLiveValues(w, { animate = true } = {}) {
   const temp = convertTemp(w.temp);
