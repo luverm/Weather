@@ -5,7 +5,7 @@ import { searchCities } from "./weather-service.js";
 import { places } from "./places.js";
 import { HourlyChart } from "./hourly-chart.js";
 import { ComfortStrip } from "./comfort-strip.js";
-import { advise, adviseDetailed } from "./advice.js";
+import { adviseDetailed } from "./advice.js";
 import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
@@ -312,7 +312,16 @@ function renderLiveValues(w, { animate = true } = {}) {
   else el.temp.textContent = `${Math.round(temp)}°`;
   applyTempGlow(el.temp, w.feelsLike ?? w.temp);
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.innerHTML = `Feels like ${Math.round(feels)}°<span class="feels-why" id="feels-why"></span>`;
+  // Reconstruct feels-like content while keeping #temp-trend live — the
+  // trend span is nested here in HTML, and the cached reference in el
+  // would otherwise become detached each render.
+  el.feelsLike.textContent = "";
+  if (el.tempTrend) el.feelsLike.appendChild(el.tempTrend);
+  el.feelsLike.appendChild(document.createTextNode(`Feels like ${Math.round(feels)}°`));
+  const whyNode = document.createElement("span");
+  whyNode.className = "feels-why";
+  whyNode.id = "feels-why";
+  el.feelsLike.appendChild(whyNode);
   renderFeelsWhy(w);
   renderDayRange(w);
   renderDayExtremes(w);
@@ -784,7 +793,23 @@ function renderSunnyHours(w) {
   if (clear === 0) return;
   const existing = el.sunDaylightDelta.textContent || "";
   const chip = `~${clear}h sunny`;
-  el.sunDaylightDelta.textContent = existing ? `${chip} · ${existing}` : chip;
+  const combined = existing ? `${chip} · ${existing}` : chip;
+  // Wrap the sunny prefix in a neutral span so the amber/blue gain/loss
+  // coloring only applies to the trailing "+2m tomorrow" part.
+  el.sunDaylightDelta.textContent = "";
+  const sunny = document.createElement("span");
+  sunny.className = "sun-daylight-sunny";
+  sunny.textContent = chip;
+  el.sunDaylightDelta.appendChild(sunny);
+  if (existing) {
+    el.sunDaylightDelta.appendChild(document.createTextNode(" · "));
+    const tail = document.createElement("span");
+    tail.className = el.sunDaylightDelta.className.replace(/\bsun-daylight-delta\b/, "").trim();
+    tail.textContent = existing;
+    el.sunDaylightDelta.appendChild(tail);
+    el.sunDaylightDelta.className = "sun-daylight-delta";
+  }
+  el.sunDaylightDelta.dataset.combined = combined;
 }
 
 function renderAurora(w) {
