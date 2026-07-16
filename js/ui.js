@@ -972,6 +972,19 @@ function renderAdvice(w) {
 function renderHeatSafety(w) {
   if (!el.heatSafety) return;
   const t = w.temp;
+  const feels = w.feelsLike ?? t;
+  if (t != null && feels != null && feels <= -10) {
+    // Frostbite risk: Environment Canada shortcuts.
+    const level =
+      feels <= -47 ? { label: "Frostbite in ~2 min", tone: "danger" } :
+      feels <= -35 ? { label: "Frostbite in ~10 min", tone: "danger" } :
+      feels <= -27 ? { label: "Frostbite in ~30 min", tone: "warn" } :
+      { label: "Cold exposure risk", tone: "info" };
+    el.heatSafety.hidden = false;
+    el.heatSafety.dataset.tone = level.tone;
+    el.heatSafety.textContent = `${level.label} · feels ${Math.round(feels)}°`;
+    return;
+  }
   if (t == null || t < 25) { el.heatSafety.hidden = true; return; }
   // Simplified WBGT from Stull: uses air temp, humidity and a small solar bonus.
   const rh = w.humidity ?? 50;
