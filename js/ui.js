@@ -800,9 +800,17 @@ function renderSunWindow(w) {
     // 0 clouds -> golden, 100 clouds -> deep grey-blue.
     const clarity = 1 - c.cover / 100;
     const opacity = c.isDay ? 0.35 + clarity * 0.6 : 0.15 + clarity * 0.35;
-    return `<span class="sun-window-cell" title="${fmtTime(c.time)} · ${c.cover}% clouds"
-             style="opacity:${opacity.toFixed(2)};background:${cloudCellColor(c.cover, c.isDay)}"></span>`;
+    return `<button type="button" class="sun-window-cell" data-ts="${c.time}"
+             title="${fmtTime(c.time)} · ${c.cover}% clouds"
+             style="opacity:${opacity.toFixed(2)};background:${cloudCellColor(c.cover, c.isDay)}"
+             aria-label="Jump to ${fmtTime(c.time)}, ${c.cover}% clouds"></button>`;
   }).join("");
+  el.sunWindowStrip.querySelectorAll(".sun-window-cell").forEach((cell) => {
+    cell.addEventListener("click", () => {
+      const ts = parseInt(cell.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
 }
 
 function cloudCellColor(cover, isDay) {
