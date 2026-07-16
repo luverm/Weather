@@ -219,10 +219,12 @@ function normalize(d, aq) {
     isDay: !!c.is_day,
     condition,
     label,
-    sunrise: daily.sunrise?.[0] ? new Date(daily.sunrise[0]).getTime() : null,
-    sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null,
-    uv: daily.uv_index_max?.[0] ?? null,
-    uvPeak: findUvPeak(d.hourly),
+    // NB: `past_days: 1` means raw daily[0] is yesterday. Read today's values
+    // from the filtered dailyForecast list instead.
+    sunrise: dailyForecast[0]?.sunrise ?? null,
+    sunset: dailyForecast[0]?.sunset ?? null,
+    uv: dailyForecast[0]?.uvMax ?? null,
+    uvPeak: findUvPeak(d.hourly, now),
     timezone: d.timezone,
     hourly,
     daily: dailyForecast,
@@ -329,12 +331,16 @@ function aqiLabel(v) {
   return "Hazardous";
 }
 
-function findUvPeak(hourly) {
+function findUvPeak(hourly, now = Date.now()) {
   if (!hourly?.uv_index) return null;
   let peak = { t: null, v: -Infinity };
   for (let i = 0; i < hourly.uv_index.length; i++) {
+    const ts = new Date(hourly.time[i]).getTime();
+    // Round 91 fetches past_hours=1, so we might see a stale midday peak.
+    // Only consider the future so "peak N at HH:MM" is always upcoming.
+    if (ts < now - 30 * 60_000) continue;
     const v = hourly.uv_index[i];
-    if (v > peak.v) peak = { t: new Date(hourly.time[i]).getTime(), v };
+    if (v > peak.v) peak = { t: ts, v };
   }
   if (peak.t == null) return null;
   return { time: peak.t, value: peak.v };
