@@ -1783,6 +1783,11 @@ kbd {
   background: linear-gradient(90deg, rgba(154, 209, 255, 0.45), rgba(90, 168, 255, 0.75));
   border-radius: 4px;
 }
+.daily-rain.snow .daily-rain-fill {
+  background: linear-gradient(90deg, rgba(220, 230, 250, 0.55), rgba(240, 245, 255, 0.85));
+}
+.daily-rain.snow { background: rgba(220, 230, 250, 0.14); }
+.daily-rain.snow .daily-rain-num { color: #d8e3f5; }
 .daily-rain-num {
   position: relative;
   margin-left: auto;

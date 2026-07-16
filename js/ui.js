@@ -1283,11 +1283,16 @@ function renderDaily(w) {
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
     const mm = d.precip ?? 0;
+    const snowy = d.condition === "snow" || (d.snowfall ?? 0) >= 1;
     const rainBarW = mm > 0.1 ? Math.max(6, (mm / wettest) * 100) : 0;
+    const rainKind = snowy ? "snow" : "rain";
+    const snowNote = snowy && d.snowfall != null && d.snowfall >= 0.5
+      ? ` · ${d.snowfall.toFixed(d.snowfall < 5 ? 1 : 0)} cm`
+      : "";
     const rainBar = rainBarW > 0
-      ? `<span class="daily-rain" title="${mm.toFixed(1)} mm">
+      ? `<span class="daily-rain ${rainKind}" title="${mm.toFixed(1)} mm${snowNote}">
            <span class="daily-rain-fill" style="width:${rainBarW.toFixed(0)}%"></span>
-           <span class="daily-rain-num">${mm.toFixed(mm < 1 ? 1 : 0)}</span>
+           <span class="daily-rain-num">${snowy && d.snowfall >= 0.5 ? `${d.snowfall.toFixed(d.snowfall < 5 ? 1 : 0)}cm` : mm.toFixed(mm < 1 ? 1 : 0)}</span>
          </span>`
       : `<span class="daily-rain empty"></span>`;
     item.innerHTML = `
