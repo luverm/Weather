@@ -48,6 +48,7 @@ const el = {
   metricUVSub: $("#m-uv-sub"),
   aqArc: $("#aq-arc"),
   aqValue: $("#aq-value"),
+  aqArrow: $("#aq-arrow"),
   aqLabel: $("#aq-label"),
   aqDetail: $("#aq-detail"),
   aqAdvice: $("#aq-advice"),
@@ -677,6 +678,20 @@ function renderAirQuality(aq) {
     `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
   if (el.aqAdvice) el.aqAdvice.textContent = aqAdvice(aq.aqi);
   renderAqTrend(aq);
+  renderAqArrow(aq);
+}
+
+function renderAqArrow(aq) {
+  if (!el.aqArrow) return;
+  const t = aq?.trend;
+  if (!t || t.length < 3) { el.aqArrow.textContent = ""; return; }
+  const start = t.slice(0, 2).reduce((s, p) => s + p.aqi, 0) / 2;
+  const end = t.slice(-2).reduce((s, p) => s + p.aqi, 0) / 2;
+  const delta = end - start;
+  if (Math.abs(delta) < 5) { el.aqArrow.textContent = ""; return; }
+  el.aqArrow.className = `aq-arrow ${delta > 0 ? "up" : "down"}`;
+  el.aqArrow.textContent = delta > 0 ? "▲" : "▼";
+  el.aqArrow.title = delta > 0 ? "AQI worsening over the next hours" : "AQI improving over the next hours";
 }
 
 function aqAdvice(aqi) {

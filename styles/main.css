@@ -1102,6 +1102,17 @@ kbd {
 .aq-advice { font-size: 11.5px; color: var(--fg-muted); line-height: 1.35; }
 .pollen-advice { font-size: 11.5px; color: var(--fg-muted); line-height: 1.35; margin-top: 4px; display: block; }
 .pollen-advice:empty { display: none; }
+.aq-arrow {
+  position: absolute;
+  right: 4px; top: 4px;
+  font-size: 10px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+}
+.aq-arrow.up { color: #ff8a6a; }
+.aq-arrow.down { color: #78d06a; }
+.aq-arrow:empty { display: none; }
+.aq-ring { position: relative; }
 .aq-trend {
   width: 100%; height: 22px; display: block;
   margin-top: 4px;
