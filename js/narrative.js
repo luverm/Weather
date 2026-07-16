@@ -80,16 +80,17 @@ function findGusts(hourly) {
 /**
  * Return a one or two-sentence narrative for the current weather.
  */
-export function narrate(weather) {
+export function narrate(weather, { unit = "C" } = {}) {
   if (!weather) return "";
   const bits = [];
   const { condition, label, temp, feelsLike, uvPeak, windSpeed } = weather;
+  const T = (c) => c == null ? "—" : `${Math.round(unit === "F" ? c * 9 / 5 + 32 : c)}°`;
 
   // Lead: describe current state.
   const feels = Math.abs((feelsLike ?? temp) - temp) >= 3
-    ? ` — feels closer to ${Math.round(feelsLike)}°`
+    ? ` — feels closer to ${T(feelsLike)}`
     : "";
-  bits.push(`${label} at ${Math.round(temp)}°${feels}.`);
+  bits.push(`${label} at ${T(temp)}${feels}.`);
 
   // Precipitation arriving.
   const rain = findNextPrecip(weather.nowcast, weather.hourly);
@@ -107,9 +108,10 @@ export function narrate(weather) {
   if (bits.length < 2) {
     const swing = findTempSwing(weather.hourly);
     if (swing) {
+      const byDisplay = Math.round(unit === "F" ? swing.by * 9 / 5 : swing.by);
       bits.push(swing.kind === "drop"
-        ? `Temperature drops ${swing.by}° by ${fmtHour(swing.ts)}.`
-        : `Warming ${swing.by}° by ${fmtHour(swing.ts)}.`);
+        ? `Temperature drops ${byDisplay}° by ${fmtHour(swing.ts)}.`
+        : `Warming ${byDisplay}° by ${fmtHour(swing.ts)}.`);
     }
   }
 

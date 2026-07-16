@@ -27,7 +27,7 @@ function sunsetQuality(hourly, sunset) {
   return null;
 }
 
-function tomorrowBriefing(days, dow) {
+function tomorrowBriefing(days, dow, T) {
   const t = days?.[1];
   if (!t || t.tempMax == null || t.tempMin == null) return null;
   const label = t.label || t.condition || "Mixed";
@@ -37,12 +37,12 @@ function tomorrowBriefing(days, dow) {
   return {
     icon: ICONS.tomorrow,
     label: `${dow(t.time)} outlook`,
-    value: `${label} · ${Math.round(t.tempMin)}° → ${Math.round(t.tempMax)}°${rain}`,
+    value: `${label} · ${T(t.tempMin)} → ${T(t.tempMax)}${rain}`,
     ts: t.sunrise || t.time,
   };
 }
 
-export function buildInsights(weather, { fmtTime, weekday } = {}) {
+export function buildInsights(weather, { fmtTime, weekday, unit = "C" } = {}) {
   const out = [];
   if (!weather) return out;
 
@@ -50,8 +50,9 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
   const days = weather.daily || [];
   const fmt = fmtTime || ((t) => new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
   const dow = weekday || ((t) => new Date(t).toLocaleDateString([], { weekday: "short" }));
+  const T = (c) => c == null ? "—" : `${Math.round(unit === "F" ? c * 9 / 5 + 32 : c)}°`;
 
-  const tmrw = tomorrowBriefing(days, dow);
+  const tmrw = tomorrowBriefing(days, dow, T);
   if (tmrw) out.push(tmrw);
 
   // 1. Next rain in the week.
@@ -96,12 +97,12 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
   if (coldest && warmest && warmest.t - coldest.t >= 4) {
     out.push({
       icon: ICONS.cold, label: "Coldest",
-      value: `${Math.round(coldest.t)}° at ${fmt(coldest.ts)}`,
+      value: `${T(coldest.t)} at ${fmt(coldest.ts)}`,
       ts: coldest.ts,
     });
     out.push({
       icon: ICONS.warm, label: "Warmest",
-      value: `${Math.round(warmest.t)}° at ${fmt(warmest.ts)}`,
+      value: `${T(warmest.t)} at ${fmt(warmest.ts)}`,
       ts: warmest.ts,
     });
   }
@@ -117,7 +118,7 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     if (hotDay && coolDay && hotDay !== coolDay) {
       out.push({
         icon: ICONS.warm, label: "Week high",
-        value: `${Math.round(hotDay.tempMax)}° on ${dow(hotDay.time)}`,
+        value: `${T(hotDay.tempMax)} on ${dow(hotDay.time)}`,
         ts: hotDay.sunrise || hotDay.time,
       });
     }
@@ -145,7 +146,7 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     out.push({
       icon: biggest.delta > 0 ? ICONS.warm : ICONS.cold,
       label: `${kind} on ${dow(biggest.day.time)}`,
-      value: `${biggest.delta > 0 ? "+" : ""}${Math.round(biggest.delta)}° vs day before`,
+      value: `${biggest.delta > 0 ? "+" : ""}${Math.round(unit === "F" ? biggest.delta * 9 / 5 : biggest.delta)}° vs day before`,
       ts: biggest.day.sunrise || biggest.day.time,
     });
   }
