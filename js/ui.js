@@ -112,6 +112,7 @@ const el = {
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
   settingClearPlaces: $("#setting-clear-places"),
+  settingResetAll: $("#setting-reset-all"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
@@ -1976,6 +1977,23 @@ function bindSettings() {
     for (const p of places.all()) places.remove(p);
     renderPlaces();
     ui.showToast("Saved places cleared");
+    close();
+  });
+
+  el.settingResetAll?.addEventListener("click", () => {
+    if (!confirm("Reset all preferences and saved places?")) return;
+    try {
+      const KEYS = ["aether:unit", "aether:reduceMotion", "aether:places"];
+      for (const k of KEYS) localStorage.removeItem(k);
+      sessionStorage.removeItem("aether:dismissed-alerts");
+    } catch { /* ignore */ }
+    state.unit = "C";
+    el.unitBtn.textContent = "°C";
+    if (el.settingUnitF) el.settingUnitF.checked = false;
+    if (el.settingReduceMotion) el.settingReduceMotion.checked = false;
+    document.documentElement.removeAttribute("data-reduce-motion");
+    renderPlaces();
+    ui.showToast("Preferences reset");
     close();
   });
 }
