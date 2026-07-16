@@ -1120,8 +1120,15 @@ kbd {
 /* ---------- Extras row: AQ + moon + sun ---------- */
 .extras {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 10px;
+}
+@media (max-width: 720px) {
+  .extras { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+}
+@media (max-width: 460px) {
+  .extras { grid-template-columns: 1fr; gap: 8px; }
+  .extra-card { padding: 10px 12px; }
 }
 .extra-card {
   padding: 14px 16px;
