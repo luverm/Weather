@@ -1320,6 +1320,15 @@ function renderNowcast(w) {
     const mins = Math.round((n.time - Date.now()) / 60_000);
     bar.title = `+${Math.max(0, mins)} min · ${n.precip.toFixed(1)} mm`;
     bar.setAttribute("aria-label", bar.title);
+    // Only stamp a legible label on every other bar to avoid crowding.
+    if (i % 2 === 0) {
+      const label = document.createElement("span");
+      label.className = "nowcast-bar-label";
+      label.textContent = mins >= 60
+        ? `${(mins / 60).toFixed(mins % 60 === 0 ? 0 : 1)}h`
+        : `${Math.max(0, mins)}m`;
+      bar.appendChild(label);
+    }
     bar.addEventListener("click", () => state.handlers.onHourClick?.(n.time));
     el.nowcastBars.appendChild(bar);
   });

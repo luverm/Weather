@@ -476,11 +476,25 @@ html[data-reduce-motion="true"] *::after {
 .nowcast-bars {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: 6px;
-  gap: 2px;
+  grid-auto-columns: 12px;
+  gap: 3px;
   align-items: end;
-  height: 28px;
+  height: 34px;
+  position: relative;
 }
+.nowcast-bar-label {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translate(-50%, 2px);
+  font-size: 9px;
+  color: var(--fg-dim);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.nowcast-bars .nowcast-bar { position: relative; }
 .nowcast-bars span,
 .nowcast-bars .nowcast-bar {
   background: var(--accent);
