@@ -693,6 +693,11 @@ function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  // Scale the moon-lit path's glow with illumination (full moon shines).
+  if (el.moonLit) {
+    const glow = Math.round(moon.illum * 14);
+    el.moonLit.style.filter = glow > 0 ? `drop-shadow(0 0 ${glow}px rgba(255,240,200,${0.4 + moon.illum * 0.5}))` : "none";
+  }
   if (el.moonNext) {
     const parts = [];
     if (moon.daysToFull != null && moon.daysToFull > 0 && moon.daysToFull <= 20) {
