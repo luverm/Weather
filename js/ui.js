@@ -374,9 +374,9 @@ function renderMetrics(w) {
   el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
-  el.metricWindSub.textContent = dirLabel
-    ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
-    : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+  const gustText = w.windGusts != null ? `gust ${Math.round(w.windGusts)} km/h` : "gust —";
+  const gusty = gustinessLabel(w.windSpeed, w.windGusts);
+  el.metricWindSub.textContent = [dirLabel, gustText, gusty].filter(Boolean).join(" · ");
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
@@ -454,6 +454,15 @@ function humidityComfort(rh, dew, temp) {
   if (rh <= 25) return { label: "Dry", cls: "up" };
   if (rh <= 35) return { label: "Crisp", cls: "flat" };
   return { label: "Comfy", cls: "down" };
+}
+
+function gustinessLabel(wind, gust) {
+  if (wind == null || gust == null || wind < 4) return null;
+  const ratio = gust / wind;
+  if (ratio >= 1.8) return "very gusty";
+  if (ratio >= 1.4) return "gusty";
+  if (ratio <= 1.1) return "steady";
+  return null;
 }
 
 function beaufort(kmh) {
