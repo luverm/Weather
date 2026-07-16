@@ -27,6 +27,13 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  dayExtremes: $("#day-extremes"),
+  extremeCool: $("#extreme-cool"),
+  extremeCoolTime: $("#extreme-cool-time"),
+  extremeCoolTemp: $("#extreme-cool-temp"),
+  extremeWarm: $("#extreme-warm"),
+  extremeWarmTime: $("#extreme-warm-time"),
+  extremeWarmTemp: $("#extreme-warm-temp"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -284,6 +291,27 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  renderDayExtremes(w);
+}
+
+function renderDayExtremes(w) {
+  if (!el.dayExtremes) return;
+  const hrs = (w.hourly || []).slice(0, 24).filter((h) => h.temp != null && h.time);
+  if (hrs.length < 3) { el.dayExtremes.hidden = true; return; }
+  let warm = hrs[0], cool = hrs[0];
+  for (const h of hrs) {
+    if (h.temp > warm.temp) warm = h;
+    if (h.temp < cool.temp) cool = h;
+  }
+  // If the extremes are within 2° there's nothing meaningful to show.
+  if (warm.temp - cool.temp < 2) { el.dayExtremes.hidden = true; return; }
+  el.dayExtremes.hidden = false;
+  el.extremeWarmTime.textContent = fmtTime(warm.time);
+  el.extremeCoolTime.textContent = fmtTime(cool.time);
+  el.extremeWarmTemp.textContent = `${Math.round(convertTemp(warm.temp))}°`;
+  el.extremeCoolTemp.textContent = `${Math.round(convertTemp(cool.temp))}°`;
+  el.extremeWarm.onclick = () => state.handlers.onHourClick?.(warm.time);
+  el.extremeCool.onclick = () => state.handlers.onHourClick?.(cool.time);
 }
 
 function renderDayRange(w) {
