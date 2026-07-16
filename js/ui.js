@@ -304,6 +304,25 @@ function updateDocumentTitle(w) {
     return;
   }
   document.title = `${Math.round(convertTemp(w.temp))}° · ${name} · Aether`;
+  updateFavicon(w.condition, w.isDay);
+}
+
+function updateFavicon(condition, isDay) {
+  const link = document.querySelector("link[rel='icon']");
+  if (!link) return;
+  const glyph = {
+    clear: isDay
+      ? "%3Ccircle cx='32' cy='32' r='16' fill='%23fff1c9'/%3E%3Cg stroke='%23fff1c9' stroke-width='4' stroke-linecap='round'%3E%3Cpath d='M32 4v8M32 52v8M4 32h8M52 32h8M11 11l6 6M47 47l6 6M11 53l6-6M47 17l6-6'/%3E%3C/g%3E"
+      : "%3Cpath d='M42 12a20 20 0 1010 30 16 16 0 01-10-30z' fill='%23e8ecff'/%3E",
+    clouds: "%3Cpath d='M18 40a10 10 0 010-20 12 12 0 0123-3 10 10 0 018 23z' fill='%23c9d3e6'/%3E",
+    rain: "%3Cpath d='M18 32a10 10 0 010-20 12 12 0 0123-3 10 10 0 018 23z' fill='%23c9d3e6'/%3E%3Cg stroke='%235aa8ff' stroke-width='4' stroke-linecap='round'%3E%3Cpath d='M22 44l-3 8M32 44l-3 8M42 44l-3 8'/%3E%3C/g%3E",
+    snow: "%3Cpath d='M18 32a10 10 0 010-20 12 12 0 0123-3 10 10 0 018 23z' fill='%23dfe6f5'/%3E%3Cg stroke='%23dfe6f5' stroke-width='4' stroke-linecap='round'%3E%3Cpath d='M22 46v6M32 44v8M42 46v6M22 48l-3 3M42 48l3 3'/%3E%3C/g%3E",
+    storm: "%3Cpath d='M18 28a10 10 0 010-20 12 12 0 0123-3 10 10 0 018 23z' fill='%23a8b0c2'/%3E%3Cpath d='M32 30l-8 14h8l-6 14 14-18h-8l6-10z' fill='%23ffd07a'/%3E",
+    fog: "%3Cpath d='M10 22h44M10 32h32M14 42h40M10 52h44' stroke='%23c9d3e6' stroke-width='4' stroke-linecap='round' fill='none'/%3E",
+  }[condition] || "%3Ccircle cx='32' cy='32' r='16' fill='%23fff1c9'/%3E";
+  const bg = "%230b1020";
+  link.setAttribute("href",
+    `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='${bg}'/%3E${glyph}%3C/svg%3E`);
 }
 
 function animateNumber(node, target, format) {
