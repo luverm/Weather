@@ -84,6 +84,17 @@ const app = {
   bucket: "day",
 };
 
+function syncUrlToPlace(place) {
+  try {
+    if (place?.lat == null || place?.lon == null) return;
+    const url = new URL(location.href);
+    url.searchParams.set("lat", place.lat.toFixed(3));
+    url.searchParams.set("lon", place.lon.toFixed(3));
+    if (place.name) url.searchParams.set("name", place.name);
+    history.replaceState(null, "", url.toString());
+  } catch { /* ignore */ }
+}
+
 function pickBucket(time, sunrise, sunset) {
   if (!sunrise || !sunset) {
     const h = new Date(time).getHours();
@@ -199,6 +210,7 @@ async function loadByCoords(place) {
   app.place = place;
   ui.setPlace(place);
   ui.setLoading(`Fetching weather for ${place.name}…`);
+  syncUrlToPlace(place);
 
   // Drop any scrubber offset so we start live on each new city.
   clock.reset();
