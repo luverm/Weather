@@ -299,9 +299,26 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  el.feelsLike.innerHTML = `Feels like ${Math.round(feels)}°<span class="feels-why" id="feels-why"></span>`;
+  renderFeelsWhy(w);
   renderDayRange(w);
   renderDayExtremes(w);
+}
+
+function renderFeelsWhy(w) {
+  const node = document.getElementById("feels-why");
+  if (!node) return;
+  const air = w.temp;
+  const feels = w.feelsLike;
+  if (air == null || feels == null) { node.textContent = ""; return; }
+  const delta = feels - air;
+  if (Math.abs(delta) < 3) { node.textContent = ""; return; }
+  const cause = delta < 0
+    ? ((w.windSpeed ?? 0) > 15 ? "wind chill" : "cool air on skin")
+    : ((w.humidity ?? 0) > 65 ? "humidity" : (w.uv >= 6 ? "strong sun" : "warm air"));
+  const arrow = delta < 0 ? "▼" : "▲";
+  node.className = `feels-why ${delta < 0 ? "colder" : "warmer"}`;
+  node.textContent = ` · ${arrow} ${Math.abs(Math.round(delta))}° from ${cause}`;
 }
 
 function renderDayExtremes(w) {
