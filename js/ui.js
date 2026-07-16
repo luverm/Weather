@@ -1328,14 +1328,25 @@ function renderDailySpark(days) {
 function renderWeekPrecip(days) {
   if (!el.weekPrecip) return;
   const total = days.reduce((s, d) => s + (d.precip ?? 0), 0);
-  const wetDays = days.filter((d) => (d.precip ?? 0) > 0.5).length;
+  const wet = days.filter((d) => (d.precip ?? 0) > 0.5);
   if (total < 0.5) {
     el.weekPrecip.textContent = "dry week";
     el.weekPrecip.dataset.tone = "dry";
     return;
   }
   el.weekPrecip.dataset.tone = total >= 20 ? "wet" : "moist";
-  el.weekPrecip.textContent = `${total.toFixed(total < 5 ? 1 : 0)} mm · ${wetDays} wet day${wetDays === 1 ? "" : "s"}`;
+  const tz = state.weather?.timezone;
+  const shortDay = (ts) => new Date(ts).toLocaleDateString(undefined, {
+    weekday: "short",
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  const wetLabel = wet.length === 0
+    ? ""
+    : wet.length <= 3
+      ? wet.map((d) => shortDay(d.time)).join(", ")
+      : `${wet.length} wet days`;
+  el.weekPrecip.textContent =
+    `${total.toFixed(total < 5 ? 1 : 0)} mm${wetLabel ? " · " + wetLabel : ""}`;
 }
 
 function renderDailyDelta(days) {
