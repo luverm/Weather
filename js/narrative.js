@@ -59,6 +59,13 @@ function findCloudBreak(hourly) {
   return null;
 }
 
+function cardinal(deg) {
+  const dirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
+                "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+  const i = Math.round(((deg % 360) + 360) % 360 / 22.5) % 16;
+  return dirs[i];
+}
+
 function findGusts(hourly) {
   if (!hourly?.length) return null;
   let peak = { t: null, v: -Infinity };
@@ -135,6 +142,11 @@ export function narrate(weather) {
     } else if (direction === "falling" && Math.abs(delta) >= 1.5) {
       bits.push("Pressure is falling — watch for weather moving in.");
     }
+  }
+
+  // Steady wind mention when nothing else grabbed the slot.
+  if (bits.length < 2 && windSpeed >= 15 && weather.windDir != null) {
+    bits.push(`Wind from the ${cardinal(weather.windDir)} at ${Math.round(windSpeed)} km/h.`);
   }
 
   // Calm night fallback.
