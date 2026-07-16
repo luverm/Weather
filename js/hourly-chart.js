@@ -248,6 +248,32 @@ export class HourlyChart {
       }
     }
 
+    // UV line: only during daytime, scaled 0..12 → bottom 40% of the plot.
+    const uvLine = this.svg.querySelector("#chart-uv-line");
+    if (uvLine) {
+      const uvs = this.hours.map((h) => h.uv).filter((v) => v != null && v > 0);
+      if (uvs.length >= 2) {
+        const uvMax = Math.max(6, ...uvs);
+        const uBot = PAD_TOP + innerH - 2;
+        const uTop = PAD_TOP + innerH * 0.55;
+        const uRange = uBot - uTop;
+        let uPath = "";
+        let started = false;
+        this.hours.forEach((h, i) => {
+          if (!h.isDay || h.uv == null || h.uv <= 0.05) {
+            started = false;
+            return;
+          }
+          const y = uBot - (h.uv / uvMax) * uRange;
+          uPath += (started ? "L" : "M") + iToX(i).toFixed(1) + "," + y.toFixed(1) + " ";
+          started = true;
+        });
+        uvLine.setAttribute("d", uPath.trim());
+      } else {
+        uvLine.setAttribute("d", "");
+      }
+    }
+
     // Precipitation probability bars (0-100% -> 0..12px height)
     const precipG = this.svg.querySelector("#chart-precip");
     precipG.innerHTML = "";

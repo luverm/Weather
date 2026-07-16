@@ -198,6 +198,7 @@
             <span class="legend-swatch gust"></span><span>Gusts</span>
             <span class="legend-swatch precip"></span><span>Precip</span>
             <span class="legend-swatch comfort" title="Colored strip at the top of the chart shows hourly feels-like comfort"></span><span>Comfort</span>
+            <span class="legend-swatch uv" title="Dashed amber line traces UV index during daytime"></span><span>UV</span>
           </div>
           <span id="chart-hover" class="chart-hover" hidden></span>
         </div>
@@ -222,6 +223,7 @@
           <path id="chart-temp-fill" class="chart-temp-fill" fill="url(#temp-fill)"></path>
           <path id="chart-gust-line" class="chart-gust-line" fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="1.5 3" opacity="0.45"></path>
           <path id="chart-feels-line" class="chart-feels-line" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3 3" opacity="0.5"></path>
+          <path id="chart-uv-line" class="chart-uv-line" fill="none" stroke="#ffd07a" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="2 2" opacity="0.6"></path>
           <path id="chart-temp-line" class="chart-temp-line" fill="none" stroke="url(#temp-stroke)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"></path>
           <g id="chart-labels" class="chart-labels"></g>
           <line id="chart-cursor" class="chart-cursor" x1="-10" x2="-10" y1="0" y2="140"></line>
