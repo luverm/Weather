@@ -1266,6 +1266,44 @@ kbd {
   font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums;
 }
 
+/* ---------- Rain intensity strip (24-cell mm-per-hour band) ---------- */
+.rain-strip {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+  align-items: center;
+  margin-top: 6px;
+  padding: 0 4px;
+}
+.rain-strip[hidden] { display: none; }
+.rain-strip-total {
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.rain-strip-cells {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  gap: 1px;
+  height: 8px;
+}
+.rain-strip-cell {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: rgba(154, 209, 255, calc(0.12 + var(--i) * 0.75));
+  transform: scaleY(calc(0.35 + var(--i) * 0.65));
+  transform-origin: bottom;
+  transition: transform 200ms var(--ease);
+}
+.rain-strip-cell.snow {
+  background: rgba(220, 230, 250, calc(0.18 + var(--i) * 0.7));
+}
+.rain-strip-cell:hover { transform: scaleY(1.15); }
+
 /* ---------- Comfort strip (24-cell heat band under the chart) ---------- */
 .comfort-strip {
   display: grid;

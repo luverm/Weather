@@ -109,6 +109,9 @@ const el = {
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
   comfortStrip: $("#comfort-strip"),
+  rainStrip: $("#rain-strip"),
+  rainStripCells: $("#rain-strip-cells"),
+  rainStripTotal: $("#rain-strip-total"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
   weekendDetail: $("#weekend-detail"),
@@ -214,6 +217,7 @@ export const ui = {
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
+    renderRainStrip(weather);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
@@ -460,6 +464,25 @@ function uvLevel(v) {
   if (v < 8) return { label: "High", cls: "up" };
   if (v < 11) return { label: "Very High", cls: "up" };
   return { label: "Extreme", cls: "up" };
+}
+
+function renderRainStrip(w) {
+  if (!el.rainStrip || !el.rainStripCells) return;
+  const hrs = (w.hourly || []).slice(0, 24);
+  const anyWet = hrs.some((h) => (h.precip ?? 0) > 0.05);
+  if (!anyWet) { el.rainStrip.hidden = true; return; }
+  el.rainStrip.hidden = false;
+  const total = hrs.reduce((s, h) => s + (h.precip ?? 0), 0);
+  const dryHours = hrs.filter((h) => (h.precip ?? 0) < 0.1).length;
+  el.rainStripTotal.textContent = `${total.toFixed(total < 1 ? 1 : 0)} mm · ${dryHours}h dry`;
+  el.rainStripCells.innerHTML = hrs.map((h) => {
+    const mm = h.precip ?? 0;
+    const kind = h.condition === "snow" ? "snow" : "rain";
+    // Log-ish scaling: 0.1 mm faint, 3 mm mid, 12+ mm saturated.
+    const intensity = Math.min(1, Math.log10(1 + mm) / Math.log10(13));
+    return `<span class="rain-strip-cell ${kind}" title="${fmtTime(h.time)} · ${mm.toFixed(1)} mm"
+             style="--i:${intensity.toFixed(2)}"></span>`;
+  }).join("");
 }
 
 function renderGustStrip(w) {
