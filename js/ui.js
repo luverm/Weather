@@ -691,11 +691,26 @@ function renderSun(w) {
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
   renderDaylightDelta(w);
+  renderSunnyHours(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   renderSunWindow(w);
   renderGoldenHour(w);
   renderAurora(w);
+}
+
+function renderSunnyHours(w) {
+  if (!el.sunDaylightDelta) return;
+  const day = (w.hourly || []).filter((h) =>
+    h.time >= (w.sunrise ?? 0) && h.time <= (w.sunset ?? Infinity)
+    && h.isDay && h.cloudCover != null
+  );
+  if (day.length < 3) return;
+  const clear = day.filter((h) => h.cloudCover < 30).length;
+  if (clear === 0) return;
+  const existing = el.sunDaylightDelta.textContent || "";
+  const chip = `~${clear}h sunny`;
+  el.sunDaylightDelta.textContent = existing ? `${chip} · ${existing}` : chip;
 }
 
 function renderAurora(w) {
