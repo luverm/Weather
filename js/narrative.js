@@ -42,6 +42,23 @@ function findTempSwing(hourly) {
   return null;
 }
 
+function findCloudBreak(hourly) {
+  if (!hourly?.length) return null;
+  const slice = hourly.slice(0, 12).filter((h) => h.cloudCover != null);
+  if (slice.length < 3) return null;
+  const nowCover = slice[0].cloudCover;
+  // Find hour where cover drops below 30 (clear break) or rises above 80 (overcast).
+  const clearing = slice.find((h) => h.cloudCover < 30 && h.time > Date.now() + 60_000);
+  const overcast = slice.find((h) => h.cloudCover > 80 && h.time > Date.now() + 60_000);
+  if (clearing && nowCover > 55 && clearing.cloudCover + 30 < nowCover) {
+    return { kind: "clear", ts: clearing.time, cover: clearing.cloudCover };
+  }
+  if (overcast && nowCover < 45 && overcast.cloudCover - 30 > nowCover) {
+    return { kind: "overcast", ts: overcast.time, cover: overcast.cloudCover };
+  }
+  return null;
+}
+
 function findGusts(hourly) {
   if (!hourly?.length) return null;
   let peak = { t: null, v: -Infinity };
@@ -86,6 +103,16 @@ export function narrate(weather) {
       bits.push(swing.kind === "drop"
         ? `Temperature drops ${swing.by}° by ${fmtHour(swing.ts)}.`
         : `Warming ${swing.by}° by ${fmtHour(swing.ts)}.`);
+    }
+  }
+
+  // Cloud break or overcast turn.
+  if (bits.length < 2) {
+    const cloud = findCloudBreak(weather.hourly);
+    if (cloud) {
+      bits.push(cloud.kind === "clear"
+        ? `Clouds thin out by ${fmtHour(cloud.ts)}.`
+        : `Overcast rolling in by ${fmtHour(cloud.ts)}.`);
     }
   }
 
