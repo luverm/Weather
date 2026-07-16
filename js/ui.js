@@ -1009,7 +1009,7 @@ function renderHeatSafety(w) {
       { label: "Cold exposure risk", tone: "info" };
     el.heatSafety.hidden = false;
     el.heatSafety.dataset.tone = level.tone;
-    el.heatSafety.textContent = `${level.label} · feels ${Math.round(feels)}°`;
+    el.heatSafety.textContent = `${level.label} · feels ${Math.round(convertTemp(feels))}°`;
     return;
   }
   if (t == null || t < 25) { el.heatSafety.hidden = true; return; }
@@ -1029,7 +1029,10 @@ function renderHeatSafety(w) {
   if (!level) { el.heatSafety.hidden = true; return; }
   el.heatSafety.hidden = false;
   el.heatSafety.dataset.tone = level.tone;
-  el.heatSafety.textContent = `${level.label} · WBGT ~${wbgt.toFixed(1)}°C`;
+  const wbgtDisplay = state.unit === "F"
+    ? `${(wbgt * 9 / 5 + 32).toFixed(1)}°F`
+    : `${wbgt.toFixed(1)}°C`;
+  el.heatSafety.textContent = `${level.label} · WBGT ~${wbgtDisplay}`;
 }
 
 function adviceIconSvg(key) {
