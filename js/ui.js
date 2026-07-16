@@ -57,6 +57,7 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   goldenHour: $("#golden-hour"),
@@ -589,6 +590,7 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   renderSunWindow(w);
@@ -652,6 +654,34 @@ function cloudCellColor(cover, isDay) {
   if (cover < 60) return "linear-gradient(180deg, #cdd7e6, #8ea2c0)";
   if (cover < 85) return "linear-gradient(180deg, #a4b0c2, #6f7d94)";
   return "linear-gradient(180deg, #6f7d94, #4a5468)";
+}
+
+function renderDaylightDelta(w) {
+  if (!el.sunDaylightDelta) return;
+  const today = w?.daily?.[0];
+  const tmrw = w?.daily?.[1];
+  if (!today?.sunrise || !today?.sunset || !tmrw?.sunrise || !tmrw?.sunset) {
+    el.sunDaylightDelta.textContent = "";
+    return;
+  }
+  const dToday = today.sunset - today.sunrise;
+  const dTmrw = tmrw.sunset - tmrw.sunrise;
+  const diff = Math.round((dTmrw - dToday) / 1000);
+  if (Math.abs(diff) < 30) {
+    el.sunDaylightDelta.textContent = "~same tomorrow";
+    el.sunDaylightDelta.className = "sun-daylight-delta flat";
+    return;
+  }
+  const sign = diff > 0 ? "+" : "−";
+  const abs = Math.abs(diff);
+  const mins = Math.floor(abs / 60);
+  const secs = abs % 60;
+  const parts = [];
+  if (mins) parts.push(`${mins}m`);
+  if (secs && !mins) parts.push(`${secs}s`);
+  else if (secs && mins) parts.push(`${secs}s`);
+  el.sunDaylightDelta.textContent = `${sign}${parts.join(" ")} tomorrow`;
+  el.sunDaylightDelta.className = `sun-daylight-delta ${diff > 0 ? "gain" : "loss"}`;
 }
 
 function scheduleSunArc(w) {
