@@ -10,7 +10,23 @@ const ICONS = {
   uv: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M4 12H2M6 6l-2-2M12 18a6 6 0 006-6H6a6 6 0 006 6z"/></svg>',
   humid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c4 5 6 8 6 11a6 6 0 01-12 0c0-3 2-6 6-11z"/></svg>',
   sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg>',
+  tomorrow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="18" cy="6" r="1.6" fill="currentColor" stroke="none"/></svg>',
 };
+
+function tomorrowBriefing(days, dow) {
+  const t = days?.[1];
+  if (!t || t.tempMax == null || t.tempMin == null) return null;
+  const label = t.label || t.condition || "Mixed";
+  const rain = (t.pop ?? 0) >= 40 || (t.precip ?? 0) >= 1
+    ? ` · ${t.pop ?? 0}% rain (${(t.precip ?? 0).toFixed(1)} mm)`
+    : "";
+  return {
+    icon: ICONS.tomorrow,
+    label: `${dow(t.time)} outlook`,
+    value: `${label} · ${Math.round(t.tempMin)}° → ${Math.round(t.tempMax)}°${rain}`,
+    ts: t.sunrise || t.time,
+  };
+}
 
 export function buildInsights(weather, { fmtTime, weekday } = {}) {
   const out = [];
@@ -20,6 +36,9 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
   const days = weather.daily || [];
   const fmt = fmtTime || ((t) => new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
   const dow = weekday || ((t) => new Date(t).toLocaleDateString([], { weekday: "short" }));
+
+  const tmrw = tomorrowBriefing(days, dow);
+  if (tmrw) out.push(tmrw);
 
   // 1. Next rain in the week.
   const rainyDay = days.find((d) => (d.pop ?? 0) >= 55 || (d.precip ?? 0) >= 1.5);
@@ -99,5 +118,5 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     });
   }
 
-  return out.slice(0, 6);
+  return out.slice(0, 7);
 }
