@@ -290,6 +290,30 @@ export class HourlyChart {
       });
     }
 
+    // Cloud cover overlay: gentle top-anchored band whose height reflects
+    // hourly cloud percentage. Rendered under precipitation bars so it never
+    // fights the primary series.
+    const cloudsPath = this.svg.querySelector("#chart-clouds");
+    if (cloudsPath) {
+      const covers = this.hours.map((h) => h.cloudCover);
+      if (covers.some((c) => c != null)) {
+        const top = PAD_TOP + 4;
+        const bandH = innerH * 0.35;
+        let path = "";
+        this.hours.forEach((h, i) => {
+          const c = Math.max(0, Math.min(100, h.cloudCover ?? 0));
+          const y = top + bandH * (c / 100);
+          path += (i === 0 ? "M" : "L") + iToX(i).toFixed(1) + "," + y.toFixed(1) + " ";
+        });
+        // Close down to just below the band's top so the shape lives up top.
+        path += `L${iToX(this.hours.length - 1).toFixed(1)},${top.toFixed(1)} `;
+        path += `L${iToX(0).toFixed(1)},${top.toFixed(1)} Z`;
+        cloudsPath.setAttribute("d", path);
+      } else {
+        cloudsPath.setAttribute("d", "");
+      }
+    }
+
     // Night shading: dim rectangles where !isDay
     const nightG = this.svg.querySelector("#chart-night");
     nightG.innerHTML = "";
