@@ -309,6 +309,7 @@ installShortcuts({
     if (next) loadByCoords(next);
   },
   refresh: () => refreshWeather(),
+  share: () => document.getElementById("share-btn")?.click(),
   nudge: (hours) => {
     clock.setOffset(clock.offset() + hours * 3600_000);
     scrubber.sync();
