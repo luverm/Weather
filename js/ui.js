@@ -1888,12 +1888,21 @@ function bindSearch() {
 }
 
 function bindUnitToggle() {
-  el.unitBtn.addEventListener("click", () => {
+  const flip = () => {
     state.unit = state.unit === "C" ? "F" : "C";
     localStorage.setItem("aether:unit", state.unit);
     el.unitBtn.textContent = `°${state.unit}`;
+    if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
     if (state.weather) ui.setWeather(state.weather);
+  };
+  el.unitBtn.addEventListener("click", flip);
+  // Double-click the big temperature to toggle units too — hidden shortcut
+  // that people discover once they've tried tapping the number.
+  el.temp?.addEventListener("dblclick", (e) => {
+    e.preventDefault();
+    flip();
   });
+  el.temp?.setAttribute("title", "Double-click to toggle °C / °F");
 }
 
 function bindLocate() {
