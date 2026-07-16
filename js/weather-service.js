@@ -94,6 +94,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
+    past_days: 1,
     past_hours: 1,
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
@@ -154,12 +155,17 @@ function normalize(d, aq) {
     }
   }
 
-  // 7-day daily forecast.
+  // Yesterday summary (kept separate so daily[] indexing stays "today = 0").
+  let yesterday = null;
   const dailyForecast = [];
   if (daily.time) {
+    const nowMs = now;
+    const dayStart = new Date(nowMs);
+    dayStart.setHours(0, 0, 0, 0);
+    const todayStart = dayStart.getTime();
     for (let i = 0; i < daily.time.length; i++) {
       const ts = new Date(daily.time[i]).getTime();
-      dailyForecast.push({
+      const entry = {
         time: ts,
         tempMax: daily.temperature_2m_max?.[i],
         tempMin: daily.temperature_2m_min?.[i],
@@ -172,7 +178,12 @@ function normalize(d, aq) {
         sunrise: daily.sunrise?.[i] ? new Date(daily.sunrise[i]).getTime() : null,
         sunset: daily.sunset?.[i] ? new Date(daily.sunset[i]).getTime() : null,
         ...mapWmo(daily.weather_code[i]),
-      });
+      };
+      if (ts < todayStart) {
+        yesterday = entry;
+        continue;
+      }
+      dailyForecast.push(entry);
     }
   }
 
@@ -215,6 +226,7 @@ function normalize(d, aq) {
     timezone: d.timezone,
     hourly,
     daily: dailyForecast,
+    yesterday,
     nowcast,
     moon,
     airQuality: normalizeAq(aq),
@@ -402,6 +414,14 @@ function mock(lat, lon) {
     })),
     nowcast: [],
     moon: computeMoonPhase(new Date()),
+    yesterday: {
+      time: now - 86400_000,
+      tempMax: 19, tempMin: 11, precip: 0, pop: 5, snowfall: 0,
+      windMax: 10, gustsMax: 16, uvMax: 4,
+      sunrise: new Date(now - 86400_000).setHours(6, 32, 0, 0),
+      sunset: new Date(now - 86400_000).setHours(18, 58, 0, 0),
+      condition: CONDITIONS.CLOUDS, label: "Cloudy",
+    },
     airQuality: { aqi: 42, pm25: 8, pm10: 14, o3: 40, no2: 15, co: 0.2, label: "Good" },
     pollen: {
       items: [

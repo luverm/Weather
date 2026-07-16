@@ -27,6 +27,20 @@ function sunsetQuality(hourly, sunset) {
   return null;
 }
 
+function yesterdayCompare(yesterday, today, T, unit) {
+  if (!yesterday || !today) return null;
+  if (yesterday.tempMax == null || today.tempMax == null) return null;
+  const deltaHi = today.tempMax - yesterday.tempMax;
+  if (Math.abs(deltaHi) < 2) return null;
+  const label = deltaHi > 0 ? "Warmer than yesterday" : "Cooler than yesterday";
+  const scaled = unit === "F" ? deltaHi * 9 / 5 : deltaHi;
+  return {
+    icon: deltaHi > 0 ? ICONS.warm : ICONS.cold,
+    label,
+    value: `${deltaHi > 0 ? "+" : ""}${Math.round(scaled)}° · high ${T(today.tempMax)} vs ${T(yesterday.tempMax)}`,
+  };
+}
+
 function weeklyNarrative(days, dow, T) {
   if (!days || days.length < 4) return null;
   const highs = days.map((d) => d.tempMax).filter((v) => v != null);
@@ -86,6 +100,8 @@ export function buildInsights(weather, { fmtTime, weekday, unit = "C" } = {}) {
 
   const week = weeklyNarrative(days, dow, T);
   if (week) out.push(week);
+  const yesterday = yesterdayCompare(weather.yesterday, days?.[0], T, unit);
+  if (yesterday) out.push(yesterday);
   const tmrw = tomorrowBriefing(days, dow, T);
   if (tmrw) out.push(tmrw);
 
