@@ -8,6 +8,12 @@ const PAD_RIGHT = 6;
 const PAD_TOP = 16;
 const PAD_BOT = 22;
 
+function cardinalDir(deg) {
+  const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  const i = Math.round(((deg % 360) + 360) % 360 / 45) % 8;
+  return dirs[i];
+}
+
 function comfortColor(feels) {
   // Anchor colors: -10°C dark blue → 0 cool → 12 neutral → 20 mild-warm → 30 hot → 38 red
   const stops = [
@@ -160,12 +166,15 @@ export class HourlyChart {
       : null;
     const feelsStr = (feels != null && Math.abs(feels - t) >= 1)
       ? `<em>feels ${Math.round(feels)}°</em>` : "";
-    const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h` : "";
+    const wind = h.wind != null
+      ? ` · ${Math.round(h.wind)} km/h${h.windDir != null ? " " + cardinalDir(h.windDir) : ""}`
+      : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
     const cloud = h.cloudCover != null ? ` · ${Math.round(h.cloudCover)}% cloud` : "";
+    const uv = h.uv != null && h.uv > 0.1 && h.isDay ? ` · UV ${Math.round(h.uv)}` : "";
     this.popover.innerHTML =
       `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
-      `<em>${h.pop}% precip${wind}${hum}${cloud}</em>`;
+      `<em>${h.pop}% precip${wind}${uv}${hum}${cloud}</em>`;
     this.popover.style.left = `${pxX.toFixed(1)}px`;
     this.popover.style.top = `${pxY.toFixed(1)}px`;
     this.popover.hidden = false;
