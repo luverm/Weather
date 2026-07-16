@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { findSunniestWindow, sunnyLabel } from "./sun-window.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -50,6 +51,11 @@ const el = {
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  sunWindow: $("#sun-window"),
+  sunWindowTitle: $("#sun-window-title"),
+  sunWindowTime: $("#sun-window-time"),
+  sunWindowStrip: $("#sun-window-strip"),
+  sunWindowFoot: $("#sun-window-foot"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -523,6 +529,34 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderSunWindow(w);
+}
+
+function renderSunWindow(w) {
+  if (!el.sunWindow || !el.sunWindowStrip) return;
+  const win = findSunniestWindow(w);
+  if (!win) { el.sunWindow.hidden = true; return; }
+  el.sunWindow.hidden = false;
+  const label = sunnyLabel(win.avgClouds);
+  el.sunWindowTitle.textContent = win.daylightOnly ? "Sunniest window" : "Clearest window";
+  el.sunWindowTime.textContent = `${fmtTime(win.start)}–${fmtTime(win.end)}`;
+  el.sunWindowFoot.textContent = `${label} · ${win.avgClouds}% clouds`;
+  el.sunWindowStrip.innerHTML = win.cells.map((c) => {
+    // 0 clouds -> golden, 100 clouds -> deep grey-blue.
+    const clarity = 1 - c.cover / 100;
+    const opacity = c.isDay ? 0.35 + clarity * 0.6 : 0.15 + clarity * 0.35;
+    return `<span class="sun-window-cell" title="${fmtTime(c.time)} · ${c.cover}% clouds"
+             style="opacity:${opacity.toFixed(2)};background:${cloudCellColor(c.cover, c.isDay)}"></span>`;
+  }).join("");
+}
+
+function cloudCellColor(cover, isDay) {
+  if (!isDay) return "rgba(150,170,220,0.4)";
+  if (cover < 15) return "linear-gradient(180deg, #ffd979, #ff9a5c)";
+  if (cover < 35) return "linear-gradient(180deg, #ffd07a, #d3b48c)";
+  if (cover < 60) return "linear-gradient(180deg, #cdd7e6, #8ea2c0)";
+  if (cover < 85) return "linear-gradient(180deg, #a4b0c2, #6f7d94)";
+  return "linear-gradient(180deg, #6f7d94, #4a5468)";
 }
 
 function scheduleSunArc(w) {
