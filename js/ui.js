@@ -629,6 +629,31 @@ function renderMoon(moon) {
   el.moonLit.setAttribute("d", outer + " " + terminator);
 }
 
+function sunBearings(lat, sunriseTs) {
+  if (lat == null || !sunriseTs) return null;
+  const date = new Date(sunriseTs);
+  const start = Date.UTC(date.getUTCFullYear(), 0, 0);
+  const day = (date.getTime() - start) / 86_400_000;
+  const decl = 23.45 * Math.sin((2 * Math.PI * (day - 81)) / 365) * Math.PI / 180;
+  const latR = lat * Math.PI / 180;
+  const cos = Math.cos(latR);
+  if (Math.abs(cos) < 1e-6) return null;
+  let cosA = -Math.sin(decl) / cos;
+  if (cosA > 1 || cosA < -1) return null;
+  // Azimuth from north, clockwise.
+  const az = Math.acos(cosA) * 180 / Math.PI;
+  const rise = compassBearing(az);
+  const set = compassBearing(360 - az);
+  return { rise, set };
+}
+
+function compassBearing(deg) {
+  const dirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
+                "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+  const i = Math.round(((deg % 360) + 360) % 360 / 22.5) % 16;
+  return dirs[i];
+}
+
 function fmtTime(ts) {
   if (!ts) return "—";
   const tz = state.weather?.timezone;
@@ -646,8 +671,9 @@ function fmtTime(ts) {
 }
 
 function renderSun(w) {
-  el.sunRise.textContent = fmtTime(w.sunrise);
-  el.sunSet.textContent = fmtTime(w.sunset);
+  const bearing = sunBearings(state.place?.lat, w.sunrise);
+  el.sunRise.innerHTML = `${fmtTime(w.sunrise)}${bearing ? `<span class="sun-bearing">${bearing.rise}</span>` : ""}`;
+  el.sunSet.innerHTML = `${fmtTime(w.sunset)}${bearing ? `<span class="sun-bearing">${bearing.set}</span>` : ""}`;
   if (w.sunrise && w.sunset) {
     const mins = Math.round((w.sunset - w.sunrise) / 60_000);
     const hh = Math.floor(mins / 60);
