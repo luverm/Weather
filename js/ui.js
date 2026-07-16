@@ -404,7 +404,15 @@ function renderMetrics(w) {
       el.humidityComfort.textContent = "";
     }
   }
-  el.metricPressure.textContent = Math.round(w.pressure ?? 0);
+  el.metricPressure.innerHTML = `${Math.round(w.pressure ?? 0)}<span class="pressure-badge" id="pressure-badge"></span>`;
+  const badge = document.getElementById("pressure-badge");
+  if (badge) {
+    const p = w.pressure;
+    if (p == null) badge.textContent = "";
+    else if (p >= 1025) { badge.textContent = "H"; badge.className = "pressure-badge high"; }
+    else if (p <= 1000) { badge.textContent = "L"; badge.className = "pressure-badge low"; }
+    else { badge.textContent = ""; }
+  }
   el.metricPressureSub.textContent = w.visibility != null
     ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
     : "visibility —";
