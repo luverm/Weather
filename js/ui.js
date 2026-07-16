@@ -95,6 +95,7 @@ const el = {
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
   weekPrecip: $("#week-precip"),
+  bestDays: $("#best-days"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -1255,6 +1256,7 @@ function renderDaily(w) {
   renderDailySpark(days);
   renderDailyDelta(days);
   renderWeekPrecip(days);
+  renderBestDays(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1347,6 +1349,29 @@ function renderDailySpark(days) {
       el.dailySparkDots.appendChild(c);
     }
   });
+}
+
+function renderBestDays(days) {
+  if (!el.bestDays) return;
+  if (!days || days.length < 3) { el.bestDays.textContent = ""; return; }
+  const scored = days.map((d, i) => {
+    if (d.tempMax == null || d.tempMin == null) return null;
+    const meanT = (d.tempMax + d.tempMin) / 2;
+    // Comfort band 14..24, drop off outside.
+    const tempScore = Math.max(0, 100 - Math.abs(meanT - 19) * 6);
+    const popScore = Math.max(0, 100 - (d.pop ?? 0));
+    const gustScore = Math.max(0, 100 - Math.max(0, (d.gustsMax ?? 20) - 20) * 3);
+    const score = tempScore * 0.4 + popScore * 0.4 + gustScore * 0.2;
+    return { i, d, score };
+  }).filter(Boolean).sort((a, b) => b.score - a.score);
+  if (!scored.length || scored[0].score < 55) { el.bestDays.textContent = ""; return; }
+  const tz = state.weather?.timezone;
+  const shortDay = (ts) => new Date(ts).toLocaleDateString(undefined, {
+    weekday: "short",
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  const top = scored.slice(0, 2).map((s) => shortDay(s.d.time));
+  el.bestDays.textContent = `Best: ${top.join(", ")}`;
 }
 
 function renderWeekPrecip(days) {

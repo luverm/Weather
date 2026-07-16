@@ -1673,6 +1673,16 @@ kbd {
 .week-precip[data-tone="moist"] { color: #9ac8ff; }
 .week-precip[data-tone="wet"] { color: #5aa8ff; border-color: rgba(90, 168, 255, 0.4); }
 .week-precip:empty { display: none; }
+.best-days {
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(140, 220, 200, 0.4);
+  font-size: 11px;
+  color: #8bd7c8;
+  letter-spacing: 0.03em;
+  text-transform: none;
+}
+.best-days:empty { display: none; }
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;
