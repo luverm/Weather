@@ -846,6 +846,14 @@ html[data-reduce-motion="true"] *::after {
   fill: var(--fg-dim);
   font-variant-numeric: tabular-nums;
 }
+.chart-dividers { color: var(--fg-dim); }
+.chart-dividers text.chart-day-mark {
+  font-size: 8.5px;
+  fill: var(--fg-dim);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
 .chart-labels text.temp-point {
   fill: var(--fg-muted);
   font-size: 9.5px;

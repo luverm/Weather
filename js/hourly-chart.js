@@ -370,6 +370,37 @@ export class HourlyChart {
       }
     }
 
+    // Day divider: draw a faint vertical line where the calendar crosses
+    // midnight in the observer's timezone. Useful for "how much of this
+    // curve is tomorrow?"
+    const divG = this.svg.querySelector("#chart-dividers");
+    if (divG) {
+      divG.innerHTML = "";
+      for (let i = 1; i < this.hours.length; i++) {
+        const prev = this._hourOf(this.hours[i - 1].time);
+        const cur = this._hourOf(this.hours[i].time);
+        if (prev === "23" && cur === "00") {
+          const x = iToX(i - 0.5);
+          const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+          line.setAttribute("x1", x.toFixed(1));
+          line.setAttribute("x2", x.toFixed(1));
+          line.setAttribute("y1", "10");
+          line.setAttribute("y2", String(H - PAD_BOT + 6));
+          line.setAttribute("stroke", "currentColor");
+          line.setAttribute("stroke-width", "1");
+          line.setAttribute("stroke-dasharray", "2 3");
+          line.setAttribute("opacity", "0.35");
+          divG.appendChild(line);
+          const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          txt.setAttribute("x", (x + 3).toFixed(1));
+          txt.setAttribute("y", "12");
+          txt.setAttribute("class", "chart-day-mark");
+          txt.textContent = "Tomorrow";
+          divG.appendChild(txt);
+        }
+      }
+    }
+
     // Labels: every ~3 hours
     const unit = this.getUnit();
     const labG = this.svg.querySelector("#chart-labels");
