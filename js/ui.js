@@ -41,6 +41,8 @@ const el = {
   metricHumidity: $("#m-humidity"),
   metricHumiditySub: $("#m-humidity-sub"),
   metricPressure: $("#m-pressure"),
+  metricPressureNum: $("#m-pressure-num"),
+  metricPressureBadge: $("#pressure-badge"),
   metricPressureSub: $("#m-pressure-sub"),
   metricUV: $("#m-uv"),
   metricUVSub: $("#m-uv-sub"),
@@ -447,14 +449,13 @@ function renderMetrics(w) {
       el.humidityComfort.textContent = "";
     }
   }
-  el.metricPressure.innerHTML = `${Math.round(w.pressure ?? 0)}<span class="pressure-badge" id="pressure-badge"></span>`;
-  const badge = document.getElementById("pressure-badge");
-  if (badge) {
+  if (el.metricPressureNum) el.metricPressureNum.textContent = String(Math.round(w.pressure ?? 0));
+  if (el.metricPressureBadge) {
     const p = w.pressure;
-    if (p == null) badge.textContent = "";
-    else if (p >= 1025) { badge.textContent = "H"; badge.className = "pressure-badge high"; }
-    else if (p <= 1000) { badge.textContent = "L"; badge.className = "pressure-badge low"; }
-    else { badge.textContent = ""; }
+    if (p == null) { el.metricPressureBadge.textContent = ""; el.metricPressureBadge.className = "pressure-badge"; }
+    else if (p >= 1025) { el.metricPressureBadge.textContent = "H"; el.metricPressureBadge.className = "pressure-badge high"; }
+    else if (p <= 1000) { el.metricPressureBadge.textContent = "L"; el.metricPressureBadge.className = "pressure-badge low"; }
+    else { el.metricPressureBadge.textContent = ""; el.metricPressureBadge.className = "pressure-badge"; }
   }
   el.metricPressureSub.textContent = w.visibility != null
     ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
