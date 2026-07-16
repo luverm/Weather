@@ -125,6 +125,16 @@ export function narrate(weather, { unit = "C" } = {}) {
     }
   }
 
+  // Chilly start tomorrow if today is mild but tomorrow's low dips.
+  if (bits.length < 2) {
+    const today = weather.daily?.[0];
+    const tmrw = weather.daily?.[1];
+    if (today?.tempMin != null && tmrw?.tempMin != null
+        && temp >= 12 && tmrw.tempMin <= 5) {
+      bits.push(`Chilly start tomorrow — down to ${T(tmrw.tempMin)}.`);
+    }
+  }
+
   // Wind gusts.
   if (bits.length < 2) {
     const gust = findGusts(weather.hourly);
