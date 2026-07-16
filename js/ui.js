@@ -1082,6 +1082,7 @@ function renderDaily(w) {
     if (d.tempMax > gMax) gMax = d.tempMax;
   }
   const span = Math.max(1, gMax - gMin);
+  const wettest = Math.max(1, ...days.map((d) => d.precip ?? 0));
   days.forEach((d, i) => {
     const dt = new Date(d.time);
     const tz = state.weather?.timezone;
@@ -1099,6 +1100,14 @@ function renderDaily(w) {
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const mm = d.precip ?? 0;
+    const rainBarW = mm > 0.1 ? Math.max(6, (mm / wettest) * 100) : 0;
+    const rainBar = rainBarW > 0
+      ? `<span class="daily-rain" title="${mm.toFixed(1)} mm">
+           <span class="daily-rain-fill" style="width:${rainBarW.toFixed(0)}%"></span>
+           <span class="daily-rain-num">${mm.toFixed(mm < 1 ? 1 : 0)}</span>
+         </span>`
+      : `<span class="daily-rain empty"></span>`;
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
@@ -1107,6 +1116,7 @@ function renderDaily(w) {
       </div>
       <span class="daily-temp-min">${Math.round(convertTemp(d.tempMin))}°</span>
       <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°</span>
+      ${rainBar}
       ${extra}
     `;
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));

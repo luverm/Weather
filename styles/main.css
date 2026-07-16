@@ -1521,7 +1521,7 @@ kbd {
   letter-spacing: 0.04em;
 }
 .daily-gust.show { display: block; }
-.daily-item { grid-auto-rows: auto; }
+.daily-item { grid-auto-rows: auto; grid-template-columns: 72px 28px 1fr 60px 60px 60px; }
 
 /* ---------- Forecast (hourly + daily) ---------- */
 .forecast, .daily {
@@ -1641,12 +1641,35 @@ kbd {
 }
 .daily-item {
   display: grid;
-  grid-template-columns: 72px 28px 1fr 60px 60px;
+  grid-template-columns: 72px 28px 1fr 60px 60px 60px;
   gap: 12px;
   align-items: center;
   padding: 10px 8px;
   border-radius: 10px;
   transition: background 200ms var(--ease);
+}
+.daily-rain {
+  position: relative;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(154, 209, 255, 0.10);
+  overflow: hidden;
+  display: flex; align-items: center;
+}
+.daily-rain.empty { background: transparent; }
+.daily-rain-fill {
+  position: absolute; top: 0; bottom: 0; left: 0;
+  background: linear-gradient(90deg, rgba(154, 209, 255, 0.45), rgba(90, 168, 255, 0.75));
+  border-radius: 4px;
+}
+.daily-rain-num {
+  position: relative;
+  margin-left: auto;
+  padding-right: 4px;
+  font-size: 10px;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+  z-index: 1;
 }
 .daily-item:hover { background: var(--glass); }
 .daily-day { font-size: 13px; font-weight: 500; }
