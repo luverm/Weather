@@ -82,6 +82,7 @@ const el = {
   pollenLevel: $("#pollen-level"),
   pollenDominant: $("#pollen-dominant"),
   pollenItems: $("#pollen-items"),
+  pollenAdvice: $("#pollen-advice"),
   pressureTrend: $("#m-pressure-trend"),
   tempTrend: $("#temp-trend"),
   uvLevel: $("#m-uv-level"),
@@ -1219,6 +1220,15 @@ function renderPollen(pollen) {
   el.pollenItems.innerHTML = pollen.items.map((p) =>
     `<span>${escapeHtml(p.label)} ${p.value.toFixed(1)}</span>`
   ).join("");
+  if (el.pollenAdvice) {
+    el.pollenAdvice.textContent = pollenAdvice(pollen.level);
+  }
+}
+
+function pollenAdvice(level) {
+  if (level === "Very high") return "Very high — mask up outside, close windows, shower after.";
+  if (level === "High") return "High — sensitive people should limit time outdoors.";
+  return "";
 }
 
 function renderTrends(w) {
