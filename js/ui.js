@@ -163,6 +163,7 @@ const state = {
   sunArcTimer: null,
   localTimer: null,
   nowcastTimer: null,
+  shadowTimer: null,
 };
 
 export const ui = {
@@ -796,6 +797,12 @@ function renderSun(w) {
 }
 
 function renderShadow(w) {
+  if (state.shadowTimer) { clearInterval(state.shadowTimer); state.shadowTimer = null; }
+  paintShadow(w);
+  state.shadowTimer = setInterval(() => paintShadow(w), 60_000);
+}
+
+function paintShadow(w) {
   if (!el.sunShadow) return;
   const lat = state.place?.lat;
   const lon = state.place?.lon;
