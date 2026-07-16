@@ -1676,6 +1676,7 @@ function applyStoredPreferences() {
 ui.isReduceMotion = () => localStorage.getItem("aether:reduceMotion") === "1";
 
 function startFetchedTicker() {
+  const AUTO_REFRESH_MIN = 15;
   const update = () => {
     if (!el.fetchedAgo || !state.weather?.fetchedAt) {
       if (el.fetchedAgo) el.fetchedAgo.textContent = "";
@@ -1687,8 +1688,13 @@ function startFetchedTicker() {
       minutes < 1 ? "Just now" :
       minutes < 60 ? `Updated ${minutes}m ago` :
       `Updated ${Math.floor(minutes / 60)}h ago`;
-    el.fetchedAgo.textContent = "· " + label;
+    const remaining = Math.max(0, AUTO_REFRESH_MIN - minutes);
+    const suffix = remaining > 0 && minutes < AUTO_REFRESH_MIN ? ` (next ~${remaining}m)` : "";
+    el.fetchedAgo.textContent = "· " + label + suffix;
     el.fetchedAgo.classList.toggle("stale", minutes >= 20);
+    try {
+      el.fetchedAgo.title = new Date(state.weather.fetchedAt).toLocaleString();
+    } catch { /* ignore */ }
   };
   update();
   setInterval(update, 30_000);
