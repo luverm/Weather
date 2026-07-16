@@ -1721,11 +1721,14 @@ function renderPlaces() {
   if (!all.length) { el.placesStrip.hidden = true; el.placesStrip.innerHTML = ""; return; }
   el.placesStrip.hidden = false;
   const activeId = state.place ? places.idFor(state.place) : null;
+  const STALE_MS = 4 * 3600_000;
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
+    const stale = p.updated && (Date.now() - p.updated) > STALE_MS;
     const icon = p.condition ? `<span class="chip-icon">${iconFor(p.condition)}</span>` : "";
     return `
-      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
+      <div class="place-chip ${active ? "active" : ""} ${stale ? "stale" : ""}" data-id="${p.id}"
+           title="${stale ? "Cached — reload to refresh" : ""}">
         ${icon}
         <span>${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
