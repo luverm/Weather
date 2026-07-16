@@ -113,6 +113,8 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunPeak: $("#sun-peak"),
+  sunPeakAlt: $("#sun-peak-alt"),
   comfortStrip: $("#comfort-strip"),
   rainStrip: $("#rain-strip"),
   rainStripCells: $("#rain-strip-cells"),
@@ -701,11 +703,26 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   renderDaylightDelta(w);
   renderSunnyHours(w);
+  renderPeakAltitude(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   renderSunWindow(w);
   renderGoldenHour(w);
   renderAurora(w);
+}
+
+function renderPeakAltitude(w) {
+  if (!el.sunPeak || !el.sunPeakAlt) return;
+  const lat = state.place?.lat;
+  if (lat == null || !w?.sunrise) { el.sunPeak.hidden = true; return; }
+  const date = new Date(w.sunrise);
+  const start = Date.UTC(date.getUTCFullYear(), 0, 0);
+  const day = (date.getTime() - start) / 86_400_000;
+  const decl = 23.45 * Math.sin((2 * Math.PI * (day - 81)) / 365);
+  const alt = 90 - Math.abs(lat - decl);
+  if (alt <= 0) { el.sunPeak.hidden = true; return; }
+  el.sunPeak.hidden = false;
+  el.sunPeakAlt.textContent = `${Math.round(alt)}°`;
 }
 
 function renderSunnyHours(w) {
