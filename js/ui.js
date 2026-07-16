@@ -78,6 +78,7 @@ const el = {
   advice: $("#advice"),
   adviceText: $("#advice-text"),
   heatSafety: $("#heat-safety"),
+  comfortNow: $("#comfort-now"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
   pollenCard: $("#pollen-card"),
@@ -995,6 +996,27 @@ function renderAdvice(w) {
   if (iconEl && r.icon) iconEl.outerHTML = adviceIconSvg(r.icon);
   el.advice.hidden = false;
   renderHeatSafety(w);
+  renderComfortNow(w);
+}
+
+function renderComfortNow(w) {
+  if (!el.comfortNow) return;
+  const feels = w.feelsLike ?? w.temp;
+  if (feels == null) { el.comfortNow.hidden = true; return; }
+  const tempScore = Math.max(0, 100 - Math.abs(feels - 19) * 6);
+  const windScore = Math.max(0, 100 - Math.max(0, (w.windSpeed ?? 0) - 12) * 3);
+  const popScore = Math.max(0, 100 - (w.hourly?.[0]?.pop ?? 0) * 0.7);
+  const uvPenalty = (w.uv ?? 0) >= 8 ? 15 : 0;
+  const score = Math.round(tempScore * 0.4 + windScore * 0.2 + popScore * 0.4 - uvPenalty);
+  const band =
+    score >= 80 ? "excellent" :
+    score >= 65 ? "great" :
+    score >= 45 ? "okay" :
+    score >= 25 ? "poor" :
+    "rough";
+  el.comfortNow.hidden = false;
+  el.comfortNow.dataset.band = band;
+  el.comfortNow.textContent = `Outdoors right now: ${band} (${score})`;
 }
 
 function renderHeatSafety(w) {

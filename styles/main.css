@@ -409,6 +409,23 @@ html[data-reduce-motion="true"] *::after {
 .heat-safety[data-tone="info"] { color: #ffd07a; border-color: rgba(255,208,122,0.4); }
 .heat-safety[data-tone="warn"] { color: #ffa872; border-color: rgba(255,168,114,0.5); background: rgba(255,168,114,0.06); }
 .heat-safety[data-tone="danger"] { color: #ff6a6a; border-color: rgba(255,106,106,0.55); background: rgba(255,106,106,0.08); }
+
+.comfort-now {
+  display: inline-block;
+  margin: 8px 8px 0 0;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  border: 1px solid var(--stroke);
+  color: var(--fg-muted);
+}
+.comfort-now[hidden] { display: none; }
+.comfort-now[data-band="excellent"] { color: #6ce8b0; border-color: rgba(108,232,176,0.4); }
+.comfort-now[data-band="great"] { color: #8bd7c8; border-color: rgba(139,215,200,0.4); }
+.comfort-now[data-band="okay"] { color: #ffd07a; border-color: rgba(255,208,122,0.4); }
+.comfort-now[data-band="poor"] { color: #ffa872; border-color: rgba(255,168,114,0.5); }
+.comfort-now[data-band="rough"] { color: #ff6a6a; border-color: rgba(255,106,106,0.5); }
 .day-range {
   margin-top: 10px;
   display: grid;
