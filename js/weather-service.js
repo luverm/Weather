@@ -350,7 +350,15 @@ function computeMoonPhase(date) {
     phase < 0.72 ? "Waning gibbous" :
     phase < 0.78 ? "Last quarter" :
     "Waning crescent";
-  return { phase, illum, name };
+  // Days until the next full moon (phase = 0.5) or new moon (phase = 0 / 1).
+  const SYN = 29.5305882;
+  const daysToFull = phase < 0.5
+    ? Math.round((0.5 - phase) * SYN)
+    : Math.round((1.5 - phase) * SYN);
+  const daysToNew = phase < 1
+    ? Math.round((1 - phase) * SYN)
+    : Math.round(SYN);
+  return { phase, illum, name, daysToFull, daysToNew };
 }
 
 function mock(lat, lon) {
