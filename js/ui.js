@@ -1988,6 +1988,14 @@ function bindShare() {
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
     ].filter(Boolean);
+    if (state.place?.lat != null && state.place?.lon != null) {
+      const url = new URL(location.href);
+      url.search = "";
+      url.searchParams.set("lat", state.place.lat.toFixed(3));
+      url.searchParams.set("lon", state.place.lon.toFixed(3));
+      if (state.place.name) url.searchParams.set("name", state.place.name);
+      lines.push(url.toString());
+    }
     const text = lines.join("\n");
     try {
       if (navigator.share) {
