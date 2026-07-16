@@ -438,6 +438,12 @@ function renderMetrics(w) {
     }
   }
   el.metricHumidity.textContent = Math.round(w.humidity ?? 0);
+  const wb = wetBulb(w.temp, w.humidity);
+  if (wb != null) {
+    el.metricHumidity.title = `Wet-bulb ~${Math.round(convertTemp(wb))}°${state.unit}`;
+  } else {
+    el.metricHumidity.removeAttribute("title");
+  }
   el.metricHumiditySub.textContent = w.dewPoint != null
     ? `dew ${Math.round(convertTemp(w.dewPoint))}°`
     : "dew —";
@@ -483,6 +489,14 @@ function renderMetrics(w) {
     el.metricUVSub.textContent = "peak —";
   }
   renderPressureSparkline(w);
+}
+
+function wetBulb(t, rh) {
+  if (t == null || rh == null) return null;
+  // Stull 2011: accurate to ~0.3°C for the normal range.
+  return t * Math.atan(0.151977 * Math.sqrt(rh + 8.313659))
+    + Math.atan(t + rh) - Math.atan(rh - 1.676331)
+    + 0.00391838 * Math.pow(rh, 1.5) * Math.atan(0.023101 * rh) - 4.686035;
 }
 
 function humidityComfort(rh, dew, temp) {
