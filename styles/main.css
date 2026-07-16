@@ -906,10 +906,14 @@ html[data-reduce-motion="true"] *::after {
   display: block;
   height: 100%;
   border-radius: 2px;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
   background: rgba(154, 209, 255, calc(0.2 + var(--h) * 0.7));
   transform: scaleY(calc(0.4 + var(--h) * 0.6));
   transform-origin: bottom;
 }
+.wind-gust-cell:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .wind-gust-cell.calm { background: rgba(154, 209, 255, calc(0.15 + var(--h) * 0.4)); }
 .wind-gust-cell.breeze { background: rgba(154, 220, 200, calc(0.25 + var(--h) * 0.55)); }
 .wind-gust-cell.windy { background: rgba(255, 205, 130, calc(0.35 + var(--h) * 0.55)); }
@@ -1393,11 +1397,15 @@ kbd {
   display: block;
   height: 100%;
   border-radius: 2px;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
   background: rgba(154, 209, 255, calc(0.12 + var(--i) * 0.75));
   transform: scaleY(calc(0.35 + var(--i) * 0.65));
   transform-origin: bottom;
   transition: transform 200ms var(--ease);
 }
+.rain-strip-cell:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .rain-strip-cell.snow {
   background: rgba(220, 230, 250, calc(0.18 + var(--i) * 0.7));
 }

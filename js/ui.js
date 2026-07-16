@@ -521,19 +521,35 @@ function renderRainStrip(w) {
     const kind = h.condition === "snow" ? "snow" : "rain";
     // Log-ish scaling: 0.1 mm faint, 3 mm mid, 12+ mm saturated.
     const intensity = Math.min(1, Math.log10(1 + mm) / Math.log10(13));
-    return `<span class="rain-strip-cell ${kind}" title="${fmtTime(h.time)} · ${mm.toFixed(1)} mm"
-             style="--i:${intensity.toFixed(2)}"></span>`;
+    return `<button type="button" class="rain-strip-cell ${kind}" data-ts="${h.time}"
+             title="${fmtTime(h.time)} · ${mm.toFixed(1)} mm" aria-label="Jump to ${fmtTime(h.time)}, ${mm.toFixed(1)} mm"
+             style="--i:${intensity.toFixed(2)}"></button>`;
   }).join("");
+  el.rainStripCells.querySelectorAll(".rain-strip-cell").forEach((cell) => {
+    cell.addEventListener("click", () => {
+      const ts = parseInt(cell.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
 }
 
 function renderGustStrip(w) {
   if (!el.windGustStrip) return;
-  const cells = (w.hourly || []).slice(0, 12).map((h) => h.gusts ?? h.wind).filter((v) => v != null);
-  if (cells.length < 4) { el.windGustStrip.innerHTML = ""; return; }
-  el.windGustStrip.innerHTML = cells.map((v) => {
+  const hrs = (w.hourly || []).slice(0, 12).filter((h) => (h.gusts ?? h.wind) != null);
+  if (hrs.length < 4) { el.windGustStrip.innerHTML = ""; return; }
+  el.windGustStrip.innerHTML = hrs.map((h) => {
+    const v = h.gusts ?? h.wind;
     const cls = v < 20 ? "calm" : v < 35 ? "breeze" : v < 55 ? "windy" : "gale";
-    return `<span class="wind-gust-cell ${cls}" title="${Math.round(v)} km/h" style="--h:${Math.min(1, v / 80).toFixed(2)}"></span>`;
+    return `<button type="button" class="wind-gust-cell ${cls}" data-ts="${h.time}"
+             title="${fmtTime(h.time)} · ${Math.round(v)} km/h" aria-label="Jump to ${fmtTime(h.time)}, ${Math.round(v)} km/h"
+             style="--h:${Math.min(1, v / 80).toFixed(2)}"></button>`;
   }).join("");
+  el.windGustStrip.querySelectorAll(".wind-gust-cell").forEach((cell) => {
+    cell.addEventListener("click", () => {
+      const ts = parseInt(cell.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
 }
 
 function renderPressureSparkline(w) {
