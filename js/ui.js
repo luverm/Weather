@@ -1651,7 +1651,8 @@ function toggleDailyExpand(item, d, w) {
     const height = 10 + (pct / 100) * 36;
     const precipLevel = h.pop >= 60 ? 2 : h.pop >= 25 ? 1 : 0;
     const hh = new Date(h.time).getHours().toString().padStart(2, "0");
-    return `<button type="button" class="daily-expand-bar" data-precip="${precipLevel}" data-ts="${h.time}" style="height:${height.toFixed(1)}px" title="${hh}:00 · ${Math.round(convertTemp(h.temp))}° · ${h.pop}%"><span>${Math.round(convertTemp(h.temp))}°</span></button>`;
+    const glyph = `<span class="expand-glyph">${iconFor(h.condition)}</span>`;
+    return `<button type="button" class="daily-expand-bar" data-precip="${precipLevel}" data-ts="${h.time}" style="height:${height.toFixed(1)}px" title="${hh}:00 · ${Math.round(convertTemp(h.temp))}° · ${h.pop}%">${glyph}<span>${Math.round(convertTemp(h.temp))}°</span></button>`;
   }).join("");
   box.querySelectorAll(".daily-expand-bar").forEach((bar) => {
     bar.addEventListener("click", (e) => {
