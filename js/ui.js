@@ -361,7 +361,12 @@ function renderMetrics(w) {
       el.uvLevel.textContent = "";
     }
   }
-  if (w.uvPeak?.time) {
+  const burn = burnTime(w.uv);
+  if (burn && w.uvPeak?.time) {
+    el.metricUVSub.textContent = `burn ~${burn} · peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`;
+  } else if (burn) {
+    el.metricUVSub.textContent = `burn ~${burn}`;
+  } else if (w.uvPeak?.time) {
     el.metricUVSub.textContent = `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`;
   } else {
     el.metricUVSub.textContent = "peak —";
@@ -398,6 +403,20 @@ function beaufort(kmh) {
   if (kmh < 103) return { label: "Storm", cls: "up" };
   if (kmh < 118) return { label: "Violent storm", cls: "up" };
   return { label: "Hurricane", cls: "up" };
+}
+
+// Time until first-degree sunburn for an average lightly-tanned (Fitzpatrick II-III)
+// skin, from UV index. Uses the WHO MED formula: burn ≈ 200 / UV minutes at UV=1.
+// Below UV 2 the risk is negligible, so we return null.
+function burnTime(uv) {
+  if (uv == null || uv < 2) return null;
+  const minutes = Math.max(5, Math.round(200 / uv));
+  if (minutes >= 60) {
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return m ? `${h}h ${m}m` : `${h}h`;
+  }
+  return `${minutes}m`;
 }
 
 function uvLevel(v) {
