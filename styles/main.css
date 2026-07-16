@@ -1153,6 +1153,14 @@ kbd {
   letter-spacing: 0.06em;
   vertical-align: middle;
 }
+.sun-yesterday {
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 9px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+  vertical-align: middle;
+}
 .sun-daylight-delta {
   font-size: 10px;
   color: var(--fg-dim);

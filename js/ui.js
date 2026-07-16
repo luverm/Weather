@@ -752,6 +752,20 @@ function renderMoon(moon) {
   el.moonLit.setAttribute("d", outer + " " + terminator);
 }
 
+function sunDeltaChip(prev, cur) {
+  if (!prev || !cur) return "";
+  // Sunrise/sunset times drift by ~1 minute per day. Match by "time-of-day"
+  // rather than epoch: 06:15 yesterday → 06:14 today = -1m even though 24h
+  // elapsed between the two epochs.
+  const p = new Date(prev), c = new Date(cur);
+  const pMin = p.getHours() * 60 + p.getMinutes();
+  const cMin = c.getHours() * 60 + c.getMinutes();
+  const delta = cMin - pMin;
+  if (Math.abs(delta) < 1) return "";
+  const sign = delta > 0 ? "+" : "−";
+  return `<span class="sun-yesterday">${sign}${Math.abs(delta)}m</span>`;
+}
+
 function sunBearings(lat, sunriseTs) {
   if (lat == null || !sunriseTs) return null;
   const date = new Date(sunriseTs);
@@ -795,8 +809,12 @@ function fmtTime(ts) {
 
 function renderSun(w) {
   const bearing = sunBearings(state.place?.lat, w.sunrise);
-  el.sunRise.innerHTML = `${fmtTime(w.sunrise)}${bearing ? `<span class="sun-bearing">${bearing.rise}</span>` : ""}`;
-  el.sunSet.innerHTML = `${fmtTime(w.sunset)}${bearing ? `<span class="sun-bearing">${bearing.set}</span>` : ""}`;
+  const yRise = w.yesterday?.sunrise;
+  const ySet = w.yesterday?.sunset;
+  const riseDelta = sunDeltaChip(yRise, w.sunrise);
+  const setDelta = sunDeltaChip(ySet, w.sunset);
+  el.sunRise.innerHTML = `${fmtTime(w.sunrise)}${bearing ? `<span class="sun-bearing">${bearing.rise}</span>` : ""}${riseDelta}`;
+  el.sunSet.innerHTML = `${fmtTime(w.sunset)}${bearing ? `<span class="sun-bearing">${bearing.set}</span>` : ""}${setDelta}`;
   if (el.sunArcRiseLabel) el.sunArcRiseLabel.textContent = bearing?.rise ?? "";
   if (el.sunArcSetLabel) el.sunArcSetLabel.textContent = bearing?.set ?? "";
   if (w.sunrise && w.sunset) {
