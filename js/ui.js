@@ -260,6 +260,8 @@ export const ui = {
   },
   setScrubbing(on) {
     document.documentElement.setAttribute("data-scrubbing", on ? "true" : "false");
+    const label = document.getElementById("place-label-text");
+    if (label) label.textContent = on ? "Preview" : "Now in";
     if (on) {
       el.hintText.textContent = "Drag to explore future weather.";
     } else {
