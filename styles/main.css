@@ -1007,6 +1007,32 @@ kbd {
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
 
+.golden-hour {
+  margin-top: 8px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.golden-hour[hidden] { display: none; }
+.golden-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--stroke);
+  font-size: 11px;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+.golden-chip .golden-label { color: var(--fg-dim); letter-spacing: 0.08em; text-transform: uppercase; font-size: 10px; }
+.golden-chip .golden-time { color: var(--fg); }
+.golden-swatch, .blue-swatch {
+  width: 8px; height: 8px; border-radius: 50%;
+  box-shadow: 0 0 6px currentColor;
+}
+.golden-swatch { background: linear-gradient(180deg, #ffdc7a, #ff9c5c); color: #ffb765; }
+.blue-swatch { background: linear-gradient(180deg, #6a86d1, #38477a); color: #6a86d1; }
+
 .sun-window {
   margin-top: 10px;
   padding: 8px 10px 10px;

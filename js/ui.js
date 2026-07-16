@@ -58,6 +58,9 @@ const el = {
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  goldenHour: $("#golden-hour"),
+  goldenTime: $("#golden-time"),
+  blueTime: $("#blue-time"),
   sunWindow: $("#sun-window"),
   sunWindowTitle: $("#sun-window-title"),
   sunWindowTime: $("#sun-window-time"),
@@ -577,6 +580,39 @@ function renderSun(w) {
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   renderSunWindow(w);
+  renderGoldenHour(w);
+}
+
+function renderGoldenHour(w) {
+  if (!el.goldenHour) return;
+  if (!w?.sunrise || !w?.sunset) { el.goldenHour.hidden = true; return; }
+  const now = Date.now();
+  // Approximate golden hour: first/last 55 min above horizon. Blue hour:
+  // 30 min before sunrise / after sunset.
+  const goldMs = 55 * 60_000;
+  const blueMs = 30 * 60_000;
+  // Pick the next upcoming pair. If evening hasn't ended, show evening.
+  let goldenStart, goldenEnd, blueStart, blueEnd, kind;
+  if (now < w.sunrise - blueMs) {
+    goldenStart = w.sunrise; goldenEnd = w.sunrise + goldMs;
+    blueStart = w.sunrise - blueMs; blueEnd = w.sunrise;
+    kind = "morning";
+  } else if (now < w.sunset + blueMs) {
+    goldenStart = w.sunset - goldMs; goldenEnd = w.sunset;
+    blueStart = w.sunset; blueEnd = w.sunset + blueMs;
+    kind = "evening";
+  } else {
+    // After tonight's blue hour, hop to tomorrow's morning if available.
+    const tmrw = w.daily?.[1];
+    if (!tmrw?.sunrise) { el.goldenHour.hidden = true; return; }
+    goldenStart = tmrw.sunrise; goldenEnd = tmrw.sunrise + goldMs;
+    blueStart = tmrw.sunrise - blueMs; blueEnd = tmrw.sunrise;
+    kind = "morning";
+  }
+  el.goldenHour.hidden = false;
+  el.goldenHour.dataset.kind = kind;
+  el.goldenTime.textContent = `${fmtTime(goldenStart)}–${fmtTime(goldenEnd)}`;
+  el.blueTime.textContent = `${fmtTime(blueStart)}–${fmtTime(blueEnd)}`;
 }
 
 function renderSunWindow(w) {
