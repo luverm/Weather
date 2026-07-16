@@ -368,13 +368,17 @@ setInterval(() => {
   refreshWeather();
 }, 15 * 60_000);
 
-// Offline indicator wiring.
+// Offline indicator wiring + auto-refresh when back online.
 const offlineBanner = document.getElementById("offline-banner");
 function syncOnlineState() {
   if (!offlineBanner) return;
   offlineBanner.hidden = navigator.onLine;
 }
-window.addEventListener("online", syncOnlineState);
+window.addEventListener("online", () => {
+  syncOnlineState();
+  // Give the network a moment to settle before hitting the API.
+  setTimeout(() => { if (app.place) refreshWeather(); }, 800);
+});
 window.addEventListener("offline", syncOnlineState);
 syncOnlineState();
 
