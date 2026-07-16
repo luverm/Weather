@@ -368,6 +368,16 @@ setInterval(() => {
   refreshWeather();
 }, 15 * 60_000);
 
+// Offline indicator wiring.
+const offlineBanner = document.getElementById("offline-banner");
+function syncOnlineState() {
+  if (!offlineBanner) return;
+  offlineBanner.hidden = navigator.onLine;
+}
+window.addEventListener("online", syncOnlineState);
+window.addEventListener("offline", syncOnlineState);
+syncOnlineState();
+
 // PWA service worker — optional, best-effort.
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
