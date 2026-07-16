@@ -252,6 +252,7 @@ export const ui = {
         updated: Date.now(),
       });
     }
+    updateDocumentTitle(weather);
     renderPlaces();
   },
   /** Called by the scrubber whenever simulated time moves. */
@@ -295,6 +296,15 @@ export const ui = {
 // ---------- Rendering ----------
 
 function convertTemp(c) { return state.unit === "F" ? c * 9 / 5 + 32 : c; }
+
+function updateDocumentTitle(w) {
+  const name = state.place?.name;
+  if (!name || w?.temp == null) {
+    document.title = "Aether — Interactive Weather";
+    return;
+  }
+  document.title = `${Math.round(convertTemp(w.temp))}° · ${name} · Aether`;
+}
 
 function animateNumber(node, target, format) {
   if (target == null || isNaN(target)) { node.textContent = "–"; return; }
