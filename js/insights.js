@@ -12,7 +12,20 @@ const ICONS = {
   sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg>',
   tomorrow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="18" cy="6" r="1.6" fill="currentColor" stroke="none"/></svg>',
   snow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M4 6l16 12M20 6L4 18M2 12h20"/></svg>',
+  sunset: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 18a5 5 0 015-5M12 18a5 5 0 00-5-5M12 18h10M12 18H2M15 6l-2 2M9 6l2 2M12 3v3"/></svg>',
 };
+
+function sunsetQuality(hourly, sunset) {
+  if (!sunset || sunset < Date.now()) return null;
+  const nearby = (hourly || []).find((h) => Math.abs(h.time - sunset) < 60 * 60_000);
+  if (!nearby || nearby.cloudCover == null) return null;
+  const c = nearby.cloudCover;
+  // Sweet spot for dramatic sunset colors is roughly 30-70% mid/high cloud cover.
+  if (c >= 30 && c <= 65) return { label: "Sunset colors", desc: `${c}% cloud — dramatic light likely` };
+  if (c < 15) return { label: "Sunset colors", desc: "clear sky — softer glow than dramatic" };
+  if (c >= 85) return { label: "Sunset colors", desc: `${c}% cloud — mostly muted` };
+  return null;
+}
 
 function tomorrowBriefing(days, dow) {
   const t = days?.[1];
@@ -116,6 +129,17 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
       icon: ICONS.uv, label: "UV peak",
       value: `${Math.round(weather.uvPeak.value)} at ${fmt(weather.uvPeak.time)}`,
       ts: weather.uvPeak.time,
+    });
+  }
+
+  // 6a. Sunset quality (only when sunset is still ahead today).
+  const sq = sunsetQuality(hours, weather.sunset);
+  if (sq) {
+    out.push({
+      icon: ICONS.sunset,
+      label: sq.label,
+      value: `${sq.desc} at ${fmt(weather.sunset)}`,
+      ts: weather.sunset,
     });
   }
 
