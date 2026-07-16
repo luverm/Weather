@@ -114,6 +114,8 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcRiseLabel: $("#sun-arc-rise-label"),
+  sunArcSetLabel: $("#sun-arc-set-label"),
   sunPeak: $("#sun-peak"),
   sunPeakAlt: $("#sun-peak-alt"),
   comfortStrip: $("#comfort-strip"),
@@ -736,6 +738,8 @@ function renderSun(w) {
   const bearing = sunBearings(state.place?.lat, w.sunrise);
   el.sunRise.innerHTML = `${fmtTime(w.sunrise)}${bearing ? `<span class="sun-bearing">${bearing.rise}</span>` : ""}`;
   el.sunSet.innerHTML = `${fmtTime(w.sunset)}${bearing ? `<span class="sun-bearing">${bearing.set}</span>` : ""}`;
+  if (el.sunArcRiseLabel) el.sunArcRiseLabel.textContent = bearing?.rise ?? "";
+  if (el.sunArcSetLabel) el.sunArcSetLabel.textContent = bearing?.set ?? "";
   if (w.sunrise && w.sunset) {
     const mins = Math.round((w.sunset - w.sunrise) / 60_000);
     const hh = Math.floor(mins / 60);

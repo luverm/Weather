@@ -1119,6 +1119,11 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+.sun-arc-label {
+  font-size: 8px;
+  fill: var(--fg-dim);
+  letter-spacing: 0.08em;
+}
 
 .aurora-chip {
   margin-top: 8px;
