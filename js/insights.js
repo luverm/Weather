@@ -27,6 +27,38 @@ function sunsetQuality(hourly, sunset) {
   return null;
 }
 
+function weeklyNarrative(days, dow, T) {
+  if (!days || days.length < 4) return null;
+  const highs = days.map((d) => d.tempMax).filter((v) => v != null);
+  if (highs.length < 3) return null;
+  const firstMean = (highs[0] + (highs[1] ?? highs[0])) / 2;
+  const lastMean = (highs[highs.length - 1] + (highs[highs.length - 2] ?? highs[highs.length - 1])) / 2;
+  const trend = lastMean - firstMean;
+  const totalPrecip = days.reduce((s, d) => s + (d.precip ?? 0), 0);
+  const wetDays = days.filter((d) => (d.precip ?? 0) > 1).length;
+  let mood;
+  if (Math.abs(trend) >= 5) {
+    mood = trend > 0 ? "warms up" : "cools off";
+  } else if (highs.every((h) => h >= 22)) {
+    mood = "stays warm";
+  } else if (highs.every((h) => h <= 5)) {
+    mood = "stays cold";
+  } else {
+    mood = "holds steady";
+  }
+  const rainMood =
+    totalPrecip < 1 ? "and dry throughout" :
+    totalPrecip >= 20 ? `with ${wetDays} wet day${wetDays === 1 ? "" : "s"} totaling ${Math.round(totalPrecip)} mm` :
+    wetDays > 0 ? `with a few damp spells` : "with dry stretches";
+  const range = `${T(Math.min(...highs))} → ${T(Math.max(...highs))}`;
+  return {
+    icon: ICONS.tomorrow,
+    label: "Week outlook",
+    value: `${mood} ${rainMood} · ${range}`,
+    ts: days[0].sunrise || days[0].time,
+  };
+}
+
 function tomorrowBriefing(days, dow, T) {
   const t = days?.[1];
   if (!t || t.tempMax == null || t.tempMin == null) return null;
@@ -52,6 +84,8 @@ export function buildInsights(weather, { fmtTime, weekday, unit = "C" } = {}) {
   const dow = weekday || ((t) => new Date(t).toLocaleDateString([], { weekday: "short" }));
   const T = (c) => c == null ? "—" : `${Math.round(unit === "F" ? c * 9 / 5 + 32 : c)}°`;
 
+  const week = weeklyNarrative(days, dow, T);
+  if (week) out.push(week);
   const tmrw = tomorrowBriefing(days, dow, T);
   if (tmrw) out.push(tmrw);
 
@@ -172,5 +206,5 @@ export function buildInsights(weather, { fmtTime, weekday, unit = "C" } = {}) {
     });
   }
 
-  return out.slice(0, 7);
+  return out.slice(0, 8);
 }
