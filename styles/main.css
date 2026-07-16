@@ -716,6 +716,7 @@ html[data-reduce-motion="true"] *::after {
   opacity: 0.55;
 }
 .legend-swatch.precip { background: rgba(154, 209, 255, 0.55); }
+.legend-swatch.comfort { background: linear-gradient(90deg, #5082dc, #d0e0d0, #f0aa64, #eb695a); }
 
 .chart-wrap {
   position: relative;

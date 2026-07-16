@@ -8,6 +8,29 @@ const PAD_RIGHT = 6;
 const PAD_TOP = 16;
 const PAD_BOT = 22;
 
+function comfortColor(feels) {
+  // Anchor colors: -10°C dark blue → 0 cool → 12 neutral → 20 mild-warm → 30 hot → 38 red
+  const stops = [
+    { t: -10, c: [80, 130, 220] },
+    { t: 0,   c: [120, 175, 235] },
+    { t: 12,  c: [180, 210, 200] },
+    { t: 20,  c: [220, 215, 160] },
+    { t: 28,  c: [240, 170, 100] },
+    { t: 34,  c: [235, 105, 90] },
+    { t: 40,  c: [200, 60, 70] },
+  ];
+  let lo = stops[0], hi = stops[stops.length - 1];
+  for (let i = 0; i < stops.length - 1; i++) {
+    if (feels >= stops[i].t && feels <= stops[i + 1].t) { lo = stops[i]; hi = stops[i + 1]; break; }
+    if (feels < stops[0].t) { lo = stops[0]; hi = stops[0]; break; }
+    if (feels > stops[stops.length - 1].t) { lo = hi = stops[stops.length - 1]; break; }
+  }
+  const range = hi.t - lo.t || 1;
+  const f = Math.max(0, Math.min(1, (feels - lo.t) / range));
+  const rgb = lo.c.map((v, i) => Math.round(v + (hi.c[i] - v) * f));
+  return `rgb(${rgb.join(",")})`;
+}
+
 export class HourlyChart {
   constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit, getTimezone }) {
     this.svg = svgEl;
@@ -243,6 +266,29 @@ export class HourlyChart {
       r.setAttribute("opacity", (0.35 + (pop / 100) * 0.55).toFixed(2));
       precipG.appendChild(r);
     });
+
+    // Feels-like comfort strip along the top edge of the chart. Each hour
+    // gets its own thin rect coloured by the apparent temperature so you can
+    // read "cold night → mild afternoon" at a glance.
+    const comfortG = this.svg.querySelector("#chart-comfort");
+    if (comfortG) {
+      comfortG.innerHTML = "";
+      const stripY = 0;
+      const stripH = 4;
+      const cellW = innerW / this.hours.length;
+      this.hours.forEach((h, i) => {
+        const feels = h.feelsLike ?? h.temp;
+        if (feels == null) return;
+        const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        r.setAttribute("x", (PAD_LEFT + i * cellW).toFixed(1));
+        r.setAttribute("y", String(stripY));
+        r.setAttribute("width", (cellW + 0.5).toFixed(1));
+        r.setAttribute("height", String(stripH));
+        r.setAttribute("fill", comfortColor(feels));
+        r.setAttribute("opacity", "0.75");
+        comfortG.appendChild(r);
+      });
+    }
 
     // Night shading: dim rectangles where !isDay
     const nightG = this.svg.querySelector("#chart-night");

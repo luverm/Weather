@@ -185,6 +185,7 @@
             <span class="legend-swatch feels"></span><span>Feels-like</span>
             <span class="legend-swatch gust"></span><span>Gusts</span>
             <span class="legend-swatch precip"></span><span>Precip</span>
+            <span class="legend-swatch comfort" title="Colored strip at the top of the chart shows hourly feels-like comfort"></span><span>Comfort</span>
           </div>
           <span id="chart-hover" class="chart-hover" hidden></span>
         </div>
@@ -202,6 +203,7 @@
               <stop offset="100%" stop-color="#ff9c7a"/>
             </linearGradient>
           </defs>
+          <g id="chart-comfort" class="chart-comfort"></g>
           <g id="chart-night" class="chart-night"></g>
           <g id="chart-precip" class="chart-precip"></g>
           <path id="chart-temp-fill" class="chart-temp-fill" fill="url(#temp-fill)"></path>
