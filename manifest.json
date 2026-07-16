@@ -1,7 +1,7 @@
 {
   "name": "Aether — Interactive Weather",
   "short_name": "Aether",
-  "description": "An immersive, animated weather experience.",
+  "description": "An immersive, animated weather experience with hourly forecasts, radar, air quality, activity windows and sun tracking.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0b1020",
