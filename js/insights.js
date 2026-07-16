@@ -11,6 +11,7 @@ const ICONS = {
   humid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c4 5 6 8 6 11a6 6 0 01-12 0c0-3 2-6 6-11z"/></svg>',
   sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg>',
   tomorrow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="18" cy="6" r="1.6" fill="currentColor" stroke="none"/></svg>',
+  snow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M4 6l16 12M20 6L4 18M2 12h20"/></svg>',
 };
 
 function tomorrowBriefing(days, dow) {
@@ -115,6 +116,16 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
       icon: ICONS.uv, label: "UV peak",
       value: `${Math.round(weather.uvPeak.value)} at ${fmt(weather.uvPeak.time)}`,
       ts: weather.uvPeak.time,
+    });
+  }
+
+  // 6. Snowfall total when the week has snow.
+  const snowyDay = days.reduce((best, d) => (d.snowfall ?? 0) > (best?.snowfall ?? 0) ? d : best, null);
+  if (snowyDay && (snowyDay.snowfall ?? 0) >= 1) {
+    out.push({
+      icon: ICONS.snow, label: "Snowfall",
+      value: `${snowyDay.snowfall.toFixed(snowyDay.snowfall < 5 ? 1 : 0)} cm on ${dow(snowyDay.time)}`,
+      ts: snowyDay.sunrise || snowyDay.time,
     });
   }
 
