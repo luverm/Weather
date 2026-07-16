@@ -155,6 +155,7 @@ const state = {
   sunTimer: null,
   sunArcTimer: null,
   localTimer: null,
+  nowcastTimer: null,
 };
 
 export const ui = {
@@ -1511,6 +1512,7 @@ function toggleDailyExpand(item, d, w) {
 }
 
 function renderNowcast(w) {
+  if (state.nowcastTimer) { clearInterval(state.nowcastTimer); state.nowcastTimer = null; }
   const nowcast = (w.nowcast || []).filter((n) => n.time > Date.now());
   // Find first >0.1 precip entry.
   const first = nowcast.find((n) => n.precip > 0.1);
@@ -1518,11 +1520,15 @@ function renderNowcast(w) {
     el.nowcast.hidden = true;
     return;
   }
-  const inMin = Math.max(0, Math.round((first.time - Date.now()) / 60_000));
   const kind = first.code >= 71 && first.code <= 86 ? "Snow" : "Rain";
-  el.nowcastHeadline.textContent = inMin === 0
-    ? `${kind} now`
-    : `${kind} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
+  const paintHeadline = () => {
+    const inMin = Math.max(0, Math.round((first.time - Date.now()) / 60_000));
+    el.nowcastHeadline.textContent = inMin === 0
+      ? `${kind} now`
+      : `${kind} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
+  };
+  paintHeadline();
+  state.nowcastTimer = setInterval(paintHeadline, 30_000);
   // 2h outlook summary.
   const totalMm = nowcast.reduce((s, n) => s + (n.precip || 0), 0);
   el.nowcastSub.textContent = `${totalMm.toFixed(1)} mm expected in the next 2 hours`;
