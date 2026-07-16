@@ -49,7 +49,7 @@ function activityScore(h) {
   return Math.round(tw + ww + pw + daytimeBonus - uvPenalty(h.uv));
 }
 
-function stargazeScore(h) {
+function stargazeScore(h, moonIllum = 0) {
   if (!h) return 0;
   // Need: night, clear, dry. Prefer real hourly cloud cover; fall back to the
   // condition enum when the API doesn't return one.
@@ -67,7 +67,9 @@ function stargazeScore(h) {
   }
   const popPenalty = (h.pop ?? 0) * 0.6;
   const windPenalty = Math.max(0, ((h.wind ?? 0) - 18) * 2);
-  return Math.max(0, Math.round(base - popPenalty - windPenalty));
+  // Bright moon washes out fainter stars — up to 25 points at full moon.
+  const moonPenalty = Math.max(0, (moonIllum ?? 0) * 25);
+  return Math.max(0, Math.round(base - popPenalty - windPenalty - moonPenalty));
 }
 
 function photoScore(h, goldenWindows) {
@@ -163,7 +165,8 @@ export function findActivityWindows(weather) {
   }
 
   // Stargazing: 2h window.
-  const stars = rollingPeak(hours, stargazeScore, 2);
+  const moonIllum = weather.moon?.illum ?? 0;
+  const stars = rollingPeak(hours, (h) => stargazeScore(h, moonIllum), 2);
   if (stars && stars.score >= 60) {
     out.push({
       kind: "stars",
