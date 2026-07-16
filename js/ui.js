@@ -304,11 +304,35 @@ function renderLiveValues(w, { animate = true } = {}) {
   const feels = convertTemp(w.feelsLike ?? w.temp);
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
+  applyTempGlow(el.temp, w.feelsLike ?? w.temp);
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.innerHTML = `Feels like ${Math.round(feels)}°<span class="feels-why" id="feels-why"></span>`;
   renderFeelsWhy(w);
   renderDayRange(w);
   renderDayExtremes(w);
+}
+
+function applyTempGlow(node, feelsC) {
+  if (!node) return;
+  if (feelsC == null) { node.style.textShadow = ""; return; }
+  const stops = [
+    { t: -10, c: [140, 190, 255] },
+    { t: 0,   c: [180, 210, 255] },
+    { t: 12,  c: [220, 230, 220] },
+    { t: 20,  c: [255, 220, 170] },
+    { t: 28,  c: [255, 180, 120] },
+    { t: 36,  c: [255, 130, 90] },
+  ];
+  let lo = stops[0], hi = stops[stops.length - 1];
+  for (let i = 0; i < stops.length - 1; i++) {
+    if (feelsC >= stops[i].t && feelsC <= stops[i + 1].t) { lo = stops[i]; hi = stops[i + 1]; break; }
+    if (feelsC < stops[0].t) { hi = lo; break; }
+    if (feelsC > stops[stops.length - 1].t) { lo = hi; break; }
+  }
+  const range = hi.t - lo.t || 1;
+  const f = Math.max(0, Math.min(1, (feelsC - lo.t) / range));
+  const rgb = lo.c.map((v, i) => Math.round(v + (hi.c[i] - v) * f));
+  node.style.textShadow = `0 0 24px rgba(${rgb.join(",")},0.32), 0 0 6px rgba(${rgb.join(",")},0.22)`;
 }
 
 function renderFeelsWhy(w) {
