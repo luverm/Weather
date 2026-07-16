@@ -307,6 +307,15 @@ installShortcuts({
 
 // ---------- Start ----------
 (async function init() {
+  // Deep-link via query params (?lat=…&lon=…&name=…).
+  const params = new URLSearchParams(location.search);
+  const lat = parseFloat(params.get("lat"));
+  const lon = parseFloat(params.get("lon"));
+  if (!Number.isNaN(lat) && !Number.isNaN(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180) {
+    const name = params.get("name") || `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
+    await loadByCoords({ name, lat, lon });
+    return;
+  }
   // Prefer the most recent saved place if we have one — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();
@@ -315,8 +324,8 @@ installShortcuts({
     return;
   }
   try {
-    const { lat, lon } = await getLocation();
-    await loadByCoords({ name: "Current location", lat, lon });
+    const { lat: geoLat, lon: geoLon } = await getLocation();
+    await loadByCoords({ name: "Current location", lat: geoLat, lon: geoLon });
   } catch {
     await loadByCoords({ name: "Reykjavík", country: "Iceland", lat: 64.1466, lon: -21.9426 });
   }
