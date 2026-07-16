@@ -639,9 +639,13 @@ html[data-reduce-motion="true"] *::after {
   position: relative;
   min-height: 8px;
   border-radius: 3px;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
   background: rgba(154, 209, 255, 0.25);
   transition: background 160ms var(--ease), transform 160ms var(--ease);
 }
+.daily-expand-bar:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .daily-expand-bar[data-precip="1"] { background: rgba(154, 209, 255, 0.55); }
 .daily-expand-bar[data-precip="2"] { background: rgba(154, 209, 255, 0.85); }
 .daily-expand-bar:hover { transform: scaleY(1.12); }
