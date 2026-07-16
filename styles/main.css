@@ -618,6 +618,18 @@ html[data-reduce-motion="true"] *::after {
 }
 .scrubber-sunrise { background: linear-gradient(180deg, transparent, rgba(255, 210, 160, 0.8), transparent); }
 .scrubber-sunset { background: linear-gradient(180deg, transparent, rgba(255, 160, 120, 0.8), transparent); }
+.scrubber-now {
+  position: absolute; top: 0; bottom: 0; width: 1px;
+  left: 4.167%;
+  background: rgba(154, 209, 255, 0.55);
+  pointer-events: none;
+}
+.scrubber-now::after {
+  content: "now";
+  position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+  font-size: 9px; letter-spacing: 0.10em; text-transform: uppercase;
+  color: rgba(154, 209, 255, 0.7); white-space: nowrap;
+}
 .scrubber-sunrise::after,
 .scrubber-sunset::after {
   content: attr(data-label);
