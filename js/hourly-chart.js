@@ -83,6 +83,46 @@ export class HourlyChart {
     this.setCursor(null);
   }
 
+  setSunTimes(sunrise, sunset) {
+    this.sunrise = sunrise;
+    this.sunset = sunset;
+    this._drawSunMarkers();
+  }
+
+  _drawSunMarkers() {
+    const g = this.svg?.querySelector("#chart-sun-markers");
+    if (!g || !this.hours.length) return;
+    g.innerHTML = "";
+    if (!this.sunrise && !this.sunset) return;
+    const first = this.hours[0].time;
+    const last = this.hours[this.hours.length - 1].time;
+    const stamp = (ts, glyph) => {
+      if (ts == null || ts < first || ts > last) return;
+      const frac = (ts - first) / (last - first);
+      const x = PAD_LEFT + frac * (W - PAD_LEFT - PAD_RIGHT);
+      const y = PAD_TOP + 2;
+      const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      circle.setAttribute("cx", x.toFixed(1));
+      circle.setAttribute("cy", y.toFixed(1));
+      circle.setAttribute("r", "2.5");
+      circle.setAttribute("fill", "#ffd07a");
+      circle.setAttribute("opacity", "0.9");
+      g.appendChild(circle);
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("x1", x.toFixed(1));
+      line.setAttribute("x2", x.toFixed(1));
+      line.setAttribute("y1", (y + 3).toFixed(1));
+      line.setAttribute("y2", String(H - PAD_BOT));
+      line.setAttribute("stroke", "#ffd07a");
+      line.setAttribute("stroke-width", "0.6");
+      line.setAttribute("stroke-dasharray", "1 3");
+      line.setAttribute("opacity", "0.35");
+      g.appendChild(line);
+    };
+    stamp(this.sunrise, "rise");
+    stamp(this.sunset, "set");
+  }
+
   refresh() { this._draw(); }
 
   setCursor(ts) {
@@ -369,6 +409,9 @@ export class HourlyChart {
         runStart = null;
       }
     }
+
+    // Draw the sun markers now that geometry is known.
+    this._drawSunMarkers();
 
     // Day divider: draw a faint vertical line where the calendar crosses
     // midnight in the observer's timezone. Useful for "how much of this

@@ -235,7 +235,10 @@ export const ui = {
     renderAlerts(weather);
     renderWeekend(weather);
     startLocaltime(weather);
-    if (state.chart) state.chart.setHours(weather.hourly);
+    if (state.chart) {
+      state.chart.setHours(weather.hourly);
+      state.chart.setSunTimes(weather.sunrise, weather.sunset);
+    }
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     renderRainStrip(weather);
     if (el.narrative) el.narrative.textContent = narrative || "";
