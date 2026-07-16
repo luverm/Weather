@@ -132,6 +132,24 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     });
   }
 
+  // 5b. Big day-over-day swings in the 7-day forecast.
+  let biggest = null;
+  for (let i = 1; i < days.length; i++) {
+    const p = days[i - 1], c = days[i];
+    if (p.tempMax == null || c.tempMax == null) continue;
+    const delta = c.tempMax - p.tempMax;
+    if (!biggest || Math.abs(delta) > Math.abs(biggest.delta)) biggest = { delta, day: c };
+  }
+  if (biggest && Math.abs(biggest.delta) >= 6) {
+    const kind = biggest.delta > 0 ? "Warm-up" : "Cool-down";
+    out.push({
+      icon: biggest.delta > 0 ? ICONS.warm : ICONS.cold,
+      label: `${kind} on ${dow(biggest.day.time)}`,
+      value: `${biggest.delta > 0 ? "+" : ""}${Math.round(biggest.delta)}° vs day before`,
+      ts: biggest.day.sunrise || biggest.day.time,
+    });
+  }
+
   // 6a. Sunset quality (only when sunset is still ahead today).
   const sq = sunsetQuality(hours, weather.sunset);
   if (sq) {
