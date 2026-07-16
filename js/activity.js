@@ -6,6 +6,7 @@
 const ICONS = {
   walk: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4" r="2"/><path d="M9 21l3-7 4 3 2-4M7 13l3-3 3 4"/></svg>',
   stars: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 4.5L18 9l-4.4 1.5L12 15l-1.6-4.5L6 9l4.4-1.5L12 3z"/><path d="M19 14l.7 1.8L21 17l-1.3.6L19 19l-.7-1.4L17 17l1.3-1.2z"/></svg>',
+  photo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="4"/></svg>',
 };
 
 function tempScore(t) {
@@ -50,16 +51,58 @@ function activityScore(h) {
 
 function stargazeScore(h) {
   if (!h) return 0;
-  // Need: night, clear, dry. Cloud cover not in hourly — proxy via condition.
+  // Need: night, clear, dry. Prefer real hourly cloud cover; fall back to the
+  // condition enum when the API doesn't return one.
   if (h.isDay) return 0;
-  const isClear = h.condition === "clear";
-  const isCloudy = h.condition === "clouds" || h.condition === "fog";
   const isWet = h.condition === "rain" || h.condition === "snow" || h.condition === "storm";
   if (isWet) return 0;
-  const base = isClear ? 95 : isCloudy ? 35 : 60;
+  let base;
+  if (h.cloudCover != null) {
+    // Clear = 100, overcast = 20.
+    base = 100 - h.cloudCover * 0.8;
+  } else {
+    const isClear = h.condition === "clear";
+    const isCloudy = h.condition === "clouds" || h.condition === "fog";
+    base = isClear ? 95 : isCloudy ? 35 : 60;
+  }
   const popPenalty = (h.pop ?? 0) * 0.6;
   const windPenalty = Math.max(0, ((h.wind ?? 0) - 18) * 2);
   return Math.max(0, Math.round(base - popPenalty - windPenalty));
+}
+
+function photoScore(h, goldenWindows) {
+  if (!h) return 0;
+  // Photography wants: daylight, clear-ish, low wind, dry, ideally golden hour.
+  if (!h.isDay) return 0;
+  const isWet = h.condition === "rain" || h.condition === "snow" || h.condition === "storm";
+  if (isWet) return 0;
+  let base = 60;
+  if (h.cloudCover != null) {
+    // 10..60% cloud cover is actually the sweet spot for dramatic light.
+    const c = h.cloudCover;
+    if (c < 5) base = 65;
+    else if (c < 20) base = 80;
+    else if (c < 45) base = 95;
+    else if (c < 70) base = 70;
+    else base = 40;
+  }
+  // Golden-hour multiplier: if `h.time` falls within a golden window,
+  // enormous bump.
+  const inGolden = goldenWindows.some((w) => h.time >= w.start && h.time <= w.end);
+  if (inGolden) base += 20;
+  const popPenalty = (h.pop ?? 0) * 0.4;
+  const windPenalty = Math.max(0, ((h.wind ?? 0) - 24) * 2);
+  return Math.max(0, Math.round(base - popPenalty - windPenalty));
+}
+
+function goldenWindowsIn(weather) {
+  const out = [];
+  const goldMs = 55 * 60_000;
+  for (const d of (weather.daily || [])) {
+    if (d.sunrise) out.push({ start: d.sunrise, end: d.sunrise + goldMs });
+    if (d.sunset) out.push({ start: d.sunset - goldMs, end: d.sunset });
+  }
+  return out;
 }
 
 function rollingPeak(hours, scoreFn, span) {
@@ -130,6 +173,21 @@ export function findActivityWindows(weather) {
       end: hours[stars.endIdx].time + 60 * 60 * 1000,
       score: Math.round(stars.score),
       why: reasonsFor(stars, hours),
+    });
+  }
+
+  // Photography: 1h golden-hour window.
+  const goldenWindows = goldenWindowsIn(weather);
+  const photo = rollingPeak(hours, (h) => photoScore(h, goldenWindows), 1);
+  if (photo && photo.score >= 70) {
+    out.push({
+      kind: "photo",
+      icon: ICONS.photo,
+      label: "Best for photography",
+      start: hours[photo.startIdx].time,
+      end: hours[photo.endIdx].time + 60 * 60 * 1000,
+      score: Math.round(photo.score),
+      why: reasonsFor(photo, hours),
     });
   }
 
