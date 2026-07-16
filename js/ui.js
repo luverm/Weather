@@ -5,7 +5,7 @@ import { searchCities } from "./weather-service.js";
 import { places } from "./places.js";
 import { HourlyChart } from "./hourly-chart.js";
 import { ComfortStrip } from "./comfort-strip.js";
-import { advise } from "./advice.js";
+import { advise, adviseDetailed } from "./advice.js";
 import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
@@ -929,13 +929,40 @@ function scheduleSunCountdown(w) {
 }
 
 function renderAdvice(w) {
-  const text = advise(w);
   if (!el.advice || !el.adviceText) return;
-  if (text) {
-    el.adviceText.textContent = text;
-    el.advice.hidden = false;
-  } else {
-    el.advice.hidden = true;
+  const r = adviseDetailed(w);
+  if (!r?.text) { el.advice.hidden = true; return; }
+  el.adviceText.textContent = r.text;
+  const iconEl = el.advice.querySelector(".advice-icon");
+  if (iconEl && r.icon) iconEl.outerHTML = adviceIconSvg(r.icon);
+  el.advice.hidden = false;
+}
+
+function adviceIconSvg(key) {
+  const common = 'class="advice-icon" aria-hidden="true" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"';
+  const svg = (body) => `<svg viewBox="0 0 24 24" ${common}>${body}</svg>`;
+  switch (key) {
+    case "umbrella":
+      return svg('<path d="M4 12a8 8 0 0116 0"/><path d="M4 12h16"/><path d="M12 12v6a2 2 0 004 0"/>');
+    case "snowflake":
+      return svg('<path d="M12 2v20M4 6l16 12M20 6L4 18M2 12h20"/>');
+    case "storm":
+      return svg('<path d="M7 13a4 4 0 010-8 5 5 0 019.9-1A4 4 0 0117 13H7z"/><path d="M12 13l-2 4h3l-2 4"/>');
+    case "sun":
+      return svg('<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/>');
+    case "coat":
+    case "jacket":
+      return svg('<path d="M8 4l-4 4v10a2 2 0 002 2h4V4M16 4l4 4v10a2 2 0 01-2 2h-4V4M8 4h8"/>');
+    case "boots":
+      return svg('<path d="M9 4h4v10l4 3v3H7v-3l2-2z"/>');
+    case "wind":
+      return svg('<path d="M3 8h12a3 3 0 100-6M3 14h16a3 3 0 100-6M3 20h9a3 3 0 100-6"/>');
+    case "shirt":
+      return svg('<path d="M4 5l4-2 4 3 4-3 4 2-2 5-2-1v11H8V9l-2 1z"/>');
+    case "water":
+      return svg('<path d="M12 3c4 5 6 8 6 11a6 6 0 01-12 0c0-3 2-6 6-11z"/>');
+    default:
+      return svg('<path d="M12 3a5 5 0 00-3 9v2h6v-2a5 5 0 00-3-9zM9 18h6M10 21h4"/>');
   }
 }
 
