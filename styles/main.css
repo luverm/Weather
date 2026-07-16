@@ -1088,6 +1088,29 @@ kbd {
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
 
+.aurora-chip {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(105, 230, 170, 0.10), rgba(140, 90, 230, 0.14));
+  border: 1px solid rgba(140, 220, 200, 0.35);
+  font-size: 11.5px;
+  color: var(--fg);
+  cursor: help;
+}
+.aurora-chip[hidden] { display: none; }
+.aurora-swatch {
+  width: 12px; height: 12px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #6ce8b0, #7f6cdc);
+  box-shadow: 0 0 8px rgba(120, 200, 180, 0.6);
+}
+.aurora-label { letter-spacing: 0.02em; }
+.aurora-detail { color: var(--fg-dim); font-variant-numeric: tabular-nums; margin-left: auto; }
+
 .golden-hour {
   margin-top: 8px;
   display: flex;

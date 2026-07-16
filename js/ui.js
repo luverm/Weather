@@ -63,6 +63,8 @@ const el = {
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   goldenHour: $("#golden-hour"),
+  auroraChip: $("#aurora-chip"),
+  auroraDetail: $("#aurora-detail"),
   goldenTime: $("#golden-time"),
   blueTime: $("#blue-time"),
   sunWindow: $("#sun-window"),
@@ -693,6 +695,23 @@ function renderSun(w) {
   scheduleSunArc(w);
   renderSunWindow(w);
   renderGoldenHour(w);
+  renderAurora(w);
+}
+
+function renderAurora(w) {
+  if (!el.auroraChip) return;
+  const lat = state.place?.lat;
+  if (lat == null || Math.abs(lat) < 55) { el.auroraChip.hidden = true; return; }
+  // Look for a night window in the next 12h with cloud cover < 45%.
+  const hrs = (w.hourly || []).slice(0, 12).filter((h) => !h.isDay && h.cloudCover != null && h.cloudCover < 45);
+  if (!hrs.length) { el.auroraChip.hidden = true; return; }
+  // Pick the first block.
+  const start = hrs[0];
+  const end = hrs[hrs.length - 1];
+  const moon = w.moon?.illum ?? 0;
+  const moonHint = moon > 0.75 ? " · bright moon" : moon > 0.4 ? "" : " · dark sky";
+  el.auroraChip.hidden = false;
+  el.auroraDetail.textContent = `clear ${fmtTime(start.time)}–${fmtTime(end.time)}${moonHint}`;
 }
 
 function renderGoldenHour(w) {
