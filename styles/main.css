@@ -394,6 +394,21 @@ html[data-reduce-motion="true"] *::after {
 .feels-why { color: var(--fg-dim); font-size: 11.5px; font-variant-numeric: tabular-nums; }
 .feels-why.colder { color: #9ac8ff; }
 .feels-why.warmer { color: #ffb072; }
+
+.heat-safety {
+  display: inline-block;
+  margin: 8px 0 0;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid var(--stroke);
+}
+.heat-safety[hidden] { display: none; }
+.heat-safety[data-tone="info"] { color: #ffd07a; border-color: rgba(255,208,122,0.4); }
+.heat-safety[data-tone="warn"] { color: #ffa872; border-color: rgba(255,168,114,0.5); background: rgba(255,168,114,0.06); }
+.heat-safety[data-tone="danger"] { color: #ff6a6a; border-color: rgba(255,106,106,0.55); background: rgba(255,106,106,0.08); }
 .day-range {
   margin-top: 10px;
   display: grid;

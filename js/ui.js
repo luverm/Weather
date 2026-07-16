@@ -75,6 +75,7 @@ const el = {
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
+  heatSafety: $("#heat-safety"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
   pollenCard: $("#pollen-card"),
@@ -965,6 +966,30 @@ function renderAdvice(w) {
   const iconEl = el.advice.querySelector(".advice-icon");
   if (iconEl && r.icon) iconEl.outerHTML = adviceIconSvg(r.icon);
   el.advice.hidden = false;
+  renderHeatSafety(w);
+}
+
+function renderHeatSafety(w) {
+  if (!el.heatSafety) return;
+  const t = w.temp;
+  if (t == null || t < 25) { el.heatSafety.hidden = true; return; }
+  // Simplified WBGT from Stull: uses air temp, humidity and a small solar bonus.
+  const rh = w.humidity ?? 50;
+  const uv = w.uv ?? 0;
+  const tw = t * Math.atan(0.151977 * Math.sqrt(rh + 8.313659))
+    + Math.atan(t + rh) - Math.atan(rh - 1.676331)
+    + 0.00391838 * Math.pow(rh, 1.5) * Math.atan(0.023101 * rh) - 4.686035;
+  const solarBonus = Math.max(0, uv - 5) * 0.4;
+  const wbgt = 0.7 * tw + 0.2 * (t + solarBonus) + 0.1 * t;
+  const level =
+    wbgt >= 32 ? { label: "Extreme heat risk", tone: "danger" } :
+    wbgt >= 30 ? { label: "High heat risk", tone: "warn" } :
+    wbgt >= 28 ? { label: "Moderate heat risk", tone: "info" } :
+    null;
+  if (!level) { el.heatSafety.hidden = true; return; }
+  el.heatSafety.hidden = false;
+  el.heatSafety.dataset.tone = level.tone;
+  el.heatSafety.textContent = `${level.label} · WBGT ~${wbgt.toFixed(1)}°C`;
 }
 
 function adviceIconSvg(key) {
