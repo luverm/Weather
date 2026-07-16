@@ -856,6 +856,27 @@ html[data-reduce-motion="true"] *::after {
   transition: transform 900ms var(--ease);
 }
 
+.wind-gust-strip {
+  grid-column: 1 / span 2;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 2px;
+  height: 8px;
+  margin-top: 4px;
+}
+.wind-gust-cell {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: rgba(154, 209, 255, calc(0.2 + var(--h) * 0.7));
+  transform: scaleY(calc(0.4 + var(--h) * 0.6));
+  transform-origin: bottom;
+}
+.wind-gust-cell.calm { background: rgba(154, 209, 255, calc(0.15 + var(--h) * 0.4)); }
+.wind-gust-cell.breeze { background: rgba(154, 220, 200, calc(0.25 + var(--h) * 0.55)); }
+.wind-gust-cell.windy { background: rgba(255, 205, 130, calc(0.35 + var(--h) * 0.55)); }
+.wind-gust-cell.gale { background: rgba(255, 130, 110, calc(0.5 + var(--h) * 0.5)); }
+
 /* ---------- Sun countdown ---------- */
 .sun-countdown {
   display: inline-block;

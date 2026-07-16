@@ -36,6 +36,7 @@ const el = {
   extremeWarmTemp: $("#extreme-warm-temp"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
+  windGustStrip: $("#wind-gust-strip"),
   windBft: $("#m-wind-bft"),
   metricHumidity: $("#m-humidity"),
   metricHumiditySub: $("#m-humidity-sub"),
@@ -382,6 +383,7 @@ function renderMetrics(w) {
   el.metricPressureSub.textContent = w.visibility != null
     ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
     : "visibility —";
+  renderGustStrip(w);
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
@@ -457,6 +459,16 @@ function uvLevel(v) {
   if (v < 8) return { label: "High", cls: "up" };
   if (v < 11) return { label: "Very High", cls: "up" };
   return { label: "Extreme", cls: "up" };
+}
+
+function renderGustStrip(w) {
+  if (!el.windGustStrip) return;
+  const cells = (w.hourly || []).slice(0, 12).map((h) => h.gusts ?? h.wind).filter((v) => v != null);
+  if (cells.length < 4) { el.windGustStrip.innerHTML = ""; return; }
+  el.windGustStrip.innerHTML = cells.map((v) => {
+    const cls = v < 20 ? "calm" : v < 35 ? "breeze" : v < 55 ? "windy" : "gale";
+    return `<span class="wind-gust-cell ${cls}" title="${Math.round(v)} km/h" style="--h:${Math.min(1, v / 80).toFixed(2)}"></span>`;
+  }).join("");
 }
 
 function renderPressureSparkline(w) {
