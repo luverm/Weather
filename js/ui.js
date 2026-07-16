@@ -123,6 +123,9 @@ const el = {
   sunArcSetLabel: $("#sun-arc-set-label"),
   sunPeak: $("#sun-peak"),
   sunPeakAlt: $("#sun-peak-alt"),
+  sunShadow: $("#sun-shadow"),
+  sunShadowLen: $("#sun-shadow-len"),
+  sunShadowDir: $("#sun-shadow-dir"),
   comfortStrip: $("#comfort-strip"),
   rainStrip: $("#rain-strip"),
   rainStripCells: $("#rain-strip-cells"),
@@ -784,11 +787,45 @@ function renderSun(w) {
   renderDaylightDelta(w);
   renderSunnyHours(w);
   renderPeakAltitude(w);
+  renderShadow(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   renderSunWindow(w);
   renderGoldenHour(w);
   renderAurora(w);
+}
+
+function renderShadow(w) {
+  if (!el.sunShadow) return;
+  const lat = state.place?.lat;
+  const lon = state.place?.lon;
+  if (lat == null || lon == null || !w?.sunrise || !w?.sunset) { el.sunShadow.hidden = true; return; }
+  const now = Date.now();
+  if (now < w.sunrise || now > w.sunset) { el.sunShadow.hidden = true; return; }
+  // Solar position via a simplified formula (accurate to ~1° for our purpose).
+  const date = new Date(now);
+  const start = Date.UTC(date.getUTCFullYear(), 0, 0);
+  const day = (date.getTime() - start) / 86_400_000;
+  const declDeg = 23.45 * Math.sin((2 * Math.PI * (day - 81)) / 365);
+  const declR = declDeg * Math.PI / 180;
+  const latR = lat * Math.PI / 180;
+  // Solar noon in UTC ≈ 12 - lon/15 hours from midnight.
+  const utcHours = date.getUTCHours() + date.getUTCMinutes() / 60;
+  const solarHour = utcHours + lon / 15;
+  const hourAngleR = (solarHour - 12) * 15 * Math.PI / 180;
+  const sinAlt = Math.sin(latR) * Math.sin(declR)
+    + Math.cos(latR) * Math.cos(declR) * Math.cos(hourAngleR);
+  const altR = Math.asin(Math.max(-1, Math.min(1, sinAlt)));
+  const altDeg = altR * 180 / Math.PI;
+  if (altDeg < 3) { el.sunShadow.hidden = true; return; }
+  const cosAz = (Math.sin(declR) - Math.sin(altR) * Math.sin(latR)) / (Math.cos(altR) * Math.cos(latR));
+  const az = Math.acos(Math.max(-1, Math.min(1, cosAz))) * 180 / Math.PI;
+  const solarAz = solarHour > 12 ? 360 - az : az;
+  const shadowAz = (solarAz + 180) % 360;
+  const shadowLen = 1 / Math.tan(altR);
+  el.sunShadow.hidden = false;
+  el.sunShadowLen.textContent = `${shadowLen.toFixed(1)}×`;
+  el.sunShadowDir.textContent = compassBearing(shadowAz);
 }
 
 function renderPeakAltitude(w) {

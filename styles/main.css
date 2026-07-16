@@ -1155,6 +1155,27 @@ kbd {
 }
 .sun-peak[hidden] { display: none; }
 .sun-peak strong { font-size: 11px; letter-spacing: 0; }
+
+.sun-shadow {
+  position: absolute;
+  left: 12px;
+  margin-top: 8px;
+  display: inline-flex;
+  gap: 4px;
+  align-items: baseline;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--stroke);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+}
+.sun-shadow[hidden] { display: none; }
+.sun-shadow strong { font-size: 11px; letter-spacing: 0; color: var(--fg-muted); }
+.sun-shadow-dir { letter-spacing: 0.04em; color: var(--fg-muted); }
 #sun-card { position: relative; }
 #sun-arc-marker {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
