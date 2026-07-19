@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { precipOutlook, summarize as summarizePrecip } from "./precip-outlook.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -102,6 +103,10 @@ const el = {
   nowcastHeadline: $("#nowcast-headline"),
   nowcastSub: $("#nowcast-sub"),
   nowcastBars: $("#nowcast-bars"),
+  precipOutlookCard: $("#precip-outlook-card"),
+  precipOutlookHeadline: $("#precip-outlook-headline"),
+  precipOutlookDetail: $("#precip-outlook-detail"),
+  precipOutlookBars: $("#precip-outlook-bars"),
   searchInput: $("#search-input"),
   searchResults: $("#search-results"),
   locateBtn: $("#locate-btn"),
@@ -186,6 +191,7 @@ export const ui = {
     renderHourly(weather);
     renderDaily(weather);
     renderNowcast(weather);
+    renderPrecipOutlook(weather);
     renderAdvice(weather);
     renderPollen(weather.pollen);
     renderTrends(weather);
@@ -1035,6 +1041,45 @@ function renderNowcast(w) {
     el.nowcastBars.appendChild(bar);
   });
   el.nowcast.hidden = false;
+}
+
+function renderPrecipOutlook(w) {
+  if (!el.precipOutlookCard) return;
+  const outlook = precipOutlook(w);
+  if (!outlook || !outlook.bars.length) {
+    el.precipOutlookCard.hidden = true;
+    return;
+  }
+  const tz = w?.timezone;
+  const { headline, detail, tone } = summarizePrecip(outlook, tz);
+  el.precipOutlookHeadline.textContent = headline;
+  el.precipOutlookDetail.textContent = detail;
+  el.precipOutlookCard.dataset.tone = tone;
+  el.precipOutlookCard.hidden = false;
+
+  // Bars — always 24 columns. Scale non-linearly so a light drizzle still
+  // shows above the baseline while a downpour doesn't dwarf everything else.
+  const peak = Math.max(0.5, outlook.peakMm);
+  el.precipOutlookBars.innerHTML = "";
+  const now = Date.now();
+  outlook.bars.forEach((b) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "precip-outlook-bar";
+    const ratio = b.precip > 0 ? Math.pow(b.precip / peak, 0.6) : 0;
+    const pct = Math.max(3, Math.round(ratio * 100));
+    btn.style.setProperty("--bar-h", `${pct}%`);
+    if (b.kind === "snow") btn.dataset.kind = "snow";
+    btn.dataset.event = b.isEvent ? "true" : "false";
+    btn.dataset.empty = b.precip <= 0 ? "true" : "false";
+    if (b.time <= now && now < b.time + 3600_000) btn.dataset.now = "true";
+    const hh = fmtTime(b.time);
+    const mm = b.precip.toFixed(1);
+    btn.title = `${hh} · ${mm} mm · ${b.pop}%`;
+    btn.setAttribute("aria-label", `${hh}: ${mm} millimetres, ${b.pop} percent chance`);
+    btn.addEventListener("click", () => state.handlers.onHourClick?.(b.time));
+    el.precipOutlookBars.appendChild(btn);
+  });
 }
 
 // ---------- Icons ----------

@@ -318,6 +318,17 @@
           <ul id="activity-list" class="activity-list"></ul>
         </div>
 
+        <div class="extra-card glass" id="precip-outlook-card" hidden>
+          <span class="metric-label">Next precipitation</span>
+          <div class="precip-outlook-row">
+            <div class="precip-outlook-meta">
+              <strong id="precip-outlook-headline">—</strong>
+              <span id="precip-outlook-detail" class="precip-outlook-detail">—</span>
+            </div>
+            <div id="precip-outlook-bars" class="precip-outlook-bars" aria-label="Precipitation over the next 24 hours"></div>
+          </div>
+        </div>
+
         <div class="extra-card glass" id="sun-card">
           <span class="metric-label"><span id="sun-next-label">Sun</span> <span id="sun-countdown" class="sun-countdown"></span></span>
           <svg id="sun-arc" class="sun-arc" viewBox="0 0 200 84" aria-hidden="true">
@@ -459,6 +470,7 @@
           <div><dt><kbd>Space</kbd></dt><dd>Play / pause radar</dd></div>
           <div><dt><kbd>F</kbd></dt><dd>Fullscreen radar</dd></div>
           <div><dt><kbd>N</kbd></dt><dd>Return scrubber to now</dd></div>
+          <div><dt><kbd>R</kbd></dt><dd>Refresh weather</dd></div>
           <div><dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Nudge time ± 1 h</dd></div>
           <div><dt><kbd>[</kbd> <kbd>]</kbd></dt><dd>Cycle saved cities</dd></div>
           <div><dt><kbd>?</kbd></dt><dd>Show / hide this panel</dd></div>
