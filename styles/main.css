@@ -1925,6 +1925,19 @@ kbd {
 .daily-item.is-weekend .daily-day {
   color: #ffd48a;
 }
+.daily-item.is-today .daily-day {
+  color: var(--fg);
+  font-weight: 600;
+}
+.daily-item.is-today .daily-day::before {
+  content: "";
+  display: inline-block;
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+  margin-right: 6px;
+  vertical-align: middle;
+}
 /* Subtle left accent for the upcoming week's stand-out days. */
 .daily-super {
   position: relative;
