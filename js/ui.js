@@ -1114,12 +1114,22 @@ function cardinal(deg) {
 
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
-  for (const h of (w.hourly || []).slice(0, 24)) {
+  // Find the hour closest to "now" so we can crown it with a subtle "Now" tag.
+  const now = Date.now();
+  const hourly = (w.hourly || []).slice(0, 24);
+  let nowIdx = -1, bestDiff = Infinity;
+  hourly.forEach((h, i) => {
+    const d = Math.abs(h.time - now);
+    if (d < bestDiff && d < 90 * 60_000) { bestDiff = d; nowIdx = i; }
+  });
+  hourly.forEach((h, i) => {
     const item = document.createElement("div");
     item.className = "forecast-item";
+    if (i === nowIdx) item.classList.add("is-now");
     item.dataset.ts = h.time;
+    const timeLabel = i === nowIdx ? "Now" : fmtTime(h.time);
     item.innerHTML = `
-      <span class="forecast-time">${fmtTime(h.time)}</span>
+      <span class="forecast-time">${timeLabel}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
@@ -1127,7 +1137,7 @@ function renderHourly(w) {
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
-  }
+  });
 }
 
 // Wind chevron only shows when there's actually wind to talk about.
