@@ -390,7 +390,32 @@ html[data-reduce-motion="true"] *::after {
 }
 .unit:hover { background: var(--glass); color: var(--fg); }
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
-.feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
+.feels-like {
+  margin: 4px 0 0; font-size: 13px; color: var(--fg-muted);
+  display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px;
+}
+.feels-like-driver {
+  display: inline-flex; align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--fg-dim);
+  transition: background 300ms var(--ease), border-color 300ms var(--ease), color 300ms var(--ease);
+  cursor: help;
+}
+.feels-like-driver[hidden] { display: none; }
+.feels-like-driver[data-dir="up"] {
+  color: #ffc98a; background: rgba(255, 201, 138, 0.10);
+  border-color: rgba(255, 201, 138, 0.25);
+}
+.feels-like-driver[data-dir="down"] {
+  color: #9ad1ff; background: rgba(154, 209, 255, 0.10);
+  border-color: rgba(154, 209, 255, 0.25);
+}
 .day-range {
   margin-top: 10px;
   display: grid;

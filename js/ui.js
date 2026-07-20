@@ -21,6 +21,8 @@ const el = {
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
+  feelsLikeText: $("#feels-like-text"),
+  feelsLikeDriver: $("#feels-like-driver"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -279,8 +281,62 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  if (el.feelsLikeText) el.feelsLikeText.textContent = `Feels like ${Math.round(feels)}°`;
+  else el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  renderFeelsLikeDriver(w);
   renderDayRange(w);
+}
+
+function renderFeelsLikeDriver(w) {
+  const node = el.feelsLikeDriver;
+  if (!node) return;
+  const driver = feelsLikeDriver(w);
+  if (!driver) {
+    node.hidden = true; node.dataset.dir = ""; node.textContent = "";
+    return;
+  }
+  node.hidden = false;
+  node.dataset.dir = driver.dir;
+  node.textContent = driver.label;
+  node.setAttribute("title", driver.title);
+}
+
+// Attribute the feels-like gap to the most plausible driver.
+// Returns null when the delta is small (< ~2° display units) or data is missing.
+function feelsLikeDriver(w) {
+  if (w.temp == null || w.feelsLike == null) return null;
+  const deltaC = w.feelsLike - w.temp;
+  const deltaDisplay = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
+  const round = Math.round(Math.abs(deltaDisplay));
+  if (round < 2) return null;
+  const magnitude = `${round}°`;
+  if (deltaC < 0) {
+    // Feels cooler than air: wind is the usual culprit.
+    const strong = (w.windSpeed ?? 0) >= 25;
+    return {
+      dir: "down",
+      label: strong ? `Wind cuts ${magnitude}` : `Wind chills ${magnitude}`,
+      title: `Wind, air temperature and body heat loss combine to make it feel ${magnitude} cooler than the air.`,
+    };
+  }
+  // Feels warmer than air.
+  const humid = (w.humidity ?? 0) >= 60;
+  const sunny = w.isDay && (w.condition === "clear" || w.condition === "clouds");
+  const hot = w.temp >= 26;
+  if (humid && (hot || sunny)) {
+    return { dir: "up", label: `Humid sun +${magnitude}`,
+             title: `Sun and ${Math.round(w.humidity)}% humidity add ${magnitude} to what your body feels.` };
+  }
+  if (humid) {
+    return { dir: "up", label: `Humidity +${magnitude}`,
+             title: `${Math.round(w.humidity)}% humidity makes it feel ${magnitude} warmer than the air.` };
+  }
+  if (sunny) {
+    return { dir: "up", label: `Sun adds +${magnitude}`,
+             title: `Direct sun makes it feel ${magnitude} warmer than the shaded air temperature.` };
+  }
+  return { dir: "up", label: `Warmer by ${magnitude}`,
+           title: `Feels ${magnitude} warmer than the air.` };
 }
 
 function renderDayRange(w) {
