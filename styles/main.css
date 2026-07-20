@@ -1076,6 +1076,7 @@ kbd {
   margin-top: 4px;
   font-variant-numeric: tabular-nums;
 }
+.metric-sub.warn { color: #ffb86b; }
 
 /* WHO-scale UV strip: 0..11+ gradient with a live marker + faint peak notch. */
 .uv-scale {

@@ -458,9 +458,18 @@ function renderMetrics(w) {
     }
   }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
-  el.metricPressureSub.textContent = w.visibility != null
-    ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
-    : "visibility —";
+  if (w.visibility != null) {
+    const km = Math.round((w.visibility / 1000) * 10) / 10;
+    let flag = "";
+    if (km < 1) flag = " · dense fog";
+    else if (km < 4) flag = " · reduced";
+    else if (km < 10) flag = " · hazy";
+    el.metricPressureSub.textContent = `visibility ${km} km${flag}`;
+    el.metricPressureSub.classList.toggle("warn", km < 4);
+  } else {
+    el.metricPressureSub.textContent = "visibility —";
+    el.metricPressureSub.classList.remove("warn");
+  }
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
