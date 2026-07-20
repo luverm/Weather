@@ -640,6 +640,13 @@ function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  // Look ahead ~30 days for the next full and new moon dates.
+  const nextFull = findNextMoonPhase(0.5);
+  const nextNew  = findNextMoonPhase(0.0);
+  const parts = [`${moon.name} · ${Math.round(moon.illum * 100)}% illuminated`];
+  if (nextFull) parts.push(`Next full moon: ${fmtDate(nextFull)}`);
+  if (nextNew)  parts.push(`Next new moon: ${fmtDate(nextNew)}`);
+  el.moonName.setAttribute("title", parts.join(" · "));
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
@@ -672,6 +679,42 @@ function fmtTime(ts) {
   const hh = d.getHours().toString().padStart(2, "0");
   const mm = d.getMinutes().toString().padStart(2, "0");
   return `${hh}:${mm}`;
+}
+
+// Sweep the next 30 days looking for the sample closest to the target phase
+// (0 for new, 0.5 for full). Coarse but fine for a tooltip hint.
+function findNextMoonPhase(target) {
+  const now = Date.now();
+  let bestTs = null, bestDist = Infinity;
+  for (let d = 1; d <= 32; d++) {
+    const ts = now + d * 86400_000;
+    const phase = quickMoonPhase(new Date(ts));
+    // Signed cyclical distance to target on the [0..1] circle.
+    let dist = Math.abs(phase - target);
+    if (dist > 0.5) dist = 1 - dist;
+    if (dist < bestDist) { bestDist = dist; bestTs = ts; }
+  }
+  return bestTs;
+}
+
+// Small copy of the same algorithm used in weather-service.js — kept
+// duplicated here to avoid a circular import for a UI-only hint.
+function quickMoonPhase(date) {
+  const year = date.getUTCFullYear();
+  const month = date.getUTCMonth() + 1;
+  const day = date.getUTCDate() + date.getUTCHours() / 24;
+  let r = year % 100;
+  r %= 19;
+  if (r > 9) r -= 19;
+  r = (r * 11) % 30 + month + day;
+  if (month < 3) r += 2;
+  r -= (year < 2000 ? 4 : 8.3);
+  r = ((r % 30) + 30) % 30;
+  return r / 29.5305882;
+}
+
+function fmtDate(ts) {
+  return new Date(ts).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 }
 
 // 7-day moon phase preview strip. Each day is a tiny 20 px SVG rendered
