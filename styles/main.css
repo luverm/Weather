@@ -290,6 +290,44 @@ html[data-reduce-motion="true"] *::after {
 .places-strip {
   display: flex; flex-wrap: wrap; gap: 8px;
 }
+
+/* Live "raining now" / "snowing now" chip pulsing above the hero. */
+.live-precip {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  color: var(--fg-dim);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  animation: livePrecipDrift 6s ease-in-out infinite alternate;
+}
+.live-precip[hidden] { display: none; }
+.live-precip-pulse {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 6px currentColor;
+  animation: livePrecipPulse 1.6s ease-in-out infinite;
+}
+.live-precip[data-kind="rain"]  { color: #9ad1ff; background: rgba(154, 209, 255, 0.08); border-color: rgba(154, 209, 255, 0.22); }
+.live-precip[data-kind="snow"]  { color: #d4ecff; background: rgba(212, 236, 255, 0.09); border-color: rgba(212, 236, 255, 0.24); }
+.live-precip[data-kind="storm"] { color: #ffe27a; background: rgba(255, 226, 122, 0.09); border-color: rgba(255, 226, 122, 0.28); }
+.live-precip[data-kind="fog"]   { color: #c9d1e0; background: rgba(201, 209, 224, 0.06); border-color: rgba(201, 209, 224, 0.18); }
+@keyframes livePrecipPulse {
+  0%, 100% { transform: scale(1);   opacity: 1;   }
+  50%      { transform: scale(1.35); opacity: 0.6; }
+}
+@keyframes livePrecipDrift {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(-1px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-precip, .live-precip-pulse { animation: none; }
+}
 .place-chip {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 8px 14px; border-radius: 999px;

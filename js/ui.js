@@ -125,6 +125,8 @@ const el = {
   heroInner: document.querySelector(".hero-inner"),
   toast: $("#toast"),
   placesStrip: $("#places-strip"),
+  livePrecip: $("#live-precip"),
+  livePrecipText: $("#live-precip-text"),
 };
 
 const state = {
@@ -203,6 +205,7 @@ export const ui = {
     renderHourly(weather);
     renderDaily(weather);
     renderNowcast(weather);
+    renderLivePrecip(weather);
     renderAdvice(weather);
     renderPollen(weather.pollen);
     renderTrends(weather);
@@ -1476,6 +1479,28 @@ function toggleDailyExpand(item, d, w) {
   }).join("");
   item.appendChild(box);
   item.dataset.expanded = "true";
+}
+
+// Live pulse strip above the hero when the current condition IS
+// precipitation. Hidden otherwise.
+function renderLivePrecip(w) {
+  const node = el.livePrecip;
+  const text = el.livePrecipText;
+  if (!node || !text) return;
+  const cond = w?.condition;
+  let kind = null, label = null;
+  if (cond === "storm") { kind = "storm"; label = "Thunderstorm now"; }
+  else if (cond === "snow") { kind = "snow"; label = "Snowing now"; }
+  else if (cond === "rain") { kind = "rain"; label = "Raining now"; }
+  else if (cond === "fog") { kind = "fog"; label = "Foggy now"; }
+  if (!kind) { node.hidden = true; node.dataset.kind = ""; return; }
+  const mmHr = w?.hourly?.[0]?.precip;
+  const suffix = (typeof mmHr === "number" && mmHr > 0.1)
+    ? ` · ${mmHr.toFixed(1)} mm/hr`
+    : "";
+  node.hidden = false;
+  node.dataset.kind = kind;
+  text.textContent = label + suffix;
 }
 
 function renderNowcast(w) {
