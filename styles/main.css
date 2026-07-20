@@ -1760,6 +1760,11 @@ kbd {
   display: block;
 }
 .daily-spark circle { transition: r 160ms var(--ease); }
+.daily-range-band {
+  fill: url(#daily-hi-stroke);
+  fill-opacity: 0.10;
+  transition: d 400ms var(--ease);
+}
 .daily-spark .dot-hi { fill: #ff9c7a; }
 .daily-spark .dot-lo { fill: #9ad1ff; }
 .forecast-track {
