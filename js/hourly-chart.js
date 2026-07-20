@@ -34,6 +34,14 @@ export class HourlyChart {
     return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
   }
 
+  _dayLabel(ts) {
+    const tz = this.getTimezone();
+    const opts = { weekday: "short", ...(tz && tz !== "auto" ? { timeZone: tz } : {}) };
+    try {
+      return new Intl.DateTimeFormat(undefined, opts).format(new Date(ts));
+    } catch { return new Date(ts).toLocaleDateString(undefined, { weekday: "short" }); }
+  }
+
   _hourOf(ts) {
     const tz = this.getTimezone();
     if (tz && tz !== "auto") {
@@ -261,6 +269,34 @@ export class HourlyChart {
         r.setAttribute("height", String(H));
         nightG.appendChild(r);
         runStart = null;
+      }
+    }
+
+    // Day-break divider: a subtle vertical line where the local calendar day
+    // rolls over. Makes it obvious when the chart crosses midnight.
+    const dayG = this.svg.querySelector("#chart-daybreaks");
+    if (dayG) {
+      dayG.innerHTML = "";
+      let prevHour = null;
+      for (let i = 0; i < this.hours.length; i++) {
+        const hh = this._hourOf(this.hours[i].time);
+        if (prevHour != null && hh === "00" && prevHour !== "00") {
+          const x = iToX(i - 0.5);
+          const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+          line.setAttribute("x1", x.toFixed(1));
+          line.setAttribute("x2", x.toFixed(1));
+          line.setAttribute("y1", "6");
+          line.setAttribute("y2", String(H - 22));
+          line.setAttribute("class", "chart-daybreak-line");
+          dayG.appendChild(line);
+          const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          label.setAttribute("x", (x + 3).toFixed(1));
+          label.setAttribute("y", "12");
+          label.setAttribute("class", "chart-daybreak-label");
+          label.textContent = this._dayLabel(this.hours[i].time);
+          dayG.appendChild(label);
+        }
+        prevHour = hh;
       }
     }
 
