@@ -1220,6 +1220,19 @@ kbd {
 .sun-daylight-delta[data-dir="up"]   { color: #ffc98a; }
 .sun-daylight-delta[data-dir="down"] { color: #9ad1ff; }
 .sun-daylight-delta[data-dir="flat"] { color: var(--fg-dim); font-style: italic; }
+
+/* Cloud cover caption in the sun card. */
+.sky-cover {
+  margin: 8px 0 0;
+  padding-top: 6px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--fg-dim);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.sky-cover[hidden] { display: none; }
 /* Golden / blue hour indicator sitting just above the sun arc. */
 .golden-hour {
   display: inline-flex; align-items: center; gap: 6px;

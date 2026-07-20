@@ -108,6 +108,7 @@ const el = {
   sunNoonLabel: $("#sun-noon-label"),
   goldenHour: $("#golden-hour"),
   goldenHourText: $("#golden-hour-text"),
+  skyCover: $("#sky-cover"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -671,9 +672,27 @@ function renderSun(w) {
   renderSunQuality(el.sunRiseQuality, w.sunColor?.sunrise, "sunrise");
   renderSunQuality(el.sunSetQuality, w.sunColor?.sunset,  "sunset");
   renderDaylightDelta(w.dayLengthDelta);
+  renderSkyCover(w);
   scheduleGoldenHour(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+// One-line summary of the current sky cover, e.g. "Sky · 42% cloud".
+function renderSkyCover(w) {
+  const node = el.skyCover;
+  if (!node) return;
+  const cc = w?.cloudCover;
+  if (cc == null) { node.hidden = true; node.textContent = ""; return; }
+  const pct = Math.round(cc);
+  let label = "";
+  if (pct < 10) label = "Clear sky";
+  else if (pct < 30) label = "Mostly clear";
+  else if (pct < 60) label = "Partly cloudy";
+  else if (pct < 85) label = "Mostly cloudy";
+  else label = "Overcast";
+  node.hidden = false;
+  node.textContent = `Sky · ${pct}% cloud · ${label}`;
 }
 
 // Golden hour: ~1h after sunrise & ~1h before sunset. Blue hour: 20-30 min
