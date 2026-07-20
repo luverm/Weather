@@ -83,7 +83,7 @@ export async function getWeather(lat, lon) {
       "precipitation_probability", "precipitation",
       "wind_speed_10m", "wind_gusts_10m",
       "is_day", "uv_index", "pressure_msl",
-      "relative_humidity_2m",
+      "relative_humidity_2m", "cloud_cover",
     ].join(","),
     daily: [
       "sunrise", "sunset",
@@ -146,6 +146,7 @@ function normalize(d, aq) {
         uv: d.hourly.uv_index?.[i] ?? null,
         pressure: d.hourly.pressure_msl?.[i] ?? null,
         humidity: d.hourly.relative_humidity_2m?.[i] ?? null,
+        cloudCover: d.hourly.cloud_cover?.[i] ?? null,
         ...mapWmo(d.hourly.weather_code[i]),
       });
     }
@@ -189,6 +190,10 @@ function normalize(d, aq) {
   // Moon phase is not in Open-Meteo's free tier — compute it locally.
   const moon = computeMoonPhase(new Date());
 
+  // Predict how colourful the next sunrise / sunset will be from hourly
+  // cloud cover around the event time.
+  const sunColor = predictSunColor(dailyForecast, d.hourly);
+
   return {
     temp: c.temperature_2m,
     feelsLike: c.apparent_temperature,
@@ -215,8 +220,60 @@ function normalize(d, aq) {
     moon,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
+    sunColor,
     fetchedAt: now,
   };
+}
+
+// ---------- Sunset / sunrise colour forecast ----------
+//
+// Photographers' rule of thumb: the most vivid sunrises and sunsets happen
+// when there are mid- to high-level clouds to catch the light, but the sky
+// is clear at the horizon. Since Open-Meteo's free tier only exposes total
+// cloud cover, we use it as a decent proxy — the sweet spot is 30–70 %.
+//
+// Returns { sunrise, sunset } where each entry (or null) is:
+//   { time, cloudCover, score: 0..1, label, tone: 'muted'|'fair'|'good'|'great' }
+function predictSunColor(dailyForecast, hourly) {
+  const out = { sunrise: null, sunset: null };
+  if (!hourly?.time || !hourly?.cloud_cover) return out;
+  const now = Date.now();
+  for (const day of dailyForecast || []) {
+    for (const [kind, ts] of [["sunrise", day.sunrise], ["sunset", day.sunset]]) {
+      if (!ts || ts < now - 30 * 60_000) continue;
+      if (out[kind]) continue;               // pick the next occurrence only
+      const cc = cloudCoverAt(hourly, ts);
+      if (cc == null) continue;
+      out[kind] = { time: ts, cloudCover: cc, ...scoreSunColor(cc) };
+    }
+    if (out.sunrise && out.sunset) break;
+  }
+  return out;
+}
+
+function cloudCoverAt(hourly, ts) {
+  let best = null, bestDiff = Infinity;
+  for (let i = 0; i < hourly.time.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    const diff = Math.abs(t - ts);
+    if (diff < bestDiff) { bestDiff = diff; best = i; }
+  }
+  if (best == null || bestDiff > 90 * 60_000) return null;
+  const v = hourly.cloud_cover?.[best];
+  return typeof v === "number" ? v : null;
+}
+
+function scoreSunColor(cc) {
+  // Triangle centred on 50 %, peaking there and tapering to zero at 0 % / 100 %.
+  // Peaks in the 30–70 band map to "great"; the tails become "muted".
+  const distance = Math.abs(cc - 50);
+  const score = Math.max(0, 1 - distance / 50);
+  let label, tone;
+  if (cc >= 30 && cc <= 70) { label = "Vivid"; tone = "great"; }
+  else if ((cc >= 15 && cc < 30) || (cc > 70 && cc <= 85)) { label = "Colourful"; tone = "good"; }
+  else if ((cc >= 5 && cc < 15) || (cc > 85 && cc <= 95)) { label = "Subtle"; tone = "fair"; }
+  else { label = cc < 5 ? "Clear" : "Overcast"; tone = "muted"; }
+  return { score, label, tone };
 }
 
 function computePressureTrend(hourly, now) {
@@ -400,6 +457,12 @@ function mock(lat, lon) {
       level: "Moderate",
     },
     pressureTrend: { delta: -0.4, direction: "steady" },
+    sunColor: {
+      sunrise: { time: new Date().setHours(6, 30, 0, 0), cloudCover: 22,
+                 score: 0.44, label: "Colourful", tone: "good" },
+      sunset:  { time: new Date().setHours(19, 0, 0, 0),  cloudCover: 55,
+                 score: 0.9,  label: "Vivid",     tone: "great" },
+    },
     fetchedAt: now,
     offline: true,
   };

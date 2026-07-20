@@ -50,6 +50,8 @@ const el = {
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  sunRiseQuality: $("#sun-rise-quality"),
+  sunSetQuality: $("#sun-set-quality"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -521,8 +523,23 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderSunQuality(el.sunRiseQuality, w.sunColor?.sunrise, "sunrise");
+  renderSunQuality(el.sunSetQuality, w.sunColor?.sunset,  "sunset");
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderSunQuality(node, entry, kind) {
+  if (!node) return;
+  if (!entry) { node.hidden = true; node.dataset.tone = ""; return; }
+  node.hidden = false;
+  node.dataset.tone = entry.tone;
+  const label = node.querySelector(".sun-quality-label");
+  if (label) label.textContent = entry.label;
+  const cc = Math.round(entry.cloudCover);
+  const title = `${kind === "sunrise" ? "Sunrise" : "Sunset"} colour: ${entry.label} · ${cc}% cloud cover`;
+  node.setAttribute("title", title);
+  node.setAttribute("aria-label", title);
 }
 
 function scheduleSunArc(w) {
