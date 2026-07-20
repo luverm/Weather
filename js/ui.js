@@ -1109,6 +1109,9 @@ function renderDaily(w) {
     if (d.tempMax > gMax) gMax = d.tempMax;
   }
   const span = Math.max(1, gMax - gMin);
+  // Superlative days (excluding today, so the accents describe upcoming
+  // extremes rather than the day you're already living through).
+  const superlatives = pickWeekSuperlatives(days);
   days.forEach((d, i) => {
     const dt = new Date(d.time);
     const tz = state.weather?.timezone;
@@ -1127,6 +1130,12 @@ function renderDaily(w) {
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
     const uvBadge = dailyUvBadge(d.uvMax);
+    const supers = superlatives[i] || [];
+    if (supers.length) {
+      item.classList.add("daily-super");
+      item.dataset.super = supers[0].kind;
+      item.setAttribute("title", supers.map((s) => s.title).join(" · "));
+    }
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
@@ -1231,6 +1240,37 @@ function renderYesterdayLine(w) {
   const yLo = y.tempMin != null ? `${Math.round(convertTemp(y.tempMin))}°` : "—";
   const yHi = `${Math.round(convertTemp(y.tempMax))}°`;
   line.setAttribute("title", `Yesterday: ${yHi} / ${yLo}${yRain ? ` · ${yRain.toFixed(0)} mm` : ""}`);
+}
+
+// Tag the upcoming week's stand-out days (hottest, coldest, wettest, windiest).
+// Returns an array parallel to `days` where each entry is an array of tags
+// for that day. Skips today so the accents describe the days you're planning
+// around, not the one you're already in.
+function pickWeekSuperlatives(days) {
+  const result = days.map(() => []);
+  if (days.length < 3) return result;
+  const upcoming = days
+    .map((d, i) => ({ d, i }))
+    .filter(({ i }) => i > 0);           // exclude today
+  const pickBest = (key, cmp, tag) => {
+    let bestIdx = null, bestVal = null;
+    for (const { d, i } of upcoming) {
+      const v = d[key];
+      if (v == null) continue;
+      if (bestIdx == null || cmp(v, bestVal)) { bestIdx = i; bestVal = v; }
+    }
+    if (bestIdx != null) result[bestIdx].push(tag(bestVal));
+  };
+  pickBest("tempMax", (a, b) => a > b, (v) => ({
+    kind: "hot", title: `Hottest day ahead — ${Math.round(v)}°` }));
+  pickBest("tempMin", (a, b) => a < b, (v) => ({
+    kind: "cold", title: `Coldest day ahead — ${Math.round(v)}°` }));
+  pickBest("precip", (a, b) => a > b + 0.1, (v) => v >= 1 ? ({
+    kind: "wet", title: `Wettest day ahead — ${v.toFixed(0)} mm` }) : null);
+  pickBest("gustsMax", (a, b) => a > b, (v) => v >= 30 ? ({
+    kind: "windy", title: `Windiest day ahead — gusts ${Math.round(v)} km/h` }) : null);
+  // Strip nulls dropped by the tag returning null.
+  return result.map((row) => row.filter(Boolean));
 }
 
 // Small colored dot on each daily row showing peak UV.
