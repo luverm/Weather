@@ -489,7 +489,13 @@ function mock(lat, lon) {
     dayLengthDelta: { deltaSeconds: 74,
                       yesterdayMs: 12 * 3600_000,
                       todayMs:     12 * 3600_000 + 74_000 },
-    yesterday: null,
+    yesterday: {
+      time: now - 86400_000,
+      tempMax: 19, tempMin: 11, precip: 0, pop: 20,
+      windMax: 12, gustsMax: 20, uvMax: 5,
+      sunrise: null, sunset: null,
+      condition: CONDITIONS.CLOUDS, label: "Cloudy",
+    },
     fetchedAt: now,
     offline: true,
   };

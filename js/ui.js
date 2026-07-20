@@ -27,6 +27,8 @@ const el = {
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
+  yesterdayLine: $("#yesterday-line"),
+  yesterdayText: $("#yesterday-text"),
   dayRangeMarker: $("#day-range-marker"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
@@ -343,6 +345,7 @@ function feelsLikeDriver(w) {
 }
 
 function renderDayRange(w) {
+  renderYesterdayLine(w);
   if (!el.dayRange || !el.dayRangeMarker) return;
   // Pull today's min/max from the daily forecast; fall back to nearest hour
   // span if the daily isn't ready yet.
@@ -1073,6 +1076,41 @@ function renderDaily(w) {
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+}
+
+// One-line comparison with yesterday's daily aggregates.
+function renderYesterdayLine(w) {
+  const line = el.yesterdayLine;
+  const text = el.yesterdayText;
+  if (!line || !text) return;
+  const y = w.yesterday;
+  const today = w.daily?.[0];
+  if (!y || !today || y.tempMax == null || today.tempMax == null) {
+    line.hidden = true; line.dataset.dir = ""; text.textContent = "";
+    return;
+  }
+  const deltaC = today.tempMax - y.tempMax;
+  const deltaDisplay = Math.round(state.unit === "F" ? deltaC * 9 / 5 : deltaC);
+  const parts = [];
+  const abs = Math.abs(deltaDisplay);
+  let dir = "flat";
+  if (abs >= 1) {
+    dir = deltaDisplay > 0 ? "up" : "down";
+    parts.push(`${abs}° ${deltaDisplay > 0 ? "warmer" : "cooler"} than yesterday`);
+  } else {
+    parts.push("similar to yesterday");
+  }
+  // Add rain delta when meaningful (both directions).
+  const yRain = y.precip ?? 0;
+  const tRain = today.precip ?? 0;
+  if (yRain >= 1 && tRain < 0.5) parts.push("drier");
+  else if (tRain >= 1 && yRain < 0.5) parts.push("wetter");
+  line.hidden = false;
+  line.dataset.dir = dir;
+  text.textContent = parts.join(" · ");
+  const yLo = y.tempMin != null ? `${Math.round(convertTemp(y.tempMin))}°` : "—";
+  const yHi = `${Math.round(convertTemp(y.tempMax))}°`;
+  line.setAttribute("title", `Yesterday: ${yHi} / ${yLo}${yRain ? ` · ${yRain.toFixed(0)} mm` : ""}`);
 }
 
 function renderDailyIconStrip(days) {
