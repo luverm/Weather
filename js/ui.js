@@ -96,6 +96,8 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  goldenHour: $("#golden-hour"),
+  goldenHourText: $("#golden-hour-text"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -584,8 +586,60 @@ function renderSun(w) {
   renderSunQuality(el.sunRiseQuality, w.sunColor?.sunrise, "sunrise");
   renderSunQuality(el.sunSetQuality, w.sunColor?.sunset,  "sunset");
   renderDaylightDelta(w.dayLengthDelta);
+  scheduleGoldenHour(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+// Golden hour: ~1h after sunrise & ~1h before sunset. Blue hour: 20-30 min
+// on the darker side of those events. Show whichever window is closest,
+// with a live countdown so it feels present.
+function scheduleGoldenHour(w) {
+  const wrap = el.goldenHour;
+  const text = el.goldenHourText;
+  if (!wrap || !text) return;
+  if (state.goldenTimer) { clearInterval(state.goldenTimer); state.goldenTimer = null; }
+  const daily = w?.daily || [];
+  if (!daily.length) { wrap.hidden = true; return; }
+
+  const windows = [];
+  for (const d of daily) {
+    if (d.sunrise) {
+      windows.push({ kind: "blue-morning",   start: d.sunrise - 30 * 60_000, end: d.sunrise });
+      windows.push({ kind: "golden-morning", start: d.sunrise,               end: d.sunrise + 60 * 60_000 });
+    }
+    if (d.sunset) {
+      windows.push({ kind: "golden-evening", start: d.sunset - 60 * 60_000,  end: d.sunset });
+      windows.push({ kind: "blue-evening",   start: d.sunset,                end: d.sunset + 30 * 60_000 });
+    }
+  }
+  if (!windows.length) { wrap.hidden = true; return; }
+
+  const update = () => {
+    const now = Date.now();
+    // Prefer a window that's currently active, otherwise the next one.
+    const active = windows.find((w) => now >= w.start && now <= w.end);
+    const next = windows.filter((w) => w.start > now).sort((a, b) => a.start - b.start)[0];
+    const win = active || next;
+    if (!win) { wrap.hidden = true; return; }
+    wrap.hidden = false;
+    wrap.dataset.kind = win.kind;
+    const name = win.kind.startsWith("golden") ? "Golden hour" : "Blue hour";
+    if (active) {
+      const mins = Math.max(1, Math.round((win.end - now) / 60_000));
+      text.textContent = `${name} · ${mins}m left`;
+      wrap.setAttribute("title", `${name} runs until ${fmtTime(win.end)}`);
+    } else {
+      const mins = Math.max(0, Math.round((win.start - now) / 60_000));
+      const label = mins >= 60
+        ? `${Math.floor(mins / 60)}h ${mins % 60}m`
+        : `${mins}m`;
+      text.textContent = `${name} in ${label}`;
+      wrap.setAttribute("title", `${name} starts at ${fmtTime(win.start)}`);
+    }
+  };
+  update();
+  state.goldenTimer = setInterval(update, 30_000);
 }
 
 function renderDaylightDelta(delta) {
