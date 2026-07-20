@@ -82,6 +82,7 @@ const el = {
   refreshBtn: $("#refresh-btn"),
   fetchedAgo: $("#fetched-ago"),
   dailyIconStrip: $("#daily-icon-strip"),
+  dailyPrecipBars: $("#daily-precip-bars"),
   settingsBtn: $("#settings-btn"),
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
@@ -959,6 +960,7 @@ function renderDaily(w) {
   const days = (w.daily || []).slice(0, 7);
   if (!days.length) return;
   renderDailyIconStrip(days);
+  renderDailyPrecipBars(days);
   renderDailySpark(days);
   renderDailyDelta(days);
   // Global min/max for the range bar.
@@ -1005,6 +1007,27 @@ function renderDailyIconStrip(days) {
   el.dailyIconStrip.innerHTML = days.map((d) =>
     `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
   ).join("");
+}
+
+function renderDailyPrecipBars(days) {
+  const wrap = el.dailyPrecipBars;
+  if (!wrap) return;
+  const totals = days.map((d) => Math.max(0, d.precip ?? 0));
+  const peak = Math.max(...totals);
+  if (peak <= 0.05) { wrap.hidden = true; wrap.innerHTML = ""; return; }
+  // Sqrt scale so a 2mm sprinkle still reads next to a 20mm drencher.
+  const scale = (v) => (v <= 0 ? 0 : Math.sqrt(v) / Math.sqrt(Math.max(peak, 1)));
+  wrap.hidden = false;
+  wrap.innerHTML = days.map((d, i) => {
+    const mm = totals[i];
+    const pct = Math.round(scale(mm) * 100);
+    const tone = mm >= 15 ? "heavy" : mm >= 5 ? "moderate" : mm >= 1 ? "light" : mm > 0 ? "trace" : "dry";
+    const title = mm > 0 ? `${mm.toFixed(mm < 1 ? 1 : 0)} mm expected` : "Dry";
+    return `<span class="precip-bar" data-tone="${tone}" title="${title}"
+              aria-label="${title}">
+              <span class="precip-bar-fill" style="height:${pct}%"></span>
+            </span>`;
+  }).join("");
 }
 
 function renderDailySpark(days) {

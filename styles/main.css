@@ -1504,6 +1504,49 @@ kbd {
   display: block;
 }
 
+/* 7-day precipitation totals — small bars aligned with the daily strip. */
+.daily-precip-bars {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 4px;
+  padding: 0 10px 2px;
+  align-items: end;
+  justify-items: center;
+  height: 22px;
+}
+.daily-precip-bars[hidden] { display: none; }
+.precip-bar {
+  position: relative;
+  width: 60%;
+  max-width: 22px;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px 4px 3px 3px;
+  overflow: hidden;
+}
+.precip-bar-fill {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 0;
+  background: linear-gradient(180deg, rgba(154, 209, 255, 0.9), rgba(154, 209, 255, 0.6));
+  border-radius: 4px 4px 3px 3px;
+  transition: height 700ms var(--ease);
+}
+.precip-bar[data-tone="moderate"] .precip-bar-fill {
+  background: linear-gradient(180deg, #7cc0ff, #4d8dcf);
+}
+.precip-bar[data-tone="heavy"] .precip-bar-fill {
+  background: linear-gradient(180deg, #a4a8ff, #6a5fd8);
+}
+.precip-bar[data-tone="dry"] {
+  background: transparent;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+}
+@media (prefers-reduced-motion: reduce) {
+  .precip-bar-fill { transition: none; }
+}
+
 .daily-spark {
   width: 100%;
   height: 52px;
