@@ -1605,6 +1605,17 @@ kbd {
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+.daily-week-total {
+  margin-left: auto;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  color: #9ad1ff;
+  text-transform: none;
+  font-size: 11px;
+  cursor: help;
+}
+.daily-week-total[hidden] { display: none; }
+.daily-week-total + .daily-delta { margin-left: 8px; }
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;

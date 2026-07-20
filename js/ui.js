@@ -81,6 +81,7 @@ const el = {
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
+  dailyWeekTotal: $("#daily-week-total"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -1102,6 +1103,7 @@ function renderDaily(w) {
   renderDailyPrecipBars(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderDailyWeekTotal(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1271,6 +1273,20 @@ function pickWeekSuperlatives(days) {
     kind: "windy", title: `Windiest day ahead — gusts ${Math.round(v)} km/h` }) : null);
   // Strip nulls dropped by the tag returning null.
   return result.map((row) => row.filter(Boolean));
+}
+
+function renderDailyWeekTotal(days) {
+  const node = el.dailyWeekTotal;
+  if (!node) return;
+  const total = days.reduce((s, d) => s + Math.max(0, d.precip ?? 0), 0);
+  if (total < 0.5) { node.hidden = true; node.textContent = ""; return; }
+  node.hidden = false;
+  node.textContent = `${total.toFixed(total < 10 ? 1 : 0)} mm this week`;
+  const wettest = days.reduce((best, d) => (d.precip ?? 0) > (best?.precip ?? 0) ? d : best, null);
+  if (wettest && wettest.precip >= 1) {
+    const dow = new Date(wettest.time).toLocaleDateString(undefined, { weekday: "long" });
+    node.setAttribute("title", `Total forecast rainfall over the next 7 days · wettest on ${dow}`);
+  }
 }
 
 // Small colored dot on each daily row showing peak UV.
