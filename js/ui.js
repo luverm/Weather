@@ -1931,8 +1931,10 @@ function startFetchedTicker() {
       minutes < 1 ? "Just now" :
       minutes < 60 ? `Updated ${minutes}m ago` :
       `Updated ${Math.floor(minutes / 60)}h ago`;
-    el.fetchedAgo.textContent = "· " + label;
+    const suffix = state.weather?.offline ? " · offline sample" : "";
+    el.fetchedAgo.textContent = "· " + label + suffix;
     el.fetchedAgo.classList.toggle("stale", minutes >= 20);
+    el.fetchedAgo.classList.toggle("offline", !!state.weather?.offline);
   };
   update();
   setInterval(update, 30_000);
