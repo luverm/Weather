@@ -555,6 +555,20 @@ html[data-reduce-motion="true"] *::after {
   cursor: ew-resize;
   touch-action: none;
   outline: none;
+  transition: background-image 500ms var(--ease);
+}
+/* When we know the local sunrise/sunset positions, paint a real
+   dawn → day → dusk → night band anchored to those markers. */
+.scrubber-track[data-lit="true"] {
+  background: linear-gradient(90deg,
+    rgba(10,15,40,0.55) 0%,
+    rgba(10,15,40,0.55)   calc(var(--sr-pos, 0.25) * 100% - 6%),
+    rgba(255,180,120,0.35) calc(var(--sr-pos, 0.25) * 100% + 1%),
+    rgba(150,205,255,0.30) calc(var(--sr-pos, 0.25) * 100% + 8%),
+    rgba(150,205,255,0.30) calc(var(--ss-pos, 0.75) * 100% - 8%),
+    rgba(255,150,110,0.35) calc(var(--ss-pos, 0.75) * 100% - 1%),
+    rgba(10,15,40,0.55)   calc(var(--ss-pos, 0.75) * 100% + 6%),
+    rgba(10,15,40,0.55) 100%);
 }
 .scrubber-track:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
 .scrubber-fill {

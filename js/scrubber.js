@@ -38,7 +38,29 @@ export class Scrubber {
     this.sunset = sunset;
     this._placeMarker(this.sunriseEl, sunrise, "Sunrise");
     this._placeMarker(this.sunsetEl, sunset, "Sunset");
+    this._paintDayNight(sunrise, sunset);
     this._render(this._currentT());
+  }
+
+  /** Feed the CSS gradient positions for today's sunrise/sunset. */
+  _paintDayNight(sunrise, sunset) {
+    if (!this.track) return;
+    const totalMs = RANGE_HOURS * 3600_000;
+    const relFor = (ts) => {
+      if (!ts) return null;
+      const r = (ts - (this.start - 3600_000)) / totalMs;
+      return r >= 0 && r <= 1 ? r : null;
+    };
+    const sr = relFor(sunrise);
+    const ss = relFor(sunset);
+    // Missing / out-of-range values remove the property so the CSS default
+    // gradient takes over.
+    if (sr != null) this.track.style.setProperty("--sr-pos", sr.toFixed(4));
+    else            this.track.style.removeProperty("--sr-pos");
+    if (ss != null) this.track.style.setProperty("--ss-pos", ss.toFixed(4));
+    else            this.track.style.removeProperty("--ss-pos");
+    this.track.setAttribute("data-lit",
+      sr != null || ss != null ? "true" : "false");
   }
 
   /** Called when we externally reset to "now" (e.g. search selected). */
