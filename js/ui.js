@@ -1657,6 +1657,15 @@ function toggleDailyExpand(item, d, w) {
   const tSpan = Math.max(1, tMax - tMin);
   const box = document.createElement("div");
   box.className = "daily-expand";
+  if (d.sunrise && d.sunset) {
+    const mins = Math.max(0, Math.round((d.sunset - d.sunrise) / 60_000));
+    const hh = Math.floor(mins / 60), mm = mins % 60;
+    const header = document.createElement("div");
+    header.className = "daily-expand-header";
+    header.textContent =
+      `Sun ${fmtTime(d.sunrise)} → ${fmtTime(d.sunset)} · ${hh}h ${mm}m daylight`;
+    box.appendChild(header);
+  }
   // Fit up to 12 sampled hours evenly across the day.
   const stepped = [];
   const step = Math.max(1, Math.floor(hrs.length / 12));
