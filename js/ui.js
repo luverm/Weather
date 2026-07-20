@@ -1692,11 +1692,21 @@ function renderPlaces() {
   if (!all.length) { el.placesStrip.hidden = true; el.placesStrip.innerHTML = ""; return; }
   el.placesStrip.hidden = false;
   const activeId = state.place ? places.idFor(state.place) : null;
+  const activeTemp = state.weather?.temp;
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
     const icon = p.condition ? `<span class="chip-icon">${iconFor(p.condition)}</span>` : "";
+    // Delta tooltip: how much warmer/cooler than the currently loaded place.
+    let title = p.name;
+    if (!active && p.temp != null && activeTemp != null) {
+      const dC = p.temp - activeTemp;
+      const dDisplay = Math.round(state.unit === "F" ? dC * 9 / 5 : dC);
+      if (dDisplay === 0) title = `${p.name} · same as here`;
+      else if (dDisplay > 0) title = `${p.name} · ${dDisplay}° warmer than here`;
+      else title = `${p.name} · ${Math.abs(dDisplay)}° cooler than here`;
+    }
     return `
-      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
+      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}" title="${escapeHtml(title)}">
         ${icon}
         <span class="chip-name">${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
