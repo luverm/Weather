@@ -1198,10 +1198,17 @@ function renderHourly(w) {
     const d = Math.abs(h.time - now);
     if (d < bestDiff && d < 90 * 60_000) { bestDiff = d; nowIdx = i; }
   });
+  // Peak-precip hour (highest POP >= 55%) — visually accented so it stands
+  // out at a glance for "when will it rain worst?".
+  let peakPopIdx = -1, peakPop = 55;
+  hourly.forEach((h, i) => {
+    if ((h.pop ?? 0) > peakPop) { peakPop = h.pop; peakPopIdx = i; }
+  });
   hourly.forEach((h, i) => {
     const item = document.createElement("div");
     item.className = "forecast-item";
     if (i === nowIdx) item.classList.add("is-now");
+    if (i === peakPopIdx) item.classList.add("is-peak-pop");
     item.dataset.ts = h.time;
     const timeLabel = i === nowIdx ? "Now" : fmtTime(h.time);
     item.innerHTML = `
