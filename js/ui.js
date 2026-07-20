@@ -379,9 +379,14 @@ function renderMetrics(w) {
   el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
-  el.metricWindSub.textContent = dirLabel
-    ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
-    : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+  const peakBits = [];
+  if (dirLabel) peakBits.push(dirLabel);
+  peakBits.push(`gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`);
+  const peakWind = findPeakWind(w);
+  if (peakWind) {
+    peakBits.push(`peak ${Math.round(peakWind.value)} at ${fmtTime(peakWind.time)}`);
+  }
+  el.metricWindSub.textContent = peakBits.join(" · ");
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
@@ -432,6 +437,21 @@ function renderMetrics(w) {
   }
   renderUvScale(w);
   renderPressureSparkline(w);
+}
+
+// Return the highest gust (or wind) in the next 24h that meaningfully beats
+// the current gust; used to caption the wind metric card.
+function findPeakWind(w) {
+  const hours = (w.hourly || []).slice(0, 24);
+  const nowGust = w.windGusts ?? w.windSpeed ?? 0;
+  let best = null;
+  for (const h of hours) {
+    const v = h.gusts ?? h.wind ?? 0;
+    if (v == null) continue;
+    if (!best || v > best.value) best = { value: v, time: h.time };
+  }
+  if (!best || best.value < nowGust + 3) return null;
+  return best;
 }
 
 // Marker across the standard WHO UV scale: 0..11+ with a subtle glow when
