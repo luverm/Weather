@@ -1601,7 +1601,7 @@ kbd {
 .forecast-track::-webkit-scrollbar { display: none; }
 .forecast-item {
   display: grid;
-  grid-template-rows: auto auto auto auto;
+  grid-template-rows: auto auto auto auto auto;
   gap: 4px;
   justify-items: center;
   padding: 10px 6px;
@@ -1620,6 +1620,30 @@ kbd {
   opacity: 0.9;
 }
 .forecast-pop.dim { opacity: 0; }
+
+/* Hourly wind chevron — only rendered when wind is meaningful. */
+.forecast-wind {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 10px; color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+  height: 12px;                 /* reserve space so all items align */
+  line-height: 1;
+}
+.forecast-wind.dim { visibility: hidden; }
+.forecast-wind svg { width: 10px; height: 10px; transform-origin: 50% 50%; }
+.forecast-wind[data-tone="gentle"] { color: var(--fg-dim); }
+.forecast-wind[data-tone="brisk"]  { color: #ffc98a; }
+.forecast-wind[data-tone="strong"] {
+  color: #ff9c7a;
+  animation: gustFlicker 3.2s ease-in-out infinite;
+}
+@keyframes gustFlicker {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .forecast-wind[data-tone="strong"] { animation: none; }
+}
 
 .daily-track {
   display: grid;

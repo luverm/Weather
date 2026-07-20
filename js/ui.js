@@ -998,10 +998,29 @@ function renderHourly(w) {
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
+      ${hourlyWindChevron(h)}
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
   }
+}
+
+// Wind chevron only shows when there's actually wind to talk about.
+// Rotates so the arrow points where the wind is going (not where it's from).
+function hourlyWindChevron(h) {
+  const wind = h.wind ?? 0;
+  const dir = h.windDir;
+  if (wind < 12 || dir == null) return `<span class="forecast-wind dim"></span>`;
+  const tone = wind >= 40 ? "strong" : wind >= 22 ? "brisk" : "gentle";
+  const rot = ((dir + 180) % 360).toFixed(0);        // point downstream
+  const label = `${Math.round(wind)} km/h from ${cardinal(dir)}`;
+  return `
+    <span class="forecast-wind" data-tone="${tone}" title="${label}" aria-label="${label}">
+      <svg viewBox="-6 -6 12 12" style="transform:rotate(${rot}deg)">
+        <path d="M0 -4L3 3L0 1L-3 3Z" fill="currentColor"/>
+      </svg>
+      <span>${Math.round(wind)}</span>
+    </span>`;
 }
 
 function highlightHour(index) {
