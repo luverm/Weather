@@ -422,6 +422,12 @@ function renderMetrics(w) {
     peakBits.push(`peak ${Math.round(peakWind.value)} at ${fmtTime(peakWind.time)}`);
   }
   el.metricWindSub.textContent = peakBits.join(" · ");
+  // Tooltip on the wind value shows mph so US-unit users can peek without
+  // re-reading km/h in their head.
+  if (w.windSpeed != null) {
+    const mph = w.windSpeed * 0.621371;
+    el.metricWind.setAttribute("title", `${Math.round(mph)} mph`);
+  }
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
