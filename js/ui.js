@@ -217,6 +217,7 @@ export const ui = {
       });
     }
     renderPlaces();
+    updateDocumentTitle(weather);
   },
   /** Called by the scrubber whenever simulated time moves. */
   setSampledWeather(sampled, { highlightHourIndex } = {}) {
@@ -1093,6 +1094,22 @@ function renderDaily(w) {
 }
 
 // One-line comparison with yesterday's daily aggregates.
+const DEFAULT_TITLE = "Aether — Interactive Weather";
+
+// Reflect the current temp + condition + city in the browser tab title so
+// pinned tabs and the switcher stay useful at a glance.
+function updateDocumentTitle(w) {
+  if (!w || w.temp == null) { document.title = DEFAULT_TITLE; return; }
+  const temp = convertTemp(w.temp);
+  const label = w.label || capitalize(w.condition || "");
+  const placeName = state.place?.name || "";
+  const parts = [`${Math.round(temp)}°${state.unit}`, label].filter(Boolean);
+  const head = parts.join(" · ");
+  document.title = placeName
+    ? `${head} — ${placeName} · Aether`
+    : `${head} — Aether`;
+}
+
 function renderYesterdayLine(w) {
   const line = el.yesterdayLine;
   const text = el.yesterdayText;
