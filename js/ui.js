@@ -1193,8 +1193,20 @@ function renderDaily(w) {
     if (supers.length) {
       item.classList.add("daily-super");
       item.dataset.super = supers[0].kind;
-      item.setAttribute("title", supers.map((s) => s.title).join(" · "));
     }
+    // Compose a rich tooltip: superlatives (if any) + sunrise/sunset + precip.
+    const tipParts = [];
+    if (supers.length) tipParts.push(...supers.map((s) => s.title));
+    if (d.sunrise && d.sunset) {
+      tipParts.push(`Sun ${fmtTime(d.sunrise)} → ${fmtTime(d.sunset)}`);
+    }
+    if ((d.precip ?? 0) >= 0.5) {
+      tipParts.push(`${d.precip.toFixed(d.precip < 10 ? 1 : 0)} mm expected`);
+    }
+    if (d.gustsMax && d.gustsMax >= 25) {
+      tipParts.push(`Gusts to ${Math.round(d.gustsMax)} km/h`);
+    }
+    if (tipParts.length) item.setAttribute("title", tipParts.join(" · "));
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
