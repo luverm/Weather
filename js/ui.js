@@ -1230,6 +1230,9 @@ function renderDaily(w) {
     const item = document.createElement("div");
     item.className = "daily-item";
     item.dataset.ts = d.time;
+    // Mark Sat/Sun so weekends visually pop in the 7-day list.
+    const dow = new Date(d.time).getDay();
+    if (dow === 0 || dow === 6) item.classList.add("is-weekend");
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";

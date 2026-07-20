@@ -1875,6 +1875,13 @@ kbd {
 .daily-uv[data-tone="very-high"] { background: linear-gradient(180deg, #f26a5a, #d64c3a); color: #fff; }
 .daily-uv[data-tone="extreme"]   { background: linear-gradient(180deg, #c25aff, #8f3ce0); color: #fff; }
 .daily-item:hover { background: var(--glass); }
+/* Weekends get a subtle warm tint so Sat/Sun visually pop. */
+.daily-item.is-weekend {
+  background: rgba(255, 210, 140, 0.03);
+}
+.daily-item.is-weekend .daily-day {
+  color: #ffd48a;
+}
 /* Subtle left accent for the upcoming week's stand-out days. */
 .daily-super {
   position: relative;
