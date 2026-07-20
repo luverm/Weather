@@ -347,6 +347,14 @@ html[data-reduce-motion="true"] *::after {
   line-height: 1.02;
 }
 .place-sub { margin: 8px 0 0; color: var(--fg-muted); font-size: 14px; }
+.place-elev {
+  margin-left: 4px;
+  font-size: 12px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  cursor: help;
+}
 .place-localtime {
   margin: 6px 0 0;
   display: inline-flex; align-items: center; gap: 6px;

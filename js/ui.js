@@ -193,6 +193,8 @@ export const ui = {
   setWeather(weather, { narrative } = {}) {
     state.weather = weather;
     state.sampledWeather = weather; // initially same as live
+    // Refresh the place-sub to append elevation once the API tells us.
+    if (state.place) refreshPlaceSub(state.place, weather);
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
@@ -824,6 +826,22 @@ function renderAdvice(w) {
     el.advice.hidden = false;
   } else {
     el.advice.hidden = true;
+  }
+}
+
+// Compose the place-sub line with elevation appended when the API returned
+// it. Called after each weather fetch — the geocoding response doesn't
+// include elevation on its own.
+function refreshPlaceSub(place, weather) {
+  const parts = [place.admin1, place.country].filter(Boolean);
+  const parent = parts.join(", ") || "—";
+  const el2 = el.placeSub;
+  if (!el2) return;
+  if (weather?.elevation != null) {
+    const m = Math.round(weather.elevation);
+    el2.innerHTML = `${escapeHtml(parent)} <span class="place-elev" title="Elevation">· ${m} m</span>`;
+  } else {
+    el2.textContent = parent;
   }
 }
 

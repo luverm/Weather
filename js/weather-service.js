@@ -215,6 +215,7 @@ function normalize(d, aq) {
     dewPoint: c.dew_point_2m,
     visibility: c.visibility, // meters
     cloudCover: c.cloud_cover, // %
+    elevation: d.elevation,     // meters above sea level
     isDay: !!c.is_day,
     condition,
     label,
@@ -480,6 +481,7 @@ function mock(lat, lon) {
       level: "Moderate",
     },
     pressureTrend: { delta: -0.4, direction: "steady" },
+    elevation: 12,
     sunColor: {
       sunrise: { time: new Date().setHours(6, 30, 0, 0), cloudCover: 22,
                  score: 0.44, label: "Colourful", tone: "good" },
