@@ -93,6 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
+    past_days: 1,          // yesterday, for day-length delta
     past_hours: 1,
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
@@ -152,12 +153,13 @@ function normalize(d, aq) {
     }
   }
 
-  // 7-day daily forecast.
-  const dailyForecast = [];
+  // Daily forecast. `past_days=1` gives us yesterday at index 0; we lift it
+  // out so downstream renders see a today-first list.
+  const rawDaily = [];
   if (daily.time) {
     for (let i = 0; i < daily.time.length; i++) {
       const ts = new Date(daily.time[i]).getTime();
-      dailyForecast.push({
+      rawDaily.push({
         time: ts,
         tempMax: daily.temperature_2m_max?.[i],
         tempMin: daily.temperature_2m_min?.[i],
@@ -172,6 +174,12 @@ function normalize(d, aq) {
       });
     }
   }
+  // The API returns one past day followed by forecast_days entries. Split so
+  // dailyForecast[0] === today; keep yesterday around for the day-length
+  // delta shown in the sun card.
+  const yesterday = rawDaily[0] || null;
+  const dailyForecast = rawDaily.slice(1);
+  const dayLengthDelta = computeDayLengthDelta(yesterday, dailyForecast[0]);
 
   // 15-min nowcast for the next ~2h — used for "rain in 12 min" banner.
   const nowcast = [];
@@ -209,9 +217,9 @@ function normalize(d, aq) {
     isDay: !!c.is_day,
     condition,
     label,
-    sunrise: daily.sunrise?.[0] ? new Date(daily.sunrise[0]).getTime() : null,
-    sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null,
-    uv: daily.uv_index_max?.[0] ?? null,
+    sunrise: dailyForecast[0]?.sunrise ?? null,
+    sunset: dailyForecast[0]?.sunset ?? null,
+    uv: dailyForecast[0]?.uvMax ?? null,
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
     hourly,
@@ -221,8 +229,21 @@ function normalize(d, aq) {
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
     sunColor,
+    dayLengthDelta,
+    yesterday,
     fetchedAt: now,
   };
+}
+
+function computeDayLengthDelta(yesterday, today) {
+  if (!yesterday?.sunrise || !yesterday?.sunset || !today?.sunrise || !today?.sunset) {
+    return null;
+  }
+  const y = yesterday.sunset - yesterday.sunrise;
+  const t = today.sunset    - today.sunrise;
+  if (!isFinite(y) || !isFinite(t) || y <= 0 || t <= 0) return null;
+  const deltaSeconds = Math.round((t - y) / 1000);
+  return { deltaSeconds, yesterdayMs: y, todayMs: t };
 }
 
 // ---------- Sunset / sunrise colour forecast ----------
@@ -463,6 +484,10 @@ function mock(lat, lon) {
       sunset:  { time: new Date().setHours(19, 0, 0, 0),  cloudCover: 55,
                  score: 0.9,  label: "Vivid",     tone: "great" },
     },
+    dayLengthDelta: { deltaSeconds: 74,
+                      yesterdayMs: 12 * 3600_000,
+                      todayMs:     12 * 3600_000 + 74_000 },
+    yesterday: null,
     fetchedAt: now,
     offline: true,
   };

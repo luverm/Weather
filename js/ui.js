@@ -52,6 +52,7 @@ const el = {
   sunNextLabel: $("#sun-next-label"),
   sunRiseQuality: $("#sun-rise-quality"),
   sunSetQuality: $("#sun-set-quality"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -525,8 +526,41 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   renderSunQuality(el.sunRiseQuality, w.sunColor?.sunrise, "sunrise");
   renderSunQuality(el.sunSetQuality, w.sunColor?.sunset,  "sunset");
+  renderDaylightDelta(w.dayLengthDelta);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderDaylightDelta(delta) {
+  const node = el.sunDaylightDelta;
+  if (!node) return;
+  if (!delta || !isFinite(delta.deltaSeconds)) {
+    node.hidden = true; node.dataset.dir = ""; node.textContent = "";
+    return;
+  }
+  const secs = delta.deltaSeconds;
+  const abs = Math.abs(secs);
+  // Anything under 15 s is noise — near solstices the delta rounds to zero.
+  if (abs < 15) {
+    node.hidden = false; node.dataset.dir = "flat";
+    node.textContent = "same as yesterday";
+    node.setAttribute("title", "Day length is unchanged from yesterday.");
+    return;
+  }
+  const dir = secs > 0 ? "up" : "down";
+  const arrow = secs > 0 ? "▲" : "▼";
+  const min = Math.floor(abs / 60);
+  const sec = abs % 60;
+  const parts = [];
+  if (min) parts.push(`${min}m`);
+  parts.push(`${sec}s`);
+  const compact = min && sec === 0 ? `${min}m` : (min ? `${min}m ${sec}s` : `${sec}s`);
+  node.hidden = false;
+  node.dataset.dir = dir;
+  node.textContent = `${arrow} ${compact} vs. yesterday`;
+  node.setAttribute("title", secs > 0
+    ? `Today is ${parts.join(" ")} longer than yesterday`
+    : `Today is ${parts.join(" ")} shorter than yesterday`);
 }
 
 function renderSunQuality(node, entry, kind) {

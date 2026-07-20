@@ -1016,6 +1016,23 @@ kbd {
 @media (prefers-reduced-motion: reduce) {
   .sun-quality[data-tone="great"] .sun-quality-dot { animation: none; }
 }
+
+/* Day-length delta vs yesterday. */
+.sun-daylight-delta {
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  margin-top: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sun-daylight-delta[hidden] { display: none; }
+.sun-daylight-delta[data-dir="up"]   { color: #ffc98a; }
+.sun-daylight-delta[data-dir="down"] { color: #9ad1ff; }
+.sun-daylight-delta[data-dir="flat"] { color: var(--fg-dim); font-style: italic; }
 .sun-arc {
   width: 100%;
   height: 76px;
