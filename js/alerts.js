@@ -70,6 +70,23 @@ export function buildAlerts(weather) {
     });
   }
 
+  // ---- Rain windows ----
+  // If rain is expected in discrete bursts, surface a "Rain 3–5 PM, 8–11 PM"
+  // chip so users see the WHEN, not just the how-much.
+  const rainWindows = groupRainWindows(hours);
+  if (rainWindows.length) {
+    const summary = rainWindows.slice(0, 3).map((w) =>
+      `${shortClock(w.start)}–${shortClock(w.end)}`
+    ).join(", ");
+    out.push({
+      id: "rain-windows",
+      severity: "info",
+      title: rainWindows.length === 1 ? "Rain window" : "Rain windows",
+      detail: `Wet ${summary}${rainWindows.length > 3 ? "…" : ""}.`,
+      ts: rainWindows[0].start,
+    });
+  }
+
   // ---- Rain accumulation ----
   const rainy = wettestRunningWindow(hours, 6);
   const dayTotal = today?.precip ?? 0;
@@ -186,6 +203,28 @@ function peakGust(hours) {
   return best;
 }
 
+// Group adjacent hourly entries with high POP or measurable precip into
+// windows. An hour "closes" the window when it drops below the threshold
+// for at least 1 hour. Skips windows whose midpoint is already in the past.
+function groupRainWindows(hours) {
+  const out = [];
+  const isWet = (h) => (h.pop ?? 0) >= 55 || (h.precip ?? 0) >= 0.4;
+  let start = null, endTs = null;
+  for (let i = 0; i < hours.length; i++) {
+    const h = hours[i];
+    if (isWet(h)) {
+      if (start == null) start = h.time;
+      endTs = h.time + 3600_000;
+    } else if (start != null) {
+      out.push({ start, end: endTs });
+      start = null; endTs = null;
+    }
+  }
+  if (start != null) out.push({ start, end: endTs });
+  const now = Date.now();
+  return out.filter((w) => (w.start + w.end) / 2 > now).slice(0, 4);
+}
+
 function wettestRunningWindow(hours, span) {
   if (hours.length < span) return null;
   let best = null;
@@ -213,5 +252,6 @@ function dedupe(items) {
   if (ids.has("severe-heat")) drop.add("heat");
   if (ids.has("hard-freeze")) drop.add("frost");
   if (ids.has("heavy-rain") || ids.has("soaking-rain")) drop.add("wet-day");
+  if (ids.has("rain-windows") && ids.has("wet-day")) drop.add("wet-day");
   return items.filter((x) => !drop.has(x.id));
 }
