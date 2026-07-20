@@ -51,6 +51,7 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonWeek: $("#moon-week"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -205,6 +206,7 @@ export const ui = {
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
     renderMoon(weather.moon);
+    renderMoonWeek(weather.moonWeek);
     renderSun(weather);
     renderHourly(weather);
     renderDaily(weather);
@@ -658,6 +660,38 @@ function fmtTime(ts) {
   const hh = d.getHours().toString().padStart(2, "0");
   const mm = d.getMinutes().toString().padStart(2, "0");
   return `${hh}:${mm}`;
+}
+
+// 7-day moon phase preview strip. Each day is a tiny 20 px SVG rendered
+// with the same waxing/waning terminator math as the big glyph.
+function renderMoonWeek(week) {
+  const wrap = el.moonWeek;
+  if (!wrap) return;
+  if (!week?.length) { wrap.innerHTML = ""; return; }
+  const r = 8;
+  wrap.innerHTML = week.map((entry, i) => {
+    const p = entry.phase;
+    const waxing = p < 0.5;
+    const outer = waxing
+      ? `M 0 ${-r} A ${r} ${r} 0 0 1 0 ${r}`
+      : `M 0 ${-r} A ${r} ${r} 0 0 0 0 ${r}`;
+    const termX = Math.abs(Math.cos(p * 2 * Math.PI)) * r;
+    const large = Math.cos(p * 2 * Math.PI) > 0 ? 0 : 1;
+    const termSweep = waxing ? (Math.cos(p * 2 * Math.PI) > 0 ? 0 : 1)
+                             : (Math.cos(p * 2 * Math.PI) > 0 ? 1 : 0);
+    const d = outer + ` A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
+    const dow = i === 0 ? "Now" : new Date(entry.ts).toLocaleDateString(undefined, { weekday: "short" });
+    const title = `${entry.name} · ${Math.round(entry.illum * 100)}% illuminated · ${dow}`;
+    return `
+      <span class="moon-week-day" title="${title}" aria-label="${title}">
+        <svg viewBox="-10 -10 20 20" aria-hidden="true">
+          <circle cx="0" cy="0" r="${r}" fill="rgba(255,255,255,0.06)"/>
+          <path d="${d}" fill="#f0e6cb"/>
+        </svg>
+        <span class="moon-week-label">${dow}</span>
+      </span>
+    `;
+  }).join("");
 }
 
 function renderSun(w) {

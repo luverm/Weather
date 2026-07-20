@@ -198,6 +198,11 @@ function normalize(d, aq) {
 
   // Moon phase is not in Open-Meteo's free tier — compute it locally.
   const moon = computeMoonPhase(new Date());
+  const moonWeek = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(now + i * 86400_000);
+    moonWeek.push({ ts: d.getTime(), ...computeMoonPhase(d) });
+  }
 
   // Predict how colourful the next sunrise / sunset will be from hourly
   // cloud cover around the event time.
@@ -228,6 +233,7 @@ function normalize(d, aq) {
     daily: dailyForecast,
     nowcast,
     moon,
+    moonWeek,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
     sunColor,
@@ -469,6 +475,10 @@ function mock(lat, lon) {
     })),
     nowcast: [],
     moon: computeMoonPhase(new Date()),
+    moonWeek: Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(now + i * 86400_000);
+      return { ts: d.getTime(), ...computeMoonPhase(d) };
+    }),
     airQuality: { aqi: 42, pm25: 8, pm10: 14, o3: 40, no2: 15, co: 0.2, label: "Good" },
     pollen: {
       items: [
