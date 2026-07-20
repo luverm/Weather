@@ -1236,7 +1236,9 @@ function renderDaily(w) {
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
-    const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
+    const popLabel = d.pop >= 30
+      ? (` · ${d.pop}% rain` + (d.precip >= 1 ? ` (${d.precip.toFixed(d.precip < 10 ? 1 : 0)} mm)` : ""))
+      : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
     const uvBadge = dailyUvBadge(d.uvMax);
     const supers = superlatives[i] || [];
