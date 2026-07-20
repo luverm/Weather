@@ -39,6 +39,8 @@ const el = {
   metricPressureSub: $("#m-pressure-sub"),
   metricUV: $("#m-uv"),
   metricUVSub: $("#m-uv-sub"),
+  uvScale: $("#uv-scale"),
+  uvScaleMarker: $("#uv-scale-marker"),
   aqArc: $("#aq-arc"),
   aqValue: $("#aq-value"),
   aqLabel: $("#aq-label"),
@@ -428,7 +430,33 @@ function renderMetrics(w) {
   } else {
     el.metricUVSub.textContent = "peak —";
   }
+  renderUvScale(w);
   renderPressureSparkline(w);
+}
+
+// Marker across the standard WHO UV scale: 0..11+ with a subtle glow when
+// current UV is above the "high" threshold (6+).
+function renderUvScale(w) {
+  if (!el.uvScale || !el.uvScaleMarker) return;
+  const value = w.uv;
+  if (value == null) { el.uvScale.hidden = true; return; }
+  el.uvScale.hidden = false;
+  const clamped = Math.max(0, Math.min(11, value));
+  const pct = (clamped / 11) * 100;
+  el.uvScaleMarker.style.left = `${pct.toFixed(1)}%`;
+  const tone = value >= 11 ? "extreme"
+             : value >= 8  ? "very-high"
+             : value >= 6  ? "high"
+             : value >= 3  ? "moderate"
+             : "low";
+  el.uvScale.dataset.tone = tone;
+  const peak = w.uvPeak?.value;
+  const peakPct = peak != null ? Math.min(11, peak) / 11 * 100 : null;
+  if (peakPct != null) {
+    el.uvScale.style.setProperty("--uv-peak", `${peakPct.toFixed(1)}%`);
+  } else {
+    el.uvScale.style.removeProperty("--uv-peak");
+  }
 }
 
 function humidityComfort(rh, dew, temp) {

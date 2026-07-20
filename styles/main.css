@@ -996,6 +996,50 @@ kbd {
   font-variant-numeric: tabular-nums;
 }
 
+/* WHO-scale UV strip: 0..11+ gradient with a live marker + faint peak notch. */
+.uv-scale {
+  grid-column: 1 / span 2;
+  position: relative;
+  height: 12px;
+  margin-top: 6px;
+}
+.uv-scale[hidden] { display: none; }
+.uv-scale-track {
+  position: absolute; inset: 4px 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg,
+    #7cd48a 0%,
+    #d0d848 27%,
+    #f2a04a 55%,
+    #f26a5a 73%,
+    #c25aff 100%);
+  opacity: 0.85;
+}
+.uv-scale-marker {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 3px;
+  background: #fff;
+  border-radius: 3px;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
+  transform: translateX(-50%);
+  transition: left 500ms var(--ease), box-shadow 300ms var(--ease);
+}
+.uv-scale[data-tone="high"]      .uv-scale-marker { box-shadow: 0 0 10px rgba(255, 210, 120, 0.9); }
+.uv-scale[data-tone="very-high"] .uv-scale-marker { box-shadow: 0 0 10px rgba(255, 130, 90, 0.9); }
+.uv-scale[data-tone="extreme"]   .uv-scale-marker { box-shadow: 0 0 12px rgba(200, 110, 255, 0.9); }
+/* Faint peak notch, if we know today's peak. */
+.uv-scale::after {
+  content: "";
+  position: absolute;
+  top: -2px; bottom: -2px;
+  left: var(--uv-peak, -20px);
+  width: 1px;
+  background: rgba(255, 255, 255, 0.35);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
 /* ---------- Extras row: AQ + moon + sun ---------- */
 .extras {
   display: grid;
