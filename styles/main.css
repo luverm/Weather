@@ -901,6 +901,20 @@ html[data-reduce-motion="true"] *::after {
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
+.chart-extreme {
+  stroke: rgba(255, 255, 255, 0.9);
+  stroke-width: 1;
+  transition: cx 400ms var(--ease), cy 400ms var(--ease);
+}
+.chart-extreme-hot  { fill: #ff9c7a; }
+.chart-extreme-cold { fill: #9ad1ff; }
+.chart-extreme-label {
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+.chart-extreme-label.chart-extreme-hot  { fill: #ffbd9a; }
+.chart-extreme-label.chart-extreme-cold { fill: #b8dcff; }
 .chart-labels text {
   font-size: 9px;
   fill: var(--fg-dim);

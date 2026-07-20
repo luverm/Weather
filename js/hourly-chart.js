@@ -300,6 +300,42 @@ export class HourlyChart {
       }
     }
 
+    // Extremes: mark the hottest and coldest hour with a small dot.
+    const exG = this.svg.querySelector("#chart-extremes");
+    if (exG) {
+      exG.innerHTML = "";
+      const exUnit = this.getUnit();
+      let hotIdx = 0, coldIdx = 0;
+      this.hours.forEach((h, i) => {
+        if (h.temp > this.hours[hotIdx].temp) hotIdx = i;
+        if (h.temp < this.hours[coldIdx].temp) coldIdx = i;
+      });
+      const drawExtreme = (idx, kind) => {
+        if (idx == null) return;
+        const p = this.points[idx];
+        const h = this.hours[idx];
+        const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        c.setAttribute("cx", p.x.toFixed(1));
+        c.setAttribute("cy", p.y.toFixed(1));
+        c.setAttribute("r", "3");
+        c.setAttribute("class", `chart-extreme chart-extreme-${kind}`);
+        exG.appendChild(c);
+        const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        label.setAttribute("x", p.x.toFixed(1));
+        label.setAttribute("y", (kind === "hot" ? p.y - 8 : p.y + 12).toFixed(1));
+        label.setAttribute("text-anchor", "middle");
+        label.setAttribute("class", `chart-extreme-label chart-extreme-${kind}`);
+        const tVal = exUnit === "F" ? h.temp * 9 / 5 + 32 : h.temp;
+        label.textContent = `${kind === "hot" ? "▲" : "▼"} ${Math.round(tVal)}°`;
+        exG.appendChild(label);
+      };
+      // Only annotate when the day genuinely swings (>3° between extremes).
+      if (this.hours[hotIdx].temp - this.hours[coldIdx].temp >= 3) {
+        drawExtreme(hotIdx, "hot");
+        drawExtreme(coldIdx, "cold");
+      }
+    }
+
     // Labels: every ~3 hours
     const unit = this.getUnit();
     const labG = this.svg.querySelector("#chart-labels");
