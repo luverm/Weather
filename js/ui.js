@@ -378,6 +378,23 @@ function renderDayRange(w) {
   el.dayRange.hidden = false;
   el.dayRangeMin.textContent = `${Math.round(convertTemp(lo))}°`;
   el.dayRangeMax.textContent = `${Math.round(convertTemp(hi))}°`;
+  // Annotate the min/max endpoints with the hour when they land, so users
+  // can hover to see "coldest around 5 AM".
+  const hoursNext = (w.hourly || []).slice(0, 24);
+  const nearestTs = (target) => {
+    let best = null, bestDiff = Infinity;
+    for (const h of hoursNext) {
+      const diff = Math.abs(h.temp - target);
+      if (diff < bestDiff) { bestDiff = diff; best = h; }
+    }
+    return best?.time;
+  };
+  const loTs = nearestTs(lo);
+  const hiTs = nearestTs(hi);
+  if (loTs) el.dayRangeMin.setAttribute("title", `Low ${Math.round(convertTemp(lo))}° around ${fmtTime(loTs)}`);
+  else el.dayRangeMin.removeAttribute("title");
+  if (hiTs) el.dayRangeMax.setAttribute("title", `High ${Math.round(convertTemp(hi))}° around ${fmtTime(hiTs)}`);
+  else el.dayRangeMax.removeAttribute("title");
   // Marker position: clamp current temp to [lo,hi] so marker stays on track.
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));

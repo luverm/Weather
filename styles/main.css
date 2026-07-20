@@ -1956,7 +1956,8 @@ kbd {
   .metrics { grid-template-columns: repeat(2, 1fr); }
   .extras { grid-template-columns: 1fr; }
   .brand-name { display: none; }
-  .daily-item { grid-template-columns: 64px 24px 1fr 48px 48px; gap: 8px; }
+  .daily-item { grid-template-columns: 60px 22px 1fr 40px 40px 24px; gap: 6px; }
+  .daily-uv { width: 20px; height: 20px; font-size: 9.5px; }
   .chart-svg { height: 120px; }
   .shortcuts-list { grid-template-columns: 1fr; }
 }
