@@ -1126,6 +1126,7 @@ function renderDaily(w) {
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const uvBadge = dailyUvBadge(d.uvMax);
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
@@ -1134,6 +1135,7 @@ function renderDaily(w) {
       </div>
       <span class="daily-temp-min">${Math.round(convertTemp(d.tempMin))}°</span>
       <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°</span>
+      ${uvBadge}
       ${extra}
     `;
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
@@ -1229,6 +1231,17 @@ function renderYesterdayLine(w) {
   const yLo = y.tempMin != null ? `${Math.round(convertTemp(y.tempMin))}°` : "—";
   const yHi = `${Math.round(convertTemp(y.tempMax))}°`;
   line.setAttribute("title", `Yesterday: ${yHi} / ${yLo}${yRain ? ` · ${yRain.toFixed(0)} mm` : ""}`);
+}
+
+// Small colored dot on each daily row showing peak UV.
+function dailyUvBadge(uvMax) {
+  if (uvMax == null || uvMax < 3) return "";
+  const tone = uvMax >= 11 ? "extreme"
+             : uvMax >= 8  ? "very-high"
+             : uvMax >= 6  ? "high"
+             : "moderate";
+  const label = `UV ${Math.round(uvMax)}`;
+  return `<span class="daily-uv" data-tone="${tone}" title="Peak UV ${Math.round(uvMax)}" aria-label="${label}">${Math.round(uvMax)}</span>`;
 }
 
 function renderDailyIconStrip(days) {
