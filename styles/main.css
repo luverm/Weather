@@ -1761,6 +1761,15 @@ kbd {
   height: 22px;
 }
 .daily-precip-bars[hidden] { display: none; }
+.dry-week {
+  grid-column: 1 / -1;
+  align-self: center;
+  justify-self: center;
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.02em;
+  font-style: italic;
+}
 .precip-bar {
   position: relative;
   width: 60%;

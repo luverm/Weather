@@ -1480,7 +1480,11 @@ function renderDailyPrecipBars(days) {
   if (!wrap) return;
   const totals = days.map((d) => Math.max(0, d.precip ?? 0));
   const peak = Math.max(...totals);
-  if (peak <= 0.05) { wrap.hidden = true; wrap.innerHTML = ""; return; }
+  if (peak <= 0.05) {
+    wrap.hidden = false;
+    wrap.innerHTML = `<span class="dry-week">Dry week ahead — no rain in the outlook</span>`;
+    return;
+  }
   // Sqrt scale so a 2mm sprinkle still reads next to a 20mm drencher.
   const scale = (v) => (v <= 0 ? 0 : Math.sqrt(v) / Math.sqrt(Math.max(peak, 1)));
   wrap.hidden = false;
