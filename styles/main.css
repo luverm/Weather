@@ -259,6 +259,12 @@ html[data-reduce-motion="true"] *::after {
 .search-results li:hover,
 .search-results li[aria-selected="true"] { background: rgba(255, 255, 255, 0.08); }
 .search-results .sub { color: rgba(246, 247, 251, 0.55); font-size: 13px; }
+.search-results .saved-badge {
+  display: inline-flex; align-items: center;
+  color: #7cd48a;
+  margin-left: 6px;
+}
+.search-results li.is-saved { color: rgba(246, 247, 251, 0.75); }
 .search-results .recent-heading {
   padding: 8px 12px 4px;
   font-size: 10px;

@@ -1725,12 +1725,20 @@ const runSearch = debounce(async (q) => {
 
 function renderSearchResults(results) {
   if (!results.length) { el.searchResults.hidden = true; el.searchResults.innerHTML = ""; return; }
-  el.searchResults.innerHTML = results.map((r, i) => `
-    <li role="option" data-index="${i}">
-      <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
-      <span class="sub">${escapeHtml(r.country || "")}</span>
-    </li>
-  `).join("");
+  el.searchResults.innerHTML = results.map((r, i) => {
+    const saved = places.isSaved(r);
+    const badge = saved
+      ? `<span class="saved-badge" title="Already saved" aria-label="Already saved">
+           <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l3.5 3.5L13 5"/></svg>
+         </span>`
+      : "";
+    return `
+      <li role="option" data-index="${i}" ${saved ? 'class="is-saved"' : ""}>
+        <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""} ${badge}</span>
+        <span class="sub">${escapeHtml(r.country || "")}</span>
+      </li>
+    `;
+  }).join("");
   el.searchResults.hidden = false;
   el.searchResults._items = results;
 }
