@@ -1132,6 +1132,7 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+#sun-noon-group { transition: opacity 500ms var(--ease); }
 
 /* ---------- Radar map ---------- */
 .radar {

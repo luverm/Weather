@@ -98,6 +98,8 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunNoonGroup: $("#sun-noon-group"),
+  sunNoonLabel: $("#sun-noon-label"),
   goldenHour: $("#golden-hour"),
   goldenHourText: $("#golden-hour-text"),
   comfortStrip: $("#comfort-strip"),
@@ -693,7 +695,19 @@ function renderSunQuality(node, entry, kind) {
 function scheduleSunArc(w) {
   if (!el.sunArcMarker || !el.sunArcPath) return;
   if (state.sunArcTimer) { clearInterval(state.sunArcTimer); state.sunArcTimer = null; }
-  if (!w?.sunrise || !w?.sunset) return;
+  if (!w?.sunrise || !w?.sunset) {
+    if (el.sunNoonGroup) el.sunNoonGroup.setAttribute("opacity", "0");
+    return;
+  }
+
+  // Solar noon = midway between sunrise and sunset. Show a small tick at
+  // the arc's apex captioned with the time in the location's timezone.
+  const noonTs = Math.round((w.sunrise + w.sunset) / 2);
+  if (el.sunNoonGroup && el.sunNoonLabel) {
+    el.sunNoonLabel.textContent = fmtTime(noonTs);
+    el.sunNoonGroup.setAttribute("opacity", "1");
+    el.sunNoonGroup.setAttribute("data-noon-ts", String(noonTs));
+  }
 
   const update = () => {
     const now = Date.now();
