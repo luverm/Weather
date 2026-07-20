@@ -1156,6 +1156,45 @@ function updateDocumentTitle(w) {
   document.title = placeName
     ? `${head} — ${placeName} · Aether`
     : `${head} — Aether`;
+  updateFavicon(w);
+}
+
+// Draw a small condition-shaped SVG straight into the favicon <link>.
+// The tab dot then reflects the weather at a glance — rain drop for rain,
+// snowflake for snow, moon for clear night, etc.
+function updateFavicon(w) {
+  const link = document.getElementById("favicon");
+  if (!link) return;
+  const svg = faviconSvgFor(w);
+  link.setAttribute("href", `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`);
+}
+
+function faviconSvgFor(w) {
+  const cond = w.condition;
+  const isDay = w.isDay !== false;
+  const bg = isDay ? "#7cc0ff" : "#0b1020";
+  const ink = isDay ? "#fff1c9" : "#e6ecff";
+  const shape = (() => {
+    if (cond === "rain") return `
+      <path d="M20 30 A16 16 0 0 1 44 30 A12 12 0 0 1 48 46 H16 A12 12 0 0 1 20 30Z" fill="${ink}"/>
+      <path d="M22 50 L20 58 M32 50 L30 58 M42 50 L40 58" stroke="#9ad1ff" stroke-width="3" stroke-linecap="round"/>`;
+    if (cond === "snow") return `
+      <path d="M32 12 V54 M14 22 L50 44 M14 44 L50 22" stroke="${ink}" stroke-width="4" stroke-linecap="round"/>`;
+    if (cond === "storm") return `
+      <path d="M20 26 A16 16 0 0 1 44 26 A12 12 0 0 1 48 42 H16 A12 12 0 0 1 20 26Z" fill="${ink}"/>
+      <path d="M30 40 L26 54 L34 50 L30 62" stroke="#ffe27a" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+    if (cond === "fog") return `
+      <path d="M12 26 H52 M8 38 H56 M14 50 H50" stroke="${ink}" stroke-width="4" stroke-linecap="round"/>`;
+    if (cond === "clouds") return `
+      <path d="M18 40 A14 14 0 0 1 40 30 A11 11 0 0 1 50 46 H20 A10 10 0 0 1 18 40Z" fill="${ink}"/>`;
+    // clear day / night
+    if (isDay) return `<circle cx="32" cy="32" r="16" fill="${ink}"/>`;
+    return `<path d="M40 22 A16 16 0 1 0 42 46 A13 13 0 0 1 40 22Z" fill="${ink}"/>`;
+  })();
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <rect width="64" height="64" rx="14" fill="${bg}"/>
+    ${shape}
+  </svg>`;
 }
 
 function renderYesterdayLine(w) {
