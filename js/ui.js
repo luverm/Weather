@@ -90,6 +90,9 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcGolden: $("#sun-arc-golden"),
+  goldenHourCaption: $("#golden-hour-caption"),
+  goldenHourText: $("#golden-hour-text"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -122,6 +125,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  goldenTimer: null,
   localTimer: null,
 };
 
@@ -523,6 +527,88 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleGoldenHour(w);
+}
+
+// Golden hour = the last ~45 min before sunset and the first ~45 min
+// after sunrise, when the sun is low and light is warm. We highlight a
+// segment on the sun arc during a golden window and show a caption that
+// counts down to the next window (or how long is left in the current one).
+const GOLDEN_MIN = 45; // minutes
+
+function goldenWindows(daily) {
+  const windows = [];
+  for (const d of daily || []) {
+    if (d.sunrise) windows.push({ start: d.sunrise, end: d.sunrise + GOLDEN_MIN * 60_000, kind: "morning" });
+    if (d.sunset) windows.push({ start: d.sunset - GOLDEN_MIN * 60_000, end: d.sunset, kind: "evening" });
+  }
+  windows.sort((a, b) => a.start - b.start);
+  return windows;
+}
+
+function scheduleGoldenHour(w) {
+  if (state.goldenTimer) { clearInterval(state.goldenTimer); state.goldenTimer = null; }
+  const caption = el.goldenHourCaption;
+  const text = el.goldenHourText;
+  const band = el.sunArcGolden;
+  if (!caption || !text) return;
+  const windows = goldenWindows(w?.daily);
+  if (!windows.length) { caption.hidden = true; if (band) band.setAttribute("opacity", "0"); return; }
+
+  const update = () => {
+    const now = Date.now();
+    const current = windows.find((win) => now >= win.start && now <= win.end);
+    const next = windows.find((win) => win.start > now);
+    if (!current && !next) { caption.hidden = true; if (band) band.setAttribute("opacity", "0"); return; }
+    caption.hidden = false;
+
+    if (current) {
+      const left = Math.max(0, Math.round((current.end - now) / 60_000));
+      text.textContent = left > 0
+        ? `Golden hour now · ${left}m left`
+        : `Golden hour ending`;
+      caption.setAttribute("data-active", "true");
+      paintGoldenBand(w, current);
+    } else {
+      const mins = Math.max(1, Math.round((next.start - now) / 60_000));
+      const label = next.kind === "morning" ? "Sunrise" : "Sunset";
+      const timeStr = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
+      text.textContent = `${label} golden hour · in ${timeStr}`;
+      caption.setAttribute("data-active", "false");
+      if (band) band.setAttribute("opacity", "0");
+    }
+  };
+  update();
+  state.goldenTimer = setInterval(update, 60_000);
+}
+
+function paintGoldenBand(w, win) {
+  const band = el.sunArcGolden;
+  if (!band || !w?.sunrise || !w?.sunset) return;
+  // Only paint if this golden window corresponds to *today*'s sun arc.
+  const sr = w.sunrise, ss = w.sunset;
+  const span = ss - sr;
+  if (span <= 0) { band.setAttribute("opacity", "0"); return; }
+  // Convert the golden window to arc-fraction t in [0,1]. For the morning
+  // window that's [0, GOLDEN/span]; for evening it's [1 - GOLDEN/span, 1].
+  const g = (GOLDEN_MIN * 60_000) / span;
+  let t0, t1;
+  if (win.kind === "morning" && Math.abs(win.start - sr) < 60_000) { t0 = 0; t1 = Math.min(1, g); }
+  else if (win.kind === "evening" && Math.abs(win.end - ss) < 60_000) { t0 = Math.max(0, 1 - g); t1 = 1; }
+  else { band.setAttribute("opacity", "0"); return; }
+
+  // Sample the same Bezier as the sun arc and draw a polyline segment.
+  const pts = [];
+  const N = 16;
+  for (let i = 0; i <= N; i++) {
+    const t = t0 + (t1 - t0) * (i / N);
+    const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
+    const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
+    pts.push(`${x.toFixed(1)} ${y.toFixed(1)}`);
+  }
+  band.setAttribute("d", `M ${pts.join(" L ")}`);
+  band.setAttribute("stroke-dasharray", "");
+  band.setAttribute("opacity", "0.85");
 }
 
 function scheduleSunArc(w) {
