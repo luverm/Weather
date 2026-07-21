@@ -1446,6 +1446,33 @@ kbd {
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+.daily-standout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 2px 10px 6px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-dim);
+}
+.daily-standout[hidden] { display: none; }
+.daily-standout .standout-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--stroke);
+  letter-spacing: 0.02em;
+}
+.daily-standout .standout-chip b {
+  color: var(--fg);
+  font-weight: 500;
+}
+.daily-standout .chip-warm { color: #ffb888; border-color: rgba(255,184,136,0.28); background: rgba(255,140,80,0.08); }
+.daily-standout .chip-cold { color: #9ac0ff; border-color: rgba(154,192,255,0.28); background: rgba(90,140,220,0.08); }
+.daily-standout .chip-rain { color: #9adcff; border-color: rgba(154,220,255,0.28); background: rgba(80,150,220,0.08); }
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;

@@ -73,6 +73,7 @@ const el = {
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
+  dailyStandout: $("#daily-standout"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -964,6 +965,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderDailyStandout(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1068,6 +1070,64 @@ function renderDailyDelta(days) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
   }
   el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
+}
+
+// Look across the upcoming days (skipping today, since today is already
+// visible in the hero) and pick out the warmest and the wettest — plus
+// the coldest if the spread is significant. Rendered as chips beneath
+// the daily heading. Silent when there's no useful signal.
+function renderDailyStandout(days) {
+  if (!el.dailyStandout) return;
+  el.dailyStandout.innerHTML = "";
+  const upcoming = days.slice(1);
+  if (upcoming.length < 2) { el.dailyStandout.hidden = true; return; }
+
+  const withMax = upcoming.filter((d) => d.tempMax != null);
+  const withMin = upcoming.filter((d) => d.tempMin != null);
+  const withRain = upcoming.filter((d) => (d.precip ?? 0) > 0.5);
+
+  const chips = [];
+  const dayName = (d) => {
+    const tz = state.weather?.timezone;
+    return new Date(d.time).toLocaleDateString(undefined, {
+      weekday: "short",
+      ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    });
+  };
+
+  if (withMax.length) {
+    const hottest = withMax.reduce((a, b) => (b.tempMax > a.tempMax ? b : a));
+    chips.push({
+      cls: "chip-warm",
+      label: `Warmest <b>${dayName(hottest)}</b> ${Math.round(convertTemp(hottest.tempMax))}°`,
+    });
+  }
+  if (withMin.length) {
+    const coldest = withMin.reduce((a, b) => (b.tempMin < a.tempMin ? b : a));
+    const hi = withMax.length ? withMax.reduce((a, b) => (b.tempMax > a.tempMax ? b : a)).tempMax : null;
+    const spread = hi != null ? hi - coldest.tempMin : 0;
+    // Only surface a "coolest" chip when the spread across the week is
+    // meaningful (>6 °C), otherwise it's noise.
+    if (spread >= 6) {
+      chips.push({
+        cls: "chip-cold",
+        label: `Coolest <b>${dayName(coldest)}</b> ${Math.round(convertTemp(coldest.tempMin))}°`,
+      });
+    }
+  }
+  if (withRain.length) {
+    const wettest = withRain.reduce((a, b) => (b.precip > a.precip ? b : a));
+    chips.push({
+      cls: "chip-rain",
+      label: `Wettest <b>${dayName(wettest)}</b> ${wettest.precip.toFixed(1)} mm`,
+    });
+  }
+
+  if (!chips.length) { el.dailyStandout.hidden = true; return; }
+  el.dailyStandout.hidden = false;
+  el.dailyStandout.innerHTML = chips.map((c) =>
+    `<span class="standout-chip ${c.cls}">${c.label}</span>`
+  ).join("");
 }
 
 function toggleDailyExpand(item, d, w) {
