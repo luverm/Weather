@@ -426,6 +426,24 @@ html[data-reduce-motion="true"] *::after {
   box-shadow: 0 2px 8px rgba(0,0,0,0.35);
   transition: left 380ms var(--ease);
 }
+.day-range-caption {
+  margin: 6px 0 0;
+  padding: 0;
+  max-width: 240px;
+  margin-left: auto;
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.day-range-caption[hidden] { display: none; }
+.day-range-caption b {
+  color: var(--fg);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
 
 /* ---------- Nowcast banner ---------- */
 .nowcast {

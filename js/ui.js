@@ -26,6 +26,7 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  dayRangeCaption: $("#day-range-caption"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -307,6 +308,29 @@ function renderDayRange(w) {
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+  renderDayRangeCaption(w);
+}
+
+// Find today's peak and low hour (up to 24 upcoming hourly entries) and
+// print "Peak 15:00 · Low 06:00" beneath the range track. Skipped if
+// only one distinct hour is available.
+function renderDayRangeCaption(w) {
+  if (!el.dayRangeCaption) return;
+  const hours = (w.hourly || []).slice(0, 24).filter((h) => h?.temp != null);
+  if (hours.length < 3) { el.dayRangeCaption.hidden = true; return; }
+  let peak = hours[0], low = hours[0];
+  for (const h of hours) {
+    if (h.temp > peak.temp) peak = h;
+    if (h.temp < low.temp) low = h;
+  }
+  if (peak === low) { el.dayRangeCaption.hidden = true; return; }
+  el.dayRangeCaption.hidden = false;
+  const peakTime = fmtTime(peak.time);
+  const lowTime = fmtTime(low.time);
+  const peakDeg = Math.round(convertTemp(peak.temp));
+  const lowDeg = Math.round(convertTemp(low.temp));
+  el.dayRangeCaption.innerHTML =
+    `Peak <b>${peakDeg}°</b> at ${peakTime} · Low <b>${lowDeg}°</b> at ${lowTime}`;
 }
 
 function renderMetrics(w) {
