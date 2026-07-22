@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { updateTabBadge } from "./tab-badge.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -205,6 +206,7 @@ export const ui = {
       });
     }
     renderPlaces();
+    refreshTabBadge();
   },
   /** Called by the scrubber whenever simulated time moves. */
   setSampledWeather(sampled, { highlightHourIndex } = {}) {
@@ -219,6 +221,7 @@ export const ui = {
     } else if (state.chart) {
       state.chart.setCursor(sampled.hourly?.[highlightHourIndex]?.time);
     }
+    refreshTabBadge();
   },
   setScrubbing(on) {
     document.documentElement.setAttribute("data-scrubbing", on ? "true" : "false");
@@ -245,6 +248,19 @@ export const ui = {
 // ---------- Rendering ----------
 
 function convertTemp(c) { return state.unit === "F" ? c * 9 / 5 + 32 : c; }
+
+function refreshTabBadge() {
+  const source = state.sampledWeather || state.weather;
+  if (!source) return;
+  updateTabBadge({
+    condition: source.condition,
+    temp: source.temp,
+    isDay: source.isDay,
+    placeName: state.place?.name,
+    label: source.label,
+    unit: state.unit,
+  });
+}
 
 function animateNumber(node, target, format) {
   if (target == null || isNaN(target)) { node.textContent = "–"; return; }
