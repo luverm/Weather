@@ -1062,6 +1062,71 @@ kbd {
   animation: none;
 }
 
+/* Daylight ledger — day-over-day change in daylight length. */
+.daylight-ledger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--stroke);
+  font-size: 11.5px;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+  width: fit-content;
+  transition: background 300ms var(--ease), border-color 300ms var(--ease), color 300ms var(--ease);
+}
+.daylight-ledger[hidden] { display: none; }
+.daylight-ledger .ledger-icon {
+  flex-shrink: 0;
+  transform: rotate(var(--ledger-rot, 0deg));
+  transition: transform 400ms var(--ease);
+}
+.daylight-ledger[data-dir="gaining"] {
+  background: rgba(120, 208, 106, 0.12);
+  border-color: rgba(120, 208, 106, 0.30);
+  color: #b8e7ae;
+}
+.daylight-ledger[data-dir="losing"] {
+  background: rgba(109, 155, 255, 0.12);
+  border-color: rgba(109, 155, 255, 0.30);
+  color: #b7cbff;
+}
+.daylight-ledger-detail {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.18);
+  color: var(--fg);
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  margin-left: auto;
+}
+.daylight-ledger-detail:empty { display: none; }
+[data-tone="bright"] .daylight-ledger {
+  background: rgba(15, 20, 40, 0.05);
+  color: rgba(15, 20, 40, 0.72);
+}
+[data-tone="bright"] .daylight-ledger[data-dir="gaining"] {
+  background: rgba(60, 140, 55, 0.14);
+  border-color: rgba(60, 140, 55, 0.34);
+  color: rgba(25, 70, 20, 0.90);
+}
+[data-tone="bright"] .daylight-ledger[data-dir="losing"] {
+  background: rgba(60, 90, 180, 0.14);
+  border-color: rgba(60, 90, 180, 0.34);
+  color: rgba(20, 40, 100, 0.90);
+}
+[data-tone="bright"] .daylight-ledger-detail {
+  background: rgba(15, 20, 40, 0.10);
+  color: rgba(15, 20, 40, 0.78);
+}
+[data-reduce-motion="true"] .daylight-ledger,
+[data-reduce-motion="true"] .daylight-ledger .ledger-icon {
+  transition: none;
+}
+
 /* ---------- Radar map ---------- */
 .radar {
   padding: 12px;

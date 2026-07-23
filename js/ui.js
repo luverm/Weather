@@ -532,6 +532,78 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderDaylightLedger(w);
+}
+
+// Compute average day-over-day daylight change from the 7-day forecast.
+// Returns { deltaSec, tomorrowDeltaSec, samples } or null when insufficient
+// data (e.g. polar day/night where sunrise/sunset are missing).
+function daylightTrend(daily) {
+  if (!Array.isArray(daily) || daily.length < 2) return null;
+  const lengths = [];
+  for (const d of daily) {
+    if (d?.sunrise && d?.sunset && d.sunset > d.sunrise) {
+      lengths.push((d.sunset - d.sunrise) / 1000);
+    } else {
+      lengths.push(null);
+    }
+  }
+  const diffs = [];
+  for (let i = 1; i < lengths.length; i++) {
+    if (lengths[i] != null && lengths[i - 1] != null) {
+      diffs.push(lengths[i] - lengths[i - 1]);
+    }
+  }
+  if (!diffs.length) return null;
+  const avg = diffs.reduce((a, b) => a + b, 0) / diffs.length;
+  return {
+    deltaSec: avg,
+    tomorrowDeltaSec: diffs[0],
+    samples: diffs.length,
+  };
+}
+
+function formatDaylightChange(sec) {
+  const abs = Math.abs(Math.round(sec));
+  if (abs < 10) return "no change";
+  const mins = Math.floor(abs / 60);
+  const secs = abs % 60;
+  if (mins === 0) return `${secs}s`;
+  if (secs === 0) return `${mins}m`;
+  return `${mins}m ${secs.toString().padStart(2, "0")}s`;
+}
+
+function renderDaylightLedger(w) {
+  const root = document.getElementById("daylight-ledger");
+  const text = document.getElementById("daylight-ledger-text");
+  const detail = document.getElementById("daylight-ledger-detail");
+  if (!root || !text || !detail) return;
+  const trend = daylightTrend(w?.daily);
+  if (!trend) {
+    root.hidden = true;
+    return;
+  }
+  root.hidden = false;
+  const dir = trend.deltaSec > 5 ? "gaining" : trend.deltaSec < -5 ? "losing" : "steady";
+  root.dataset.dir = dir;
+  // Rotate the ledger glyph to hint direction: gaining tips up, losing tips
+  // down, steady is horizontal.
+  const rot = dir === "gaining" ? -18 : dir === "losing" ? 18 : 0;
+  root.style.setProperty("--ledger-rot", `${rot}deg`);
+  if (dir === "steady") {
+    text.textContent = "Daylight steady";
+  } else {
+    const per = formatDaylightChange(trend.deltaSec);
+    text.textContent = `${dir === "gaining" ? "Gaining" : "Losing"} ${per}/day`;
+  }
+  // Detail: tomorrow's specific delta so the number feels grounded. Skip when
+  // it rounds to "no change" so we never render "−no change tomorrow".
+  if (Math.abs(trend.tomorrowDeltaSec) >= 10 && dir !== "steady") {
+    const sign = trend.tomorrowDeltaSec > 0 ? "+" : "−";
+    detail.textContent = `${sign}${formatDaylightChange(Math.abs(trend.tomorrowDeltaSec))} tomorrow`;
+  } else {
+    detail.textContent = "";
+  }
 }
 
 function scheduleSunArc(w) {
