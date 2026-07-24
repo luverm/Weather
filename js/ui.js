@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { buildPrecipTimeline, renderPrecipTimeline } from "./precip-timeline.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -91,6 +92,7 @@ const el = {
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
   comfortStrip: $("#comfort-strip"),
+  precipTimeline: $("#precip-timeline"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
   weekendDetail: $("#weekend-detail"),
@@ -193,6 +195,7 @@ export const ui = {
     renderActivity(weather);
     renderAlerts(weather);
     renderWeekend(weather);
+    renderPrecip(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -680,6 +683,14 @@ function renderWeekend(w) {
   el.weekendChip.onclick = () => {
     if (snap.ts) state.handlers.onHourClick?.(snap.ts);
   };
+}
+
+function renderPrecip(w) {
+  if (!el.precipTimeline) return;
+  const data = buildPrecipTimeline(w, { fmtTime });
+  renderPrecipTimeline(el.precipTimeline, data, {
+    onHourClick: (ts) => state.handlers.onHourClick?.(ts),
+  });
 }
 
 function renderAlerts(w) {
