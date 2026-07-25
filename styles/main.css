@@ -426,6 +426,30 @@ html[data-reduce-motion="true"] *::after {
   box-shadow: 0 2px 8px rgba(0,0,0,0.35);
   transition: left 380ms var(--ease);
 }
+.day-range-tick {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 12px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: rgba(255,255,255,0.55);
+  box-shadow: 0 0 4px rgba(255,255,255,0.35);
+  pointer-events: none;
+  transition: left 380ms var(--ease);
+}
+.day-range-tick-hi { background: #ffd6a3; }
+.day-range-tick-lo { background: #a9c8ff; }
+.day-range-peaks {
+  margin: 4px auto 0;
+  max-width: 240px;
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.day-range-peaks[hidden] { display: none; }
 
 /* ---------- Nowcast banner ---------- */
 .nowcast {

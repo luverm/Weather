@@ -26,6 +26,9 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  dayRangePeaks: $("#day-range-peaks"),
+  dayRangeTickLo: $("#day-range-tick-lo"),
+  dayRangeTickHi: $("#day-range-tick-hi"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -299,6 +302,7 @@ function renderDayRange(w) {
   }
   if (lo == null || hi == null || lo === hi) {
     el.dayRange.hidden = true;
+    if (el.dayRangePeaks) el.dayRangePeaks.hidden = true;
     return;
   }
   el.dayRange.hidden = false;
@@ -308,6 +312,58 @@ function renderDayRange(w) {
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+
+  renderDayRangePeaks(w, lo, hi);
+}
+
+// Find the upcoming hour of today's high & low, then position tiny ticks on
+// the range track and emit a compact "↑ 15:00 · ↓ 05:00" caption.
+function renderDayRangePeaks(w, lo, hi) {
+  const hideTicks = () => {
+    if (el.dayRangeTickLo) el.dayRangeTickLo.style.display = "none";
+    if (el.dayRangeTickHi) el.dayRangeTickHi.style.display = "none";
+  };
+  if (!el.dayRangePeaks) { hideTicks(); return; }
+  const hours = (w.hourly || []).filter((h) => h?.temp != null);
+  // Constrain to today (until midnight local) — a peak "tomorrow at 15:00"
+  // would be misleading here.
+  const dayEnd = endOfLocalDay(Date.now());
+  const scope = hours.filter((h) => h.time <= dayEnd);
+  const pool = scope.length >= 2 ? scope : hours;
+  if (pool.length < 2) { el.dayRangePeaks.hidden = true; hideTicks(); return; }
+
+  let peak = pool[0], trough = pool[0];
+  for (const h of pool) {
+    if (h.temp > peak.temp) peak = h;
+    if (h.temp < trough.temp) trough = h;
+  }
+  const now = Date.now();
+  const parts = [];
+  if (peak.time >= now - 30 * 60_000) parts.push(`↑ ${fmtTime(peak.time)}`);
+  if (trough.time >= now - 30 * 60_000 && trough.time !== peak.time) {
+    parts.push(`↓ ${fmtTime(trough.time)}`);
+  }
+  if (!parts.length) { el.dayRangePeaks.hidden = true; hideTicks(); return; }
+  el.dayRangePeaks.hidden = false;
+  el.dayRangePeaks.textContent = parts.join("  ·  ");
+
+  // Ticks on the track — clamp to [lo,hi] so they never overflow.
+  const span = Math.max(0.0001, hi - lo);
+  const placeTick = (elTick, temp, when) => {
+    if (!elTick) return;
+    if (when < now - 30 * 60_000) { elTick.style.display = "none"; return; }
+    const f = Math.max(0, Math.min(1, (temp - lo) / span));
+    elTick.style.display = "";
+    elTick.style.left = `${(f * 100).toFixed(1)}%`;
+  };
+  placeTick(el.dayRangeTickHi, peak.temp, peak.time);
+  placeTick(el.dayRangeTickLo, trough.temp, trough.time);
+}
+
+function endOfLocalDay(ts) {
+  const d = new Date(ts);
+  d.setHours(23, 59, 59, 999);
+  return d.getTime();
 }
 
 function renderMetrics(w) {
