@@ -366,13 +366,38 @@ function endOfLocalDay(ts) {
   return d.getTime();
 }
 
+// Find the largest gust in the next 12h — only report it as "upcoming" if
+// it's meaningfully stronger than the current gust and at least 1h away.
+function upcomingGustPeak(w) {
+  const now = Date.now();
+  const cur = w.windGusts ?? 0;
+  const windows = (w.hourly || []).filter(
+    (h) => h?.gusts != null && h.time > now + 45 * 60_000 && h.time <= now + 12 * 3600_000
+  );
+  if (!windows.length) return null;
+  let best = windows[0];
+  for (const h of windows) if (h.gusts > best.gusts) best = h;
+  if (best.gusts < Math.max(cur + 10, cur * 1.25)) return null;
+  return { time: best.time, gusts: best.gusts };
+}
+
+function fmtHoursAway(ts) {
+  const mins = Math.max(0, Math.round((ts - Date.now()) / 60_000));
+  if (mins < 60) return `${mins}m`;
+  const h = Math.round(mins / 60);
+  return `${h}h`;
+}
+
 function renderMetrics(w) {
   el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
-  el.metricWindSub.textContent = dirLabel
-    ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
-    : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+  const gustStr = w.windGusts != null ? `${Math.round(w.windGusts)} km/h` : "—";
+  const gustPeak = upcomingGustPeak(w);
+  const peakSuffix = gustPeak ? ` · peak ${Math.round(gustPeak.gusts)} in ${fmtHoursAway(gustPeak.time)}` : "";
+  el.metricWindSub.textContent = (dirLabel
+    ? `${dirLabel} · gust ${gustStr}`
+    : `gust ${gustStr}`) + peakSuffix;
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
