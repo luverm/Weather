@@ -90,6 +90,11 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcGoldenAM: $("#sun-arc-golden-am"),
+  sunArcGoldenPM: $("#sun-arc-golden-pm"),
+  sunChip: $("#sun-chip"),
+  sunChipText: $("#sun-chip-text"),
+  sunChipDot: $("#sun-chip-dot"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -525,37 +530,138 @@ function renderSun(w) {
   scheduleSunArc(w);
 }
 
+// Sun arc: quadratic Bezier P0=(10,74) P1=(100,-26) P2=(190,74).
+const SUN_ARC_P0 = { x: 10, y: 74 };
+const SUN_ARC_P1 = { x: 100, y: -26 };
+const SUN_ARC_P2 = { x: 190, y: 74 };
+const GOLDEN_HOUR_MS = 50 * 60_000;
+const BLUE_HOUR_MS = 30 * 60_000;
+
+function bezierAt(t) {
+  const u = 1 - t;
+  return {
+    x: u * u * SUN_ARC_P0.x + 2 * u * t * SUN_ARC_P1.x + t * t * SUN_ARC_P2.x,
+    y: u * u * SUN_ARC_P0.y + 2 * u * t * SUN_ARC_P1.y + t * t * SUN_ARC_P2.y,
+  };
+}
+
+// Sub-Bezier control point for the quadratic curve between t=a and t=b.
+function bezierMid(a, b) {
+  const lerp = (p, q, k) => ({ x: p.x + (q.x - p.x) * k, y: p.y + (q.y - p.y) * k });
+  const l1 = lerp(SUN_ARC_P0, SUN_ARC_P1, a);
+  const l2 = lerp(SUN_ARC_P1, SUN_ARC_P2, a);
+  return lerp(l1, l2, b);
+}
+
+function subArcPath(a, b) {
+  const start = bezierAt(a);
+  const end = bezierAt(b);
+  const ctrl = bezierMid(a, b);
+  return `M${start.x.toFixed(1)} ${start.y.toFixed(1)} Q${ctrl.x.toFixed(1)} ${ctrl.y.toFixed(1)} ${end.x.toFixed(1)} ${end.y.toFixed(1)}`;
+}
+
+function fmtDuration(ms) {
+  const mins = Math.max(0, Math.round(ms / 60_000));
+  if (mins < 60) return `${mins}m`;
+  return `${Math.floor(mins / 60)}h ${mins % 60}m`;
+}
+
+// Given today's sunrise/sunset, decide the current sun-window state.
+function sunWindowState(now, sr, ss) {
+  if (now >= sr - BLUE_HOUR_MS && now < sr) {
+    return { kind: "blue-am", label: "Blue hour", remaining: sr - now, suffix: "till sunrise" };
+  }
+  if (now >= sr && now < sr + GOLDEN_HOUR_MS) {
+    return { kind: "golden-am", label: "Golden hour", remaining: sr + GOLDEN_HOUR_MS - now, suffix: "left" };
+  }
+  if (now >= ss - GOLDEN_HOUR_MS && now < ss) {
+    return { kind: "golden-pm", label: "Golden hour", remaining: ss - now, suffix: "till sunset" };
+  }
+  if (now >= ss && now < ss + BLUE_HOUR_MS) {
+    return { kind: "blue-pm", label: "Blue hour", remaining: ss + BLUE_HOUR_MS - now, suffix: "of dusk left" };
+  }
+  return null;
+}
+
+// Look ahead across today + upcoming days for the next golden hour that has not started yet.
+function nextGoldenHour(now, daily) {
+  if (!daily?.length) return null;
+  let best = null;
+  for (const d of daily) {
+    for (const [ts, side] of [[d.sunrise, "sunrise"], [d.sunset, "sunset"]]) {
+      if (ts == null) continue;
+      const start = side === "sunrise" ? ts : ts - GOLDEN_HOUR_MS;
+      if (start <= now) continue;
+      if (!best || start < best.start) best = { start, side };
+    }
+  }
+  return best;
+}
+
 function scheduleSunArc(w) {
   if (!el.sunArcMarker || !el.sunArcPath) return;
   if (state.sunArcTimer) { clearInterval(state.sunArcTimer); state.sunArcTimer = null; }
   if (!w?.sunrise || !w?.sunset) return;
 
+  const sr = w.sunrise, ss = w.sunset;
+  const daylight = Math.max(1, ss - sr);
+  // Fraction of the arc consumed by one golden-hour window.
+  const goldenFrac = Math.min(0.4, GOLDEN_HOUR_MS / daylight);
+  if (el.sunArcGoldenAM) {
+    el.sunArcGoldenAM.setAttribute("d", subArcPath(0, goldenFrac));
+    el.sunArcGoldenAM.setAttribute("opacity", "0.85");
+  }
+  if (el.sunArcGoldenPM) {
+    el.sunArcGoldenPM.setAttribute("d", subArcPath(1 - goldenFrac, 1));
+    el.sunArcGoldenPM.setAttribute("opacity", "0.85");
+  }
+
   const update = () => {
     const now = Date.now();
-    const sr = w.sunrise, ss = w.sunset;
     let frac;
-    if (now < sr) {
-      // Before sunrise: ride the night arc fraction toward 0 (left horizon).
-      frac = 0;
-    } else if (now > ss) {
-      frac = 1;
-    } else {
-      frac = (now - sr) / (ss - sr);
-    }
-    // Quadratic Bezier from (10,74) to (190,74) via (100,-26). The midpoint
-    // (50% t) reaches y = 0.5*(74) + 0.5*(74 + 2*(-26-74)/2*(...)) — easier
-    // to evaluate the curve directly.
-    const t = clamp01(frac);
-    const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
-    const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
+    if (now < sr) frac = 0;
+    else if (now > ss) frac = 1;
+    else frac = (now - sr) / daylight;
+    const { x, y } = bezierAt(clamp01(frac));
     el.sunArcMarker.setAttribute("cx", x.toFixed(1));
     el.sunArcMarker.setAttribute("cy", y.toFixed(1));
-    // After sunset, dim the marker so it visually settles.
     const isUp = now >= sr && now <= ss;
     el.sunArcMarker.style.opacity = isUp ? "1" : "0.45";
+    updateSunChip(now, w);
   };
   update();
   state.sunArcTimer = setInterval(update, 60_000);
+}
+
+function updateSunChip(now, w) {
+  if (!el.sunChip || !el.sunChipText) return;
+
+  // Try each daily window for a match — golden/blue hour can straddle
+  // sunrise from the previous UTC day when tz differs.
+  let active = null;
+  for (const d of w.daily || []) {
+    if (!d.sunrise || !d.sunset) continue;
+    const s = sunWindowState(now, d.sunrise, d.sunset);
+    if (s) { active = s; break; }
+  }
+
+  if (active) {
+    el.sunChip.hidden = false;
+    el.sunChip.dataset.state = active.kind;
+    el.sunChipText.textContent =
+      `${active.label} · ${fmtDuration(active.remaining)} ${active.suffix}`;
+    return;
+  }
+
+  const next = nextGoldenHour(now, w.daily);
+  if (!next) { el.sunChip.hidden = true; return; }
+  const away = next.start - now;
+  // Only advertise the upcoming golden hour when it's close (~6h) — otherwise
+  // hide the chip so the card stays quiet.
+  if (away > 6 * 3600_000) { el.sunChip.hidden = true; return; }
+  el.sunChip.hidden = false;
+  el.sunChip.dataset.state = next.side === "sunrise" ? "next-am" : "next-pm";
+  el.sunChipText.textContent = `Golden hour in ${fmtDuration(away)}`;
 }
 
 function clamp01(v) { return Math.max(0, Math.min(1, v)); }

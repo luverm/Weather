@@ -976,6 +976,54 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+.sun-arc-golden {
+  filter: drop-shadow(0 0 4px rgba(255, 170, 90, 0.55));
+  transition: opacity 400ms var(--ease);
+}
+#sun-arc-golden-am { stroke: #ffcf94; }
+#sun-arc-golden-pm { stroke: #ff9a5c; }
+
+.sun-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 0;
+  padding: 3px 9px 3px 8px;
+  border-radius: 999px;
+  background: rgba(255, 200, 140, 0.10);
+  border: 1px solid rgba(255, 200, 140, 0.28);
+  color: #ffd9a8;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  transition: background 400ms var(--ease), border-color 400ms var(--ease), color 400ms var(--ease);
+  align-self: start;
+  width: fit-content;
+}
+.sun-chip[hidden] { display: none; }
+.sun-chip-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #ffc07a;
+  box-shadow: 0 0 6px rgba(255, 190, 120, 0.7);
+}
+.sun-chip[data-state^="blue"] {
+  background: rgba(140, 170, 255, 0.10);
+  border-color: rgba(150, 180, 255, 0.28);
+  color: #c9d8ff;
+}
+.sun-chip[data-state^="blue"] .sun-chip-dot {
+  background: #8fb0ff;
+  box-shadow: 0 0 6px rgba(140, 175, 255, 0.7);
+}
+.sun-chip[data-state^="next"] {
+  background: rgba(255, 210, 160, 0.06);
+  border-color: rgba(255, 210, 160, 0.18);
+  color: rgba(255, 217, 168, 0.85);
+}
+.sun-chip[data-state^="next"] .sun-chip-dot {
+  background: rgba(255, 192, 122, 0.55);
+  box-shadow: none;
+}
 
 /* ---------- Radar map ---------- */
 .radar {

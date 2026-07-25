@@ -333,8 +333,16 @@
             <line x1="10" y1="74" x2="190" y2="74" stroke="var(--stroke)" stroke-dasharray="2 4"/>
             <path id="sun-arc-path" d="M10 74 Q100 -26 190 74"
                   fill="none" stroke="url(#sun-arc-grad)" stroke-width="1.5" stroke-linecap="round"/>
+            <path id="sun-arc-golden-am" class="sun-arc-golden" fill="none" stroke="#ffc07a"
+                  stroke-width="3.5" stroke-linecap="round" opacity="0"/>
+            <path id="sun-arc-golden-pm" class="sun-arc-golden" fill="none" stroke="#ff9a5c"
+                  stroke-width="3.5" stroke-linecap="round" opacity="0"/>
             <circle id="sun-arc-marker" cx="10" cy="74" r="4.5" fill="#fff1c9"/>
           </svg>
+          <div class="sun-chip" id="sun-chip" hidden>
+            <span class="sun-chip-dot" id="sun-chip-dot" aria-hidden="true"></span>
+            <span class="sun-chip-text" id="sun-chip-text">—</span>
+          </div>
           <div class="sun-row">
             <div class="sun-item">
               <span class="sun-label">Rises</span>
