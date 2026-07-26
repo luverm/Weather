@@ -90,6 +90,11 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcGoldenRise: $("#sun-arc-golden-rise"),
+  sunArcGoldenSet: $("#sun-arc-golden-set"),
+  sunGoldenBadge: $("#sun-golden-badge"),
+  sunGoldenText: $("#sun-golden-text"),
+  sunCard: $("#sun-card"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -530,6 +535,21 @@ function scheduleSunArc(w) {
   if (state.sunArcTimer) { clearInterval(state.sunArcTimer); state.sunArcTimer = null; }
   if (!w?.sunrise || !w?.sunset) return;
 
+  // Paint the golden-hour band once per weather load — it only depends on
+  // sunrise/sunset. Show ~60 min at each end (or 15% of daylight, whichever
+  // is smaller, so polar days don't blow out the arc).
+  const daylight = w.sunset - w.sunrise;
+  if (daylight > 0 && el.sunArcGoldenRise && el.sunArcGoldenSet) {
+    const goldenFrac = Math.min(0.15, (60 * 60_000) / daylight);
+    // pathLength=1, so dasharray is in [0..1] units of the whole arc.
+    el.sunArcGoldenRise.setAttribute("stroke-dasharray", `${goldenFrac.toFixed(4)} 1`);
+    el.sunArcGoldenRise.setAttribute("stroke-dashoffset", "0");
+    el.sunArcGoldenSet.setAttribute("stroke-dasharray", `${goldenFrac.toFixed(4)} 1`);
+    // Negative dashoffset shifts the dash pattern along the path so the
+    // visible segment sits at the very end.
+    el.sunArcGoldenSet.setAttribute("stroke-dashoffset", `-${(1 - goldenFrac).toFixed(4)}`);
+  }
+
   const update = () => {
     const now = Date.now();
     const sr = w.sunrise, ss = w.sunset;
@@ -558,6 +578,25 @@ function scheduleSunArc(w) {
   state.sunArcTimer = setInterval(update, 60_000);
 }
 
+// Return the closest active or upcoming golden-hour window across the
+// week's daily forecast. Windows are ~60 min around sunrise and sunset.
+function nextGoldenWindow(daily, now) {
+  if (!daily?.length) return null;
+  const HALF = 30 * 60_000; // 30 min either side of the horizon
+  let best = null;
+  for (const d of daily) {
+    for (const [ts, kind] of [[d.sunrise, "rise"], [d.sunset, "set"]]) {
+      if (!ts) continue;
+      const start = ts - HALF;
+      const end = ts + HALF;
+      // Skip windows that have already fully passed.
+      if (end < now) continue;
+      if (!best || start < best.start) best = { start, end, at: ts, kind };
+    }
+  }
+  return best;
+}
+
 function clamp01(v) { return Math.max(0, Math.min(1, v)); }
 
 function scheduleSunCountdown(w) {
@@ -574,14 +613,36 @@ function scheduleSunCountdown(w) {
     if (!nextTs) {
       if (el.sunCountdown) el.sunCountdown.textContent = "";
       if (el.sunNextLabel) el.sunNextLabel.textContent = "Sun";
-      return;
+    } else {
+      const mins = Math.max(0, Math.round((nextTs - now) / 60_000));
+      const label = mins >= 60
+        ? `${Math.floor(mins / 60)}h ${mins % 60}m`
+        : `${mins}m`;
+      if (el.sunNextLabel) el.sunNextLabel.textContent = `${nextKind} in`;
+      if (el.sunCountdown) el.sunCountdown.textContent = label;
     }
-    const mins = Math.max(0, Math.round((nextTs - now) / 60_000));
-    const label = mins >= 60
-      ? `${Math.floor(mins / 60)}h ${mins % 60}m`
-      : `${mins}m`;
-    if (el.sunNextLabel) el.sunNextLabel.textContent = `${nextKind} in`;
-    if (el.sunCountdown) el.sunCountdown.textContent = label;
+    // Golden-hour badge — either "in Xm" or "Xm left".
+    const g = nextGoldenWindow(w.daily, now);
+    if (el.sunGoldenBadge && el.sunGoldenText) {
+      if (!g) {
+        el.sunGoldenBadge.hidden = true;
+        el.sunCard?.removeAttribute("data-golden");
+      } else if (now >= g.start && now <= g.end) {
+        const remain = Math.max(1, Math.round((g.end - now) / 60_000));
+        el.sunGoldenText.textContent = `Golden hour · ${remain}m left`;
+        el.sunGoldenBadge.hidden = false;
+        el.sunCard?.setAttribute("data-golden", "active");
+      } else if (g.start - now < 3 * 60 * 60_000) {
+        const until = Math.max(1, Math.round((g.start - now) / 60_000));
+        const untilLabel = until >= 60 ? `${Math.floor(until / 60)}h ${until % 60}m` : `${until}m`;
+        el.sunGoldenText.textContent = `Golden hour in ${untilLabel}`;
+        el.sunGoldenBadge.hidden = false;
+        el.sunCard?.setAttribute("data-golden", "upcoming");
+      } else {
+        el.sunGoldenBadge.hidden = true;
+        el.sunCard?.removeAttribute("data-golden");
+      }
+    }
   };
   update();
   state.sunTimer = setInterval(update, 30_000);
