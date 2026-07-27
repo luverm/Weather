@@ -1033,12 +1033,15 @@ function renderDaily(w) {
   renderDailySpark(days);
   renderDailyPrecip(days);
   renderDailyDelta(days);
-  // Global min/max for the range bar.
+  // Global min/max for the range bar + week extremes for warmest/coolest tags.
   let gMin = Infinity, gMax = -Infinity;
-  for (const d of days) {
+  let warmestIdx = 0, coolestIdx = 0;
+  days.forEach((d, i) => {
     if (d.tempMin < gMin) gMin = d.tempMin;
     if (d.tempMax > gMax) gMax = d.tempMax;
-  }
+    if (d.tempMax != null && d.tempMax > (days[warmestIdx].tempMax ?? -Infinity)) warmestIdx = i;
+    if (d.tempMin != null && d.tempMin < (days[coolestIdx].tempMin ?? Infinity)) coolestIdx = i;
+  });
   const span = Math.max(1, gMax - gMin);
   days.forEach((d, i) => {
     const dt = new Date(d.time);
@@ -1051,12 +1054,17 @@ function renderDaily(w) {
     const width = ((d.tempMax - d.tempMin) / span) * 100;
     const item = document.createElement("div");
     item.className = "daily-item";
+    if (i === 0) item.classList.add("is-today");
     item.dataset.ts = d.time;
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
-    const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    let tagText = "";
+    if (i === warmestIdx && warmestIdx !== coolestIdx && d.tempMax != null) tagText = "warmest";
+    else if (i === coolestIdx && warmestIdx !== coolestIdx && d.tempMin != null) tagText = "coolest";
+    const tagHtml = tagText ? `<span class="daily-tag" data-kind="${tagText}">${tagText}</span>` : "";
+    const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}${tagHtml}</span>` : tagHtml ? `<span class="daily-gust">${tagHtml}</span>` : "";
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
