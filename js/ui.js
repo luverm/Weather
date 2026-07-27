@@ -76,6 +76,9 @@ const el = {
   pressureSparkFill: $("#pressure-spark-fill"),
   humiditySparkLine: $("#humidity-spark-line"),
   humiditySparkFill: $("#humidity-spark-fill"),
+  uvSparkLine: $("#uv-spark-line"),
+  uvSparkFill: $("#uv-spark-fill"),
+  uvSparkPeak: $("#uv-spark-peak"),
   dailySpark: $("#daily-spark"),
   dailyHi: $("#daily-hi"),
   dailyLo: $("#daily-lo"),
@@ -373,6 +376,40 @@ function renderMetrics(w) {
     el.metricUVSub.textContent = "peak —";
   }
   renderPressureSparkline(w);
+  renderUvSparkline(w);
+}
+
+function renderUvSparkline(w) {
+  if (!el.uvSparkLine || !el.uvSparkFill) return;
+  const hourly = (w.hourly || []).slice(0, 12);
+  const series = hourly.map((h) => h.uv).filter((v) => v != null);
+  if (series.length < 2) {
+    el.uvSparkLine.setAttribute("d", "");
+    el.uvSparkFill.setAttribute("d", "");
+    if (el.uvSparkPeak) el.uvSparkPeak.setAttribute("opacity", "0");
+    return;
+  }
+  drawSparkline(el.uvSparkLine, el.uvSparkFill, series, {
+    minSpan: 3, fixedMin: 0,
+  });
+  // Highlight peak within the visible window.
+  if (el.uvSparkPeak) {
+    let peakIdx = 0;
+    for (let i = 1; i < series.length; i++) if (series[i] > series[peakIdx]) peakIdx = i;
+    const peakVal = series[peakIdx];
+    if (peakVal < 3) {
+      el.uvSparkPeak.setAttribute("opacity", "0");
+    } else {
+      const W = 100, H = 24, PAD = 1.5;
+      const innerW = W - PAD * 2, innerH = H - PAD * 2;
+      const max = Math.max(3, ...series);
+      const x = PAD + (peakIdx / (series.length - 1)) * innerW;
+      const y = PAD + innerH - (peakVal / max) * innerH;
+      el.uvSparkPeak.setAttribute("cx", x.toFixed(1));
+      el.uvSparkPeak.setAttribute("cy", y.toFixed(1));
+      el.uvSparkPeak.setAttribute("opacity", "0.9");
+    }
+  }
 }
 
 function humidityComfort(rh, dew, temp) {

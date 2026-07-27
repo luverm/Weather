@@ -548,7 +548,8 @@ html[data-reduce-motion="true"] *::after {
 
 /* ---------- Pressure sparkline ---------- */
 .metric-pressure,
-.metric-humidity {
+.metric-humidity,
+.metric-uv {
   grid-template-rows: auto auto auto auto;
 }
 .pressure-spark {
@@ -560,6 +561,10 @@ html[data-reduce-motion="true"] *::after {
   margin-top: 2px;
 }
 .metric-humidity .pressure-spark { color: #9ad1ff; }
+.metric-uv .pressure-spark { color: #ffcf6a; opacity: 1; }
+.uv-spark #uv-spark-peak {
+  filter: drop-shadow(0 0 3px rgba(255,241,201,0.9));
+}
 
 /* ---------- Daily expand ---------- */
 .daily-item { cursor: pointer; }
