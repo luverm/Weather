@@ -26,6 +26,7 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  yesterdayDelta: $("#yesterday-delta"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -294,6 +295,33 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  renderYesterdayDelta(w);
+}
+
+function renderYesterdayDelta(w) {
+  if (!el.yesterdayDelta) return;
+  const y = w.yesterday;
+  if (!y || w.temp == null) { el.yesterdayDelta.hidden = true; return; }
+  // Prefer same-hour comparison; fall back to yesterday's mean if unavailable.
+  let past = y.sameHourTemp;
+  if (past == null) {
+    if (y.tempMax == null || y.tempMin == null) { el.yesterdayDelta.hidden = true; return; }
+    past = (y.tempMax + y.tempMin) / 2;
+  }
+  const deltaC = w.temp - past;
+  const unit = state.unit || "C";
+  const shown = unit === "F" ? deltaC * 9 / 5 : deltaC;
+  const abs = Math.abs(shown);
+  el.yesterdayDelta.hidden = false;
+  el.yesterdayDelta.className = "yesterday-delta";
+  if (abs < 0.75) {
+    el.yesterdayDelta.textContent = "Same as yesterday at this hour";
+    el.yesterdayDelta.classList.add("flat");
+  } else {
+    const dir = shown > 0 ? "warmer" : "cooler";
+    el.yesterdayDelta.classList.add(shown > 0 ? "warmer" : "cooler");
+    el.yesterdayDelta.textContent = `${abs.toFixed(1)}° ${dir} than yesterday`;
+  }
 }
 
 function renderDayRange(w) {

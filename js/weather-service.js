@@ -93,6 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
+    past_days: 1,
     past_hours: 1,
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
@@ -152,12 +153,15 @@ function normalize(d, aq, lat, lon) {
     }
   }
 
-  // 7-day daily forecast.
-  const dailyForecast = [];
+  // 7-day daily forecast. With past_days=1 the API returns yesterday at
+  // index 0, then today, then out through the forecast window. Split it so
+  // callers see today+forecast in `.daily` and yesterday's summary lives on
+  // its own field for the "vs yesterday" comparison.
+  const dailyRaw = [];
   if (daily.time) {
     for (let i = 0; i < daily.time.length; i++) {
       const ts = new Date(daily.time[i]).getTime();
-      dailyForecast.push({
+      dailyRaw.push({
         time: ts,
         tempMax: daily.temperature_2m_max?.[i],
         tempMin: daily.temperature_2m_min?.[i],
@@ -170,6 +174,26 @@ function normalize(d, aq, lat, lon) {
         sunset: daily.sunset?.[i] ? new Date(daily.sunset[i]).getTime() : null,
         ...mapWmo(daily.weather_code[i]),
       });
+    }
+  }
+  // Identify today's index: first entry whose local date matches "now".
+  const todayIdx = Math.max(0, dailyRaw.findIndex((d) => d.time + 86_400_000 > now));
+  const yesterday = todayIdx > 0 ? dailyRaw[todayIdx - 1] : null;
+  const dailyForecast = dailyRaw.slice(todayIdx);
+
+  // Same-hour temperature ~24h ago, if the hourly window covers it.
+  let yestSameHourTemp = null;
+  if (d.hourly?.time) {
+    const targetTs = now - 24 * 3600_000;
+    let bestI = -1;
+    let bestDiff = Infinity;
+    for (let i = 0; i < d.hourly.time.length; i++) {
+      const t = new Date(d.hourly.time[i]).getTime();
+      const diff = Math.abs(t - targetTs);
+      if (diff < bestDiff) { bestDiff = diff; bestI = i; }
+    }
+    if (bestI >= 0 && bestDiff <= 90 * 60_000) {
+      yestSameHourTemp = d.hourly.temperature_2m?.[bestI] ?? null;
     }
   }
 
@@ -224,6 +248,12 @@ function normalize(d, aq, lat, lon) {
     timezone: d.timezone,
     hourly,
     daily: dailyForecast,
+    yesterday: yesterday ? {
+      tempMax: yesterday.tempMax,
+      tempMin: yesterday.tempMin,
+      precip: yesterday.precip,
+      sameHourTemp: yestSameHourTemp,
+    } : null,
     nowcast,
     moon,
     airQuality: normalizeAq(aq),
@@ -603,6 +633,7 @@ function mock(lat, lon) {
       condition: CONDITIONS.CLOUDS, label: "Cloudy",
     })),
     nowcast: [],
+    yesterday: { tempMax: 22, tempMin: 14, precip: 0, sameHourTemp: 15 },
     moon: { ...computeMoon(new Date(), lat, lon), week: computeMoonWeek(new Date(), 7) },
     airQuality: { aqi: 42, pm25: 8, pm10: 14, o3: 40, no2: 15, co: 0.2, label: "Good" },
     pollen: {

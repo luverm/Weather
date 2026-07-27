@@ -426,6 +426,18 @@ html[data-reduce-motion="true"] *::after {
   box-shadow: 0 2px 8px rgba(0,0,0,0.35);
   transition: left 380ms var(--ease);
 }
+.yesterday-delta {
+  margin: 6px 0 0 auto;
+  max-width: 240px;
+  font-size: 11.5px;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.yesterday-delta[hidden] { display: none; }
+.yesterday-delta.warmer { color: #ffb27a; }
+.yesterday-delta.cooler { color: #9ad1ff; }
+.yesterday-delta.flat   { color: var(--fg-dim); }
 
 /* ---------- Nowcast banner ---------- */
 .nowcast {
