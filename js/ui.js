@@ -944,11 +944,25 @@ function renderHourly(w) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    // Wind arrow: shown when there's a meaningful breeze and we have a
+    // direction. Rotates to match the direction wind is blowing FROM (matches
+    // the compass convention in the wind metric card). Opacity scales with
+    // wind strength so calm hours don't shout.
+    let arrow = "";
+    if (h.windDir != null && h.wind != null && h.wind >= 5) {
+      const strength = Math.min(1, (h.wind - 5) / 25);
+      const opacity = (0.4 + strength * 0.5).toFixed(2);
+      const title = `${Math.round(h.wind)} km/h from ${cardinal(h.windDir)}`;
+      arrow = `<svg class="forecast-wind" viewBox="-8 -8 16 16" style="transform:rotate(${Math.round(h.windDir)}deg);opacity:${opacity}" aria-hidden="true"><title>${escapeHtml(title)}</title><path d="M0 -6 L2.4 4 L0 2 L-2.4 4 Z" fill="currentColor"/></svg>`;
+    } else {
+      arrow = `<span class="forecast-wind-empty" aria-hidden="true"></span>`;
+    }
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
+      ${arrow}
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
