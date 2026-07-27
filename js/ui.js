@@ -76,6 +76,9 @@ const el = {
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
+  dailyPrecip: $("#daily-precip"),
+  dailyPrecipBars: $("#daily-precip-bars"),
+  dailyPrecipSummary: $("#daily-precip-summary"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -897,6 +900,7 @@ function renderDaily(w) {
   if (!days.length) return;
   renderDailyIconStrip(days);
   renderDailySpark(days);
+  renderDailyPrecip(days);
   renderDailyDelta(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
@@ -980,6 +984,50 @@ function renderDailySpark(days) {
       el.dailySparkDots.appendChild(c);
     }
   });
+}
+
+function renderDailyPrecip(days) {
+  if (!el.dailyPrecip || !el.dailyPrecipBars) return;
+  const totals = days.map((d) => Math.max(0, +d.precip || 0));
+  const totalWeek = totals.reduce((s, v) => s + v, 0);
+  // Hide entirely on effectively-dry forecasts to avoid a row of stubs.
+  if (totalWeek < 0.2) {
+    el.dailyPrecip.setAttribute("hidden", "");
+    return;
+  }
+  el.dailyPrecip.removeAttribute("hidden");
+  // Scale bars to the wettest day so relative comparison is honest.
+  const peak = Math.max(0.5, ...totals);
+  const tz = state.weather?.timezone;
+  const bars = days.map((d, i) => {
+    const mm = totals[i];
+    const heightPct = Math.max(mm > 0 ? 8 : 2, (mm / peak) * 100);
+    const level = mm >= 10 ? 3 : mm >= 4 ? 2 : mm >= 1 ? 1 : mm > 0 ? 0 : -1;
+    const dt = new Date(d.time);
+    const dayLabel = i === 0 ? "Today" : dt.toLocaleDateString(undefined, {
+      weekday: "short",
+      ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    });
+    const label = mm >= 0.5
+      ? `${mm.toFixed(mm < 10 ? 1 : 0)}mm`
+      : (d.pop >= 30 ? `${d.pop}%` : "");
+    const title = `${dayLabel}: ${mm.toFixed(1)}mm · ${d.pop || 0}% chance`;
+    return `<div class="dprecip-col" title="${escapeHtml(title)}">
+      <span class="dprecip-value">${label}</span>
+      <div class="dprecip-bar" data-level="${level}" style="height:${heightPct.toFixed(1)}%"></div>
+      <span class="dprecip-day">${dayLabel}</span>
+    </div>`;
+  }).join("");
+  el.dailyPrecipBars.innerHTML = bars;
+
+  if (el.dailyPrecipSummary) {
+    const wetDays = totals.filter((v) => v >= 0.5).length;
+    const weekText = totalWeek >= 10
+      ? `${Math.round(totalWeek)}mm this week`
+      : `${totalWeek.toFixed(1)}mm this week`;
+    const wetText = wetDays > 0 ? ` · ${wetDays} wet ${wetDays === 1 ? "day" : "days"}` : "";
+    el.dailyPrecipSummary.textContent = weekText + wetText;
+  }
 }
 
 function renderDailyDelta(days) {
