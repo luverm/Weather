@@ -195,6 +195,7 @@ function normalize(d, aq, lat, lon) {
     ? -d.utc_offset_seconds / 60
     : null;
   const moon = computeMoon(new Date(), lat, lon, tzOffsetMin);
+  moon.week = computeMoonWeek(new Date(), 7);
 
   return {
     temp: c.temperature_2m,
@@ -475,6 +476,24 @@ function computeMoon(date, lat, lon, tzOffsetMin) {
   };
 }
 
+// Cheap week of moon phases — no rise/set search, just phase + illum for
+// each of the next `n` calendar days at their local noon. Returns
+// [{ time, phase, illum, name }].
+function computeMoonWeek(startDate, n) {
+  const out = [];
+  const base = new Date(startDate);
+  base.setHours(12, 0, 0, 0); // midday sampling — moon phase drifts smoothly
+  for (let i = 0; i < n; i++) {
+    const day = new Date(base.getTime() + i * 86_400_000);
+    const daysSince = (day.getTime() - REF_NEW_MOON) / 86_400_000;
+    const age = ((daysSince % SYNODIC_MONTH) + SYNODIC_MONTH) % SYNODIC_MONTH;
+    const phase = age / SYNODIC_MONTH;
+    const illum = 0.5 * (1 - Math.cos(2 * Math.PI * phase));
+    out.push({ time: day.getTime(), phase, illum });
+  }
+  return out;
+}
+
 // Sun equatorial coords (SunCalc-style). Enough precision for altitude within
 // a few arc-seconds, which is far tighter than we need for magic-hour timing.
 function sunCoords(d) {
@@ -584,7 +603,7 @@ function mock(lat, lon) {
       condition: CONDITIONS.CLOUDS, label: "Cloudy",
     })),
     nowcast: [],
-    moon: computeMoon(new Date(), lat, lon),
+    moon: { ...computeMoon(new Date(), lat, lon), week: computeMoonWeek(new Date(), 7) },
     airQuality: { aqi: 42, pm25: 8, pm10: 14, o3: 40, no2: 15, co: 0.2, label: "Good" },
     pollen: {
       items: [

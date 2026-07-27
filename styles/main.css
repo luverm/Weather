@@ -991,6 +991,31 @@ kbd {
   margin-left: 4px;
 }
 
+.moon-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--stroke);
+}
+.moon-week:empty { display: none; }
+.moon-week-day {
+  display: grid;
+  gap: 3px;
+  justify-items: center;
+}
+.moon-week-glyph {
+  width: 18px; height: 18px;
+  display: block;
+  filter: drop-shadow(0 0 3px rgba(240,230,203,0.2));
+}
+.moon-week-label {
+  font-size: 9.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 .sun-row { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .sun-item { display: grid; gap: 2px; }
 .sun-label { font-size: 10.5px; color: var(--fg-dim); letter-spacing: 0.14em; text-transform: uppercase; }

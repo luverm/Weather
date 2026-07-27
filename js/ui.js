@@ -49,6 +49,7 @@ const el = {
   moonSet: $("#moon-set"),
   moonAgePill: $("#moon-age-pill"),
   moonNextPhase: $("#moon-next-phase"),
+  moonWeek: $("#moon-week"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -523,26 +524,23 @@ function renderAqTrend(aq) {
   drawSparkline(el.aqTrendLine, el.aqTrendFill, pts, { minSpan: 20 });
 }
 
-function renderMoon(moon) {
-  if (!moon) return;
-  el.moonName.textContent = moon.name;
-  el.moonIllum.textContent = Math.round(moon.illum * 100);
-  // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
-  const r = 18;
-  const phase = moon.phase;
-  // Two semicircles + a horizontal ellipse representing the terminator.
-  // waxing: right side lit (phase 0..0.5); waning: left side (0.5..1).
+function moonLitPath(phase, r) {
   const waxing = phase < 0.5;
   const outer = waxing
     ? `M 0 ${-r} A ${r} ${r} 0 0 1 0 ${r}`
     : `M 0 ${-r} A ${r} ${r} 0 0 0 0 ${r}`;
-  // Terminator ellipse x-radius goes 1 -> 0 -> 1 across the cycle.
-  const termX = Math.abs(Math.cos(phase * 2 * Math.PI)) * r;
-  const large = Math.cos(phase * 2 * Math.PI) > 0 ? 0 : 1;
-  const termSweep = waxing ? (Math.cos(phase * 2 * Math.PI) > 0 ? 0 : 1)
-                           : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
-  const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
-  el.moonLit.setAttribute("d", outer + " " + terminator);
+  const cosTheta = Math.cos(phase * 2 * Math.PI);
+  const termX = Math.abs(cosTheta) * r;
+  const large = cosTheta > 0 ? 0 : 1;
+  const termSweep = waxing ? (cosTheta > 0 ? 0 : 1) : (cosTheta > 0 ? 1 : 0);
+  return `${outer} A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
+}
+
+function renderMoon(moon) {
+  if (!moon) return;
+  el.moonName.textContent = moon.name;
+  el.moonIllum.textContent = Math.round(moon.illum * 100);
+  el.moonLit.setAttribute("d", moonLitPath(moon.phase, 18));
 
   // Age pill (days since last new moon).
   if (el.moonAgePill) {
@@ -574,6 +572,31 @@ function renderMoon(moon) {
     if (moon.alwaysUp || moon.alwaysDown) el.moonSet.textContent = "";
     else el.moonSet.textContent = moon.setTs ? fmtTime(moon.setTs) : "—";
   }
+
+  if (el.moonWeek) renderMoonWeek(moon.week);
+}
+
+function renderMoonWeek(week) {
+  if (!el.moonWeek) return;
+  if (!week || week.length === 0) { el.moonWeek.innerHTML = ""; return; }
+  const tz = state.weather?.timezone;
+  const fmtDay = (ts) => new Date(ts).toLocaleDateString(undefined, {
+    weekday: "narrow",
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  el.moonWeek.innerHTML = week.map((d, i) => {
+    const label = i === 0 ? "T" : fmtDay(d.time);
+    const path = moonLitPath(d.phase, 8);
+    const illum = Math.round(d.illum * 100);
+    const title = `${new Date(d.time).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })} · ${illum}%`;
+    return `<div class="moon-week-day" title="${escapeHtml(title)}">
+      <svg viewBox="-10 -10 20 20" class="moon-week-glyph" aria-hidden="true">
+        <circle cx="0" cy="0" r="8" fill="rgba(255,255,255,0.08)"/>
+        <path d="${path}" fill="#f0e6cb"/>
+      </svg>
+      <span class="moon-week-label">${label}</span>
+    </div>`;
+  }).join("");
 }
 
 function fmtDays(d) {
