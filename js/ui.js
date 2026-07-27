@@ -52,6 +52,11 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunMagic: $("#sun-magic"),
+  magicGolden: $("#magic-golden"),
+  magicBlue: $("#magic-blue"),
+  magicGoldenTimes: $("#magic-golden-times"),
+  magicBlueTimes: $("#magic-blue-times"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -568,8 +573,32 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderMagicHour(w.magicHour);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderMagicHour(mh) {
+  if (!el.sunMagic) return;
+  const hasGolden = mh && (mh.morningGoldenEnd || mh.eveningGoldenStart);
+  const hasBlue   = mh && (mh.morningBlueStart || mh.eveningBlueEnd);
+  if (!hasGolden && !hasBlue) {
+    el.sunMagic.setAttribute("hidden", "");
+    return;
+  }
+  el.sunMagic.removeAttribute("hidden");
+  if (el.magicGolden) el.magicGolden.hidden = !hasGolden;
+  if (el.magicBlue)   el.magicBlue.hidden   = !hasBlue;
+  if (hasGolden && el.magicGoldenTimes) {
+    const a = mh.morningGoldenEnd ? fmtTime(mh.morningGoldenEnd) : null;
+    const b = mh.eveningGoldenStart ? fmtTime(mh.eveningGoldenStart) : null;
+    el.magicGoldenTimes.textContent = [a, b].filter(Boolean).join(" · ");
+  }
+  if (hasBlue && el.magicBlueTimes) {
+    const a = mh.morningBlueStart ? fmtTime(mh.morningBlueStart) : null;
+    const b = mh.eveningBlueEnd ? fmtTime(mh.eveningBlueEnd) : null;
+    el.magicBlueTimes.textContent = [a, b].filter(Boolean).join(" · ");
+  }
 }
 
 function scheduleSunArc(w) {

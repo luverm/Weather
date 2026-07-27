@@ -990,6 +990,43 @@ kbd {
 .sun-item { display: grid; gap: 2px; }
 .sun-label { font-size: 10.5px; color: var(--fg-dim); letter-spacing: 0.14em; text-transform: uppercase; }
 .sun-item strong { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
+
+.sun-magic {
+  display: grid;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--stroke);
+}
+.sun-magic[hidden] { display: none; }
+.magic-band {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+.magic-band[hidden] { display: none; }
+.magic-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  flex: none;
+  box-shadow: 0 0 6px currentColor;
+}
+.magic-golden { color: #ffca7a; }
+.magic-golden .magic-dot { background: currentColor; }
+.magic-blue   { color: #7ea8ff; }
+.magic-blue .magic-dot { background: currentColor; }
+.magic-label {
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  min-width: 44px;
+}
+.magic-times {
+  color: var(--fg);
+  font-weight: 500;
+}
 .sun-arc {
   width: 100%;
   height: 76px;

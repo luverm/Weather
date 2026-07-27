@@ -212,6 +212,11 @@ function normalize(d, aq, lat, lon) {
     label,
     sunrise: daily.sunrise?.[0] ? new Date(daily.sunrise[0]).getTime() : null,
     sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null,
+    magicHour: computeMagicHour(
+      daily.sunrise?.[0] ? new Date(daily.sunrise[0]).getTime() : null,
+      daily.sunset?.[0]  ? new Date(daily.sunset[0]).getTime()  : null,
+      lat, lon
+    ),
     uv: daily.uv_index_max?.[0] ?? null,
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
@@ -469,6 +474,73 @@ function computeMoon(date, lat, lon, tzOffsetMin) {
   };
 }
 
+// Sun equatorial coords (SunCalc-style). Enough precision for altitude within
+// a few arc-seconds, which is far tighter than we need for magic-hour timing.
+function sunCoords(d) {
+  const M = (357.5291 + 0.98560028 * d) * DEG;
+  const C = (1.9148 * Math.sin(M) + 0.02 * Math.sin(2 * M) + 0.0003 * Math.sin(3 * M)) * DEG;
+  const L = M + C + 102.9372 * DEG + Math.PI;
+  return {
+    ra: Math.atan2(Math.sin(L) * Math.cos(OBLIQUITY), Math.cos(L)),
+    dec: Math.asin(Math.sin(OBLIQUITY) * Math.sin(L)),
+  };
+}
+
+function sunAltitude(date, lat, lon) {
+  const d = toDays(date);
+  const lw = -lon * DEG;
+  const phi = lat * DEG;
+  const { ra, dec } = sunCoords(d);
+  const siderealTime = (280.16 + 360.9856235 * d) * DEG - lw;
+  const H = siderealTime - ra;
+  return Math.asin(Math.sin(phi) * Math.sin(dec) + Math.cos(phi) * Math.cos(dec) * Math.cos(H));
+}
+
+// Bisect a monotonic segment for the time when altitude crosses `target`
+// (radians). `ascending` is true when the sun is rising during [t1,t2].
+function bisectSunAlt(t1, t2, target, lat, lon, ascending) {
+  for (let i = 0; i < 24; i++) {
+    const tm = (t1 + t2) / 2;
+    const alt = sunAltitude(new Date(tm), lat, lon);
+    if (ascending ? alt < target : alt > target) t1 = tm;
+    else t2 = tm;
+  }
+  return (t1 + t2) / 2;
+}
+
+// Golden hour: sun altitude ∈ (0°, 6°]. Blue hour: (-6°, 0°). Returns
+// { morningGoldenEnd, eveningGoldenStart, morningBlueStart, eveningBlueEnd }
+// as timestamps. Any leg may be null (polar day/night, no crossing).
+function computeMagicHour(sunrise, sunset, lat, lon) {
+  if (!sunrise || !sunset || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  const goldenAlt = 6 * DEG;
+  const blueAlt = -6 * DEG;
+  const noon = (sunrise + sunset) / 2;
+  // Peak sun altitude: if it never reaches +6°, morning/evening golden is
+  // effectively the whole day above the horizon — cap to sunrise/sunset.
+  const noonAlt = sunAltitude(new Date(noon), lat, lon);
+  let morningGoldenEnd = null, eveningGoldenStart = null;
+  if (noonAlt >= goldenAlt) {
+    morningGoldenEnd = bisectSunAlt(sunrise, noon, goldenAlt, lat, lon, true);
+    eveningGoldenStart = bisectSunAlt(noon, sunset, goldenAlt, lat, lon, false);
+  }
+  // Blue hour brackets sunrise/sunset by up to 90 min on each side; if the
+  // sun does not drop 6° below the horizon in that window (e.g. Nordic
+  // summer) we simply leave the values null.
+  const blueSpan = 90 * 60_000;
+  const preRise = new Date(sunrise - blueSpan);
+  const preRiseAlt = sunAltitude(preRise, lat, lon);
+  const morningBlueStart = preRiseAlt <= blueAlt
+    ? bisectSunAlt(sunrise - blueSpan, sunrise, blueAlt, lat, lon, true)
+    : null;
+  const postSet = new Date(sunset + blueSpan);
+  const postSetAlt = sunAltitude(postSet, lat, lon);
+  const eveningBlueEnd = postSetAlt <= blueAlt
+    ? bisectSunAlt(sunset, sunset + blueSpan, blueAlt, lat, lon, false)
+    : null;
+  return { morningGoldenEnd, eveningGoldenStart, morningBlueStart, eveningBlueEnd };
+}
+
 function mock(lat, lon) {
   const hour = new Date().getHours();
   const isDay = hour >= 6 && hour < 19;
@@ -480,6 +552,11 @@ function mock(lat, lon) {
     isDay, condition: CONDITIONS.CLOUDS, label: "Partly cloudy (offline)",
     sunrise: new Date().setHours(6, 30, 0, 0),
     sunset: new Date().setHours(19, 0, 0, 0),
+    magicHour: computeMagicHour(
+      new Date().setHours(6, 30, 0, 0),
+      new Date().setHours(19, 0, 0, 0),
+      lat, lon
+    ),
     uv: 3,
     uvPeak: { time: new Date().setHours(13, 0, 0, 0), value: 5 },
     timezone: "UTC",
