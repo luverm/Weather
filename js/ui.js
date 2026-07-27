@@ -45,6 +45,10 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonRise: $("#moon-rise"),
+  moonSet: $("#moon-set"),
+  moonAgePill: $("#moon-age-pill"),
+  moonNextPhase: $("#moon-next-phase"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -494,6 +498,46 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+
+  // Age pill (days since last new moon).
+  if (el.moonAgePill) {
+    const age = Math.round((moon.ageDays ?? 0) * 10) / 10;
+    el.moonAgePill.textContent = `${age}d old`;
+  }
+
+  // Next major phase: whichever is nearest (full or new).
+  if (el.moonNextPhase) {
+    const toFull = moon.nextFullDays ?? Infinity;
+    const toNew = moon.nextNewDays ?? Infinity;
+    if (Number.isFinite(toFull) && Number.isFinite(toNew)) {
+      const isFull = toFull <= toNew;
+      const days = isFull ? toFull : toNew;
+      const label = isFull ? "Full" : "New";
+      el.moonNextPhase.textContent = `${label} in ${fmtDays(days)}`;
+    } else {
+      el.moonNextPhase.textContent = "";
+    }
+  }
+
+  // Rise / set times for the local day.
+  if (el.moonRise) {
+    if (moon.alwaysUp) el.moonRise.textContent = "always up";
+    else if (moon.alwaysDown) el.moonRise.textContent = "always down";
+    else el.moonRise.textContent = moon.riseTs ? fmtTime(moon.riseTs) : "—";
+  }
+  if (el.moonSet) {
+    if (moon.alwaysUp || moon.alwaysDown) el.moonSet.textContent = "";
+    else el.moonSet.textContent = moon.setTs ? fmtTime(moon.setTs) : "—";
+  }
+}
+
+function fmtDays(d) {
+  if (d < 1) {
+    const hours = Math.max(1, Math.round(d * 24));
+    return `${hours}h`;
+  }
+  if (d < 10) return `${d.toFixed(1)}d`;
+  return `${Math.round(d)}d`;
 }
 
 function fmtTime(ts) {

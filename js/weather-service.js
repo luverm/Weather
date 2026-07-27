@@ -115,14 +115,14 @@ export async function getWeather(lat, lon) {
   try {
     const [forecast, air] = await Promise.allSettled([fetchJson(url), fetchJson(aqUrl)]);
     if (forecast.status !== "fulfilled") throw forecast.reason;
-    return normalize(forecast.value, air.status === "fulfilled" ? air.value : null);
+    return normalize(forecast.value, air.status === "fulfilled" ? air.value : null, lat, lon);
   } catch (err) {
     console.warn("Weather fetch failed, using mock", err);
     return mock(lat, lon);
   }
 }
 
-function normalize(d, aq) {
+function normalize(d, aq, lat, lon) {
   const c = d.current || {};
   const { condition, label } = mapWmo(c.weather_code);
   const daily = d.daily || {};
@@ -186,8 +186,14 @@ function normalize(d, aq) {
     }
   }
 
-  // Moon phase is not in Open-Meteo's free tier — compute it locally.
-  const moon = computeMoonPhase(new Date());
+  // Moon phase is not in Open-Meteo's free tier — compute it locally,
+  // including moonrise/moonset for the caller's coordinates. Anchor the
+  // rise/set search window to the *observed location's* local day so the
+  // times fall inside its calendar day (not the browser's).
+  const tzOffsetMin = Number.isFinite(d.utc_offset_seconds)
+    ? -d.utc_offset_seconds / 60
+    : null;
+  const moon = computeMoon(new Date(), lat, lon, tzOffsetMin);
 
   return {
     temp: c.temperature_2m,
@@ -324,20 +330,117 @@ function findUvPeak(hourly) {
   return { time: peak.t, value: peak.v };
 }
 
-// Conway's simplified moon-phase algorithm — accurate enough for UI glyphs.
-// Returns { phase: 0..1, name: "Waxing crescent", illum: 0..1 }
-function computeMoonPhase(date) {
-  const year = date.getUTCFullYear();
-  const month = date.getUTCMonth() + 1;
-  const day = date.getUTCDate() + date.getUTCHours() / 24;
-  let r = year % 100;
-  r %= 19;
-  if (r > 9) r -= 19;
-  r = (r * 11) % 30 + month + day;
-  if (month < 3) r += 2;
-  r -= (year < 2000 ? 4 : 8.3);
-  r = ((r % 30) + 30) % 30; // 0..29.53
-  const phase = r / 29.5305882;
+// ---------- Astronomy (moon) ----------
+// Full moon-phase + moonrise/moonset computation. Adapted from the well-known
+// SunCalc algorithms (Mourner, BSD). Accurate to ~a few minutes for rise/set
+// times and well under 1% for illumination — good enough for a weather UI.
+const SYNODIC_MONTH = 29.530588861; // days between new moons
+// A reference new moon (2000 Jan 6 18:14 UT) as a JS timestamp.
+const REF_NEW_MOON = Date.UTC(2000, 0, 6, 18, 14, 0);
+const DEG = Math.PI / 180;
+const OBLIQUITY = 23.4397 * DEG;
+
+function toJulian(date) { return date.valueOf() / 86400000 - 0.5 + 2440588; }
+function toDays(date)   { return toJulian(date) - 2451545; }
+
+function moonEclipticCoords(d) {
+  // All angles in radians.
+  const L = (218.316 + 13.176396 * d) * DEG; // mean longitude
+  const M = (134.963 + 13.064993 * d) * DEG; // mean anomaly
+  const F = (93.272  + 13.229350 * d) * DEG; // mean distance
+  const lng = L + 6.289 * DEG * Math.sin(M); // ecliptic longitude
+  const lat = 5.128 * DEG * Math.sin(F);     // ecliptic latitude
+  return { lng, lat };
+}
+
+function moonEquatorialCoords(lng, lat) {
+  const ra = Math.atan2(
+    Math.sin(lng) * Math.cos(OBLIQUITY) - Math.tan(lat) * Math.sin(OBLIQUITY),
+    Math.cos(lng)
+  );
+  const dec = Math.asin(
+    Math.sin(lat) * Math.cos(OBLIQUITY) + Math.cos(lat) * Math.sin(OBLIQUITY) * Math.sin(lng)
+  );
+  return { ra, dec };
+}
+
+function moonAltitude(date, lat, lon) {
+  const d = toDays(date);
+  const lw = -lon * DEG; // west-longitude convention used by SunCalc
+  const phi = lat * DEG;
+  const { lng, lat: mlat } = moonEclipticCoords(d);
+  const { ra, dec } = moonEquatorialCoords(lng, mlat);
+  const siderealTime = (280.16 + 360.9856235 * d) * DEG - lw;
+  const H = siderealTime - ra;
+  return Math.asin(Math.sin(phi) * Math.sin(dec) + Math.cos(phi) * Math.cos(dec) * Math.cos(H));
+}
+
+// Returns { rise, set, alwaysUp, alwaysDown } for the local calendar day
+// containing `date`. Times are JS timestamps (UTC ms). Uses hourly sampling
+// with a parabolic fit for sub-hour precision.
+function computeMoonRiseSet(date, lat, lon, tzOffsetMin) {
+  const t = new Date(date);
+  t.setUTCHours(0, 0, 0, 0);
+  // Anchor at local midnight for the observed location. `tzOffsetMin` follows
+  // JS `getTimezoneOffset()` convention (positive west of UTC). If not
+  // supplied, fall back to the caller's browser zone.
+  const off = Number.isFinite(tzOffsetMin) ? tzOffsetMin : new Date(date).getTimezoneOffset();
+  t.setTime(t.getTime() + off * 60_000);
+
+  const HC = 0.133 * DEG; // moon's apparent radius + refraction
+  const alt = (h) => moonAltitude(new Date(t.getTime() + h * 3600_000), lat, lon) - HC;
+
+  let h0 = alt(0);
+  let rise = null;
+  let set = null;
+  let ye = 0;
+
+  for (let i = 1; i <= 24; i += 2) {
+    const h1 = alt(i);
+    const h2 = alt(i + 1);
+    const a = (h0 + h2) / 2 - h1;
+    const b = (h2 - h0) / 2;
+    const xe = -b / (2 * a);
+    ye = (a * xe + b) * xe + h1;
+    const disc = b * b - 4 * a * h1;
+    let roots = 0;
+    let x1 = 0, x2 = 0;
+    if (disc >= 0) {
+      const dx = Math.sqrt(disc) / (Math.abs(a) * 2);
+      x1 = xe - dx;
+      x2 = xe + dx;
+      if (Math.abs(x1) <= 1) roots++;
+      if (Math.abs(x2) <= 1) roots++;
+      if (x1 < -1) x1 = x2;
+    }
+    if (roots === 1) {
+      if (h0 < 0) rise = i + x1;
+      else set = i + x1;
+    } else if (roots === 2) {
+      rise = i + (ye < 0 ? x2 : x1);
+      set  = i + (ye < 0 ? x1 : x2);
+    }
+    if (rise != null && set != null) break;
+    h0 = h2;
+  }
+
+  const result = { rise: null, set: null, alwaysUp: false, alwaysDown: false };
+  if (rise != null) result.rise = t.getTime() + rise * 3600_000;
+  if (set  != null) result.set  = t.getTime() + set  * 3600_000;
+  if (rise == null && set == null) {
+    if (ye > 0) result.alwaysUp = true;
+    else result.alwaysDown = true;
+  }
+  return result;
+}
+
+// Full moon summary for the given moment + location.
+// Returns { phase, illum, name, ageDays, riseTs, setTs, alwaysUp, alwaysDown,
+//           nextFullDays, nextNewDays }.
+function computeMoon(date, lat, lon, tzOffsetMin) {
+  const daysSince = (date.getTime() - REF_NEW_MOON) / 86_400_000;
+  const ageDays = ((daysSince % SYNODIC_MONTH) + SYNODIC_MONTH) % SYNODIC_MONTH;
+  const phase = ageDays / SYNODIC_MONTH; // 0 new, 0.5 full, 1 new again
   const illum = 0.5 * (1 - Math.cos(2 * Math.PI * phase));
   const name =
     phase < 0.03 || phase > 0.97 ? "New moon" :
@@ -348,7 +451,22 @@ function computeMoonPhase(date) {
     phase < 0.72 ? "Waning gibbous" :
     phase < 0.78 ? "Last quarter" :
     "Waning crescent";
-  return { phase, illum, name };
+
+  const nextNewDays  = SYNODIC_MONTH - ageDays;
+  const nextFullDays = ((SYNODIC_MONTH / 2 - ageDays) + SYNODIC_MONTH) % SYNODIC_MONTH;
+
+  let rs = { rise: null, set: null, alwaysUp: false, alwaysDown: false };
+  if (Number.isFinite(lat) && Number.isFinite(lon)) {
+    try { rs = computeMoonRiseSet(date, lat, lon, tzOffsetMin); }
+    catch (e) { /* leave defaults */ }
+  }
+
+  return {
+    phase, illum, name, ageDays,
+    riseTs: rs.rise, setTs: rs.set,
+    alwaysUp: rs.alwaysUp, alwaysDown: rs.alwaysDown,
+    nextFullDays, nextNewDays,
+  };
 }
 
 function mock(lat, lon) {
@@ -387,7 +505,7 @@ function mock(lat, lon) {
       condition: CONDITIONS.CLOUDS, label: "Cloudy",
     })),
     nowcast: [],
-    moon: computeMoonPhase(new Date()),
+    moon: computeMoon(new Date(), lat, lon),
     airQuality: { aqi: 42, pm25: 8, pm10: 14, o3: 40, no2: 15, co: 0.2, label: "Good" },
     pollen: {
       items: [
