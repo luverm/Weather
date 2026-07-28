@@ -1430,9 +1430,24 @@ kbd {
   color: var(--fg-dim);
   margin-top: 2px;
   letter-spacing: 0.04em;
+  display: inline-flex; gap: 6px; flex-wrap: wrap;
 }
-.daily-gust.show { display: block; }
+.daily-gust.show { display: inline-flex; }
 .daily-item { grid-auto-rows: auto; }
+.daily-precip, .daily-gust-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  background: rgba(154, 209, 255, 0.14);
+  color: #cfe4ff;
+}
+.daily-precip.chance { background: rgba(154, 209, 255, 0.08); color: var(--fg-muted); }
+.daily-precip.moderate { background: rgba(124, 175, 255, 0.22); color: #d9e8ff; }
+.daily-precip.heavy { background: rgba(196, 128, 255, 0.22); color: #efd8ff; }
+.daily-gust-chip { background: rgba(255, 240, 200, 0.14); color: #ffe6c7; }
 
 /* ---------- Forecast (hourly + daily) ---------- */
 .forecast, .daily {
