@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { summarize as summarizePrecip, buildAreaPath, relativeTime, intensityLabel } from "./precipitation-outlook.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -87,6 +88,13 @@ const el = {
   insightsList: $("#insights-list"),
   activityCard: $("#activity-card"),
   activityList: $("#activity-list"),
+  precipCard: $("#precip-card"),
+  precipStatus: $("#precip-status"),
+  precipTotalValue: $("#precip-total-value"),
+  precipHeadline: $("#precip-headline"),
+  precipTiming: $("#precip-timing"),
+  precipAreaLine: $("#precip-area-line"),
+  precipAreaFill: $("#precip-area-fill"),
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
@@ -191,6 +199,7 @@ export const ui = {
     renderTrends(weather);
     renderInsights(weather);
     renderActivity(weather);
+    renderPrecipOutlook(weather);
     renderAlerts(weather);
     renderWeekend(weather);
     startLocaltime(weather);
@@ -768,6 +777,44 @@ function renderActivity(w) {
       if (ts) state.handlers.onHourClick?.(ts);
     });
   });
+}
+
+function renderPrecipOutlook(w) {
+  if (!el.precipCard) return;
+  const s = summarizePrecip(w.hourly);
+  if (!s) { el.precipCard.hidden = true; return; }
+  el.precipCard.hidden = false;
+
+  const status = s.dry ? "dry" : (intensityLabel(s.peakMm) || "light");
+  el.precipCard.setAttribute("data-status", status);
+  if (el.precipStatus) {
+    el.precipStatus.textContent = s.dry ? "dry" : status;
+    el.precipStatus.className = `trend ${s.dry ? "down" : (status === "heavy" || status === "torrential" ? "up" : "flat")}`;
+  }
+
+  if (s.dry) {
+    el.precipTotalValue.textContent = "0";
+    el.precipHeadline.textContent = "Dry stretch expected.";
+    el.precipTiming.textContent = "No measurable rain in the next 24 h.";
+  } else {
+    const totalDisplay = s.rawTotal;
+    el.precipTotalValue.textContent = totalDisplay >= 10
+      ? String(Math.round(totalDisplay))
+      : totalDisplay.toFixed(1);
+    const bits = [];
+    if (s.firstHour) bits.push(`Rain ${relativeTime(s.firstHour.time)}`);
+    else bits.push(`Passing showers`);
+    if (s.peakHour) bits.push(`peak ${fmtTime(s.peakHour.time)}`);
+    el.precipHeadline.textContent = bits.join(" · ") + ".";
+    const intensity = intensityLabel(s.peakMm);
+    el.precipTiming.textContent = intensity
+      ? `${intensity} peak · ${s.peakMm.toFixed(1)} mm/h`
+      : `Light showers over the day`;
+  }
+
+  const { line, fill } = buildAreaPath(s.cumulative);
+  if (el.precipAreaLine) el.precipAreaLine.setAttribute("d", line);
+  if (el.precipAreaFill) el.precipAreaFill.setAttribute("d", fill);
 }
 
 function renderPollen(pollen) {

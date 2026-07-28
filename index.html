@@ -318,6 +318,30 @@
           <ul id="activity-list" class="activity-list"></ul>
         </div>
 
+        <div class="extra-card glass" id="precip-card" hidden>
+          <span class="metric-label">Next 24 h precip <span id="precip-status" class="trend" aria-hidden="true"></span></span>
+          <div class="precip-row">
+            <div class="precip-total">
+              <strong id="precip-total-value">—</strong>
+              <span class="precip-total-unit">mm</span>
+            </div>
+            <div class="precip-meta">
+              <span id="precip-headline" class="precip-headline">—</span>
+              <span id="precip-timing" class="precip-timing"></span>
+            </div>
+          </div>
+          <svg id="precip-area" class="precip-area" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="precip-area-grad" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="currentColor" stop-opacity="0.55"/>
+                <stop offset="100%" stop-color="currentColor" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <path id="precip-area-fill" fill="url(#precip-area-grad)"></path>
+            <path id="precip-area-line" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"></path>
+          </svg>
+        </div>
+
         <div class="extra-card glass" id="sun-card">
           <span class="metric-label"><span id="sun-next-label">Sun</span> <span id="sun-countdown" class="sun-countdown"></span></span>
           <svg id="sun-arc" class="sun-arc" viewBox="0 0 200 84" aria-hidden="true">

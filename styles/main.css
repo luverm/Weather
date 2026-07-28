@@ -977,6 +977,53 @@ kbd {
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
 
+/* ---------- Precipitation outlook ---------- */
+#precip-card { color: #9ad1ff; }
+#precip-card[data-status="dry"] { color: #b7c6dd; }
+#precip-card[data-status="light"] { color: #7ec5f5; }
+#precip-card[data-status="moderate"] { color: #6aa6ff; }
+#precip-card[data-status="heavy"] { color: #c691ff; }
+#precip-card[data-status="torrential"] { color: #ff7a9c; }
+.precip-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: center;
+}
+.precip-total {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+.precip-total strong {
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: currentColor;
+}
+.precip-total-unit { font-size: 12px; color: var(--fg-muted); }
+.precip-meta { display: grid; gap: 2px; min-width: 0; }
+.precip-headline {
+  font-size: 12.5px;
+  color: var(--fg);
+  line-height: 1.25;
+}
+.precip-timing {
+  font-size: 11.5px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+}
+.precip-area {
+  width: 100%;
+  height: 30px;
+  display: block;
+  margin-top: 2px;
+  color: currentColor;
+  opacity: 0.9;
+}
+
 /* ---------- Radar map ---------- */
 .radar {
   padding: 12px;
