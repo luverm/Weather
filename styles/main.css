@@ -976,6 +976,28 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+.sun-arc-golden-dot {
+  filter: drop-shadow(0 0 3px rgba(255,180,90,0.55));
+}
+.sun-golden {
+  display: inline-flex; align-items: center; gap: 8px;
+  margin-top: 2px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255,190,110,0.16), rgba(255,150,90,0.06));
+  border: 1px solid rgba(255,190,110,0.25);
+  font-size: 11px;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+  justify-self: start;
+}
+.sun-golden-swatch {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #ffdca0, #ff9a55);
+  box-shadow: 0 0 6px rgba(255,180,90,0.5);
+}
+.sun-golden-text { color: var(--fg); font-weight: 500; }
+.sun-golden-text span { color: var(--fg); }
 
 /* ---------- Precipitation outlook ---------- */
 #precip-card { color: #9ad1ff; }

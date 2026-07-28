@@ -98,6 +98,10 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcGolden: $("#sun-arc-golden"),
+  sunGolden: $("#sun-golden"),
+  sunGoldenAm: $("#sun-golden-am"),
+  sunGoldenPm: $("#sun-golden-pm"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -532,6 +536,42 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderGoldenHour(w);
+}
+
+function renderGoldenHour(w) {
+  if (!el.sunGolden) return;
+  if (!w?.sunrise || !w?.sunset) { el.sunGolden.hidden = true; return; }
+  const dayMs = w.sunset - w.sunrise;
+  // Golden hour ≈ 60 minutes when the sun sits low; scale slightly at extreme
+  // latitudes where twilight is longer.
+  const window = Math.min(90 * 60_000, Math.max(35 * 60_000, dayMs * 0.09));
+  const amStart = w.sunrise;
+  const amEnd = w.sunrise + window;
+  const pmStart = w.sunset - window;
+  const pmEnd = w.sunset;
+  if (amEnd >= pmStart) { el.sunGolden.hidden = true; return; }
+  el.sunGolden.hidden = false;
+  el.sunGoldenAm.textContent = `${fmtTime(amStart)}–${fmtTime(amEnd)}`;
+  el.sunGoldenPm.textContent = `${fmtTime(pmStart)}–${fmtTime(pmEnd)}`;
+
+  // Paint two dots on the arc at the far edges of each golden band.
+  if (el.sunArcGolden) {
+    const pts = [
+      arcPoint((amEnd - w.sunrise) / dayMs),
+      arcPoint((pmStart - w.sunrise) / dayMs),
+    ];
+    el.sunArcGolden.innerHTML = pts.map((p) =>
+      `<circle class="sun-arc-golden-dot" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="2.2" fill="#ffb46a"/>`
+    ).join("");
+  }
+}
+
+function arcPoint(frac) {
+  const t = clamp01(frac);
+  const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
+  const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
+  return { x, y };
 }
 
 function scheduleSunArc(w) {
@@ -551,12 +591,7 @@ function scheduleSunArc(w) {
     } else {
       frac = (now - sr) / (ss - sr);
     }
-    // Quadratic Bezier from (10,74) to (190,74) via (100,-26). The midpoint
-    // (50% t) reaches y = 0.5*(74) + 0.5*(74 + 2*(-26-74)/2*(...)) — easier
-    // to evaluate the curve directly.
-    const t = clamp01(frac);
-    const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
-    const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
+    const { x, y } = arcPoint(frac);
     el.sunArcMarker.setAttribute("cx", x.toFixed(1));
     el.sunArcMarker.setAttribute("cy", y.toFixed(1));
     // After sunset, dim the marker so it visually settles.
