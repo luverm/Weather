@@ -17,6 +17,7 @@ import { narrate } from "./narrative.js";
 import { places } from "./places.js";
 import { RadarMap } from "./radar-map.js";
 import { installShortcuts } from "./shortcuts.js";
+import { scoreWeather } from "./comfort-index.js";
 
 const engine = new AnimationEngine();
 
@@ -301,6 +302,23 @@ installShortcuts({
     scrubber.sync();
     if (app.weather) applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
+  },
+  jumpToBestComfort: () => {
+    const hrs = app.weather?.hourly;
+    if (!hrs || hrs.length < 2) return;
+    let best = null;
+    let bestScore = -1;
+    for (const h of hrs) {
+      const snap = { temp: h.temp, feelsLike: h.feelsLike ?? h.temp, humidity: h.humidity, windSpeed: h.wind, uv: h.uv, hourly: [{ precip: h.precip }] };
+      const s = scoreWeather(snap);
+      if (s && s.score > bestScore) { bestScore = s.score; best = h; }
+    }
+    if (!best) return;
+    clock.setOffset(best.time - Date.now());
+    scrubber.sync();
+    applyScene(app.weather);
+    ui.setScrubbing(!clock.isLive());
+    ui.showToast(`Best window: ${new Date(best.time).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })} · comfort ${bestScore}`);
   },
 });
 
