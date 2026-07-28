@@ -56,6 +56,9 @@ const el = {
   adviceText: $("#advice-text"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
+  chartSummary: $("#chart-summary"),
+  chartSummaryRange: $("#chart-summary-range"),
+  chartSummaryExtremes: $("#chart-summary-extremes"),
   pollenCard: $("#pollen-card"),
   pollenLevel: $("#pollen-level"),
   pollenDominant: $("#pollen-dominant"),
@@ -922,6 +925,25 @@ function renderHourly(w) {
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
   }
+  renderChartSummary(w);
+}
+
+function renderChartSummary(w) {
+  if (!el.chartSummary) return;
+  const hrs = (w.hourly || []).filter((h) => h.temp != null).slice(0, 24);
+  if (hrs.length < 4) { el.chartSummary.hidden = true; return; }
+  let lo = hrs[0], hi = hrs[0];
+  for (const h of hrs) {
+    if (h.temp < lo.temp) lo = h;
+    if (h.temp > hi.temp) hi = h;
+  }
+  const swing = hi.temp - lo.temp;
+  if (swing < 1) { el.chartSummary.hidden = true; return; }
+  el.chartSummary.hidden = false;
+  el.chartSummaryRange.textContent = `${Math.round(convertTemp(lo.temp))}° → ${Math.round(convertTemp(hi.temp))}°`;
+  const swingUnit = state.unit === "F" ? swing * 9 / 5 : swing;
+  el.chartSummaryExtremes.textContent =
+    `swing ${Math.round(swingUnit)}° · lo ${fmtTime(lo.time)} · hi ${fmtTime(hi.time)}`;
 }
 
 function highlightHour(index) {
