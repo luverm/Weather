@@ -1444,13 +1444,22 @@ function bindShare() {
     const unit = state.unit;
     const t = (v) => `${Math.round(unit === "F" ? v * 9 / 5 + 32 : v)}°${unit}`;
     const today = w.daily?.[0];
+    const comfort = scoreWeather(w);
+    const nextEv = pickNextEvent(w);
+    const precip = summarizePrecip(w.hourly);
+    const precipLine = precip && !precip.dry
+      ? `Next 24 h: ${precip.rawTotal.toFixed(1)} mm ${precip.dominant} · peak ${precip.peakMm.toFixed(1)} mm/h`
+      : precip ? `Next 24 h: dry` : null;
     const lines = [
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
+      comfort ? `Comfort ${comfort.score} · ${comfort.label}${comfort.notes.length ? ` (${comfort.notes.join(", ")})` : ""}` : null,
       today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
       `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
+      precipLine,
+      nextEv ? `Next: ${nextEv.text}` : null,
     ].filter(Boolean);
     const text = lines.join("\n");
     try {
