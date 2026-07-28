@@ -11,6 +11,7 @@ import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { summarize as summarizePrecip, buildAreaPath, relativeTime, intensityLabel } from "./precipitation-outlook.js";
+import { pickNextEvent } from "./next-event.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -54,6 +55,9 @@ const el = {
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
+  nextEvent: $("#next-event"),
+  nextEventIcon: $("#next-event-icon"),
+  nextEventText: $("#next-event-text"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
   chartSummary: $("#chart-summary"),
@@ -202,6 +206,7 @@ export const ui = {
     renderDaily(weather);
     renderNowcast(weather);
     renderAdvice(weather);
+    renderNextEvent(weather);
     renderPollen(weather.pollen);
     renderTrends(weather);
     renderInsights(weather);
@@ -632,6 +637,16 @@ function scheduleSunCountdown(w) {
   };
   update();
   state.sunTimer = setInterval(update, 30_000);
+}
+
+function renderNextEvent(w) {
+  if (!el.nextEvent) return;
+  const ev = pickNextEvent(w);
+  if (!ev) { el.nextEvent.hidden = true; return; }
+  el.nextEvent.hidden = false;
+  el.nextEventIcon.textContent = ev.icon || "·";
+  el.nextEventText.textContent = ev.text;
+  el.nextEvent.setAttribute("data-kind", ev.kind);
 }
 
 function renderAdvice(w) {
