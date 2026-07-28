@@ -12,6 +12,7 @@ import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { summarize as summarizePrecip, buildAreaPath, relativeTime, intensityLabel } from "./precipitation-outlook.js";
 import { pickNextEvent } from "./next-event.js";
+import { scoreWeather } from "./comfort-index.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -58,6 +59,10 @@ const el = {
   nextEvent: $("#next-event"),
   nextEventIcon: $("#next-event-icon"),
   nextEventText: $("#next-event-text"),
+  comfortBadge: $("#comfort-badge"),
+  comfortBadgeScore: $("#comfort-badge-score"),
+  comfortBadgeLabel: $("#comfort-badge-label"),
+  comfortBadgeNotes: $("#comfort-badge-notes"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
   chartSummary: $("#chart-summary"),
@@ -199,6 +204,7 @@ export const ui = {
     state.sampledWeather = weather; // initially same as live
     renderLiveValues(weather);
     renderMetrics(weather);
+    renderComfort(weather);
     renderAirQuality(weather.airQuality);
     renderMoon(weather.moon);
     renderSun(weather);
@@ -232,6 +238,7 @@ export const ui = {
     state.sampledWeather = sampled;
     renderLiveValues(sampled, { animate: false });
     renderMetrics(sampled);
+    renderComfort(sampled);
     renderAdvice(sampled);
     highlightHour(highlightHourIndex);
     if (state.comfortStrip) state.comfortStrip.highlight(highlightHourIndex);
@@ -637,6 +644,17 @@ function scheduleSunCountdown(w) {
   };
   update();
   state.sunTimer = setInterval(update, 30_000);
+}
+
+function renderComfort(w) {
+  if (!el.comfortBadge) return;
+  const s = scoreWeather(w);
+  if (!s) { el.comfortBadge.hidden = true; return; }
+  el.comfortBadge.hidden = false;
+  el.comfortBadge.setAttribute("data-tone", s.tone);
+  el.comfortBadgeScore.textContent = String(s.score);
+  el.comfortBadgeLabel.textContent = s.label;
+  el.comfortBadgeNotes.textContent = s.notes.length ? s.notes.join(" · ") : "balanced";
 }
 
 function renderNextEvent(w) {

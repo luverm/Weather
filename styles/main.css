@@ -391,6 +391,57 @@ html[data-reduce-motion="true"] *::after {
 .unit:hover { background: var(--glass); color: var(--fg); }
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
+.comfort-badge {
+  display: inline-grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: center;
+  margin-top: 10px;
+  padding: 6px 12px 6px 8px;
+  border-radius: 14px;
+  background: var(--glass);
+  border: 1px solid var(--stroke);
+  color: var(--fg);
+  max-width: 260px;
+  margin-left: auto;
+}
+.comfort-badge[hidden] { display: none; }
+.comfort-badge-score {
+  display: grid; place-items: center;
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #0b1020;
+  background: currentColor;
+}
+.comfort-badge-score::after { content: ""; }
+.comfort-badge-meta { display: grid; gap: 1px; min-width: 0; }
+.comfort-badge-label {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--fg);
+  letter-spacing: 0.01em;
+}
+.comfort-badge-notes {
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
+}
+.comfort-badge[data-tone="great"] { color: #7cd984; }
+.comfort-badge[data-tone="good"]  { color: #9ad1ff; }
+.comfort-badge[data-tone="mid"]   { color: #ffd47b; }
+.comfort-badge[data-tone="poor"]  { color: #ff9c7a; }
+.comfort-badge[data-tone="bad"]   { color: #ff6a6a; }
+.comfort-badge .comfort-badge-score { color: #0b1020; }
+.comfort-badge[data-tone="great"] .comfort-badge-score { background: #7cd984; }
+.comfort-badge[data-tone="good"]  .comfort-badge-score { background: #9ad1ff; }
+.comfort-badge[data-tone="mid"]   .comfort-badge-score { background: #ffd47b; }
+.comfort-badge[data-tone="poor"]  .comfort-badge-score { background: #ff9c7a; }
+.comfort-badge[data-tone="bad"]   .comfort-badge-score { background: #ff6a6a; color: #fff; }
+[data-scrubbing="true"] .comfort-badge { opacity: 0.6; }
 .day-range {
   margin-top: 10px;
   display: grid;
