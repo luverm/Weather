@@ -858,6 +858,9 @@ function renderPrecipOutlook(w) {
 
   const status = s.dry ? "dry" : (intensityLabel(s.peakMm) || "light");
   el.precipCard.setAttribute("data-status", status);
+  el.precipCard.setAttribute("data-form", s.dry ? "dry" : s.dominant);
+  const noun = s.dominant === "snow" ? "Snow" : "Rain";
+  const nounLower = noun.toLowerCase();
   if (el.precipStatus) {
     el.precipStatus.textContent = s.dry ? "dry" : status;
     el.precipStatus.className = `trend ${s.dry ? "down" : (status === "heavy" || status === "torrential" ? "up" : "flat")}`;
@@ -866,21 +869,24 @@ function renderPrecipOutlook(w) {
   if (s.dry) {
     el.precipTotalValue.textContent = "0";
     el.precipHeadline.textContent = "Dry stretch expected.";
-    el.precipTiming.textContent = "No measurable rain in the next 24 h.";
+    el.precipTiming.textContent = "No measurable precipitation in the next 24 h.";
   } else {
     const totalDisplay = s.rawTotal;
     el.precipTotalValue.textContent = totalDisplay >= 10
       ? String(Math.round(totalDisplay))
       : totalDisplay.toFixed(1);
     const bits = [];
-    if (s.firstHour) bits.push(`Rain ${relativeTime(s.firstHour.time)}`);
-    else bits.push(`Passing showers`);
+    if (s.firstHour) bits.push(`${noun} ${relativeTime(s.firstHour.time)}`);
+    else bits.push(`Passing ${nounLower === "snow" ? "flurries" : "showers"}`);
     if (s.peakHour) bits.push(`peak ${fmtTime(s.peakHour.time)}`);
     el.precipHeadline.textContent = bits.join(" · ") + ".";
     const intensity = intensityLabel(s.peakMm);
+    const mixBit = s.snow > 0 && s.rain > 0
+      ? ` · mix: ${s.rain.toFixed(1)} mm rain / ${s.snow.toFixed(1)} mm snow`
+      : "";
     el.precipTiming.textContent = intensity
-      ? `${intensity} peak · ${s.peakMm.toFixed(1)} mm/h`
-      : `Light showers over the day`;
+      ? `${intensity} peak · ${s.peakMm.toFixed(1)} mm/h${mixBit}`
+      : `Light ${nounLower === "snow" ? "flurries" : "showers"} over the day`;
   }
 
   const { line, fill } = buildAreaPath(s.cumulative);

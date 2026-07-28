@@ -1091,6 +1091,14 @@ kbd {
 #precip-card[data-status="moderate"] { color: #6aa6ff; }
 #precip-card[data-status="heavy"] { color: #c691ff; }
 #precip-card[data-status="torrential"] { color: #ff7a9c; }
+#precip-card[data-form="snow"] { color: #dfe9ff; }
+#precip-card[data-form="snow"] .precip-total-unit::before { content: ""; }
+#precip-card[data-form="snow"] .metric-label::before {
+  content: "❄  "; opacity: 0.8;
+}
+#precip-card[data-form="rain"] .metric-label::before {
+  content: "";
+}
 .precip-row {
   display: grid;
   grid-template-columns: auto 1fr;

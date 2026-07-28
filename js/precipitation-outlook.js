@@ -12,10 +12,14 @@ export function summarize(hours) {
   if (h.length < 2) return null;
 
   let raw = 0;
+  let snow = 0;
+  let rain = 0;
   const cumulative = [];
   for (const p of h) {
     const mm = Math.max(0, p.precip ?? 0);
     raw += mm;
+    if (p.condition === "snow") snow += mm;
+    else rain += mm;
     cumulative.push({ time: p.time, mm: raw });
   }
 
@@ -30,9 +34,13 @@ export function summarize(hours) {
   }
 
   const dry = raw < 0.2 && peakMm < 0.1;
+  const dominant = snow > rain ? "snow" : "rain";
   return {
     total: raw,
     rawTotal: raw,
+    snow,
+    rain,
+    dominant,
     dry,
     firstHour: firstIdx >= 0 ? h[firstIdx] : null,
     peakHour: peakIdx >= 0 && peakMm > 0 ? h[peakIdx] : null,
