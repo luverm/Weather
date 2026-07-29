@@ -94,6 +94,8 @@ const el = {
   sunsetOutlookLabel: $("#sunset-outlook-label"),
   sunsetOutlookSub: $("#sunset-outlook-sub"),
   sunsetOutlookScore: $("#sunset-outlook-score"),
+  precipTotal: $("#precip-total"),
+  precipTotalText: $("#precip-total-text"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -846,7 +848,35 @@ function cardinal(deg) {
   return dirs[i];
 }
 
+function renderPrecipTotal(w) {
+  if (!el.precipTotal) return;
+  const hours = (w.hourly || []).slice(0, 24);
+  if (!hours.length) { el.precipTotal.hidden = true; return; }
+  const total = hours.reduce((s, h) => s + (h.precip || 0), 0);
+  const peakPop = hours.reduce((m, h) => Math.max(m, h.pop || 0), 0);
+  // Nothing worth showing if the run is bone-dry and low PoP.
+  if (total < 0.05 && peakPop < 30) { el.precipTotal.hidden = true; return; }
+  let state = "dry", text;
+  if (total < 0.05) {
+    state = "dry";
+    text = `Dry · ${Math.round(peakPop)}% peak`;
+  } else if (total < 2.5) {
+    state = "light";
+    text = `${total.toFixed(1)} mm · next 24h`;
+  } else if (total < 10) {
+    state = "moderate";
+    text = `${total.toFixed(1)} mm · next 24h`;
+  } else {
+    state = "heavy";
+    text = `${total.toFixed(1)} mm · next 24h`;
+  }
+  el.precipTotal.dataset.state = state;
+  el.precipTotalText.textContent = text;
+  el.precipTotal.hidden = false;
+}
+
 function renderHourly(w) {
+  renderPrecipTotal(w);
   el.forecastTrack.innerHTML = "";
   for (const h of (w.hourly || []).slice(0, 24)) {
     const item = document.createElement("div");

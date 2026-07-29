@@ -180,6 +180,12 @@
       <div class="chart-card glass" id="chart-card" aria-label="Hourly forecast chart">
         <div class="chart-head">
           <span class="chart-title">Hourly trend</span>
+          <span id="precip-total" class="precip-total" data-state="dry" hidden>
+            <svg class="precip-total-icon" viewBox="0 0 12 12" aria-hidden="true">
+              <path d="M6 1.5 C 3 5 2 6.5 2 8.2 A 4 4 0 0 0 10 8.2 C 10 6.5 9 5 6 1.5 Z" fill="currentColor"/>
+            </svg>
+            <span id="precip-total-text">—</span>
+          </span>
           <div class="chart-legend">
             <span class="legend-swatch temp"></span><span>Temp</span>
             <span class="legend-swatch feels"></span><span>Feels-like</span>
