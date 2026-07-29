@@ -977,6 +977,54 @@ kbd {
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
 
+/* ---------- Sunset color forecast pill ---------- */
+.sunset-outlook {
+  display: grid;
+  grid-template-columns: 10px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  margin: 4px 0 -2px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.06));
+  border: 1px solid var(--stroke);
+  font-size: 12.5px;
+  color: var(--fg);
+  transition: background 400ms var(--ease), border-color 400ms var(--ease);
+}
+.sunset-outlook-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+}
+.sunset-outlook-text { display: grid; gap: 1px; min-width: 0; }
+.sunset-outlook-text strong {
+  font-weight: 500;
+  font-size: 12.5px;
+  letter-spacing: 0.005em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sunset-outlook-sub {
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+.sunset-outlook-score {
+  font-size: 15px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: currentColor;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in oklab, currentColor 18%, transparent);
+}
+.sunset-outlook[data-tone="vivid"]    { color: #ffb37a; border-color: rgba(255,120,80,0.35); background: linear-gradient(90deg, rgba(255,120,80,0.10), rgba(255,180,120,0.14)); }
+.sunset-outlook[data-tone="colorful"] { color: #ffcf9a; border-color: rgba(255,180,120,0.30); background: linear-gradient(90deg, rgba(255,180,120,0.06), rgba(255,210,150,0.10)); }
+.sunset-outlook[data-tone="fair"]     { color: #ffe1a8; border-color: rgba(255,220,170,0.22); background: linear-gradient(90deg, rgba(255,220,170,0.04), rgba(255,235,190,0.08)); }
+.sunset-outlook[data-tone="muted"]    { color: #b7c0d6; border-color: rgba(180,190,210,0.20); }
+.sunset-outlook[data-tone="overcast"] { color: #8b95ab; border-color: rgba(140,150,170,0.18); }
+
 /* ---------- Radar map ---------- */
 .radar {
   padding: 12px;

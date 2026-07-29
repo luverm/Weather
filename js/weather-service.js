@@ -84,6 +84,7 @@ export async function getWeather(lat, lon) {
       "wind_speed_10m", "wind_gusts_10m",
       "is_day", "uv_index", "pressure_msl",
       "relative_humidity_2m",
+      "cloud_cover", "cloud_cover_low", "cloud_cover_mid", "cloud_cover_high",
     ].join(","),
     daily: [
       "sunrise", "sunset",
@@ -146,6 +147,10 @@ function normalize(d, aq) {
         uv: d.hourly.uv_index?.[i] ?? null,
         pressure: d.hourly.pressure_msl?.[i] ?? null,
         humidity: d.hourly.relative_humidity_2m?.[i] ?? null,
+        cloud: d.hourly.cloud_cover?.[i] ?? null,
+        cloudLow: d.hourly.cloud_cover_low?.[i] ?? null,
+        cloudMid: d.hourly.cloud_cover_mid?.[i] ?? null,
+        cloudHigh: d.hourly.cloud_cover_high?.[i] ?? null,
         ...mapWmo(d.hourly.weather_code[i]),
       });
     }
@@ -189,6 +194,10 @@ function normalize(d, aq) {
   // Moon phase is not in Open-Meteo's free tier — compute it locally.
   const moon = computeMoonPhase(new Date());
 
+  // Sunset / sunrise color outlook — scored from the hourly cloud layers
+  // sampled at the next twilight event within ~30h.
+  const sunsetOutlook = computeSunsetOutlook(dailyForecast, hourly, now);
+
   return {
     temp: c.temperature_2m,
     feelsLike: c.apparent_temperature,
@@ -213,11 +222,84 @@ function normalize(d, aq) {
     daily: dailyForecast,
     nowcast,
     moon,
+    sunsetOutlook,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
     fetchedAt: now,
   };
 }
+
+// Sunset color forecast — heuristic loosely modelled on the
+// SunsetBot / Steven Corfidi ideas: cirrus/mid-level clouds catch late-day
+// light and glow, low clouds and precipitation block it.
+function computeSunsetOutlook(daily, hourly, now) {
+  if (!daily?.length) return null;
+  // Find the next twilight event (sunrise or sunset) within ~30h.
+  let bestEvent = null;
+  for (const d of daily) {
+    for (const [ts, kind] of [[d.sunrise, "sunrise"], [d.sunset, "sunset"]]) {
+      if (!ts) continue;
+      if (ts < now - 30 * 60_000) continue;
+      if (!bestEvent || ts < bestEvent.time) bestEvent = { time: ts, kind };
+    }
+  }
+  if (!bestEvent) return null;
+  // Snap to the hourly slot nearest the event.
+  let sample = null;
+  let bestDiff = Infinity;
+  for (const h of hourly || []) {
+    const diff = Math.abs(h.time - bestEvent.time);
+    if (diff < bestDiff) { bestDiff = diff; sample = h; }
+  }
+  // Need an hourly slot within ~90 min of the event and layered cloud data.
+  if (!sample || bestDiff > 90 * 60_000) return null;
+  if (sample.cloudHigh == null || sample.cloudLow == null) return null;
+
+  const high = clamp(sample.cloudHigh, 0, 100);
+  const mid  = clamp(sample.cloudMid ?? 0, 0, 100);
+  const low  = clamp(sample.cloudLow, 0, 100);
+  const total = clamp(sample.cloud ?? Math.max(high, mid, low), 0, 100);
+  const pop  = clamp(sample.pop ?? 0, 0, 100);
+
+  // Reward: bell-curve on high cloud fraction, peak around 45 %.
+  const highScore = bellCurve(high, 45, 32); // 0..1
+  const midScore  = bellCurve(mid, 25, 26);
+  // Penalties: low cloud deck > 30 % dulls the show; precip and overcast kill it.
+  const lowPenalty     = clamp((low - 30) / 70, 0, 1);
+  const precipPenalty  = clamp(pop / 100, 0, 1);
+  const overcastPen    = total > 92 ? 0.9 : total > 85 ? 0.6 : 0;
+
+  let score = 100 * (0.55 * highScore + 0.30 * midScore + 0.15);
+  score *= (1 - 0.70 * lowPenalty);
+  score *= (1 - 0.75 * precipPenalty);
+  score *= (1 - overcastPen);
+  score = clamp(Math.round(score), 0, 100);
+
+  let label, tone;
+  if (score >= 75)      { label = "Vivid colors likely"; tone = "vivid"; }
+  else if (score >= 55) { label = "Colorful sky";         tone = "colorful"; }
+  else if (score >= 35) { label = "Fair color";           tone = "fair"; }
+  else if (score >= 15) { label = "Muted";                tone = "muted"; }
+  else                  { label = "Overcast, no glow";    tone = "overcast"; }
+
+  return {
+    kind: bestEvent.kind,      // "sunrise" | "sunset"
+    time: bestEvent.time,
+    score,
+    label,
+    tone,
+    high: Math.round(high),
+    mid:  Math.round(mid),
+    low:  Math.round(low),
+  };
+}
+
+function bellCurve(x, peak, width) {
+  const d = (x - peak) / width;
+  return Math.exp(-d * d);
+}
+
+function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
 
 function computePressureTrend(hourly, now) {
   if (!hourly?.time || !hourly?.pressure_msl) return null;
@@ -400,6 +482,14 @@ function mock(lat, lon) {
       level: "Moderate",
     },
     pressureTrend: { delta: -0.4, direction: "steady" },
+    sunsetOutlook: {
+      kind: "sunset",
+      time: new Date().setHours(19, 0, 0, 0),
+      score: 62,
+      label: "Colorful sky",
+      tone: "colorful",
+      high: 48, mid: 22, low: 18,
+    },
     fetchedAt: now,
     offline: true,
   };

@@ -90,6 +90,10 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunsetOutlook: $("#sunset-outlook"),
+  sunsetOutlookLabel: $("#sunset-outlook-label"),
+  sunsetOutlookSub: $("#sunset-outlook-sub"),
+  sunsetOutlookScore: $("#sunset-outlook-score"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -523,6 +527,23 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderSunsetOutlook(w.sunsetOutlook);
+}
+
+function renderSunsetOutlook(outlook) {
+  if (!el.sunsetOutlook) return;
+  if (!outlook) { el.sunsetOutlook.hidden = true; return; }
+  const kindWord = outlook.kind === "sunrise" ? "Sunrise" : "Sunset";
+  el.sunsetOutlook.hidden = false;
+  el.sunsetOutlook.dataset.tone = outlook.tone;
+  el.sunsetOutlook.title =
+    `${kindWord} outlook · high ${outlook.high}% · mid ${outlook.mid}% · low ${outlook.low}%`;
+  if (el.sunsetOutlookLabel) el.sunsetOutlookLabel.textContent = `${kindWord}: ${outlook.label}`;
+  if (el.sunsetOutlookSub) {
+    el.sunsetOutlookSub.textContent =
+      `high ${outlook.high}% · low ${outlook.low}%`;
+  }
+  if (el.sunsetOutlookScore) el.sunsetOutlookScore.textContent = `${outlook.score}`;
 }
 
 function scheduleSunArc(w) {
