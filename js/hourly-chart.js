@@ -269,8 +269,19 @@ export class HourlyChart {
     const labG = this.svg.querySelector("#chart-labels");
     labG.innerHTML = "";
     const labelStep = Math.max(3, Math.floor(this.hours.length / 8));
+    const peakSkip = new Set();
+    // Find the index of the daily high and low so we can suppress overlap
+    // with the every-3-hour tick labels.
+    let hiIdx = 0, loIdx = 0;
+    for (let i = 1; i < this.hours.length; i++) {
+      if (this.hours[i].temp > this.hours[hiIdx].temp) hiIdx = i;
+      if (this.hours[i].temp < this.hours[loIdx].temp) loIdx = i;
+    }
+    peakSkip.add(hiIdx); peakSkip.add(loIdx);
     this.hours.forEach((h, i) => {
       if (i % labelStep !== 0) return;
+      // Skip a tick label that would overlap a peak marker (± 1 slot).
+      if (peakSkip.has(i) || peakSkip.has(i - 1) || peakSkip.has(i + 1)) return;
       const hh = this._hourOf(h.time);
       const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
       txt.setAttribute("x", iToX(i).toFixed(1));
@@ -288,5 +299,56 @@ export class HourlyChart {
       tTxt.textContent = `${Math.round(tVal)}°`;
       labG.appendChild(tTxt);
     });
+
+    // Peak markers — highlight the daily high & low with a dot + labelled chip.
+    const peaksG = this.svg.querySelector("#chart-peaks");
+    if (peaksG) {
+      peaksG.innerHTML = "";
+      if (hiIdx !== loIdx) {
+        this._drawPeak(peaksG, hiIdx, "hi", iToX, tToY, unit);
+        this._drawPeak(peaksG, loIdx, "lo", iToX, tToY, unit);
+      }
+    }
+  }
+
+  _drawPeak(group, i, kind, iToX, tToY, unit) {
+    const h = this.hours[i];
+    if (h?.temp == null) return;
+    const x = iToX(i);
+    const y = tToY(h.temp);
+    const above = kind === "hi";
+    const tVal = unit === "F" ? h.temp * 9 / 5 + 32 : h.temp;
+    const hh = this._hourOf(h.time);
+    const label = `${above ? "▲" : "▼"} ${Math.round(tVal)}° · ${hh}`;
+    // Halo behind marker.
+    const halo = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    halo.setAttribute("cx", x.toFixed(1));
+    halo.setAttribute("cy", y.toFixed(1));
+    halo.setAttribute("r", "5");
+    halo.setAttribute("class", `chart-peak-halo peak-${kind}`);
+    group.appendChild(halo);
+    // Marker dot.
+    const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    dot.setAttribute("cx", x.toFixed(1));
+    dot.setAttribute("cy", y.toFixed(1));
+    dot.setAttribute("r", "2.6");
+    dot.setAttribute("class", `chart-peak-dot peak-${kind}`);
+    group.appendChild(dot);
+    // Label — placed above the high, below the low, clamped to the plot.
+    const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    const yOff = above ? -10 : 14;
+    let ty = y + yOff;
+    ty = Math.max(10, Math.min(H - 26, ty));
+    // Nudge x for the extreme edges so labels stay inside the viewbox.
+    let anchor = "middle";
+    let tx = x;
+    if (x < 40) { anchor = "start"; tx = x - 4; }
+    else if (x > W - 40) { anchor = "end"; tx = x + 4; }
+    txt.setAttribute("x", tx.toFixed(1));
+    txt.setAttribute("y", ty.toFixed(1));
+    txt.setAttribute("text-anchor", anchor);
+    txt.setAttribute("class", `chart-peak-label peak-${kind}`);
+    txt.textContent = label;
+    group.appendChild(txt);
   }
 }

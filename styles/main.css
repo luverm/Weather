@@ -796,6 +796,21 @@ html[data-reduce-motion="true"] *::after {
   pointer-events: none;
   filter: drop-shadow(0 0 6px var(--accent));
 }
+.chart-peaks { pointer-events: none; }
+.chart-peak-halo { fill: currentColor; opacity: 0.20; }
+.chart-peak-dot  { fill: currentColor; opacity: 0.95; }
+.chart-peak-label {
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  fill: currentColor;
+  paint-order: stroke;
+  stroke: rgba(11, 16, 32, 0.72);
+  stroke-width: 2.4;
+  stroke-linejoin: round;
+  letter-spacing: 0.02em;
+}
+.chart-peaks .peak-hi { color: #ffb37a; }
+.chart-peaks .peak-lo { color: #9ad1ff; }
 
 /* ---------- Wind compass (inside wind metric) ---------- */
 .metric-wind {
