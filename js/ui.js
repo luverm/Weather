@@ -23,6 +23,8 @@ const el = {
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
+  feelsLikeText: $("#feels-like-text"),
+  feelsCause: $("#feels-cause"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -285,10 +287,33 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  if (el.feelsLikeText) el.feelsLikeText.textContent = `Feels like ${Math.round(feels)}°`;
+  else el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  renderFeelsCause(w, temp, feels);
   renderDayRange(w);
   updateFavicon(w.condition, w.isDay);
   updatePageTitle(w, temp);
+}
+
+function renderFeelsCause(w, tempConverted, feelsConverted) {
+  if (!el.feelsCause) return;
+  const delta = Math.round(feelsConverted - tempConverted);
+  if (Math.abs(delta) < 3) { el.feelsCause.hidden = true; return; }
+  // Pick the dominant cause: wind chill (cold + windy), heat index (warm + humid), or generic.
+  const rawTemp = w.temp;
+  const wind = w.windSpeed ?? 0;
+  const humidity = w.humidity ?? 0;
+  let cause;
+  if (delta < 0) {
+    cause = wind >= 15 ? "wind chill" : "cooler";
+  } else {
+    cause = humidity >= 60 ? "humid" : (rawTemp != null && rawTemp >= 25 ? "sunload" : "warmer");
+  }
+  const sign = delta > 0 ? "+" : "";
+  el.feelsCause.hidden = false;
+  el.feelsCause.textContent = `${sign}${delta}° · ${cause}`;
+  el.feelsCause.classList.toggle("cold", delta < 0);
+  el.feelsCause.classList.toggle("warm", delta > 0);
 }
 
 function updatePageTitle(w, temp) {
