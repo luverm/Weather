@@ -11,6 +11,7 @@ import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { buildDayAhead, formatRelative } from "./day-ahead.js";
+import { updateFavicon } from "./favicon.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -286,6 +287,15 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  updateFavicon(w.condition, w.isDay);
+  updatePageTitle(w, temp);
+}
+
+function updatePageTitle(w, temp) {
+  if (!state.place?.name) return;
+  const t = Number.isFinite(temp) ? `${Math.round(temp)}°` : "";
+  const label = capitalize(w.label || "");
+  document.title = `${t} ${label} — ${state.place.name} · Aether`.replace(/\s+/g, " ").trim();
 }
 
 function renderDayRange(w) {
