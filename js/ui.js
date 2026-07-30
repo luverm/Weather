@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { buildDayAhead, formatRelative } from "./day-ahead.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -96,6 +97,8 @@ const el = {
   weekendDetail: $("#weekend-detail"),
   weekendIconSat: $("#weekend-icon-sat"),
   weekendIconSun: $("#weekend-icon-sun"),
+  dayAheadCard: $("#day-ahead-card"),
+  dayAheadTrack: $("#day-ahead-track"),
   forecastTrack: $("#forecast-track"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
@@ -193,6 +196,7 @@ export const ui = {
     renderActivity(weather);
     renderAlerts(weather);
     renderWeekend(weather);
+    renderDayAhead(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -654,6 +658,38 @@ function renderInsights(w) {
   el.insightsList.querySelectorAll("li[data-ts]").forEach((li) => {
     li.addEventListener("click", () => {
       const ts = parseInt(li.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
+}
+
+function renderDayAhead(w) {
+  if (!el.dayAheadCard || !el.dayAheadTrack) return;
+  const items = buildDayAhead(w);
+  if (!items.length) {
+    el.dayAheadCard.hidden = true;
+    el.dayAheadTrack.innerHTML = "";
+    return;
+  }
+  el.dayAheadCard.hidden = false;
+  const now = Date.now();
+  el.dayAheadTrack.innerHTML = items.map((it) => {
+    const abs = fmtTime(it.ts);
+    const rel = formatRelative(it.ts, now, { fmtTime });
+    const valueHtml = it.value ? `<span class="day-ahead-value">${escapeHtml(it.value)}</span>` : "";
+    return `
+      <button class="day-ahead-chip" data-ts="${it.ts}" data-kind="${it.kind}" type="button" title="${abs}">
+        <span class="day-ahead-icon" aria-hidden="true">${it.icon}</span>
+        <span class="day-ahead-meta">
+          <span class="day-ahead-label">${escapeHtml(it.label)}${valueHtml}</span>
+          <span class="day-ahead-time">${escapeHtml(rel)} · ${escapeHtml(abs)}</span>
+        </span>
+      </button>
+    `;
+  }).join("");
+  el.dayAheadTrack.querySelectorAll(".day-ahead-chip").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const ts = parseInt(btn.dataset.ts, 10);
       if (ts) state.handlers.onHourClick?.(ts);
     });
   });

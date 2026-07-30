@@ -1150,6 +1150,99 @@ kbd {
   font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums;
 }
 
+/* ---------- Day-ahead timeline ---------- */
+.day-ahead {
+  padding: 10px 14px 14px;
+  border-radius: var(--radius-sm);
+}
+.day-ahead[hidden] { display: none; }
+.day-ahead-track {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 2px 6px;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+}
+.day-ahead-track::-webkit-scrollbar { height: 6px; }
+.day-ahead-track::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.15);
+  border-radius: 3px;
+}
+.day-ahead-chip {
+  flex: 0 0 auto;
+  display: inline-grid;
+  grid-template-columns: 28px 1fr;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 12px 8px 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
+  scroll-snap-align: start;
+}
+.day-ahead-chip:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.25);
+  transform: translateY(-1px);
+}
+.day-ahead-chip:focus-visible {
+  outline: 2px solid var(--accent, #7cc0ff);
+  outline-offset: 2px;
+}
+.day-ahead-icon {
+  width: 28px; height: 28px;
+  display: grid; place-items: center;
+  font-size: 18px; line-height: 1;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+}
+.day-ahead-meta {
+  display: grid; gap: 2px; min-width: 0;
+  text-align: left;
+}
+.day-ahead-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--fg, #fff);
+  display: inline-flex;
+  gap: 6px;
+  align-items: baseline;
+  white-space: nowrap;
+}
+.day-ahead-value {
+  font-variant-numeric: tabular-nums;
+  color: var(--accent, #7cc0ff);
+  font-weight: 600;
+}
+.day-ahead-time {
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+.day-ahead-chip[data-kind="rain-start"] .day-ahead-icon,
+.day-ahead-chip[data-kind="rain-end"] .day-ahead-icon { background: rgba(120,180,255,0.14); }
+.day-ahead-chip[data-kind="sunrise"] .day-ahead-icon,
+.day-ahead-chip[data-kind="sunset"] .day-ahead-icon { background: rgba(255,210,140,0.14); }
+.day-ahead-chip[data-kind="temp-hi"] .day-ahead-icon { background: rgba(255,140,120,0.14); }
+.day-ahead-chip[data-kind="temp-lo"] .day-ahead-icon { background: rgba(155,205,255,0.14); }
+.day-ahead-chip[data-kind="wind"] .day-ahead-icon { background: rgba(180,220,255,0.14); }
+.day-ahead-chip[data-kind="uv"] .day-ahead-icon { background: rgba(255,205,120,0.14); }
+
+@media (max-width: 640px) {
+  .day-ahead-chip { padding: 7px 10px 7px 8px; }
+  .day-ahead-icon { width: 26px; height: 26px; font-size: 16px; }
+  .day-ahead-label { font-size: 12px; }
+  .day-ahead-time { font-size: 10px; }
+}
+
 /* ---------- Comfort strip (24-cell heat band under the chart) ---------- */
 .comfort-strip {
   display: grid;
