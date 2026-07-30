@@ -1085,6 +1085,9 @@ function renderDailyDelta(days) {
   if (Math.abs(dPop) >= 20) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
   }
+  // Count wet days in the 7-day window (precip >= 1 mm OR POP >= 55%).
+  const wet = days.filter((d) => (d.precip ?? 0) >= 1 || (d.pop ?? 0) >= 55).length;
+  if (wet > 0) parts.push(`${wet} wet day${wet === 1 ? "" : "s"} ahead`);
   el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
 }
 
