@@ -8,7 +8,7 @@ import { RainScene } from "./scenes/rain.js";
 import { SnowScene } from "./scenes/snow.js";
 import { LightningScene } from "./scenes/lightning.js";
 import { WindScene } from "./scenes/wind.js";
-import { getWeather, getLocation } from "./weather-service.js";
+import { getWeather, getLocation, getCurrentQuick } from "./weather-service.js";
 import { ui } from "./ui.js";
 import { clock } from "./clock.js";
 import { Scrubber } from "./scrubber.js";
@@ -218,6 +218,29 @@ async function loadByCoords(place) {
 
   // Move the radar to the new location (fire-and-forget; resolves later).
   ensureRadar([place.lat, place.lon]).then((r) => r?.setCenter(place.lat, place.lon, place.name));
+
+  // Refresh temps for OTHER saved cities so chip deltas stay meaningful.
+  refreshOtherPlacesInBackground(place);
+}
+
+let refreshInFlight = false;
+async function refreshOtherPlacesInBackground(activePlace) {
+  if (refreshInFlight) return;
+  refreshInFlight = true;
+  try {
+    const all = places.all();
+    const activeId = places.idFor(activePlace);
+    const others = all.filter((p) => places.idFor(p) !== activeId);
+    // Cap parallelism modestly; each hit is small.
+    await Promise.all(others.slice(0, 6).map(async (p) => {
+      const r = await getCurrentQuick(p.lat, p.lon);
+      if (!r || r.temp == null) return;
+      places.updateSummary(p, { temp: r.temp, condition: r.condition });
+    }));
+    ui.refreshPlaces?.();
+  } finally {
+    refreshInFlight = false;
+  }
 }
 
 async function useGeolocation() {

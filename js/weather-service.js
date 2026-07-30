@@ -67,6 +67,26 @@ export async function searchCities(query) {
   }
 }
 
+// Lightweight fetch used to refresh saved-city chip summaries in the
+// background — pulls only the fields the chip actually needs.
+export async function getCurrentQuick(lat, lon) {
+  const params = new URLSearchParams({
+    latitude: lat,
+    longitude: lon,
+    current: "temperature_2m,weather_code,is_day",
+    timezone: "auto",
+  });
+  const url = `${FORECAST}?${params.toString()}`;
+  try {
+    const data = await fetchJson(url);
+    const c = data.current || {};
+    const { condition } = mapWmo(c.weather_code);
+    return { temp: c.temperature_2m, condition, isDay: !!c.is_day };
+  } catch {
+    return null;
+  }
+}
+
 export async function getWeather(lat, lon) {
   const params = new URLSearchParams({
     latitude: lat,
