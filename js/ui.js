@@ -1167,12 +1167,26 @@ function renderPlaces() {
   if (!all.length) { el.placesStrip.hidden = true; el.placesStrip.innerHTML = ""; return; }
   el.placesStrip.hidden = false;
   const activeId = state.place ? places.idFor(state.place) : null;
+  const activeTemp = state.weather?.temp;
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
+    const tempHtml = p.temp != null
+      ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>`
+      : "";
+    let deltaHtml = "";
+    if (!active && activeTemp != null && p.temp != null) {
+      const d = Math.round(convertTemp(p.temp) - convertTemp(activeTemp));
+      if (d !== 0) {
+        const sign = d > 0 ? "+" : "";
+        const cls = d > 0 ? "warmer" : "cooler";
+        deltaHtml = `<span class="place-delta ${cls}" title="${sign}${d}° vs current view">${sign}${d}°</span>`;
+      }
+    }
     return `
       <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
         <span>${escapeHtml(p.name)}</span>
-        ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
+        ${tempHtml}
+        ${deltaHtml}
         <span class="close" data-action="remove" aria-label="Remove">
           <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
         </span>

@@ -302,7 +302,26 @@ html[data-reduce-motion="true"] *::after {
 }
 .place-chip:hover { background: var(--glass-strong); transform: translateY(-1px); }
 .place-chip.active { background: var(--glass-strong); border-color: rgba(255,255,255,0.35); }
-.place-chip .temp { color: var(--fg-muted); font-variant-numeric: tabular-nums; }
+.place-chip .temp {
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1;
+}
+.place-chip .place-delta {
+  font-size: 10.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--stroke);
+  letter-spacing: 0.02em;
+}
+.place-chip .place-delta.warmer { color: #ffb98a; border-color: rgba(255,150,110,0.35); }
+.place-chip .place-delta.cooler { color: #9ec9ff; border-color: rgba(140,180,255,0.35); }
 .place-chip .close {
   width: 16px; height: 16px; display: grid; place-items: center;
   border-radius: 50%; color: var(--fg-dim);
