@@ -91,6 +91,10 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcGhMorning: $("#sun-arc-gh-morning"),
+  sunArcGhEvening: $("#sun-arc-gh-evening"),
+  goldenHour: $("#golden-hour"),
+  goldenHourText: $("#golden-hour-text"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -534,32 +538,85 @@ function scheduleSunArc(w) {
   if (state.sunArcTimer) { clearInterval(state.sunArcTimer); state.sunArcTimer = null; }
   if (!w?.sunrise || !w?.sunset) return;
 
+  const arcAt = (t) => {
+    const c = clamp01(t);
+    return {
+      x: (1 - c) ** 2 * 10 + 2 * (1 - c) * c * 100 + c ** 2 * 190,
+      y: (1 - c) ** 2 * 74 + 2 * (1 - c) * c * -26 + c ** 2 * 74,
+    };
+  };
+
   const update = () => {
     const now = Date.now();
     const sr = w.sunrise, ss = w.sunset;
     let frac;
-    if (now < sr) {
-      // Before sunrise: ride the night arc fraction toward 0 (left horizon).
-      frac = 0;
-    } else if (now > ss) {
-      frac = 1;
-    } else {
-      frac = (now - sr) / (ss - sr);
-    }
-    // Quadratic Bezier from (10,74) to (190,74) via (100,-26). The midpoint
-    // (50% t) reaches y = 0.5*(74) + 0.5*(74 + 2*(-26-74)/2*(...)) — easier
-    // to evaluate the curve directly.
-    const t = clamp01(frac);
-    const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
-    const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
-    el.sunArcMarker.setAttribute("cx", x.toFixed(1));
-    el.sunArcMarker.setAttribute("cy", y.toFixed(1));
-    // After sunset, dim the marker so it visually settles.
+    if (now < sr) frac = 0;
+    else if (now > ss) frac = 1;
+    else frac = (now - sr) / (ss - sr);
+    const p = arcAt(frac);
+    el.sunArcMarker.setAttribute("cx", p.x.toFixed(1));
+    el.sunArcMarker.setAttribute("cy", p.y.toFixed(1));
     const isUp = now >= sr && now <= ss;
     el.sunArcMarker.style.opacity = isUp ? "1" : "0.45";
+
+    // Golden hour boundaries: first ~60 min after sunrise, last ~60 min before sunset.
+    // If daylight is shorter than 3 h (polar edge case), scale down to 20 %.
+    const daylight = ss - sr;
+    if (daylight <= 0) return;
+    const ghMs = Math.min(60 * 60_000, daylight * 0.2);
+    const ghMorning = sr + ghMs; // ends
+    const ghEvening = ss - ghMs; // starts
+    if (el.sunArcGhMorning) {
+      const m = arcAt(ghMs / daylight);
+      el.sunArcGhMorning.setAttribute("cx", m.x.toFixed(1));
+      el.sunArcGhMorning.setAttribute("cy", m.y.toFixed(1));
+    }
+    if (el.sunArcGhEvening) {
+      const e = arcAt(1 - ghMs / daylight);
+      el.sunArcGhEvening.setAttribute("cx", e.x.toFixed(1));
+      el.sunArcGhEvening.setAttribute("cy", e.y.toFixed(1));
+    }
+    updateGoldenHour(now, sr, ss, ghMorning, ghEvening, w);
   };
   update();
   state.sunArcTimer = setInterval(update, 60_000);
+}
+
+function updateGoldenHour(now, sr, ss, ghMorning, ghEvening, w) {
+  if (!el.goldenHour || !el.goldenHourText) return;
+  const inMorning = now >= sr && now <= ghMorning;
+  const inEvening = now >= ghEvening && now <= ss;
+  const isNow = inMorning || inEvening;
+
+  let text;
+  if (inMorning) {
+    text = `Golden hour now · until ${fmtTime(ghMorning)}`;
+  } else if (inEvening) {
+    text = `Golden hour now · until ${fmtTime(ss)}`;
+  } else {
+    // Next golden hour: next boundary after now.
+    const candidates = [
+      { start: sr, end: ghMorning, label: "morning" },
+      { start: ghEvening, end: ss, label: "evening" },
+    ];
+    // Also consider tomorrow's morning if both today's have passed.
+    if (w?.daily?.[1]?.sunrise) {
+      const trSr = w.daily[1].sunrise;
+      const trGhMs = Math.min(60 * 60_000, ((w.daily[1].sunset ?? trSr + 12 * 3600_000) - trSr) * 0.2);
+      candidates.push({ start: trSr, end: trSr + trGhMs, label: "tomorrow" });
+    }
+    const upcoming = candidates.filter((c) => c.start > now).sort((a, b) => a.start - b.start)[0];
+    if (!upcoming) {
+      el.goldenHour.hidden = true;
+      return;
+    }
+    const mins = Math.max(0, Math.round((upcoming.start - now) / 60_000));
+    const rel = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
+    text = `Golden hour in ${rel} · ${fmtTime(upcoming.start)}`;
+  }
+  el.goldenHour.hidden = false;
+  el.goldenHour.classList.toggle("now", isNow);
+  el.goldenHourText.textContent = text;
 }
 
 function clamp01(v) { return Math.max(0, Math.min(1, v)); }

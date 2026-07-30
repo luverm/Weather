@@ -976,6 +976,35 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+.sun-arc-gh {
+  filter: drop-shadow(0 0 3px rgba(255,170,110,0.6));
+  transition: cx 400ms var(--ease), cy 400ms var(--ease), opacity 400ms var(--ease);
+}
+.golden-hour {
+  margin: 8px 0 0;
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 11.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.02em;
+}
+.golden-hour[hidden] { display: none; }
+.golden-hour .golden-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: linear-gradient(135deg, #ffd07a, #ff8f6a);
+  box-shadow: 0 0 6px rgba(255,170,120,0.55);
+  flex: 0 0 auto;
+}
+.golden-hour.now { color: #ffcda1; }
+.golden-hour.now .golden-dot { animation: golden-pulse 2s ease-in-out infinite; }
+@keyframes golden-pulse {
+  0%,100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.25); opacity: 0.72; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .golden-hour.now .golden-dot { animation: none; }
+}
 
 /* ---------- Radar map ---------- */
 .radar {
