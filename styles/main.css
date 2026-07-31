@@ -1514,7 +1514,19 @@ kbd {
   border-radius: 2px;
   pointer-events: none;
   box-shadow: 0 0 8px rgba(255,255,255,0.35);
+  animation: peaksNowPulse 2.8s ease-in-out infinite;
 }
+@keyframes peaksNowPulse {
+  0%, 100% {
+    box-shadow: 0 0 6px rgba(255,255,255,0.28);
+    background: rgba(255,255,255,0.45);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(255,255,255,0.55);
+    background: rgba(255,255,255,0.75);
+  }
+}
+[data-reduce-motion="true"] .peaks-now { animation: none; }
 .peaks-now::after {
   content: "now";
   position: absolute;
