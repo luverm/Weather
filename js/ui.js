@@ -21,6 +21,9 @@ const el = {
   placeSub: $("#place-sub"),
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
+  skyCover: $("#sky-cover"),
+  skyCoverFill: $("#sky-cover-fill"),
+  skyCoverText: $("#sky-cover-text"),
   feelsLike: $("#feels-like"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
@@ -296,7 +299,26 @@ function renderLiveValues(w, { animate = true } = {}) {
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  renderSkyCover(w);
   renderDayRange(w);
+}
+
+function renderSkyCover(w) {
+  if (!el.skyCover || !el.skyCoverFill || !el.skyCoverText) return;
+  const cc = w.cloudCover;
+  if (cc == null) {
+    el.skyCover.hidden = true;
+    return;
+  }
+  el.skyCover.hidden = false;
+  const pct = Math.max(0, Math.min(100, Math.round(cc)));
+  el.skyCoverFill.style.width = `${pct}%`;
+  const label = pct <= 10 ? "Clear sky"
+              : pct <= 30 ? "Mostly clear"
+              : pct <= 60 ? "Partly cloudy"
+              : pct <= 85 ? "Mostly cloudy"
+              : "Overcast";
+  el.skyCoverText.textContent = `${label} · ${pct}% cover`;
 }
 
 function renderDayRange(w) {
