@@ -428,9 +428,14 @@ function renderMetrics(w) {
     }
   }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
-  el.metricPressureSub.textContent = w.visibility != null
-    ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
-    : "visibility —";
+  if (w.visibility != null) {
+    const km = w.visibility / 1000;
+    const rounded = km >= 10 ? Math.round(km) : Math.round(km * 10) / 10;
+    const label = visibilityLabel(km);
+    el.metricPressureSub.textContent = `${label} · ${rounded} km`;
+  } else {
+    el.metricPressureSub.textContent = "visibility —";
+  }
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
@@ -478,6 +483,16 @@ function beaufort(kmh) {
   if (kmh < 103) return { label: "Storm", cls: "up" };
   if (kmh < 118) return { label: "Violent storm", cls: "up" };
   return { label: "Hurricane", cls: "up" };
+}
+
+function visibilityLabel(km) {
+  if (km == null) return "visibility";
+  if (km >= 20) return "very clear";
+  if (km >= 10) return "clear";
+  if (km >= 5) return "hazy";
+  if (km >= 2) return "misty";
+  if (km >= 1) return "foggy";
+  return "poor visibility";
 }
 
 function uvLevel(v) {
