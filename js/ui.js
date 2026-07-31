@@ -95,6 +95,8 @@ const el = {
   peaksRibbon: $("#peaks-ribbon"),
   peaksTrack: $("#peaks-track"),
   peaksRange: $("#peaks-range"),
+  precipSummary: $("#precip-summary"),
+  precipSummaryText: $("#precip-summary-text"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
   weekendDetail: $("#weekend-detail"),
@@ -936,6 +938,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderPrecipSummary(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1018,6 +1021,27 @@ function renderDailySpark(days) {
       el.dailySparkDots.appendChild(c);
     }
   });
+}
+
+function renderPrecipSummary(days) {
+  if (!el.precipSummary || !el.precipSummaryText) return;
+  const week = days.slice(0, 7);
+  const today = week[0];
+  const todayMm = today?.precip ?? 0;
+  const weekMm = week.reduce((s, d) => s + (d.precip ?? 0), 0);
+  const wetDays = week.filter((d) => (d.precip ?? 0) >= 1).length;
+  // Only surface when there's actually meaningful precipitation somewhere.
+  if (weekMm < 0.5) {
+    el.precipSummary.hidden = true;
+    return;
+  }
+  el.precipSummary.hidden = false;
+  const fmt = (mm) => mm >= 10 ? `${Math.round(mm)} mm` : `${mm.toFixed(1)} mm`;
+  const parts = [];
+  parts.push(`${fmt(todayMm)} today`);
+  parts.push(`${fmt(weekMm)} this week`);
+  if (wetDays >= 2) parts.push(`${wetDays} wet days`);
+  el.precipSummaryText.textContent = parts.join(" · ");
 }
 
 function renderDailyDelta(days) {
