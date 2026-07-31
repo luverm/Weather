@@ -11,6 +11,7 @@ import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { buildPeaks } from "./peaks.js";
+import { buildStreak } from "./streak.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -93,6 +94,7 @@ const el = {
   activityCard: $("#activity-card"),
   activityList: $("#activity-list"),
   alertsStrip: $("#alerts-strip"),
+  streakChip: $("#streak-chip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
   comfortStrip: $("#comfort-strip"),
@@ -204,6 +206,7 @@ export const ui = {
     renderAlerts(weather);
     renderWeekend(weather);
     renderPeaks(weather);
+    renderStreak(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly, collectSunEvents(weather));
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -751,6 +754,22 @@ function renderWeekend(w) {
   el.weekendChip.onclick = () => {
     if (snap.ts) state.handlers.onHourClick?.(snap.ts);
   };
+}
+
+function renderStreak(w) {
+  if (!el.streakChip) return;
+  const streak = buildStreak(w, { fmtTime });
+  if (!streak) {
+    el.streakChip.hidden = true;
+    return;
+  }
+  el.streakChip.hidden = false;
+  el.streakChip.dataset.tone = streak.tone;
+  el.streakChip.textContent = streak.headline;
+  el.streakChip.onclick = () => {
+    if (streak.flipTs) state.handlers.onHourClick?.(streak.flipTs);
+  };
+  el.streakChip.style.cursor = streak.flipTs ? "pointer" : "default";
 }
 
 function renderPeaks(w) {

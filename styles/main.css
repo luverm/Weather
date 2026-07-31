@@ -1379,6 +1379,46 @@ kbd {
   border: 1px solid rgba(154,209,255,0.25);
 }
 
+/* ---------- Condition streak chip ---------- */
+.streak-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,0.05);
+  color: var(--fg);
+  font-size: 12.5px;
+  letter-spacing: 0.01em;
+  transition: background 160ms var(--ease), transform 160ms var(--ease);
+  align-self: start;
+  max-width: fit-content;
+}
+.streak-chip[hidden] { display: none; }
+.streak-chip:hover { transform: translateY(-1px); background: rgba(255,255,255,0.08); }
+.streak-chip[data-tone="wet"] {
+  background: rgba(124, 192, 242, 0.12);
+  border-color: rgba(124, 192, 242, 0.32);
+  color: #b7dcff;
+}
+.streak-chip[data-tone="dry"] {
+  background: rgba(255, 210, 140, 0.10);
+  border-color: rgba(255, 210, 140, 0.28);
+  color: #ffcf88;
+}
+.streak-chip[data-tone="warn"] {
+  background: rgba(255, 200, 120, 0.14);
+  border-color: rgba(255, 200, 120, 0.32);
+  color: #ffdca6;
+}
+.streak-chip::before {
+  content: "";
+  width: 8px; height: 8px; border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 22%, transparent);
+}
+
 /* ---------- Today's peaks ribbon ---------- */
 .peaks-ribbon {
   padding: 10px 14px 20px;
