@@ -1163,7 +1163,7 @@ function renderHourly(w) {
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
-      <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
+      <span class="forecast-pop ${(h.pop ?? 0) < 20 ? "dim" : ""}">${h.pop ?? 0}%</span>
       ${windArrow}
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
@@ -1353,7 +1353,7 @@ function toggleDailyExpand(item, d, w) {
     const summary = document.createElement("div");
     summary.className = "daily-expand";
     summary.style.gridTemplateColumns = "1fr";
-    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${Math.round(d.gustsMax ?? 0)} km/h · UV ${Math.round(d.uvMax ?? 0)}</span>`;
+    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop ?? 0}% · gust up to ${Math.round(d.gustsMax ?? 0)} km/h · UV ${Math.round(d.uvMax ?? 0)}</span>`;
     item.appendChild(summary);
     item.dataset.expanded = "true";
     return;
@@ -1370,9 +1370,10 @@ function toggleDailyExpand(item, d, w) {
   box.innerHTML = stepped.map((h) => {
     const pct = ((h.temp - tMin) / tSpan) * 100;
     const height = 10 + (pct / 100) * 36;
-    const precipLevel = h.pop >= 60 ? 2 : h.pop >= 25 ? 1 : 0;
-    const hh = new Date(h.time).getHours().toString().padStart(2, "0");
-    return `<div class="daily-expand-bar" data-precip="${precipLevel}" style="height:${height.toFixed(1)}px" title="${hh}:00 · ${Math.round(convertTemp(h.temp))}° · ${h.pop}%"><span>${Math.round(convertTemp(h.temp))}°</span></div>`;
+    const pop = h.pop ?? 0;
+    const precipLevel = pop >= 60 ? 2 : pop >= 25 ? 1 : 0;
+    const hh = tzHour(h.time);
+    return `<div class="daily-expand-bar" data-precip="${precipLevel}" style="height:${height.toFixed(1)}px" title="${hh}:00 · ${Math.round(convertTemp(h.temp))}° · ${pop}%"><span>${Math.round(convertTemp(h.temp))}°</span></div>`;
   }).join("");
   item.appendChild(box);
   item.dataset.expanded = "true";
