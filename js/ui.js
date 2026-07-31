@@ -54,6 +54,7 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonNext: $("#moon-next"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -627,6 +628,7 @@ function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  renderMoonNext(moon);
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
@@ -643,6 +645,33 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+}
+
+// Given the current lunar phase (0..1), report the moon's age in days and how
+// many days until the next quarter-phase milestone (new, first quarter, full,
+// last quarter). Phase step is 29.5306 days per cycle.
+function renderMoonNext(moon) {
+  if (!el.moonNext || moon == null) return;
+  const CYCLE = 29.5306;
+  const age = Math.round(moon.phase * CYCLE);
+  // Milestones by phase fraction and label.
+  const milestones = [
+    { p: 0.00, name: "New moon" },
+    { p: 0.25, name: "First quarter" },
+    { p: 0.50, name: "Full moon" },
+    { p: 0.75, name: "Last quarter" },
+    { p: 1.00, name: "New moon" },
+  ];
+  // Find the next milestone strictly ahead of current phase.
+  const next = milestones.find((m) => m.p > moon.phase + 0.01) || milestones[milestones.length - 1];
+  const daysAhead = Math.max(0, Math.round((next.p - moon.phase) * CYCLE));
+  const ageLabel = age <= 1 ? "1 day old" : `${age} days old`;
+  const nextLabel = daysAhead === 0
+    ? "today"
+    : daysAhead === 1
+      ? `${next.name.toLowerCase()} tomorrow`
+      : `${next.name.toLowerCase()} in ${daysAhead}d`;
+  el.moonNext.textContent = `${ageLabel} · ${nextLabel}`;
 }
 
 function fmtTime(ts) {
