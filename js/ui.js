@@ -308,9 +308,22 @@ function renderLiveValues(w, { animate = true } = {}) {
   else el.temp.textContent = `${Math.round(temp)}°`;
   applyTempTint(w.temp);
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  // Re-render feels-line so the leading trend chip stays intact.
+  el.feelsLike.textContent = "";
+  if (el.tempTrend) el.feelsLike.appendChild(el.tempTrend);
+  const label = feelsLikeLabel(w.temp, w.feelsLike);
+  const suffix = document.createTextNode(`${label} ${Math.round(feels)}°`);
+  el.feelsLike.appendChild(suffix);
   renderSkyCover(w);
   renderDayRange(w);
+}
+
+function feelsLikeLabel(temp, feelsLike) {
+  if (temp == null || feelsLike == null) return "Feels like";
+  const delta = feelsLike - temp;
+  if (delta <= -3) return "Wind chill";
+  if (delta >= 3) return "Heat index";
+  return "Feels like";
 }
 
 // Paint the hero temp with a subtle cool→warm gradient anchored to °C so the
