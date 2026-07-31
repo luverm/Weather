@@ -936,13 +936,13 @@ function renderPeaks(w) {
   const nowMarker = data.nowFrac >= 0 && data.nowFrac <= 1
     ? `<div class="peaks-now" style="left:${clampedNow.toFixed(1)}%"></div>`
     : "";
-  const dots = data.items.map((it) => {
+  const dots = data.items.map((it, i) => {
     // Clamp so labels don't collide with rounded track ends.
     const leftPct = Math.max(6, Math.min(94, it.frac * 100));
     return `
       <button class="peak peak-${it.kind}" type="button"
               data-ts="${it.ts}"
-              style="left:${leftPct.toFixed(1)}%; --peak-color:${it.color}"
+              style="left:${leftPct.toFixed(1)}%; --peak-color:${it.color}; --peak-delay:${(i * 55).toFixed(0)}ms"
               title="${escapeHtml(it.label)} · ${escapeHtml(fmtTime(it.ts))}">
         <span class="peak-emoji" aria-hidden="true">${it.icon}</span>
         <span class="peak-value">${escapeHtml(it.valueText)}</span>
