@@ -349,6 +349,8 @@ document.addEventListener("visibilitychange", () => {
   const fetchedAt = app.weather?.fetchedAt;
   if (app.weather && clock.isLive() && fetchedAt && Date.now() - fetchedAt > STALE_MS) {
     refreshWeather();
+    // Let the user know why the numbers just changed under them.
+    ui.showToast?.("Refreshed — you'd been away a while");
   }
 });
 
