@@ -339,10 +339,16 @@ installShortcuts({
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
     engine.stop();
-  } else if (!app.reducedMotion) {
-    engine.start();
-  } else {
-    engine.tickOnce();
+    return;
+  }
+  if (!app.reducedMotion) engine.start();
+  else engine.tickOnce();
+  // If we've been away long enough that the data is stale, silently pull a
+  // fresh forecast so the user isn't looking at yesterday's numbers.
+  const STALE_MS = 15 * 60 * 1000;
+  const fetchedAt = app.weather?.fetchedAt;
+  if (app.weather && clock.isLive() && fetchedAt && Date.now() - fetchedAt > STALE_MS) {
+    refreshWeather();
   }
 });
 
