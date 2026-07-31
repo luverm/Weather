@@ -17,6 +17,7 @@ import { narrate } from "./narrative.js";
 import { places } from "./places.js";
 import { RadarMap } from "./radar-map.js";
 import { installShortcuts } from "./shortcuts.js";
+import { updateTabDecoration } from "./tab-decoration.js";
 
 const engine = new AnimationEngine();
 
@@ -172,6 +173,16 @@ function applyScene(weather) {
   // Update audio to match whatever the scene now shows.
   audio.setWeather(sampled, bucket);
 
+  // Reflect current conditions in the browser tab (title + favicon) so an
+  // open Aether tab is identifiable at a glance among many.
+  updateTabDecoration({
+    temp: sampled.temp,
+    condition: sampled.condition,
+    isDay: sampled.isDay,
+    unit: ui.getUnit?.() ?? "C",
+    placeName: app.place?.name,
+  });
+
   // In reduced-motion mode, repaint exactly one frame now that weather changed.
   if (app.reducedMotion) engine.tickOnce();
 }
@@ -273,6 +284,9 @@ ui.init({
     scrubber.sync();
     if (app.weather) applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
+  },
+  onUnitChange: () => {
+    if (app.weather) applyScene(app.weather);
   },
 });
 

@@ -1209,6 +1209,7 @@ function bindUnitToggle() {
     localStorage.setItem("aether:unit", state.unit);
     el.unitBtn.textContent = `°${state.unit}`;
     if (state.weather) ui.setWeather(state.weather);
+    state.handlers.onUnitChange?.(state.unit);
   });
 }
 
