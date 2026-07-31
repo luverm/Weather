@@ -1546,7 +1546,7 @@ kbd {
 .forecast-track::-webkit-scrollbar { display: none; }
 .forecast-item {
   display: grid;
-  grid-template-rows: auto auto auto auto;
+  grid-template-rows: auto auto auto auto auto;
   gap: 4px;
   justify-items: center;
   padding: 10px 6px;
@@ -1565,6 +1565,21 @@ kbd {
   opacity: 0.9;
 }
 .forecast-pop.dim { opacity: 0; }
+.forecast-wind {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  min-height: 14px;
+}
+.forecast-wind svg { width: 12px; height: 12px; display: block; }
+.forecast-wind-light   { color: rgba(200, 220, 255, 0.55); }
+.forecast-wind-moderate { color: rgba(199, 180, 255, 0.85); }
+.forecast-wind-strong  { color: #ff9c7a; font-weight: 600; }
+.forecast-wind-val { font-size: 10px; }
 
 .daily-track {
   display: grid;

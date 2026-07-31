@@ -876,15 +876,41 @@ function renderHourly(w) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    const windArrow = renderHourlyWindArrow(h);
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
+      ${windArrow}
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
   }
+}
+
+// Small SVG glyph rendered under each hourly card summarising wind speed +
+// direction. Direction is where wind comes FROM (meteorological convention);
+// the arrow points TO the direction the wind is heading, so a 270° "from west"
+// arrow points east.
+function renderHourlyWindArrow(h) {
+  const speed = h.gusts ?? h.wind;
+  if (speed == null || h.windDir == null) return `<span class="forecast-wind" aria-hidden="true"></span>`;
+  const strength = speed >= 40 ? "strong" : speed >= 20 ? "moderate" : "light";
+  const label = `${Math.round(speed)} km/h from ${cardinal(h.windDir)}`;
+  // Wind arrow head points DOWNWIND, i.e. +180° from the reported "from"
+  // direction. Using rotate() around the SVG's own center.
+  const rot = ((h.windDir + 180) % 360).toFixed(0);
+  return `
+    <span class="forecast-wind forecast-wind-${strength}" title="${escapeHtml(label)}">
+      <svg viewBox="-8 -8 16 16" aria-hidden="true">
+        <g transform="rotate(${rot})">
+          <path d="M0 -5 L2 3 L0 1 L-2 3 Z" fill="currentColor"/>
+        </g>
+      </svg>
+      <span class="forecast-wind-val">${Math.round(speed)}</span>
+    </span>
+  `;
 }
 
 function highlightHour(index) {
