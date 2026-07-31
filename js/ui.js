@@ -675,8 +675,10 @@ function renderMoonNext(moon) {
     { p: 0.75, name: "Last quarter" },
     { p: 1.00, name: "New moon" },
   ];
-  // Find the next milestone strictly ahead of current phase.
-  const next = milestones.find((m) => m.p > moon.phase + 0.01) || milestones[milestones.length - 1];
+  // Find the next milestone at or after the current phase. Using a small
+  // negative epsilon so "1 day before first quarter" reads as first-quarter-
+  // imminent rather than jumping to the following milestone.
+  const next = milestones.find((m) => m.p >= moon.phase - 0.005) || milestones[milestones.length - 1];
   const daysAhead = Math.max(0, Math.round((next.p - moon.phase) * CYCLE));
   const ageLabel = age <= 1 ? "1 day old" : `${age} days old`;
   const nextLabel = daysAhead === 0
@@ -701,6 +703,23 @@ function fmtTime(ts) {
   const hh = d.getHours().toString().padStart(2, "0");
   const mm = d.getMinutes().toString().padStart(2, "0");
   return `${hh}:${mm}`;
+}
+
+// Two-digit hour in the currently loaded city's timezone. Falls back to the
+// browser's local hour if we don't have a tz string or Intl bails on it.
+function tzHour(ts) {
+  if (ts == null) return "—";
+  const tz = state.weather?.timezone;
+  if (tz && tz !== "auto") {
+    try {
+      const parts = new Intl.DateTimeFormat(undefined, {
+        timeZone: tz, hour: "2-digit", hour12: false,
+      }).formatToParts(new Date(ts));
+      const h = parts.find((p) => p.type === "hour")?.value;
+      if (h != null) return h.padStart(2, "0");
+    } catch { /* fall through */ }
+  }
+  return new Date(ts).getHours().toString().padStart(2, "0");
 }
 
 function renderSun(w) {
@@ -970,7 +989,7 @@ function renderConditionArc(w) {
   }
   el.conditionArc.hidden = false;
   el.conditionArc.innerHTML = hours.map((h) => {
-    const hh = new Date(h.time).getHours().toString().padStart(2, "0");
+    const hh = tzHour(h.time);
     const isDay = h.isDay !== false;
     const cls = isDay ? "" : "night";
     return `
