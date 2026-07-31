@@ -1531,6 +1531,46 @@ kbd {
   .peaks-track { height: 46px; }
 }
 
+/* ---------- Condition arc (mini 12-hour icon strip) ---------- */
+.condition-arc {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 2px;
+  margin-top: 6px;
+}
+.condition-arc[hidden] { display: none; }
+.condition-arc-cell {
+  display: grid;
+  grid-template-rows: auto auto;
+  gap: 2px;
+  place-items: center;
+  padding: 4px 0 2px;
+  border-radius: 8px;
+  border: 0;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--fg-muted);
+  cursor: pointer;
+  transition: background 160ms var(--ease), transform 160ms var(--ease), color 160ms var(--ease);
+}
+.condition-arc-cell:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--fg);
+  transform: translateY(-1px);
+}
+.condition-arc-cell.night {
+  background: rgba(20, 30, 60, 0.24);
+}
+.condition-arc-icon {
+  width: 18px; height: 18px; display: grid; place-items: center;
+}
+.condition-arc-icon svg { width: 100%; height: 100%; }
+.condition-arc-hour {
+  font-size: 9.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---------- Weekly precipitation summary ---------- */
 .precip-summary {
   display: inline-flex;

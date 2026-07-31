@@ -101,6 +101,7 @@ const el = {
   peaksRibbon: $("#peaks-ribbon"),
   peaksTrack: $("#peaks-track"),
   peaksRange: $("#peaks-range"),
+  conditionArc: $("#condition-arc"),
   precipSummary: $("#precip-summary"),
   precipSummaryText: $("#precip-summary-text"),
   weekendChip: $("#weekend-chip"),
@@ -805,6 +806,37 @@ function renderPeaks(w) {
   }).join("");
   el.peaksTrack.innerHTML = nowMarker + dots;
   el.peaksTrack.querySelectorAll(".peak").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const ts = parseInt(btn.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
+  renderConditionArc(w);
+}
+
+function renderConditionArc(w) {
+  if (!el.conditionArc) return;
+  const hours = (w?.hourly || []).slice(0, 12);
+  if (hours.length < 4) {
+    el.conditionArc.hidden = true;
+    el.conditionArc.innerHTML = "";
+    return;
+  }
+  el.conditionArc.hidden = false;
+  el.conditionArc.innerHTML = hours.map((h) => {
+    const hh = new Date(h.time).getHours().toString().padStart(2, "0");
+    const isDay = h.isDay !== false;
+    const cls = isDay ? "" : "night";
+    return `
+      <button class="condition-arc-cell ${cls}" type="button"
+              data-ts="${h.time}"
+              title="${hh}:00 · ${escapeHtml(h.label || h.condition || "")}">
+        <span class="condition-arc-icon">${iconFor(h.condition)}</span>
+        <span class="condition-arc-hour">${hh}</span>
+      </button>
+    `;
+  }).join("");
+  el.conditionArc.querySelectorAll(".condition-arc-cell").forEach((btn) => {
     btn.addEventListener("click", () => {
       const ts = parseInt(btn.dataset.ts, 10);
       if (ts) state.handlers.onHourClick?.(ts);
