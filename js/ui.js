@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { buildPeaks } from "./peaks.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -91,6 +92,9 @@ const el = {
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
   comfortStrip: $("#comfort-strip"),
+  peaksRibbon: $("#peaks-ribbon"),
+  peaksTrack: $("#peaks-track"),
+  peaksRange: $("#peaks-range"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
   weekendDetail: $("#weekend-detail"),
@@ -193,6 +197,7 @@ export const ui = {
     renderActivity(weather);
     renderAlerts(weather);
     renderWeekend(weather);
+    renderPeaks(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -680,6 +685,46 @@ function renderWeekend(w) {
   el.weekendChip.onclick = () => {
     if (snap.ts) state.handlers.onHourClick?.(snap.ts);
   };
+}
+
+function renderPeaks(w) {
+  if (!el.peaksRibbon || !el.peaksTrack) return;
+  const data = buildPeaks(w, { unit: state.unit });
+  if (!data) {
+    el.peaksRibbon.hidden = true;
+    el.peaksTrack.innerHTML = "";
+    return;
+  }
+  el.peaksRibbon.hidden = false;
+  if (el.peaksRange) {
+    el.peaksRange.textContent = `${fmtTime(data.start)} → ${fmtTime(data.end)}`;
+  }
+  // Keep the "now" indicator inside the rounded track so it's always visible.
+  const clampedNow = Math.max(0.5, Math.min(99.5, data.nowFrac * 100));
+  const nowMarker = data.nowFrac >= 0 && data.nowFrac <= 1
+    ? `<div class="peaks-now" style="left:${clampedNow.toFixed(1)}%"></div>`
+    : "";
+  const dots = data.items.map((it) => {
+    // Clamp so labels don't collide with rounded track ends.
+    const leftPct = Math.max(6, Math.min(94, it.frac * 100));
+    return `
+      <button class="peak peak-${it.kind}" type="button"
+              data-ts="${it.ts}"
+              style="left:${leftPct.toFixed(1)}%; --peak-color:${it.color}"
+              title="${escapeHtml(it.label)} · ${escapeHtml(fmtTime(it.ts))}">
+        <span class="peak-emoji" aria-hidden="true">${it.icon}</span>
+        <span class="peak-value">${escapeHtml(it.valueText)}</span>
+        <span class="peak-time">${escapeHtml(fmtTime(it.ts))}</span>
+      </button>
+    `;
+  }).join("");
+  el.peaksTrack.innerHTML = nowMarker + dots;
+  el.peaksTrack.querySelectorAll(".peak").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const ts = parseInt(btn.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
 }
 
 function renderAlerts(w) {
