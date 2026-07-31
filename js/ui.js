@@ -49,6 +49,7 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunTrend: $("#sun-trend"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -539,8 +540,38 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderSunTrend(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+// Compare today's daylight to tomorrow's and surface the shift so the user
+// can feel the seasonal change from day to day.
+function renderSunTrend(w) {
+  if (!el.sunTrend) return;
+  const today = w?.daily?.[0];
+  const tomorrow = w?.daily?.[1];
+  if (!today?.sunrise || !today?.sunset || !tomorrow?.sunrise || !tomorrow?.sunset) {
+    el.sunTrend.textContent = "";
+    el.sunTrend.className = "sun-trend";
+    return;
+  }
+  const todayLen = today.sunset - today.sunrise;
+  const tomorrowLen = tomorrow.sunset - tomorrow.sunrise;
+  const deltaSec = Math.round((tomorrowLen - todayLen) / 1000);
+  const absSec = Math.abs(deltaSec);
+  if (absSec < 15) {
+    el.sunTrend.className = "sun-trend flat";
+    el.sunTrend.textContent = "≈ tomorrow";
+    return;
+  }
+  const mm = Math.floor(absSec / 60);
+  const ss = absSec % 60;
+  const label = mm > 0 ? `${mm}m ${ss}s` : `${ss}s`;
+  const arrow = deltaSec > 0 ? "▲" : "▼";
+  const cls = deltaSec > 0 ? "up" : "down";
+  el.sunTrend.className = `sun-trend ${cls}`;
+  el.sunTrend.textContent = `${arrow} ${label} tomorrow`;
 }
 
 function scheduleSunArc(w) {
