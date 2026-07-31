@@ -199,7 +199,7 @@ export const ui = {
     renderWeekend(weather);
     renderPeaks(weather);
     startLocaltime(weather);
-    if (state.chart) state.chart.setHours(weather.hourly);
+    if (state.chart) state.chart.setHours(weather.hourly, collectSunEvents(weather));
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
@@ -250,6 +250,17 @@ export const ui = {
 // ---------- Rendering ----------
 
 function convertTemp(c) { return state.unit === "F" ? c * 9 / 5 + 32 : c; }
+
+// Extract sunrise/sunset events that fall inside the visible hourly window
+// so the hourly chart can annotate them as thin vertical markers.
+function collectSunEvents(w) {
+  const events = [];
+  for (const d of (w?.daily || [])) {
+    if (d.sunrise) events.push({ ts: d.sunrise, kind: "rise" });
+    if (d.sunset) events.push({ ts: d.sunset, kind: "set" });
+  }
+  return events;
+}
 
 function animateNumber(node, target, format) {
   if (target == null || isNaN(target)) { node.textContent = "–"; return; }

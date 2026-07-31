@@ -48,8 +48,9 @@ export class HourlyChart {
     return new Date(ts).getHours().toString().padStart(2, "0");
   }
 
-  setHours(hours) {
+  setHours(hours, sunEvents) {
     this.hours = (hours || []).slice(0, 24);
+    this.sunEvents = Array.isArray(sunEvents) ? sunEvents : [];
     this._draw();
     this.setCursor(null);
   }
@@ -261,6 +262,46 @@ export class HourlyChart {
         r.setAttribute("height", String(H));
         nightG.appendChild(r);
         runStart = null;
+      }
+    }
+
+    // Sunrise / sunset markers: thin coloured lines at the exact event time.
+    // Only draw events that fall inside the current hourly window so we don't
+    // leak markers off the chart edges.
+    let sunG = this.svg.querySelector("#chart-sun");
+    if (!sunG) {
+      sunG = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      sunG.setAttribute("id", "chart-sun");
+      sunG.setAttribute("class", "chart-sun");
+      // Insert before the labels so labels stay on top.
+      const labelsRef = this.svg.querySelector("#chart-labels");
+      this.svg.insertBefore(sunG, labelsRef);
+    }
+    sunG.innerHTML = "";
+    if (this.sunEvents.length && this.hours.length >= 2) {
+      const t0 = this.hours[0].time;
+      const t1 = this.hours[this.hours.length - 1].time;
+      const range = Math.max(1, t1 - t0);
+      for (const ev of this.sunEvents) {
+        if (ev.ts < t0 || ev.ts > t1) continue;
+        const frac = (ev.ts - t0) / range;
+        const x = PAD_LEFT + frac * innerW;
+        const isRise = ev.kind === "rise";
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", x.toFixed(1));
+        line.setAttribute("x2", x.toFixed(1));
+        line.setAttribute("y1", "0");
+        line.setAttribute("y2", String(H - PAD_BOT + 4));
+        line.setAttribute("class", isRise ? "chart-sun-rise" : "chart-sun-set");
+        sunG.appendChild(line);
+        // A tiny glyph at the top of the line.
+        const glyph = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        glyph.setAttribute("x", x.toFixed(1));
+        glyph.setAttribute("y", "10");
+        glyph.setAttribute("text-anchor", "middle");
+        glyph.setAttribute("class", isRise ? "chart-sun-glyph rise" : "chart-sun-glyph set");
+        glyph.textContent = isRise ? "↑" : "↓";
+        sunG.appendChild(glyph);
       }
     }
 

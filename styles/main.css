@@ -773,6 +773,24 @@ html[data-reduce-motion="true"] *::after {
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
 }
+.chart-sun-rise {
+  stroke: rgba(255, 200, 120, 0.55);
+  stroke-width: 1;
+  stroke-dasharray: 1.5 2.5;
+}
+.chart-sun-set {
+  stroke: rgba(255, 130, 170, 0.55);
+  stroke-width: 1;
+  stroke-dasharray: 1.5 2.5;
+}
+.chart-sun-glyph {
+  font-size: 8px;
+  font-weight: 700;
+  fill: rgba(255, 200, 120, 0.85);
+}
+.chart-sun-glyph.set {
+  fill: rgba(255, 150, 180, 0.85);
+}
 .chart-labels text {
   font-size: 9px;
   fill: var(--fg-dim);
