@@ -34,6 +34,9 @@ const el = {
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
+  gustBar: $("#gust-bar"),
+  gustBarWind: $("#gust-bar-wind"),
+  gustBarGust: $("#gust-bar-gust"),
   metricHumidity: $("#m-humidity"),
   metricHumiditySub: $("#m-humidity-sub"),
   metricPressure: $("#m-pressure"),
@@ -414,6 +417,7 @@ function renderMetrics(w) {
       el.windBft.textContent = "";
     }
   }
+  renderGustBar(w);
   el.metricHumidity.textContent = Math.round(w.humidity ?? 0);
   el.metricHumiditySub.textContent = w.dewPoint != null
     ? `dew ${Math.round(convertTemp(w.dewPoint))}°`
@@ -483,6 +487,27 @@ function beaufort(kmh) {
   if (kmh < 103) return { label: "Storm", cls: "up" };
   if (kmh < 118) return { label: "Violent storm", cls: "up" };
   return { label: "Hurricane", cls: "up" };
+}
+
+function renderGustBar(w) {
+  if (!el.gustBar || !el.gustBarWind || !el.gustBarGust) return;
+  const sustained = w.windSpeed;
+  const gust = w.windGusts;
+  if (sustained == null || gust == null || gust < 5) {
+    el.gustBar.hidden = true;
+    return;
+  }
+  el.gustBar.hidden = false;
+  // Scale bars to a shared visual max so the gust segment sits ON TOP of the
+  // sustained segment and the extra length reads as the gap.
+  const max = Math.max(20, gust * 1.15);
+  const sustainedPct = Math.min(100, (sustained / max) * 100);
+  const gustPct = Math.min(100, (gust / max) * 100);
+  el.gustBarWind.style.width = `${sustainedPct.toFixed(1)}%`;
+  el.gustBarGust.style.width = `${gustPct.toFixed(1)}%`;
+  // Colour ramps with the gap so a very gusty day pops.
+  const gap = gust - sustained;
+  el.gustBar.dataset.intensity = gap >= 20 ? "high" : gap >= 10 ? "med" : "low";
 }
 
 function visibilityLabel(km) {

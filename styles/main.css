@@ -868,6 +868,37 @@ html[data-reduce-motion="true"] *::after {
 .metric-wind .metric-value { align-self: center; }
 .metric-wind .metric-unit { align-self: center; }
 .metric-wind .metric-sub { grid-column: 1 / span 2; }
+.gust-bar {
+  grid-column: 1 / span 2;
+  position: relative;
+  height: 4px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  margin-top: 4px;
+}
+.gust-bar[hidden] { display: none; }
+.gust-bar-gust,
+.gust-bar-wind {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  border-radius: 3px;
+  transition: width 320ms var(--ease);
+}
+.gust-bar-gust {
+  background: linear-gradient(90deg, rgba(199, 180, 255, 0.9), rgba(255, 156, 122, 0.9));
+  z-index: 1;
+}
+.gust-bar-wind {
+  background: rgba(154, 209, 255, 0.95);
+  z-index: 2;
+}
+.gust-bar[data-intensity="med"] .gust-bar-gust {
+  background: linear-gradient(90deg, rgba(199, 180, 255, 0.9), rgba(255, 175, 130, 1));
+}
+.gust-bar[data-intensity="high"] .gust-bar-gust {
+  background: linear-gradient(90deg, rgba(255, 175, 130, 1), rgba(255, 100, 100, 1));
+}
 .wind-compass {
   grid-row: 2;
   grid-column: 2;
