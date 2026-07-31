@@ -301,10 +301,51 @@ function renderLiveValues(w, { animate = true } = {}) {
   const feels = convertTemp(w.feelsLike ?? w.temp);
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
+  applyTempTint(w.temp);
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderSkyCover(w);
   renderDayRange(w);
+}
+
+// Paint the hero temp with a subtle cool→warm gradient anchored to °C so the
+// tint stays consistent regardless of the display unit.
+function applyTempTint(tempC) {
+  if (!el.temp || tempC == null) return;
+  const clamped = Math.max(-15, Math.min(38, tempC));
+  const stops = [
+    [-15, [154, 190, 255]],
+    [0,   [190, 220, 255]],
+    [12,  [230, 235, 245]],
+    [22,  [255, 220, 190]],
+    [30,  [255, 170, 120]],
+    [38,  [255, 120, 96]],
+  ];
+  const [r, g, b] = interpStops(stops, clamped);
+  const hi = `rgb(${r}, ${g}, ${b})`;
+  // The bottom half of the gradient gets a slightly desaturated / darker
+  // twin so the huge number still has weight in the layout.
+  const lo = `rgb(${Math.max(0, r - 40)}, ${Math.max(0, g - 40)}, ${Math.max(0, b - 40)})`;
+  el.temp.style.setProperty("--temp-hi", hi);
+  el.temp.style.setProperty("--temp-lo", lo);
+}
+
+function interpStops(stops, v) {
+  if (v <= stops[0][0]) return stops[0][1];
+  if (v >= stops[stops.length - 1][0]) return stops[stops.length - 1][1];
+  for (let i = 0; i < stops.length - 1; i++) {
+    const [x0, c0] = stops[i];
+    const [x1, c1] = stops[i + 1];
+    if (v >= x0 && v <= x1) {
+      const t = (v - x0) / (x1 - x0);
+      return [
+        Math.round(c0[0] + (c1[0] - c0[0]) * t),
+        Math.round(c0[1] + (c1[1] - c0[1]) * t),
+        Math.round(c0[2] + (c1[2] - c0[2]) * t),
+      ];
+    }
+  }
+  return stops[stops.length - 1][1];
 }
 
 function renderSkyCover(w) {
