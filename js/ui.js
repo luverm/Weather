@@ -34,6 +34,7 @@ const el = {
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
+  windTrend: $("#m-wind-trend"),
   gustBar: $("#gust-bar"),
   gustBarWind: $("#gust-bar-wind"),
   gustBarGust: $("#gust-bar-gust"),
@@ -418,6 +419,7 @@ function renderMetrics(w) {
     }
   }
   renderGustBar(w);
+  renderWindTrend(w);
   el.metricHumidity.textContent = Math.round(w.humidity ?? 0);
   el.metricHumiditySub.textContent = w.dewPoint != null
     ? `dew ${Math.round(convertTemp(w.dewPoint))}°`
@@ -487,6 +489,27 @@ function beaufort(kmh) {
   if (kmh < 103) return { label: "Storm", cls: "up" };
   if (kmh < 118) return { label: "Violent storm", cls: "up" };
   return { label: "Hurricane", cls: "up" };
+}
+
+function renderWindTrend(w) {
+  if (!el.windTrend) return;
+  const cur = w.windSpeed;
+  const hrs = w.hourly || [];
+  const future = hrs.find((h) => h.time > Date.now() + 5.5 * 3600_000);
+  const futureWind = future?.wind ?? future?.gusts;
+  if (cur == null || futureWind == null) {
+    el.windTrend.textContent = "";
+    return;
+  }
+  const delta = futureWind - cur;
+  if (Math.abs(delta) < 3) {
+    el.windTrend.className = "trend wind-trend flat";
+    el.windTrend.textContent = "→ steady";
+    return;
+  }
+  el.windTrend.className = `trend wind-trend ${delta > 0 ? "up" : "down"}`;
+  const label = delta > 0 ? "picking up" : "easing";
+  el.windTrend.textContent = `${delta > 0 ? "▲" : "▼"} ${label}`;
 }
 
 function renderGustBar(w) {
