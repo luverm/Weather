@@ -257,7 +257,8 @@ html[data-reduce-motion="true"] *::after {
   color: #f6f7fb; transition: background 150ms var(--ease);
 }
 .search-results li:hover,
-.search-results li[aria-selected="true"] { background: rgba(255, 255, 255, 0.08); }
+.search-results li[aria-selected="true"],
+.search-results li.highlight { background: rgba(255, 255, 255, 0.08); }
 .search-results .sub { color: rgba(246, 247, 251, 0.55); font-size: 13px; }
 .search-results .recent-heading {
   padding: 8px 12px 4px;

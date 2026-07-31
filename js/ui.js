@@ -1457,6 +1457,7 @@ function renderSearchResults(results) {
   `).join("");
   el.searchResults.hidden = false;
   el.searchResults._items = results;
+  el.searchResults._highlight = null;
 }
 
 function showRecentsIfAny() {
@@ -1470,6 +1471,7 @@ function showRecentsIfAny() {
   `).join("");
   el.searchResults.innerHTML = `<li class="recent-heading">Recent places</li>${itemsHtml}`;
   el.searchResults._items = recents;
+  el.searchResults._highlight = null;
   el.searchResults.hidden = false;
 }
 
@@ -1492,17 +1494,52 @@ function bindSearch() {
       el.searchResults.hidden = false;
     }
   });
+  // Keyboard nav: Down/Up move the highlight, Enter selects.
+  el.searchInput.addEventListener("keydown", (e) => {
+    const items = el.searchResults._items || [];
+    if (el.searchResults.hidden || !items.length) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      moveSearchHighlight(1);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      moveSearchHighlight(-1);
+    } else if (e.key === "Enter") {
+      const idx = el.searchResults._highlight ?? 0;
+      const item = items[idx];
+      if (item) {
+        e.preventDefault();
+        selectSearchItem(item);
+      }
+    }
+  });
   el.searchResults.addEventListener("click", (e) => {
     const li = e.target.closest("li");
     if (!li) return;
     const i = parseInt(li.dataset.index, 10);
     const item = el.searchResults._items?.[i];
-    if (!item) return;
-    el.searchInput.value = item.name;
-    el.searchResults.hidden = true;
-    places.add(item);
-    state.handlers.onSearchSelect?.(item);
+    if (item) selectSearchItem(item);
   });
+}
+
+function selectSearchItem(item) {
+  el.searchInput.value = item.name;
+  el.searchResults.hidden = true;
+  places.add(item);
+  state.handlers.onSearchSelect?.(item);
+}
+
+function moveSearchHighlight(dir) {
+  const items = el.searchResults._items || [];
+  if (!items.length) return;
+  const cur = el.searchResults._highlight ?? -1;
+  const next = ((cur + dir) % items.length + items.length) % items.length;
+  el.searchResults._highlight = next;
+  el.searchResults.querySelectorAll("li[data-index]").forEach((li) => {
+    li.classList.toggle("highlight", parseInt(li.dataset.index, 10) === next);
+  });
+  const targetLi = el.searchResults.querySelector(`li[data-index="${next}"]`);
+  targetLi?.scrollIntoView({ block: "nearest" });
 }
 
 function bindUnitToggle() {
