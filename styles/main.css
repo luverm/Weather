@@ -840,6 +840,73 @@ html[data-reduce-motion="true"] *::after {
 }
 .sun-countdown:empty { display: none; }
 
+/* ---------- Sun glow forecast ---------- */
+.sun-glow {
+  margin-top: 12px;
+  padding: 8px 10px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: center;
+  border-radius: 12px;
+  background: linear-gradient(90deg, rgba(255, 210, 160, 0.10), rgba(255, 210, 160, 0.02));
+  border: 1px solid rgba(255, 210, 160, 0.16);
+  transition: background 400ms var(--ease), border-color 400ms var(--ease);
+}
+.sun-glow[hidden] { display: none; }
+.sun-glow-tier {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 210, 160, 0.22);
+  color: #ffdcae;
+  white-space: nowrap;
+}
+.sun-glow-hint {
+  font-size: 12px;
+  color: var(--fg-dim);
+  line-height: 1.3;
+}
+.sun-glow[data-tier="vivid"] {
+  background: linear-gradient(90deg, rgba(255, 170, 100, 0.16), rgba(255, 110, 90, 0.05));
+  border-color: rgba(255, 170, 100, 0.28);
+}
+.sun-glow[data-tier="vivid"] .sun-glow-tier {
+  background: linear-gradient(90deg, rgba(255, 180, 120, 0.42), rgba(255, 140, 90, 0.42));
+  color: #fff2df;
+}
+.sun-glow[data-tier="clean"] {
+  background: linear-gradient(90deg, rgba(160, 200, 255, 0.10), rgba(160, 200, 255, 0.02));
+  border-color: rgba(160, 200, 255, 0.20);
+}
+.sun-glow[data-tier="clean"] .sun-glow-tier {
+  background: rgba(160, 200, 255, 0.22);
+  color: #cfe1ff;
+}
+.sun-glow[data-tier="muted"] {
+  background: linear-gradient(90deg, rgba(190, 190, 210, 0.10), rgba(190, 190, 210, 0.02));
+  border-color: rgba(190, 190, 210, 0.20);
+}
+.sun-glow[data-tier="muted"] .sun-glow-tier {
+  background: rgba(190, 190, 210, 0.20);
+  color: #d6d3e2;
+}
+.sun-glow[data-tier="hazy"] {
+  background: linear-gradient(90deg, rgba(210, 190, 160, 0.10), rgba(210, 190, 160, 0.02));
+  border-color: rgba(210, 190, 160, 0.20);
+}
+.sun-glow[data-tier="hazy"] .sun-glow-tier {
+  background: rgba(210, 190, 160, 0.22);
+  color: #e7d8bd;
+}
+@media (max-width: 480px) {
+  .sun-glow { grid-template-columns: 1fr; gap: 4px; padding: 8px 10px; }
+  .sun-glow-tier { justify-self: start; }
+}
+
 /* ---------- Keyboard shortcuts overlay ---------- */
 .shortcuts {
   position: fixed;

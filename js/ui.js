@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { predictGlow } from "./sunset-glow.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -90,6 +91,9 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunGlow: $("#sun-glow"),
+  sunGlowTier: $("#sun-glow-tier"),
+  sunGlowHint: $("#sun-glow-hint"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -523,6 +527,29 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderSunGlow(w);
+}
+
+// Pick the next upcoming sunrise or sunset across the daily forecast and
+// classify how vivid it's likely to be. The chip hides if we don't have
+// hourly cloud data (offline mock without cloud, or missing anchor).
+function renderSunGlow(w) {
+  if (!el.sunGlow) return;
+  if (!w?.daily?.length) { el.sunGlow.hidden = true; return; }
+  const now = Date.now();
+  let anchorTs = null, anchorKind = null;
+  for (const d of w.daily) {
+    for (const [ts, kind] of [[d.sunrise, "Sunrise"], [d.sunset, "Sunset"]]) {
+      if (ts && ts > now && (!anchorTs || ts < anchorTs)) { anchorTs = ts; anchorKind = kind; }
+    }
+  }
+  const glow = anchorTs ? predictGlow(w, anchorTs) : null;
+  if (!glow) { el.sunGlow.hidden = true; return; }
+  el.sunGlow.hidden = false;
+  el.sunGlow.setAttribute("data-tier", glow.tier);
+  el.sunGlow.setAttribute("title", `${anchorKind} · ${glow.hint}`);
+  if (el.sunGlowTier) el.sunGlowTier.textContent = `${anchorKind} · ${glow.label}`;
+  if (el.sunGlowHint) el.sunGlowHint.textContent = glow.hint;
 }
 
 function scheduleSunArc(w) {
