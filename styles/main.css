@@ -976,6 +976,52 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+.sun-delta {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--fg-dim);
+  letter-spacing: 0.02em;
+}
+.sun-delta[data-dir="up"] { color: #ffd692; }
+.sun-delta[data-dir="down"] { color: #9ec8ff; }
+.sun-delta:empty { display: none; }
+.sun-golden {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255,210,140,0.14), rgba(255,170,120,0.06));
+  border: 1px solid rgba(255,210,140,0.18);
+  font-size: 11.5px;
+  color: var(--fg-muted);
+  overflow: hidden;
+}
+.sun-golden[hidden] { display: none; }
+.sun-golden-icon {
+  width: 14px;
+  height: 14px;
+  color: #ffcf88;
+  flex: none;
+  filter: drop-shadow(0 0 4px rgba(255,207,136,0.55));
+}
+.sun-golden-icon path { fill: none; }
+.sun-golden-label {
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+.sun-golden-times {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+  font-weight: 500;
+  white-space: nowrap;
+}
 
 /* ---------- Radar map ---------- */
 .radar {

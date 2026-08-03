@@ -48,8 +48,11 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  sunGolden: $("#sun-golden"),
+  sunGoldenTimes: $("#sun-golden-times"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -515,14 +518,86 @@ function fmtTime(ts) {
 function renderSun(w) {
   el.sunRise.textContent = fmtTime(w.sunrise);
   el.sunSet.textContent = fmtTime(w.sunset);
+  const deltaEl = el.sunDaylightDelta;
   if (w.sunrise && w.sunset) {
     const mins = Math.round((w.sunset - w.sunrise) / 60_000);
     const hh = Math.floor(mins / 60);
     const mm = mins % 60;
+    // Rebuild the daylight cell, preserving the delta chip inside <strong>.
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
-  } else el.sunDaylight.textContent = "—";
+    if (deltaEl) el.sunDaylight.appendChild(deltaEl);
+    renderDaylightDelta(w, mins);
+  } else {
+    el.sunDaylight.textContent = "—";
+    if (deltaEl) { deltaEl.textContent = ""; el.sunDaylight.appendChild(deltaEl); }
+  }
+  renderGoldenHour(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderDaylightDelta(w, todayMins) {
+  const deltaEl = el.sunDaylightDelta;
+  if (!deltaEl) return;
+  deltaEl.textContent = "";
+  deltaEl.removeAttribute("data-dir");
+  // Compare today's daylight length with tomorrow's; skip if either is missing.
+  const tomorrow = w?.daily?.find(
+    (d) => d?.sunrise && d?.sunset && d.sunrise > (w.sunrise || 0)
+  );
+  if (!tomorrow) return;
+  const tMins = Math.round((tomorrow.sunset - tomorrow.sunrise) / 60_000);
+  const delta = tMins - todayMins;
+  if (!Number.isFinite(delta) || Math.abs(delta) < 1) {
+    deltaEl.textContent = "±0m";
+    return;
+  }
+  const sign = delta > 0 ? "+" : "−";
+  deltaEl.textContent = `${sign}${Math.abs(delta)}m`;
+  deltaEl.setAttribute("data-dir", delta > 0 ? "up" : "down");
+  deltaEl.title = delta > 0
+    ? `Tomorrow is ${Math.abs(delta)} min longer`
+    : `Tomorrow is ${Math.abs(delta)} min shorter`;
+}
+
+// Golden hour ≈ first ~45 min after sunrise and last ~45 min before sunset,
+// where the sun sits roughly 6° above the horizon and light is warmest.
+// We surface the *next* golden window (or "now" if we're already inside one),
+// falling back to tomorrow morning after the evening one ends.
+function renderGoldenHour(w) {
+  if (!el.sunGolden || !el.sunGoldenTimes) return;
+  const WIN = 45 * 60_000;
+  const now = Date.now();
+  const windows = [];
+  if (w?.daily?.length) {
+    for (const d of w.daily) {
+      if (d?.sunrise) windows.push({ start: d.sunrise, end: d.sunrise + WIN, kind: "AM" });
+      if (d?.sunset)  windows.push({ start: d.sunset - WIN, end: d.sunset, kind: "PM" });
+    }
+  } else if (w?.sunrise && w?.sunset) {
+    windows.push({ start: w.sunrise, end: w.sunrise + WIN, kind: "AM" });
+    windows.push({ start: w.sunset - WIN, end: w.sunset, kind: "PM" });
+  }
+  windows.sort((a, b) => a.start - b.start);
+
+  const active = windows.find((w2) => now >= w2.start && now <= w2.end);
+  const upcoming = windows.find((w2) => w2.start > now);
+  const pick = active || upcoming;
+  if (!pick) { el.sunGolden.hidden = true; return; }
+
+  el.sunGolden.hidden = false;
+  // Absolute-ms date comparison is unreliable across timezones, so use a hours-
+  // until threshold: any next-window more than 12 h away is on the following day.
+  const hoursUntil = (pick.start - now) / 3600_000;
+  const dayHint = !active && hoursUntil > 12 ? "tomorrow · " : "";
+  const range = active
+    ? `now · until ${fmtTime(pick.end)}`
+    : `${dayHint}${fmtTime(pick.start)}–${fmtTime(pick.end)}`;
+  el.sunGoldenTimes.textContent = range;
+  el.sunGolden.setAttribute("data-when", active ? "active" : "upcoming");
+  el.sunGolden.title = active
+    ? "Golden hour is happening right now"
+    : `Next ${pick.kind === "AM" ? "morning" : "evening"} golden hour`;
 }
 
 function scheduleSunArc(w) {
