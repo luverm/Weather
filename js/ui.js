@@ -35,6 +35,8 @@ const el = {
   metricPressureSub: $("#m-pressure-sub"),
   metricUV: $("#m-uv"),
   metricUVSub: $("#m-uv-sub"),
+  uvStripBars: $("#uv-strip-bars"),
+  uvStripNow: $("#uv-strip-now"),
   aqArc: $("#aq-arc"),
   aqValue: $("#aq-value"),
   aqLabel: $("#aq-label"),
@@ -355,12 +357,85 @@ function renderMetrics(w) {
       el.uvLevel.textContent = "";
     }
   }
-  if (w.uvPeak?.time) {
-    el.metricUVSub.textContent = `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`;
-  } else {
-    el.metricUVSub.textContent = "peak —";
-  }
+  const spf = spfWindow(w.hourly);
+  const peakStr = w.uvPeak?.time
+    ? `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`
+    : "peak —";
+  const spfStr = spf
+    ? `SPF ${fmtTime(spf.start)}–${fmtTime(spf.end)}`
+    : "";
+  el.metricUVSub.textContent = spfStr ? `${peakStr} · ${spfStr}` : peakStr;
+  renderUvStrip(w);
   renderPressureSparkline(w);
+}
+
+function spfWindow(hourly) {
+  if (!hourly?.length) return null;
+  const now = Date.now();
+  // Only look ahead a day.
+  const upcoming = hourly.filter((h) => h.time >= now - 30 * 60_000 && h.time < now + 24 * 3600_000);
+  const spfy = upcoming.filter((h) => (h.uv ?? 0) >= 3);
+  if (!spfy.length) return null;
+  return { start: spfy[0].time, end: spfy[spfy.length - 1].time };
+}
+
+function uvColor(uv) {
+  if (uv == null || uv < 1)  return "#5aa9d6"; // near-none
+  if (uv < 3)  return "#8ce09a"; // low
+  if (uv < 6)  return "#ffe57a"; // moderate
+  if (uv < 8)  return "#ffb454"; // high
+  if (uv < 11) return "#ff6b3d"; // very high
+  return "#c56cff"; // extreme
+}
+
+function renderUvStrip(w) {
+  if (!el.uvStripBars || !el.uvStripNow) return;
+  el.uvStripBars.innerHTML = "";
+  const hrs = (w.hourly || []).slice(0, 12);
+  if (hrs.length < 2) {
+    el.uvStripNow.setAttribute("x1", "-1");
+    el.uvStripNow.setAttribute("x2", "-1");
+    return;
+  }
+  const W = 100, H = 26, PAD_X = 1;
+  const innerW = W - PAD_X * 2;
+  const slotW = innerW / hrs.length;
+  const barW = Math.max(2, slotW - 1);
+  // Fix the scale so bars are comparable day to day (UV maxes ~12 realistically).
+  const maxUv = Math.max(4, ...hrs.map((h) => h.uv ?? 0));
+  const now = Date.now();
+  let nowX = null;
+  const svgNS = "http://www.w3.org/2000/svg";
+  hrs.forEach((h, i) => {
+    const uv = Math.max(0, h.uv ?? 0);
+    // Even zero-UV bars get a hairline so night hours still register visually.
+    const height = Math.max(1.2, (uv / maxUv) * (H - 4));
+    const x = PAD_X + i * slotW + (slotW - barW) / 2;
+    const y = H - 1 - height;
+    const rect = document.createElementNS(svgNS, "rect");
+    rect.setAttribute("x", x.toFixed(2));
+    rect.setAttribute("y", y.toFixed(2));
+    rect.setAttribute("width", barW.toFixed(2));
+    rect.setAttribute("height", height.toFixed(2));
+    rect.setAttribute("rx", "0.8");
+    rect.setAttribute("fill", uvColor(uv));
+    rect.setAttribute("opacity", h.isDay === false ? "0.35" : "0.92");
+    const title = document.createElementNS(svgNS, "title");
+    title.textContent = `${fmtTime(h.time)} · UV ${uv.toFixed(1)}`;
+    rect.appendChild(title);
+    el.uvStripBars.appendChild(rect);
+    // Track which bar contains 'now'.
+    if (nowX == null && h.time + 3600_000 > now && h.time <= now + 3600_000) {
+      nowX = x + barW / 2;
+    }
+  });
+  if (nowX != null) {
+    el.uvStripNow.setAttribute("x1", nowX.toFixed(2));
+    el.uvStripNow.setAttribute("x2", nowX.toFixed(2));
+    el.uvStripNow.style.display = "";
+  } else {
+    el.uvStripNow.style.display = "none";
+  }
 }
 
 function humidityComfort(rh, dew, temp) {

@@ -255,10 +255,14 @@
           </svg>
           <span id="m-pressure-sub" class="metric-sub">visibility —</span>
         </div>
-        <div class="metric glass">
+        <div class="metric glass metric-uv">
           <span class="metric-label">UV <span id="m-uv-level" class="trend" aria-hidden="true"></span></span>
           <span id="m-uv" class="metric-value">—</span>
           <span class="metric-unit">idx</span>
+          <svg id="uv-strip" class="uv-strip" viewBox="0 0 100 26" preserveAspectRatio="none" aria-hidden="true">
+            <g id="uv-strip-bars"></g>
+            <line id="uv-strip-now" class="uv-strip-now" y1="1" y2="25" x1="-1" x2="-1"></line>
+          </svg>
           <span id="m-uv-sub" class="metric-sub">peak —</span>
         </div>
       </div>
