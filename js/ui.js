@@ -372,11 +372,11 @@ function renderMetrics(w) {
       el.uvLevel.textContent = "";
     }
   }
-  if (w.uvPeak?.time) {
-    el.metricUVSub.textContent = `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`;
-  } else {
-    el.metricUVSub.textContent = "peak —";
-  }
+  const burn = burnTimeMinutes(w.uv, w.isDay);
+  const peak = w.uvPeak?.time
+    ? `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`
+    : "peak —";
+  el.metricUVSub.textContent = burn ? `${peak} · burn ${burn}` : peak;
   renderPressureSparkline(w);
 }
 
@@ -418,6 +418,20 @@ function uvLevel(v) {
   if (v < 8) return { label: "High", cls: "up" };
   if (v < 11) return { label: "Very High", cls: "up" };
   return { label: "Extreme", cls: "up" };
+}
+
+// Rough time-to-erythema for unprotected fair skin (Fitzpatrick II).
+// ~200 / UV is a widely-used approximation; we skip UV < 3 and nighttime
+// where the estimate would be misleading. Returns "Nm" or "Nh Nm".
+function burnTimeMinutes(uv, isDay) {
+  if (uv == null || uv < 3 || isDay === false) return null;
+  const mins = Math.max(5, Math.round(200 / uv));
+  if (mins >= 60) {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return m ? `~${h}h${m}m` : `~${h}h`;
+  }
+  return `~${mins}m`;
 }
 
 function renderPressureSparkline(w) {
