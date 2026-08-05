@@ -50,6 +50,7 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -572,9 +573,39 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w);
   renderGoldenHour(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+// "Days lengthening / shortening by Nm Ss" — tomorrow vs. today.
+function renderDaylightDelta(w) {
+  if (!el.sunDaylightDelta) return;
+  const days = w?.daily || [];
+  const today = days.find((d) => d?.sunrise && d?.sunset);
+  const idx = today ? days.indexOf(today) : -1;
+  const tomorrow = idx >= 0 ? days[idx + 1] : null;
+  if (!today || !tomorrow || !tomorrow.sunrise || !tomorrow.sunset) {
+    el.sunDaylightDelta.textContent = "";
+    el.sunDaylightDelta.removeAttribute("data-direction");
+    return;
+  }
+  const t = today.sunset - today.sunrise;
+  const n = tomorrow.sunset - tomorrow.sunrise;
+  const deltaSec = Math.round((n - t) / 1000);
+  if (Math.abs(deltaSec) < 30) {
+    el.sunDaylightDelta.textContent = "≈ tomorrow";
+    el.sunDaylightDelta.setAttribute("data-direction", "flat");
+    return;
+  }
+  const arrow = deltaSec > 0 ? "↑" : "↓";
+  const abs = Math.abs(deltaSec);
+  const m = Math.floor(abs / 60);
+  const s = abs % 60;
+  const label = m ? `${m}m ${s.toString().padStart(2, "0")}s` : `${s}s`;
+  el.sunDaylightDelta.textContent = `${arrow} ${label}`;
+  el.sunDaylightDelta.setAttribute("data-direction", deltaSec > 0 ? "up" : "down");
 }
 
 // Prefer today's golden hour + civil twilight — fall back to tomorrow if the
