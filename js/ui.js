@@ -644,12 +644,19 @@ function renderGoldenHour(w) {
   const range = (win) => `${fmtTime(win.start)}–${fmtTime(win.end)}`;
   el.goldenAmTime.textContent = range(gw.goldenAm);
   el.goldenPmTime.textContent = range(gw.goldenPm);
-  // Show the nearest upcoming twilight (dawn if it's still ahead today,
-  // otherwise dusk).
+
+  // Pick the next civil twilight. If today's dusk is already past, pull
+  // dawn from the following day so we don't display a stale time.
   const now = Date.now();
-  const nextTwilight = now < gw.dawn.start ? gw.dawn
-    : now < gw.dusk.start ? gw.dusk
-    : gw.dawn; // tomorrow-ish; still informative
+  let nextTwilight;
+  if (now < gw.dawn.start)      nextTwilight = gw.dawn;
+  else if (now < gw.dusk.start) nextTwilight = gw.dusk;
+  else {
+    const idx = (w.daily || []).indexOf(day);
+    const nextDay = idx >= 0 ? (w.daily || [])[idx + 1] : null;
+    const gwNext = nextDay && goldenWindows(nextDay);
+    nextTwilight = gwNext?.dawn || gw.dawn;
+  }
   el.twilightTime.textContent = range(nextTwilight);
 
   // Fade past chips so the sun card reads like a timeline.

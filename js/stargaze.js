@@ -10,10 +10,17 @@ function nightHours(weather) {
   if (!hours.length) return [];
   const days = weather?.daily || [];
   const now = Date.now();
-  // Today = the first day whose sunset is still in the future or was
-  // very recent; otherwise the last day we have.
-  const today = days.find((d) => d?.sunset && d.sunset + 30 * 60_000 > now) || days[0];
-  const tomorrow = today && days[days.indexOf(today) + 1];
+  // "Tonight" = the night starting at day[i]'s sunset, ending at day[i+1]'s
+  // sunrise. Pick the day whose following-morning sunrise is still ahead of
+  // "now" — that keeps us on today throughout the whole current night
+  // (previous logic switched to tomorrow shortly after sunset, evaluating the
+  // wrong night).
+  const today = days.find((d, i) => {
+    const next = days[i + 1];
+    return d?.sunset && next?.sunrise && now < next.sunrise;
+  }) || days.find((d) => d?.sunset && d?.sunrise) || null;
+  const idx = today ? days.indexOf(today) : -1;
+  const tomorrow = idx >= 0 ? days[idx + 1] : null;
   const nightStart = today?.sunset ?? null;
   const nightEnd = tomorrow?.sunrise ?? (today?.sunset ? today.sunset + 10 * 3600_000 : null);
   if (nightStart && nightEnd) {
