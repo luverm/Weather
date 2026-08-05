@@ -333,6 +333,8 @@
             <line x1="10" y1="74" x2="190" y2="74" stroke="var(--stroke)" stroke-dasharray="2 4"/>
             <path id="sun-arc-path" d="M10 74 Q100 -26 190 74"
                   fill="none" stroke="url(#sun-arc-grad)" stroke-width="1.5" stroke-linecap="round"/>
+            <circle id="sun-arc-golden-am" class="sun-arc-tick sun-arc-golden" cx="-10" cy="-10" r="2.4"/>
+            <circle id="sun-arc-golden-pm" class="sun-arc-tick sun-arc-golden" cx="-10" cy="-10" r="2.4"/>
             <circle id="sun-arc-marker" cx="10" cy="74" r="4.5" fill="#fff1c9"/>
           </svg>
           <div class="sun-row">
@@ -348,6 +350,23 @@
               <span class="sun-label">Daylight</span>
               <strong id="sun-daylight">—</strong>
             </div>
+          </div>
+          <div class="golden-row" id="golden-row" hidden>
+            <span class="golden-chip" id="golden-am" title="Morning golden hour">
+              <span class="golden-dot"></span>
+              <span class="golden-name">Golden</span>
+              <span class="golden-time" id="golden-am-time">—</span>
+            </span>
+            <span class="golden-chip" id="golden-pm" title="Evening golden hour">
+              <span class="golden-dot"></span>
+              <span class="golden-name">Golden</span>
+              <span class="golden-time" id="golden-pm-time">—</span>
+            </span>
+            <span class="golden-chip twilight-chip" id="twilight" title="Civil twilight">
+              <span class="golden-dot"></span>
+              <span class="golden-name">Twilight</span>
+              <span class="golden-time" id="twilight-time">—</span>
+            </span>
           </div>
         </div>
       </div>

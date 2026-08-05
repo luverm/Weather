@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { goldenWindows, nextGoldenEvent, currentGoldenWindow } from "./golden-hour.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -90,6 +91,15 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcGoldenAm: $("#sun-arc-golden-am"),
+  sunArcGoldenPm: $("#sun-arc-golden-pm"),
+  goldenRow: $("#golden-row"),
+  goldenAm: $("#golden-am"),
+  goldenPm: $("#golden-pm"),
+  goldenAmTime: $("#golden-am-time"),
+  goldenPmTime: $("#golden-pm-time"),
+  twilight: $("#twilight"),
+  twilightTime: $("#twilight-time"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -521,13 +531,78 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderGoldenHour(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+// Prefer today's golden hour + civil twilight — fall back to tomorrow if the
+// window has already closed for today (typical after 10 pm).
+function pickGoldenDay(w) {
+  const now = Date.now();
+  const days = w?.daily || [];
+  const today = days.find((d) =>
+    d?.sunrise && d?.sunset && (now < d.sunset + 60 * 60_000)
+  );
+  return today || days.find((d) => d?.sunrise && d?.sunset) || null;
+}
+
+function renderGoldenHour(w) {
+  if (!el.goldenRow) return;
+  const day = pickGoldenDay(w);
+  const gw = day && goldenWindows(day);
+  if (!gw) { el.goldenRow.hidden = true; return; }
+  el.goldenRow.hidden = false;
+
+  // Windows are ranges; show them as "start–end" so users see the duration.
+  const range = (win) => `${fmtTime(win.start)}–${fmtTime(win.end)}`;
+  el.goldenAmTime.textContent = range(gw.goldenAm);
+  el.goldenPmTime.textContent = range(gw.goldenPm);
+  // Show the nearest upcoming twilight (dawn if it's still ahead today,
+  // otherwise dusk).
+  const now = Date.now();
+  const nextTwilight = now < gw.dawn.start ? gw.dawn
+    : now < gw.dusk.start ? gw.dusk
+    : gw.dawn; // tomorrow-ish; still informative
+  el.twilightTime.textContent = range(nextTwilight);
+
+  // Fade past chips so the sun card reads like a timeline.
+  const dim = (elem, past) => elem?.classList.toggle("is-past", !!past);
+  dim(el.goldenAm, now >= gw.goldenAm.end);
+  dim(el.goldenPm, now >= gw.goldenPm.end);
+  dim(el.twilight, now >= nextTwilight.end);
+}
+
+function arcPoint(frac) {
+  // Quadratic Bezier from (10,74) to (190,74) via (100,-26).
+  const t = clamp01(frac);
+  return {
+    x: (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190,
+    y: (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74,
+  };
+}
+
+function placeGoldenTicks(w) {
+  const day = pickGoldenDay(w);
+  const gw = day && goldenWindows(day);
+  const sr = day?.sunrise, ss = day?.sunset;
+  const put = (node, frac) => {
+    if (!node) return;
+    if (frac == null) { node.style.opacity = 0; return; }
+    const p = arcPoint(frac);
+    node.setAttribute("cx", p.x.toFixed(1));
+    node.setAttribute("cy", p.y.toFixed(1));
+    node.style.opacity = "";
+  };
+  if (!gw || !sr || !ss || ss <= sr) { put(el.sunArcGoldenAm, null); put(el.sunArcGoldenPm, null); return; }
+  put(el.sunArcGoldenAm, (gw.goldenAm.end - sr) / (ss - sr));
+  put(el.sunArcGoldenPm, (gw.goldenPm.start - sr) / (ss - sr));
 }
 
 function scheduleSunArc(w) {
   if (!el.sunArcMarker || !el.sunArcPath) return;
   if (state.sunArcTimer) { clearInterval(state.sunArcTimer); state.sunArcTimer = null; }
+  placeGoldenTicks(w);
   if (!w?.sunrise || !w?.sunset) return;
 
   const update = () => {
@@ -542,14 +617,9 @@ function scheduleSunArc(w) {
     } else {
       frac = (now - sr) / (ss - sr);
     }
-    // Quadratic Bezier from (10,74) to (190,74) via (100,-26). The midpoint
-    // (50% t) reaches y = 0.5*(74) + 0.5*(74 + 2*(-26-74)/2*(...)) — easier
-    // to evaluate the curve directly.
-    const t = clamp01(frac);
-    const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
-    const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
-    el.sunArcMarker.setAttribute("cx", x.toFixed(1));
-    el.sunArcMarker.setAttribute("cy", y.toFixed(1));
+    const p = arcPoint(frac);
+    el.sunArcMarker.setAttribute("cx", p.x.toFixed(1));
+    el.sunArcMarker.setAttribute("cy", p.y.toFixed(1));
     // After sunset, dim the marker so it visually settles.
     const isUp = now >= sr && now <= ss;
     el.sunArcMarker.style.opacity = isUp ? "1" : "0.45";
@@ -565,11 +635,25 @@ function scheduleSunCountdown(w) {
   if (!w?.daily?.length) return;
   const update = () => {
     const now = Date.now();
+    // If we're already inside a golden/blue hour window, count down its end.
+    const inside = currentGoldenWindow(w, now);
+    if (inside) {
+      const mins = Math.max(0, Math.round((inside.endsAt - now) / 60_000));
+      const label = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
+      if (el.sunNextLabel) el.sunNextLabel.textContent = `${inside.kind} ends in`;
+      if (el.sunCountdown) el.sunCountdown.textContent = label;
+      return;
+    }
+    // Otherwise, take whichever of (next sun event, next photo event) is nearer.
     let nextTs = null, nextKind = null;
     for (const d of w.daily) {
       for (const [ts, kind] of [[d.sunrise, "Sunrise"], [d.sunset, "Sunset"]]) {
         if (ts && ts > now && (!nextTs || ts < nextTs)) { nextTs = ts; nextKind = kind; }
       }
+    }
+    const golden = nextGoldenEvent(w, now);
+    if (golden && (!nextTs || golden.ts < nextTs)) {
+      nextTs = golden.ts; nextKind = golden.kind;
     }
     if (!nextTs) {
       if (el.sunCountdown) el.sunCountdown.textContent = "";
