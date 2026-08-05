@@ -11,6 +11,7 @@ import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { goldenWindows, nextGoldenEvent, currentGoldenWindow } from "./golden-hour.js";
+import { stargazeScore } from "./stargaze.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -100,6 +101,10 @@ const el = {
   goldenPmTime: $("#golden-pm-time"),
   twilight: $("#twilight"),
   twilightTime: $("#twilight-time"),
+  stargaze: $("#stargaze"),
+  stargazeLabel: $("#stargaze-label"),
+  stargazeStars: $("#stargaze-stars"),
+  stargazeReason: $("#stargaze-reason"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -192,6 +197,7 @@ export const ui = {
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
     renderMoon(weather.moon);
+    renderStargaze(weather);
     renderSun(weather);
     renderHourly(weather);
     renderDaily(weather);
@@ -504,6 +510,41 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+}
+
+function renderStargaze(weather) {
+  if (!el.stargaze) return;
+  const s = stargazeScore(weather);
+  if (!s.haveData) { el.stargaze.hidden = true; return; }
+  el.stargaze.hidden = false;
+  el.stargazeLabel.textContent = s.label;
+  el.stargazeReason.textContent = s.reason;
+  // Render 5 stars, filled per 0.5 step (whole + half + empty).
+  const full = Math.floor(s.stars);
+  const half = s.stars - full >= 0.5 ? 1 : 0;
+  const empty = 5 - full - half;
+  const starPath = "M10 1.5 12.6 7.3 19 8.1 14.3 12.4 15.6 18.7 10 15.5 4.4 18.7 5.7 12.4 1 8.1 7.4 7.3z";
+  const clipId = `sg-half-${Math.random().toString(36).slice(2, 8)}`;
+  const star = (fill, key) => {
+    if (fill === "half") {
+      const id = `${clipId}-${key}`;
+      return `<svg class="stargaze-star" viewBox="0 0 20 20" aria-hidden="true">
+        <defs><clipPath id="${id}"><rect x="0" y="0" width="10" height="20"/></clipPath></defs>
+        <path d="${starPath}" fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>
+        <path d="${starPath}" fill="currentColor" clip-path="url(#${id})"/>
+      </svg>`;
+    }
+    return `<svg class="stargaze-star" viewBox="0 0 20 20" aria-hidden="true">
+      <path d="${starPath}" fill="${fill === "full" ? "currentColor" : "none"}" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>
+    </svg>`;
+  };
+  const parts = [];
+  for (let i = 0; i < full;  i++) parts.push(star("full",  `f${i}`));
+  for (let i = 0; i < half;  i++) parts.push(star("half",  `h${i}`));
+  for (let i = 0; i < empty; i++) parts.push(star("empty", `e${i}`));
+  el.stargazeStars.innerHTML = parts.join("");
+  const cls = s.stars >= 3.5 ? "good" : s.stars >= 2 ? "ok" : "bad";
+  el.stargaze.dataset.rating = cls;
 }
 
 function fmtTime(ts) {
