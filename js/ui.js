@@ -292,8 +292,13 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
-  renderYesterdayDelta(w);
-  updateDocTitle(w);
+  // Only refresh the tab title and the yesterday-delta from the LIVE render
+  // (animate=true). Scrubbed updates (animate=false) shouldn't drag the tab
+  // title or "vs yesterday" pill off the real "now".
+  if (animate) {
+    renderYesterdayDelta(w);
+    updateDocTitle(w);
+  }
 }
 
 // Fold the live temp + city into the browser-tab title so a quick glance
