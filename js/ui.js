@@ -293,6 +293,18 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
   renderYesterdayDelta(w);
+  updateDocTitle(w);
+}
+
+// Fold the live temp + city into the browser-tab title so a quick glance
+// at the tab strip tells you the weather without switching to it.
+function updateDocTitle(w) {
+  if (!w || w.temp == null) return;
+  const temp = Math.round(convertTemp(w.temp));
+  const city = state.place?.name;
+  const label = capitalize(w.label || "").replace(/\s+/g, " ").trim();
+  const prefix = `${temp}°${label ? " " + label : ""}`;
+  document.title = city ? `${prefix} · ${city} — Aether` : `${prefix} — Aether`;
 }
 
 // "3° warmer than this time yesterday" — only shown when the delta is
