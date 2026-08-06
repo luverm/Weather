@@ -48,6 +48,8 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  tonight: $("#tonight"),
+  tonightText: $("#tonight-text"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -188,6 +190,7 @@ export const ui = {
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
     renderMoon(weather.moon);
+    renderTonight(weather);
     renderSun(weather);
     renderHourly(weather);
     renderDaily(weather);
@@ -504,6 +507,57 @@ function renderAqTrend(aq) {
     return;
   }
   drawSparkline(el.aqTrendLine, el.aqTrendFill, pts, { minSpan: 20 });
+}
+
+// Overnight comfort — scans the hourly forecast between local 22:00 tonight
+// and 06:00 tomorrow to summarise sleep conditions on the moon card.
+function renderTonight(w) {
+  if (!el.tonight || !el.tonightText) return;
+  const hours = w.hourly || [];
+  if (!hours.length) { el.tonight.hidden = true; return; }
+  const tz = w.timezone;
+  const hourOf = (ts) => {
+    if (tz && tz !== "auto") {
+      try {
+        const parts = new Intl.DateTimeFormat(undefined, {
+          timeZone: tz, hour: "2-digit", hour12: false,
+        }).formatToParts(new Date(ts));
+        return Number(parts.find((p) => p.type === "hour")?.value ?? new Date(ts).getHours());
+      } catch { /* fall through */ }
+    }
+    return new Date(ts).getHours();
+  };
+  const overnight = [];
+  for (const h of hours) {
+    const local = hourOf(h.time);
+    if (h.time < Date.now()) continue;
+    if (local >= 22 || local < 6) overnight.push(h);
+    if (overnight.length >= 10) break;
+  }
+  if (overnight.length < 2) { el.tonight.hidden = true; return; }
+  let lo = Infinity, hiHum = 0;
+  for (const h of overnight) {
+    if (h.temp != null && h.temp < lo) lo = h.temp;
+    if (h.humidity != null && h.humidity > hiHum) hiHum = h.humidity;
+  }
+  if (!isFinite(lo)) { el.tonight.hidden = true; return; }
+  const loU = convertTemp(lo);
+  const inF = state.unit === "F";
+  const veryCold = inF ? loU <= 32 : loU <= 0;
+  const cold    = inF ? loU <= 50 : loU <= 10;
+  const mild    = inF ? loU <= 65 : loU <= 18;
+  const warm    = inF ? loU <= 75 : loU <= 24;
+  let tone = "hot", word = "warm & muggy";
+  if (veryCold)      { tone = "cold"; word = "frost risk"; }
+  else if (cold)     { tone = "cool"; word = "chilly"; }
+  else if (mild)     { tone = "mild"; word = "good sleep weather"; }
+  else if (warm)     { tone = "warm"; word = "mild"; }
+  else               { tone = "hot";  word = "warm night"; }
+  if (hiHum >= 80 && !veryCold && !cold) word = tone === "hot" ? "warm & humid" : "muggy";
+  else if (hiHum <= 30) word += " · dry";
+  el.tonight.hidden = false;
+  el.tonight.dataset.tone = tone;
+  el.tonightText.textContent = `${Math.round(loU)}° · ${word}`;
 }
 
 function renderMoon(moon) {
