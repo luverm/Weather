@@ -82,6 +82,9 @@ const el = {
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
+  weeklyTrend: $("#weekly-trend"),
+  weeklyTrendArrow: $("#weekly-trend-arrow"),
+  weeklyTrendText: $("#weekly-trend-text"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -1021,6 +1024,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderWeeklyTrend(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1109,6 +1113,39 @@ function renderDailySpark(days) {
       el.dailySparkDots.appendChild(c);
     }
   });
+}
+
+// Least-squares slope of the week's highs. Renders a "Warming"/"Cooling"
+// chip when the total week swing crosses ~2 units in the active unit, and
+// stays silent for flat weeks so the header doesn't lie.
+function renderWeeklyTrend(days) {
+  if (!el.weeklyTrend || !el.weeklyTrendText) return;
+  const highs = days.map((d) => d.tempMax).filter((v) => v != null);
+  if (highs.length < 4) { el.weeklyTrend.hidden = true; return; }
+  const n = highs.length;
+  const meanX = (n - 1) / 2;
+  const meanY = highs.reduce((s, v) => s + v, 0) / n;
+  let num = 0, den = 0;
+  for (let i = 0; i < n; i++) {
+    num += (i - meanX) * (highs[i] - meanY);
+    den += (i - meanX) ** 2;
+  }
+  if (den === 0) { el.weeklyTrend.hidden = true; return; }
+  const slopeC = num / den; // °C per day
+  const totalC = slopeC * (n - 1); // °C from day 0 to last
+  const totalDisplay = state.unit === "F" ? totalC * 9 / 5 : totalC;
+  if (Math.abs(totalDisplay) < 2) {
+    el.weeklyTrend.hidden = false;
+    el.weeklyTrend.dataset.dir = "flat";
+    if (el.weeklyTrendArrow) el.weeklyTrendArrow.textContent = "→";
+    el.weeklyTrendText.textContent = "Steady week";
+    return;
+  }
+  const warming = totalDisplay > 0;
+  el.weeklyTrend.hidden = false;
+  el.weeklyTrend.dataset.dir = warming ? "up" : "down";
+  if (el.weeklyTrendArrow) el.weeklyTrendArrow.textContent = warming ? "▲" : "▼";
+  el.weeklyTrendText.textContent = `${warming ? "Warming" : "Cooling"} ${Math.round(Math.abs(totalDisplay))}°`;
 }
 
 function renderDailyDelta(days) {

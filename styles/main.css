@@ -1506,6 +1506,26 @@ kbd {
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+
+/* Weekly trend chip beside the 7-day heading. */
+.weekly-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: none;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+  background: rgba(255, 255, 255, 0.04);
+}
+.weekly-trend[hidden] { display: none; }
+.weekly-trend[data-dir="up"]   { color: #ffc39a; border-color: rgba(255,148,108,0.35); background: rgba(255,148,108,0.08); }
+.weekly-trend[data-dir="down"] { color: #bcd6ff; border-color: rgba(150,190,255,0.35); background: rgba(150,190,255,0.08); }
+.weekly-trend-arrow { font-size: 10px; line-height: 1; transform: translateY(-1px); }
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;
