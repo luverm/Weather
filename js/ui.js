@@ -50,6 +50,9 @@ const el = {
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  sunMagic: $("#sun-magic"),
+  sunMagicLabel: $("#sun-magic-label"),
+  sunMagicTime: $("#sun-magic-time"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -523,6 +526,53 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderSunMagic(w);
+}
+
+// Golden hour ≈ 60 min around sunrise/sunset when the sun is low; blue hour
+// is the ~30 min band on the night side of that (sun just below the horizon).
+// We pick the next window from all days in the forecast, or the currently
+// active one if we're already inside it, and expose "Now · Xm left" while it
+// runs.
+function magicWindows(w) {
+  const out = [];
+  for (const d of (w.daily || [])) {
+    if (d.sunrise) {
+      out.push({ kind: "blue-morning",   label: "Blue hour",   start: d.sunrise - 30 * 60_000, end: d.sunrise });
+      out.push({ kind: "golden-morning", label: "Golden hour", start: d.sunrise, end: d.sunrise + 60 * 60_000 });
+    }
+    if (d.sunset) {
+      out.push({ kind: "golden-evening", label: "Golden hour", start: d.sunset - 60 * 60_000, end: d.sunset });
+      out.push({ kind: "blue-evening",   label: "Blue hour",   start: d.sunset, end: d.sunset + 30 * 60_000 });
+    }
+  }
+  out.sort((a, b) => a.start - b.start);
+  return out;
+}
+
+function pickMagicWindow(w, now = Date.now()) {
+  const list = magicWindows(w);
+  const active = list.find((x) => now >= x.start && now < x.end);
+  if (active) return { ...active, active: true };
+  const future = list.find((x) => x.start > now);
+  return future ? { ...future, active: false } : null;
+}
+
+function renderSunMagic(w) {
+  if (!el.sunMagic) return;
+  const win = pickMagicWindow(w);
+  if (!win) { el.sunMagic.hidden = true; return; }
+  el.sunMagic.hidden = false;
+  el.sunMagic.dataset.kind = win.kind;
+  el.sunMagic.dataset.active = win.active ? "true" : "false";
+  const isMorning = win.kind.endsWith("morning");
+  el.sunMagicLabel.textContent = `${win.label} · ${isMorning ? "dawn" : "dusk"}`;
+  if (win.active) {
+    const leftMin = Math.max(1, Math.round((win.end - Date.now()) / 60_000));
+    el.sunMagicTime.textContent = `now · ${leftMin}m left`;
+  } else {
+    el.sunMagicTime.textContent = `${fmtTime(win.start)} – ${fmtTime(win.end)}`;
+  }
 }
 
 function scheduleSunArc(w) {
@@ -582,6 +632,7 @@ function scheduleSunCountdown(w) {
       : `${mins}m`;
     if (el.sunNextLabel) el.sunNextLabel.textContent = `${nextKind} in`;
     if (el.sunCountdown) el.sunCountdown.textContent = label;
+    renderSunMagic(w);
   };
   update();
   state.sunTimer = setInterval(update, 30_000);
