@@ -1585,7 +1585,27 @@ kbd {
   transition: background 200ms var(--ease);
 }
 .daily-item:hover { background: var(--glass); }
-.daily-day { font-size: 13px; font-weight: 500; }
+.daily-day { font-size: 13px; font-weight: 500; display: flex; flex-direction: column; gap: 2px; align-items: flex-start; }
+
+/* Superlative badge: 'Warmest', 'Coolest', 'Wettest' on the noteworthy day. */
+.daily-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--stroke);
+}
+.daily-badge[data-kind="hot"]  { color: #ffb98d; background: rgba(255,140,90,0.14);  border-color: rgba(255,140,90,0.35); }
+.daily-badge[data-kind="cold"] { color: #b8d3ff; background: rgba(140,180,255,0.14); border-color: rgba(140,180,255,0.35); }
+.daily-badge[data-kind="wet"]  { color: #a6d7ff; background: rgba(100,180,240,0.14); border-color: rgba(100,180,240,0.35); }
+.daily-item[data-superlative="hot"]  { box-shadow: inset 3px 0 0 rgba(255,140,90,0.55); }
+.daily-item[data-superlative="cold"] { box-shadow: inset 3px 0 0 rgba(140,180,255,0.55); }
+.daily-item[data-superlative="wet"]  { box-shadow: inset 3px 0 0 rgba(100,180,240,0.55); }
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
 .daily-range {
   position: relative;

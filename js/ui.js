@@ -981,6 +981,32 @@ function highlightHour(index) {
   items.forEach((it, i) => it.classList.toggle("active", i === index));
 }
 
+// Tag at most three days (hottest, coldest, wettest) so the daily strip
+// draws a small badge on the noteworthy days. Skipped when the differences
+// are too small to matter.
+function pickSuperlatives(days) {
+  const out = new Map();
+  if (!days || days.length < 3) return out;
+  let hotIdx = -1, coldIdx = -1, wetIdx = -1;
+  let hotV = -Infinity, coldV = Infinity, wetV = -Infinity;
+  for (let i = 0; i < days.length; i++) {
+    const d = days[i];
+    if (d.tempMax != null && d.tempMax > hotV) { hotV = d.tempMax; hotIdx = i; }
+    if (d.tempMin != null && d.tempMin < coldV) { coldV = d.tempMin; coldIdx = i; }
+    const wet = (d.precip ?? 0);
+    if (wet > wetV) { wetV = wet; wetIdx = i; }
+  }
+  const tempSpread = (hotV - Math.max(-Infinity, ...days.map((d) => d.tempMin ?? Infinity)));
+  if (hotIdx >= 0 && tempSpread >= 3) out.set(hotIdx, "hot");
+  if (coldIdx >= 0 && coldIdx !== hotIdx && (hotV - coldV) >= 3) out.set(coldIdx, "cold");
+  if (wetIdx >= 0 && wetV >= 3 && !out.has(wetIdx)) out.set(wetIdx, "wet");
+  return out;
+}
+
+function superlativeLabel(kind) {
+  return { hot: "Warmest", cold: "Coolest", wet: "Wettest" }[kind] || "";
+}
+
 function renderDaily(w) {
   el.dailyTrack.innerHTML = "";
   const days = (w.daily || []).slice(0, 7);
@@ -995,6 +1021,7 @@ function renderDaily(w) {
     if (d.tempMax > gMax) gMax = d.tempMax;
   }
   const span = Math.max(1, gMax - gMin);
+  const superlatives = pickSuperlatives(days);
   days.forEach((d, i) => {
     const dt = new Date(d.time);
     const tz = state.weather?.timezone;
@@ -1007,13 +1034,18 @@ function renderDaily(w) {
     const item = document.createElement("div");
     item.className = "daily-item";
     item.dataset.ts = d.time;
+    const superlative = superlatives.get(i);
+    if (superlative) item.dataset.superlative = superlative;
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const badge = superlative
+      ? `<span class="daily-badge" data-kind="${superlative}">${superlativeLabel(superlative)}</span>`
+      : "";
     item.innerHTML = `
-      <span class="daily-day">${day}</span>
+      <span class="daily-day">${day}${badge}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
