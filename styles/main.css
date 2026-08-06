@@ -391,6 +391,39 @@ html[data-reduce-motion="true"] *::after {
 .unit:hover { background: var(--glass); color: var(--fg); }
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
+
+/* "vs yesterday" chip — same hour, 24h earlier, from past_hours=24. */
+.yday-delta {
+  margin: 6px 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 11px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+.yday-delta[hidden] { display: none; }
+.yday-delta[data-dir="up"] {
+  color: #ffc39a;
+  border-color: rgba(255, 148, 108, 0.35);
+  background: rgba(255, 148, 108, 0.08);
+}
+.yday-delta[data-dir="down"] {
+  color: #bcd6ff;
+  border-color: rgba(150, 190, 255, 0.35);
+  background: rgba(150, 190, 255, 0.08);
+}
+.yday-delta-arrow {
+  font-size: 10px;
+  line-height: 1;
+  display: inline-block;
+  transform: translateY(-1px);
+}
 .day-range {
   margin-top: 10px;
   display: grid;

@@ -26,6 +26,9 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  ydayDelta: $("#yday-delta"),
+  ydayDeltaArrow: $("#yday-delta-arrow"),
+  ydayDeltaText: $("#yday-delta-text"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -281,6 +284,32 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  renderYesterdayDelta(w);
+}
+
+// "3° warmer than this time yesterday" — only shown when the delta is
+// large enough to be interesting (≥ 1° in the current unit).
+function renderYesterdayDelta(w) {
+  if (!el.ydayDelta || !el.ydayDeltaText) return;
+  const cur = w.temp;
+  const y = w.yesterday;
+  if (cur == null || !y || y.temp == null) { el.ydayDelta.hidden = true; return; }
+  const curU = convertTemp(cur);
+  const ydU = convertTemp(y.temp);
+  const delta = curU - ydU;
+  if (!isFinite(delta) || Math.abs(delta) < 1) {
+    el.ydayDelta.hidden = false;
+    el.ydayDelta.dataset.dir = "flat";
+    if (el.ydayDeltaArrow) el.ydayDeltaArrow.textContent = "≈";
+    el.ydayDeltaText.textContent = "About the same as yesterday";
+    return;
+  }
+  el.ydayDelta.hidden = false;
+  const rounded = Math.round(Math.abs(delta));
+  const warmer = delta > 0;
+  el.ydayDelta.dataset.dir = warmer ? "up" : "down";
+  if (el.ydayDeltaArrow) el.ydayDeltaArrow.textContent = warmer ? "▲" : "▼";
+  el.ydayDeltaText.textContent = `${rounded}° ${warmer ? "warmer" : "cooler"} than yesterday`;
 }
 
 function renderDayRange(w) {
