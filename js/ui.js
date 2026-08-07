@@ -617,6 +617,12 @@ function scheduleGoldenHour(w) {
   }
   windows.sort((a, b) => a.start - b.start);
   if (!windows.length) { el.sunGolden.hidden = true; return; }
+  // Attach a "sky" hint per window using hourly cloud cover / condition.
+  // We only have ~24h of hourly data, so windows beyond that day just get
+  // no annotation — better silence than a fake guess.
+  for (const win of windows) {
+    win.sky = skyDuring(w?.hourly, win.start, win.end);
+  }
   el.sunGolden.hidden = false;
 
   const update = () => {
@@ -627,8 +633,9 @@ function scheduleGoldenHour(w) {
       const remaining = Math.max(0, Math.round((active.end - now) / 60_000));
       const kindLabel = active.kind === "morning" ? "Morning" : "Evening";
       el.sunGolden.dataset.state = "active";
+      const sky = active.sky ? ` · ${active.sky.label}` : "";
       el.sunGoldenText.textContent =
-        `${kindLabel} golden hour · ends ${fmtTime(active.end)} (${remaining}m left)`;
+        `${kindLabel} golden hour · ends ${fmtTime(active.end)} (${remaining}m left)${sky}`;
       return;
     }
     // Next upcoming window.
@@ -643,11 +650,35 @@ function scheduleGoldenHour(w) {
       ? `in ${Math.floor(mins / 60)}h ${mins % 60}m`
       : `in ${mins}m`;
     el.sunGolden.dataset.state = "upcoming";
+    const sky = next.sky ? ` · ${next.sky.label}` : "";
     el.sunGoldenText.textContent =
-      `${kindLabel} golden hour · ${fmtTime(next.start)}–${fmtTime(next.end)} · ${inLabel}`;
+      `${kindLabel} golden hour · ${fmtTime(next.start)}–${fmtTime(next.end)} · ${inLabel}${sky}`;
   };
   update();
   state.sunGoldenTimer = setInterval(update, 30_000);
+}
+
+// Summarize sky visibility for a time window using hourly cloud cover
+// and weather conditions. Returns { label } or null when we have no data.
+function skyDuring(hourly, start, end) {
+  if (!Array.isArray(hourly) || !hourly.length) return null;
+  const inside = hourly.filter((h) => h.time >= start - 30 * 60_000 && h.time <= end + 30 * 60_000);
+  if (!inside.length) return null;
+  // Precip trumps cloud: if any hour in the window is rain/snow/storm, say so.
+  const wet = inside.find((h) => h.condition === "rain" || h.condition === "storm" || h.condition === "snow");
+  if (wet) {
+    if (wet.condition === "snow") return { label: "snow expected" };
+    if (wet.condition === "storm") return { label: "storms expected" };
+    return { label: "rain expected" };
+  }
+  // Average cloud cover across the window.
+  const covers = inside.map((h) => h.cloudCover).filter((v) => v != null);
+  if (!covers.length) return null;
+  const avg = covers.reduce((s, v) => s + v, 0) / covers.length;
+  if (avg < 20) return { label: "clear skies" };
+  if (avg < 50) return { label: "mostly clear" };
+  if (avg < 80) return { label: "partly cloudy" };
+  return { label: "overcast" };
 }
 
 function clamp01(v) { return Math.max(0, Math.min(1, v)); }
