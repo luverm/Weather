@@ -976,6 +976,52 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+.sun-arc-golden {
+  opacity: 0.55;
+  transition: opacity 500ms var(--ease), r 500ms var(--ease);
+}
+.sun-arc-golden.active {
+  opacity: 1;
+  animation: sun-golden-pulse 2.4s ease-in-out infinite;
+}
+@keyframes sun-golden-pulse {
+  0%, 100% { r: 6; }
+  50% { r: 8; }
+}
+.sun-golden {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 190, 110, 0.10);
+  color: #ffcf95;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  align-self: start;
+  justify-self: start;
+  max-width: 100%;
+}
+.sun-golden[hidden] { display: none; }
+.sun-golden[data-state="active"] {
+  background: rgba(255, 180, 90, 0.18);
+  color: #ffe0b0;
+  animation: sun-golden-glow 3s ease-in-out infinite;
+}
+@keyframes sun-golden-glow {
+  0%, 100% { box-shadow: 0 0 0 rgba(255, 180, 90, 0); }
+  50% { box-shadow: 0 0 12px rgba(255, 180, 90, 0.35); }
+}
+.sun-golden-icon {
+  flex-shrink: 0;
+  color: #ffbc78;
+}
+[data-reduce-motion="true"] .sun-arc-golden.active,
+[data-reduce-motion="true"] .sun-golden[data-state="active"] {
+  animation: none;
+}
 
 /* ---------- Radar map ---------- */
 .radar {
