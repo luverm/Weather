@@ -90,6 +90,9 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunCard: $("#sun-card"),
+  sunGoldenMorning: $("#sun-golden-morning"),
+  sunGoldenEvening: $("#sun-golden-evening"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -521,14 +524,78 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderGoldenHourBands(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+// Quadratic Bezier along the sun arc: (10,74) → (100,-26) → (190,74).
+function sunArcPoint(t) {
+  const u = 1 - t;
+  return {
+    x: u * u * 10 + 2 * u * t * 100 + t * t * 190,
+    y: u * u * 74 + 2 * u * t * -26 + t * t * 74,
+  };
+}
+
+function sunArcSubPath(t0, t1, samples = 14) {
+  if (t1 <= t0) return "";
+  let d = "";
+  for (let i = 0; i <= samples; i++) {
+    const t = t0 + (t1 - t0) * (i / samples);
+    const p = sunArcPoint(t);
+    d += (i === 0 ? "M " : "L ") + p.x.toFixed(1) + " " + p.y.toFixed(1) + " ";
+  }
+  return d.trim();
+}
+
+// Golden hour ≈ first & last 60 min of daylight. Rough but reads well.
+function goldenHourWindows(w) {
+  if (!w?.sunrise || !w?.sunset || w.sunset <= w.sunrise) return null;
+  const daylight = w.sunset - w.sunrise;
+  const win = Math.min(60 * 60_000, daylight / 4);
+  return {
+    daylight,
+    morning: { start: w.sunrise, end: w.sunrise + win },
+    evening: { start: w.sunset - win, end: w.sunset },
+  };
+}
+
+function renderGoldenHourBands(w) {
+  if (!el.sunGoldenMorning || !el.sunGoldenEvening) return;
+  const g = goldenHourWindows(w);
+  if (!g) {
+    el.sunGoldenMorning.setAttribute("d", "");
+    el.sunGoldenEvening.setAttribute("d", "");
+    return;
+  }
+  const mFrac0 = 0;
+  const mFrac1 = (g.morning.end - w.sunrise) / g.daylight;
+  const eFrac0 = (g.evening.start - w.sunrise) / g.daylight;
+  const eFrac1 = 1;
+  el.sunGoldenMorning.setAttribute("d", sunArcSubPath(mFrac0, mFrac1));
+  el.sunGoldenEvening.setAttribute("d", sunArcSubPath(eFrac0, eFrac1));
+}
+
+function currentGoldenPhase(w, now = Date.now()) {
+  const g = goldenHourWindows(w);
+  if (!g) return null;
+  if (now >= g.morning.start && now <= g.morning.end) {
+    return { kind: "morning", endsAt: g.morning.end };
+  }
+  if (now >= g.evening.start && now <= g.evening.end) {
+    return { kind: "evening", endsAt: g.evening.end };
+  }
+  return null;
 }
 
 function scheduleSunArc(w) {
   if (!el.sunArcMarker || !el.sunArcPath) return;
   if (state.sunArcTimer) { clearInterval(state.sunArcTimer); state.sunArcTimer = null; }
-  if (!w?.sunrise || !w?.sunset) return;
+  if (!w?.sunrise || !w?.sunset) {
+    el.sunCard?.removeAttribute("data-golden");
+    return;
+  }
 
   const update = () => {
     const now = Date.now();
@@ -542,17 +609,20 @@ function scheduleSunArc(w) {
     } else {
       frac = (now - sr) / (ss - sr);
     }
-    // Quadratic Bezier from (10,74) to (190,74) via (100,-26). The midpoint
-    // (50% t) reaches y = 0.5*(74) + 0.5*(74 + 2*(-26-74)/2*(...)) — easier
-    // to evaluate the curve directly.
     const t = clamp01(frac);
-    const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
-    const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
-    el.sunArcMarker.setAttribute("cx", x.toFixed(1));
-    el.sunArcMarker.setAttribute("cy", y.toFixed(1));
+    const p = sunArcPoint(t);
+    el.sunArcMarker.setAttribute("cx", p.x.toFixed(1));
+    el.sunArcMarker.setAttribute("cy", p.y.toFixed(1));
     // After sunset, dim the marker so it visually settles.
     const isUp = now >= sr && now <= ss;
     el.sunArcMarker.style.opacity = isUp ? "1" : "0.45";
+    // Toggle the "in golden hour" state on the card.
+    const phase = currentGoldenPhase(w, now);
+    if (phase && el.sunCard) {
+      el.sunCard.setAttribute("data-golden", phase.kind);
+    } else {
+      el.sunCard?.removeAttribute("data-golden");
+    }
   };
   update();
   state.sunArcTimer = setInterval(update, 60_000);
@@ -565,6 +635,17 @@ function scheduleSunCountdown(w) {
   if (!w?.daily?.length) return;
   const update = () => {
     const now = Date.now();
+    // If we're inside a golden-hour window, prefer counting down to its end.
+    const golden = currentGoldenPhase(w, now);
+    if (golden) {
+      const mins = Math.max(0, Math.round((golden.endsAt - now) / 60_000));
+      const label = mins >= 60
+        ? `${Math.floor(mins / 60)}h ${mins % 60}m`
+        : `${mins}m`;
+      if (el.sunNextLabel) el.sunNextLabel.textContent = "Golden hour · ends in";
+      if (el.sunCountdown) el.sunCountdown.textContent = label;
+      return;
+    }
     let nextTs = null, nextKind = null;
     for (const d of w.daily) {
       for (const [ts, kind] of [[d.sunrise, "Sunrise"], [d.sunset, "Sunset"]]) {
