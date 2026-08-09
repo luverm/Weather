@@ -94,6 +94,8 @@ const el = {
   sunColor: $("#sun-color"),
   sunColorHeadline: $("#sun-color-headline"),
   sunColorDetail: $("#sun-color-detail"),
+  goldenHour: $("#golden-hour"),
+  goldenHourText: $("#golden-hour-text"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -579,6 +581,56 @@ function renderSun(w) {
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   renderSunColor(w);
+  scheduleGoldenHour(w);
+}
+
+// Golden hour: the ~1 h after sunrise and before sunset when sunlight is
+// warm and low-angled. We show the next window with a live "now" / "in Nm"
+// label so photographers can plan.
+function scheduleGoldenHour(w) {
+  if (!el.goldenHour) return;
+  if (state.goldenTimer) { clearInterval(state.goldenTimer); state.goldenTimer = null; }
+  if (!w?.daily?.length) { el.goldenHour.hidden = true; return; }
+
+  const update = () => {
+    const now = Date.now();
+    // Collect every morning/evening window from the next few days.
+    const spans = [];
+    for (const d of w.daily) {
+      if (d.sunrise) spans.push({
+        start: d.sunrise - 15 * 60_000,
+        end: d.sunrise + 60 * 60_000,
+        kind: "morning",
+      });
+      if (d.sunset) spans.push({
+        start: d.sunset - 60 * 60_000,
+        end: d.sunset + 15 * 60_000,
+        kind: "evening",
+      });
+    }
+    // Ongoing window wins; otherwise pick the next upcoming one.
+    const current = spans.find((s) => now >= s.start && now <= s.end);
+    const upcoming = spans
+      .filter((s) => s.start > now)
+      .sort((a, b) => a.start - b.start)[0];
+    const pick = current || upcoming;
+    if (!pick) { el.goldenHour.hidden = true; return; }
+    el.goldenHour.hidden = false;
+    const startTxt = fmtTime(pick.start);
+    const endTxt = fmtTime(pick.end);
+    if (current) {
+      const mLeft = Math.max(1, Math.round((pick.end - now) / 60_000));
+      el.goldenHourText.textContent = `Golden hour now · ${mLeft} min left`;
+    } else {
+      const minsAway = Math.round((pick.start - now) / 60_000);
+      const away = minsAway >= 90
+        ? `in ${Math.floor(minsAway / 60)}h ${minsAway % 60}m`
+        : `in ${minsAway}m`;
+      el.goldenHourText.textContent = `Golden hour ${away} · ${startTxt}–${endTxt}`;
+    }
+  };
+  update();
+  state.goldenTimer = setInterval(update, 60_000);
 }
 
 function renderSunColor(w) {

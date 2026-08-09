@@ -977,10 +977,33 @@ kbd {
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
 
+/* Golden-hour hint that sits between the sun-row and color-quality pill.
+   Explicit grid span keeps the pill on its own row even though the parent
+   card silently inherits a 2-column grid from `.metric-label`. */
+.golden-hour {
+  grid-column: 1 / -1;
+  margin: 10px 0 0;
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255,196,110,0.16), rgba(255,142,90,0.10));
+  border: 1px solid rgba(255,196,110,0.25);
+  color: #ffd7a3;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  font-weight: 500;
+}
+.golden-hour[hidden] { display: none; }
+.golden-hour-icon { color: #ffcf7a; opacity: 0.9; flex-shrink: 0; }
+
 /* Sunset / sunrise color-quality pill.
    The swatch is a small horizon slice whose gradient shifts with the
    predicted tone — vibrant reds, warm pinks, muted grays. */
 .sun-color {
+  grid-column: 1 / -1;
   margin-top: 10px;
   display: grid;
   grid-template-columns: auto 1fr;
