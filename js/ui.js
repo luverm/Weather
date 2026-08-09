@@ -73,6 +73,8 @@ const el = {
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
+  weeklyPrecip: $("#weekly-precip"),
+  weeklyPrecipText: $("#weekly-precip-text"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -977,6 +979,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderWeeklyPrecip(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1084,6 +1087,35 @@ function renderDailyDelta(days) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
   }
   el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
+}
+
+// Total rainfall/snowfall across the 7-day forecast, plus a hint at which day
+// is driest so the reader can plan around it. Hidden entirely when the week
+// is dry (< 0.5 mm total).
+function renderWeeklyPrecip(days) {
+  if (!el.weeklyPrecip || !el.weeklyPrecipText) return;
+  const total = days.reduce((s, d) => s + (d.precip ?? 0), 0);
+  if (total < 0.5) { el.weeklyPrecip.hidden = true; return; }
+  const wetDays = days.filter((d) => (d.precip ?? 0) >= 0.5).length;
+  // Consider only days ≥ tomorrow when suggesting a driest planning window.
+  const future = days.slice(1);
+  const driest = future.length
+    ? future.reduce((best, d) => ((d.precip ?? 0) < (best?.precip ?? Infinity) ? d : best), null)
+    : null;
+  const parts = [`${fmtPrecip(total)}`];
+  parts.push(`${wetDays} wet day${wetDays === 1 ? "" : "s"}`);
+  if (driest && (driest.precip ?? 0) < 0.5) {
+    const day = dayShort(driest.time);
+    parts.push(`driest ${day}`);
+  }
+  el.weeklyPrecipText.textContent = `Rain this week: ${parts.join(" · ")}`;
+  el.weeklyPrecip.hidden = false;
+}
+
+function dayShort(ts) {
+  const tz = state.weather?.timezone;
+  const opts = { weekday: "short", ...(tz && tz !== "auto" ? { timeZone: tz } : {}) };
+  return new Date(ts).toLocaleDateString(undefined, opts);
 }
 
 function toggleDailyExpand(item, d, w) {

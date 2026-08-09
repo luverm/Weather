@@ -1463,6 +1463,22 @@ kbd {
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+.weekly-precip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 10px 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  width: fit-content;
+  background: rgba(120,170,255,0.10);
+  border: 1px solid rgba(120,170,255,0.22);
+  color: #cddcff;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+.weekly-precip[hidden] { display: none; }
+.weekly-precip-icon { opacity: 0.85; flex-shrink: 0; }
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;
