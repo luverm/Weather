@@ -332,9 +332,13 @@ function renderMetrics(w) {
   el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
-  el.metricWindSub.textContent = dirLabel
-    ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
-    : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+  const gustLabel = w.windGusts != null ? `${Math.round(w.windGusts)} km/h` : "—";
+  const trend = windTrendLabel(w);
+  const parts = [];
+  if (dirLabel) parts.push(dirLabel);
+  parts.push(`gust ${gustLabel}`);
+  if (trend) parts.push(trend);
+  el.metricWindSub.textContent = parts.join(" · ");
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
@@ -380,6 +384,26 @@ function renderMetrics(w) {
   }
   el.metricUVSub.textContent = uvSubText(w);
   renderPressureSparkline(w);
+}
+
+// Wind speed trend across the next 6 h. Uses hourly wind data to detect if
+// the wind is picking up ("rising"), easing ("easing"), or holding steady.
+// Returns null when we can't say — very light winds don't need a label.
+function windTrendLabel(w) {
+  const hours = (w.hourly || []).slice(0, 7).map((h) => h.wind).filter((v) => v != null);
+  if (hours.length < 3) return null;
+  const current = w.windSpeed ?? hours[0];
+  const late = hours.slice(3, 7);
+  if (!late.length) return null;
+  const laterAvg = late.reduce((s, v) => s + v, 0) / late.length;
+  const delta = laterAvg - current;
+  // Threshold scales with base speed: a 5 km/h change matters more at 8 km/h
+  // than at 40 km/h.
+  const threshold = Math.max(4, current * 0.25);
+  if (Math.abs(delta) < threshold) return null;
+  const arrow = delta > 0 ? "↑" : "↓";
+  const kind = delta > 0 ? "rising" : "easing";
+  return `${arrow} ${kind}`;
 }
 
 // Build the UV metric sub-line. When UV is meaningful today, prefer the
