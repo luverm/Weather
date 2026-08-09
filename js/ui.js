@@ -374,12 +374,48 @@ function renderMetrics(w) {
       el.uvLevel.textContent = "";
     }
   }
-  if (w.uvPeak?.time) {
-    el.metricUVSub.textContent = `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`;
-  } else {
-    el.metricUVSub.textContent = "peak —";
-  }
+  el.metricUVSub.textContent = uvSubText(w);
   renderPressureSparkline(w);
+}
+
+// Build the UV metric sub-line. When UV is meaningful today, prefer the
+// protection-window phrasing ("sunscreen 10:15–16:20 · peak 8"). Otherwise
+// fall back to a compact peak label so the row never renders blank.
+function uvSubText(w) {
+  const hours = (w.hourly || []).filter((h) => h.uv != null);
+  const now = Date.now();
+  // Only consider today + tonight's window — the next 18 h of UV data.
+  const forward = hours.filter((h) => h.time >= now - 30 * 60_000 && h.time <= now + 18 * 3600_000);
+  const window = uvBurnWindow(forward);
+  const peak = w.uvPeak;
+  const pieces = [];
+  if (window) {
+    const from = fmtTime(window.start);
+    const to = fmtTime(window.end);
+    if (now < window.start) pieces.push(`sunscreen from ${from}`);
+    else if (now > window.end) pieces.push(`sun safe now`);
+    else pieces.push(`sunscreen · ends ${to}`);
+  }
+  if (peak?.time && peak.value != null) {
+    pieces.push(`peak ${Math.round(peak.value)} at ${fmtTime(peak.time)}`);
+  }
+  return pieces.length ? pieces.join(" · ") : "peak —";
+}
+
+// Find the first and last hour today whose UV index reaches the "moderate"
+// threshold (3+) — the standard cue to start using protection. Returns null
+// if UV never gets high enough.
+function uvBurnWindow(hours) {
+  const BURN = 3;
+  let start = null, end = null;
+  for (const h of hours) {
+    if (h.uv >= BURN) {
+      if (start == null) start = h.time;
+      end = h.time + 3600_000; // window closes at the end of the hour
+    }
+  }
+  if (start == null) return null;
+  return { start, end };
 }
 
 function humidityComfort(rh, dew, temp) {
