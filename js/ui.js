@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { sunsetColorQuality } from "./sunset-quality.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -90,6 +91,9 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunColor: $("#sun-color"),
+  sunColorHeadline: $("#sun-color-headline"),
+  sunColorDetail: $("#sun-color-detail"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -245,6 +249,21 @@ export const ui = {
 // ---------- Rendering ----------
 
 function convertTemp(c) { return state.unit === "F" ? c * 9 / 5 + 32 : c; }
+
+// Format a precipitation amount in mm using the user's unit preference. We
+// mirror the temperature unit as the imperial-vs-metric proxy: °F users see
+// inches, °C users see mm. Below 0.1 mm we round up to a floor so the value
+// doesn't render as "0" for a nonzero forecast.
+function fmtPrecip(mm) {
+  if (mm == null) return "—";
+  if (state.unit === "F") {
+    const inches = mm / 25.4;
+    if (inches < 0.05) return "<0.05 in";
+    return `${inches.toFixed(inches < 1 ? 2 : 1)} in`;
+  }
+  if (mm < 0.5) return "<0.5 mm";
+  return `${mm.toFixed(mm < 5 ? 1 : 0)} mm`;
+}
 
 function animateNumber(node, target, format) {
   if (target == null || isNaN(target)) { node.textContent = "–"; return; }
@@ -523,6 +542,22 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderSunColor(w);
+}
+
+function renderSunColor(w) {
+  if (!el.sunColor) return;
+  const q = sunsetColorQuality(w);
+  if (!q) { el.sunColor.hidden = true; return; }
+  el.sunColor.hidden = false;
+  el.sunColor.setAttribute("data-tone", q.tone);
+  el.sunColor.setAttribute("data-kind", q.kind);
+  if (el.sunColorHeadline) el.sunColorHeadline.textContent = q.headline;
+  if (el.sunColorDetail) {
+    const at = fmtTime(q.ts);
+    const kindWord = q.kind === "sunrise" ? "sunrise" : "sunset";
+    el.sunColorDetail.textContent = `${kindWord} at ${at}`;
+  }
 }
 
 function scheduleSunArc(w) {
@@ -877,7 +912,10 @@ function renderDaily(w) {
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
-    const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const precipLabel = d.precip >= 0.5 ? ` · ${fmtPrecip(d.precip)}` : "";
+    const extra = gustLabel || popLabel || precipLabel
+      ? `<span class="daily-gust">${popLabel}${precipLabel}${gustLabel}</span>`
+      : "";
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
@@ -978,7 +1016,8 @@ function toggleDailyExpand(item, d, w) {
     const summary = document.createElement("div");
     summary.className = "daily-expand";
     summary.style.gridTemplateColumns = "1fr";
-    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${Math.round(d.gustsMax ?? 0)} km/h · UV ${Math.round(d.uvMax ?? 0)}</span>`;
+    const precipBit = d.precip >= 0.5 ? ` · ${fmtPrecip(d.precip)} total` : "";
+    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}%${precipBit} · gust up to ${Math.round(d.gustsMax ?? 0)} km/h · UV ${Math.round(d.uvMax ?? 0)}</span>`;
     item.appendChild(summary);
     item.dataset.expanded = "true";
     return;
