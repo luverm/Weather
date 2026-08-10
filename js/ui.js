@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { buildPrecipOutlook, precipTimingPhrase } from "./precip-outlook.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -98,6 +99,14 @@ const el = {
   weekendIconSun: $("#weekend-icon-sun"),
   forecastTrack: $("#forecast-track"),
   dailyTrack: $("#daily-track"),
+  precipCard: $("#precip-outlook"),
+  precipHeadline: $("#precip-headline"),
+  precipTotal: $("#precip-total"),
+  precipTiming: $("#precip-timing"),
+  precipTrack: $("#precip-track"),
+  precipNote: $("#precip-note"),
+  precipPeak: $("#precip-peak"),
+  precipKindBadge: $("#precip-kind-badge"),
   nowcast: $("#nowcast"),
   nowcastHeadline: $("#nowcast-headline"),
   nowcastSub: $("#nowcast-sub"),
@@ -193,6 +202,7 @@ export const ui = {
     renderActivity(weather);
     renderAlerts(weather);
     renderWeekend(weather);
+    renderPrecipOutlook(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -213,6 +223,7 @@ export const ui = {
     renderMetrics(sampled);
     renderAdvice(sampled);
     highlightHour(highlightHourIndex);
+    highlightPrecipBar(highlightHourIndex);
     if (state.comfortStrip) state.comfortStrip.highlight(highlightHourIndex);
     if (state.chart && sampled._sampledTs != null) {
       state.chart.setCursor(sampled._sampledTs);
@@ -1001,6 +1012,114 @@ function toggleDailyExpand(item, d, w) {
   }).join("");
   item.appendChild(box);
   item.dataset.expanded = "true";
+}
+
+function precipKindIcon(kind) {
+  const common = 'fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"';
+  const cloud = `<path d="M7 14a4 4 0 010-8 5 5 0 019.9-1A4 4 0 0117 14H7z" ${common}/>`;
+  if (kind === "snow") {
+    return `<svg viewBox="0 0 24 24">${cloud}<path d="M9 18v2M12 17v3M15 18v2" ${common}/></svg>`;
+  }
+  if (kind === "mixed") {
+    return `<svg viewBox="0 0 24 24">${cloud}<path d="M9 17l-1 3M12 17v3M15 17l-1 3" ${common}/></svg>`;
+  }
+  if (kind === "dry") {
+    return `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" ${common}/><path d="M12 3v2M12 19v2M3 12h2M19 12h2" ${common}/></svg>`;
+  }
+  // rain (default)
+  return `<svg viewBox="0 0 24 24">${cloud}<path d="M9 17l-1 3M13 17l-1 3M17 17l-1 3" ${common}/></svg>`;
+}
+
+function fmtMm(mm) {
+  if (mm == null || isNaN(mm)) return "—";
+  if (mm < 0.05) return "0 mm";
+  if (mm < 1) return `${mm.toFixed(1)} mm`;
+  return `${mm.toFixed(mm < 10 ? 1 : 0)} mm`;
+}
+
+function renderPrecipOutlook(w) {
+  if (!el.precipCard) return;
+  const outlook = buildPrecipOutlook(w);
+  state.precipOutlook = outlook;
+
+  // Nothing meaningful to show if we have no hourly data at all.
+  if (!outlook.bars.length) {
+    el.precipCard.hidden = true;
+    return;
+  }
+  el.precipCard.hidden = false;
+  el.precipCard.dataset.kind = outlook.kind;
+
+  const kindLabel = {
+    rain: "Next 24 h · Rain",
+    snow: "Next 24 h · Snow",
+    mixed: "Next 24 h · Rain & snow",
+    dry: "Next 24 h · Dry",
+  }[outlook.kind] || "Next 24 hours";
+  el.precipHeadline.textContent = kindLabel;
+
+  if (outlook.kind === "dry") {
+    el.precipTotal.textContent = "No accumulation";
+    el.precipTiming.textContent = outlook.maxPop >= 30 ? `Peak chance ${outlook.maxPop}%` : "";
+    el.precipNote.textContent = outlook.dryReason || "";
+    el.precipPeak.textContent = "";
+  } else {
+    el.precipTotal.textContent = fmtMm(outlook.totalMm);
+    el.precipTiming.textContent = precipTimingPhrase(outlook);
+    el.precipNote.textContent =
+      outlook.wetHours <= 1
+        ? "One wet hour ahead"
+        : `${outlook.wetHours} wet hours in the next day`;
+    el.precipPeak.textContent = outlook.peak
+      ? `Peak ${fmtMm(outlook.peak.mm)} at ${fmtTime(outlook.peak.ts)}`
+      : "";
+  }
+
+  if (el.precipKindBadge) {
+    el.precipKindBadge.innerHTML = precipKindIcon(outlook.kind);
+  }
+
+  // Bars — heights log-scaled so drizzle is still visible against downpour.
+  el.precipTrack.innerHTML = "";
+  const maxMm = Math.max(0.5, ...outlook.bars.map((b) => b.mm));
+  const logMax = Math.log10(1 + maxMm);
+  outlook.bars.forEach((b, i) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "precip-bar";
+    btn.dataset.level = String(b.level);
+    btn.dataset.kind = b.kind;
+    if (b.level === 0 && b.pop >= 40) btn.dataset.pop = "high";
+    const frac = maxMm > 0 ? Math.log10(1 + b.mm) / logMax : 0;
+    // Reserve 4 px minimum so even zero bars leave a rhythm.
+    const h = 4 + frac * 32;
+    btn.style.setProperty("--h", `${h.toFixed(1)}px`);
+    btn.title = `${fmtTime(b.ts)} · ${fmtMm(b.mm)}${b.pop ? ` · ${b.pop}%` : ""}`;
+    btn.setAttribute("aria-label", btn.title);
+    btn.dataset.ts = String(b.ts);
+    btn.dataset.idx = String(i);
+    btn.addEventListener("click", () => state.handlers.onHourClick?.(b.ts));
+    el.precipTrack.appendChild(btn);
+  });
+
+  // Time ticks every 6 hours, positioned under the corresponding bar.
+  const barsCount = outlook.bars.length;
+  [0, 6, 12, 18].forEach((offset) => {
+    if (offset >= barsCount) return;
+    const tick = document.createElement("span");
+    tick.className = "precip-tick";
+    tick.textContent = fmtTime(outlook.bars[offset].ts);
+    // Center the tick under the bar (bars are 1fr each in a 24-col grid).
+    const percent = (offset / 24) * 100 + (1 / 24) * 50;
+    tick.style.left = `${percent.toFixed(2)}%`;
+    el.precipTrack.appendChild(tick);
+  });
+}
+
+function highlightPrecipBar(index) {
+  if (!el.precipTrack) return;
+  const bars = el.precipTrack.querySelectorAll(".precip-bar");
+  bars.forEach((b, i) => b.classList.toggle("active", i === index));
 }
 
 function renderNowcast(w) {

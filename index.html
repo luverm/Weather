@@ -403,6 +403,27 @@
         <div id="forecast-track" class="forecast-track"></div>
       </div>
 
+      <!-- 24-hour precipitation outlook -->
+      <div class="precip-outlook glass" id="precip-outlook" aria-label="24-hour precipitation outlook" hidden>
+        <div class="precip-head">
+          <div class="precip-title">
+            <span id="precip-kind-badge" class="precip-kind-badge" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M7 14a4 4 0 010-8 5 5 0 019.9-1A4 4 0 0117 14H7z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9 17l-1 3M13 17l-1 3M17 17l-1 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </span>
+            <div class="precip-title-text">
+              <span class="metric-label" id="precip-headline">Next 24 hours</span>
+              <strong id="precip-total">—</strong>
+            </div>
+          </div>
+          <span id="precip-timing" class="precip-timing"></span>
+        </div>
+        <div id="precip-track" class="precip-track" role="group"></div>
+        <div class="precip-foot">
+          <span id="precip-note" class="precip-note">—</span>
+          <span id="precip-peak" class="precip-peak"></span>
+        </div>
+      </div>
+
       <!-- 7-day forecast -->
       <div class="daily glass" aria-label="7-day forecast">
         <div class="forecast-heading">
