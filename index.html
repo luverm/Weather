@@ -160,6 +160,20 @@
         <div id="nowcast-bars" class="nowcast-bars" aria-hidden="true"></div>
       </div>
 
+      <!-- Hour-scale rain outlook (next 12 h). -->
+      <button id="rain-outlook" class="rain-outlook glass" type="button" hidden aria-label="Rain outlook — tap a cell to preview that hour">
+        <div class="rain-outlook-head">
+          <svg class="rain-outlook-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 15a4 4 0 010-8 5 5 0 019.9-1A4 4 0 0117 15H7z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          </svg>
+          <div class="rain-outlook-text">
+            <strong id="rain-outlook-headline">—</strong>
+            <span id="rain-outlook-sub">—</span>
+          </div>
+        </div>
+        <div id="rain-outlook-cells" class="rain-outlook-cells" aria-hidden="true"></div>
+      </button>
+
       <!-- Time scrubber -->
       <div class="scrubber glass" aria-label="Time scrubber">
         <div class="scrubber-head">

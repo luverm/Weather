@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { buildRainOutlook } from "./rain-outlook.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -102,6 +103,10 @@ const el = {
   nowcastHeadline: $("#nowcast-headline"),
   nowcastSub: $("#nowcast-sub"),
   nowcastBars: $("#nowcast-bars"),
+  rainOutlook: $("#rain-outlook"),
+  rainOutlookHeadline: $("#rain-outlook-headline"),
+  rainOutlookSub: $("#rain-outlook-sub"),
+  rainOutlookCells: $("#rain-outlook-cells"),
   searchInput: $("#search-input"),
   searchResults: $("#search-results"),
   locateBtn: $("#locate-btn"),
@@ -137,6 +142,7 @@ export const ui = {
     bindRefresh();
     bindSettings();
     bindTilt();
+    bindRainOutlook();
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
@@ -186,6 +192,7 @@ export const ui = {
     renderHourly(weather);
     renderDaily(weather);
     renderNowcast(weather);
+    renderRainOutlook(weather);
     renderAdvice(weather);
     renderPollen(weather.pollen);
     renderTrends(weather);
@@ -1035,6 +1042,51 @@ function renderNowcast(w) {
     el.nowcastBars.appendChild(bar);
   });
   el.nowcast.hidden = false;
+}
+
+function renderRainOutlook(w) {
+  if (!el.rainOutlook) return;
+  const outlook = buildRainOutlook(w);
+  if (!outlook) {
+    el.rainOutlook.hidden = true;
+    el.rainOutlookCells.innerHTML = "";
+    return;
+  }
+  el.rainOutlook.hidden = false;
+  el.rainOutlook.dataset.kind = outlook.kind;
+  el.rainOutlookHeadline.textContent = outlook.headline;
+  el.rainOutlookSub.textContent = outlook.sub;
+  if (outlook.ts != null) {
+    el.rainOutlook.dataset.ts = outlook.ts;
+    el.rainOutlook.setAttribute("title", `Jump to ${new Date(outlook.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })}`);
+  } else {
+    delete el.rainOutlook.dataset.ts;
+    el.rainOutlook.removeAttribute("title");
+  }
+  el.rainOutlookCells.innerHTML = "";
+  outlook.cells.forEach((cell, i) => {
+    const seg = document.createElement("span");
+    seg.className = `rain-outlook-cell ${cell.wet ? "wet" : "dry"}`;
+    // Bar height scales with probability; wet cells get a stronger min for legibility.
+    const heightPct = Math.max(cell.wet ? 24 : 8, cell.pop);
+    seg.style.setProperty("--h", `${heightPct}%`);
+    seg.dataset.ts = cell.time;
+    const label = new Date(cell.time).toLocaleTimeString([], { hour: "2-digit", hour12: false });
+    seg.setAttribute("title", `${label} · ${cell.pop}%${cell.precip ? ` · ${cell.precip.toFixed(1)} mm` : ""}`);
+    if (i === 0) seg.classList.add("now");
+    el.rainOutlookCells.appendChild(seg);
+  });
+}
+
+function bindRainOutlook() {
+  if (!el.rainOutlook || el.rainOutlook._bound) return;
+  el.rainOutlook._bound = true;
+  el.rainOutlook.addEventListener("click", (e) => {
+    const cell = e.target.closest(".rain-outlook-cell");
+    const ts = cell?.dataset.ts ?? el.rainOutlook.dataset.ts;
+    if (!ts) return;
+    state.handlers.onHourClick?.(Number(ts));
+  });
 }
 
 // ---------- Icons ----------
