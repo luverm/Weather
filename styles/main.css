@@ -977,6 +977,76 @@ kbd {
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
 
+.sun-quality {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 210, 160, 0.10),
+    rgba(255, 150, 120, 0.05) 60%,
+    rgba(180, 130, 210, 0.10)
+  );
+  border: 1px solid var(--stroke);
+  transition: background 500ms var(--ease), border-color 500ms var(--ease);
+}
+.sun-quality[data-tier="brilliant"] {
+  background: linear-gradient(90deg, rgba(255,180,110,0.22), rgba(255,120,120,0.18) 60%, rgba(190,110,220,0.20));
+  border-color: rgba(255,180,120,0.35);
+}
+.sun-quality[data-tier="great"] {
+  background: linear-gradient(90deg, rgba(255,200,140,0.18), rgba(255,150,130,0.12) 60%, rgba(190,140,220,0.15));
+  border-color: rgba(255,190,140,0.28);
+}
+.sun-quality[data-tier="muted"],
+.sun-quality[data-tier="grey"] {
+  background: rgba(160, 168, 190, 0.08);
+  border-color: rgba(160, 168, 190, 0.18);
+}
+.sun-quality-stars {
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 1px;
+  color: #ffd28c;
+  filter: drop-shadow(0 0 4px rgba(255, 200, 140, 0.5));
+}
+.sun-quality[data-tier="muted"] .sun-quality-stars,
+.sun-quality[data-tier="grey"] .sun-quality-stars {
+  color: var(--fg-dim);
+  filter: none;
+}
+.sun-quality-meta { display: grid; gap: 1px; min-width: 0; }
+.sun-quality-meta strong {
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.sun-quality-detail {
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sun-quality-score {
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #ffe0b8;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255, 210, 160, 0.10);
+}
+.sun-quality[data-tier="muted"] .sun-quality-score,
+.sun-quality[data-tier="grey"] .sun-quality-score {
+  color: var(--fg-dim);
+  background: rgba(255, 255, 255, 0.05);
+}
+
 /* ---------- Radar map ---------- */
 .radar {
   padding: 12px;

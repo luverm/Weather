@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { sunsetQuality } from "./sunset-quality.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -90,6 +91,11 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunQuality: $("#sun-quality"),
+  sunQualityStars: $("#sun-quality-stars"),
+  sunQualityLabel: $("#sun-quality-label"),
+  sunQualityDetail: $("#sun-quality-detail"),
+  sunQualityScore: $("#sun-quality-score"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -523,6 +529,37 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderSunQuality(w);
+}
+
+function renderSunQuality(w) {
+  if (!el.sunQuality) return;
+  const q = sunsetQuality(w);
+  if (!q) { el.sunQuality.hidden = true; return; }
+  el.sunQuality.hidden = false;
+  const tier = q.label.toLowerCase();
+  el.sunQuality.setAttribute("data-tier", tier);
+  const filled = "★".repeat(q.stars);
+  const empty = "☆".repeat(5 - q.stars);
+  el.sunQualityStars.textContent = filled + empty;
+  const kindLabel = q.kind === "sunrise" ? "Sunrise" : "Sunset";
+  el.sunQualityLabel.textContent = `${kindLabel} · ${q.label}`;
+  const parts = [];
+  const cloudBits = [
+    q.cloudLow  != null ? `low ${Math.round(q.cloudLow)}%`   : null,
+    q.cloudMid  != null ? `mid ${Math.round(q.cloudMid)}%`   : null,
+    q.cloudHigh != null ? `high ${Math.round(q.cloudHigh)}%` : null,
+  ].filter(Boolean);
+  if (cloudBits.length) parts.push(cloudBits.join(" · "));
+  else parts.push("Cloud data unavailable");
+  el.sunQualityDetail.textContent = parts.join(" · ");
+  el.sunQualityScore.textContent = q.score;
+  el.sunQuality.setAttribute(
+    "title",
+    `${kindLabel} at ${fmtTime(q.time)} · quality ${q.score}/100 (${q.label})`
+  );
+  el.sunQuality.setAttribute("aria-label",
+    `${kindLabel} quality ${q.score} out of 100, ${q.label}`);
 }
 
 function scheduleSunArc(w) {
