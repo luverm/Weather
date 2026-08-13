@@ -716,6 +716,7 @@ html[data-reduce-motion="true"] *::after {
   opacity: 0.55;
 }
 .legend-swatch.precip { background: rgba(154, 209, 255, 0.55); }
+.legend-swatch.cloud  { background: rgba(220, 230, 245, 0.55); border-radius: 3px; height: 4px; }
 
 .chart-wrap {
   position: relative;
@@ -773,6 +774,12 @@ html[data-reduce-motion="true"] *::after {
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
 }
+.chart-clouds rect {
+  fill: rgba(220, 230, 245, 0.85);
+  transition: opacity 200ms var(--ease);
+}
+[data-tone="bright"] .chart-clouds rect { fill: rgba(30, 50, 90, 0.7); }
+[data-tone="warm"]   .chart-clouds rect { fill: rgba(255, 240, 220, 0.85); }
 .chart-labels text {
   font-size: 9px;
   fill: var(--fg-dim);
@@ -975,6 +982,62 @@ kbd {
 #sun-arc-marker {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
+}
+
+/* ---------- Sunset color forecast pill ---------- */
+.sunset-preview {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  margin: 6px 0 -2px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.08));
+  border: 1px solid var(--stroke);
+  animation: fadeIn 280ms var(--ease);
+}
+.sunset-preview[hidden] { display: none; }
+.sunset-preview-swatch {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffe8c9, #ff9f5c 55%, transparent 78%);
+  box-shadow: 0 0 14px rgba(255,159,92,0.4);
+  flex: 0 0 auto;
+}
+.sunset-preview-text { display: grid; gap: 1px; min-width: 0; }
+.sunset-preview-label {
+  font-size: 12.5px; font-weight: 600; letter-spacing: 0.02em;
+  color: var(--fg);
+  text-transform: capitalize;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sunset-preview-detail {
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sunset-preview-score {
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px;
+  color: var(--fg-muted);
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--stroke);
+}
+.sunset-preview[data-tone="vivid"] .sunset-preview-score {
+  color: #fff; background: rgba(255,138,88,0.35); border-color: rgba(255,138,88,0.55);
+}
+.sunset-preview[data-tone="warm"]  .sunset-preview-score {
+  color: #fff; background: rgba(255,159,92,0.25); border-color: rgba(255,159,92,0.45);
+}
+.sunset-preview[data-tone="fair"]  .sunset-preview-score {
+  color: #ffe6b5; background: rgba(240,194,107,0.18); border-color: rgba(240,194,107,0.36);
+}
+.sunset-preview[data-tone="muted"] .sunset-preview-score,
+.sunset-preview[data-tone="grey"]  .sunset-preview-score {
+  color: var(--fg-muted);
 }
 
 /* ---------- Radar map ---------- */

@@ -139,9 +139,10 @@ export class HourlyChart {
       ? `<em>feels ${Math.round(feels)}°</em>` : "";
     const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
+    const clouds = h.cloudCover != null ? ` · ${Math.round(h.cloudCover)}% cloud` : "";
     this.popover.innerHTML =
       `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
-      `<em>${h.pop}% precip${wind}${hum}</em>`;
+      `<em>${h.pop}% precip${wind}${hum}${clouds}</em>`;
     this.popover.style.left = `${pxX.toFixed(1)}px`;
     this.popover.style.top = `${pxY.toFixed(1)}px`;
     this.popover.hidden = false;
@@ -221,6 +222,32 @@ export class HourlyChart {
         feelsLine.setAttribute("opacity", "0.55");
       } else {
         feelsLine.setAttribute("d", "");
+      }
+    }
+
+    // Cloud-cover ribbon along the top: opacity proportional to hourly cloud
+    // cover so users can spot clear windows at a glance.
+    const cloudG = this.svg.querySelector("#chart-clouds");
+    if (cloudG) {
+      cloudG.innerHTML = "";
+      const hasCloudData = this.hours.some((h) => h.cloudCover != null);
+      if (hasCloudData) {
+        const ribbonH = 6;
+        const ribbonY = 2;
+        const cellW = innerW / this.hours.length;
+        this.hours.forEach((h, i) => {
+          const cc = Math.max(0, Math.min(100, h.cloudCover ?? 0));
+          if (cc < 5) return;
+          const opacity = 0.12 + (cc / 100) * 0.55;
+          const x = PAD_LEFT + i * cellW;
+          const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+          r.setAttribute("x", x.toFixed(1));
+          r.setAttribute("y", ribbonY.toFixed(1));
+          r.setAttribute("width", (cellW + 0.4).toFixed(1));
+          r.setAttribute("height", String(ribbonH));
+          r.setAttribute("opacity", opacity.toFixed(2));
+          cloudG.appendChild(r);
+        });
       }
     }
 

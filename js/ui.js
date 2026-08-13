@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { forecastNextSunEvent } from "./sunset-forecast.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -90,6 +91,11 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunsetPreview: $("#sunset-preview"),
+  sunsetPreviewSwatch: $("#sunset-preview-swatch"),
+  sunsetPreviewLabel: $("#sunset-preview-label"),
+  sunsetPreviewDetail: $("#sunset-preview-detail"),
+  sunsetPreviewScore: $("#sunset-preview-score"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -523,6 +529,33 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderSunsetPreview(w);
+}
+
+function renderSunsetPreview(w) {
+  if (!el.sunsetPreview) return;
+  const preview = forecastNextSunEvent(w);
+  if (!preview) {
+    el.sunsetPreview.hidden = true;
+    return;
+  }
+  el.sunsetPreview.hidden = false;
+  el.sunsetPreview.dataset.tone = preview.tone;
+  el.sunsetPreview.setAttribute(
+    "title",
+    `${capitalize(preview.kind)} at ${fmtTime(preview.ts)} — clouds low ${fmtPct(preview.clouds.low)}, mid ${fmtPct(preview.clouds.mid)}, high ${fmtPct(preview.clouds.high)}`
+  );
+  el.sunsetPreviewSwatch.style.background =
+    `radial-gradient(circle at 35% 30%, #ffe8c9, ${preview.tint} 55%, transparent 78%)`;
+  el.sunsetPreviewSwatch.style.boxShadow = `0 0 14px ${preview.tint}66`;
+  el.sunsetPreviewLabel.textContent =
+    `${preview.label} ${preview.kind}`;
+  el.sunsetPreviewDetail.textContent = preview.detail;
+  el.sunsetPreviewScore.textContent = `${preview.score}`;
+}
+
+function fmtPct(v) {
+  return v == null ? "—" : `${Math.round(v)}%`;
 }
 
 function scheduleSunArc(w) {

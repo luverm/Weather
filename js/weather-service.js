@@ -84,6 +84,7 @@ export async function getWeather(lat, lon) {
       "wind_speed_10m", "wind_gusts_10m",
       "is_day", "uv_index", "pressure_msl",
       "relative_humidity_2m",
+      "cloud_cover", "cloud_cover_low", "cloud_cover_mid", "cloud_cover_high",
     ].join(","),
     daily: [
       "sunrise", "sunset",
@@ -146,6 +147,10 @@ function normalize(d, aq) {
         uv: d.hourly.uv_index?.[i] ?? null,
         pressure: d.hourly.pressure_msl?.[i] ?? null,
         humidity: d.hourly.relative_humidity_2m?.[i] ?? null,
+        cloudCover: d.hourly.cloud_cover?.[i] ?? null,
+        cloudLow: d.hourly.cloud_cover_low?.[i] ?? null,
+        cloudMid: d.hourly.cloud_cover_mid?.[i] ?? null,
+        cloudHigh: d.hourly.cloud_cover_high?.[i] ?? null,
         ...mapWmo(d.hourly.weather_code[i]),
       });
     }
@@ -373,6 +378,10 @@ function mock(lat, lon) {
       wind: 8 + Math.sin(i) * 3, gusts: 12 + Math.sin(i) * 4,
       isDay: (i + hour) % 24 >= 6 && (i + hour) % 24 < 19,
       uv: Math.max(0, Math.sin((i - 6) * Math.PI / 13) * 6),
+      cloudCover: 45 + Math.sin(i / 3) * 25,
+      cloudLow: 20 + Math.sin(i / 4) * 15,
+      cloudMid: 30 + Math.sin(i / 2) * 20,
+      cloudHigh: 25 + Math.cos(i / 3) * 15,
       condition: CONDITIONS.CLOUDS, label: "Cloudy",
     })),
     daily: Array.from({ length: 7 }, (_, i) => ({
