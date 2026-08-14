@@ -1345,9 +1345,16 @@ function renderRainSummary(days, timezone) {
     const h = p < 0.05 ? 0.8 : Math.max(1.5, norm * (H - PAD * 2));
     const y = H - PAD - h;
     const cls = i === peakIdx ? "rain-bar peak" : "rain-bar";
+    const label = i === 0 ? "Today" : i === 1 ? "Tomorrow"
+      : new Date(days[i].time).toLocaleDateString(undefined, {
+        weekday: "short",
+        ...(timezone && timezone !== "auto" ? { timeZone: timezone } : {}),
+      });
+    const tip = `${label}: ${fmt(p)}`;
     parts.push(
       `<rect class="${cls}" x="${x.toFixed(2)}" y="${y.toFixed(2)}" ` +
-      `width="${cellW.toFixed(2)}" height="${h.toFixed(2)}" rx="1"></rect>`
+      `width="${cellW.toFixed(2)}" height="${h.toFixed(2)}" rx="1">` +
+      `<title>${escapeHtml(tip)}</title></rect>`
     );
   });
   el.dailyPrecip.innerHTML = parts.join("");
