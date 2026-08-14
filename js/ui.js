@@ -528,9 +528,24 @@ function renderAirQuality(aq) {
   // Circumference of r=20 is ~125.66 — we use 126 in the SVG.
   const frac = Math.max(0, Math.min(1, (aq.aqi ?? 0) / 200));
   el.aqArc.setAttribute("stroke-dashoffset", String(126 * (1 - frac)));
+  const trendLabel = aqTrendDirection(aq);
   el.aqDetail.textContent =
-    `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
+    `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}${trendLabel}`;
   renderAqTrend(aq);
+}
+
+// Compare the last trend point vs the current AQI to describe direction.
+// Only reports when the delta is meaningful (>= 10 AQI) so the label
+// doesn't flip-flop on noise.
+function aqTrendDirection(aq) {
+  const t = aq?.trend;
+  if (!t || t.length < 3) return "";
+  const cur = aq.aqi != null ? aq.aqi : t[0]?.aqi;
+  const later = t[t.length - 1]?.aqi;
+  if (cur == null || later == null) return "";
+  const delta = later - cur;
+  if (Math.abs(delta) < 10) return " · steady";
+  return delta > 0 ? " · worsening" : " · improving";
 }
 
 function renderAqTrend(aq) {
