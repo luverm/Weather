@@ -362,12 +362,44 @@ function renderMetrics(w) {
       el.uvLevel.textContent = "";
     }
   }
-  if (w.uvPeak?.time) {
-    el.metricUVSub.textContent = `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`;
-  } else {
-    el.metricUVSub.textContent = "peak —";
-  }
+  el.metricUVSub.textContent = uvSubline(w);
   renderPressureSparkline(w);
+}
+
+// Prefer a protection-window read on the UV metric sub — the first and
+// last hour when UV crosses 3 (Moderate). Falls back to peak-only.
+function uvSubline(w) {
+  const window = uvProtectionWindow(w.hourly);
+  const peak = w.uvPeak;
+  if (window) {
+    const range = `${fmtTime(window.start)}–${fmtTime(window.end)}`;
+    return `protect ${range}`;
+  }
+  if (peak?.time && peak.value >= 1) {
+    return `peak ${Math.round(peak.value)} at ${fmtTime(peak.time)}`;
+  }
+  if (peak?.value != null && peak.value < 1) return "low UV all day";
+  return "peak —";
+}
+
+function uvProtectionWindow(hourly) {
+  if (!hourly?.length) return null;
+  const THRESHOLD = 3;
+  const now = Date.now();
+  const dayEnd = now + 18 * 3600_000;
+  let start = null, end = null;
+  for (const h of hourly) {
+    if (h.time > dayEnd) break;
+    if (h.uv == null) continue;
+    if (h.uv >= THRESHOLD) {
+      if (start == null) start = h.time;
+      end = h.time + 3600_000; // hour bucket ends at the top of next hour
+    }
+  }
+  if (start == null || end == null) return null;
+  // If the window is essentially over, don't render (past-only).
+  if (end < now) return null;
+  return { start, end };
 }
 
 function humidityComfort(rh, dew, temp) {
