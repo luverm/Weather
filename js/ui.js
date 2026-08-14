@@ -72,6 +72,9 @@ const el = {
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
+  rainSummary: $("#rain-summary"),
+  rainSummaryText: $("#rain-summary-text"),
+  dailyPrecip: $("#daily-precip"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -854,6 +857,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderRainSummary(days, w.timezone);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -958,6 +962,69 @@ function renderDailyDelta(days) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
   }
   el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
+}
+
+// Weekly rainfall visualization: bar chart of daily precip totals + a
+// summary chip highlighting the total and wettest day. Hidden when the
+// week is dry (< 0.2 mm total).
+function renderRainSummary(days, timezone) {
+  if (!el.rainSummary || !el.dailyPrecip || !el.rainSummaryText) return;
+  const precips = days.map((d) => Math.max(0, d.precip ?? 0));
+  const total = precips.reduce((a, b) => a + b, 0);
+
+  if (total < 0.2) {
+    el.rainSummary.hidden = true;
+    return;
+  }
+
+  // Wettest day.
+  let peakIdx = 0;
+  for (let i = 1; i < precips.length; i++) {
+    if (precips[i] > precips[peakIdx]) peakIdx = i;
+  }
+  const wetDays = precips.filter((p) => p >= 0.5).length;
+
+  const wetName = (() => {
+    if (peakIdx === 0) return "today";
+    if (peakIdx === 1) return "tomorrow";
+    const dt = new Date(days[peakIdx].time);
+    return dt.toLocaleDateString(undefined, {
+      weekday: "short",
+      ...(timezone && timezone !== "auto" ? { timeZone: timezone } : {}),
+    });
+  })();
+
+  const inches = state.unit === "F";
+  const fmt = (mm) => inches
+    ? `${(mm / 25.4).toFixed(mm >= 25.4 ? 1 : 2)} in`
+    : `${mm >= 10 ? Math.round(mm) : mm.toFixed(1)} mm`;
+
+  const daysWord = wetDays === 1 ? "day" : "days";
+  const wetPortion = wetDays >= 1 ? ` across ${wetDays} ${daysWord}` : "";
+  el.rainSummaryText.textContent =
+    `${fmt(total)} this week${wetPortion} · wettest ${wetName} (${fmt(precips[peakIdx])})`;
+
+  // Bar chart. 7 evenly-spaced columns in the 140x22 viewport, padding 2 px.
+  const W = 140, H = 22, PAD = 2, GAP = 2;
+  const cols = precips.length;
+  const cellW = (W - PAD * 2 - GAP * (cols - 1)) / cols;
+  const maxP = Math.max(...precips, 1);
+
+  const parts = [];
+  precips.forEach((p, i) => {
+    const x = PAD + i * (cellW + GAP);
+    const norm = p / maxP;
+    // Use a small floor so even trace amounts show a hairline bar.
+    const h = p < 0.05 ? 0.8 : Math.max(1.5, norm * (H - PAD * 2));
+    const y = H - PAD - h;
+    const cls = i === peakIdx ? "rain-bar peak" : "rain-bar";
+    parts.push(
+      `<rect class="${cls}" x="${x.toFixed(2)}" y="${y.toFixed(2)}" ` +
+      `width="${cellW.toFixed(2)}" height="${h.toFixed(2)}" rx="1"></rect>`
+    );
+  });
+  el.dailyPrecip.innerHTML = parts.join("");
+  el.rainSummary.hidden = false;
 }
 
 function toggleDailyExpand(item, d, w) {

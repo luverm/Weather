@@ -1421,6 +1421,52 @@ kbd {
 .daily-spark circle { transition: r 160ms var(--ease); }
 .daily-spark .dot-hi { fill: #ff9c7a; }
 .daily-spark .dot-lo { fill: #9ad1ff; }
+
+/* ---------- Weekly rain summary chip + bars (Round 22) ---------- */
+.rain-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  margin: 2px 6px 4px;
+  border-radius: 10px;
+  background: var(--glass);
+  color: var(--fg-muted);
+  font-size: 12px;
+  line-height: 1.3;
+  animation: fadeIn 260ms var(--ease);
+}
+.rain-summary[hidden] { display: none; }
+.rain-summary-icon {
+  display: inline-flex;
+  align-items: center;
+  color: #9ad1ff;
+  flex-shrink: 0;
+}
+.rain-summary-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.daily-precip {
+  width: 108px;
+  height: 22px;
+  flex-shrink: 0;
+  display: block;
+}
+.daily-precip .rain-bar {
+  fill: rgba(154, 209, 255, 0.55);
+  transition: fill 200ms var(--ease);
+}
+.daily-precip .rain-bar.peak {
+  fill: #6cb8ff;
+}
+@media (max-width: 640px) {
+  .daily-precip { width: 84px; }
+  .rain-summary { font-size: 11.5px; padding: 5px 10px; }
+}
 .forecast-track {
   display: grid;
   grid-auto-flow: column;
