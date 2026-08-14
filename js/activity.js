@@ -6,6 +6,7 @@
 const ICONS = {
   walk: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4" r="2"/><path d="M9 21l3-7 4 3 2-4M7 13l3-3 3 4"/></svg>',
   stars: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 4.5L18 9l-4.4 1.5L12 15l-1.6-4.5L6 9l4.4-1.5L12 3z"/><path d="M19 14l.7 1.8L21 17l-1.3.6L19 19l-.7-1.4L17 17l1.3-1.2z"/></svg>',
+  run: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="15" cy="4" r="2"/><path d="M6 22l4-5 3 2 4-6M8 12l4-3 3 3-2 4"/></svg>',
 };
 
 function tempScore(t) {
@@ -101,6 +102,25 @@ function avg(arr) {
   return xs.reduce((a, b) => a + b, 0) / xs.length;
 }
 
+// Running scores best on cooler, dry, low-wind hours — the comfy band
+// sits lower than for walking (12°C ideal, penalty steeper on the warm side).
+function runScore(h) {
+  if (!h) return 0;
+  const t = h.temp;
+  let tScore = 60;
+  if (t != null) {
+    const ideal = 12;
+    const dist = t - ideal;
+    tScore = dist >= 0
+      ? Math.max(0, 100 - dist * 6)       // hotter than 12 = punish
+      : Math.max(0, 100 - -dist * 4);      // cooler is less bad
+  }
+  const w = h.wind ?? 0;
+  const wScore = w <= 15 ? 100 : Math.max(0, 100 - (w - 15) * 4);
+  const p = precipScore(h.pop, h.precip);
+  return Math.round(tScore * 0.4 + wScore * 0.2 + p * 0.4 - uvPenalty(h.uv));
+}
+
 export function findActivityWindows(weather) {
   const hours = weather?.hourly || [];
   if (hours.length < 3) return [];
@@ -117,6 +137,26 @@ export function findActivityWindows(weather) {
       score: Math.round(walk.score),
       why: reasonsFor(walk, hours),
     });
+  }
+
+  // Running: 2h window; only surface when clearly different from the
+  // walk window OR when walking wasn't suggested at all.
+  const run = rollingPeak(hours, runScore, 2);
+  if (run && run.score >= 60) {
+    const walkStart = walk ? hours[walk.startIdx].time : null;
+    const overlap = walkStart != null
+      && Math.abs(walkStart - hours[run.startIdx].time) < 60 * 60 * 1000;
+    if (!overlap || !walk) {
+      out.push({
+        kind: "run",
+        icon: ICONS.run,
+        label: "Best for running",
+        start: hours[run.startIdx].time,
+        end: hours[run.endIdx].time + 60 * 60 * 1000,
+        score: Math.round(run.score),
+        why: reasonsFor(run, hours),
+      });
+    }
   }
 
   // Stargazing: 2h window.
