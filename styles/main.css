@@ -1676,6 +1676,16 @@ kbd {
 }
 .fetched-ago:empty { display: none; }
 .fetched-ago.stale { color: #ffb86b; }
+[data-offline="true"] .fetched-ago::before {
+  content: "offline · ";
+  color: #ff8a8a;
+  font-weight: 500;
+}
+[data-offline="true"] .live-dot {
+  background: #ff8a8a;
+  box-shadow: 0 0 8px rgba(255, 138, 138, 0.5);
+  animation: none;
+}
 
 #refresh-btn.spinning svg { animation: spin 700ms var(--ease) both; }
 @keyframes spin { from { transform: rotate(0) } to { transform: rotate(360deg) } }

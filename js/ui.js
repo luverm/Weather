@@ -207,6 +207,14 @@ export const ui = {
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
+    // Offline / mock-data indicator: mark the app root so CSS can style
+    // subtle badges (place-sub, fetched-ago). Toast once per boot so the
+    // user notices without being nagged on subsequent renders.
+    document.documentElement.dataset.offline = weather.offline ? "true" : "false";
+    if (weather.offline && !state._offlineNoticed) {
+      state._offlineNoticed = true;
+      ui.showToast("Offline — showing sample data");
+    }
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
