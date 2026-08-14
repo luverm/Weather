@@ -115,6 +115,16 @@ export function narrate(weather) {
     bits.push("Calm and settled for the next few hours.");
   }
 
+  // Condition change ahead — surface it if it lands within the next
+  // ~8 hours and isn't already implied by the rain/dry lines above.
+  if (bits.length < 2) {
+    const swap = nextConditionSwap(condition, weather.hourly);
+    if (swap && swap.inMin <= 8 * 60) {
+      const to = friendlyCondition(swap.to);
+      bits.push(`${capitalize(to)} moving in around ${fmtHour(swap.ts)}.`);
+    }
+  }
+
   // How long the current condition holds — helpful for "will it stay
   // this pleasant?" style questions. Only append when we have a fresh
   // slot AND the run is at least 2 h so it carries real signal.
@@ -138,6 +148,34 @@ function currentConditionRun(condition, hourly) {
     hrs++;
   }
   return hrs;
+}
+
+// Find the first upcoming hour whose condition differs from the current
+// one. Returns { ts, inMin, to } or null when the run holds through the
+// entire hourly window.
+function nextConditionSwap(condition, hourly) {
+  if (!hourly?.length) return null;
+  const now = Date.now();
+  for (const h of hourly) {
+    if (h.time <= now) continue;
+    if (h.condition !== condition) {
+      return { ts: h.time, inMin: Math.round((h.time - now) / 60_000), to: h.condition };
+    }
+  }
+  return null;
+}
+
+// Friendlier phrasing for the narrative than the internal condition ids.
+function friendlyCondition(c) {
+  switch (c) {
+    case "clear":  return "clear skies";
+    case "clouds": return "clouds";
+    case "rain":   return "rain";
+    case "snow":   return "snow";
+    case "storm":  return "storms";
+    case "fog":    return "fog";
+    default:       return c;
+  }
 }
 
 function capitalize(s) {
