@@ -288,5 +288,40 @@ export class HourlyChart {
       tTxt.textContent = `${Math.round(tVal)}°`;
       labG.appendChild(tTxt);
     });
+
+    // Peak / trough markers — highlight warmest and coldest hour in the
+    // 24 h window. Skipped for flat curves where the range is too small
+    // to be meaningful.
+    if (span >= 4) {
+      let hiIdx = 0, loIdx = 0;
+      for (let i = 1; i < this.hours.length; i++) {
+        if (this.hours[i].temp > this.hours[hiIdx].temp) hiIdx = i;
+        if (this.hours[i].temp < this.hours[loIdx].temp) loIdx = i;
+      }
+      if (hiIdx !== loIdx) {
+        const markExtreme = (i, kind) => {
+          const p = this.points[i];
+          if (!p) return;
+          const t = unit === "F"
+            ? this.hours[i].temp * 9 / 5 + 32
+            : this.hours[i].temp;
+          const ring = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          ring.setAttribute("cx", p.x.toFixed(1));
+          ring.setAttribute("cy", p.y.toFixed(1));
+          ring.setAttribute("r", "4");
+          ring.setAttribute("class", `chart-extreme ${kind}`);
+          labG.appendChild(ring);
+          const lab = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          lab.setAttribute("x", p.x.toFixed(1));
+          lab.setAttribute("y", (kind === "hi" ? p.y - 10 : p.y + 14).toFixed(1));
+          lab.setAttribute("text-anchor", "middle");
+          lab.setAttribute("class", `chart-extreme-label ${kind}`);
+          lab.textContent = `${kind === "hi" ? "▲" : "▼"} ${Math.round(t)}°`;
+          labG.appendChild(lab);
+        };
+        markExtreme(hiIdx, "hi");
+        markExtreme(loIdx, "lo");
+      }
+    }
   }
 }
