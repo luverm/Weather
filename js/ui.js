@@ -652,6 +652,7 @@ function renderMoon(moon) {
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
   renderMoonNext(moon);
+  renderMoonSkyHint();
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
@@ -668,6 +669,25 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+}
+
+// Only relevant at night — during the day the moon-detail is trivia.
+// Reuses the .moon-next element by prefixing sky context to the string
+// it would otherwise carry alone.
+function renderMoonSkyHint() {
+  const w = state.weather;
+  if (!el.moonNext || !w || w.isDay) return;
+  const cc = w.cloudCover;
+  if (cc == null) return;
+  let sky = "";
+  if (cc <= 15) sky = "· clear skies";
+  else if (cc <= 40) sky = "· mostly clear";
+  else if (cc <= 70) sky = "· partly cloudy";
+  else sky = "· overcast";
+  const base = el.moonNext.textContent || "";
+  if (base && !base.includes("·")) {
+    el.moonNext.textContent = `${base} ${sky}`;
+  }
 }
 
 // Show days until the next full or new moon — whichever is closer.
