@@ -144,11 +144,56 @@ export function buildAlerts(weather) {
     });
   }
 
+  // ---- Multi-day heat wave / cold snap ----
+  const daily = weather.daily || [];
+  const heatRun = longestRun(daily, (d) => d.tempMax != null && d.tempMax >= 30);
+  if (heatRun >= 3) {
+    out.push({
+      id: "heat-wave",
+      severity: heatRun >= 5 ? "danger" : "warn",
+      title: `Heat wave · ${heatRun} days`,
+      detail: `Highs stay at or above 30° for ${heatRun} consecutive days.`,
+    });
+  }
+  const coldRun = longestRun(daily, (d) => d.tempMin != null && d.tempMin <= -5);
+  if (coldRun >= 3) {
+    out.push({
+      id: "cold-snap",
+      severity: coldRun >= 5 ? "danger" : "warn",
+      title: `Cold snap · ${coldRun} days`,
+      detail: `Overnight lows stay at or below −5° for ${coldRun} consecutive days.`,
+    });
+  }
+
+  // ---- Sudden temperature swing (today → tomorrow) ----
+  if (today?.tempMax != null && tomorrow?.tempMax != null) {
+    const swing = tomorrow.tempMax - today.tempMax;
+    if (Math.abs(swing) >= 10) {
+      out.push({
+        id: "temp-swing",
+        severity: "info",
+        title: swing > 0 ? `Warm-up tomorrow · +${Math.round(swing)}°`
+                         : `Cool-down tomorrow · ${Math.round(swing)}°`,
+        detail: `Peak jumps from ${Math.round(today.tempMax)}° to ${Math.round(tomorrow.tempMax)}°.`,
+      });
+    }
+  }
+
   // De-dupe (if a daily heat triggers heat AND severe-heat, keep the worst).
   const SEV = { danger: 3, warn: 2, info: 1 };
   return dedupe(out)
     .sort((a, b) => (SEV[b.severity] ?? 0) - (SEV[a.severity] ?? 0))
     .slice(0, 4);
+}
+
+// Longest streak of consecutive items matching `pred`.
+function longestRun(items, pred) {
+  let best = 0, cur = 0;
+  for (const item of items) {
+    if (pred(item)) { cur++; if (cur > best) best = cur; }
+    else cur = 0;
+  }
+  return best;
 }
 
 function hottestHour(hours) {
