@@ -1533,6 +1533,7 @@ function showRecentsIfAny() {
 }
 
 function bindSearch() {
+  cyclePlaceholders();
   el.searchInput.addEventListener("input", (e) => {
     const v = e.target.value.trim();
     if (v.length < 2) {
@@ -1571,6 +1572,28 @@ function bindUnitToggle() {
     el.unitBtn.textContent = `°${state.unit}`;
     if (state.weather) ui.setWeather(state.weather);
   });
+}
+
+// Rotating example city in the search placeholder. Pauses when the
+// input is focused or has text so it doesn't distract mid-typing.
+const PLACEHOLDER_CITIES = [
+  "Kyoto", "Reykjavík", "Cape Town", "Buenos Aires", "Lisbon",
+  "Wellington", "Vancouver", "Marrakesh", "Ho Chi Minh City", "Oslo",
+  "San Francisco", "Athens", "Nairobi", "Melbourne", "Zurich",
+];
+function cyclePlaceholders() {
+  if (!el.searchInput) return;
+  let i = Math.floor((Date.now() / 1000) % PLACEHOLDER_CITIES.length);
+  const apply = () => {
+    if (document.activeElement === el.searchInput) return;
+    if (el.searchInput.value.length > 0) return;
+    el.searchInput.setAttribute(
+      "placeholder", `Try “${PLACEHOLDER_CITIES[i % PLACEHOLDER_CITIES.length]}”…`
+    );
+    i++;
+  };
+  apply();
+  setInterval(apply, 4500);
 }
 
 function bindLocate() {
