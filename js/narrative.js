@@ -115,5 +115,32 @@ export function narrate(weather) {
     bits.push("Calm and settled for the next few hours.");
   }
 
+  // How long the current condition holds — helpful for "will it stay
+  // this pleasant?" style questions. Only append when we have a fresh
+  // slot AND the run is at least 2 h so it carries real signal.
+  if (bits.length < 2) {
+    const runHrs = currentConditionRun(condition, weather.hourly);
+    if (runHrs >= 2 && runHrs <= 12) {
+      bits.push(`${capitalize(condition)} holds for about ${runHrs} more ${runHrs === 1 ? "hour" : "hours"}.`);
+    }
+  }
+
   return bits.slice(0, 2).join(" ");
+}
+
+function currentConditionRun(condition, hourly) {
+  if (!hourly?.length) return 0;
+  const now = Date.now();
+  let hrs = 0;
+  for (const h of hourly) {
+    if (h.time <= now) continue;
+    if (h.condition !== condition) break;
+    hrs++;
+  }
+  return hrs;
+}
+
+function capitalize(s) {
+  if (!s) return s;
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
