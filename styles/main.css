@@ -1626,7 +1626,18 @@ kbd {
   transition: background 200ms var(--ease);
 }
 .daily-item:hover { background: var(--glass); }
-.daily-day { font-size: 13px; font-weight: 500; }
+.daily-day { font-size: 13px; font-weight: 500; display: inline-flex; align-items: baseline; gap: 6px; }
+.daily-vs-today {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 1px 5px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+  background: rgba(255,255,255,0.08);
+  color: var(--fg-dim);
+}
+.daily-vs-today.warmer { background: rgba(255, 156, 122, 0.16); color: #ffb196; }
+.daily-vs-today.cooler { background: rgba(154, 209, 255, 0.16); color: #b8dcff; }
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
 .daily-range {
   position: relative;

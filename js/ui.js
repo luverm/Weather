@@ -1094,6 +1094,7 @@ function renderDaily(w) {
     if (d.tempMax > gMax) gMax = d.tempMax;
   }
   const span = Math.max(1, gMax - gMin);
+  const todayMax = days[0]?.tempMax;
   days.forEach((d, i) => {
     const dt = new Date(d.time);
     const tz = state.weather?.timezone;
@@ -1110,9 +1111,21 @@ function renderDaily(w) {
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
+    // Delta vs today (skip on today itself). Scale by unit; show only if >= 2°.
+    let deltaChip = "";
+    if (i > 0 && todayMax != null && d.tempMax != null) {
+      const rawDelta = d.tempMax - todayMax;
+      const deltaScaled = state.unit === "F" ? rawDelta * 9 / 5 : rawDelta;
+      const rounded = Math.round(deltaScaled);
+      if (Math.abs(rounded) >= 2) {
+        const cls = rounded > 0 ? "warmer" : "cooler";
+        const arrow = rounded > 0 ? "▲" : "▼";
+        deltaChip = `<span class="daily-vs-today ${cls}" title="vs today">${arrow}${Math.abs(rounded)}°</span>`;
+      }
+    }
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
     item.innerHTML = `
-      <span class="daily-day">${day}</span>
+      <span class="daily-day">${day}${deltaChip}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
