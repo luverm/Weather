@@ -215,7 +215,6 @@ export const ui = {
       state._offlineNoticed = true;
       ui.showToast("Offline — showing sample data");
     }
-    if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
       places.updateSummary(state.place, {
@@ -1020,9 +1019,28 @@ function renderPollen(pollen) {
   el.pollenLevel.textContent = pollen.level;
   el.pollenLevel.setAttribute("data-level", pollen.level);
   el.pollenDominant.textContent = `${pollen.dominant.label} dominant`;
-  el.pollenItems.innerHTML = pollen.items.map((p) =>
-    `<span>${escapeHtml(p.label)} ${p.value.toFixed(1)}</span>`
-  ).join("");
+  // Bars scale to a common ceiling so cross-item comparison is honest.
+  // 20 grains/m³ matches the "Very high" threshold in weather-service.
+  const CEIL = 20;
+  el.pollenItems.innerHTML = pollen.items.map((p) => {
+    const frac = Math.max(0.04, Math.min(1, p.value / CEIL));
+    const cls = pollenBarClass(p.value);
+    return `<span class="pollen-item">
+      <span class="pollen-item-label">${escapeHtml(p.label)}</span>
+      <span class="pollen-item-bar" role="presentation">
+        <span class="pollen-item-fill ${cls}" style="width:${(frac * 100).toFixed(0)}%"></span>
+      </span>
+      <span class="pollen-item-value">${p.value.toFixed(1)}</span>
+    </span>`;
+  }).join("");
+}
+
+function pollenBarClass(v) {
+  if (v == null) return "";
+  if (v < 0.5) return "lvl-low";
+  if (v < 5) return "lvl-mod";
+  if (v < 20) return "lvl-high";
+  return "lvl-vhigh";
 }
 
 function renderTrends(w) {

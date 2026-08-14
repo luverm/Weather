@@ -682,11 +682,38 @@ html[data-reduce-motion="true"] *::after {
 .pollen-level[data-level="Very high"] { background: rgba(255, 106, 106, 0.2); color: #ff9a9a; border-color: rgba(255, 106, 106, 0.35); }
 .pollen-meta strong { display: block; font-size: 14px; font-weight: 500; }
 .pollen-items {
-  display: flex; gap: 8px; flex-wrap: wrap;
-  margin-top: 3px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 4px;
+  margin-top: 4px;
   font-size: 11px; color: var(--fg-dim);
 }
 .pollen-items span { font-variant-numeric: tabular-nums; }
+.pollen-item {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
+.pollen-item-label { color: var(--fg-muted); }
+.pollen-item-value { font-size: 10.5px; color: var(--fg-dim); }
+.pollen-item-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+  position: relative;
+}
+.pollen-item-fill {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  transition: width 320ms var(--ease);
+}
+.pollen-item-fill.lvl-low   { background: #78d06a; }
+.pollen-item-fill.lvl-mod   { background: #ffd36a; }
+.pollen-item-fill.lvl-high  { background: #ff9f5c; }
+.pollen-item-fill.lvl-vhigh { background: #ff6a6a; }
 
 /* ---------- Advice ---------- */
 .advice {
