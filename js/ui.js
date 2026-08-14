@@ -1209,6 +1209,15 @@ function renderDaily(w) {
       }
     }
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const titleParts = [
+      d.label || d.condition,
+      `${Math.round(convertTemp(d.tempMin))}°–${Math.round(convertTemp(d.tempMax))}°`,
+      d.pop != null ? `${d.pop}% rain` : null,
+      d.precip > 0 ? `${d.precip.toFixed(d.precip >= 10 ? 0 : 1)} mm` : null,
+      d.gustsMax != null ? `gusts to ${Math.round(d.gustsMax)} km/h` : null,
+      d.uvMax != null ? `UV ${Math.round(d.uvMax)}` : null,
+    ].filter(Boolean);
+    item.title = titleParts.join(" · ");
     item.innerHTML = `
       <span class="daily-day">${day}${deltaChip}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
