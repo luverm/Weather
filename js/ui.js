@@ -20,6 +20,7 @@ const el = {
   placeSub: $("#place-sub"),
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
+  tempBand: $("#temp-band"),
   feelsLike: $("#feels-like"),
   feelsLikeText: $("#feels-like-text"),
   feelsReason: $("#feels-reason"),
@@ -293,6 +294,7 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = conditionLabelWithClouds(w);
+  renderTempBand(w);
   if (el.feelsLikeText) el.feelsLikeText.textContent = `Feels like ${Math.round(feels)}°`;
   else el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderFeelsReason(w);
@@ -301,6 +303,26 @@ function renderLiveValues(w, { animate = true } = {}) {
     el.heroInner.dataset.condition = w.condition || "";
     el.heroInner.dataset.daynight = w.isDay ? "day" : "night";
   }
+}
+
+// Colored comfort-band pill (Freezing / Cold / Cool / Mild / Warm / Hot /
+// Scorching) using the *actual* measured temperature — same value the
+// hero displays, so the pill and the number always agree.
+function renderTempBand(w) {
+  if (!el.tempBand) return;
+  const c = w.temp;
+  if (c == null) { el.tempBand.hidden = true; return; }
+  let label = "Mild", cls = "mild";
+  if (c <= -5)      { label = "Freezing";  cls = "freezing"; }
+  else if (c <= 5)  { label = "Cold";      cls = "cold"; }
+  else if (c <= 12) { label = "Cool";      cls = "cool"; }
+  else if (c <= 20) { label = "Mild";      cls = "mild"; }
+  else if (c <= 27) { label = "Warm";      cls = "warm"; }
+  else if (c <= 33) { label = "Hot";       cls = "hot"; }
+  else              { label = "Scorching"; cls = "scorching"; }
+  el.tempBand.textContent = label;
+  el.tempBand.className = `temp-band ${cls}`;
+  el.tempBand.hidden = false;
 }
 
 // Append a cloud-cover percentage to the condition label when the
