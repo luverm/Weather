@@ -47,6 +47,7 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonNext: $("#moon-next"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -590,6 +591,7 @@ function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  renderMoonNext(moon);
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
@@ -606,6 +608,31 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+}
+
+// Show days until the next full or new moon — whichever is closer.
+// Reflects the same 29.53-day synodic period used by weather-service's
+// computeMoonPhase. Silent if the target is the current phase (within a day).
+function renderMoonNext(moon) {
+  if (!el.moonNext || moon?.phase == null) return;
+  const CYCLE = 29.5305882;
+  const phase = moon.phase;
+  // Full is at 0.5, new at 0/1.
+  const toNew = phase <= 0.5 ? (1 - phase) : (1 - phase); // always cycles forward
+  const toFull = phase < 0.5 ? (0.5 - phase) : (1.5 - phase) % 1;
+  const daysToNew = toNew * CYCLE;
+  const daysToFull = toFull * CYCLE;
+  const [days, name] = daysToNew < daysToFull
+    ? [daysToNew, "new moon"]
+    : [daysToFull, "full moon"];
+  const rounded = Math.round(days);
+  if (rounded <= 0) {
+    el.moonNext.textContent = `${capitalize(name)} tonight`;
+  } else if (rounded === 1) {
+    el.moonNext.textContent = `${capitalize(name)} tomorrow`;
+  } else {
+    el.moonNext.textContent = `${capitalize(name)} in ${rounded} days`;
+  }
 }
 
 function fmtTime(ts) {
