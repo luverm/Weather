@@ -202,7 +202,15 @@ export function buildAlerts(weather) {
   // De-dupe (if a daily heat triggers heat AND severe-heat, keep the worst).
   const SEV = { danger: 3, warn: 2, info: 1 };
   return dedupe(out)
-    .sort((a, b) => (SEV[b.severity] ?? 0) - (SEV[a.severity] ?? 0))
+    .sort((a, b) => {
+      const sevDiff = (SEV[b.severity] ?? 0) - (SEV[a.severity] ?? 0);
+      if (sevDiff !== 0) return sevDiff;
+      // Within a severity tier, imminent events beat later ones. Alerts
+      // without a `ts` (running conditions) sort after time-bound ones.
+      const at = a.ts ?? Infinity;
+      const bt = b.ts ?? Infinity;
+      return at - bt;
+    })
     .slice(0, 4);
 }
 
