@@ -99,5 +99,17 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     });
   }
 
+  // 6. Weekly rain accumulation (skip when insignificant to keep the
+  // insights list from growing noisy on dry weeks).
+  if (days.length >= 3) {
+    const weekTotal = days.reduce((s, d) => s + (d.precip || 0), 0);
+    if (weekTotal >= 3) {
+      out.push({
+        icon: ICONS.rain, label: "Week rain",
+        value: `${weekTotal.toFixed(weekTotal >= 10 ? 0 : 1)} mm across ${days.length} days`,
+      });
+    }
+  }
+
   return out.slice(0, 6);
 }
