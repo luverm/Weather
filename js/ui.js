@@ -658,7 +658,8 @@ function scheduleGoldenHour(w) {
     const active = windows.find((wnd) => now >= wnd.start && now <= wnd.end);
     if (active) {
       const minsLeft = Math.max(1, Math.round((active.end - now) / 60_000));
-      el.goldenHourText.textContent = `Golden hour now · ${minsLeft} min left`;
+      const quality = active.kind === "evening" ? sunsetQualityTag(w) : "";
+      el.goldenHourText.textContent = `Golden hour now · ${minsLeft} min left${quality}`;
       el.goldenHour.dataset.state = "active";
       el.goldenHour.hidden = false;
       return;
@@ -672,12 +673,26 @@ function scheduleGoldenHour(w) {
       ? `${Math.floor(minsUntil / 60)}h ${minsUntil % 60}m`
       : `${minsUntil}m`;
     const rangeLabel = `${fmtTime(next.start)}–${fmtTime(next.end)}`;
-    el.goldenHourText.textContent = `Golden hour ${untilLabel} · ${rangeLabel}`;
+    // Only mention quality for the upcoming evening window (sunset).
+    const quality = (next.kind === "evening" && minsUntil <= 180)
+      ? sunsetQualityTag(w) : "";
+    el.goldenHourText.textContent = `Golden hour ${untilLabel} · ${rangeLabel}${quality}`;
     el.goldenHour.dataset.state = "upcoming";
     el.goldenHour.hidden = false;
   };
   update();
   state.goldenTimer = setInterval(update, 60_000);
+}
+
+// Photographers' rule of thumb: 30–70% mid/high cloud cover paints the
+// sky in the richest colors; 0% clears go pale; overcast just goes flat.
+function sunsetQualityTag(w) {
+  const cc = w.cloudCover;
+  if (cc == null) return "";
+  if (cc >= 30 && cc <= 70) return " · vivid";
+  if (cc < 15) return " · clear";
+  if (cc > 90) return " · overcast";
+  return "";
 }
 
 function scheduleSunArc(w) {
