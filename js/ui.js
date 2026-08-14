@@ -347,9 +347,13 @@ function renderMetrics(w) {
   el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
-  el.metricWindSub.textContent = dirLabel
-    ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
-    : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+  const gustStr = w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—";
+  const trend = windTrend(w);
+  const parts = [];
+  if (dirLabel) parts.push(dirLabel);
+  parts.push(`gust ${gustStr}`);
+  if (trend) parts.push(trend);
+  el.metricWindSub.textContent = parts.join(" · ");
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
@@ -395,6 +399,25 @@ function renderMetrics(w) {
   }
   el.metricUVSub.textContent = uvSubline(w);
   renderPressureSparkline(w);
+}
+
+// Wind trend for the next ~3 h vs current: 'picking up' / 'calming' /
+// null. Threshold is ~30% change so tiny fluctuations don't show noise.
+function windTrend(w) {
+  const cur = w.windSpeed;
+  const hours = w.hourly;
+  if (cur == null || !hours?.length) return null;
+  const now = Date.now();
+  const next = hours.filter((h) => h.time > now && h.time <= now + 3.5 * 3600_000);
+  if (next.length < 2) return null;
+  const winds = next.map((h) => h.wind).filter((v) => v != null);
+  if (winds.length < 2) return null;
+  const avg = winds.reduce((a, b) => a + b, 0) / winds.length;
+  if (cur < 1 && avg < 1) return null; // effectively calm both windows
+  const ratio = avg / Math.max(1, cur);
+  if (ratio > 1.3 && avg - cur >= 3) return "picking up";
+  if (ratio < 0.7 && cur - avg >= 3) return "calming";
+  return null;
 }
 
 // Prefer a protection-window read on the UV metric sub — the first and
