@@ -1045,7 +1045,24 @@ function renderHourly(w) {
 
 function highlightHour(index) {
   const items = el.forecastTrack.querySelectorAll(".forecast-item");
-  items.forEach((it, i) => it.classList.toggle("active", i === index));
+  let activeEl = null;
+  items.forEach((it, i) => {
+    const isActive = i === index;
+    it.classList.toggle("active", isActive);
+    if (isActive) activeEl = it;
+  });
+  // Bring the active hour into view — user is scrubbing, so they want to
+  // see whichever hour is under the cursor. Uses instant scroll (not
+  // smooth) because scrubbing fires often and smooth would lag behind.
+  if (activeEl && el.forecastTrack) {
+    const track = el.forecastTrack;
+    const itemRect = activeEl.getBoundingClientRect();
+    const trackRect = track.getBoundingClientRect();
+    if (itemRect.left < trackRect.left + 24 || itemRect.right > trackRect.right - 24) {
+      const offset = activeEl.offsetLeft - track.clientWidth / 2 + activeEl.clientWidth / 2;
+      track.scrollTo({ left: offset, behavior: "auto" });
+    }
+  }
 }
 
 function renderDaily(w) {
