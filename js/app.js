@@ -327,10 +327,15 @@ installShortcuts({
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
     engine.stop();
-  } else if (!app.reducedMotion) {
-    engine.start();
   } else {
-    engine.tickOnce();
+    if (!app.reducedMotion) engine.start();
+    else engine.tickOnce();
+    // Refresh on regained focus when data is >5 min old — user likely
+    // switched away and just came back, expecting fresh readings.
+    if (app.weather && clock.isLive()
+        && Date.now() - (app.weather.fetchedAt || 0) > 5 * 60_000) {
+      refreshWeather();
+    }
   }
 });
 
