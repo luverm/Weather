@@ -289,6 +289,10 @@ function renderLiveValues(w, { animate = true } = {}) {
   else el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderFeelsReason(w);
   renderDayRange(w);
+  if (el.heroInner) {
+    el.heroInner.dataset.condition = w.condition || "";
+    el.heroInner.dataset.daynight = w.isDay ? "day" : "night";
+  }
 }
 
 // Explain why perceived temp differs from measured. Only shows when the

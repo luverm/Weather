@@ -319,9 +319,18 @@ html[data-reduce-motion="true"] *::after {
   align-items: end;
   gap: 24px;
   transform: perspective(1200px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
-  transition: transform 400ms var(--ease);
+  transition: transform 400ms var(--ease), box-shadow 800ms var(--ease);
   will-change: transform;
 }
+/* Condition-aware ambient glow — subtle so the scene animation still leads.
+   Falls back to the default glass shadow when no condition is set. */
+.hero-inner[data-condition="rain"]  { box-shadow: 0 20px 60px -30px rgba(120, 170, 255, 0.55); }
+.hero-inner[data-condition="storm"] { box-shadow: 0 20px 60px -25px rgba(170, 120, 255, 0.60); }
+.hero-inner[data-condition="snow"]  { box-shadow: 0 20px 60px -30px rgba(220, 230, 255, 0.45); }
+.hero-inner[data-condition="fog"]   { box-shadow: 0 20px 60px -32px rgba(200, 200, 210, 0.42); }
+.hero-inner[data-condition="clear"][data-daynight="day"]   { box-shadow: 0 20px 60px -30px rgba(255, 200, 130, 0.50); }
+.hero-inner[data-condition="clear"][data-daynight="night"] { box-shadow: 0 20px 60px -30px rgba(110, 140, 220, 0.42); }
+.hero-inner[data-condition="clouds"]                       { box-shadow: 0 20px 60px -32px rgba(150, 170, 200, 0.38); }
 .place-label {
   margin: 0 0 6px;
   font-size: 12px;
