@@ -21,6 +21,8 @@ const el = {
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
+  feelsLikeText: $("#feels-like-text"),
+  feelsReason: $("#feels-reason"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -283,8 +285,37 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  if (el.feelsLikeText) el.feelsLikeText.textContent = `Feels like ${Math.round(feels)}°`;
+  else el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  renderFeelsReason(w);
   renderDayRange(w);
+}
+
+// Explain why perceived temp differs from measured. Only shows when the
+// gap is meaningful (>= 2°C) — otherwise the extra chip becomes noise.
+function renderFeelsReason(w) {
+  if (!el.feelsReason) return;
+  const t = w.temp, f = w.feelsLike;
+  if (t == null || f == null) { el.feelsReason.hidden = true; return; }
+  const delta = f - t;
+  if (Math.abs(delta) < 2) { el.feelsReason.hidden = true; return; }
+
+  let label = null, kind = null;
+  if (delta < 0) {
+    // Cooler than measured — usually wind chill or evaporative cooling.
+    if ((w.windSpeed ?? 0) >= 15) { label = "wind chill"; kind = "cold"; }
+    else if ((w.humidity ?? 50) < 30) { label = "dry air"; kind = "cold"; }
+    else { label = "chilly"; kind = "cold"; }
+  } else {
+    // Warmer than measured — humidity or direct sun.
+    if ((w.humidity ?? 0) >= 65 && t >= 20) { label = "humidity"; kind = "warm"; }
+    else if ((w.uv ?? 0) >= 6 && w.isDay) { label = "strong sun"; kind = "warm"; }
+    else if ((w.windSpeed ?? 20) < 8 && t >= 24) { label = "still air"; kind = "warm"; }
+    else { label = "muggy"; kind = "warm"; }
+  }
+  el.feelsReason.textContent = label;
+  el.feelsReason.dataset.kind = kind;
+  el.feelsReason.hidden = false;
 }
 
 function renderDayRange(w) {
