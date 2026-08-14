@@ -1193,13 +1193,30 @@ function renderNowcast(w) {
     return;
   }
   const inMin = Math.max(0, Math.round((first.time - Date.now()) / 60_000));
-  const kind = first.code >= 71 && first.code <= 86 ? "Snow" : "Rain";
+  const isSnow = first.code >= 71 && first.code <= 86;
+
+  // Find the peak within the nowcast window so we can classify intensity
+  // and tell the user when it hits hardest.
+  const peak = nowcast.reduce(
+    (best, n) => (n.precip > best.precip ? n : best),
+    { precip: 0, time: null }
+  );
+  // 15-min buckets → mm/h ≈ mm × 4.
+  const peakMmh = peak.precip * 4;
+  const intensity = precipIntensity(peakMmh, isSnow);
+  const kind = intensity ? `${intensity} ${isSnow ? "snow" : "rain"}` : (isSnow ? "Snow" : "Rain");
+
   el.nowcastHeadline.textContent = inMin === 0
-    ? `${kind} now`
-    : `${kind} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
-  // 2h outlook summary.
+    ? `${capitalize(kind)} now`
+    : `${capitalize(kind)} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
+
+  // 2h outlook summary — total + when it peaks (if not right now).
   const totalMm = nowcast.reduce((s, n) => s + (n.precip || 0), 0);
-  el.nowcastSub.textContent = `${totalMm.toFixed(1)} mm expected in the next 2 hours`;
+  const peakInMin = peak.time ? Math.round((peak.time - Date.now()) / 60_000) : null;
+  const peakLabel = (peakInMin != null && peakInMin > 5 && peakInMin < 120)
+    ? ` · peaks in ${peakInMin} min`
+    : "";
+  el.nowcastSub.textContent = `${totalMm.toFixed(1)} mm total, next 2 h${peakLabel}`;
   // Bars (time-labeled, clickable to scrub).
   el.nowcastBars.innerHTML = "";
   const slice = nowcast.slice(0, 8);
@@ -1216,6 +1233,23 @@ function renderNowcast(w) {
     el.nowcastBars.appendChild(bar);
   });
   el.nowcast.hidden = false;
+}
+
+// Classify peak precipitation intensity (mm/h) into a human descriptor.
+// Thresholds follow common meteorological conventions; snow gets slightly
+// lower cutoffs since equal mm accumulates faster as snowfall.
+function precipIntensity(mmh, isSnow) {
+  if (mmh < 0.4) return null; // too weak to mention
+  if (isSnow) {
+    if (mmh < 1) return "light";
+    if (mmh < 4) return "moderate";
+    return "heavy";
+  }
+  if (mmh < 1) return "drizzle";
+  if (mmh < 2.5) return "light";
+  if (mmh < 7.6) return "moderate";
+  if (mmh < 15) return "heavy";
+  return "downpour";
 }
 
 // ---------- Icons ----------
