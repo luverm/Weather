@@ -1051,9 +1051,29 @@ function renderDaily(w) {
 
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
-  el.dailyIconStrip.innerHTML = days.map((d) =>
-    `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
-  ).join("");
+  el.dailyIconStrip.innerHTML = days.map((d, i) => {
+    const title = escapeHtml(d.label || d.condition || "");
+    return `<button type="button" class="strip-day" data-i="${i}" `
+      + `title="${title}" aria-label="${title}">${iconFor(d.condition)}</button>`;
+  }).join("");
+  if (!el.dailyIconStrip._boundClick) {
+    el.dailyIconStrip.addEventListener("click", handleStripClick);
+    el.dailyIconStrip._boundClick = true;
+  }
+}
+
+function handleStripClick(e) {
+  const btn = e.target.closest?.(".strip-day");
+  if (!btn) return;
+  const i = Number(btn.dataset.i);
+  if (!Number.isFinite(i)) return;
+  const items = el.dailyTrack?.querySelectorAll(".daily-item");
+  const target = items?.[i];
+  if (!target) return;
+  target.click();
+  target.scrollIntoView({ behavior: "smooth", block: "center" });
+  target.classList.remove("strip-flash"); void target.offsetWidth;
+  target.classList.add("strip-flash");
 }
 
 function renderDailySpark(days) {
