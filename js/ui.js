@@ -1779,8 +1779,23 @@ function bindShare() {
       }
     }
 
+    // Local time at the shared place makes the summary self-dating —
+    // useful when the recipient is in a different timezone.
+    let localTime = "";
+    try {
+      if (w.timezone && w.timezone !== "auto") {
+        localTime = new Intl.DateTimeFormat(undefined, {
+          timeZone: w.timezone, hour: "2-digit", minute: "2-digit",
+          hour12: false, weekday: "short",
+        }).format(new Date());
+      }
+    } catch { /* ignore */ }
+    const header = localTime
+      ? `Aether · ${placeName} · ${localTime}`
+      : `Aether · ${placeName}`;
+
     const lines = [
-      `Aether · ${placeName}`,
+      header,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
       today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
       `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
