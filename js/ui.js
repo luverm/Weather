@@ -1582,6 +1582,33 @@ function bindShare() {
     const unit = state.unit;
     const t = (v) => `${Math.round(unit === "F" ? v * 9 / 5 + 32 : v)}°${unit}`;
     const today = w.daily?.[0];
+
+    // Weekly context — total rain and hottest/coldest days.
+    const week = (w.daily || []).slice(0, 7);
+    const weekRain = week.reduce((s, d) => s + (d.precip || 0), 0);
+    const rainLine = weekRain >= 1
+      ? `This week: ${weekRain.toFixed(weekRain >= 10 ? 0 : 1)} mm rain across ${
+          week.filter((d) => (d.precip || 0) >= 0.5).length} days`
+      : null;
+    let extremesLine = null;
+    if (week.length >= 3) {
+      const hottest = week.reduce((a, b) => (b.tempMax > a.tempMax ? b : a));
+      const coldest = week.reduce((a, b) => (b.tempMin < a.tempMin ? b : a));
+      if (hottest.tempMax != null && coldest.tempMin != null
+          && (hottest.tempMax - coldest.tempMin) >= 8) {
+        const dayName = (d) => {
+          const dt = new Date(d.time);
+          const idx = week.indexOf(d);
+          if (idx === 0) return "today";
+          if (idx === 1) return "tomorrow";
+          return dt.toLocaleDateString(undefined, { weekday: "short" });
+        };
+        extremesLine =
+          `Highs: ${t(hottest.tempMax)} ${dayName(hottest)} · ` +
+          `Lows: ${t(coldest.tempMin)} ${dayName(coldest)}`;
+      }
+    }
+
     const lines = [
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
@@ -1589,6 +1616,8 @@ function bindShare() {
       `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
+      rainLine,
+      extremesLine,
     ].filter(Boolean);
     const text = lines.join("\n");
     try {
