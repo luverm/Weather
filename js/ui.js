@@ -389,9 +389,7 @@ function renderMetrics(w) {
     }
   }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
-  el.metricPressureSub.textContent = w.visibility != null
-    ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
-    : "visibility —";
+  el.metricPressureSub.textContent = visibilitySubline(w.visibility);
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
@@ -404,6 +402,22 @@ function renderMetrics(w) {
   }
   el.metricUVSub.textContent = uvSubline(w);
   renderPressureSparkline(w);
+}
+
+// Visibility in metres → 'visibility X km · qualifier'. Qualifiers follow
+// standard meteorological banding (WMO): >10 km clear, 4–10 hazy,
+// 1–4 poor, <1 dense fog. Silent when no reading is available.
+function visibilitySubline(meters) {
+  if (meters == null) return "visibility —";
+  const km = meters / 1000;
+  const km1 = Math.round(km * 10) / 10;
+  let qual = "";
+  if (km >= 20) qual = "excellent";
+  else if (km >= 10) qual = "clear";
+  else if (km >= 4) qual = "hazy";
+  else if (km >= 1) qual = "poor";
+  else qual = "dense fog";
+  return `visibility ${km1} km · ${qual}`;
 }
 
 // Wind trend for the next ~3 h vs current: 'picking up' / 'calming' /
