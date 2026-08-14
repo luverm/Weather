@@ -293,7 +293,7 @@ function renderLiveValues(w, { animate = true } = {}) {
   const feels = convertTemp(w.feelsLike ?? w.temp);
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
-  el.conditionLabel.textContent = capitalize(w.label);
+  el.conditionLabel.textContent = conditionLabelWithClouds(w);
   if (el.feelsLikeText) el.feelsLikeText.textContent = `Feels like ${Math.round(feels)}°`;
   else el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderFeelsReason(w);
@@ -302,6 +302,23 @@ function renderLiveValues(w, { animate = true } = {}) {
     el.heroInner.dataset.condition = w.condition || "";
     el.heroInner.dataset.daynight = w.isDay ? "day" : "night";
   }
+}
+
+// Append a cloud-cover percentage to the condition label when the
+// reading is meaningful — helps distinguish 'Partly cloudy' at 30%
+// from 65%, both of which map to the same WMO bucket.
+function conditionLabelWithClouds(w) {
+  const base = capitalize(w.label);
+  const cc = w.cloudCover;
+  if (cc == null || w.condition === "rain" || w.condition === "storm"
+      || w.condition === "snow" || w.condition === "fog") return base;
+  if (cc <= 5) return `${base} · ${Math.round(cc)}% cloud`;
+  if (cc >= 95) return `${base} · ${Math.round(cc)}% cloud`;
+  // Only annotate the ambiguous "cloudy"/"partly cloudy" band.
+  if (w.condition === "clouds" || (w.condition === "clear" && cc >= 15)) {
+    return `${base} · ${Math.round(cc)}% cloud`;
+  }
+  return base;
 }
 
 // Explain why perceived temp differs from measured. Only shows when the
