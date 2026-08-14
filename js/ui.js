@@ -1131,6 +1131,17 @@ function renderHourly(w) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    const feels = h.feelsLike != null ? Math.round(convertTemp(h.feelsLike)) : null;
+    const tParts = [
+      fmtTime(h.time),
+      h.label || h.condition,
+      `${Math.round(convertTemp(h.temp))}°${feels != null && Math.abs(feels - Math.round(convertTemp(h.temp))) >= 1 ? ` (feels ${feels}°)` : ""}`,
+      `${h.pop}% rain`,
+      h.precip > 0.1 ? `${h.precip.toFixed(1)} mm` : null,
+      h.wind != null ? `wind ${Math.round(h.wind)} km/h` : null,
+      h.humidity != null ? `${Math.round(h.humidity)}% rh` : null,
+    ].filter(Boolean);
+    item.title = tParts.join(" · ");
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
