@@ -179,6 +179,26 @@ export function buildAlerts(weather) {
     }
   }
 
+  // ---- Dry spell / wet stretch across the daily forecast ----
+  const dryRun = longestRun(daily, (d) => (d.precip ?? 0) < 0.2);
+  if (dryRun >= 5) {
+    out.push({
+      id: "dry-spell",
+      severity: "info",
+      title: `${dryRun}-day dry spell`,
+      detail: "No meaningful rain in the forecast — water your plants.",
+    });
+  }
+  const wetRun = longestRun(daily, (d) => (d.precip ?? 0) >= 1);
+  if (wetRun >= 4) {
+    out.push({
+      id: "wet-stretch",
+      severity: "info",
+      title: `${wetRun}-day wet stretch`,
+      detail: "Rain expected on each of the next few days.",
+    });
+  }
+
   // De-dupe (if a daily heat triggers heat AND severe-heat, keep the worst).
   const SEV = { danger: 3, warn: 2, info: 1 };
   return dedupe(out)
