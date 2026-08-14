@@ -302,6 +302,8 @@ installShortcuts({
     if (app.weather) applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
   },
+  refresh: () => refreshWeather(),
+  share: () => document.getElementById("share-btn")?.click(),
 });
 
 // ---------- Start ----------
