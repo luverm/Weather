@@ -249,8 +249,16 @@ export const ui = {
   showToast(msg, dur = 2600) {
     el.toast.textContent = msg;
     el.toast.hidden = false;
+    el.toast.title = "Click to dismiss";
     clearTimeout(el.toast._t);
     el.toast._t = setTimeout(() => (el.toast.hidden = true), dur);
+    if (!el.toast._boundDismiss) {
+      el.toast.addEventListener("click", () => {
+        clearTimeout(el.toast._t);
+        el.toast.hidden = true;
+      });
+      el.toast._boundDismiss = true;
+    }
   },
   getUnit: () => state.unit,
 };
