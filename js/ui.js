@@ -557,18 +557,23 @@ function renderDaylightStrip(w) {
     const mins = Math.round(daylight[i] / 60_000);
     const hh = Math.floor(mins / 60);
     const mm = mins % 60;
-    const title = `${dayLabel(d.time, i)} · ${hh}h ${mm}m of daylight`;
+    const title = `${dayLabel(d.time, i)} · ${hh}h ${mm}m of daylight — click to jump to forecast`;
     return `
-      <div class="daylight-bar ${i === 0 ? "today" : ""}" title="${escapeHtml(title)}">
+      <button type="button" class="daylight-bar ${i === 0 ? "today" : ""}"
+              data-day-ts="${d.time}" title="${escapeHtml(title)}"
+              aria-label="${escapeHtml(title)}">
         <span class="daylight-bar-slot">
           <span class="daylight-bar-fill" style="height:${(frac * 100).toFixed(1)}%"></span>
         </span>
         <span class="daylight-bar-day">${escapeHtml(dayLabel(d.time, i))}</span>
-      </div>
+      </button>
     `;
   }).join("");
   el.daylightStrip.innerHTML = bars;
   el.daylightStrip.hidden = false;
+  el.daylightStrip.querySelectorAll(".daylight-bar").forEach((btn) => {
+    btn.addEventListener("click", () => focusDailyRow(btn.dataset.dayTs));
+  });
 
   // Delta: tomorrow vs today, signed minutes.
   const delta = daylight[1] - daylight[0];
@@ -950,6 +955,18 @@ function renderDaily(w) {
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+}
+
+function focusDailyRow(ts) {
+  if (!ts || !el.dailyTrack) return;
+  const target = el.dailyTrack.querySelector(`.daily-item[data-ts="${ts}"]`);
+  if (!target) return;
+  target.scrollIntoView({ behavior: "smooth", block: "center" });
+  target.classList.remove("flash");
+  // Force reflow so the animation restarts even on repeat clicks.
+  void target.offsetWidth;
+  target.classList.add("flash");
+  setTimeout(() => target.classList.remove("flash"), 1400);
 }
 
 function renderDailyIconStrip(days) {
