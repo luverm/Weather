@@ -1,11 +1,19 @@
 // Build a short natural-language summary from the weather data.
 // Picks the most noteworthy signal: rain arrival, cold snap, heat, wind, etc.
 
-function fmtHour(ts) {
-  const d = new Date(ts);
-  const m = d.getMinutes();
-  return `${d.getHours()}${m ? ":" + String(m).padStart(2, "0") : ""}${d.getHours() < 12 ? "am" : "pm"}`
-    .replace(/^(\d{1,2})/, (s) => (parseInt(s, 10) % 12 || 12));
+function fmtHour(ts, tz) {
+  const opts = { hour: "numeric", minute: "2-digit", hour12: true };
+  if (tz && tz !== "auto") opts.timeZone = tz;
+  try {
+    return new Intl.DateTimeFormat("en-US", opts).format(new Date(ts))
+      // Trim the space in "4:00 PM" and lowercase.
+      .replace(/\s?(AM|PM)/, (_, m) => m.toLowerCase())
+      // Drop ":00" for on-the-hour times ("4pm" reads better than "4:00pm").
+      .replace(/:00(?=[ap]m)/, "");
+  } catch {
+    const d = new Date(ts);
+    return `${d.getHours() % 12 || 12}${d.getHours() < 12 ? "am" : "pm"}`;
+  }
 }
 
 function findNextPrecip(nowcast, hourly) {
@@ -59,7 +67,8 @@ function findGusts(hourly) {
 export function narrate(weather) {
   if (!weather) return "";
   const bits = [];
-  const { condition, label, temp, feelsLike, uvPeak, windSpeed } = weather;
+  const { condition, label, temp, feelsLike, uvPeak, windSpeed, timezone } = weather;
+  const at = (ts) => fmtHour(ts, timezone);
 
   // Lead: describe current state.
   const feels = Math.abs((feelsLike ?? temp) - temp) >= 3
@@ -71,12 +80,12 @@ export function narrate(weather) {
   const rain = findNextPrecip(weather.nowcast, weather.hourly);
   if (rain && condition !== "rain" && condition !== "storm" && condition !== "snow") {
     if (rain.inMin <= 120) {
-      bits.push(`${rain.kind === "snow" ? "Snow" : "Rain"} starting around ${fmtHour(rain.ts)}.`);
+      bits.push(`${rain.kind === "snow" ? "Snow" : "Rain"} starting around ${at(rain.ts)}.`);
     }
   } else if (condition === "rain" || condition === "storm") {
     // If it's raining now, look ahead for when it stops.
     const dry = weather.hourly?.find((h) => h.pop < 30 && h.time > Date.now() + 30 * 60_000);
-    if (dry) bits.push(`Easing off by ${fmtHour(dry.time)}.`);
+    if (dry) bits.push(`Easing off by ${at(dry.time)}.`);
   }
 
   // Temperature swing.
@@ -84,20 +93,20 @@ export function narrate(weather) {
     const swing = findTempSwing(weather.hourly);
     if (swing) {
       bits.push(swing.kind === "drop"
-        ? `Temperature drops ${swing.by}° by ${fmtHour(swing.ts)}.`
-        : `Warming ${swing.by}° by ${fmtHour(swing.ts)}.`);
+        ? `Temperature drops ${swing.by}° by ${at(swing.ts)}.`
+        : `Warming ${swing.by}° by ${at(swing.ts)}.`);
     }
   }
 
   // Wind gusts.
   if (bits.length < 2) {
     const gust = findGusts(weather.hourly);
-    if (gust) bits.push(`Gusts up to ${gust.kmh} km/h around ${fmtHour(gust.ts)}.`);
+    if (gust) bits.push(`Gusts up to ${gust.kmh} km/h around ${at(gust.ts)}.`);
   }
 
   // UV warning.
   if (bits.length < 2 && uvPeak?.value >= 6) {
-    bits.push(`UV peaks at ${Math.round(uvPeak.value)} near ${fmtHour(uvPeak.time)}.`);
+    bits.push(`UV peaks at ${Math.round(uvPeak.value)} near ${at(uvPeak.time)}.`);
   }
 
   // Pressure trend narrative.
