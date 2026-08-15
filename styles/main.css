@@ -363,6 +363,7 @@ html[data-reduce-motion="true"] *::after {
   line-height: 1.55;
   color: var(--fg-muted);
 }
+.narrative:empty { display: none; }
 .temp-wrap { text-align: right; }
 .temp {
   display: inline-flex; align-items: flex-start; gap: 6px;
