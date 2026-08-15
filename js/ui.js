@@ -22,6 +22,8 @@ const el = {
   conditionLabel: $("#condition-label"),
   cloudCover: $("#cloud-cover"),
   feelsLike: $("#feels-like"),
+  feelsLikeText: $("#feels-like-text"),
+  feelsReason: $("#feels-reason"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -288,8 +290,27 @@ function renderLiveValues(w, { animate = true } = {}) {
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
   renderCloudCover(w);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  if (el.feelsLikeText) el.feelsLikeText.textContent = `Feels like ${Math.round(feels)}°`;
+  if (el.feelsReason) {
+    const reason = feelsReason(w);
+    if (reason) {
+      el.feelsReason.textContent = reason;
+      el.feelsReason.hidden = false;
+    } else {
+      el.feelsReason.hidden = true;
+      el.feelsReason.textContent = "";
+    }
+  }
   renderDayRange(w);
+}
+
+function feelsReason(w) {
+  if (w.temp == null || w.feelsLike == null) return null;
+  const diff = w.feelsLike - w.temp;
+  if (Math.abs(diff) < 2) return null;
+  if (diff < 0 && (w.windSpeed || 0) >= 15) return "wind chill";
+  if (diff > 0 && (w.humidity || 0) >= 65 && w.temp >= 22) return "heat index";
+  return null;
 }
 
 function renderCloudCover(w) {
