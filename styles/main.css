@@ -1724,6 +1724,10 @@ kbd {
   background: linear-gradient(180deg, rgba(30,45,90,0.4), rgba(50,90,170,0.32));
 }
 .forecast-item.wet .forecast-pop { color: #9ad1ff; opacity: 1; }
+.forecast-item.warm .forecast-icon { color: #ffbf82; }
+.forecast-item.cool .forecast-icon { color: #9ad1ff; }
+[data-tone="bright"] .forecast-item.warm .forecast-icon { color: #cf6a2b; }
+[data-tone="bright"] .forecast-item.cool .forecast-icon { color: #2b7dd1; }
 .forecast-item.night .forecast-time { color: rgba(255,255,255,0.55); }
 .forecast-item.night .forecast-icon { color: rgba(200,215,255,0.75); }
 [data-tone="bright"] .forecast-item.night {

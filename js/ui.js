@@ -1046,11 +1046,20 @@ function cardinal(deg) {
 
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
-  for (const h of (w.hourly || []).slice(0, 24)) {
+  const hours = (w.hourly || []).slice(0, 24);
+  // Derive a warm/cool tint per icon by comparing to today's temp median.
+  const temps = hours.map((h) => h.temp).filter((v) => v != null);
+  const mid = temps.length ? temps.reduce((a, b) => a + b, 0) / temps.length : null;
+  for (const h of hours) {
     const item = document.createElement("div");
     const classes = ["forecast-item"];
     if (h.isDay === false) classes.push("night");
     if ((h.pop ?? 0) >= 60) classes.push("wet");
+    if (mid != null && h.temp != null) {
+      const delta = h.temp - mid;
+      if (delta >= 3) classes.push("warm");
+      else if (delta <= -3) classes.push("cool");
+    }
     item.className = classes.join(" ");
     item.dataset.ts = h.time;
     item.innerHTML = `
