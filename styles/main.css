@@ -1457,8 +1457,14 @@ kbd {
 .alert-info    { color: #9ad1ff; }
 .alert-warn    { color: #ffb978; border-color: rgba(255,185,120,0.3); background: rgba(255,185,120,0.08); }
 .alert-warn:hover { background: rgba(255,185,120,0.14); }
-.alert-danger  { color: #ff8a8a; border-color: rgba(255,138,138,0.35); background: rgba(255,138,138,0.10); }
-.alert-danger:hover { background: rgba(255,138,138,0.16); }
+.alert-danger  {
+  color: #ff8a8a;
+  border-color: rgba(255,138,138,0.45);
+  background: rgba(255,138,138,0.12);
+  box-shadow: 0 0 12px rgba(255,110,110,0.28);
+}
+.alert-danger:hover { background: rgba(255,138,138,0.2); box-shadow: 0 0 16px rgba(255,110,110,0.4); }
+.alert-danger .alert-dot { box-shadow: 0 0 6px rgba(255,110,110,0.75); }
 
 @media (max-width: 720px) {
   .alert-pill .alert-detail { display: none; }
