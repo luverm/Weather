@@ -255,10 +255,15 @@
           </svg>
           <span id="m-pressure-sub" class="metric-sub">visibility —</span>
         </div>
-        <div class="metric glass">
+        <div class="metric glass metric-uv">
           <span class="metric-label">UV <span id="m-uv-level" class="trend" aria-hidden="true"></span></span>
           <span id="m-uv" class="metric-value">—</span>
           <span class="metric-unit">idx</span>
+          <svg id="uv-spark" class="pressure-spark uv-spark" viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true">
+            <path id="uv-spark-fill" fill="currentColor" fill-opacity="0.14"></path>
+            <path id="uv-spark-line" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"></path>
+            <circle id="uv-spark-peak" r="1.8" fill="currentColor"></circle>
+          </svg>
           <span id="m-uv-sub" class="metric-sub">peak —</span>
         </div>
       </div>

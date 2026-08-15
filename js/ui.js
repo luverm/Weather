@@ -69,6 +69,9 @@ const el = {
   pressureSparkFill: $("#pressure-spark-fill"),
   humiditySparkLine: $("#humidity-spark-line"),
   humiditySparkFill: $("#humidity-spark-fill"),
+  uvSparkLine: $("#uv-spark-line"),
+  uvSparkFill: $("#uv-spark-fill"),
+  uvSparkPeak: $("#uv-spark-peak"),
   dailySpark: $("#daily-spark"),
   dailyHi: $("#daily-hi"),
   dailyLo: $("#daily-lo"),
@@ -416,6 +419,36 @@ function renderPressureSparkline(w) {
     (w.hourly || []).map((h) => h.humidity).filter((v) => v != null).slice(0, 12),
     { minSpan: 10, fixedMin: 0, fixedMax: 100 }
   );
+  renderUvSparkline(w);
+}
+
+function renderUvSparkline(w) {
+  if (!el.uvSparkLine || !el.uvSparkFill) return;
+  const series = (w.hourly || []).map((h) => h.uv).filter((v) => v != null).slice(0, 24);
+  drawSparkline(
+    el.uvSparkLine, el.uvSparkFill, series,
+    { minSpan: 3, fixedMin: 0 },
+  );
+  // Place a peak marker so the UV bell curve gets a visible summit dot.
+  if (el.uvSparkPeak) {
+    if (series.length < 2) {
+      el.uvSparkPeak.setAttribute("cx", "-10");
+      el.uvSparkPeak.setAttribute("cy", "-10");
+      return;
+    }
+    let peakIdx = 0;
+    for (let i = 1; i < series.length; i++) {
+      if (series[i] > series[peakIdx]) peakIdx = i;
+    }
+    const max = Math.max(3, ...series);
+    const W = 100, H = 24, PAD = 1.5;
+    const innerW = W - PAD * 2;
+    const innerH = H - PAD * 2;
+    const cx = PAD + (peakIdx / (series.length - 1)) * innerW;
+    const cy = PAD + innerH - (series[peakIdx] / max) * innerH;
+    el.uvSparkPeak.setAttribute("cx", cx.toFixed(1));
+    el.uvSparkPeak.setAttribute("cy", cy.toFixed(1));
+  }
 }
 
 function drawSparkline(lineEl, fillEl, series, { minSpan = 1, fixedMin, fixedMax } = {}) {
