@@ -13,6 +13,22 @@ import { weekendSnapshot } from "./weekend.js";
 
 const $ = (sel) => document.querySelector(sel);
 
+// Countries that still use Fahrenheit as the default civilian scale.
+// Everyone else gets Celsius. Read once; the user can always toggle.
+const FAHRENHEIT_REGIONS = new Set(["US", "BS", "BZ", "KY", "LR", "PW", "FM", "MH"]);
+function defaultUnitFromLocale() {
+  try {
+    const locales = [navigator.language, ...(navigator.languages || [])];
+    for (const loc of locales) {
+      if (!loc) continue;
+      const region = loc.split(/[-_]/)[1]?.toUpperCase();
+      if (region && FAHRENHEIT_REGIONS.has(region)) return "F";
+      if (region) return "C";
+    }
+  } catch { /* ignore */ }
+  return "C";
+}
+
 const el = {
   temp: $("#temp-value"),
   unitBtn: $("#unit-toggle"),
@@ -128,7 +144,7 @@ const el = {
 };
 
 const state = {
-  unit: localStorage.getItem("aether:unit") || "C",
+  unit: localStorage.getItem("aether:unit") || defaultUnitFromLocale(),
   weather: null,
   place: null,
   sampledWeather: null, // the weather values at the current scrubber time
