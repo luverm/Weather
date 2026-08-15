@@ -104,6 +104,7 @@ const el = {
   weekendIconSun: $("#weekend-icon-sun"),
   forecastTrack: $("#forecast-track"),
   dailyTrack: $("#daily-track"),
+  dailyPrecipSummary: $("#daily-precip-summary"),
   nowcast: $("#nowcast"),
   nowcastHeadline: $("#nowcast-headline"),
   nowcastSub: $("#nowcast-sub"),
@@ -972,6 +973,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderDailyPrecipSummary(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1066,6 +1068,36 @@ function renderDailySpark(days) {
       el.dailySparkDots.appendChild(c);
     }
   });
+}
+
+function renderDailyPrecipSummary(days) {
+  if (!el.dailyPrecipSummary) return;
+  const withPrecip = days.filter((d) => d.precip != null);
+  if (withPrecip.length < 2) { el.dailyPrecipSummary.hidden = true; return; }
+  const total = withPrecip.reduce((s, d) => s + (d.precip || 0), 0);
+  // Find the wettest day (skip if all zero — dry week gets its own copy).
+  const wettest = withPrecip.reduce((best, d) =>
+    (d.precip || 0) > (best?.precip || -1) ? d : best, null);
+  const tz = state.weather?.timezone;
+  const dryDays = withPrecip.filter((d) => (d.precip || 0) < 0.2).length;
+  el.dailyPrecipSummary.hidden = false;
+  if (total < 0.5) {
+    el.dailyPrecipSummary.className = "daily-precip-summary dry";
+    el.dailyPrecipSummary.textContent =
+      `Dry week — barely any precipitation across the next ${withPrecip.length} days.`;
+    return;
+  }
+  const wetDay = new Date(wettest.time).toLocaleDateString(undefined, {
+    weekday: "long",
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  const totalStr = total < 10 ? total.toFixed(1) : Math.round(total).toString();
+  const wettestStr = wettest.precip < 10 ? wettest.precip.toFixed(1) : Math.round(wettest.precip).toString();
+  const parts = [`${totalStr} mm total`];
+  parts.push(`wettest ${wetDay} (${wettestStr} mm)`);
+  if (dryDays > 0) parts.push(`${dryDays} dry`);
+  el.dailyPrecipSummary.className = "daily-precip-summary";
+  el.dailyPrecipSummary.textContent = `This week · ${parts.join(" · ")}`;
 }
 
 function renderDailyDelta(days) {
