@@ -9,6 +9,18 @@ export function buildAlerts(weather) {
   const hours = (weather.hourly || []).slice(0, 24);
   const today = (weather.daily || [])[0];
   const tomorrow = (weather.daily || [])[1];
+  const tz = weather.timezone && weather.timezone !== "auto" ? weather.timezone : null;
+  const shortClock = (ts) => {
+    if (!ts) return "later";
+    if (tz) {
+      try {
+        return new Intl.DateTimeFormat(undefined, {
+          timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
+        }).format(new Date(ts));
+      } catch { /* fall through */ }
+    }
+    return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+  };
 
   // ---- Heat ----
   const hottest = hottestHour(hours);
@@ -197,12 +209,6 @@ function wettestRunningWindow(hours, span) {
     }
   }
   return best;
-}
-
-function shortClock(ts) {
-  if (!ts) return "later";
-  const d = new Date(ts);
-  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
 }
 
 function dedupe(items) {
