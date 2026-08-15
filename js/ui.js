@@ -951,11 +951,11 @@ function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
   for (const h of (w.hourly || []).slice(0, 24)) {
     const item = document.createElement("div");
-    item.className = "forecast-item";
+    item.className = `forecast-item ${h.isDay === false ? "night" : ""}`;
     item.dataset.ts = h.time;
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
-      <span class="forecast-icon">${iconFor(h.condition)}</span>
+      <span class="forecast-icon">${iconFor(h.isDay === false && h.condition === "clear" ? "night-clear" : h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
     `;
@@ -1268,6 +1268,8 @@ function iconFor(condition) {
   switch (condition) {
     case "clear":
       return `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" ${common}/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5" ${common}/></svg>`;
+    case "night-clear":
+      return `<svg viewBox="0 0 24 24"><path d="M20 15A8 8 0 019 4a8 8 0 1011 11z" ${common}/></svg>`;
     case "clouds":
       return `<svg viewBox="0 0 24 24"><path d="M7 17a4 4 0 010-8 5 5 0 019.9-1A4 4 0 0117 17H7z" ${common}/></svg>`;
     case "rain":
