@@ -1220,10 +1220,20 @@ function renderNowcast(w) {
     return;
   }
   const inMin = Math.max(0, Math.round((first.time - Date.now()) / 60_000));
-  const kind = first.code >= 71 && first.code <= 86 ? "Snow" : "Rain";
+  const isSnow = first.code >= 71 && first.code <= 86;
+  const kind = isSnow ? "snow" : "rain";
+  // Look at the busiest bucket in the outlook — the first drop can be a
+  // trace even when the front behind it is heavy.
+  const peakMm = Math.max(first.precip, ...nowcast.map((n) => n.precip || 0));
+  let qualifier = "";
+  if (peakMm >= 2.5) qualifier = "Heavy ";
+  else if (peakMm >= 0.8) qualifier = isSnow ? "Steady " : "Moderate ";
+  else if (peakMm < 0.2) qualifier = "Light ";
+  const head = `${qualifier}${kind}`;
+  const readable = head.charAt(0).toUpperCase() + head.slice(1);
   el.nowcastHeadline.textContent = inMin === 0
-    ? `${kind} now`
-    : `${kind} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
+    ? `${readable} now`
+    : `${readable} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
   // 2h outlook summary.
   const totalMm = nowcast.reduce((s, n) => s + (n.precip || 0), 0);
   el.nowcastSub.textContent = `${totalMm.toFixed(1)} mm expected in the next 2 hours`;
