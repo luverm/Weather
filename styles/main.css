@@ -1780,6 +1780,22 @@ kbd {
 .fetched-ago.stale { color: #ffb86b; }
 
 #refresh-btn.spinning svg { animation: spin 700ms var(--ease) both; }
+#refresh-btn.stale { color: #ffd39a; }
+#refresh-btn.stale::after {
+  content: "";
+  position: absolute; top: 5px; right: 5px;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #ff9c7a;
+  box-shadow: 0 0 6px rgba(255,156,122,0.75);
+  animation: stale-pulse 2.4s var(--ease) infinite;
+}
+#refresh-btn { position: relative; }
+[data-reduce-motion="true"] #refresh-btn.stale::after { animation: none; }
+@keyframes stale-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
 @keyframes spin { from { transform: rotate(0) } to { transform: rotate(360deg) } }
 @keyframes pulse {
   0%, 100% { opacity: 0.4; transform: scale(1); }
