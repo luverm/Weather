@@ -1755,6 +1755,13 @@ kbd {
   transition: background 200ms var(--ease);
 }
 .daily-item:hover { background: var(--glass); }
+.daily-expand-sun {
+  grid-column: 1 / -1;
+  padding: 4px 8px 6px;
+  font-size: 11.5px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+}
 .daily-item.today {
   position: relative;
   background: rgba(255,255,255,0.04);

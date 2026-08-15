@@ -1288,6 +1288,9 @@ function toggleDailyExpand(item, d, w) {
     item.dataset.expanded = "false";
     return;
   }
+  const sunLine = (d.sunrise && d.sunset)
+    ? `Sunrise ${fmtTime(d.sunrise)} · Sunset ${fmtTime(d.sunset)}`
+    : "";
   // Build mini hourly bars for the 12 daytime-ish hours of that day, if we
   // have them in the hourly series (only first 24h). Otherwise skip.
   const dayStart = new Date(d.time);
@@ -1299,7 +1302,13 @@ function toggleDailyExpand(item, d, w) {
     const summary = document.createElement("div");
     summary.className = "daily-expand";
     summary.style.gridTemplateColumns = "1fr";
-    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${Math.round(d.gustsMax ?? 0)} km/h · UV ${Math.round(d.uvMax ?? 0)}</span>`;
+    const bits = [
+      `Pop ${d.pop}% · gust up to ${Math.round(d.gustsMax ?? 0)} km/h · UV ${Math.round(d.uvMax ?? 0)}`,
+      sunLine,
+    ].filter(Boolean);
+    summary.innerHTML = bits.map((s) =>
+      `<span style="padding:6px 8px;color:var(--fg-dim);font-size:12px">${escapeHtml(s)}</span>`
+    ).join("");
     item.appendChild(summary);
     item.dataset.expanded = "true";
     return;
@@ -1317,10 +1326,16 @@ function toggleDailyExpand(item, d, w) {
     const pct = ((h.temp - tMin) / tSpan) * 100;
     const height = 10 + (pct / 100) * 36;
     const precipLevel = h.pop >= 60 ? 2 : h.pop >= 25 ? 1 : 0;
-    const hh = new Date(h.time).getHours().toString().padStart(2, "0");
-    return `<div class="daily-expand-bar" data-precip="${precipLevel}" style="height:${height.toFixed(1)}px" title="${hh}:00 · ${Math.round(convertTemp(h.temp))}° · ${h.pop}%"><span>${Math.round(convertTemp(h.temp))}°</span></div>`;
+    const hh = fmtTime(h.time);
+    return `<div class="daily-expand-bar" data-precip="${precipLevel}" style="height:${height.toFixed(1)}px" title="${hh} · ${Math.round(convertTemp(h.temp))}° · ${h.pop}%"><span>${Math.round(convertTemp(h.temp))}°</span></div>`;
   }).join("");
   item.appendChild(box);
+  if (sunLine) {
+    const sun = document.createElement("div");
+    sun.className = "daily-expand-sun";
+    sun.textContent = sunLine;
+    item.appendChild(sun);
+  }
   item.dataset.expanded = "true";
 }
 
