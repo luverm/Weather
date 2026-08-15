@@ -145,8 +145,24 @@ export class HourlyChart {
     this.popover.style.left = `${pxX.toFixed(1)}px`;
     this.popover.style.top = `${pxY.toFixed(1)}px`;
     this.popover.hidden = false;
-    // Next frame to allow transition.
-    requestAnimationFrame(() => this.popover.classList.add("show"));
+    // Next frame to allow transition + measure the actual width to clamp.
+    requestAnimationFrame(() => {
+      this.popover.classList.add("show");
+      const wrap = this.popover.parentElement;
+      if (!wrap) return;
+      const wRect = wrap.getBoundingClientRect();
+      const pRect = this.popover.getBoundingClientRect();
+      // CSS positions the popover with translate(-50%, -100%) — pxX is the
+      // anchor point, not the left edge. Convert to left/right bounds for
+      // the clamp, then compensate by shifting the anchor.
+      const halfW = pRect.width / 2;
+      const minAnchor = halfW + 4;
+      const maxAnchor = wRect.width - halfW - 4;
+      if (maxAnchor > minAnchor) {
+        const clamped = Math.max(minAnchor, Math.min(maxAnchor, pxX));
+        this.popover.style.left = `${clamped.toFixed(1)}px`;
+      }
+    });
   }
 
   _draw() {
