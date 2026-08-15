@@ -559,12 +559,28 @@ html[data-reduce-motion="true"] *::after {
 .scrubber-tick {
   position: absolute; top: 0; bottom: 0;
   transform: translateX(-50%);
-  width: 1px;
-  background: rgba(255,255,255,0.18);
+  width: 12px;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  pointer-events: auto;
+  color: inherit;
+  outline: none;
 }
-.scrubber-tick.major { background: rgba(255,255,255,0.32); }
-[data-tone="bright"] .scrubber-tick { background: rgba(15,20,40,0.18); }
-[data-tone="bright"] .scrubber-tick.major { background: rgba(15,20,40,0.35); }
+.scrubber-tick::before {
+  content: "";
+  position: absolute; left: 50%; top: 0; bottom: 0;
+  width: 1px;
+  transform: translateX(-50%);
+  background: rgba(255,255,255,0.18);
+  transition: background 180ms var(--ease), width 180ms var(--ease);
+}
+.scrubber-tick:hover::before { background: var(--accent); width: 2px; }
+.scrubber-tick:focus-visible::before { background: var(--accent); width: 2px; box-shadow: 0 0 0 2px rgba(255,255,255,0.15); }
+.scrubber-tick.major::before { background: rgba(255,255,255,0.32); }
+[data-tone="bright"] .scrubber-tick::before { background: rgba(15,20,40,0.18); }
+[data-tone="bright"] .scrubber-tick.major::before { background: rgba(15,20,40,0.35); }
 .scrubber-tick-label {
   position: absolute; top: 3px; left: 50%; transform: translateX(-50%);
   font-size: 8.5px; letter-spacing: 0.12em; text-transform: uppercase;

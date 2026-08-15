@@ -117,16 +117,25 @@ export class Scrubber {
     const totalMs = RANGE_HOURS * 3600_000;
     const pctFor = (offsetMs) => ((offsetMs + 3600_000) / totalMs) * 100;
     const ticks = [
-      { pct: pctFor(0),                label: "now",  major: true  },
-      { pct: pctFor(6 * 3600_000),     label: "+6h",  major: false },
-      { pct: pctFor(12 * 3600_000),    label: "+12h", major: true  },
-      { pct: pctFor(18 * 3600_000),    label: "+18h", major: false },
+      { pct: pctFor(0),                offsetMs: 0,               label: "now",  major: true  },
+      { pct: pctFor(6 * 3600_000),     offsetMs: 6 * 3600_000,    label: "+6h",  major: false },
+      { pct: pctFor(12 * 3600_000),    offsetMs: 12 * 3600_000,   label: "+12h", major: true  },
+      { pct: pctFor(18 * 3600_000),    offsetMs: 18 * 3600_000,   label: "+18h", major: false },
     ];
-    container.innerHTML = ticks.map((t) =>
-      `<span class="scrubber-tick ${t.major ? "major" : ""}" style="left:${t.pct.toFixed(2)}%">` +
+    container.innerHTML = ticks.map((t, i) =>
+      `<button type="button" class="scrubber-tick ${t.major ? "major" : ""}" ` +
+        `data-offset="${t.offsetMs}" title="Jump ${t.label}" ` +
+        `style="left:${t.pct.toFixed(2)}%">` +
         `<span class="scrubber-tick-label">${t.label}</span>` +
-      `</span>`
+      `</button>`
     ).join("");
+    container.querySelectorAll(".scrubber-tick").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const offset = parseInt(btn.dataset.offset, 10);
+        if (isFinite(offset)) this._setOffset(offset);
+      });
+    });
   }
 
   _updateFromEvent(e) {
