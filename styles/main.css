@@ -1150,8 +1150,14 @@ kbd {
 .daylight-bar.today .daylight-bar-fill {
   opacity: 1;
   box-shadow: 0 0 8px rgba(255,210,140,0.55);
+  animation: daylight-today-pulse 3.4s var(--ease) infinite;
 }
-.daylight-bar.today .daylight-bar-day { color: var(--fg); }
+.daylight-bar.today .daylight-bar-day { color: var(--fg); font-weight: 500; }
+@keyframes daylight-today-pulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(255,210,140,0.35); }
+  50%      { box-shadow: 0 0 14px rgba(255,210,140,0.75); }
+}
+[data-reduce-motion="true"] .daylight-bar.today .daylight-bar-fill { animation: none; }
 [data-tone="bright"] .daylight-bar-fill {
   background: linear-gradient(180deg, #ffbf7a, #f37a52);
 }
