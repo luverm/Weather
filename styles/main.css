@@ -1168,6 +1168,9 @@ kbd {
   animation: daylight-today-pulse 3.4s var(--ease) infinite;
 }
 .daylight-bar.today .daylight-bar-day { color: var(--fg); font-weight: 500; }
+.daylight-bar.weekend .daylight-bar-day { color: #c7b4ff; }
+.daylight-bar.weekend.today .daylight-bar-day { color: var(--fg); }
+[data-tone="bright"] .daylight-bar.weekend .daylight-bar-day { color: #6b46c8; }
 @keyframes daylight-today-pulse {
   0%, 100% { box-shadow: 0 0 6px rgba(255,210,140,0.35); }
   50%      { box-shadow: 0 0 14px rgba(255,210,140,0.75); }

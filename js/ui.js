@@ -676,6 +676,15 @@ function renderDaylightStrip(w) {
       ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
     }).slice(0, 2);
   };
+  const dowOf = (ts) => {
+    if (tz && tz !== "auto") {
+      try {
+        const parts = new Intl.DateTimeFormat("en-US", { timeZone: tz, weekday: "short" }).format(new Date(ts));
+        return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(parts);
+      } catch { /* fall through */ }
+    }
+    return new Date(ts).getDay();
+  };
   const bars = days.map((d, i) => {
     // Bars grow with daylight length; shortest is a small stub so the day
     // still reads as present. Range 20%..100% of the fill area.
@@ -684,8 +693,13 @@ function renderDaylightStrip(w) {
     const hh = Math.floor(mins / 60);
     const mm = mins % 60;
     const title = `${dayLabel(d.time, i)} · ${hh}h ${mm}m of daylight — click to jump to forecast`;
+    const dow = dowOf(d.time);
+    const isWeekend = dow === 0 || dow === 6;
+    const classes = ["daylight-bar"];
+    if (i === 0) classes.push("today");
+    if (isWeekend) classes.push("weekend");
     return `
-      <button type="button" class="daylight-bar ${i === 0 ? "today" : ""}"
+      <button type="button" class="${classes.join(" ")}"
               data-day-ts="${d.time}" title="${escapeHtml(title)}"
               aria-label="${escapeHtml(title)}">
         <span class="daylight-bar-slot">
