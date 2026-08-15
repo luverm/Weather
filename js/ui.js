@@ -692,7 +692,8 @@ function renderDaylightStrip(w) {
     const mins = Math.round(daylight[i] / 60_000);
     const hh = Math.floor(mins / 60);
     const mm = mins % 60;
-    const title = `${dayLabel(d.time, i)} · ${hh}h ${mm}m of daylight — click to jump to forecast`;
+    const title = `${dayLabel(d.time, i)} · ${hh}h ${mm}m of daylight ` +
+                  `(${fmtTime(d.sunrise)} → ${fmtTime(d.sunset)}) — click to jump to forecast`;
     const dow = dowOf(d.time);
     const isWeekend = dow === 0 || dow === 6;
     const classes = ["daylight-bar"];
