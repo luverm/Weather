@@ -208,8 +208,19 @@ export const ui = {
     renderPlaces();
   },
   setWeather(weather, { narrative } = {}) {
+    const prevFetchedAt = state.weather?.fetchedAt;
     state.weather = weather;
     state.sampledWeather = weather; // initially same as live
+    // If a fresher timestamp arrived, briefly flash the fetched-ago label.
+    if (el.fetchedAgo && weather.fetchedAt && weather.fetchedAt !== prevFetchedAt) {
+      el.fetchedAgo.classList.remove("just-fetched");
+      void el.fetchedAgo.offsetWidth;
+      el.fetchedAgo.classList.add("just-fetched");
+      clearTimeout(el.fetchedAgo._flash);
+      el.fetchedAgo._flash = setTimeout(
+        () => el.fetchedAgo.classList.remove("just-fetched"), 1600
+      );
+    }
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
