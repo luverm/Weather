@@ -885,6 +885,20 @@ html[data-reduce-motion="true"] *::after {
   font-variant-numeric: tabular-nums;
   pointer-events: none;
 }
+.chart-freeze .chart-freeze-line {
+  stroke: #9ad1ff;
+  stroke-width: 0.8;
+  stroke-dasharray: 4 3;
+  opacity: 0.55;
+  pointer-events: none;
+}
+.chart-freeze .chart-freeze-label {
+  font-size: 8.5px;
+  fill: #9ad1ff;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  opacity: 0.7;
+}
 .chart-extremes .extreme-dot { stroke: rgba(0,0,0,0.35); stroke-width: 0.6; pointer-events: none; }
 .chart-extremes .extreme-dot.hot  { fill: #ff9c7a; filter: drop-shadow(0 0 4px rgba(255,156,122,0.7)); }
 .chart-extremes .extreme-dot.cold { fill: #9ad1ff; filter: drop-shadow(0 0 4px rgba(154,209,255,0.7)); }

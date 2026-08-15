@@ -293,6 +293,31 @@ export class HourlyChart {
       });
     }
 
+    // Freezing line: only show when 0°C falls inside the chart's temp range —
+    // that's when the crossover point actually adds information.
+    const frG = this.svg.querySelector("#chart-freeze");
+    if (frG) {
+      frG.innerHTML = "";
+      if (tMin <= 0 && tMax >= 0) {
+        const y = tToY(0);
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", (PAD_LEFT + 2).toFixed(1));
+        line.setAttribute("x2", (W - PAD_RIGHT).toFixed(1));
+        line.setAttribute("y1", y.toFixed(1));
+        line.setAttribute("y2", y.toFixed(1));
+        line.setAttribute("class", "chart-freeze-line");
+        frG.appendChild(line);
+        const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        const uNow = this.getUnit();
+        label.setAttribute("x", (W - PAD_RIGHT - 2).toFixed(1));
+        label.setAttribute("y", (y - 3).toFixed(1));
+        label.setAttribute("text-anchor", "end");
+        label.setAttribute("class", "chart-freeze-label");
+        label.textContent = uNow === "F" ? "32°" : "0°";
+        frG.appendChild(label);
+      }
+    }
+
     // Extremes: mark today's warmest and coldest hour with labeled dots so the
     // temperature line's peaks are easy to spot without hovering.
     const exG = this.svg.querySelector("#chart-extremes");
