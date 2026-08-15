@@ -1709,6 +1709,13 @@ kbd {
 .forecast-item.night {
   background: rgba(8, 12, 30, 0.28);
 }
+.forecast-item.wet {
+  background: linear-gradient(180deg, rgba(80,130,220,0.10), rgba(80,130,220,0.22));
+}
+.forecast-item.wet.night {
+  background: linear-gradient(180deg, rgba(30,45,90,0.4), rgba(50,90,170,0.32));
+}
+.forecast-item.wet .forecast-pop { color: #9ad1ff; opacity: 1; }
 .forecast-item.night .forecast-time { color: rgba(255,255,255,0.55); }
 .forecast-item.night .forecast-icon { color: rgba(200,215,255,0.75); }
 [data-tone="bright"] .forecast-item.night {

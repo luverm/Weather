@@ -1034,7 +1034,10 @@ function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
   for (const h of (w.hourly || []).slice(0, 24)) {
     const item = document.createElement("div");
-    item.className = `forecast-item ${h.isDay === false ? "night" : ""}`;
+    const classes = ["forecast-item"];
+    if (h.isDay === false) classes.push("night");
+    if ((h.pop ?? 0) >= 60) classes.push("wet");
+    item.className = classes.join(" ");
     item.dataset.ts = h.time;
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
