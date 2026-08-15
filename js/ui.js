@@ -48,6 +48,8 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
+  daylightStrip: $("#daylight-strip"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -521,8 +523,65 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightStrip(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderDaylightStrip(w) {
+  if (!el.daylightStrip || !el.sunDaylightDelta) return;
+  const days = (w.daily || []).filter((d) => d.sunrise && d.sunset).slice(0, 7);
+  if (days.length < 2) {
+    el.daylightStrip.hidden = true;
+    el.daylightStrip.innerHTML = "";
+    el.sunDaylightDelta.textContent = "";
+    el.sunDaylightDelta.className = "sun-daylight-delta";
+    return;
+  }
+  const tz = state.weather?.timezone;
+  const daylight = days.map((d) => Math.max(0, d.sunset - d.sunrise));
+  const min = Math.min(...daylight);
+  const max = Math.max(...daylight);
+  const span = Math.max(60_000, max - min); // avoid divide-by-zero at equator
+  const dayLabel = (ts, i) => {
+    if (i === 0) return "Now";
+    return new Date(ts).toLocaleDateString(undefined, {
+      weekday: "short",
+      ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    }).slice(0, 2);
+  };
+  const bars = days.map((d, i) => {
+    // Bars grow with daylight length; shortest is a small stub so the day
+    // still reads as present. Range 20%..100% of the fill area.
+    const frac = 0.2 + 0.8 * ((daylight[i] - min) / span);
+    const mins = Math.round(daylight[i] / 60_000);
+    const hh = Math.floor(mins / 60);
+    const mm = mins % 60;
+    const title = `${dayLabel(d.time, i)} · ${hh}h ${mm}m of daylight`;
+    return `
+      <div class="daylight-bar ${i === 0 ? "today" : ""}" title="${escapeHtml(title)}">
+        <span class="daylight-bar-slot">
+          <span class="daylight-bar-fill" style="height:${(frac * 100).toFixed(1)}%"></span>
+        </span>
+        <span class="daylight-bar-day">${escapeHtml(dayLabel(d.time, i))}</span>
+      </div>
+    `;
+  }).join("");
+  el.daylightStrip.innerHTML = bars;
+  el.daylightStrip.hidden = false;
+
+  // Delta: tomorrow vs today, signed minutes.
+  const delta = daylight[1] - daylight[0];
+  const absMin = Math.round(Math.abs(delta) / 60_000);
+  if (absMin < 1) {
+    el.sunDaylightDelta.textContent = "same tomorrow";
+    el.sunDaylightDelta.className = "sun-daylight-delta";
+  } else {
+    const sign = delta > 0 ? "+" : "−";
+    const cls = delta > 0 ? "longer" : "shorter";
+    el.sunDaylightDelta.textContent = `${sign}${absMin}m tomorrow`;
+    el.sunDaylightDelta.className = `sun-daylight-delta ${cls}`;
+  }
 }
 
 function scheduleSunArc(w) {

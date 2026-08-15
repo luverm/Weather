@@ -977,6 +977,65 @@ kbd {
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
 
+/* 7-day daylight-length mini strip */
+.sun-daylight-delta {
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  margin-top: 1px;
+}
+.sun-daylight-delta.longer { color: #ffd39a; }
+.sun-daylight-delta.shorter { color: #9ad1ff; }
+.daylight-strip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--stroke);
+}
+.daylight-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  height: 44px;
+}
+.daylight-bar-slot {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.daylight-bar-fill {
+  width: 100%;
+  min-height: 2px;
+  border-radius: 3px 3px 1px 1px;
+  background: linear-gradient(180deg, #ffe6c7, #ff9c7a);
+  opacity: 0.55;
+  transition: opacity 320ms var(--ease), transform 320ms var(--ease);
+}
+.daylight-bar-day {
+  font-size: 9.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.daylight-bar.today .daylight-bar-fill {
+  opacity: 1;
+  box-shadow: 0 0 8px rgba(255,210,140,0.55);
+}
+.daylight-bar.today .daylight-bar-day { color: var(--fg); }
+[data-tone="bright"] .daylight-bar-fill {
+  background: linear-gradient(180deg, #ffbf7a, #f37a52);
+}
+[data-tone="warm"] .daylight-bar-fill {
+  background: linear-gradient(180deg, #fff1c9, #ff9c7a);
+}
+[data-reduce-motion="true"] .daylight-bar-fill { transition: none; }
+
 /* ---------- Radar map ---------- */
 .radar {
   padding: 12px;
