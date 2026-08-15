@@ -26,6 +26,7 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  dayRangeSwing: $("#day-range-swing"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -308,6 +309,26 @@ function renderDayRange(w) {
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+  renderSwing(hi - lo);
+}
+
+function renderSwing(spanC) {
+  if (!el.dayRangeSwing) return;
+  if (spanC == null || !isFinite(spanC) || spanC < 1) {
+    el.dayRangeSwing.hidden = true;
+    return;
+  }
+  // Show swing in the active unit — °F spans are 1.8x their °C twin.
+  const spanDisplay = state.unit === "F" ? spanC * 9 / 5 : spanC;
+  const roundedDisp = Math.round(spanDisplay);
+  let tone = "steady";
+  let label = "Steady";
+  // Compare on the °C scale so thresholds are unit-agnostic.
+  if (spanC >= 8) { tone = "big"; label = "Big swing"; }
+  else if (spanC >= 4) { tone = "moderate"; label = "Moderate swing"; }
+  el.dayRangeSwing.hidden = false;
+  el.dayRangeSwing.className = `day-range-swing ${tone}`;
+  el.dayRangeSwing.textContent = `${label} · ${roundedDisp}°`;
 }
 
 function renderMetrics(w) {
