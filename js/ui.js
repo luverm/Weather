@@ -20,6 +20,7 @@ const el = {
   placeSub: $("#place-sub"),
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
+  cloudCover: $("#cloud-cover"),
   feelsLike: $("#feels-like"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
@@ -286,8 +287,25 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
+  renderCloudCover(w);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+}
+
+function renderCloudCover(w) {
+  if (!el.cloudCover) return;
+  const cc = w.cloudCover;
+  if (cc == null || !isFinite(cc)) { el.cloudCover.hidden = true; return; }
+  // Only surface when it adds information: a mostly-clear or mostly-cloudy
+  // sky is already implied by the condition label.
+  if (cc <= 15 || cc >= 90) { el.cloudCover.hidden = true; return; }
+  const bucket =
+    cc < 30 ? "Few clouds" :
+    cc < 60 ? "Scattered clouds" :
+    cc < 80 ? "Broken clouds" :
+    "Mostly cloudy";
+  el.cloudCover.hidden = false;
+  el.cloudCover.textContent = `${bucket} · ${Math.round(cc)}% cover`;
 }
 
 function renderDayRange(w) {
