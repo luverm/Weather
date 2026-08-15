@@ -1231,13 +1231,20 @@ function renderNowcast(w) {
   el.nowcastBars.innerHTML = "";
   const slice = nowcast.slice(0, 8);
   const maxP = Math.max(0.5, ...slice.map((n) => n.precip || 0));
-  slice.forEach((n, i) => {
+  slice.forEach((n) => {
     const bar = document.createElement("button");
     bar.type = "button";
-    bar.className = "nowcast-bar";
-    bar.style.height = `${Math.max(2, (n.precip / maxP) * 28)}px`;
+    // Precip mm per 15 min bucket → four bands. Thresholds are for light,
+    // moderate, and heavy in the mm/15min scale (roughly 4x hourly).
+    const p = n.precip || 0;
+    let intensity = "trace";
+    if (p >= 2.5) intensity = "heavy";
+    else if (p >= 0.8) intensity = "moderate";
+    else if (p >= 0.2) intensity = "light";
+    bar.className = `nowcast-bar nowcast-${intensity}`;
+    bar.style.height = `${Math.max(2, (p / maxP) * 28)}px`;
     const mins = Math.round((n.time - Date.now()) / 60_000);
-    bar.title = `+${Math.max(0, mins)} min · ${n.precip.toFixed(1)} mm`;
+    bar.title = `+${Math.max(0, mins)} min · ${p.toFixed(1)} mm · ${intensity}`;
     bar.setAttribute("aria-label", bar.title);
     bar.addEventListener("click", () => state.handlers.onHourClick?.(n.time));
     el.nowcastBars.appendChild(bar);

@@ -478,6 +478,10 @@ html[data-reduce-motion="true"] *::after {
 }
 .nowcast-bars .nowcast-bar:hover { opacity: 1; transform: scaleY(1.1); }
 .nowcast-bars .nowcast-bar:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.nowcast-bars .nowcast-trace    { background: #6aa2ff; opacity: 0.55; }
+.nowcast-bars .nowcast-light    { background: #6aa2ff; }
+.nowcast-bars .nowcast-moderate { background: linear-gradient(180deg, #6aa2ff, #7f66d1); }
+.nowcast-bars .nowcast-heavy    { background: linear-gradient(180deg, #ff9c7a, #d13a3a); box-shadow: 0 0 5px rgba(255,90,60,0.55); }
 @keyframes slideInUp {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
