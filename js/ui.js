@@ -115,6 +115,8 @@ const el = {
   nowcastHeadline: $("#nowcast-headline"),
   nowcastSub: $("#nowcast-sub"),
   nowcastBars: $("#nowcast-bars"),
+  nowcastIconRain: $("#nowcast-icon-rain"),
+  nowcastIconSnow: $("#nowcast-icon-snow"),
   searchInput: $("#search-input"),
   searchResults: $("#search-results"),
   locateBtn: $("#locate-btn"),
@@ -1269,6 +1271,8 @@ function renderNowcast(w) {
   const inMin = Math.max(0, Math.round((first.time - Date.now()) / 60_000));
   const isSnow = first.code >= 71 && first.code <= 86;
   const kind = isSnow ? "snow" : "rain";
+  if (el.nowcastIconRain) el.nowcastIconRain.hidden = isSnow;
+  if (el.nowcastIconSnow) el.nowcastIconSnow.hidden = !isSnow;
   // Look at the busiest bucket in the outlook — the first drop can be a
   // trace even when the front behind it is heavy.
   const peakMm = Math.max(first.precip, ...nowcast.map((n) => n.precip || 0));
