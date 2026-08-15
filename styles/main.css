@@ -1529,6 +1529,34 @@ kbd {
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+/* When extremes are visible they take the auto margin instead. */
+.daily-extremes:not([hidden]) + .daily-delta { margin-left: 0; }
+.daily-extremes {
+  margin-left: auto;
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+.daily-extremes[hidden] { display: none; }
+.daily-extreme {
+  background: var(--glass);
+  border: 1px solid var(--stroke);
+  color: var(--fg-muted);
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  text-transform: none;
+  transition: transform 180ms var(--ease), background 180ms var(--ease);
+}
+.daily-extreme:hover { transform: translateY(-1px); background: var(--glass-strong); }
+.daily-extreme.hot  { color: #ffd39a; border-color: rgba(255,211,154,0.4); }
+.daily-extreme.cold { color: #9ad1ff; border-color: rgba(154,209,255,0.4); }
+.daily-extreme[hidden] { display: none; }
+[data-tone="bright"] .daily-extreme.hot  { color: #b8611e; }
+[data-tone="bright"] .daily-extreme.cold { color: #14649a; }
 .daily-precip-summary {
   margin-top: 10px;
   padding: 8px 12px;

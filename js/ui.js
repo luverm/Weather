@@ -78,6 +78,9 @@ const el = {
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
+  dailyExtremes: $("#daily-extremes"),
+  dailyHotChip: $("#daily-hot-chip"),
+  dailyColdChip: $("#daily-cold-chip"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -973,6 +976,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderDailyExtremes(days);
   renderDailyPrecipSummary(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
@@ -1068,6 +1072,48 @@ function renderDailySpark(days) {
       el.dailySparkDots.appendChild(c);
     }
   });
+}
+
+function renderDailyExtremes(days) {
+  if (!el.dailyExtremes || !el.dailyHotChip || !el.dailyColdChip) return;
+  const withHi = days.filter((d) => d.tempMax != null);
+  const withLo = days.filter((d) => d.tempMin != null);
+  if (withHi.length < 2 || withLo.length < 2) {
+    el.dailyExtremes.hidden = true;
+    return;
+  }
+  const hot = withHi.reduce((best, d) => d.tempMax > best.tempMax ? d : best);
+  const cold = withLo.reduce((best, d) => d.tempMin < best.tempMin ? d : best);
+  // Only surface a chip when its dimension actually varies across the week —
+  // otherwise "warmest = Sun" is just naming an arbitrary tie.
+  const hiSpread = hot.tempMax - Math.min(...withHi.map((d) => d.tempMax));
+  const loSpread = Math.max(...withLo.map((d) => d.tempMin)) - cold.tempMin;
+  const showHot = hiSpread >= 2;
+  const showCold = loSpread >= 2;
+  if (!showHot && !showCold) {
+    el.dailyExtremes.hidden = true;
+    return;
+  }
+  const tz = state.weather?.timezone;
+  const nameOf = (d) => new Date(d.time).toLocaleDateString(undefined, {
+    weekday: "short",
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  el.dailyExtremes.hidden = false;
+  el.dailyHotChip.hidden = !showHot;
+  el.dailyColdChip.hidden = !showCold;
+  if (showHot) {
+    el.dailyHotChip.textContent = `▲ ${nameOf(hot)} ${Math.round(convertTemp(hot.tempMax))}°`;
+    el.dailyHotChip.title = "Warmest day of the week — click to jump";
+    el.dailyHotChip.dataset.ts = hot.time;
+    el.dailyHotChip.onclick = () => focusDailyRow(hot.time);
+  }
+  if (showCold) {
+    el.dailyColdChip.textContent = `▼ ${nameOf(cold)} ${Math.round(convertTemp(cold.tempMin))}°`;
+    el.dailyColdChip.title = "Coldest day of the week — click to jump";
+    el.dailyColdChip.dataset.ts = cold.time;
+    el.dailyColdChip.onclick = () => focusDailyRow(cold.time);
+  }
 }
 
 function renderDailyPrecipSummary(days) {
