@@ -1,7 +1,7 @@
 // Simple service worker: cache the shell, network-first for everything else.
 // Bump CACHE_VERSION on any deploy that changes which files exist.
 
-const CACHE_VERSION = "aether-v20";
+const CACHE_VERSION = "aether-v21";
 const SHELL = [
   "./",
   "./index.html",
@@ -63,7 +63,9 @@ self.addEventListener("fetch", (event) => {
   if (url.origin === self.location.origin) {
     event.respondWith((async () => {
       const cache = await caches.open(CACHE_VERSION);
-      const cached = await cache.match(req);
+      // ignoreSearch so `/?lat=X&lon=Y` (deep-link) still matches the cached
+      // index.html shell — otherwise every unique query string would 404 offline.
+      const cached = await cache.match(req, { ignoreSearch: true });
       if (cached) {
         // Update in background.
         fetch(req).then((res) => { if (res.ok) cache.put(req, res.clone()); }).catch(() => {});

@@ -194,9 +194,43 @@ const scrubber = new Scrubber({
   },
 });
 
+// ---------- URL sync ----------
+// Persist the active place into the URL so bookmarks and shared links can
+// restore it. Lat/lon are the source of truth; the name is a hint.
+function syncUrl(place) {
+  if (!place) return;
+  try {
+    const p = new URLSearchParams();
+    p.set("lat", place.lat.toFixed(4));
+    p.set("lon", place.lon.toFixed(4));
+    if (place.name) p.set("name", place.name);
+    if (place.admin1) p.set("admin1", place.admin1);
+    if (place.country) p.set("country", place.country);
+    if (place.timezone) p.set("tz", place.timezone);
+    history.replaceState(null, "", `?${p.toString()}${location.hash}`);
+  } catch { /* ignore — non-fatal */ }
+}
+
+function placeFromUrl() {
+  try {
+    const p = new URLSearchParams(location.search);
+    const lat = parseFloat(p.get("lat"));
+    const lon = parseFloat(p.get("lon"));
+    if (!isFinite(lat) || !isFinite(lon)) return null;
+    return {
+      lat, lon,
+      name: p.get("name") || "Bookmarked location",
+      admin1: p.get("admin1") || undefined,
+      country: p.get("country") || undefined,
+      timezone: p.get("tz") || undefined,
+    };
+  } catch { return null; }
+}
+
 // ---------- Load flow ----------
 async function loadByCoords(place) {
   app.place = place;
+  syncUrl(place);
   ui.setPlace(place);
   ui.setLoading(`Fetching weather for ${place.name}…`);
 
@@ -306,6 +340,13 @@ installShortcuts({
 
 // ---------- Start ----------
 (async function init() {
+  // URL wins so a shared link always lands on the right place, even when the
+  // opener already has a different city saved.
+  const fromUrl = placeFromUrl();
+  if (fromUrl) {
+    await loadByCoords(fromUrl);
+    return;
+  }
   // Prefer the most recent saved place if we have one — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();
