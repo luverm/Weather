@@ -1027,7 +1027,7 @@ function renderDaily(w) {
   days.forEach((d, i) => {
     const dt = new Date(d.time);
     const tz = state.weather?.timezone;
-    const day = i === 0 ? "Today" : dt.toLocaleDateString(undefined, {
+    const day = i === 0 ? "Today" : i === 1 ? "Tomorrow" : dt.toLocaleDateString(undefined, {
       weekday: "short",
       ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
     });
