@@ -801,6 +801,19 @@ html[data-reduce-motion="true"] *::after {
   pointer-events: none;
   filter: drop-shadow(0 0 6px var(--accent));
 }
+.chart-yaxis .chart-yguide {
+  stroke: currentColor;
+  stroke-width: 0.5;
+  stroke-dasharray: 1.5 4;
+  opacity: 0.18;
+  pointer-events: none;
+}
+.chart-yaxis .chart-ytick {
+  font-size: 8.5px;
+  fill: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
 .chart-extremes .extreme-dot { stroke: rgba(0,0,0,0.35); stroke-width: 0.6; pointer-events: none; }
 .chart-extremes .extreme-dot.hot  { fill: #ff9c7a; filter: drop-shadow(0 0 4px rgba(255,156,122,0.7)); }
 .chart-extremes .extreme-dot.cold { fill: #9ad1ff; filter: drop-shadow(0 0 4px rgba(154,209,255,0.7)); }

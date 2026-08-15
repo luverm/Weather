@@ -264,6 +264,35 @@ export class HourlyChart {
       }
     }
 
+    // Y-axis references: three faint horizontal guides at min/mid/max of the
+    // temperature range, with tiny labels on the far left so absolute values
+    // are readable without hovering.
+    const yG = this.svg.querySelector("#chart-yaxis");
+    if (yG) {
+      yG.innerHTML = "";
+      const uNow = this.getUnit();
+      const conv = (t) => uNow === "F" ? t * 9 / 5 + 32 : t;
+      const marks = [tMax, (tMin + tMax) / 2, tMin];
+      marks.forEach((val, idx) => {
+        const y = tToY(val);
+        const guide = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        guide.setAttribute("x1", (PAD_LEFT + 2).toFixed(1));
+        guide.setAttribute("x2", (W - PAD_RIGHT).toFixed(1));
+        guide.setAttribute("y1", y.toFixed(1));
+        guide.setAttribute("y2", y.toFixed(1));
+        guide.setAttribute("class", "chart-yguide");
+        yG.appendChild(guide);
+        // Only label the min/max — the mid guide stays unlabeled to reduce noise.
+        if (idx === 1) return;
+        const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        label.setAttribute("x", (PAD_LEFT + 2).toFixed(1));
+        label.setAttribute("y", (y + (idx === 0 ? 9 : -3)).toFixed(1));
+        label.setAttribute("class", "chart-ytick");
+        label.textContent = `${Math.round(conv(val))}°`;
+        yG.appendChild(label);
+      });
+    }
+
     // Extremes: mark today's warmest and coldest hour with labeled dots so the
     // temperature line's peaks are easy to spot without hovering.
     const exG = this.svg.querySelector("#chart-extremes");
