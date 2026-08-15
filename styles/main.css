@@ -496,6 +496,10 @@ html[data-reduce-motion="true"] *::after {
 .nowcast-bars .nowcast-light    { background: #6aa2ff; }
 .nowcast-bars .nowcast-moderate { background: linear-gradient(180deg, #6aa2ff, #7f66d1); }
 .nowcast-bars .nowcast-heavy    { background: linear-gradient(180deg, #ff9c7a, #d13a3a); box-shadow: 0 0 5px rgba(255,90,60,0.55); }
+.nowcast-bars[data-kind="snow"] .nowcast-trace    { background: #d8e6ff; opacity: 0.55; }
+.nowcast-bars[data-kind="snow"] .nowcast-light    { background: #d8e6ff; }
+.nowcast-bars[data-kind="snow"] .nowcast-moderate { background: linear-gradient(180deg, #d8e6ff, #8f9cff); }
+.nowcast-bars[data-kind="snow"] .nowcast-heavy    { background: linear-gradient(180deg, #a4b8ff, #6b3fd1); box-shadow: 0 0 5px rgba(140,120,255,0.6); }
 @keyframes slideInUp {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }

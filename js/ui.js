@@ -1286,6 +1286,7 @@ function renderNowcast(w) {
   el.nowcastSub.textContent = `${totalMm.toFixed(1)} mm expected in the next 2 hours`;
   // Bars (time-labeled, clickable to scrub).
   el.nowcastBars.innerHTML = "";
+  el.nowcastBars.dataset.kind = isSnow ? "snow" : "rain";
   const slice = nowcast.slice(0, 8);
   const maxP = Math.max(0.5, ...slice.map((n) => n.precip || 0));
   slice.forEach((n) => {
