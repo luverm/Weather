@@ -801,6 +801,19 @@ html[data-reduce-motion="true"] *::after {
   pointer-events: none;
   filter: drop-shadow(0 0 6px var(--accent));
 }
+.chart-extremes .extreme-dot { stroke: rgba(0,0,0,0.35); stroke-width: 0.6; pointer-events: none; }
+.chart-extremes .extreme-dot.hot  { fill: #ff9c7a; filter: drop-shadow(0 0 4px rgba(255,156,122,0.7)); }
+.chart-extremes .extreme-dot.cold { fill: #9ad1ff; filter: drop-shadow(0 0 4px rgba(154,209,255,0.7)); }
+.chart-extremes .extreme-label {
+  font-size: 9px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+.chart-extremes .extreme-label.hot  { fill: #ffd0b8; }
+.chart-extremes .extreme-label.cold { fill: #b8dcff; }
+[data-tone="bright"] .chart-extremes .extreme-label.hot  { fill: #c44a1a; }
+[data-tone="bright"] .chart-extremes .extreme-label.cold { fill: #14649a; }
 
 /* ---------- Wind compass (inside wind metric) ---------- */
 .metric-wind {

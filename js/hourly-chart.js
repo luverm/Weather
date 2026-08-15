@@ -264,6 +264,47 @@ export class HourlyChart {
       }
     }
 
+    // Extremes: mark today's warmest and coldest hour with labeled dots so the
+    // temperature line's peaks are easy to spot without hovering.
+    const exG = this.svg.querySelector("#chart-extremes");
+    if (exG) {
+      exG.innerHTML = "";
+      if (this.hours.length >= 4) {
+        let hotIdx = 0, coldIdx = 0;
+        for (let i = 1; i < this.hours.length; i++) {
+          const t = this.hours[i].temp;
+          if (t == null) continue;
+          if (t > this.hours[hotIdx].temp) hotIdx = i;
+          if (t < this.hours[coldIdx].temp) coldIdx = i;
+        }
+        // Only draw both if they're distinct hours and the temp span is meaningful.
+        if (hotIdx !== coldIdx && (this.hours[hotIdx].temp - this.hours[coldIdx].temp) >= 2) {
+          const uNow = this.getUnit();
+          const conv = (t) => uNow === "F" ? t * 9 / 5 + 32 : t;
+          const addMarker = (i, kind) => {
+            const p = this.points[i];
+            const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            c.setAttribute("cx", p.x.toFixed(1));
+            c.setAttribute("cy", p.y.toFixed(1));
+            c.setAttribute("r", "3");
+            c.setAttribute("class", `extreme-dot ${kind}`);
+            exG.appendChild(c);
+            const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            const above = kind === "hot";
+            label.setAttribute("x", p.x.toFixed(1));
+            label.setAttribute("y", (p.y + (above ? -8 : 14)).toFixed(1));
+            label.setAttribute("text-anchor", "middle");
+            label.setAttribute("class", `extreme-label ${kind}`);
+            const hh = this._hourOf(this.hours[i].time);
+            label.textContent = `${Math.round(conv(this.hours[i].temp))}° · ${hh}`;
+            exG.appendChild(label);
+          };
+          addMarker(hotIdx, "hot");
+          addMarker(coldIdx, "cold");
+        }
+      }
+    }
+
     // Labels: every ~3 hours
     const unit = this.getUnit();
     const labG = this.svg.querySelector("#chart-labels");
