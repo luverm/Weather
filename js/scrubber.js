@@ -26,6 +26,7 @@ export class Scrubber {
     this.sunrise = null;
     this.sunset = null;
 
+    this._renderTicks();
     this._bind();
     // Keep the label updating while live (otherwise the clock would freeze
     // at the value it had when weather was last fetched).
@@ -106,6 +107,26 @@ export class Scrubber {
     this.appEl?.setAttribute("data-scrubbing", "false");
     this._render(this._currentT());
     this.onScrub?.(0);
+  }
+
+  _renderTicks() {
+    const container = this.track?.querySelector("#scrubber-ticks");
+    if (!container) return;
+    // Track spans [-1h .. +23h] from `start`. Anchor ticks by absolute offset
+    // so the "now" tick sits exactly where clock offset 0 lands.
+    const totalMs = RANGE_HOURS * 3600_000;
+    const pctFor = (offsetMs) => ((offsetMs + 3600_000) / totalMs) * 100;
+    const ticks = [
+      { pct: pctFor(0),                label: "now",  major: true  },
+      { pct: pctFor(6 * 3600_000),     label: "+6h",  major: false },
+      { pct: pctFor(12 * 3600_000),    label: "+12h", major: true  },
+      { pct: pctFor(18 * 3600_000),    label: "+18h", major: false },
+    ];
+    container.innerHTML = ticks.map((t) =>
+      `<span class="scrubber-tick ${t.major ? "major" : ""}" style="left:${t.pct.toFixed(2)}%">` +
+        `<span class="scrubber-tick-label">${t.label}</span>` +
+      `</span>`
+    ).join("");
   }
 
   _updateFromEvent(e) {

@@ -535,6 +535,22 @@ html[data-reduce-motion="true"] *::after {
   font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
   color: var(--fg-dim); white-space: nowrap;
 }
+.scrubber-ticks { position: absolute; inset: 0; pointer-events: none; }
+.scrubber-tick {
+  position: absolute; top: 0; bottom: 0;
+  transform: translateX(-50%);
+  width: 1px;
+  background: rgba(255,255,255,0.18);
+}
+.scrubber-tick.major { background: rgba(255,255,255,0.32); }
+[data-tone="bright"] .scrubber-tick { background: rgba(15,20,40,0.18); }
+[data-tone="bright"] .scrubber-tick.major { background: rgba(15,20,40,0.35); }
+.scrubber-tick-label {
+  position: absolute; top: 3px; left: 50%; transform: translateX(-50%);
+  font-size: 8.5px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--fg-dim); white-space: nowrap;
+  opacity: 0.75;
+}
 .scrubber-thumb {
   position: absolute; top: 50%; left: calc(var(--scrub) * 100%);
   transform: translate(-50%, -50%);
@@ -543,6 +559,7 @@ html[data-reduce-motion="true"] *::after {
   box-shadow: 0 0 0 1px rgba(255,255,255,0.3), 0 4px 14px rgba(0,0,0,0.4), 0 0 20px var(--accent);
   transition: left 120ms linear, transform 200ms var(--ease);
   pointer-events: none;
+  z-index: 2;
 }
 .scrubber-track:active .scrubber-thumb { transform: translate(-50%, -50%) scale(1.15); }
 
