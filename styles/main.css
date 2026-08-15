@@ -1074,6 +1074,12 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+.sun-arc-noon-label {
+  font-size: 6.5px;
+  fill: var(--fg-dim);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
 
 /* 7-day daylight-length mini strip */
 .sun-daylight-delta {

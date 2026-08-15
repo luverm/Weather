@@ -343,6 +343,11 @@
             <line x1="10" y1="74" x2="190" y2="74" stroke="var(--stroke)" stroke-dasharray="2 4"/>
             <path id="sun-arc-path" d="M10 74 Q100 -26 190 74"
                   fill="none" stroke="url(#sun-arc-grad)" stroke-width="1.5" stroke-linecap="round"/>
+            <g class="sun-arc-noon" aria-hidden="true">
+              <line x1="100" y1="18" x2="100" y2="30" stroke="var(--stroke)" stroke-width="1"/>
+              <circle cx="100" cy="24" r="1.6" fill="rgba(255,241,201,0.5)"/>
+              <text x="100" y="14" text-anchor="middle" class="sun-arc-noon-label">noon</text>
+            </g>
             <circle id="sun-arc-marker" cx="10" cy="74" r="4.5" fill="#fff1c9"/>
           </svg>
           <div class="sun-row">
