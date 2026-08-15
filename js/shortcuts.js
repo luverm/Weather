@@ -70,6 +70,13 @@ export function installShortcuts(handlers) {
     if (key === "ArrowRight") { handlers.nudge?.(1); e.preventDefault(); return; }
     if (key === "[") { handlers.cyclePlace?.(-1); e.preventDefault(); return; }
     if (key === "]") { handlers.cyclePlace?.(1); e.preventDefault(); return; }
+    // 1..4 jump to the scrubber ticks (now / +6h / +12h / +18h).
+    if (key >= "1" && key <= "4") {
+      const hours = [0, 6, 12, 18][parseInt(key, 10) - 1];
+      handlers.jumpTo?.(hours * 3600_000);
+      e.preventDefault();
+      return;
+    }
   });
 }
 

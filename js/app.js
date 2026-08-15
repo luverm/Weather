@@ -337,6 +337,12 @@ installShortcuts({
     if (app.weather) applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
   },
+  jumpTo: (offsetMs) => {
+    clock.setOffset(offsetMs);
+    scrubber.sync();
+    if (app.weather) applyScene(app.weather);
+    ui.setScrubbing(!clock.isLive());
+  },
 });
 
 // ---------- Start ----------
