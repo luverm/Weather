@@ -1750,6 +1750,9 @@ kbd {
   box-shadow: 0 0 6px rgba(255,156,122,0.5);
 }
 .daily-item.today .daily-day { color: var(--fg); font-weight: 600; }
+.daily-item.weekend .daily-day { color: #c7b4ff; }
+[data-tone="bright"] .daily-item.weekend .daily-day { color: #6b46c8; }
+.daily-item.weekend.today .daily-day { color: var(--fg); }
 .daily-item.flash {
   animation: daily-flash 1.4s var(--ease);
 }

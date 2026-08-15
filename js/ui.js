@@ -1041,10 +1041,23 @@ function renderDaily(w) {
       weekday: "short",
       ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
     });
+    // Sat=6, Sun=0. Read from the location's timezone so a Friday-night visit
+    // to Tokyo still treats their local Sat/Sun as the weekend.
+    let dow = dt.getDay();
+    if (tz && tz !== "auto") {
+      try {
+        const parts = new Intl.DateTimeFormat("en-US", { timeZone: tz, weekday: "short" }).format(dt);
+        dow = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(parts);
+      } catch { /* fall back to browser dow */ }
+    }
+    const isWeekend = dow === 0 || dow === 6;
     const left = ((d.tempMin - gMin) / span) * 100;
     const width = ((d.tempMax - d.tempMin) / span) * 100;
     const item = document.createElement("div");
-    item.className = i === 0 ? "daily-item today" : "daily-item";
+    const classes = ["daily-item"];
+    if (i === 0) classes.push("today");
+    if (isWeekend) classes.push("weekend");
+    item.className = classes.join(" ");
     item.dataset.ts = d.time;
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
