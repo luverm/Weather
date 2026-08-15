@@ -1667,6 +1667,20 @@ kbd {
   transition: background 200ms var(--ease);
 }
 .daily-item:hover { background: var(--glass); }
+.daily-item.today {
+  position: relative;
+  background: rgba(255,255,255,0.04);
+}
+.daily-item.today::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 6px; bottom: 6px;
+  width: 3px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #ffe6c7, #ff9c7a);
+  box-shadow: 0 0 6px rgba(255,156,122,0.5);
+}
+.daily-item.today .daily-day { color: var(--fg); font-weight: 600; }
 .daily-item.flash {
   animation: daily-flash 1.4s var(--ease);
 }
