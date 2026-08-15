@@ -617,6 +617,9 @@ function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  // Give near-full moons a glow so a full moon reads at a glance.
+  const svg = el.moonLit?.ownerSVGElement;
+  if (svg) svg.classList.toggle("full", moon.illum >= 0.88);
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;

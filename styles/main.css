@@ -1075,7 +1075,9 @@ kbd {
 }
 
 .moon-row, .sun-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
-.moon-svg { width: 48px; height: 48px; }
+.moon-svg { width: 48px; height: 48px; transition: filter 400ms var(--ease); }
+.moon-svg.full { filter: drop-shadow(0 0 8px rgba(255,241,201,0.6)); }
+[data-reduce-motion="true"] .moon-svg { transition: none; }
 .moon-meta strong { display: block; font-size: 14px; font-weight: 500; }
 .moon-detail { font-size: 11.5px; color: var(--fg-dim); }
 
