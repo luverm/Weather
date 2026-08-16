@@ -976,6 +976,82 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+.sun-arc-band {
+  stroke-linecap: round;
+  stroke-width: 3.2;
+  opacity: 0.75;
+  pointer-events: none;
+}
+.sun-arc-band-golden { stroke: rgba(255, 188, 108, 0.85); }
+.sun-arc-band-blue { stroke: rgba(120, 168, 232, 0.8); }
+.sun-arc-band.is-active {
+  opacity: 1;
+  filter: drop-shadow(0 0 5px currentColor);
+}
+
+/* ---------- Magic hour chip ---------- */
+.magic-hour-chip {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  background: linear-gradient(135deg,
+    rgba(255, 190, 120, 0.10),
+    rgba(255, 150, 90, 0.02) 60%,
+    rgba(0, 0, 0, 0));
+  color: inherit;
+  cursor: default;
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  font: inherit;
+  transition: background 260ms var(--ease), border-color 260ms var(--ease), transform 220ms var(--ease);
+}
+.magic-hour-chip[hidden] { display: none; }
+.magic-hour-swatch {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #fff1c9 0%, #ffbe6c 55%, #d2734b 100%);
+  box-shadow: 0 0 10px rgba(255, 190, 120, 0.55);
+}
+.magic-hour-text { display: grid; gap: 1px; min-width: 0; }
+.magic-hour-text strong {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--fg);
+}
+.magic-hour-text span {
+  font-size: 11px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+}
+.magic-hour-chip[data-kind="blue"] {
+  background: linear-gradient(135deg,
+    rgba(120, 168, 232, 0.14),
+    rgba(90, 120, 200, 0.03) 60%,
+    rgba(0, 0, 0, 0));
+}
+.magic-hour-chip[data-kind="blue"] .magic-hour-swatch {
+  background: radial-gradient(circle at 30% 30%, #cfe0ff 0%, #78a8e8 55%, #3c5a9c 100%);
+  box-shadow: 0 0 10px rgba(120, 168, 232, 0.55);
+}
+.magic-hour-chip[data-active="true"] {
+  border-color: rgba(255, 190, 120, 0.55);
+  animation: magic-hour-pulse 3.6s ease-in-out infinite;
+}
+.magic-hour-chip[data-active="true"][data-kind="blue"] {
+  border-color: rgba(120, 168, 232, 0.55);
+}
+@keyframes magic-hour-pulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(255,190,120,0); }
+  50%      { box-shadow: 0 0 18px rgba(255,190,120,0.22); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .magic-hour-chip[data-active="true"] { animation: none; }
+}
 
 /* ---------- Radar map ---------- */
 .radar {

@@ -90,6 +90,11 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcGoldenAm: $("#sun-arc-golden-am"),
+  sunArcGoldenPm: $("#sun-arc-golden-pm"),
+  magicChip: $("#magic-hour-chip"),
+  magicHeadline: $("#magic-hour-headline"),
+  magicDetail: $("#magic-hour-detail"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -122,6 +127,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  magicHourTimer: null,
   localTimer: null,
 };
 
@@ -523,6 +529,8 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderSunArcBands(w);
+  scheduleMagicHour(w);
 }
 
 function scheduleSunArc(w) {
@@ -559,6 +567,103 @@ function scheduleSunArc(w) {
 }
 
 function clamp01(v) { return Math.max(0, Math.min(1, v)); }
+
+// Sun arc bezier: (10,74) → (100,-26) → (190,74). Sample the sub-range [t0,t1]
+// as a polyline overlay so we can highlight golden-hour zones near sunrise/sunset.
+function bezierPathAlong(t0, t1, samples = 12) {
+  const bx = (t) => (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
+  const by = (t) => (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
+  const parts = [];
+  for (let i = 0; i <= samples; i++) {
+    const t = t0 + (t1 - t0) * (i / samples);
+    parts.push(`${i === 0 ? "M" : "L"}${bx(t).toFixed(2)} ${by(t).toFixed(2)}`);
+  }
+  return parts.join(" ");
+}
+
+function renderSunArcBands(w) {
+  if (!el.sunArcGoldenAm || !el.sunArcGoldenPm) return;
+  if (!w?.sunrise || !w?.sunset || w.sunset <= w.sunrise) {
+    el.sunArcGoldenAm.setAttribute("d", "");
+    el.sunArcGoldenPm.setAttribute("d", "");
+    return;
+  }
+  const dayLen = w.sunset - w.sunrise;
+  // "Golden hour" = the last ~60 min around sunrise / sunset, capped so it
+  // never eats more than 40 % of the arc on very short polar days.
+  const goldenMs = Math.min(60 * 60_000, dayLen * 0.4);
+  const gf = clamp01(goldenMs / dayLen);
+  el.sunArcGoldenAm.setAttribute("d", bezierPathAlong(0, gf));
+  el.sunArcGoldenPm.setAttribute("d", bezierPathAlong(1 - gf, 1));
+}
+
+const MAGIC_GOLDEN_MS = 60 * 60_000;
+const MAGIC_BLUE_MS = 20 * 60_000;
+
+function magicPhaseName(kind) {
+  return kind.startsWith("blue") ? "Blue hour" : "Golden hour";
+}
+
+function collectMagicPhases(daily) {
+  const phases = [];
+  for (const d of daily || []) {
+    if (d.sunrise) {
+      phases.push({ kind: "blue-am", start: d.sunrise - MAGIC_BLUE_MS, end: d.sunrise });
+      phases.push({ kind: "golden-am", start: d.sunrise, end: d.sunrise + MAGIC_GOLDEN_MS });
+    }
+    if (d.sunset) {
+      phases.push({ kind: "golden-pm", start: d.sunset - MAGIC_GOLDEN_MS, end: d.sunset });
+      phases.push({ kind: "blue-pm", start: d.sunset, end: d.sunset + MAGIC_BLUE_MS });
+    }
+  }
+  return phases.sort((a, b) => a.start - b.start);
+}
+
+function pickMagicPhase(phases, now) {
+  for (const p of phases) if (now >= p.start && now < p.end) return { phase: p, active: true };
+  for (const p of phases) if (p.start > now) return { phase: p, active: false };
+  return null;
+}
+
+function formatMagicDetail(pick, now) {
+  const { phase, active } = pick;
+  if (active) return `until ${fmtTime(phase.end)}`;
+  const mins = Math.max(1, Math.round((phase.start - now) / 60_000));
+  if (mins < 90) return `in ${mins}m`;
+  if (mins < 24 * 60) {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return m ? `in ${h}h ${m}m` : `in ${h}h`;
+  }
+  return `at ${fmtTime(phase.start)}`;
+}
+
+function scheduleMagicHour(w) {
+  if (state.magicHourTimer) { clearInterval(state.magicHourTimer); state.magicHourTimer = null; }
+  if (!el.magicChip) return;
+
+  const phases = collectMagicPhases(w?.daily);
+  if (!phases.length) { el.magicChip.hidden = true; return; }
+
+  const update = () => {
+    const now = Date.now();
+    const pick = pickMagicPhase(phases, now);
+    if (!pick) { el.magicChip.hidden = true; return; }
+    const { phase, active } = pick;
+    el.magicChip.hidden = false;
+    el.magicChip.dataset.kind = phase.kind.startsWith("blue") ? "blue" : "golden";
+    el.magicChip.dataset.active = active ? "true" : "false";
+    if (el.magicHeadline) el.magicHeadline.textContent = magicPhaseName(phase.kind);
+    if (el.magicDetail) el.magicDetail.textContent = formatMagicDetail(pick, now);
+    // Highlight the corresponding arc band while it is active.
+    if (el.sunArcGoldenAm && el.sunArcGoldenPm) {
+      el.sunArcGoldenAm.classList.toggle("is-active", active && phase.kind === "golden-am");
+      el.sunArcGoldenPm.classList.toggle("is-active", active && phase.kind === "golden-pm");
+    }
+  };
+  update();
+  state.magicHourTimer = setInterval(update, 30_000);
+}
 
 function scheduleSunCountdown(w) {
   if (state.sunTimer) { clearInterval(state.sunTimer); state.sunTimer = null; }
