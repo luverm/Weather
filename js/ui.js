@@ -49,6 +49,7 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -530,8 +531,47 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+// Compare today's daylight to tomorrow's — a small "+3m 12s tomorrow" chip
+// that reveals whether the days are lengthening or shortening, and by how
+// much. Near a solstice the delta is < 10 s / day; we surface that too.
+function renderDaylightDelta(w) {
+  if (!el.sunDaylightDelta) return;
+  const today = w?.daily?.[0];
+  const tmrw = w?.daily?.[1];
+  el.sunDaylightDelta.textContent = "";
+  el.sunDaylightDelta.removeAttribute("data-trend");
+  el.sunDaylightDelta.removeAttribute("title");
+  if (!today?.sunrise || !today?.sunset || !tmrw?.sunrise || !tmrw?.sunset) return;
+  const todaySecs = Math.round((today.sunset - today.sunrise) / 1000);
+  const tmrwSecs = Math.round((tmrw.sunset - tmrw.sunrise) / 1000);
+  const delta = tmrwSecs - todaySecs;
+  // Guard against polar day / polar night where daylight is 0 or 24h and the
+  // delta stops being meaningful.
+  if (todaySecs <= 60 || todaySecs >= 86_340) return;
+  const abs = Math.abs(delta);
+  if (abs < 8) {
+    el.sunDaylightDelta.textContent = "at solstice";
+    el.sunDaylightDelta.dataset.trend = "solstice";
+    el.sunDaylightDelta.title = "Daylight change is < 8 s / day — you're near a solstice.";
+    return;
+  }
+  const m = Math.floor(abs / 60);
+  const s = abs % 60;
+  const parts = [];
+  if (m) parts.push(`${m}m`);
+  if (s || !m) parts.push(`${s}s`);
+  const dur = parts.join(" ");
+  const sign = delta > 0 ? "+" : "−";
+  el.sunDaylightDelta.textContent = `${sign}${dur} tomorrow`;
+  el.sunDaylightDelta.dataset.trend = delta > 0 ? "gain" : "loss";
+  el.sunDaylightDelta.title = delta > 0
+    ? "Days are getting longer."
+    : "Days are getting shorter.";
 }
 
 function scheduleSunArc(w) {
