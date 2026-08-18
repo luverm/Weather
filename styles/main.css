@@ -1434,7 +1434,7 @@ kbd {
 .forecast-track::-webkit-scrollbar { display: none; }
 .forecast-item {
   display: grid;
-  grid-template-rows: auto auto auto auto;
+  grid-template-rows: auto auto auto auto auto;
   gap: 4px;
   justify-items: center;
   padding: 10px 6px;
@@ -1448,6 +1448,22 @@ kbd {
 .forecast-time { font-size: 11px; letter-spacing: 0.08em; color: var(--fg-dim); text-transform: uppercase; }
 .forecast-icon { width: 26px; height: 26px; display: grid; place-items: center; color: var(--fg-muted); }
 .forecast-temp { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.forecast-wind {
+  --rot: 0deg;
+  --op: 0.5;
+  --scale: 1;
+  width: 14px; height: 14px;
+  display: grid; place-items: center;
+  color: var(--fg-muted);
+  opacity: var(--op);
+  transition: opacity 200ms var(--ease), transform 300ms var(--ease);
+}
+.forecast-wind svg {
+  width: 100%; height: 100%;
+  transform: rotate(var(--rot)) scale(var(--scale));
+  transform-origin: 50% 50%;
+}
+.forecast-item:hover .forecast-wind { opacity: 1; }
 .forecast-pop {
   font-size: 10px; color: var(--accent); font-variant-numeric: tabular-nums;
   opacity: 0.9;

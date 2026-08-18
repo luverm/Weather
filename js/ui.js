@@ -827,19 +827,44 @@ function cardinal(deg) {
 
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
+  // Scale the wind arrow's opacity + size against the day's max gust so calm
+  // hours fade and gusty hours stand out at a glance.
+  const gustMax = Math.max(
+    12,
+    ...(w.hourly || []).slice(0, 24).map((h) => h.gusts ?? h.wind ?? 0),
+  );
   for (const h of (w.hourly || []).slice(0, 24)) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    const windArrow = h.windDir != null
+      ? renderWindArrow(h.windDir, h.wind, h.gusts, gustMax)
+      : `<span class="forecast-wind" aria-hidden="true"></span>`;
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
+      ${windArrow}
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
   }
+}
+
+// Small SVG arrow rotated to point *toward* wind's downwind direction (i.e.
+// the direction the wind is blowing to). Meteorological convention gives us
+// the direction the wind is FROM, so we add 180°.
+function renderWindArrow(dirDegFrom, speed, gusts, gustMax) {
+  const rot = ((dirDegFrom || 0) + 180) % 360;
+  const g = gusts ?? speed ?? 0;
+  const strength = Math.min(1, g / Math.max(1, gustMax));
+  const opacity = (0.25 + strength * 0.7).toFixed(2);
+  const scale = (0.75 + strength * 0.35).toFixed(2);
+  const title = `Wind ${Math.round(speed || 0)} km/h${g ? ` · gust ${Math.round(g)}` : ""} from ${cardinal(dirDegFrom)}`;
+  return `<span class="forecast-wind" title="${escapeHtml(title)}" aria-label="${escapeHtml(title)}" style="--rot:${rot}deg; --op:${opacity}; --scale:${scale}">
+    <svg viewBox="-8 -8 16 16" aria-hidden="true"><path d="M0 -6 L3 4 L0 2 L-3 4 Z" fill="currentColor"/></svg>
+  </span>`;
 }
 
 function highlightHour(index) {
