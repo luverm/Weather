@@ -200,6 +200,9 @@ async function loadByCoords(place) {
   ui.setPlace(place);
   ui.setLoading(`Fetching weather for ${place.name}…`);
 
+  // Reflect this city in the URL so the page is bookmarkable and shareable.
+  writePlaceToUrl(place);
+
   // Drop any scrubber offset so we start live on each new city.
   clock.reset();
   ui.setScrubbing(false);
@@ -219,6 +222,48 @@ async function loadByCoords(place) {
   // Move the radar to the new location (fire-and-forget; resolves later).
   ensureRadar([place.lat, place.lon]).then((r) => r?.setCenter(place.lat, place.lon, place.name));
 }
+
+// ---------- URL deep-linking ----------
+// The URL carries the current city so links are shareable and bookmarkable.
+// Format: ?lat=51.5&lon=-0.12&name=London&admin1=England&country=UK
+function readPlaceFromUrl() {
+  try {
+    const params = new URLSearchParams(location.search);
+    const lat = parseFloat(params.get("lat"));
+    const lon = parseFloat(params.get("lon"));
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+    if (lat < -90 || lat > 90 || lon < -180 || lon > 180) return null;
+    return {
+      name: params.get("name") || "Shared location",
+      admin1: params.get("admin1") || undefined,
+      country: params.get("country") || undefined,
+      lat,
+      lon,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writePlaceToUrl(place) {
+  if (!place || !Number.isFinite(place.lat) || !Number.isFinite(place.lon)) return;
+  try {
+    const params = new URLSearchParams();
+    params.set("lat", place.lat.toFixed(4));
+    params.set("lon", place.lon.toFixed(4));
+    if (place.name) params.set("name", place.name);
+    if (place.admin1) params.set("admin1", place.admin1);
+    if (place.country) params.set("country", place.country);
+    const url = `${location.pathname}?${params.toString()}${location.hash}`;
+    history.replaceState(null, "", url);
+  } catch {
+    /* older browsers or file:// — ignore */
+  }
+}
+
+// Expose the current URL to the share flow so the shared summary includes a
+// clickable deep-link that opens the same city.
+window.__aetherShareUrl = () => location.href;
 
 async function useGeolocation() {
   ui.setLoading("Locating…");
@@ -306,8 +351,16 @@ installShortcuts({
 
 // ---------- Start ----------
 (async function init() {
-  // Prefer the most recent saved place if we have one — avoids the geolocation
-  // prompt on every load and feels snappier.
+  // 1) A URL like ?lat=…&lon=…&name=… wins so shared/bookmarked links open
+  //    the exact same city the sender saw.
+  const fromUrl = readPlaceFromUrl();
+  if (fromUrl) {
+    places.add(fromUrl);
+    await loadByCoords(fromUrl);
+    return;
+  }
+  // 2) Otherwise prefer the most recent saved place — avoids the geolocation
+  //    prompt on every load and feels snappier.
   const saved = places.all();
   if (saved.length) {
     await loadByCoords(saved[0]);
