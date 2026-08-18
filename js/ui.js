@@ -23,6 +23,7 @@ const el = {
   feelsLike: $("#feels-like"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
+  yesterdayDelta: $("#yesterday-delta"),
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
@@ -179,6 +180,7 @@ export const ui = {
     state.weather = weather;
     state.sampledWeather = weather; // initially same as live
     renderLiveValues(weather);
+    renderYesterdayDelta(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
     renderMoon(weather.moon);
@@ -278,6 +280,41 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+}
+
+function renderYesterdayDelta(w) {
+  const node = el.yesterdayDelta;
+  if (!node) return;
+  const yTemp = w?.yesterdayTemp;
+  const cur = w?.temp;
+  if (yTemp == null || cur == null) {
+    node.hidden = true;
+    node.textContent = "";
+    return;
+  }
+  const deltaC = cur - yTemp;
+  // Under 0.5 °C the diff is noise — call it flat.
+  if (Math.abs(deltaC) < 0.5) {
+    node.hidden = false;
+    node.className = "yesterday-delta flat";
+    node.textContent = "Same as yesterday";
+    return;
+  }
+  // Convert the delta itself, not each temp — °C ↔ °F differ only by scale
+  // for a difference, so no offset applies.
+  const unit = state.unit;
+  const deltaDisp = unit === "F" ? deltaC * 9 / 5 : deltaC;
+  const rounded = Math.round(Math.abs(deltaDisp));
+  if (rounded === 0) {
+    node.hidden = false;
+    node.className = "yesterday-delta flat";
+    node.textContent = "Same as yesterday";
+    return;
+  }
+  const warmer = deltaC > 0;
+  node.hidden = false;
+  node.className = `yesterday-delta ${warmer ? "up" : "down"}`;
+  node.textContent = `${warmer ? "▲" : "▼"} ${rounded}° ${warmer ? "warmer" : "cooler"} than yesterday`;
 }
 
 function renderDayRange(w) {

@@ -93,7 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
-    past_hours: 1,
+    past_days: 1, // pull yesterday for the same-hour delta pill
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -127,6 +127,11 @@ function normalize(d, aq) {
   const { condition, label } = mapWmo(c.weather_code);
   const daily = d.daily || {};
   const now = Date.now();
+
+  // Look for yesterday's temperature at approximately the current hour for
+  // the "vs. yesterday" delta pill. Scanning the full raw hourly array
+  // (which now includes past_days:1) lets us find that sample.
+  const yesterdayTemp = findYesterdayTemp(d.hourly, now);
 
   // 24-hour hourly forecast starting from the next hour.
   const hourly = [];
@@ -216,8 +221,24 @@ function normalize(d, aq) {
     moon,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
+    yesterdayTemp,
     fetchedAt: now,
   };
+}
+
+function findYesterdayTemp(hourly, now) {
+  if (!hourly?.time || !hourly?.temperature_2m) return null;
+  const target = now - 24 * 3600_000;
+  let bestIdx = -1;
+  let bestDiff = 45 * 60_000; // within ±45 min of exactly 24 h ago
+  for (let i = 0; i < hourly.time.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    const diff = Math.abs(t - target);
+    if (diff < bestDiff) { bestDiff = diff; bestIdx = i; }
+  }
+  if (bestIdx < 0) return null;
+  const v = hourly.temperature_2m[bestIdx];
+  return v == null ? null : v;
 }
 
 function computePressureTrend(hourly, now) {
@@ -402,6 +423,7 @@ function mock(lat, lon) {
       level: "Moderate",
     },
     pressureTrend: { delta: -0.4, direction: "steady" },
+    yesterdayTemp: 16.2,
     fetchedAt: now,
     offline: true,
   };
