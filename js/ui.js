@@ -957,9 +957,21 @@ function renderDaily(w) {
 
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
-  el.dailyIconStrip.innerHTML = days.map((d) =>
-    `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
-  ).join("");
+  el.dailyIconStrip.innerHTML = days.map((d) => {
+    // Weekly rain intensity bar under each icon: 0-100% pop → 3-14 px tall
+    // blue drop that gets brighter with higher probability.
+    const pop = Math.max(0, Math.min(100, d.pop ?? 0));
+    const height = pop < 5 ? 0 : 3 + (pop / 100) * 11;
+    const opacity = (0.35 + (pop / 100) * 0.55).toFixed(2);
+    const drop = height > 0
+      ? `<span class="strip-rain" style="--h:${height.toFixed(1)}px; --op:${opacity}" title="${pop}% chance of rain" aria-hidden="true"></span>`
+      : "";
+    const tip = `${d.label || d.condition || ""}${pop >= 5 ? ` · ${pop}% rain` : ""}`;
+    return `<span class="strip-day" title="${escapeHtml(tip)}">
+      ${iconFor(d.condition)}
+      ${drop}
+    </span>`;
+  }).join("");
 }
 
 function renderDailySpark(days) {
