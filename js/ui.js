@@ -90,6 +90,11 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcGoldenAm: $("#sun-arc-golden-am"),
+  sunArcGoldenPm: $("#sun-arc-golden-pm"),
+  sunGolden: $("#sun-golden"),
+  sunGoldenTimes: $("#sun-golden-times"),
+  sunGoldenBadge: $("#sun-golden-badge"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -122,6 +127,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  goldenTimer: null,
   localTimer: null,
 };
 
@@ -523,6 +529,79 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleGoldenHour(w);
+}
+
+// Golden hour = 60 minutes after sunrise and 60 minutes before sunset.
+// Draws two arc ribbons on the sun path and writes the next window's times
+// into the golden-hour line; shows a "now" badge when the current time is in
+// one of the windows.
+const GOLDEN_MIN = 60;
+function scheduleGoldenHour(w) {
+  if (state.goldenTimer) { clearInterval(state.goldenTimer); state.goldenTimer = null; }
+  if (!el.sunGolden) return;
+  if (!w?.daily?.length) { el.sunGolden.hidden = true; return; }
+
+  const update = () => {
+    const now = Date.now();
+    const win = GOLDEN_MIN * 60_000;
+    // Collect today + next day golden-hour windows so evening/next-morning
+    // rolls over cleanly at any hour.
+    const windows = [];
+    for (const d of w.daily) {
+      if (d.sunrise && d.sunset && d.sunset > d.sunrise) {
+        // Only meaningful when there's a real sunrise/sunset (skip polar days).
+        const dayLen = d.sunset - d.sunrise;
+        // Clamp golden segment so it never exceeds a quarter of the day.
+        const seg = Math.min(win, dayLen * 0.25);
+        windows.push({ kind: "morning", start: d.sunrise,       end: d.sunrise + seg });
+        windows.push({ kind: "evening", start: d.sunset - seg,  end: d.sunset });
+      }
+    }
+    if (!windows.length) { el.sunGolden.hidden = true; return; }
+
+    // Active window overrides next; otherwise show the soonest upcoming.
+    let active = null, next = null;
+    for (const win of windows) {
+      if (now >= win.start && now <= win.end) { active = win; break; }
+      if (win.start > now && (!next || win.start < next.start)) next = win;
+    }
+    const show = active || next;
+    if (!show) { el.sunGolden.hidden = true; return; }
+
+    el.sunGolden.hidden = false;
+    const kindLabel = show.kind === "morning" ? "Morning" : "Evening";
+    if (el.sunGoldenTimes) {
+      el.sunGoldenTimes.textContent = active
+        ? `ends ${fmtTime(show.end)}`
+        : `${kindLabel} · ${fmtTime(show.start)} → ${fmtTime(show.end)}`;
+    }
+    if (el.sunGoldenBadge) el.sunGoldenBadge.hidden = !active;
+
+    // Ribbon paths: shade only the today's morning + evening windows on the arc.
+    // The arc parameter t=0..1 maps to sunrise..sunset for the *primary* day.
+    const today = w.daily.find((d) => d.sunrise && d.sunset && d.sunset > d.sunrise) || w.daily[0];
+    if (!today?.sunrise || !today?.sunset || today.sunset <= today.sunrise) {
+      el.sunArcGoldenAm?.setAttribute("stroke-dasharray", "0 1");
+      el.sunArcGoldenPm?.setAttribute("stroke-dasharray", "0 1");
+      return;
+    }
+    const dayLen = today.sunset - today.sunrise;
+    const seg = Math.min(win, dayLen * 0.25);
+    const gFrac = seg / dayLen;
+    if (el.sunArcGoldenAm) {
+      // Draw first gFrac of the path.
+      el.sunArcGoldenAm.setAttribute("stroke-dasharray", `${gFrac.toFixed(4)} 1`);
+      el.sunArcGoldenAm.setAttribute("stroke-dashoffset", "0");
+    }
+    if (el.sunArcGoldenPm) {
+      // Skip first (1-gFrac) then draw gFrac.
+      el.sunArcGoldenPm.setAttribute("stroke-dasharray", `0 ${(1 - gFrac).toFixed(4)} ${gFrac.toFixed(4)} 1`);
+      el.sunArcGoldenPm.setAttribute("stroke-dashoffset", "0");
+    }
+  };
+  update();
+  state.goldenTimer = setInterval(update, 60_000);
 }
 
 function scheduleSunArc(w) {
