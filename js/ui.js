@@ -90,6 +90,12 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcGoldenAm: $("#sun-arc-golden-am"),
+  sunArcGoldenPm: $("#sun-arc-golden-pm"),
+  goldenHour: $("#golden-hour"),
+  goldenHourLabel: $("#golden-hour-label"),
+  hourlyRainPill: $("#hourly-rain-pill"),
+  hourlyRainText: $("#hourly-rain-text"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -523,6 +529,65 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderGoldenHour(w);
+}
+
+function renderGoldenHour(w) {
+  if (!el.sunArcGoldenAm || !el.sunArcGoldenPm) return;
+  if (!w?.sunrise || !w?.sunset) {
+    el.sunArcGoldenAm.style.opacity = "0";
+    el.sunArcGoldenPm.style.opacity = "0";
+    if (el.goldenHour) el.goldenHour.hidden = true;
+    return;
+  }
+  const sr = w.sunrise, ss = w.sunset;
+  const daylight = ss - sr;
+  if (daylight <= 0) {
+    el.sunArcGoldenAm.style.opacity = "0";
+    el.sunArcGoldenPm.style.opacity = "0";
+    if (el.goldenHour) el.goldenHour.hidden = true;
+    return;
+  }
+  // Golden hour ≈ 1 h after sunrise / 1 h before sunset, clipped for short days.
+  const goldenSpan = Math.min(60 * 60_000, daylight * 0.2);
+  const amEnd = sr + goldenSpan;
+  const pmStart = ss - goldenSpan;
+  // Mark the midpoint of each golden window on the sun arc.
+  const amFrac = clamp01(((amEnd + sr) / 2 - sr) / daylight);
+  const pmFrac = clamp01(((pmStart + ss) / 2 - sr) / daylight);
+  placeOnArc(el.sunArcGoldenAm, amFrac);
+  placeOnArc(el.sunArcGoldenPm, pmFrac);
+  el.sunArcGoldenAm.style.opacity = "1";
+  el.sunArcGoldenPm.style.opacity = "1";
+
+  if (el.goldenHour && el.goldenHourLabel) {
+    const now = Date.now();
+    let active = null, next = null;
+    if (now >= sr && now < amEnd) active = { end: amEnd, tag: "Now" };
+    else if (now >= pmStart && now <= ss) active = { end: ss, tag: "Now" };
+    else if (now < sr) next = { start: sr, end: amEnd };
+    else if (now < pmStart) next = { start: pmStart, end: ss };
+    if (active) {
+      const mins = Math.max(0, Math.round((active.end - now) / 60_000));
+      el.goldenHourLabel.textContent = `Golden hour · ${mins}m left`;
+      el.goldenHour.dataset.state = "active";
+      el.goldenHour.hidden = false;
+    } else if (next) {
+      el.goldenHourLabel.textContent = `Golden hour ${fmtTime(next.start)}–${fmtTime(next.end)}`;
+      el.goldenHour.dataset.state = "upcoming";
+      el.goldenHour.hidden = false;
+    } else {
+      el.goldenHour.hidden = true;
+    }
+  }
+}
+
+function placeOnArc(node, frac) {
+  const t = clamp01(frac);
+  const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
+  const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
+  node.setAttribute("cx", x.toFixed(1));
+  node.setAttribute("cy", y.toFixed(1));
 }
 
 function scheduleSunArc(w) {
@@ -553,6 +618,7 @@ function scheduleSunArc(w) {
     // After sunset, dim the marker so it visually settles.
     const isUp = now >= sr && now <= ss;
     el.sunArcMarker.style.opacity = isUp ? "1" : "0.45";
+    renderGoldenHour(w);
   };
   update();
   state.sunArcTimer = setInterval(update, 60_000);
@@ -840,6 +906,36 @@ function renderHourly(w) {
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
   }
+  renderHourlyRainPill(w);
+}
+
+function renderHourlyRainPill(w) {
+  if (!el.hourlyRainPill || !el.hourlyRainText) return;
+  const hours = (w.hourly || []).slice(0, 24);
+  const total = hours.reduce((s, h) => s + (h.precip || 0), 0);
+  const peakPop = hours.reduce((m, h) => Math.max(m, h.pop || 0), 0);
+  if (total < 0.1 && peakPop < 30) {
+    el.hourlyRainPill.hidden = true;
+    return;
+  }
+  const wetHours = hours.filter((h) => (h.precip || 0) >= 0.1 || (h.pop || 0) >= 40).length;
+  const parts = [];
+  if (total >= 0.1) parts.push(formatPrecip(total));
+  if (wetHours > 0) parts.push(`${wetHours}h wet`);
+  else if (peakPop >= 30) parts.push(`${peakPop}% peak`);
+  el.hourlyRainText.textContent = parts.join(" · ");
+  el.hourlyRainPill.dataset.tone = total >= 5 ? "heavy" : total >= 1 ? "light" : "chance";
+  el.hourlyRainPill.hidden = false;
+}
+
+function formatPrecip(mm) {
+  if (state.unit === "F") {
+    const inches = mm / 25.4;
+    if (inches < 0.05) return "<0.05 in";
+    return `${inches.toFixed(inches < 1 ? 2 : 1)} in`;
+  }
+  if (mm < 1) return `${mm.toFixed(1)} mm`;
+  return `${Math.round(mm * 10) / 10} mm`;
 }
 
 function highlightHour(index) {

@@ -976,6 +976,41 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+.sun-arc-golden {
+  opacity: 0;
+  filter: drop-shadow(0 0 4px rgba(255,178,122,0.65));
+  transition: cx 400ms var(--ease), cy 400ms var(--ease), opacity 400ms var(--ease);
+}
+.golden-hour {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 6px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ffd7ac;
+  background: linear-gradient(180deg, rgba(255,178,122,0.16), rgba(255,178,122,0.06));
+  border: 1px solid rgba(255,178,122,0.28);
+  font-variant-numeric: tabular-nums;
+}
+.golden-hour[hidden] { display: none; }
+.golden-hour[data-state="active"] {
+  color: #ffe1bd;
+  background: linear-gradient(180deg, rgba(255,178,122,0.30), rgba(255,178,122,0.10));
+  border-color: rgba(255,200,150,0.55);
+  animation: goldenPulse 2600ms ease-in-out infinite;
+}
+.golden-hour .golden-icon { font-size: 11px; line-height: 1; color: #ffb27a; }
+@keyframes goldenPulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(255,178,122,0); }
+  50%      { box-shadow: 0 0 12px rgba(255,178,122,0.30); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .golden-hour[data-state="active"] { animation: none; }
+}
 
 /* ---------- Radar map ---------- */
 .radar {
@@ -1380,6 +1415,33 @@ kbd {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+.hourly-rain-pill {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #b6dcff;
+  background: linear-gradient(180deg, rgba(154,209,255,0.16), rgba(154,209,255,0.06));
+  border: 1px solid rgba(154,209,255,0.25);
+  font-variant-numeric: tabular-nums;
+}
+.hourly-rain-pill[hidden] { display: none; }
+.hourly-rain-pill svg { display: block; }
+.hourly-rain-pill[data-tone="chance"] {
+  color: var(--fg-muted);
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  border-color: rgba(255,255,255,0.10);
+}
+.hourly-rain-pill[data-tone="heavy"] {
+  color: #d8c7ff;
+  background: linear-gradient(180deg, rgba(160,120,255,0.20), rgba(160,120,255,0.06));
+  border-color: rgba(160,120,255,0.35);
 }
 .daily-delta {
   margin-left: auto;
