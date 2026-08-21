@@ -2146,6 +2146,12 @@ function bindUnitToggle() {
   el.temp?.setAttribute("tabindex", "0");
   const setTempTitle = () => {
     const t = state.weather?.temp;
+    let both = "";
+    if (t != null) {
+      const c = Math.round(t);
+      const f = Math.round(t * 9 / 5 + 32);
+      both = ` (${c}°C · ${f}°F)`;
+    }
     let extra = "";
     if (t != null) {
       if (t <= -20) extra = " · extreme cold";
@@ -2153,7 +2159,7 @@ function bindUnitToggle() {
       else if (t >= 35) extra = " · extreme heat";
       else if (t >= 28) extra = " · hot";
     }
-    el.temp?.setAttribute("title", `Tap to toggle °C / °F${extra}`);
+    el.temp?.setAttribute("title", `Tap to toggle°${both}${extra}`);
   };
   setTempTitle();
   // Refresh whenever weather changes so the tooltip stays accurate.
