@@ -451,6 +451,14 @@ html[data-loading="true"] .hero::after {
 .temp-value.just-updated {
   filter: drop-shadow(0 0 12px rgba(255,255,255,0.35));
 }
+.temp-value.unit-flash {
+  animation: unitFlash 500ms var(--ease);
+}
+@keyframes unitFlash {
+  0%   { transform: translateY(0); }
+  40%  { transform: translateY(-4px); }
+  100% { transform: translateY(0); }
+}
 [data-scrubbing="true"] .temp-value {
   opacity: 0.85;
   filter: saturate(0.85);

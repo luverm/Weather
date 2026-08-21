@@ -2167,6 +2167,13 @@ function bindUnitToggle() {
     localStorage.setItem("aether:unit", state.unit);
     el.unitBtn.textContent = `°${state.unit}`;
     if (state.weather) ui.setWeather(state.weather);
+    // Quick flash so the eye catches that the number just converted.
+    if (el.temp) {
+      el.temp.classList.remove("unit-flash");
+      void el.temp.offsetWidth;
+      el.temp.classList.add("unit-flash");
+      setTimeout(() => el.temp?.classList.remove("unit-flash"), 500);
+    }
   };
   el.unitBtn.addEventListener("click", toggle);
   // The temperature number itself is a much larger target — let a tap there
