@@ -410,9 +410,14 @@ function renderMetrics(w) {
     }
   }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
-  el.metricPressureSub.textContent = w.visibility != null
+  // Combine visibility with a pressure-change narrative when the trend is
+  // strong enough to matter (>= 1.5 hPa in the last 3h). Keeps the sub-line
+  // short but adds actionable context.
+  const visPart = w.visibility != null
     ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
     : "visibility —";
+  const trendPart = pressureNarrative(w.pressureTrend);
+  el.metricPressureSub.textContent = trendPart ? `${visPart} · ${trendPart}` : visPart;
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   updateUvGauge(w.uv);
   if (el.uvLevel) {
@@ -471,6 +476,21 @@ function humidityComfort(rh, dew, temp) {
   if (rh <= 25) return { label: "Dry", cls: "up" };
   if (rh <= 35) return { label: "Crisp", cls: "flat" };
   return { label: "Comfy", cls: "down" };
+}
+
+// Small human summary of what the pressure trend suggests, borrowed from the
+// classic barometer rules of thumb. Returns null when the change is small.
+function pressureNarrative(trend) {
+  if (!trend || trend.delta == null) return null;
+  const abs = Math.abs(trend.delta);
+  if (abs < 1.5) return null;
+  if (trend.direction === "rising") {
+    return abs >= 3 ? "rising fast · clearing" : "rising · fairer";
+  }
+  if (trend.direction === "falling") {
+    return abs >= 3 ? "falling fast · unsettled" : "falling · wetter ahead";
+  }
+  return null;
 }
 
 function beaufort(kmh) {
