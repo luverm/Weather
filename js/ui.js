@@ -2238,9 +2238,23 @@ function bindSettings() {
     if (!confirm("Clear all saved places?")) return;
     for (const p of places.all()) places.remove(p);
     renderPlaces();
+    updateClearPlacesButton();
     ui.showToast("Saved places cleared");
     close();
   });
+  // Reflect the current count on the button so it never sits "clickable"
+  // when there's nothing to clear.
+  const updateClearPlacesButton = () => {
+    if (!el.settingClearPlaces) return;
+    const n = places.all().length;
+    el.settingClearPlaces.disabled = n === 0;
+    el.settingClearPlaces.textContent = n === 0
+      ? "No saved places"
+      : `Clear saved places (${n})`;
+  };
+  updateClearPlacesButton();
+  // Refresh the label every time the settings gear is clicked (open or close).
+  el.settingsBtn.addEventListener("click", () => updateClearPlacesButton());
 
   el.settingShortcuts?.addEventListener("click", () => {
     close();
