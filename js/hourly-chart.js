@@ -314,6 +314,27 @@ export class HourlyChart {
       }
     }
 
+    // Reference grid lines at rounded temp intervals — 5°C spacing when
+    // the range is small, 10°C when broad. Kept very faint so the temp
+    // line still reads first.
+    const gridG = this.svg.querySelector("#chart-grid");
+    if (gridG) {
+      gridG.innerHTML = "";
+      const step = span >= 15 ? 10 : 5;
+      const lo = Math.ceil(tMin / step) * step;
+      const hi = Math.floor(tMax / step) * step;
+      for (let v = lo; v <= hi; v += step) {
+        const y = tToY(v);
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", PAD_LEFT);
+        line.setAttribute("x2", W - PAD_RIGHT);
+        line.setAttribute("y1", y.toFixed(1));
+        line.setAttribute("y2", y.toFixed(1));
+        line.setAttribute("class", "chart-grid-line");
+        gridG.appendChild(line);
+      }
+    }
+
     // "Now" tick: an always-visible marker at the current hour's x, so a
     // user who has scrubbed forward can still tell where "now" sits.
     const nowLine = this.svg.querySelector("#chart-now");

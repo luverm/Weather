@@ -859,6 +859,11 @@ button:focus-visible,
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
 }
+.chart-grid-line {
+  stroke: rgba(255, 255, 255, 0.06);
+  stroke-width: 0.6;
+  pointer-events: none;
+}
 .chart-labels text {
   font-size: 9px;
   fill: var(--fg-dim);
