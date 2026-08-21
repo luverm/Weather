@@ -1105,6 +1105,30 @@ kbd {
 }
 
 /* ---------- Golden hour chip ---------- */
+/* ---------- Sky forecast bar ---------- */
+.sky-forecast {
+  display: grid;
+  gap: 4px;
+}
+.sky-forecast[hidden] { display: none; }
+.sky-forecast-bar {
+  display: flex;
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.06);
+}
+.sky-forecast-bar .seg { display: inline-block; height: 100%; transition: width 500ms var(--ease); }
+.sky-forecast-bar .seg.clear    { background: linear-gradient(90deg, #ffe6b0, #fff1c9); }
+.sky-forecast-bar .seg.partly   { background: linear-gradient(90deg, #bcd8ff, #d7c7ff); }
+.sky-forecast-bar .seg.overcast { background: linear-gradient(90deg, #6f7898, #9098b3); }
+.sky-forecast-caption {
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
 .golden-chip {
   display: inline-flex;
   align-items: center;

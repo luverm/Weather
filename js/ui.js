@@ -102,6 +102,9 @@ const el = {
   goldenChipHeadline: $("#golden-chip-headline"),
   goldenChipDetail: $("#golden-chip-detail"),
   daylightTrend: $("#daylight-trend"),
+  skyForecast: $("#sky-forecast"),
+  skyForecastBar: $("#sky-forecast-bar"),
+  skyForecastCaption: $("#sky-forecast-caption"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -697,6 +700,38 @@ function renderSun(w) {
   scheduleGoldenHour(w);
   renderDaylightTrend(w);
   renderSolarNoon(w);
+  renderSkyForecast(w);
+}
+
+// Bin the daylight hours into clear/partly/overcast and render as a stacked
+// bar with a one-line caption. Requires hourly cloud data covering today.
+function renderSkyForecast(w) {
+  if (!el.skyForecast || !el.skyForecastBar) return;
+  if (!w?.sunrise || !w?.sunset || !w?.hourly?.length) {
+    el.skyForecast.hidden = true; return;
+  }
+  const daylight = w.hourly.filter((h) =>
+    h.time >= w.sunrise && h.time <= w.sunset && h.clouds != null
+  );
+  if (daylight.length < 3) { el.skyForecast.hidden = true; return; }
+  let clear = 0, partly = 0, overcast = 0;
+  for (const h of daylight) {
+    if (h.clouds < 30) clear++;
+    else if (h.clouds < 75) partly++;
+    else overcast++;
+  }
+  const total = daylight.length;
+  const pct = (n) => (n / total) * 100;
+  el.skyForecastBar.innerHTML =
+    `<span class="seg clear" style="width:${pct(clear).toFixed(1)}%" title="${clear}h clear"></span>` +
+    `<span class="seg partly" style="width:${pct(partly).toFixed(1)}%" title="${partly}h partly cloudy"></span>` +
+    `<span class="seg overcast" style="width:${pct(overcast).toFixed(1)}%" title="${overcast}h overcast"></span>`;
+  const parts = [];
+  if (clear)    parts.push(`${clear}h clear`);
+  if (partly)   parts.push(`${partly}h partly`);
+  if (overcast) parts.push(`${overcast}h overcast`);
+  el.skyForecastCaption.textContent = parts.join(" · ");
+  el.skyForecast.hidden = false;
 }
 
 // Compare today's and tomorrow's daylight to show a "+2m / -3m" delta chip.
