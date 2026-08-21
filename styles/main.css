@@ -976,6 +976,67 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+.sun-arc-golden {
+  transition: opacity 600ms var(--ease), width 600ms var(--ease), x 600ms var(--ease);
+  pointer-events: none;
+}
+.sun-arc-golden.active {
+  opacity: 1 !important;
+  filter: drop-shadow(0 0 4px rgba(255,175,110,0.35));
+}
+
+/* ---------- Golden hour chip ---------- */
+.golden-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255,170,90,0.14), rgba(255,215,150,0.10));
+  border: 1px solid rgba(255,190,120,0.22);
+  color: #ffd6a4;
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  align-self: start;
+  justify-self: start;
+  max-width: 100%;
+  transition: background 500ms var(--ease), border-color 500ms var(--ease), color 500ms var(--ease);
+}
+.golden-chip[hidden] { display: none; }
+.golden-chip[data-state="active"] {
+  background: linear-gradient(90deg, rgba(255,170,90,0.28), rgba(255,215,150,0.16));
+  border-color: rgba(255,190,120,0.42);
+  color: #ffe1b5;
+}
+.golden-chip[data-state="blue"] {
+  background: linear-gradient(90deg, rgba(120,150,220,0.18), rgba(150,180,240,0.10));
+  border-color: rgba(150,180,240,0.28);
+  color: #cfe0ff;
+}
+.golden-chip-icon {
+  width: 14px; height: 14px; flex: none;
+  color: currentColor;
+}
+.golden-chip[data-state="blue"] .golden-chip-icon > circle {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+.golden-chip[data-state="blue"] .golden-chip-icon > path {
+  stroke-dasharray: 1.5 3;
+}
+.golden-chip-headline {
+  font-weight: 500;
+  white-space: nowrap;
+}
+.golden-chip-detail {
+  color: rgba(255,255,255,0.68);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.golden-chip-detail:empty { display: none; }
 
 /* ---------- Radar map ---------- */
 .radar {

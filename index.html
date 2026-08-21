@@ -329,12 +329,30 @@
                 <stop offset="80%" stop-color="rgba(255,170,120,0.85)"/>
                 <stop offset="100%" stop-color="rgba(255,170,120,0)"/>
               </linearGradient>
+              <linearGradient id="golden-band-grad" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%"  stop-color="rgba(255,180,110,0)"/>
+                <stop offset="70%" stop-color="rgba(255,180,110,0.28)"/>
+                <stop offset="100%" stop-color="rgba(255,150,90,0.42)"/>
+              </linearGradient>
             </defs>
+            <rect id="sun-arc-golden-am" class="sun-arc-golden" x="10" y="14" width="0" height="60"
+                  fill="url(#golden-band-grad)" opacity="0" rx="1.5"/>
+            <rect id="sun-arc-golden-pm" class="sun-arc-golden" x="10" y="14" width="0" height="60"
+                  fill="url(#golden-band-grad)" opacity="0" rx="1.5"/>
             <line x1="10" y1="74" x2="190" y2="74" stroke="var(--stroke)" stroke-dasharray="2 4"/>
             <path id="sun-arc-path" d="M10 74 Q100 -26 190 74"
                   fill="none" stroke="url(#sun-arc-grad)" stroke-width="1.5" stroke-linecap="round"/>
             <circle id="sun-arc-marker" cx="10" cy="74" r="4.5" fill="#fff1c9"/>
           </svg>
+          <div id="golden-chip" class="golden-chip" hidden>
+            <svg viewBox="0 0 24 24" class="golden-chip-icon" aria-hidden="true">
+              <circle cx="12" cy="12" r="4" fill="currentColor"/>
+              <path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4l1.4-1.4M17 7l1.4-1.4"
+                    stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+            </svg>
+            <span class="golden-chip-headline" id="golden-chip-headline">—</span>
+            <span class="golden-chip-detail" id="golden-chip-detail"></span>
+          </div>
           <div class="sun-row">
             <div class="sun-item">
               <span class="sun-label">Rises</span>

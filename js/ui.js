@@ -90,6 +90,11 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcGoldenAm: $("#sun-arc-golden-am"),
+  sunArcGoldenPm: $("#sun-arc-golden-pm"),
+  goldenChip: $("#golden-chip"),
+  goldenChipHeadline: $("#golden-chip-headline"),
+  goldenChipDetail: $("#golden-chip-detail"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -523,6 +528,136 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleGoldenHour(w);
+}
+
+// Golden hour approximated as the 60 minutes just after sunrise and the
+// 60 minutes just before sunset. Above high latitudes the daylight window
+// can be shorter than 2h — in that case we clamp each band to at most 40%
+// of the daylight width so both bands remain visible.
+const GOLDEN_MS = 60 * 60_000;
+const BLUE_MS = 30 * 60_000;
+
+function goldenWindows(sunrise, sunset) {
+  if (!sunrise || !sunset || sunset <= sunrise) return null;
+  const daylight = sunset - sunrise;
+  const span = Math.min(GOLDEN_MS, daylight * 0.4);
+  return {
+    amStart: sunrise,
+    amEnd: sunrise + span,
+    pmStart: sunset - span,
+    pmEnd: sunset,
+    span,
+  };
+}
+
+// Locate the next golden window across today + upcoming days, plus (if we're
+// currently inside one) the still-active window. Returns null when there's
+// nothing meaningful within a 48-hour horizon.
+function nextGoldenWindow(w, now) {
+  if (!w?.daily?.length) return null;
+  const horizon = now + 48 * 3600_000;
+  let active = null, upcoming = null;
+  for (const d of w.daily) {
+    const g = goldenWindows(d.sunrise, d.sunset);
+    if (!g) continue;
+    for (const [kind, start, end] of [
+      ["am", g.amStart, g.amEnd],
+      ["pm", g.pmStart, g.pmEnd],
+    ]) {
+      if (end < now - 5 * 60_000) continue;
+      if (start > horizon) continue;
+      if (now >= start && now <= end) {
+        if (!active || start < active.start) active = { kind, start, end };
+      } else if (!upcoming || start < upcoming.start) {
+        upcoming = { kind, start, end };
+      }
+    }
+  }
+  return active || upcoming;
+}
+
+function fmtDur(ms) {
+  const mins = Math.max(0, Math.round(ms / 60_000));
+  if (mins < 60) return `${mins}m`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return m ? `${h}h ${m}m` : `${h}h`;
+}
+
+function scheduleGoldenHour(w) {
+  if (state.goldenTimer) { clearInterval(state.goldenTimer); state.goldenTimer = null; }
+  if (!el.goldenChip || !el.sunArcGoldenAm || !el.sunArcGoldenPm) return;
+  if (!w?.sunrise || !w?.sunset) {
+    el.goldenChip.hidden = true;
+    el.sunArcGoldenAm.setAttribute("opacity", "0");
+    el.sunArcGoldenPm.setAttribute("opacity", "0");
+    return;
+  }
+
+  const update = () => {
+    const now = Date.now();
+    const g = goldenWindows(w.sunrise, w.sunset);
+    if (!g) return;
+
+    // Sun-arc bands: map amStart..pmEnd to x=[10..190] via daylight width.
+    const daylight = w.sunset - w.sunrise;
+    const px = (ts) => 10 + ((ts - w.sunrise) / daylight) * 180;
+    const amX = px(g.amStart);
+    const amW = Math.max(1, px(g.amEnd) - amX);
+    const pmX = px(g.pmStart);
+    const pmW = Math.max(1, px(g.pmEnd) - pmX);
+    el.sunArcGoldenAm.setAttribute("x", amX.toFixed(1));
+    el.sunArcGoldenAm.setAttribute("width", amW.toFixed(1));
+    el.sunArcGoldenPm.setAttribute("x", pmX.toFixed(1));
+    el.sunArcGoldenPm.setAttribute("width", pmW.toFixed(1));
+
+    // Emphasize whichever band is currently active.
+    const inAm = now >= g.amStart && now <= g.amEnd;
+    const inPm = now >= g.pmStart && now <= g.pmEnd;
+    const dayActive = now >= w.sunrise && now <= w.sunset;
+    el.sunArcGoldenAm.classList.toggle("active", inAm);
+    el.sunArcGoldenPm.classList.toggle("active", inPm);
+    el.sunArcGoldenAm.setAttribute("opacity", dayActive ? "0.85" : "0.55");
+    el.sunArcGoldenPm.setAttribute("opacity", dayActive ? "0.85" : "0.55");
+
+    // Chip content: active > blue hour > upcoming.
+    const next = nextGoldenWindow(w, now);
+    const blueStart = w.sunset;
+    const blueEnd = w.sunset + BLUE_MS;
+    const inBlue = now >= blueStart && now <= blueEnd;
+
+    let chipState = "upcoming", headline = "", detail = "";
+    if (inAm || inPm) {
+      chipState = "active";
+      headline = "Golden hour";
+      detail = `ends ${fmtTime(inAm ? g.amEnd : g.pmEnd)} · ${fmtDur((inAm ? g.amEnd : g.pmEnd) - now)} left`;
+    } else if (inBlue) {
+      chipState = "blue";
+      headline = "Blue hour";
+      detail = `fades ${fmtTime(blueEnd)}`;
+    } else if (next) {
+      chipState = "upcoming";
+      const label = next.kind === "am" ? "Morning golden hour" : "Evening golden hour";
+      const inMs = next.start - now;
+      const sameDay = new Date(next.start).toDateString() === new Date(now).toDateString();
+      const when = sameDay ? fmtTime(next.start) : new Date(next.start).toLocaleDateString([], { weekday: "short" }) + " " + fmtTime(next.start);
+      headline = label;
+      detail = inMs < 12 * 3600_000 ? `in ${fmtDur(inMs)} · ${when}` : when;
+    } else {
+      el.goldenChip.hidden = true;
+      return;
+    }
+
+    el.goldenChip.hidden = false;
+    el.goldenChip.dataset.state = chipState;
+    el.goldenChipHeadline.textContent = headline;
+    el.goldenChipDetail.textContent = detail;
+  };
+
+  update();
+  // 30-second cadence keeps the "X left / X in" counters live without churn.
+  state.goldenTimer = setInterval(update, 30_000);
 }
 
 function scheduleSunArc(w) {
