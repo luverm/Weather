@@ -802,14 +802,21 @@ function renderAirQuality(aq) {
 
 // Wire the AQ card so tapping it scrubs to the worst hour in the trend
 // window. Same wire-once pattern as the wind/UV cards to avoid stacking
-// listeners over renders.
+// listeners over renders. The tooltip is refreshed every render because
+// pollutant readings change.
 function wireAqClick(aq) {
-  if (!el.aqCard || el.aqCard.dataset.wired) return;
+  if (!el.aqCard) return;
+  const parts = [];
+  if (aq?.pm25 != null) parts.push(`PM2.5 ${Math.round(aq.pm25)}`);
+  if (aq?.pm10 != null) parts.push(`PM10 ${Math.round(aq.pm10)}`);
+  if (aq?.o3 != null) parts.push(`O₃ ${Math.round(aq.o3)}`);
+  if (aq?.no2 != null) parts.push(`NO₂ ${Math.round(aq.no2)}`);
+  const detail = parts.length ? ` — ${parts.join(", ")}` : "";
+  el.aqCard.setAttribute("title", `Jump to worst AQI hour${detail}`);
   const trend = aq?.trend || [];
-  if (!trend.length) return;
+  if (!trend.length || el.aqCard.dataset.wired) return;
   el.aqCard.dataset.wired = "1";
   el.aqCard.style.cursor = "pointer";
-  el.aqCard.setAttribute("title", "Jump to worst AQI hour");
   el.aqCard.setAttribute("role", "button");
   el.aqCard.setAttribute("aria-label", "Scrub to the worst forecast AQI hour");
   el.aqCard.setAttribute("tabindex", "0");
