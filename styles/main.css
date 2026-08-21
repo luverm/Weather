@@ -405,6 +405,33 @@ html[data-reduce-motion="true"] *::after {
   margin-left: auto;
 }
 .day-range[hidden] { display: none; }
+.vs-yesterday {
+  display: inline-block;
+  margin-top: 8px;
+  margin-left: auto;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-muted);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--stroke);
+  align-self: end;
+  max-width: 240px;
+  text-align: right;
+}
+.vs-yesterday[hidden] { display: none; }
+.vs-yesterday[data-dir="up"] {
+  color: #ffcc99;
+  background: rgba(255,170,90,0.10);
+  border-color: rgba(255,170,90,0.24);
+}
+.vs-yesterday[data-dir="down"] {
+  color: #9fdbff;
+  background: rgba(120,190,255,0.10);
+  border-color: rgba(120,190,255,0.24);
+}
 .day-range-end { white-space: nowrap; }
 .day-range-track {
   position: relative;

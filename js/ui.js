@@ -26,6 +26,7 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  vsYesterday: $("#vs-yesterday"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -290,6 +291,26 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  renderVsYesterday(w);
+}
+
+// Compare today's high (or if today isn't done yet, the running peak so far)
+// to yesterday's high. Only shows a chip when the difference is at least 2°C.
+function renderVsYesterday(w) {
+  if (!el.vsYesterday) return;
+  const yesterday = w?.yesterday;
+  const today = w?.daily?.[0];
+  const yHi = yesterday?.tempMax;
+  const tHi = today?.tempMax;
+  if (yHi == null || tHi == null) { el.vsYesterday.hidden = true; return; }
+  const deltaC = tHi - yHi;
+  if (Math.abs(deltaC) < 2) { el.vsYesterday.hidden = true; return; }
+  const deltaDisplay = Math.round(Math.abs(deltaC * (state.unit === "F" ? 1.8 : 1)));
+  const word = deltaC > 0 ? "warmer" : "cooler";
+  const sign = deltaC > 0 ? "+" : "−";
+  el.vsYesterday.hidden = false;
+  el.vsYesterday.dataset.dir = deltaC > 0 ? "up" : "down";
+  el.vsYesterday.textContent = `${sign}${deltaDisplay}° ${word} than yesterday`;
 }
 
 function renderDayRange(w) {
