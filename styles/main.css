@@ -1522,6 +1522,37 @@ kbd {
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+
+.hourly-summary {
+  margin-left: auto;
+  display: inline-flex;
+  gap: 10px;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-muted);
+  text-transform: none;
+  font-size: 11px;
+}
+.hourly-summary:empty { display: none; }
+.hourly-summary .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--stroke);
+}
+.hourly-summary .chip.rain {
+  color: #9cc9ff;
+  border-color: rgba(150,200,255,0.28);
+  background: rgba(150,200,255,0.10);
+}
+.hourly-summary .chip.swing {
+  color: #ffd6a4;
+  border-color: rgba(255,190,120,0.28);
+  background: rgba(255,190,120,0.10);
+}
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;

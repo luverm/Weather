@@ -107,6 +107,7 @@ const el = {
   weekendIconSat: $("#weekend-icon-sat"),
   weekendIconSun: $("#weekend-icon-sun"),
   forecastTrack: $("#forecast-track"),
+  hourlySummary: $("#hourly-summary"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
   nowcastHeadline: $("#nowcast-headline"),
@@ -1046,6 +1047,7 @@ function cardinal(deg) {
 }
 
 function renderHourly(w) {
+  renderHourlySummary(w);
   el.forecastTrack.innerHTML = "";
   for (const h of (w.hourly || []).slice(0, 24)) {
     const item = document.createElement("div");
@@ -1090,6 +1092,34 @@ function compassDir(deg) {
   if (deg == null) return "—";
   const idx = Math.round(((deg % 360) + 360) % 360 / 22.5) % 16;
   return COMPASS_16[idx];
+}
+
+// Compact chips summarizing the next 24h: total rain (only when meaningful)
+// and the day's temperature swing.
+function renderHourlySummary(w) {
+  if (!el.hourlySummary) return;
+  const hrs = (w?.hourly || []).slice(0, 24);
+  if (!hrs.length) { el.hourlySummary.textContent = ""; return; }
+
+  const chips = [];
+  const totalMm = hrs.reduce((s, h) => s + Math.max(0, h.precip || 0), 0);
+  if (totalMm >= 0.4) {
+    const label = totalMm >= 1 ? `${totalMm.toFixed(1)} mm` : `${totalMm.toFixed(2)} mm`;
+    chips.push(`<span class="chip rain" title="Expected precipitation in the next 24 hours">💧 ${label}</span>`);
+  }
+  let tMin = Infinity, tMax = -Infinity;
+  for (const h of hrs) {
+    if (h.temp == null) continue;
+    if (h.temp < tMin) tMin = h.temp;
+    if (h.temp > tMax) tMax = h.temp;
+  }
+  const swing = tMax - tMin;
+  if (Number.isFinite(swing) && swing >= 5) {
+    const lo = Math.round(convertTemp(tMin));
+    const hi = Math.round(convertTemp(tMax));
+    chips.push(`<span class="chip swing" title="Range across the next 24 hours">${lo}° → ${hi}°</span>`);
+  }
+  el.hourlySummary.innerHTML = chips.join("");
 }
 
 function highlightHour(index) {
