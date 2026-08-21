@@ -867,6 +867,16 @@ function renderMoon(moon) {
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
   renderMoonNext(moon);
+  // Give the moon SVG a tooltip that describes both the phase word and the
+  // illumination percentage so screen readers get useful text too.
+  const moonSvg = document.querySelector(".moon-svg");
+  if (moonSvg) {
+    const label = `${moon.name} · ${Math.round(moon.illum * 100)}% illuminated`;
+    moonSvg.setAttribute("aria-label", label);
+    moonSvg.setAttribute("role", "img");
+    moonSvg.setAttribute("aria-hidden", "false");
+    moonSvg.setAttribute("title", label);
+  }
   // Full-ish moons get a subtle warm halo so the moon card feels alive
   // near luna's brightest nights.
   if (el.moonLit) {
