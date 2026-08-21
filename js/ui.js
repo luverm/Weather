@@ -1250,11 +1250,15 @@ function scheduleSunArc(w) {
   if (!w?.sunrise || !w?.sunset) return;
 
   // Wire once: clicking anywhere on the sun arc's SVG maps back to a time
-  // between sunrise and sunset and scrubs there.
+  // between sunrise and sunset and scrubs there. The golden-hour rects are
+  // above the arc in the SVG paint order but stopPropagation-free, so this
+  // outer handler still receives the click and does the same math.
   const arcSvg = document.getElementById("sun-arc");
   if (arcSvg && !arcSvg.dataset.wired) {
     arcSvg.dataset.wired = "1";
     arcSvg.style.cursor = "pointer";
+    arcSvg.setAttribute("role", "img");
+    arcSvg.setAttribute("aria-label", "Sun path — click to jump to a time of day");
     arcSvg.addEventListener("click", (e) => {
       const w2 = state.weather;
       if (!w2?.sunrise || !w2?.sunset) return;
