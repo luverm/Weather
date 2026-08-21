@@ -1638,24 +1638,49 @@ function renderDailySpark(days) {
   const linePath = (arr) => arr.map((v, i) => (i === 0 ? "M" : "L") + x(i).toFixed(1) + "," + y(v).toFixed(1)).join(" ");
   el.dailyHi.setAttribute("d", linePath(days.map((d) => d.tempMax)));
   el.dailyLo.setAttribute("d", linePath(days.map((d) => d.tempMin)));
-  // Dots at each day + per-day temp labels above/below
+  // Dots at each day + per-day temp labels above/below.
   el.dailySparkDots.innerHTML = "";
+  // Identify the week's high and low so we can label them without cluttering
+  // every dot.
+  let hiIdx = 0, loIdx = 0;
+  for (let i = 1; i < days.length; i++) {
+    if (days[i].tempMax > days[hiIdx].tempMax) hiIdx = i;
+    if (days[i].tempMin < days[loIdx].tempMin) loIdx = i;
+  }
   days.forEach((d, i) => {
     if (d.tempMax != null) {
       const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
       c.setAttribute("cx", x(i).toFixed(1));
       c.setAttribute("cy", y(d.tempMax).toFixed(1));
-      c.setAttribute("r", "2.5");
+      c.setAttribute("r", i === hiIdx ? "3.2" : "2.5");
       c.setAttribute("class", "dot-hi");
       el.dailySparkDots.appendChild(c);
+      if (i === hiIdx) {
+        const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        t.setAttribute("x", x(i).toFixed(1));
+        t.setAttribute("y", (y(d.tempMax) - 5).toFixed(1));
+        t.setAttribute("text-anchor", "middle");
+        t.setAttribute("class", "dot-label hi");
+        t.textContent = `${Math.round(convertTemp(d.tempMax))}°`;
+        el.dailySparkDots.appendChild(t);
+      }
     }
     if (d.tempMin != null) {
       const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
       c.setAttribute("cx", x(i).toFixed(1));
       c.setAttribute("cy", y(d.tempMin).toFixed(1));
-      c.setAttribute("r", "2.5");
+      c.setAttribute("r", i === loIdx ? "3.2" : "2.5");
       c.setAttribute("class", "dot-lo");
       el.dailySparkDots.appendChild(c);
+      if (i === loIdx) {
+        const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        t.setAttribute("x", x(i).toFixed(1));
+        t.setAttribute("y", (y(d.tempMin) + 10).toFixed(1));
+        t.setAttribute("text-anchor", "middle");
+        t.setAttribute("class", "dot-label lo");
+        t.textContent = `${Math.round(convertTemp(d.tempMin))}°`;
+        el.dailySparkDots.appendChild(t);
+      }
     }
   });
 }
