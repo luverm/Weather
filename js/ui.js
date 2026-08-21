@@ -1604,12 +1604,26 @@ function bindSearch() {
 }
 
 function bindUnitToggle() {
-  el.unitBtn.addEventListener("click", () => {
+  const toggle = () => {
     haptic();
     state.unit = state.unit === "C" ? "F" : "C";
     localStorage.setItem("aether:unit", state.unit);
     el.unitBtn.textContent = `°${state.unit}`;
     if (state.weather) ui.setWeather(state.weather);
+  };
+  el.unitBtn.addEventListener("click", toggle);
+  // The temperature number itself is a much larger target — let a tap there
+  // toggle units too, without stealing text-selection.
+  el.temp?.addEventListener("click", (e) => {
+    if (e.target === el.unitBtn) return;
+    toggle();
+  });
+  el.temp?.setAttribute("role", "button");
+  el.temp?.setAttribute("aria-label", "Toggle temperature units");
+  el.temp?.setAttribute("tabindex", "0");
+  el.temp?.style.setProperty("cursor", "pointer");
+  el.temp?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); }
   });
 }
 
