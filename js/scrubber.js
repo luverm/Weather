@@ -62,6 +62,10 @@ export class Scrubber {
     el.style.display = "block";
     el.style.left = `${rel * 100}%`;
     el.setAttribute("data-label", label);
+    const timeText = new Date(ts).toLocaleTimeString([], {
+      hour: "2-digit", minute: "2-digit", hour12: false,
+    });
+    el.setAttribute("title", `${label} ${timeText}`);
   }
 
   _bind() {
