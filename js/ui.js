@@ -1647,6 +1647,15 @@ function renderDaily(w) {
       ${extra}
     `;
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
+    item.setAttribute("tabindex", "0");
+    item.setAttribute("role", "button");
+    item.setAttribute("aria-label", `Expand forecast for ${day}`);
+    item.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        toggleDailyExpand(item, d, w);
+      }
+    });
     el.dailyTrack.appendChild(item);
   });
 }
