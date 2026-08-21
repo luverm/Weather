@@ -1820,7 +1820,7 @@ function renderDaily(w) {
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
   const tz = state.weather?.timezone;
-  el.dailyIconStrip.innerHTML = days.map((d) => {
+  el.dailyIconStrip.innerHTML = days.map((d, i) => {
     const dt = new Date(d.time);
     const day = dt.toLocaleDateString(undefined, {
       weekday: "short",
@@ -1829,8 +1829,24 @@ function renderDailyIconStrip(days) {
     const hi = d.tempMax != null ? `${Math.round(convertTemp(d.tempMax))}°` : "—";
     const lo = d.tempMin != null ? `${Math.round(convertTemp(d.tempMin))}°` : "—";
     const title = `${day} · ${escapeHtml(d.label || d.condition || "")} · ${lo}/${hi}`;
-    return `<span class="strip-day" data-condition="${d.condition || ""}" title="${title}">${iconFor(d.condition)}</span>`;
+    return `<span class="strip-day" data-condition="${d.condition || ""}" data-i="${i}" tabindex="0" role="button" title="${title}" aria-label="${title}">${iconFor(d.condition)}</span>`;
   }).join("");
+  // Click a day icon → scrub to that day's noon (best "story of the day" spot).
+  el.dailyIconStrip.querySelectorAll(".strip-day[data-i]").forEach((sp) => {
+    const scrub = () => {
+      const idx = parseInt(sp.dataset.i, 10);
+      const d = days[idx];
+      if (!d) return;
+      const noon = d.sunrise && d.sunset
+        ? d.sunrise + (d.sunset - d.sunrise) / 2
+        : d.time + 12 * 3600_000;
+      state.handlers.onHourClick?.(noon);
+    };
+    sp.addEventListener("click", scrub);
+    sp.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); scrub(); }
+    });
+  });
 }
 
 function renderDailySpark(days) {
