@@ -406,6 +406,10 @@ html[data-reduce-motion="true"] *::after {
 .temp-value.just-updated {
   filter: drop-shadow(0 0 12px rgba(255,255,255,0.35));
 }
+[data-scrubbing="true"] .temp-value {
+  opacity: 0.85;
+  filter: saturate(0.85);
+}
 .unit {
   font-size: clamp(16px, 2vw, 24px);
   line-height: 1;
