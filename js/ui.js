@@ -1560,7 +1560,7 @@ function renderHourlySummary(w) {
   const chips = [];
   const totalMm = hrs.reduce((s, h) => s + Math.max(0, h.precip || 0), 0);
   if (totalMm >= 0.4) {
-    const label = totalMm >= 1 ? `${totalMm.toFixed(1)} mm` : `${totalMm.toFixed(2)} mm`;
+    const label = fmtAmount(totalMm);
     chips.push(`<span class="chip rain" title="Expected precipitation in the next 24 hours">💧 ${label}</span>`);
   } else {
     // Nothing wet expected — count contiguous dry hours from now forward so
@@ -1895,7 +1895,7 @@ function renderNowcast(w) {
     : `${kind} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
   // 2h outlook summary.
   const totalMm = nowcast.reduce((s, n) => s + (n.precip || 0), 0);
-  el.nowcastSub.textContent = `${totalMm.toFixed(1)} mm expected in the next 2 hours`;
+  el.nowcastSub.textContent = `${fmtAmount(totalMm)} expected in the next 2 hours`;
   // Bars (time-labeled, clickable to scrub).
   el.nowcastBars.innerHTML = "";
   const slice = nowcast.slice(0, 8);
@@ -1906,7 +1906,7 @@ function renderNowcast(w) {
     bar.className = "nowcast-bar";
     bar.style.height = `${Math.max(2, (n.precip / maxP) * 28)}px`;
     const mins = Math.round((n.time - Date.now()) / 60_000);
-    bar.title = `+${Math.max(0, mins)} min · ${n.precip.toFixed(1)} mm`;
+    bar.title = `+${Math.max(0, mins)} min · ${fmtAmount(n.precip)}`;
     bar.setAttribute("aria-label", bar.title);
     bar.addEventListener("click", () => state.handlers.onHourClick?.(n.time));
     el.nowcastBars.appendChild(bar);
