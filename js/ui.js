@@ -480,6 +480,20 @@ function renderMetrics(w) {
   if (windCard) {
     windCard.classList.toggle("gusty", gustsKmh >= 40);
     windCard.classList.toggle("stormy", gustsKmh >= 60);
+    if (!windCard.dataset.wired) {
+      windCard.dataset.wired = "1";
+      windCard.style.cursor = "pointer";
+      windCard.setAttribute("title", "Jump to peak gust");
+      windCard.addEventListener("click", () => {
+        const hrs = state.weather?.hourly || [];
+        let peakTs = null, peakV = -Infinity;
+        for (const h of hrs) {
+          const g = h.gusts ?? h.wind ?? 0;
+          if (g > peakV) { peakV = g; peakTs = h.time; }
+        }
+        if (peakTs) state.handlers.onHourClick?.(peakTs);
+      });
+    }
   }
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
