@@ -1473,7 +1473,7 @@ function renderDaily(w) {
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
   el.dailyIconStrip.innerHTML = days.map((d) =>
-    `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
+    `<span class="strip-day" data-condition="${d.condition || ""}" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
   ).join("");
 }
 
@@ -1777,6 +1777,7 @@ function bindUnitToggle() {
   el.temp?.setAttribute("role", "button");
   el.temp?.setAttribute("aria-label", "Toggle temperature units");
   el.temp?.setAttribute("tabindex", "0");
+  el.temp?.setAttribute("title", "Tap to toggle °C / °F");
   el.temp?.style.setProperty("cursor", "pointer");
   el.temp?.addEventListener("keydown", (e) => {
     if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); }
