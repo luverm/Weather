@@ -548,9 +548,15 @@ function renderMetrics(w) {
   // Combine visibility with a pressure-change narrative when the trend is
   // strong enough to matter (>= 1.5 hPa in the last 3h). Keeps the sub-line
   // short but adds actionable context.
-  const visPart = w.visibility != null
-    ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
-    : "visibility —";
+  let visPart;
+  if (w.visibility == null) {
+    visPart = "visibility —";
+  } else if (state.unit === "F") {
+    const mi = w.visibility / 1609.34;
+    visPart = `visibility ${(Math.round(mi * 10) / 10).toFixed(1)} mi`;
+  } else {
+    visPart = `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`;
+  }
   const trendPart = pressureNarrative(w.pressureTrend);
   el.metricPressureSub.textContent = trendPart ? `${visPart} · ${trendPart}` : visPart;
   // Poor visibility (< 1 km) is unusual and worth flagging.
