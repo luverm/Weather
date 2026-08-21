@@ -35,6 +35,8 @@ const el = {
   metricPressureSub: $("#m-pressure-sub"),
   metricUV: $("#m-uv"),
   metricUVSub: $("#m-uv-sub"),
+  uvGaugeFill: $("#uv-gauge-fill"),
+  uvGaugeMarker: $("#uv-gauge-marker"),
   aqArc: $("#aq-arc"),
   aqValue: $("#aq-value"),
   aqLabel: $("#aq-label"),
@@ -354,6 +356,7 @@ function renderMetrics(w) {
     ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
     : "visibility —";
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
+  updateUvGauge(w.uv);
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
     if (lvl) {
@@ -381,6 +384,21 @@ function cloudsWord(pct) {
   if (pct < 75) return "scattered";
   if (pct < 95) return "broken";
   return "overcast";
+}
+
+// UV index gauge: marker at the current value on a 0..11+ track. Anything
+// above 11 pins to the far right (still "extreme").
+function updateUvGauge(uv) {
+  if (!el.uvGaugeMarker || !el.uvGaugeFill) return;
+  if (uv == null) {
+    el.uvGaugeMarker.style.opacity = "0";
+    el.uvGaugeFill.style.opacity = "0.35";
+    return;
+  }
+  const pct = Math.max(0, Math.min(1, uv / 11));
+  el.uvGaugeMarker.style.opacity = "1";
+  el.uvGaugeMarker.style.left = (pct * 100).toFixed(1) + "%";
+  el.uvGaugeFill.style.opacity = uv < 1 ? "0.4" : "0.85";
 }
 
 function humidityComfort(rh, dew, temp) {

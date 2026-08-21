@@ -928,6 +928,40 @@ kbd {
   font-variant-numeric: tabular-nums;
 }
 
+/* ---------- UV gauge ---------- */
+.metric-uv .uv-gauge {
+  position: relative;
+  grid-column: 1 / span 2;
+  height: 6px;
+  margin: 6px 0 0;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+}
+.metric-uv .uv-gauge-fill {
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg,
+    #78d06a 0%,   /* low   0–2 */
+    #ffd66e 27%,  /* mod   3–5 */
+    #ff8a3c 55%,  /* high  6–7 */
+    #e64f4f 73%,  /* very  8–10 */
+    #a06bff 100%  /* extreme 11+ */
+  );
+  opacity: 0.75;
+}
+.metric-uv .uv-gauge-marker {
+  position: absolute;
+  top: -3px;
+  left: 0;
+  width: 3px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--fg);
+  box-shadow: 0 0 6px rgba(255,255,255,0.35);
+  transform: translateX(-50%);
+  transition: left 700ms var(--ease);
+}
+
 /* ---------- Extras row: AQ + moon + sun ---------- */
 .extras {
   display: grid;
