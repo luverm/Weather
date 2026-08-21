@@ -364,6 +364,7 @@ document.addEventListener("visibilitychange", () => {
 
 // Re-render scenes at the top of each minute so "live" view ticks forward.
 setInterval(() => {
+  if (document.hidden) return; // no need to burn cycles behind other tabs
   if (!app.weather || !clock.isLive()) return;
   applyScene(app.weather);
   // Also refresh the chart so the "now" tick keeps up with the wall clock.
