@@ -99,5 +99,26 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     });
   }
 
+  // 6. Daylight trend — compare today vs tomorrow if we have both.
+  if (days.length >= 2) {
+    const t = days[0], u = days[1];
+    if (t?.sunrise && t?.sunset && u?.sunrise && u?.sunset) {
+      const todayDL = t.sunset - t.sunrise;
+      const tmrwDL = u.sunset - u.sunrise;
+      const deltaSec = Math.round((tmrwDL - todayDL) / 1000);
+      if (Math.abs(deltaSec) >= 30) {
+        const mins = Math.round(deltaSec / 60);
+        const abs = Math.abs(mins);
+        const dir = deltaSec > 0 ? "longer" : "shorter";
+        const label = abs >= 1 ? `${abs}m ${dir}` : `${Math.abs(deltaSec)}s ${dir}`;
+        out.push({
+          icon: ICONS.sun,
+          label: "Tomorrow",
+          value: `${label} daylight`,
+        });
+      }
+    }
+  }
+
   return out.slice(0, 6);
 }
