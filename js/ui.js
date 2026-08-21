@@ -1402,7 +1402,7 @@ function renderDaily(w) {
     const left = ((d.tempMin - gMin) / span) * 100;
     const width = ((d.tempMax - d.tempMin) / span) * 100;
     const item = document.createElement("div");
-    item.className = "daily-item";
+    item.className = "daily-item" + (i === 0 ? " today" : "");
     item.dataset.ts = d.time;
     // Trend arrow: how does this day's high compare to the previous day's?
     // Skips the first row (nothing to compare) and small (< 2°C) deltas.
