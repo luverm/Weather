@@ -779,6 +779,34 @@ function renderMoon(moon) {
   el.moonLit.setAttribute("d", outer + " " + terminator);
 }
 
+// Turn the sunrise/sunset sun-card cells into scrub-to-that-moment buttons.
+// Wired once per DOM: subsequent renders just refresh the target timestamps.
+function wireSunItemClicks(w) {
+  const sunCard = document.getElementById("sun-card");
+  if (!sunCard) return;
+  const items = sunCard.querySelectorAll(".sun-item");
+  const targets = [w.sunrise, w.sunset, null];
+  items.forEach((item, i) => {
+    const ts = targets[i];
+    if (!ts) {
+      item.style.cursor = "";
+      item.removeAttribute("title");
+      return;
+    }
+    item.style.cursor = "pointer";
+    item.setAttribute("title", i === 0 ? "Jump to sunrise" : "Jump to sunset");
+    if (!item.dataset.wired) {
+      item.dataset.wired = "1";
+      item.addEventListener("click", () => {
+        const w2 = state.weather;
+        if (!w2) return;
+        const target = i === 0 ? w2.sunrise : w2.sunset;
+        if (target) state.handlers.onHourClick?.(target);
+      });
+    }
+  });
+}
+
 const SYNODIC_MONTH_DAYS = 29.5305882;
 
 // Show "Full moon in Nd" (or "New moon in Nd"), whichever is closer.
@@ -816,6 +844,7 @@ function fmtTime(ts) {
 function renderSun(w) {
   el.sunRise.textContent = fmtTime(w.sunrise);
   el.sunSet.textContent = fmtTime(w.sunset);
+  wireSunItemClicks(w);
   if (w.sunrise && w.sunset) {
     const mins = Math.round((w.sunset - w.sunrise) / 60_000);
     const hh = Math.floor(mins / 60);
