@@ -1134,6 +1134,22 @@ function scheduleSunArc(w) {
   if (state.sunArcTimer) { clearInterval(state.sunArcTimer); state.sunArcTimer = null; }
   if (!w?.sunrise || !w?.sunset) return;
 
+  // Wire once: clicking anywhere on the sun arc's SVG maps back to a time
+  // between sunrise and sunset and scrubs there.
+  const arcSvg = document.getElementById("sun-arc");
+  if (arcSvg && !arcSvg.dataset.wired) {
+    arcSvg.dataset.wired = "1";
+    arcSvg.style.cursor = "pointer";
+    arcSvg.addEventListener("click", (e) => {
+      const w2 = state.weather;
+      if (!w2?.sunrise || !w2?.sunset) return;
+      const r = arcSvg.getBoundingClientRect();
+      const frac = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+      const t = w2.sunrise + (w2.sunset - w2.sunrise) * frac;
+      state.handlers.onHourClick?.(t);
+    });
+  }
+
   const update = () => {
     const now = Date.now();
     const sr = w.sunrise, ss = w.sunset;
