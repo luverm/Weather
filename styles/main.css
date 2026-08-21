@@ -1649,6 +1649,14 @@ kbd {
   scroll-snap-align: start;
   transition: background 200ms var(--ease), transform 200ms var(--ease);
   cursor: pointer;
+  border-top: 2px solid transparent;
+}
+.forecast-item[data-daynight="night"] {
+  background: linear-gradient(180deg, rgba(20,28,60,0.20), rgba(10,14,30,0.06));
+  border-top-color: rgba(150,180,255,0.28);
+}
+.forecast-item[data-daynight="day"] {
+  border-top-color: rgba(255,210,140,0.28);
 }
 .forecast-item:hover { background: var(--glass); transform: translateY(-2px); }
 .forecast-item.active { background: var(--glass-strong); }

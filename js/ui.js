@@ -1094,6 +1094,7 @@ function renderHourly(w) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    item.dataset.daynight = h.isDay ? "day" : "night";
     // When rain is unlikely, use the same slot to hint at cloud cover so the
     // card conveys "clear vs cloudy" at a glance instead of just "0%".
     let bottom;
