@@ -1789,8 +1789,10 @@ function toggleDailyExpand(item, d, w) {
   if (existing) {
     existing.remove();
     item.dataset.expanded = "false";
+    item.setAttribute("aria-expanded", "false");
     return;
   }
+  item.setAttribute("aria-expanded", "true");
   // Build mini hourly bars for the 12 daytime-ish hours of that day, if we
   // have them in the hourly series (only first 24h). Otherwise skip.
   const dayStart = new Date(d.time);
