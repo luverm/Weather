@@ -2286,6 +2286,19 @@ function bindSettings() {
   });
 }
 
+// Best-effort: reveal the currently-active service worker cache version in
+// the settings footer. Useful when reporting an issue ("I'm on v42").
+(async function fillShellVersion() {
+  const spot = document.getElementById("settings-version");
+  if (!spot) return;
+  try {
+    const keys = await caches.keys();
+    const aether = keys.find((k) => k.startsWith("aether-"));
+    if (aether) spot.textContent = aether.replace(/^aether-/, "");
+    else spot.textContent = "shell";
+  } catch { spot.textContent = "shell"; }
+})();
+
 function applyStoredPreferences() {
   const reduce = localStorage.getItem("aether:reduceMotion") === "1";
   if (reduce) {
