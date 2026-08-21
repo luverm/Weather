@@ -1051,8 +1051,11 @@ button:focus-visible,
   padding: 26px 30px 24px;
   max-width: 460px;
   width: calc(100% - 40px);
+  max-height: calc(100dvh - 60px);
+  overflow-y: auto;
   border-radius: var(--radius);
   background: rgba(14, 18, 35, 0.94);
+  -webkit-overflow-scrolling: touch;
 }
 .shortcuts-inner h2 {
   margin: 0 0 16px;
