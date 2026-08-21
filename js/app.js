@@ -303,7 +303,25 @@ installShortcuts({
     if (app.weather) applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
   },
+  jumpToSunrise: () => jumpToSunEvent("sunrise"),
+  jumpToSunset: () => jumpToSunEvent("sunset"),
 });
+
+// Snap the scrubber to the next sunrise/sunset within the forecast window.
+function jumpToSunEvent(kind) {
+  if (!app.weather?.daily?.length) return;
+  const now = Date.now();
+  let target = null;
+  for (const d of app.weather.daily) {
+    const ts = d[kind];
+    if (ts && ts > now && (!target || ts < target)) target = ts;
+  }
+  if (!target) return;
+  clock.setOffset(target - Date.now());
+  scrubber.sync();
+  applyScene(app.weather);
+  ui.setScrubbing(!clock.isLive());
+}
 
 // ---------- Start ----------
 (async function init() {

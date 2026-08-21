@@ -1176,7 +1176,15 @@ function renderDaily(w) {
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
-    const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
+    // Include mm when the day is expected to actually wet the ground (>0.5mm),
+    // otherwise the number reads as noise next to the % probability.
+    let popLabel = "";
+    if (d.pop >= 30) {
+      const mm = d.precip >= 0.5 ? ` (${d.precip.toFixed(1)} mm)` : "";
+      popLabel = ` · ${d.pop}% rain${mm}`;
+    } else if (d.precip >= 1) {
+      popLabel = ` · ${d.precip.toFixed(1)} mm rain`;
+    }
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
     item.innerHTML = `
       <span class="daily-day">${day}</span>
