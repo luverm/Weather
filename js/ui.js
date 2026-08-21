@@ -2243,7 +2243,10 @@ function flashFresh() {
   clearTimeout(_freshTimer);
   _freshTimer = setTimeout(() => el.fetchedAgo?.classList.remove("fresh"), 2200);
   // Match with a brief highlight on the hero value so refreshes feel alive.
-  if (el.temp) {
+  // Skip the flash while the user is scrubbing so we don't visually double-
+  // announce every tick of the slider as if it's fresh weather.
+  const scrubbing = document.documentElement.getAttribute("data-scrubbing") === "true";
+  if (el.temp && !scrubbing) {
     el.temp.classList.remove("just-updated");
     void el.temp.offsetWidth;
     el.temp.classList.add("just-updated");
