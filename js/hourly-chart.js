@@ -297,6 +297,26 @@ export class HourlyChart {
       }
     }
 
+    // "Now" tick: an always-visible marker at the current hour's x, so a
+    // user who has scrubbed forward can still tell where "now" sits.
+    const nowLine = this.svg.querySelector("#chart-now");
+    if (nowLine) {
+      const now = Date.now();
+      let nowIdx = -1, bestDiff = Infinity;
+      for (let i = 0; i < this.hours.length; i++) {
+        const d = Math.abs(this.hours[i].time - now);
+        if (d < bestDiff) { bestDiff = d; nowIdx = i; }
+      }
+      if (nowIdx >= 0 && bestDiff <= 60 * 60_000) {
+        const x = this.points[nowIdx].x;
+        nowLine.setAttribute("x1", x.toFixed(1));
+        nowLine.setAttribute("x2", x.toFixed(1));
+        nowLine.setAttribute("opacity", "0.55");
+      } else {
+        nowLine.setAttribute("opacity", "0");
+      }
+    }
+
     // Labels: every ~3 hours
     const unit = this.getUnit();
     const labG = this.svg.querySelector("#chart-labels");

@@ -840,6 +840,11 @@ html[data-reduce-motion="true"] *::after {
   opacity: 0.75;
   pointer-events: none;
 }
+.chart-now {
+  stroke: rgba(255, 240, 200, 0.55);
+  stroke-width: 0.9;
+  pointer-events: none;
+}
 .chart-dot {
   fill: #fff;
   stroke: var(--accent);
