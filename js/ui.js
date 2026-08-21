@@ -88,6 +88,7 @@ const el = {
   settingUnitF: $("#setting-unit-f"),
   settingClearPlaces: $("#setting-clear-places"),
   settingShortcuts: $("#setting-shortcuts"),
+  settingReset: $("#setting-reset"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
@@ -2339,6 +2340,21 @@ function bindSettings() {
     close();
     const overlay = document.getElementById("shortcuts");
     if (overlay) overlay.hidden = false;
+  });
+
+  el.settingReset?.addEventListener("click", () => {
+    if (!confirm("Reset all data — saved places, preferences, dismissed alerts?")) return;
+    for (const p of places.all()) places.remove(p);
+    try {
+      // Clear Aether-owned localStorage keys only; leave unrelated site data
+      // alone in case the origin is shared.
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith("aether:"))
+        .forEach((k) => localStorage.removeItem(k));
+      sessionStorage.removeItem("aether:dismissed-alerts");
+    } catch { /* ignore quota / disabled storage */ }
+    ui.showToast("All data cleared — reloading");
+    setTimeout(() => location.reload(), 800);
   });
 }
 
