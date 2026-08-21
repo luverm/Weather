@@ -1061,6 +1061,17 @@ kbd {
 .aq-meta { display: grid; gap: 2px; min-width: 0; }
 .aq-meta strong { font-size: 14px; font-weight: 500; }
 .aq-detail { font-size: 11.5px; color: var(--fg-dim); }
+.aq-trend-chip {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid var(--stroke);
+}
+.aq-trend-chip[data-dir="up"]   { color: #ff9c9c; background: rgba(255,120,120,0.10); border-color: rgba(255,120,120,0.28); }
+.aq-trend-chip[data-dir="down"] { color: #a6ffa6; background: rgba(150,220,150,0.10); border-color: rgba(150,220,150,0.28); }
 .aq-trend {
   width: 100%; height: 22px; display: block;
   margin-top: 4px;

@@ -642,9 +642,25 @@ function renderAirQuality(aq) {
   // Circumference of r=20 is ~125.66 — we use 126 in the SVG.
   const frac = Math.max(0, Math.min(1, (aq.aqi ?? 0) / 200));
   el.aqArc.setAttribute("stroke-dashoffset", String(126 * (1 - frac)));
-  el.aqDetail.textContent =
-    `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
+  const trendChip = aqTrendChip(aq);
+  el.aqDetail.innerHTML =
+    `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}${trendChip}`;
   renderAqTrend(aq);
+}
+
+// Compare the last vs. first AQI reading in the ~12h trend window to add a
+// direction hint. Only when the change is >= 5 AQI points (not noise).
+function aqTrendChip(aq) {
+  const trend = aq?.trend;
+  if (!trend || trend.length < 3) return "";
+  const first = trend[0].aqi;
+  const last = trend[trend.length - 1].aqi;
+  if (first == null || last == null) return "";
+  const delta = last - first;
+  if (Math.abs(delta) < 5) return "";
+  const arrow = delta > 0 ? "▲" : "▼";
+  const dir = delta > 0 ? "worsening" : "improving";
+  return ` <span class="aq-trend-chip" data-dir="${delta > 0 ? "up" : "down"}" title="${dir}">${arrow} ${Math.round(Math.abs(delta))}</span>`;
 }
 
 function renderAqTrend(aq) {
