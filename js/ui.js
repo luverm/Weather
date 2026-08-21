@@ -292,6 +292,15 @@ function renderLiveValues(w, { animate = true } = {}) {
   renderFeelsLike(w, feels, temp);
   renderDayRange(w);
   renderVsYesterday(w);
+  updateTabTitle(w, temp);
+}
+
+// Reflect the current temperature + place in the browser tab so a pinned tab
+// shows useful info at a glance. Only when we have real values to show.
+function updateTabTitle(w, tempDisplay) {
+  if (w?.temp == null || !state.place?.name) return;
+  const unit = state.unit === "F" ? "°F" : "°C";
+  document.title = `${Math.round(tempDisplay)}${unit} · ${state.place.name} — Aether`;
 }
 
 // Rebuilds the feels-like line while preserving the inline #temp-trend span
