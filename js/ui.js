@@ -179,6 +179,7 @@ export const ui = {
   markRefreshSpin(on) {
     if (!el.refreshBtn) return;
     el.refreshBtn.classList.toggle("spinning", !!on);
+    if (el.fetchedAgo) el.fetchedAgo.classList.toggle("refreshing", !!on);
   },
   setLoading(text) { el.placeSub.textContent = text; },
   setPlace(place) {
