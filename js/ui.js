@@ -188,6 +188,14 @@ export const ui = {
     el.placeName.textContent = place.name || "Unknown";
     const sub = [place.admin1, place.country].filter(Boolean).join(", ");
     el.placeSub.textContent = sub || "—";
+    // Tooltip with lat/lon for the technically curious; kept out of the
+    // visible line so the sub stays clean.
+    if (place.lat != null && place.lon != null) {
+      const fmt = (v) => v.toFixed(3);
+      el.placeSub.title = `${fmt(place.lat)}, ${fmt(place.lon)}`;
+    } else {
+      el.placeSub.removeAttribute("title");
+    }
     // Reset alert dismissals so a fresh location can re-surface them.
     try { sessionStorage.removeItem("aether:dismissed-alerts"); } catch { /* ignore */ }
     renderPlaces();
