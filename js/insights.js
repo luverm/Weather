@@ -12,7 +12,7 @@ const ICONS = {
   sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg>',
 };
 
-export function buildInsights(weather, { fmtTime, weekday } = {}) {
+export function buildInsights(weather, { fmtTime, weekday, unit } = {}) {
   const out = [];
   if (!weather) return out;
 
@@ -47,9 +47,11 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     if (!peakGust || g > peakGust.v) peakGust = { v: g, ts: h.time };
   }
   if (peakGust && peakGust.v >= 20) {
+    const windLabel = unit === "F" ? "mph" : "km/h";
+    const val = unit === "F" ? peakGust.v * 0.621371 : peakGust.v;
     out.push({
       icon: ICONS.wind, label: "Peak gust",
-      value: `${Math.round(peakGust.v)} km/h at ${fmt(peakGust.ts)}`,
+      value: `${Math.round(val)} ${windLabel} at ${fmt(peakGust.ts)}`,
       ts: peakGust.ts,
     });
   }
