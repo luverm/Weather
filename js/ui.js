@@ -819,11 +819,18 @@ function renderSkyForecast(w) {
     `<span class="seg clear" style="width:${pct(clear).toFixed(1)}%" title="${clear}h clear"></span>` +
     `<span class="seg partly" style="width:${pct(partly).toFixed(1)}%" title="${partly}h partly cloudy"></span>` +
     `<span class="seg overcast" style="width:${pct(overcast).toFixed(1)}%" title="${overcast}h overcast"></span>`;
+  // Frontload the summary with whichever segment dominates, so the eye lands
+  // on the takeaway before the breakdown.
+  const dominant =
+    clear > partly && clear > overcast ? "Mostly clear" :
+    overcast > clear && overcast > partly ? "Mostly overcast" :
+    partly >= clear && partly >= overcast ? "Partly cloudy" :
+    "Mixed";
   const parts = [];
   if (clear)    parts.push(`${clear}h clear`);
   if (partly)   parts.push(`${partly}h partly`);
   if (overcast) parts.push(`${overcast}h overcast`);
-  el.skyForecastCaption.textContent = parts.join(" · ");
+  el.skyForecastCaption.textContent = `${dominant} · ${parts.join(" · ")}`;
   el.skyForecast.hidden = false;
 }
 
