@@ -824,6 +824,15 @@ html[data-reduce-motion="true"] *::after {
   filter: drop-shadow(0 0 6px var(--accent));
 }
 
+/* Coldest/warmest hour markers on the chart. */
+.chart-extreme { pointer-events: none; }
+.chart-extreme-halo { fill: transparent; opacity: 0.55; stroke-width: 1.2; }
+.chart-extreme-dot { stroke: rgba(6, 10, 24, 0.85); stroke-width: 0.6; }
+.chart-extreme.cold .chart-extreme-halo { stroke: #9ad1ff; }
+.chart-extreme.cold .chart-extreme-dot  { fill: #9ad1ff; }
+.chart-extreme.warm .chart-extreme-halo { stroke: #ff9c7a; }
+.chart-extreme.warm .chart-extreme-dot  { fill: #ff9c7a; }
+
 /* ---------- Wind compass (inside wind metric) ---------- */
 .metric-wind {
   grid-template-columns: 1fr auto;

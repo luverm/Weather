@@ -264,6 +264,39 @@ export class HourlyChart {
       }
     }
 
+    // Extrema markers — highlight the coldest and warmest hours on the chart
+    // so the eye can find them without hovering. Skipped when the swing is
+    // trivial (< 3°) to avoid decorative clutter.
+    const extremaG = this.svg.querySelector("#chart-extrema");
+    if (extremaG) {
+      extremaG.innerHTML = "";
+      if (span >= 3) {
+        let minI = 0, maxI = 0;
+        for (let i = 1; i < this.hours.length; i++) {
+          if (this.hours[i].temp < this.hours[minI].temp) minI = i;
+          if (this.hours[i].temp > this.hours[maxI].temp) maxI = i;
+        }
+        const marker = (i, cls) => {
+          const p = this.points[i];
+          const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+          g.setAttribute("class", `chart-extreme ${cls}`);
+          const halo = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          halo.setAttribute("cx", p.x); halo.setAttribute("cy", p.y);
+          halo.setAttribute("r", "5"); halo.setAttribute("class", "chart-extreme-halo");
+          g.appendChild(halo);
+          const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          dot.setAttribute("cx", p.x); dot.setAttribute("cy", p.y);
+          dot.setAttribute("r", "2.4"); dot.setAttribute("class", "chart-extreme-dot");
+          g.appendChild(dot);
+          return g;
+        };
+        if (minI !== maxI) {
+          extremaG.appendChild(marker(minI, "cold"));
+          extremaG.appendChild(marker(maxI, "warm"));
+        }
+      }
+    }
+
     // Labels: every ~3 hours
     const unit = this.getUnit();
     const labG = this.svg.querySelector("#chart-labels");
