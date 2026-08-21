@@ -227,6 +227,7 @@ async function useGeolocation() {
   try {
     const { lat, lon } = await getLocation();
     await loadByCoords({ name: "Current location", lat, lon });
+    ui.showToast?.("Weather for your location");
   } catch {
     ui.showToast("Location denied — pick a city");
     await loadByCoords({ name: "Reykjavík", country: "Iceland", lat: 64.1466, lon: -21.9426 });
