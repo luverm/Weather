@@ -2018,7 +2018,7 @@ function renderSearchResults(results) {
     // Keep the dropdown visible with an inert "no matches" hint instead of
     // vanishing — otherwise a typo looks like the search silently broke.
     el.searchResults.innerHTML =
-      `<li class="recent-heading" aria-disabled="true">No cities matched</li>`;
+      `<li class="recent-heading" aria-disabled="true">No cities matched — try a shorter query</li>`;
     el.searchResults.hidden = false;
     el.searchResults._items = [];
     return;
