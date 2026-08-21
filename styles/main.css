@@ -1151,7 +1151,8 @@ kbd {
 }
 
 .moon-row, .sun-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
-.moon-svg { width: 48px; height: 48px; }
+.moon-svg { width: 48px; height: 48px; transition: transform 400ms var(--ease); }
+#moon-card:hover .moon-svg { transform: rotate(-6deg) scale(1.04); }
 .moon-meta { display: grid; gap: 1px; }
 .moon-meta strong { display: block; font-size: 14px; font-weight: 500; }
 .moon-detail { font-size: 11.5px; color: var(--fg-dim); }
