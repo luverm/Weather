@@ -854,11 +854,17 @@ function wireSunItemClicks(w) {
     item.setAttribute("title", i === 0 ? "Jump to sunrise" : "Jump to sunset");
     if (!item.dataset.wired) {
       item.dataset.wired = "1";
-      item.addEventListener("click", () => {
+      item.setAttribute("tabindex", "0");
+      item.setAttribute("role", "button");
+      const scrub = () => {
         const w2 = state.weather;
         if (!w2) return;
         const target = i === 0 ? w2.sunrise : w2.sunset;
         if (target) state.handlers.onHourClick?.(target);
+      };
+      item.addEventListener("click", scrub);
+      item.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); scrub(); }
       });
     }
   });
