@@ -725,6 +725,7 @@ function renderAirQuality(aq) {
   el.aqCard.style.opacity = 1;
   const color = aqColor(aq.aqi);
   el.aqCard.style.color = color;
+  wireAqClick(aq);
   el.aqValue.textContent = aq.aqi != null ? Math.round(aq.aqi) : "—";
   el.aqLabel.textContent = aq.label || "—";
   // Circumference of r=20 is ~125.66 — we use 126 in the SVG.
@@ -734,6 +735,24 @@ function renderAirQuality(aq) {
   el.aqDetail.innerHTML =
     `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}${trendChip}`;
   renderAqTrend(aq);
+}
+
+// Wire the AQ card so tapping it scrubs to the worst hour in the trend
+// window. Same wire-once pattern as the wind/UV cards to avoid stacking
+// listeners over renders.
+function wireAqClick(aq) {
+  if (!el.aqCard || el.aqCard.dataset.wired) return;
+  const trend = aq?.trend || [];
+  if (!trend.length) return;
+  el.aqCard.dataset.wired = "1";
+  el.aqCard.style.cursor = "pointer";
+  el.aqCard.setAttribute("title", "Jump to worst AQI hour");
+  el.aqCard.addEventListener("click", () => {
+    const t = state.weather?.airQuality?.trend || [];
+    let worstTs = null, worstV = -Infinity;
+    for (const p of t) if (p.aqi > worstV) { worstV = p.aqi; worstTs = p.time; }
+    if (worstTs) state.handlers.onHourClick?.(worstTs);
+  });
 }
 
 // Compare the last vs. first AQI reading in the ~12h trend window to add a
