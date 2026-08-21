@@ -530,7 +530,19 @@ function renderMetrics(w) {
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   updateUvGauge(w.uv);
   const uvCard = document.querySelector(".metric-uv");
-  if (uvCard) uvCard.classList.toggle("severe", (w.uv ?? 0) >= 8);
+  if (uvCard) {
+    uvCard.classList.toggle("severe", (w.uv ?? 0) >= 8);
+    // Make the whole card clickable to scrub to the day's UV peak.
+    if (w.uvPeak?.time && !uvCard.dataset.wired) {
+      uvCard.dataset.wired = "1";
+      uvCard.style.cursor = "pointer";
+      uvCard.setAttribute("title", "Jump to UV peak");
+      uvCard.addEventListener("click", () => {
+        const peak = state.weather?.uvPeak?.time;
+        if (peak) state.handlers.onHourClick?.(peak);
+      });
+    }
+  }
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
     if (lvl) {
