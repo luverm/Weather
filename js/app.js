@@ -136,6 +136,7 @@ function sampleAt(weather, ts) {
     windSpeed: nearest.wind ?? weather.windSpeed,
     windGusts: nearest.gusts ?? weather.windGusts,
     uv: nearest.uv ?? weather.uv,
+    cloudCover: nearest.clouds ?? weather.cloudCover,
     sunrise: day?.sunrise ?? weather.sunrise,
     sunset: day?.sunset ?? weather.sunset,
     _sampledIndex: idx,

@@ -363,12 +363,24 @@ function renderMetrics(w) {
       el.uvLevel.textContent = "";
     }
   }
-  if (w.uvPeak?.time) {
-    el.metricUVSub.textContent = `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`;
-  } else {
-    el.metricUVSub.textContent = "peak —";
-  }
+  const peakPart = w.uvPeak?.time
+    ? `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`
+    : "peak —";
+  const clouds = w.cloudCover;
+  const cloudPart = clouds != null
+    ? ` · ${Math.round(clouds)}% ${cloudsWord(clouds)}`
+    : "";
+  el.metricUVSub.textContent = peakPart + cloudPart;
   renderPressureSparkline(w);
+}
+
+// Cloud cover word, picked to be self-consistent with WMO's cloud amounts.
+function cloudsWord(pct) {
+  if (pct < 12) return "clear";
+  if (pct < 40) return "few";
+  if (pct < 75) return "scattered";
+  if (pct < 95) return "broken";
+  return "overcast";
 }
 
 function humidityComfort(rh, dew, temp) {
@@ -1021,11 +1033,21 @@ function renderHourly(w) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    // When rain is unlikely, use the same slot to hint at cloud cover so the
+    // card conveys "clear vs cloudy" at a glance instead of just "0%".
+    let bottom;
+    if (h.pop >= 20) {
+      bottom = `<span class="forecast-pop">${h.pop}%</span>`;
+    } else if (h.clouds != null) {
+      bottom = `<span class="forecast-pop cloud" title="${h.clouds}% cloud cover">${cloudsWord(h.clouds)}</span>`;
+    } else {
+      bottom = `<span class="forecast-pop dim">${h.pop}%</span>`;
+    }
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
-      <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
+      ${bottom}
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);

@@ -1551,6 +1551,13 @@ kbd {
   opacity: 0.9;
 }
 .forecast-pop.dim { opacity: 0; }
+.forecast-pop.cloud {
+  color: var(--fg-dim);
+  font-variant-numeric: normal;
+  letter-spacing: 0.04em;
+  opacity: 0.75;
+  text-transform: lowercase;
+}
 
 .daily-track {
   display: grid;
