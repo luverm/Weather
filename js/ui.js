@@ -319,6 +319,27 @@ function updateTabTitle(w, tempDisplay) {
   const unit = state.unit === "F" ? "°F" : "°C";
   const emoji = conditionEmoji(w.condition, w.isDay);
   document.title = `${emoji} ${Math.round(tempDisplay)}${unit} · ${state.place.name} — Aether`;
+  updateFavicon(emoji);
+}
+
+// Render an emoji into the browser tab favicon slot. Keeps in sync with the
+// tab title so a row of tabs shows glanceable condition icons.
+let _lastFaviconEmoji = null;
+function updateFavicon(emoji) {
+  if (!emoji || emoji === _lastFaviconEmoji) return;
+  _lastFaviconEmoji = emoji;
+  const svg =
+    `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>` +
+    `<text x='50%' y='54%' font-size='52' text-anchor='middle' dominant-baseline='middle'>${emoji}</text>` +
+    `</svg>`;
+  const href = "data:image/svg+xml," + encodeURIComponent(svg);
+  let link = document.querySelector('link[rel="icon"]');
+  if (!link) {
+    link = document.createElement("link");
+    link.rel = "icon";
+    document.head.appendChild(link);
+  }
+  link.href = href;
 }
 
 function conditionEmoji(c, isDay) {
