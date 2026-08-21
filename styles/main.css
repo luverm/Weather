@@ -1179,7 +1179,11 @@ kbd {
 }
 .extra-card:hover { transform: translateY(-2px); }
 .aq-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
-.aq-ring { position: relative; width: 48px; height: 48px; color: #78d06a; }
+.aq-ring {
+  position: relative; width: 48px; height: 48px; color: #78d06a;
+  transition: filter 300ms var(--ease);
+}
+#aq-card:hover .aq-ring { filter: brightness(1.15); }
 .aq-ring svg { width: 48px; height: 48px; display: block; }
 .aq-value {
   position: absolute; inset: 0; display: grid; place-items: center;
