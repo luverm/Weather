@@ -1969,6 +1969,38 @@ function bindSearch() {
     }
     runSearch(v);
   });
+  // Arrow keys move a highlight through the dropdown; Enter selects it.
+  el.searchInput.addEventListener("keydown", (e) => {
+    const items = el.searchResults?._items || [];
+    if (!items.length || el.searchResults?.hidden) return;
+    const lis = el.searchResults.querySelectorAll("li[data-index]");
+    if (!lis.length) return;
+    let active = el.searchResults.querySelector("li.active");
+    let idx = active ? parseInt(active.dataset.index, 10) : -1;
+    if (e.key === "ArrowDown") {
+      idx = Math.min(items.length - 1, idx + 1);
+      e.preventDefault();
+    } else if (e.key === "ArrowUp") {
+      idx = Math.max(0, idx - 1);
+      e.preventDefault();
+    } else if (e.key === "Enter" && idx >= 0) {
+      const item = items[idx];
+      if (item) {
+        el.searchInput.value = item.name;
+        el.searchResults.hidden = true;
+        places.add(item);
+        state.handlers.onSearchSelect?.(item);
+      }
+      e.preventDefault();
+      return;
+    } else {
+      return;
+    }
+    lis.forEach((li) => li.classList.remove("active"));
+    const cur = el.searchResults.querySelector(`li[data-index="${idx}"]`);
+    cur?.classList.add("active");
+    cur?.scrollIntoView({ block: "nearest" });
+  });
   el.searchInput.addEventListener("blur", () => {
     setTimeout(() => (el.searchResults.hidden = true), 150);
   });
