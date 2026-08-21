@@ -2478,3 +2478,16 @@ ui.refreshPlaces = renderPlaces;
 // Nudge the chart to redraw (used by the once-a-minute app-level ticker so
 // the always-visible "now" tick tracks the wall clock).
 ui.refreshChart = () => state.chart?.refresh?.();
+
+// Reflect the browser's own online/offline signal in the footer so the user
+// knows any weirdness is a network issue, not the app.
+(function watchOnlineState() {
+  const apply = () => {
+    if (navigator.onLine === false && el.fetchedAgo) {
+      el.fetchedAgo.classList.add("offline");
+    }
+  };
+  window.addEventListener("online", () => el.fetchedAgo?.classList.remove("offline"));
+  window.addEventListener("offline", apply);
+  apply();
+})();
