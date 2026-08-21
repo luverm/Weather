@@ -1427,9 +1427,17 @@ function toggleDailyExpand(item, d, w) {
     const height = 10 + (pct / 100) * 36;
     const precipLevel = h.pop >= 60 ? 2 : h.pop >= 25 ? 1 : 0;
     const hh = new Date(h.time).getHours().toString().padStart(2, "0");
-    return `<div class="daily-expand-bar" data-precip="${precipLevel}" style="height:${height.toFixed(1)}px" title="${hh}:00 · ${Math.round(convertTemp(h.temp))}° · ${h.pop}%"><span>${Math.round(convertTemp(h.temp))}°</span></div>`;
+    return `<div class="daily-expand-bar" data-precip="${precipLevel}" data-ts="${h.time}" style="height:${height.toFixed(1)}px" title="${hh}:00 · ${Math.round(convertTemp(h.temp))}° · ${h.pop}%"><span>${Math.round(convertTemp(h.temp))}°</span></div>`;
   }).join("");
   item.appendChild(box);
+  box.querySelectorAll(".daily-expand-bar[data-ts]").forEach((barEl) => {
+    barEl.addEventListener("click", (e) => {
+      e.stopPropagation(); // prevent closing the expanded panel
+      const ts = parseInt(barEl.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+    barEl.style.cursor = "pointer";
+  });
   item.dataset.expanded = "true";
 }
 
