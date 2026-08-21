@@ -99,7 +99,23 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     });
   }
 
-  // 6. Daylight trend — compare today vs tomorrow if we have both.
+  // 6. Stargazing outlook — clear night + waxing crescent/gibbous or dimmer.
+  //    Uses tonight's hourly clouds when we have them.
+  const nightHours = hours.filter((h) =>
+    !h.isDay && h.time >= Date.now() && h.time <= Date.now() + 12 * 3600_000
+  );
+  const clearNight = nightHours.length >= 3
+    && nightHours.filter((h) => (h.clouds ?? 100) < 30).length >= 3;
+  const moonIllum = weather.moon?.illum ?? 1;
+  if (clearNight && moonIllum <= 0.35) {
+    out.push({
+      icon: ICONS.sun,
+      label: "Tonight",
+      value: `Great for stargazing · ${Math.round(moonIllum * 100)}% moon`,
+    });
+  }
+
+  // 7. Daylight trend — compare today vs tomorrow if we have both.
   if (days.length >= 2) {
     const t = days[0], u = days[1];
     if (t?.sunrise && t?.sunset && u?.sunrise && u?.sunset) {
