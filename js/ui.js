@@ -1567,7 +1567,9 @@ function renderDaily(w) {
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(convertWind(d.gustsMax))} ${windUnitLabel}`
       : "";
-    const snowLabel = d.condition === "snow" ? " · snow" : "";
+    const snowLabel = d.condition === "snow"
+      ? (d.snowfall >= 0.5 ? ` · ${d.snowfall.toFixed(1)} cm snow` : " · snow")
+      : "";
     // Include mm when the day is expected to actually wet the ground (>0.5mm),
     // otherwise the number reads as noise next to the % probability.
     let popLabel = "";
