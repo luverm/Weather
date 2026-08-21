@@ -1638,6 +1638,11 @@ kbd {
   border-color: rgba(255,190,120,0.28);
   background: rgba(255,190,120,0.10);
 }
+.hourly-summary .chip.transition {
+  color: #d2b6ff;
+  border-color: rgba(180, 150, 250, 0.32);
+  background: rgba(180, 150, 250, 0.10);
+}
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;

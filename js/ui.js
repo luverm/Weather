@@ -1261,7 +1261,47 @@ function renderHourlySummary(w) {
     const hi = Math.round(convertTemp(tMax));
     chips.push(`<span class="chip swing" title="Range across the next 24 hours">${lo}° → ${hi}°</span>`);
   }
+  const transition = nextTransition(w, hrs);
+  if (transition) chips.push(transition);
   el.hourlySummary.innerHTML = chips.join("");
+}
+
+// Look ahead for the first notable weather transition — rain starting, wind
+// picking up, condition family changing — and format a short chip. Skipped
+// when nothing meaningful shows up in the horizon.
+function nextTransition(w, hrs) {
+  const now = Date.now();
+  const nowFamily = conditionFamily(w?.condition);
+  const nowRaining = w?.condition === "rain" || w?.condition === "storm";
+  for (const h of hrs) {
+    if (h.time <= now + 30 * 60_000) continue;
+    if (h.time > now + 8 * 3600_000) break;
+    const hRaining = h.condition === "rain" || h.condition === "storm";
+    if (!nowRaining && hRaining) {
+      return chipTransition("🌧", "Rain starts", h.time);
+    }
+    if (nowRaining && !hRaining) {
+      return chipTransition("☀", "Rain eases", h.time);
+    }
+    const family = conditionFamily(h.condition);
+    if (family !== nowFamily && (family === "storm" || family === "snow")) {
+      return chipTransition(family === "storm" ? "⛈" : "❄", `${capitalize(family)} moves in`, h.time);
+    }
+  }
+  return null;
+}
+
+function conditionFamily(c) {
+  if (!c) return "unknown";
+  if (c === "storm" || c === "rain") return c;
+  if (c === "snow" || c === "fog") return c;
+  return "dry";
+}
+
+function chipTransition(icon, label, ts) {
+  const mins = Math.max(0, Math.round((ts - Date.now()) / 60_000));
+  const when = mins < 60 ? `in ${mins}m` : `${fmtTime(ts)}`;
+  return `<span class="chip transition" title="${escapeHtml(label)} ${when}">${icon} ${label} · ${when}</span>`;
 }
 
 function highlightHour(index) {
