@@ -396,17 +396,32 @@ function mock(lat, lon) {
       clouds: Math.round(40 + Math.sin(i / 3) * 30),
       condition: CONDITIONS.CLOUDS, label: "Cloudy",
     })),
-    daily: Array.from({ length: 7 }, (_, i) => ({
-      time: now + i * 86400_000,
-      tempMax: 20 + Math.sin(i) * 4,
-      tempMin: 12 + Math.sin(i) * 3,
-      precip: i % 3 === 0 ? 2.1 : 0,
-      pop: i % 3 === 0 ? 65 : 15,
-      windMax: 12, gustsMax: 20, uvMax: 5,
-      sunrise: new Date().setHours(6, 30, 0, 0),
-      sunset: new Date().setHours(19, 0, 0, 0),
-      condition: CONDITIONS.CLOUDS, label: "Cloudy",
-    })),
+    daily: Array.from({ length: 7 }, (_, i) => {
+      // Rotate through a small set of conditions so the mock strip looks
+      // varied — helps preview UI states offline without hunting for real
+      // rainy days.
+      const rot = i % 4;
+      const cond = rot === 0 ? CONDITIONS.CLOUDS
+                : rot === 1 ? CONDITIONS.CLEAR
+                : rot === 2 ? CONDITIONS.RAIN
+                : CONDITIONS.CLOUDS;
+      const label = rot === 0 ? "Partly cloudy"
+                  : rot === 1 ? "Clear"
+                  : rot === 2 ? "Rain showers"
+                  : "Overcast";
+      return {
+        time: now + i * 86400_000,
+        tempMax: 20 + Math.sin(i) * 4,
+        tempMin: 12 + Math.sin(i) * 3,
+        precip: rot === 2 ? 3.4 : 0,
+        pop: rot === 2 ? 70 : rot === 0 ? 25 : 5,
+        windMax: 12 + i, gustsMax: 20 + i * 2,
+        uvMax: rot === 1 ? 7 : 5,
+        sunrise: new Date().setHours(6, 30, 0, 0),
+        sunset: new Date().setHours(19, 0, 0, 0),
+        condition: cond, label,
+      };
+    }),
     yesterday: {
       time: now - 86400_000,
       tempMax: 17,
