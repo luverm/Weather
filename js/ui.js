@@ -272,6 +272,15 @@ export const ui = {
     el.toast.hidden = false;
     clearTimeout(el.toast._t);
     el.toast._t = setTimeout(() => (el.toast.hidden = true), dur);
+    if (!el.toast.dataset.wired) {
+      el.toast.dataset.wired = "1";
+      // A tap on the toast closes it early — polite for stacked notifications
+      // where the user has already read one and wants the next.
+      el.toast.addEventListener("click", () => {
+        clearTimeout(el.toast._t);
+        el.toast.hidden = true;
+      });
+    }
   },
   getUnit: () => state.unit,
 };
