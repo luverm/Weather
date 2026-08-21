@@ -1814,6 +1814,15 @@ kbd {
 }
 .daily-temp-min { color: var(--fg-muted); text-align: right; }
 .daily-temp-max { color: var(--fg); text-align: right; font-weight: 500; }
+.daily-trend {
+  display: inline-block;
+  margin-left: 5px;
+  font-size: 9px;
+  vertical-align: middle;
+  opacity: 0.75;
+}
+.daily-trend[data-dir="up"]   { color: #ffb37a; }
+.daily-trend[data-dir="down"] { color: #9ad1ff; }
 
 /* ---------- Hint + toast ---------- */
 .hint {

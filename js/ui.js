@@ -1383,6 +1383,18 @@ function renderDaily(w) {
     const item = document.createElement("div");
     item.className = "daily-item";
     item.dataset.ts = d.time;
+    // Trend arrow: how does this day's high compare to the previous day's?
+    // Skips the first row (nothing to compare) and small (< 2°C) deltas.
+    const prev = i > 0 ? days[i - 1] : (w.yesterday || null);
+    let dayTrendHtml = "";
+    if (prev?.tempMax != null && d.tempMax != null) {
+      const dd = d.tempMax - prev.tempMax;
+      if (Math.abs(dd) >= 2) {
+        const arrow = dd > 0 ? "▲" : "▼";
+        const dir = dd > 0 ? "up" : "down";
+        dayTrendHtml = `<span class="daily-trend" data-dir="${dir}" title="${Math.round(Math.abs(dd))}° vs previous day">${arrow}</span>`;
+      }
+    }
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
@@ -1403,7 +1415,7 @@ function renderDaily(w) {
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
       </div>
       <span class="daily-temp-min">${Math.round(convertTemp(d.tempMin))}°</span>
-      <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°</span>
+      <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°${dayTrendHtml}</span>
       ${extra}
     `;
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
