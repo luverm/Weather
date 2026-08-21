@@ -1148,6 +1148,12 @@ function scheduleSunArc(w) {
     // After sunset, dim the marker so it visually settles.
     const isUp = now >= sr && now <= ss;
     el.sunArcMarker.style.opacity = isUp ? "1" : "0.45";
+    // Hover tooltip: how far through daylight we are, or "below horizon".
+    if (isUp) {
+      el.sunArcMarker.setAttribute("title", `${Math.round(frac * 100)}% of daylight elapsed`);
+    } else {
+      el.sunArcMarker.setAttribute("title", "Sun below horizon");
+    }
   };
   update();
   state.sunArcTimer = setInterval(update, 60_000);
