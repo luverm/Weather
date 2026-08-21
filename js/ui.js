@@ -1728,11 +1728,11 @@ function renderPlaces() {
       }
     }
     return `
-      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
+      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}" tabindex="0" role="button" aria-label="Load weather for ${escapeHtml(p.name)}">
         <span>${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
         ${deltaChip}
-        <span class="close" data-action="remove" aria-label="Remove">
+        <span class="close" data-action="remove" aria-label="Remove" role="button" tabindex="0">
           <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
         </span>
       </div>`;
@@ -1740,13 +1740,17 @@ function renderPlaces() {
   el.placesStrip.querySelectorAll(".place-chip").forEach((chip) => {
     const id = chip.dataset.id;
     const item = all.find((p) => p.id === id);
-    chip.addEventListener("click", (e) => {
+    const trigger = (e) => {
       if (e.target.closest('[data-action="remove"]')) {
         places.remove(item);
         renderPlaces();
         return;
       }
       state.handlers.onPlaceClick?.(item);
+    };
+    chip.addEventListener("click", trigger);
+    chip.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); trigger(e); }
     });
   });
 }
