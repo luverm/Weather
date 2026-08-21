@@ -160,6 +160,26 @@ export function buildAlerts(weather) {
     });
   }
 
+  // ---- Air quality ----
+  const aqi = weather.airQuality?.aqi;
+  if (aqi != null) {
+    if (aqi > 200) {
+      out.push({
+        id: "aqi-hazard",
+        severity: "danger",
+        title: "Very unhealthy air",
+        detail: `AQI ${Math.round(aqi)} — limit outdoor exposure, mask up.`,
+      });
+    } else if (aqi > 150) {
+      out.push({
+        id: "aqi-unhealthy",
+        severity: "warn",
+        title: "Unhealthy air",
+        detail: `AQI ${Math.round(aqi)} — sensitive groups should stay indoors.`,
+      });
+    }
+  }
+
   // ---- UV (only if not already mentioned by heat) ----
   if (!out.some((a) => a.id === "severe-heat" || a.id === "heat")
       && weather.uvPeak?.value >= 9) {
