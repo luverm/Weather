@@ -409,6 +409,13 @@ function mock(lat, lon) {
                   : rot === 1 ? "Clear"
                   : rot === 2 ? "Rain showers"
                   : "Overcast";
+      // Nudge sunrise/sunset per day so the "days getting shorter/longer"
+      // badge has something to say even offline. i minutes per day = ~1m
+      // total swing across the week — realistic-ish.
+      const sunriseDate = new Date(now + i * 86400_000);
+      sunriseDate.setHours(6, 30 - i, 0, 0);
+      const sunsetDate = new Date(now + i * 86400_000);
+      sunsetDate.setHours(19, i, 0, 0);
       return {
         time: now + i * 86400_000,
         tempMax: 20 + Math.sin(i) * 4,
@@ -417,8 +424,8 @@ function mock(lat, lon) {
         pop: rot === 2 ? 70 : rot === 0 ? 25 : 5,
         windMax: 12 + i, gustsMax: 20 + i * 2,
         uvMax: rot === 1 ? 7 : 5,
-        sunrise: new Date().setHours(6, 30, 0, 0),
-        sunset: new Date().setHours(19, 0, 0, 0),
+        sunrise: sunriseDate.getTime(),
+        sunset: sunsetDate.getTime(),
         condition: cond, label,
       };
     }),
