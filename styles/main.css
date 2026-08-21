@@ -1017,6 +1017,7 @@ kbd {
   margin-top: 4px;
   font-variant-numeric: tabular-nums;
 }
+.metric-sub.warn { color: #ffb37a; }
 
 /* ---------- UV gauge ---------- */
 .metric-uv .uv-gauge {

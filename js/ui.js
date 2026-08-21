@@ -499,6 +499,8 @@ function renderMetrics(w) {
     : "visibility —";
   const trendPart = pressureNarrative(w.pressureTrend);
   el.metricPressureSub.textContent = trendPart ? `${visPart} · ${trendPart}` : visPart;
+  // Poor visibility (< 1 km) is unusual and worth flagging.
+  el.metricPressureSub.classList.toggle("warn", w.visibility != null && w.visibility < 1000);
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   updateUvGauge(w.uv);
   const uvCard = document.querySelector(".metric-uv");
