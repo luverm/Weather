@@ -336,6 +336,7 @@ function renderLiveValues(w, { animate = true } = {}) {
   renderVsYesterday(w);
   updateTabTitle(w, temp);
   updateTempTone(w.temp);
+  state._extraTempTitle?.();
 }
 
 // Push a hue into the hero via CSS custom property so the temp value picks
@@ -2131,7 +2132,20 @@ function bindUnitToggle() {
   el.temp?.setAttribute("role", "button");
   el.temp?.setAttribute("aria-label", "Toggle temperature units");
   el.temp?.setAttribute("tabindex", "0");
-  el.temp?.setAttribute("title", "Tap to toggle °C / °F");
+  const setTempTitle = () => {
+    const t = state.weather?.temp;
+    let extra = "";
+    if (t != null) {
+      if (t <= -20) extra = " · extreme cold";
+      else if (t <= -10) extra = " · very cold";
+      else if (t >= 35) extra = " · extreme heat";
+      else if (t >= 28) extra = " · hot";
+    }
+    el.temp?.setAttribute("title", `Tap to toggle °C / °F${extra}`);
+  };
+  setTempTitle();
+  // Refresh whenever weather changes so the tooltip stays accurate.
+  state._extraTempTitle = setTempTitle;
   el.temp?.style.setProperty("cursor", "pointer");
   el.temp?.addEventListener("keydown", (e) => {
     if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); }
