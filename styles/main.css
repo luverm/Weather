@@ -411,7 +411,15 @@ html[data-reduce-motion="true"] *::after {
   transition: background 200ms var(--ease), color 200ms var(--ease);
 }
 .unit:hover { background: var(--glass); color: var(--fg); }
-.condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
+.condition-label {
+  margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.condition-icon {
+  width: 20px; height: 20px; color: var(--fg-muted); flex: none;
+  display: grid; place-items: center;
+}
+.condition-icon svg { width: 20px; height: 20px; }
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
 .day-range {
   margin-top: 10px;
