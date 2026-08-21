@@ -215,6 +215,7 @@ export const ui = {
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
+    flashFresh();
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
       places.updateSummary(state.place, {
@@ -1900,6 +1901,18 @@ function applyStoredPreferences() {
 
 // Exposed so app.js can query the current preference on boot.
 ui.isReduceMotion = () => localStorage.getItem("aether:reduceMotion") === "1";
+
+// Brief highlight on the "updated Xm ago" label whenever fresh weather lands.
+let _freshTimer = null;
+function flashFresh() {
+  if (!el.fetchedAgo) return;
+  el.fetchedAgo.classList.remove("fresh");
+  // Force a reflow so the animation restarts if fresh data lands twice fast.
+  void el.fetchedAgo.offsetWidth;
+  el.fetchedAgo.classList.add("fresh");
+  clearTimeout(_freshTimer);
+  _freshTimer = setTimeout(() => el.fetchedAgo?.classList.remove("fresh"), 2200);
+}
 
 function startFetchedTicker() {
   const update = () => {
