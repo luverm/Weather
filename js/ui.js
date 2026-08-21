@@ -1591,6 +1591,7 @@ function bindSearch() {
 
 function bindUnitToggle() {
   el.unitBtn.addEventListener("click", () => {
+    haptic();
     state.unit = state.unit === "C" ? "F" : "C";
     localStorage.setItem("aether:unit", state.unit);
     el.unitBtn.textContent = `°${state.unit}`;
@@ -1598,12 +1599,18 @@ function bindUnitToggle() {
   });
 }
 
+// Short haptic tap on supported mobile devices. Silent no-op elsewhere.
+function haptic(pattern = 12) {
+  try { navigator.vibrate?.(pattern); } catch { /* ignore */ }
+}
+ui.haptic = haptic;
+
 function bindLocate() {
-  el.locateBtn.addEventListener("click", () => state.handlers.onLocate?.());
+  el.locateBtn.addEventListener("click", () => { haptic(); state.handlers.onLocate?.(); });
 }
 
 function bindAudio() {
-  el.audioBtn.addEventListener("click", () => state.handlers.onAudioToggle?.());
+  el.audioBtn.addEventListener("click", () => { haptic(); state.handlers.onAudioToggle?.(); });
 }
 
 let deferredInstallPrompt = null;
@@ -1630,7 +1637,7 @@ function bindInstallPrompt() {
 
 function bindRefresh() {
   if (!el.refreshBtn) return;
-  el.refreshBtn.addEventListener("click", () => state.handlers.onRefresh?.());
+  el.refreshBtn.addEventListener("click", () => { haptic(); state.handlers.onRefresh?.(); });
 }
 
 function bindSettings() {
