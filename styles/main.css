@@ -16,6 +16,7 @@
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --scrub: 0; /* 0..1 position along the scrubber */
+  --hero-tint: var(--fg); /* JS overrides to a temperature-based hue */
 }
 [data-tone="bright"] {
   --fg: #0f1428;
