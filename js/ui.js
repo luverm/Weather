@@ -984,7 +984,14 @@ function renderSun(w) {
     const mins = Math.round((w.sunset - w.sunrise) / 60_000);
     const hh = Math.floor(mins / 60);
     const mm = mins % 60;
-    el.sunDaylight.textContent = `${hh}h ${mm}m`;
+    // Polar special cases surface as very long or very short daylight windows.
+    if (hh >= 24) {
+      el.sunDaylight.textContent = "24h · midnight sun";
+    } else if (mins <= 0) {
+      el.sunDaylight.textContent = "polar night";
+    } else {
+      el.sunDaylight.textContent = `${hh}h ${mm}m`;
+    }
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
