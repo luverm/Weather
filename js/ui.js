@@ -29,6 +29,7 @@ const el = {
   vsYesterday: $("#vs-yesterday"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
+  metricWindUnit: $("#m-wind-unit"),
   windBft: $("#m-wind-bft"),
   metricHumidity: $("#m-humidity"),
   metricHumiditySub: $("#m-humidity-sub"),
@@ -261,6 +262,8 @@ export const ui = {
 // ---------- Rendering ----------
 
 function convertTemp(c) { return state.unit === "F" ? c * 9 / 5 + 32 : c; }
+// Wind speed is fetched in km/h; imperial UI converts to mph on the fly.
+function convertWind(kmh) { return state.unit === "F" ? kmh * 0.621371 : kmh; }
 
 function animateNumber(node, target, format) {
   if (target == null || isNaN(target)) { node.textContent = "–"; return; }
@@ -434,12 +437,17 @@ function renderDayRange(w) {
 }
 
 function renderMetrics(w) {
-  el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
+  const windUnitLabel = state.unit === "F" ? "mph" : "km/h";
+  if (el.metricWindUnit) el.metricWindUnit.textContent = windUnitLabel;
+  el.metricWind.textContent = Math.round(convertWind(w.windSpeed ?? 0));
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
+  const gustPart = w.windGusts != null
+    ? `${Math.round(convertWind(w.windGusts))} ${windUnitLabel}`
+    : "—";
   el.metricWindSub.textContent = dirLabel
-    ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
-    : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+    ? `${dirLabel} · gust ${gustPart}`
+    : `gust ${gustPart}`;
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
