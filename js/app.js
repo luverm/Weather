@@ -209,7 +209,8 @@ async function loadByCoords(place) {
   app.weather = w;
 
   // Render full UI (live + forecasts + narrative).
-  ui.setWeather(w, { narrative: narrate(w) });
+  const unit = localStorage.getItem("aether:unit") || "C";
+  ui.setWeather(w, { narrative: narrate(w, { unit }) });
 
   // Apply to scenes at current (live) time.
   applyScene(w);
