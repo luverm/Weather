@@ -2025,7 +2025,7 @@ function showRecentsIfAny() {
       <span class="sub">${escapeHtml(r.country || "")}</span>
     </li>
   `).join("");
-  el.searchResults.innerHTML = `<li class="recent-heading">Recent places</li>${itemsHtml}`;
+  el.searchResults.innerHTML = `<li class="recent-heading">Recent places · ${recents.length}</li>${itemsHtml}`;
   el.searchResults._items = recents;
   el.searchResults.hidden = false;
 }
