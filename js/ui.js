@@ -1994,13 +1994,23 @@ function bindShare() {
     const unit = state.unit;
     const t = (v) => `${Math.round(unit === "F" ? v * 9 / 5 + 32 : v)}°${unit}`;
     const today = w.daily?.[0];
+    // Compare vs yesterday when we have data, and note sunrise/sunset for the
+    // day — makes shared summaries a lot more scannable.
+    const yHi = w.yesterday?.tempMax;
+    const vs = (today?.tempMax != null && yHi != null && Math.abs(today.tempMax - yHi) >= 2)
+      ? `${today.tempMax > yHi ? "warmer" : "cooler"} than yesterday`
+      : null;
+    const sun = (w.sunrise && w.sunset)
+      ? `Sun ${fmtTime(w.sunrise)} → ${fmtTime(w.sunset)}`
+      : null;
     const lines = [
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
-      today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
+      today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip${vs ? ` · ${vs}` : ""}` : null,
       `Wind ${Math.round(convertWind(w.windSpeed))} ${unit === "F" ? "mph" : "km/h"}${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
+      sun,
     ].filter(Boolean);
     const text = lines.join("\n");
     try {
