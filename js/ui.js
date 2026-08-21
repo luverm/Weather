@@ -520,6 +520,15 @@ function renderMetrics(w) {
       windCard.dataset.wired = "1";
       windCard.style.cursor = "pointer";
       windCard.setAttribute("title", "Jump to peak gust");
+      windCard.setAttribute("role", "button");
+      windCard.setAttribute("aria-label", "Scrub to the day's peak gust");
+      windCard.setAttribute("tabindex", "0");
+      windCard.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          windCard.click();
+        }
+      });
       windCard.addEventListener("click", () => {
         const hrs = state.weather?.hourly || [];
         let peakTs = null, peakV = -Infinity;
@@ -601,6 +610,15 @@ function renderMetrics(w) {
       uvCard.dataset.wired = "1";
       uvCard.style.cursor = "pointer";
       uvCard.setAttribute("title", "Jump to UV peak");
+      uvCard.setAttribute("role", "button");
+      uvCard.setAttribute("aria-label", "Scrub to the day's UV peak time");
+      uvCard.setAttribute("tabindex", "0");
+      uvCard.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          uvCard.click();
+        }
+      });
       uvCard.addEventListener("click", () => {
         const peak = state.weather?.uvPeak?.time;
         if (peak) state.handlers.onHourClick?.(peak);
@@ -791,6 +809,15 @@ function wireAqClick(aq) {
   el.aqCard.dataset.wired = "1";
   el.aqCard.style.cursor = "pointer";
   el.aqCard.setAttribute("title", "Jump to worst AQI hour");
+  el.aqCard.setAttribute("role", "button");
+  el.aqCard.setAttribute("aria-label", "Scrub to the worst forecast AQI hour");
+  el.aqCard.setAttribute("tabindex", "0");
+  el.aqCard.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      el.aqCard.click();
+    }
+  });
   el.aqCard.addEventListener("click", () => {
     const t = state.weather?.airQuality?.trend || [];
     let worstTs = null, worstV = -Infinity;
