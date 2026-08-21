@@ -786,6 +786,15 @@ function renderMoon(moon) {
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
   renderMoonNext(moon);
+  // Full-ish moons get a subtle warm halo so the moon card feels alive
+  // near luna's brightest nights.
+  if (el.moonLit) {
+    if (moon.illum >= 0.85) {
+      el.moonLit.style.filter = `drop-shadow(0 0 ${8 + Math.round(moon.illum * 6)}px rgba(255,240,200,${0.35 + moon.illum * 0.3}))`;
+    } else {
+      el.moonLit.style.filter = "";
+    }
+  }
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
