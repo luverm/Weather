@@ -380,7 +380,19 @@ setInterval(() => {
 // PWA service worker — optional, best-effort.
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js").catch(() => {});
+    navigator.serviceWorker.register("sw.js").then((reg) => {
+      // Nudge the user when a new shell version is downloaded — a page
+      // reload picks it up. Cheaper than silent invalidation.
+      reg.addEventListener("updatefound", () => {
+        const nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener("statechange", () => {
+          if (nw.state === "installed" && navigator.serviceWorker.controller) {
+            ui.showToast?.("New Aether version ready — reload to update");
+          }
+        });
+      });
+    }).catch(() => {});
   });
 }
 
