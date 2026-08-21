@@ -1949,4 +1949,10 @@ kbd {
   .place-name { font-size: 28px; }
   .temp { font-size: 78px; }
   .narrative { font-size: 13px; }
+  /* Weekly icon strip repeats what each daily row shows — drop it on phones
+     to reclaim vertical space. */
+  .daily-icon-strip { display: none; }
+  .daily-spark { height: 44px; }
+  .daily-delta { font-size: 10.5px; }
+  .metric { padding: 12px 14px; }
 }
