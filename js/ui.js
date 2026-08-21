@@ -1061,9 +1061,10 @@ function renderDaylightTrend(w) {
   el.daylightTrend.hidden = false;
   el.daylightTrend.dataset.dir = deltaSec > 0 ? "up" : "down";
   el.daylightTrend.textContent = label + "/day";
+  const abs = label.replace("+", "").replace("−", "");
   el.daylightTrend.title = deltaSec > 0
-    ? `Tomorrow is ${label.replace("+", "").replace("−", "")} longer than today`
-    : `Tomorrow is ${label.replace("+", "").replace("−", "")} shorter than today`;
+    ? `Tomorrow is ${abs} longer than today — days growing`
+    : `Tomorrow is ${abs} shorter than today — days shrinking`;
 }
 
 // Position the "solar noon" tick halfway between sunrise and sunset on the
