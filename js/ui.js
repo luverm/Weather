@@ -2134,9 +2134,13 @@ function bindSearch() {
     } else {
       return;
     }
-    lis.forEach((li) => li.classList.remove("active"));
+    lis.forEach((li) => {
+      li.classList.remove("active");
+      li.setAttribute("aria-selected", "false");
+    });
     const cur = el.searchResults.querySelector(`li[data-index="${idx}"]`);
     cur?.classList.add("active");
+    cur?.setAttribute("aria-selected", "true");
     cur?.scrollIntoView({ block: "nearest" });
   });
   el.searchInput.addEventListener("blur", () => {
