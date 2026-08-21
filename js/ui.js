@@ -2215,8 +2215,11 @@ function bindUnitToggle() {
   });
 }
 
-// Short haptic tap on supported mobile devices. Silent no-op elsewhere.
+// Short haptic tap on supported mobile devices. Silent no-op elsewhere,
+// and skipped entirely when the user has opted into reduced motion — the
+// same intent applies to physical feedback.
 function haptic(pattern = 12) {
+  if (localStorage.getItem("aether:reduceMotion") === "1") return;
   try { navigator.vibrate?.(pattern); } catch { /* ignore */ }
 }
 ui.haptic = haptic;
