@@ -1286,6 +1286,7 @@ function renderHourly(w) {
     if (diff < bestDiff) { bestDiff = diff; nowIdx = i; }
   }
   let idx = 0;
+  let prevFamily = null;
   for (const h of list) {
     const item = document.createElement("div");
     item.className = "forecast-item";
@@ -1316,6 +1317,9 @@ function renderHourly(w) {
          </span>`
       : "";
     if (idx === nowIdx) item.classList.add("is-now");
+    const family = conditionFamily(h.condition);
+    if (prevFamily && family !== prevFamily) item.classList.add("family-shift");
+    prevFamily = family;
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}${windArrow}</span>

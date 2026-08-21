@@ -1769,6 +1769,9 @@ kbd {
   background: rgba(154, 209, 255, 0.08);
   position: relative;
 }
+.forecast-item.family-shift {
+  box-shadow: -6px 0 0 -5px rgba(210, 182, 255, 0.55);
+}
 .forecast-item.is-now::after {
   content: "NOW";
   position: absolute;
