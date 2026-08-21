@@ -337,6 +337,8 @@ let _lastFaviconEmoji = null;
 function updateFavicon(emoji) {
   if (!emoji || emoji === _lastFaviconEmoji) return;
   _lastFaviconEmoji = emoji;
+  // Some emoji include zero-width joiners; wrapping in a text node is safer
+  // than string interpolation into an SVG attribute string.
   const svg =
     `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>` +
     `<text x='50%' y='54%' font-size='52' text-anchor='middle' dominant-baseline='middle'>${emoji}</text>` +
@@ -451,9 +453,19 @@ function renderMetrics(w) {
   const gustPart = w.windGusts != null
     ? `${Math.round(convertWind(w.windGusts))} ${windUnitLabel}`
     : "—";
+  // Slip in a wind-chill note when it's cold enough for the effect to bite
+  // (Environment Canada's WC formula only applies below 10°C).
+  let chillNote = "";
+  if (w.temp != null && w.windSpeed != null && w.temp < 10 && w.windSpeed >= 5) {
+    const wc = 13.12 + 0.6215 * w.temp - 11.37 * Math.pow(w.windSpeed, 0.16)
+      + 0.3965 * w.temp * Math.pow(w.windSpeed, 0.16);
+    if (wc <= w.temp - 1) {
+      chillNote = ` · feels ${Math.round(convertTemp(wc))}°`;
+    }
+  }
   el.metricWindSub.textContent = dirLabel
-    ? `${dirLabel} · gust ${gustPart}`
-    : `gust ${gustPart}`;
+    ? `${dirLabel} · gust ${gustPart}${chillNote}`
+    : `gust ${gustPart}${chillNote}`;
   // Highlight the wind card when gusts are strong enough to notice outdoors.
   const gustsKmh = w.windGusts ?? 0;
   const windCard = document.querySelector(".metric-wind");
