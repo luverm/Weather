@@ -894,6 +894,25 @@ function renderSkyForecast(w) {
   if (partly)   parts.push(`${partly}h partly`);
   if (overcast) parts.push(`${overcast}h overcast`);
   el.skyForecastCaption.textContent = `${dominant} · ${parts.join(" · ")}`;
+  // Longest run of clear-ish hours (< 40% clouds) during daylight — helps
+  // pick a window for outdoor plans.
+  const runs = [];
+  let start = null;
+  for (let i = 0; i <= daylight.length; i++) {
+    const h = daylight[i];
+    const isClear = h && h.clouds < 40;
+    if (isClear && start == null) start = i;
+    if ((!isClear || i === daylight.length) && start != null) {
+      runs.push({ start, end: i - 1 });
+      start = null;
+    }
+  }
+  const best = runs.reduce((r, x) => (!r || (x.end - x.start) > (r.end - r.start) ? x : r), null);
+  if (best && (best.end - best.start) >= 2) {
+    const from = fmtTime(daylight[best.start].time);
+    const to = fmtTime(daylight[Math.min(best.end + 1, daylight.length - 1)].time);
+    el.skyForecastCaption.textContent += ` · clear ${from}–${to}`;
+  }
   el.skyForecast.hidden = false;
 }
 
