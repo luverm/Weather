@@ -497,7 +497,13 @@ function renderMetrics(w) {
   }
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
-    el.windNeedle.setAttribute("transform", `rotate(${dir})`);
+    // Chase the shortest arc from the last rendered angle so a 350°→10° swing
+    // spins 20° instead of 340° the wrong way.
+    const prev = state.windNeedleAngle ?? dir;
+    let delta = ((dir - prev) % 360 + 540) % 360 - 180;
+    const next = prev + delta;
+    state.windNeedleAngle = next;
+    el.windNeedle.setAttribute("transform", `rotate(${next})`);
     el.windNeedle.style.opacity = "1";
   } else if (el.windNeedle) {
     el.windNeedle.style.opacity = "0.3";
