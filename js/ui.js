@@ -2404,3 +2404,6 @@ function escapeHtml(s) {
 
 // Export renderPlaces so the app can refresh the strip after a load.
 ui.refreshPlaces = renderPlaces;
+// Nudge the chart to redraw (used by the once-a-minute app-level ticker so
+// the always-visible "now" tick tracks the wall clock).
+ui.refreshChart = () => state.chart?.refresh?.();

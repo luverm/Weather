@@ -366,6 +366,8 @@ document.addEventListener("visibilitychange", () => {
 setInterval(() => {
   if (!app.weather || !clock.isLive()) return;
   applyScene(app.weather);
+  // Also refresh the chart so the "now" tick keeps up with the wall clock.
+  ui.refreshChart?.();
 }, 60_000);
 
 // Auto-refresh every 15 minutes (but only when live and visible).
