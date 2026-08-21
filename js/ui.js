@@ -293,6 +293,19 @@ function renderLiveValues(w, { animate = true } = {}) {
   renderDayRange(w);
   renderVsYesterday(w);
   updateTabTitle(w, temp);
+  updateTempTone(w.temp);
+}
+
+// Push a hue into the hero via CSS custom property so the temp value picks
+// up a subtle color that tracks actual air temperature.
+function updateTempTone(tempC) {
+  if (!el.heroInner) return;
+  if (tempC == null) return;
+  // Map -20..40°C onto a hue from deep blue (220) through neutral to warm red (10).
+  const clamped = Math.max(-20, Math.min(40, tempC));
+  const t = (clamped + 20) / 60; // 0..1
+  const hue = Math.round(220 - t * 210);
+  el.heroInner.style.setProperty("--hero-tint", `hsl(${hue}, 65%, 75%)`);
 }
 
 // Reflect the current temperature + place in the browser tab so a pinned tab
