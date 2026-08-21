@@ -87,6 +87,7 @@ const el = {
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
   settingClearPlaces: $("#setting-clear-places"),
+  settingShortcuts: $("#setting-shortcuts"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
@@ -2180,6 +2181,12 @@ function bindSettings() {
     renderPlaces();
     ui.showToast("Saved places cleared");
     close();
+  });
+
+  el.settingShortcuts?.addEventListener("click", () => {
+    close();
+    const overlay = document.getElementById("shortcuts");
+    if (overlay) overlay.hidden = false;
   });
 }
 
