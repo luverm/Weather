@@ -2331,14 +2331,18 @@ function bindSettings() {
 
 // Best-effort: reveal the currently-active service worker cache version in
 // the settings footer. Useful when reporting an issue ("I'm on v42").
+// When the page is running standalone (installed as a PWA) we tag the
+// version so it's obvious.
 (async function fillShellVersion() {
   const spot = document.getElementById("settings-version");
   if (!spot) return;
+  const standalone = window.matchMedia?.("(display-mode: standalone)")?.matches
+    || window.navigator?.standalone === true;
   try {
     const keys = await caches.keys();
     const aether = keys.find((k) => k.startsWith("aether-"));
-    if (aether) spot.textContent = aether.replace(/^aether-/, "");
-    else spot.textContent = "shell";
+    if (aether) spot.textContent = aether.replace(/^aether-/, "") + (standalone ? " · installed" : "");
+    else spot.textContent = standalone ? "shell · installed" : "shell";
   } catch { spot.textContent = "shell"; }
 })();
 
