@@ -281,6 +281,15 @@ export const ui = {
 function convertTemp(c) { return state.unit === "F" ? c * 9 / 5 + 32 : c; }
 // Wind speed is fetched in km/h; imperial UI converts to mph on the fly.
 function convertWind(kmh) { return state.unit === "F" ? kmh * 0.621371 : kmh; }
+// Precipitation amount, printed in inches under °F and millimetres otherwise.
+function fmtAmount(mm) {
+  if (mm == null) return "—";
+  if (state.unit === "F") {
+    const inches = mm * 0.0393701;
+    return inches >= 0.1 ? `${inches.toFixed(2)} in` : `${inches.toFixed(2)} in`;
+  }
+  return `${mm.toFixed(1)} mm`;
+}
 
 function animateNumber(node, target, format) {
   if (target == null || isNaN(target)) { node.textContent = "–"; return; }
@@ -1680,14 +1689,15 @@ function renderDaily(w) {
         snowLabel = " · snow";
       }
     }
-    // Include mm when the day is expected to actually wet the ground (>0.5mm),
-    // otherwise the number reads as noise next to the % probability.
+    // Include the amount when the day is expected to actually wet the ground
+    // (>0.5mm), otherwise the number reads as noise next to the % probability.
     let popLabel = "";
+    const fmtPrecip = fmtAmount(d.precip);
     if (d.pop >= 30) {
-      const mm = d.precip >= 0.5 ? ` (${d.precip.toFixed(1)} mm)` : "";
-      popLabel = ` · ${d.pop}% rain${mm}`;
+      const amt = d.precip >= 0.5 ? ` (${fmtPrecip})` : "";
+      popLabel = ` · ${d.pop}% rain${amt}`;
     } else if (d.precip >= 1) {
-      popLabel = ` · ${d.precip.toFixed(1)} mm rain`;
+      popLabel = ` · ${fmtPrecip} rain`;
     }
     const extra = (gustLabel || popLabel || snowLabel)
       ? `<span class="daily-gust">${popLabel}${gustLabel}${snowLabel}</span>` : "";
