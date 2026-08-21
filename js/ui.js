@@ -314,7 +314,20 @@ function updateTempTone(tempC) {
 function updateTabTitle(w, tempDisplay) {
   if (w?.temp == null || !state.place?.name) return;
   const unit = state.unit === "F" ? "°F" : "°C";
-  document.title = `${Math.round(tempDisplay)}${unit} · ${state.place.name} — Aether`;
+  const emoji = conditionEmoji(w.condition, w.isDay);
+  document.title = `${emoji} ${Math.round(tempDisplay)}${unit} · ${state.place.name} — Aether`;
+}
+
+function conditionEmoji(c, isDay) {
+  switch (c) {
+    case "clear":  return isDay === false ? "🌙" : "☀️";
+    case "clouds": return isDay === false ? "☁️" : "⛅";
+    case "rain":   return "🌧";
+    case "snow":   return "❄️";
+    case "storm":  return "⛈";
+    case "fog":    return "🌫";
+    default:       return "🌤";
+  }
 }
 
 // Rebuilds the feels-like line while preserving the inline #temp-trend span
