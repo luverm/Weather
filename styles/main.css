@@ -432,6 +432,12 @@ html[data-reduce-motion="true"] *::after {
   background: rgba(120,190,255,0.10);
   border-color: rgba(120,190,255,0.24);
 }
+
+.feels-reason {
+  color: var(--fg-dim);
+  font-size: 0.9em;
+  letter-spacing: 0.02em;
+}
 .day-range-end { white-space: nowrap; }
 .day-range-track {
   position: relative;

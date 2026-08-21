@@ -289,9 +289,44 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  renderFeelsLike(w, feels, temp);
   renderDayRange(w);
   renderVsYesterday(w);
+}
+
+// Rebuilds the feels-like line while preserving the inline #temp-trend span
+// (renderMetrics later writes into it). When actual and perceived temps
+// differ meaningfully, appends a short reason word so the user knows why —
+// wind chill, muggy humidity, warming sun, etc.
+function renderFeelsLike(w, feelsDisplay, tempDisplay) {
+  if (!el.feelsLike) return;
+  const gap = (w.feelsLike ?? w.temp) - w.temp;
+  const reason = feelsLikeReason(w, gap);
+  const reasonHtml = reason ? ` <span class="feels-reason">· ${reason}</span>` : "";
+  el.feelsLike.innerHTML = `<span id="temp-trend" class="temp-trend" aria-hidden="true"></span>` +
+    `Feels like ${Math.round(feelsDisplay)}°${reasonHtml}`;
+  // Re-capture the freshly-created element so renderMetrics can update it.
+  el.tempTrend = document.getElementById("temp-trend");
+}
+
+function feelsLikeReason(w, gapC) {
+  const abs = Math.abs(gapC);
+  if (abs < 2.5) return null;
+  const wind = w.windSpeed ?? 0;
+  const dew = w.dewPoint;
+  const hum = w.humidity;
+  if (gapC < 0) {
+    if (wind >= 20) return "wind chill";
+    if (w.temp != null && w.temp < 8) return "cold air";
+    return "cooler than air";
+  }
+  // Feels warmer than actual: usually humidity or sun-baked pavement.
+  if (w.temp != null && w.temp >= 18) {
+    if (dew != null && dew >= 18) return "muggy";
+    if (hum != null && hum >= 70) return "humid";
+    return "sun-heavy";
+  }
+  return "warmer than air";
 }
 
 // Compare today's high (or if today isn't done yet, the running peak so far)
