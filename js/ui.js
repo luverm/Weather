@@ -47,6 +47,7 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonNext: $("#moon-next"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -517,6 +518,7 @@ function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  renderMoonNext(moon);
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
@@ -533,6 +535,24 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+}
+
+const SYNODIC_MONTH_DAYS = 29.5305882;
+
+// Show "Full moon in Nd" (or "New moon in Nd"), whichever is closer.
+// Same phase mapping as computeMoonPhase: 0 = new, 0.5 = full.
+function renderMoonNext(moon) {
+  if (!el.moonNext) return;
+  if (!moon || moon.phase == null) { el.moonNext.textContent = ""; return; }
+  const toFullFrac = ((0.5 - moon.phase) + 1) % 1;
+  const toNewFrac = ((1 - moon.phase) + 1) % 1;
+  const [kind, frac] = toFullFrac < toNewFrac ? ["Full", toFullFrac] : ["New", toNewFrac];
+  const days = frac * SYNODIC_MONTH_DAYS;
+  let label;
+  if (days < 0.75) label = "today";
+  else if (days < 1.75) label = "tomorrow";
+  else label = `in ${Math.round(days)}d`;
+  el.moonNext.textContent = `${kind} moon ${label}`;
 }
 
 function fmtTime(ts) {
