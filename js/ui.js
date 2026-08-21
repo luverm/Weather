@@ -188,12 +188,15 @@ export const ui = {
     el.placeName.classList.remove("flip-in"); void el.placeName.offsetWidth;
     el.placeName.classList.add("flip-in");
     el.placeName.textContent = place.name || "Unknown";
-  if (!el.placeName.dataset.wired) {
-    el.placeName.dataset.wired = "1";
-    el.placeName.style.cursor = "pointer";
-    el.placeName.title = "Click to re-use your location";
-    el.placeName.addEventListener("click", () => state.handlers.onLocate?.());
-  }
+    // "Current location" uses a small pin marker so the user knows the
+    // name came from device geolocation, not a saved city.
+    el.placeName.classList.toggle("live-place", place.name === "Current location");
+    if (!el.placeName.dataset.wired) {
+      el.placeName.dataset.wired = "1";
+      el.placeName.style.cursor = "pointer";
+      el.placeName.title = "Click to re-use your location";
+      el.placeName.addEventListener("click", () => state.handlers.onLocate?.());
+    }
     const sub = [place.admin1, place.country].filter(Boolean).join(", ");
     el.placeSub.textContent = sub || "—";
     // Tooltip with lat/lon for the technically curious; kept out of the
