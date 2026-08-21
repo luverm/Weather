@@ -1125,7 +1125,17 @@ function cardinal(deg) {
 function renderHourly(w) {
   renderHourlySummary(w);
   el.forecastTrack.innerHTML = "";
-  for (const h of (w.hourly || []).slice(0, 24)) {
+  // Locate the hour closest to "now" so we can badge it — helps orient a
+  // scrolled-through user without needing the scrubber cursor.
+  const now = Date.now();
+  const list = (w.hourly || []).slice(0, 24);
+  let nowIdx = -1, bestDiff = 45 * 60_000; // within ~45 min counts as "now"
+  for (let i = 0; i < list.length; i++) {
+    const diff = Math.abs(list[i].time - now);
+    if (diff < bestDiff) { bestDiff = diff; nowIdx = i; }
+  }
+  let idx = 0;
+  for (const h of list) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
@@ -1153,6 +1163,7 @@ function renderHourly(w) {
            </svg>
          </span>`
       : "";
+    if (idx === nowIdx) item.classList.add("is-now");
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}${windArrow}</span>
@@ -1161,6 +1172,17 @@ function renderHourly(w) {
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
+    idx++;
+  }
+  // Auto-scroll to the current hour so users see the most relevant slot first.
+  if (nowIdx > 0) {
+    const nowItem = el.forecastTrack.children[nowIdx];
+    if (nowItem) {
+      // Delay one frame so layout has settled.
+      requestAnimationFrame(() => {
+        nowItem.scrollIntoView({ inline: "start", block: "nearest", behavior: "auto" });
+      });
+    }
   }
 }
 

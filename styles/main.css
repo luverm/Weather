@@ -1664,6 +1664,27 @@ kbd {
 .forecast-item[data-daynight="day"] {
   border-top-color: rgba(255,210,140,0.28);
 }
+.forecast-item.is-now {
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+  background: rgba(154, 209, 255, 0.08);
+  position: relative;
+}
+.forecast-item.is-now::after {
+  content: "NOW";
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 8.5px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #0a1224;
+  letter-spacing: 0.14em;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+}
 .forecast-item:hover { background: var(--glass); transform: translateY(-2px); }
 .forecast-item.active { background: var(--glass-strong); }
 .forecast-time { font-size: 11px; letter-spacing: 0.08em; color: var(--fg-dim); text-transform: uppercase; }
