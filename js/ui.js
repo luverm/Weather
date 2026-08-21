@@ -702,11 +702,12 @@ function pressureNarrative(trend) {
   if (!trend || trend.delta == null) return null;
   const abs = Math.abs(trend.delta);
   if (abs < 1.5) return null;
+  const dHp = ` (${trend.delta > 0 ? "+" : ""}${trend.delta.toFixed(1)} hPa/3h)`;
   if (trend.direction === "rising") {
-    return abs >= 3 ? "rising fast · clearing" : "rising · fairer";
+    return (abs >= 3 ? "rising fast · clearing" : "rising · fairer") + dHp;
   }
   if (trend.direction === "falling") {
-    return abs >= 3 ? "falling fast · unsettled" : "falling · wetter ahead";
+    return (abs >= 3 ? "falling fast · unsettled" : "falling · wetter ahead") + dHp;
   }
   return null;
 }
