@@ -132,6 +132,18 @@ export function buildAlerts(weather) {
     });
   }
 
+  // ---- Long clear-sky window (positive info) ----
+  const clearRun = longestClearRun(hours);
+  if (clearRun && clearRun.hours >= 6) {
+    out.push({
+      id: "clear-run",
+      severity: "info",
+      title: "Long clear window",
+      detail: `~${clearRun.hours}h of clear skies from ${shortClock(clearRun.start)}.`,
+      ts: clearRun.start,
+    });
+  }
+
   // ---- UV (only if not already mentioned by heat) ----
   if (!out.some((a) => a.id === "severe-heat" || a.id === "heat")
       && weather.uvPeak?.value >= 9) {
@@ -182,6 +194,23 @@ function peakGust(hours) {
     const g = h.gusts ?? h.wind ?? 0;
     if (g == null) continue;
     if (!best || g > best.v) best = { v: g, ts: h.time };
+  }
+  return best;
+}
+
+// Longest contiguous run where cloud cover is low enough to feel clear.
+// Falls back to condition when clouds field is missing.
+function longestClearRun(hours) {
+  let best = null, curStart = null, curLen = 0;
+  const isClear = (h) => (h.clouds != null ? h.clouds < 30 : h.condition === "clear");
+  for (let i = 0; i <= hours.length; i++) {
+    if (i < hours.length && isClear(hours[i])) {
+      if (curStart == null) curStart = hours[i].time;
+      curLen++;
+    } else if (curStart != null) {
+      if (!best || curLen > best.hours) best = { start: curStart, hours: curLen };
+      curStart = null; curLen = 0;
+    }
   }
   return best;
 }
