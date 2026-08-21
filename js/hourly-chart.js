@@ -112,6 +112,12 @@ export class HourlyChart {
       if (i < 0) return;
       this.onHoverHour?.(this.hours[i].time);
     });
+    // Double-click resets to the current live time — quick "go back" from
+    // wherever the user scrubbed to.
+    this.svg.addEventListener("dblclick", () => {
+      const first = this.hours[0];
+      if (first) this.onHoverHour?.(Date.now());
+    });
   }
 
   _showHover(h) {
