@@ -276,7 +276,9 @@ export class HourlyChart {
           if (this.hours[i].temp < this.hours[minI].temp) minI = i;
           if (this.hours[i].temp > this.hours[maxI].temp) maxI = i;
         }
-        const marker = (i, cls) => {
+        const unit = this.getUnit();
+        const fmt = (v) => `${Math.round(unit === "F" ? v * 9 / 5 + 32 : v)}°`;
+        const marker = (i, cls, valueLabel) => {
           const p = this.points[i];
           const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
           g.setAttribute("class", `chart-extreme ${cls}`);
@@ -288,11 +290,21 @@ export class HourlyChart {
           dot.setAttribute("cx", p.x); dot.setAttribute("cy", p.y);
           dot.setAttribute("r", "2.4"); dot.setAttribute("class", "chart-extreme-dot");
           g.appendChild(dot);
+          // Tiny value label offset above (warm) or below (cold) the marker
+          // so both remain visible when they're near the chart edges.
+          const yOffset = cls === "warm" ? -8 : 12;
+          const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          label.setAttribute("x", p.x);
+          label.setAttribute("y", (p.y + yOffset).toFixed(1));
+          label.setAttribute("text-anchor", "middle");
+          label.setAttribute("class", "chart-extreme-label");
+          label.textContent = valueLabel;
+          g.appendChild(label);
           return g;
         };
         if (minI !== maxI) {
-          extremaG.appendChild(marker(minI, "cold"));
-          extremaG.appendChild(marker(maxI, "warm"));
+          extremaG.appendChild(marker(minI, "cold", fmt(this.hours[minI].temp)));
+          extremaG.appendChild(marker(maxI, "warm", fmt(this.hours[maxI].temp)));
         }
       }
     }

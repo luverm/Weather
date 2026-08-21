@@ -881,6 +881,17 @@ html[data-reduce-motion="true"] *::after {
 .chart-extreme.cold .chart-extreme-dot  { fill: #9ad1ff; }
 .chart-extreme.warm .chart-extreme-halo { stroke: #ff9c7a; }
 .chart-extreme.warm .chart-extreme-dot  { fill: #ff9c7a; }
+.chart-extreme-label {
+  font-size: 8.5px;
+  font-variant-numeric: tabular-nums;
+  fill: currentColor;
+  paint-order: stroke;
+  stroke: rgba(6,10,24,0.7);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+.chart-extreme.warm .chart-extreme-label { fill: #ffb37a; }
+.chart-extreme.cold .chart-extreme-label { fill: #a4d1ff; }
 
 /* ---------- Wind compass (inside wind metric) ---------- */
 .metric-wind {
