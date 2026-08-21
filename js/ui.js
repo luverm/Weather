@@ -1458,6 +1458,7 @@ function renderDaily(w) {
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(convertWind(d.gustsMax))} ${windUnitLabel}`
       : "";
+    const snowLabel = d.condition === "snow" ? " · snow" : "";
     // Include mm when the day is expected to actually wet the ground (>0.5mm),
     // otherwise the number reads as noise next to the % probability.
     let popLabel = "";
@@ -1467,7 +1468,8 @@ function renderDaily(w) {
     } else if (d.precip >= 1) {
       popLabel = ` · ${d.precip.toFixed(1)} mm rain`;
     }
-    const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const extra = (gustLabel || popLabel || snowLabel)
+      ? `<span class="daily-gust">${popLabel}${gustLabel}${snowLabel}</span>` : "";
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
