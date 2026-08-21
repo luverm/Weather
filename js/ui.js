@@ -476,6 +476,8 @@ function renderDayRange(w) {
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+  // Tooltip: current spot on the day's range in the active unit.
+  el.dayRangeMarker.setAttribute("title", `Now: ${Math.round(convertTemp(t))}° (${Math.round(frac * 100)}% of today's range)`);
 }
 
 function renderMetrics(w) {
