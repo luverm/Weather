@@ -1061,15 +1061,35 @@ function renderHourly(w) {
     } else {
       bottom = `<span class="forecast-pop dim">${h.pop}%</span>`;
     }
+    // Wind gust arrow: only rendered when gusts are strong enough to notice
+    // (≥ 25 km/h) to keep quieter hours uncluttered. Meteorological convention
+    // reports the direction the wind comes FROM; we rotate the arrow so it
+    // points where the wind is BLOWING TO by adding 180°.
+    const gustVal = h.gusts ?? h.wind ?? 0;
+    const windArrow = (h.windDir != null && gustVal >= 25)
+      ? `<span class="forecast-wind" title="Gusts ${Math.round(gustVal)} km/h from ${compassDir(h.windDir)}">
+           <svg viewBox="0 0 12 12" aria-hidden="true">
+             <path d="M6 1 L9.5 10 L6 8 L2.5 10 Z" fill="currentColor"
+                   transform="rotate(${((h.windDir + 180) % 360)} 6 6)"/>
+           </svg>
+         </span>`
+      : "";
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
-      <span class="forecast-icon">${iconFor(h.condition)}</span>
+      <span class="forecast-icon">${iconFor(h.condition)}${windArrow}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       ${bottom}
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
   }
+}
+
+const COMPASS_16 = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+function compassDir(deg) {
+  if (deg == null) return "—";
+  const idx = Math.round(((deg % 360) + 360) % 360 / 22.5) % 16;
+  return COMPASS_16[idx];
 }
 
 function highlightHour(index) {
