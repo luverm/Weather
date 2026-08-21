@@ -39,7 +39,14 @@ export function installShortcuts(handlers) {
   });
 
   window.addEventListener("keydown", (e) => {
-    // Let browsers handle modifier combos (copy, find, etc.)
+    // Cmd/Ctrl+K is a classic "focus search" shortcut on the web — hijack it
+    // even when the user is typing, since search itself is what they want.
+    if ((e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey && (e.key === "k" || e.key === "K")) {
+      e.preventDefault();
+      handlers.focusSearch?.();
+      return;
+    }
+    // Let browsers handle other modifier combos (copy, find, etc.)
     if (e.metaKey || e.ctrlKey || e.altKey) return;
 
     const typing = isTyping(e.target);
