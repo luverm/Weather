@@ -401,7 +401,10 @@ html[data-reduce-motion="true"] *::after {
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent;
   font-variant-numeric: tabular-nums;
-  transition: opacity 200ms var(--ease);
+  transition: opacity 200ms var(--ease), filter 500ms var(--ease);
+}
+.temp-value.just-updated {
+  filter: drop-shadow(0 0 12px rgba(255,255,255,0.35));
 }
 .unit {
   font-size: clamp(16px, 2vw, 24px);

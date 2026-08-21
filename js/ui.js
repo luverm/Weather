@@ -2124,6 +2124,13 @@ function flashFresh() {
   el.fetchedAgo.classList.add("fresh");
   clearTimeout(_freshTimer);
   _freshTimer = setTimeout(() => el.fetchedAgo?.classList.remove("fresh"), 2200);
+  // Match with a brief highlight on the hero value so refreshes feel alive.
+  if (el.temp) {
+    el.temp.classList.remove("just-updated");
+    void el.temp.offsetWidth;
+    el.temp.classList.add("just-updated");
+    setTimeout(() => el.temp?.classList.remove("just-updated"), 900);
+  }
 }
 
 function startFetchedTicker() {
