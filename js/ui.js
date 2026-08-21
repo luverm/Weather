@@ -501,6 +501,8 @@ function renderMetrics(w) {
   el.metricPressureSub.textContent = trendPart ? `${visPart} · ${trendPart}` : visPart;
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   updateUvGauge(w.uv);
+  const uvCard = document.querySelector(".metric-uv");
+  if (uvCard) uvCard.classList.toggle("severe", (w.uv ?? 0) >= 8);
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
     if (lvl) {
