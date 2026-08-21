@@ -1100,6 +1100,12 @@ function renderSolarNoon(w) {
   el.sunArcNoonLabel.setAttribute("x", x.toFixed(1));
   el.sunArcNoon.setAttribute("opacity", "1");
   el.sunArcNoonLabel.setAttribute("opacity", "1");
+  // Give the tick a hover tooltip with the actual noon clock time.
+  const title = `Solar noon · ${fmtTime(noon)}`;
+  el.sunArcNoon.querySelector?.("title")?.remove?.();
+  const t = document.createElementNS("http://www.w3.org/2000/svg", "title");
+  t.textContent = title;
+  el.sunArcNoon.appendChild(t);
 }
 
 // Golden hour approximated as the 60 minutes just after sunrise and the
