@@ -98,6 +98,22 @@ export function buildAlerts(weather) {
     });
   }
 
+  // ---- Freezing rain ----
+  // Rain hours where the ambient temp is within a couple degrees of freezing
+  // → ice risk. Flag once for the first offending hour.
+  const iceHour = hours.find((h) =>
+    h.condition === "rain" && h.temp != null && h.temp >= -2 && h.temp <= 2
+  );
+  if (iceHour) {
+    out.push({
+      id: "freezing-rain",
+      severity: "danger",
+      title: "Freezing rain risk",
+      detail: `Rain near ${Math.round(iceHour.temp)}° around ${shortClock(iceHour.time)} — expect ice on surfaces.`,
+      ts: iceHour.time,
+    });
+  }
+
   // ---- Snow ----
   const snowHour = hours.find((h) => h.condition === "snow");
   if (snowHour) {
