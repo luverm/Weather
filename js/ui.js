@@ -1471,12 +1471,27 @@ function renderPlaces() {
   if (!all.length) { el.placesStrip.hidden = true; el.placesStrip.innerHTML = ""; return; }
   el.placesStrip.hidden = false;
   const activeId = state.place ? places.idFor(state.place) : null;
+  const activePlace = all.find((p) => places.idFor(p) === activeId);
+  const activeTempC = activePlace?.temp;
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
+    // Delta shown for non-active saved places when both have a stored temp,
+    // so the user can compare at a glance across their pinned cities.
+    let deltaChip = "";
+    if (!active && p.temp != null && activeTempC != null) {
+      const dC = p.temp - activeTempC;
+      if (Math.abs(dC) >= 1) {
+        const dDisplay = Math.round(Math.abs(dC * (state.unit === "F" ? 1.8 : 1)));
+        const dir = dC > 0 ? "up" : "down";
+        const sign = dC > 0 ? "+" : "−";
+        deltaChip = `<span class="place-delta" data-dir="${dir}">${sign}${dDisplay}°</span>`;
+      }
+    }
     return `
       <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
         <span>${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
+        ${deltaChip}
         <span class="close" data-action="remove" aria-label="Remove">
           <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
         </span>
