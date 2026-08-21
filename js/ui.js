@@ -92,9 +92,12 @@ const el = {
   sunArcPath: $("#sun-arc-path"),
   sunArcGoldenAm: $("#sun-arc-golden-am"),
   sunArcGoldenPm: $("#sun-arc-golden-pm"),
+  sunArcNoon: $("#sun-arc-noon"),
+  sunArcNoonLabel: $("#sun-arc-noon-label"),
   goldenChip: $("#golden-chip"),
   goldenChipHeadline: $("#golden-chip-headline"),
   goldenChipDetail: $("#golden-chip-detail"),
+  daylightTrend: $("#daylight-trend"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -529,6 +532,58 @@ function renderSun(w) {
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   scheduleGoldenHour(w);
+  renderDaylightTrend(w);
+  renderSolarNoon(w);
+}
+
+// Compare today's and tomorrow's daylight to show a "+2m / -3m" delta chip.
+// Uses time-of-day differences (not raw timestamps) so DST cutovers don't
+// leak into the number.
+function renderDaylightTrend(w) {
+  if (!el.daylightTrend) return;
+  const days = w?.daily || [];
+  if (days.length < 2) { el.daylightTrend.hidden = true; return; }
+  const today = days[0], tomorrow = days[1];
+  if (!today?.sunrise || !today?.sunset || !tomorrow?.sunrise || !tomorrow?.sunset) {
+    el.daylightTrend.hidden = true;
+    return;
+  }
+  const todayDL = today.sunset - today.sunrise;
+  const tomorrowDL = tomorrow.sunset - tomorrow.sunrise;
+  const deltaSec = Math.round((tomorrowDL - todayDL) / 1000);
+  // Only surface a change of ~30 seconds or more; smaller reads as noise.
+  if (Math.abs(deltaSec) < 30) { el.daylightTrend.hidden = true; return; }
+  const mins = Math.round(deltaSec / 60);
+  const secs = Math.abs(deltaSec % 60);
+  const sign = deltaSec > 0 ? "+" : "−";
+  const label = Math.abs(mins) >= 1
+    ? `${sign}${Math.abs(mins)}m`
+    : `${sign}${secs}s`;
+  el.daylightTrend.hidden = false;
+  el.daylightTrend.dataset.dir = deltaSec > 0 ? "up" : "down";
+  el.daylightTrend.textContent = label + "/day";
+  el.daylightTrend.title = deltaSec > 0
+    ? `Tomorrow is ${label.replace("+", "").replace("−", "")} longer than today`
+    : `Tomorrow is ${label.replace("+", "").replace("−", "")} shorter than today`;
+}
+
+// Position the "solar noon" tick halfway between sunrise and sunset on the
+// arc's x axis (mirrors the golden-band mapping).
+function renderSolarNoon(w) {
+  if (!el.sunArcNoon || !el.sunArcNoonLabel) return;
+  if (!w?.sunrise || !w?.sunset || w.sunset <= w.sunrise) {
+    el.sunArcNoon.setAttribute("opacity", "0");
+    el.sunArcNoonLabel.setAttribute("opacity", "0");
+    return;
+  }
+  const noon = w.sunrise + (w.sunset - w.sunrise) / 2;
+  const daylight = w.sunset - w.sunrise;
+  const x = 10 + ((noon - w.sunrise) / daylight) * 180;
+  el.sunArcNoon.setAttribute("x1", x.toFixed(1));
+  el.sunArcNoon.setAttribute("x2", x.toFixed(1));
+  el.sunArcNoonLabel.setAttribute("x", x.toFixed(1));
+  el.sunArcNoon.setAttribute("opacity", "1");
+  el.sunArcNoonLabel.setAttribute("opacity", "1");
 }
 
 // Golden hour approximated as the 60 minutes just after sunrise and the

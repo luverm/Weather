@@ -1038,6 +1038,43 @@ kbd {
 }
 .golden-chip-detail:empty { display: none; }
 
+/* ---------- Daylight trend badge ---------- */
+.daylight-trend {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  margin-left: 4px;
+  border-radius: 999px;
+  font-size: 9.5px;
+  letter-spacing: 0.05em;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+  color: #cfe0ff;
+  background: rgba(140, 180, 255, 0.14);
+  border: 1px solid rgba(140, 180, 255, 0.22);
+}
+.daylight-trend[hidden] { display: none; }
+.daylight-trend[data-dir="up"] {
+  color: #b6f0c8;
+  background: rgba(120, 220, 160, 0.14);
+  border-color: rgba(120, 220, 160, 0.28);
+}
+.daylight-trend[data-dir="down"] {
+  color: #ffbfd2;
+  background: rgba(240, 140, 180, 0.14);
+  border-color: rgba(240, 140, 180, 0.28);
+}
+
+/* ---------- Solar-noon guide ---------- */
+.sun-arc-noon,
+.sun-arc-noon-label {
+  transition: opacity 400ms var(--ease);
+  pointer-events: none;
+}
+.sun-arc-noon-label {
+  text-transform: uppercase;
+}
+
 /* ---------- Radar map ---------- */
 .radar {
   padding: 12px;
