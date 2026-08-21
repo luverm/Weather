@@ -1939,6 +1939,7 @@ kbd {
 .fetched-ago:empty { display: none; }
 .fetched-ago.stale { color: #ffb86b; }
 .fetched-ago.fresh { color: #a4f4bd; text-shadow: 0 0 6px rgba(160,240,180,0.5); transition: color 500ms var(--ease); }
+.fetched-ago.offline { color: #ffb37a; }
 
 #refresh-btn.spinning svg { animation: spin 700ms var(--ease) both; }
 @keyframes spin { from { transform: rotate(0) } to { transform: rotate(360deg) } }
