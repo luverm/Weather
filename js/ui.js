@@ -490,9 +490,15 @@ function renderMetrics(w) {
     }
   }
   el.metricHumidity.textContent = Math.round(w.humidity ?? 0);
-  el.metricHumiditySub.textContent = w.dewPoint != null
+  // NOAA heat-index formula only meaningful when air temp >= 27°C and humidity >= 40%.
+  let heatSuffix = "";
+  if (w.temp != null && w.humidity != null && w.temp >= 27 && w.humidity >= 40) {
+    const hi = heatIndex(w.temp, w.humidity);
+    if (hi >= w.temp + 1) heatSuffix = ` · heat ${Math.round(convertTemp(hi))}°`;
+  }
+  el.metricHumiditySub.textContent = (w.dewPoint != null
     ? `dew ${Math.round(convertTemp(w.dewPoint))}°`
-    : "dew —";
+    : "dew —") + heatSuffix;
   if (el.humidityComfort) {
     const pill = humidityComfort(w.humidity, w.dewPoint, w.temp);
     if (pill) {
@@ -573,6 +579,19 @@ function humidityComfort(rh, dew, temp) {
   if (rh <= 25) return { label: "Dry", cls: "up" };
   if (rh <= 35) return { label: "Crisp", cls: "flat" };
   return { label: "Comfy", cls: "down" };
+}
+
+// NOAA heat-index computed in Celsius (input) → Celsius (output). Applies the
+// canonical Rothfusz regression on Fahrenheit values internally then converts
+// back so callers can stay unit-agnostic.
+function heatIndex(tempC, rh) {
+  const T = tempC * 9 / 5 + 32;
+  const HI =
+    -42.379 + 2.04901523 * T + 10.14333127 * rh
+    - 0.22475541 * T * rh - 0.00683783 * T * T
+    - 0.05481717 * rh * rh + 0.00122874 * T * T * rh
+    + 0.00085282 * T * rh * rh - 0.00000199 * T * T * rh * rh;
+  return (HI - 32) * 5 / 9;
 }
 
 // Small human summary of what the pressure trend suggests, borrowed from the
