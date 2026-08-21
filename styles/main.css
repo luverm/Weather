@@ -349,7 +349,22 @@ html[data-reduce-motion="true"] *::after {
 .place-chip .close:hover { background: rgba(255,255,255,0.12); color: var(--fg); }
 
 /* ---------- Hero ---------- */
-.hero { align-self: start; display: grid; gap: 14px; }
+.hero { align-self: start; display: grid; gap: 14px; position: relative; }
+html[data-loading="true"] .hero::after {
+  content: "";
+  position: absolute;
+  left: 12px; right: 12px; bottom: -6px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  animation: loadingSweep 1.4s ease-in-out infinite;
+  pointer-events: none;
+  opacity: 0.65;
+}
+@keyframes loadingSweep {
+  0%   { transform: translateX(-30%); }
+  100% { transform: translateX(30%);  }
+}
 .hero-inner {
   padding: 28px clamp(20px, 3.5vw, 42px);
   display: grid;
