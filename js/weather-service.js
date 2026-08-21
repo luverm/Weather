@@ -384,18 +384,24 @@ function mock(lat, lon) {
     uv: 3,
     uvPeak: { time: new Date().setHours(13, 0, 0, 0), value: 5 },
     timezone: "UTC",
-    hourly: Array.from({ length: 24 }, (_, i) => ({
-      time: now + (i + 1) * 3600_000,
-      temp: 18 + Math.sin(i / 2) * 3,
-      feelsLike: 17 + Math.sin(i / 2) * 3,
-      pop: 20, precip: 0,
-      wind: 8 + Math.sin(i) * 3, gusts: 12 + Math.sin(i) * 4,
-      windDir: (220 + i * 5) % 360,
-      isDay: (i + hour) % 24 >= 6 && (i + hour) % 24 < 19,
-      uv: Math.max(0, Math.sin((i - 6) * Math.PI / 13) * 6),
-      clouds: Math.round(40 + Math.sin(i / 3) * 30),
-      condition: CONDITIONS.CLOUDS, label: "Cloudy",
-    })),
+    hourly: Array.from({ length: 24 }, (_, i) => {
+      // Layer in a brief rain patch a few hours out so the offline preview
+      // exercises the transition/nowcast chips.
+      const rainy = i >= 5 && i <= 8;
+      return {
+        time: now + (i + 1) * 3600_000,
+        temp: 18 + Math.sin(i / 2) * 3,
+        feelsLike: 17 + Math.sin(i / 2) * 3,
+        pop: rainy ? 70 : 20, precip: rainy ? 1.2 : 0,
+        wind: 8 + Math.sin(i) * 3, gusts: 12 + Math.sin(i) * 4,
+        windDir: (220 + i * 5) % 360,
+        isDay: (i + hour) % 24 >= 6 && (i + hour) % 24 < 19,
+        uv: Math.max(0, Math.sin((i - 6) * Math.PI / 13) * 6),
+        clouds: rainy ? 95 : Math.round(40 + Math.sin(i / 3) * 30),
+        condition: rainy ? CONDITIONS.RAIN : CONDITIONS.CLOUDS,
+        label: rainy ? "Rain showers" : "Cloudy",
+      };
+    }),
     daily: Array.from({ length: 7 }, (_, i) => {
       // Rotate through a small set of conditions so the mock strip looks
       // varied — helps preview UI states offline without hunting for real
