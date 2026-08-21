@@ -1859,6 +1859,12 @@ kbd {
   .daily-item { grid-template-columns: 64px 24px 1fr 48px 48px; gap: 8px; }
   .chart-svg { height: 120px; }
   .shortcuts-list { grid-template-columns: 1fr; }
+  /* Legend crowds the chart heading on phones — hide it here; the popover
+     that appears on tap still explains each series. */
+  .chart-legend { display: none; }
+  .hourly-summary { font-size: 10.5px; gap: 6px; }
+  .hourly-summary .chip { padding: 2px 6px; }
+  .vs-yesterday { max-width: 100%; }
 }
 @media (max-width: 420px) {
   .place-name { font-size: 28px; }
