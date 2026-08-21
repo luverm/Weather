@@ -448,6 +448,13 @@ function renderMetrics(w) {
   el.metricWindSub.textContent = dirLabel
     ? `${dirLabel} · gust ${gustPart}`
     : `gust ${gustPart}`;
+  // Highlight the wind card when gusts are strong enough to notice outdoors.
+  const gustsKmh = w.windGusts ?? 0;
+  const windCard = document.querySelector(".metric-wind");
+  if (windCard) {
+    windCard.classList.toggle("gusty", gustsKmh >= 40);
+    windCard.classList.toggle("stormy", gustsKmh >= 60);
+  }
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);

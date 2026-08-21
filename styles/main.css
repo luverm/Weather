@@ -884,6 +884,19 @@ html[data-reduce-motion="true"] *::after {
 .metric-wind .metric-value { align-self: center; }
 .metric-wind .metric-unit { align-self: center; }
 .metric-wind .metric-sub { grid-column: 1 / span 2; }
+.metric-wind.gusty {
+  border-color: rgba(255,180,120,0.32);
+  box-shadow: inset 0 0 0 1px rgba(255,180,120,0.16);
+}
+.metric-wind.stormy {
+  border-color: rgba(255,120,120,0.42);
+  box-shadow: inset 0 0 0 1px rgba(255,120,120,0.22);
+  animation: gustPulse 2.4s ease-in-out infinite;
+}
+@keyframes gustPulse {
+  0%, 100% { box-shadow: inset 0 0 0 1px rgba(255,120,120,0.22); }
+  50%      { box-shadow: inset 0 0 0 1px rgba(255,120,120,0.4), 0 0 12px rgba(255,120,120,0.14); }
+}
 .wind-compass {
   grid-row: 2;
   grid-column: 2;
