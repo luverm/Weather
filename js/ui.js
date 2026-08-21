@@ -2081,6 +2081,8 @@ function bindUnitToggle() {
   // toggle units too, without stealing text-selection.
   el.temp?.addEventListener("click", (e) => {
     if (e.target === el.unitBtn) return;
+    // Don't toggle while the user is highlighting text on the temp value.
+    if (window.getSelection?.().toString?.().length) return;
     toggle();
   });
   el.temp?.setAttribute("role", "button");
