@@ -1956,7 +1956,11 @@ kbd {
   border-radius: 10px;
   transition: background 200ms var(--ease);
 }
-.daily-item:hover { background: var(--glass); }
+.daily-item {
+  transition: background 200ms var(--ease), padding-left 200ms var(--ease);
+}
+.daily-item:hover { background: var(--glass); padding-left: 12px; }
+.daily-item.today:hover { padding-left: 10px; }
 .daily-item.today {
   background: linear-gradient(90deg, rgba(154,209,255,0.10), rgba(154,209,255,0));
   border-left: 2px solid var(--accent);
