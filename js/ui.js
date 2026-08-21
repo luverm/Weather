@@ -537,6 +537,8 @@ function renderMetrics(w) {
     state.windNeedleAngle = next;
     el.windNeedle.setAttribute("transform", `rotate(${next})`);
     el.windNeedle.style.opacity = "1";
+    const compass = document.querySelector(".wind-compass");
+    if (compass) compass.setAttribute("title", `Wind from ${compassDir(dir)} (${Math.round(dir)}°)`);
   } else if (el.windNeedle) {
     el.windNeedle.style.opacity = "0.3";
   }
