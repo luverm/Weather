@@ -296,7 +296,10 @@ installShortcuts({
     const currentId = app.place ? places.idFor(app.place) : null;
     const idx = Math.max(0, list.findIndex((p) => places.idFor(p) === currentId));
     const next = list[(idx + dir + list.length) % list.length];
-    if (next) loadByCoords(next);
+    if (next) {
+      ui.showToast?.(`Loading ${next.name}…`);
+      loadByCoords(next);
+    }
   },
   nudge: (hours) => {
     clock.setOffset(clock.offset() + hours * 3600_000);
