@@ -270,8 +270,23 @@ html[data-reduce-motion="true"] *::after {
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--fg-dim);
-  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
 }
+.search-results .recent-clear {
+  pointer-events: auto;
+  font-size: 12px;
+  line-height: 1;
+  color: var(--fg-muted);
+  background: transparent;
+  border: 0;
+  padding: 2px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.search-results .recent-clear:hover { color: var(--fg); background: rgba(255,255,255,0.08); }
 
 .icon-btn {
   width: 42px; height: 42px;

@@ -2043,7 +2043,10 @@ function showRecentsIfAny() {
       <span class="sub">${escapeHtml(r.country || "")}</span>
     </li>
   `).join("");
-  el.searchResults.innerHTML = `<li class="recent-heading">Recent places · ${recents.length}</li>${itemsHtml}`;
+  el.searchResults.innerHTML =
+    `<li class="recent-heading">Recent places · ${recents.length}` +
+    `<button type="button" class="recent-clear" title="Clear recent places" aria-label="Clear recent places">×</button>` +
+    `</li>${itemsHtml}`;
   el.searchResults._items = recents;
   el.searchResults.hidden = false;
 }
@@ -2100,6 +2103,15 @@ function bindSearch() {
     }
   });
   el.searchResults.addEventListener("click", (e) => {
+    // Inline clear-recents action inside the "Recent places" header.
+    if (e.target.classList?.contains("recent-clear")) {
+      e.stopPropagation();
+      for (const p of places.all()) places.remove(p);
+      renderPlaces();
+      el.searchResults.hidden = true;
+      ui.showToast("Recent places cleared");
+      return;
+    }
     const li = e.target.closest("li");
     if (!li) return;
     const i = parseInt(li.dataset.index, 10);
