@@ -566,12 +566,19 @@ html[data-reduce-motion="true"] *::after {
   position: relative;
   height: 36px;
   border-radius: 18px;
-  background: linear-gradient(90deg,
-    rgba(10,15,40,0.5) 0%,
-    rgba(40,60,120,0.4) 25%,
-    rgba(255,200,120,0.3) 50%,
-    rgba(40,60,120,0.4) 75%,
-    rgba(10,15,40,0.5) 100%);
+  background:
+    /* 4 subtle tick marks at 20/40/60/80% (~every 4.8h of the 24h window) */
+    linear-gradient(90deg,
+      transparent 0 20%, rgba(255,255,255,0.10) 20% calc(20% + 1px), transparent calc(20% + 1px) 40%,
+      rgba(255,255,255,0.10) 40% calc(40% + 1px), transparent calc(40% + 1px) 60%,
+      rgba(255,255,255,0.10) 60% calc(60% + 1px), transparent calc(60% + 1px) 80%,
+      rgba(255,255,255,0.10) 80% calc(80% + 1px), transparent calc(80% + 1px) 100%),
+    linear-gradient(90deg,
+      rgba(10,15,40,0.5) 0%,
+      rgba(40,60,120,0.4) 25%,
+      rgba(255,200,120,0.3) 50%,
+      rgba(40,60,120,0.4) 75%,
+      rgba(10,15,40,0.5) 100%);
   overflow: hidden;
   cursor: ew-resize;
   touch-action: none;
