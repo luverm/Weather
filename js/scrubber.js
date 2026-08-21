@@ -102,6 +102,7 @@ export class Scrubber {
   }
 
   reset() {
+    try { navigator.vibrate?.(12); } catch { /* ignore */ }
     clock.setOffset(0);
     this.appEl?.setAttribute("data-scrubbing", "false");
     this._render(this._currentT());
