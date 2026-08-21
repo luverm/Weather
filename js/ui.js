@@ -2030,6 +2030,7 @@ function renderPlaces() {
         renderPlaces();
         return;
       }
+      haptic();
       state.handlers.onPlaceClick?.(item);
     };
     chip.addEventListener("click", trigger);
