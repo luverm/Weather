@@ -1717,6 +1717,11 @@ kbd {
   border-color: rgba(180, 150, 250, 0.32);
   background: rgba(180, 150, 250, 0.10);
 }
+.hourly-summary .chip.dry {
+  color: #b6f0c8;
+  border-color: rgba(120, 220, 160, 0.28);
+  background: rgba(120, 220, 160, 0.08);
+}
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;
@@ -1936,6 +1941,7 @@ kbd {
   0%, 100% { opacity: 0.4; transform: scale(1); }
   50% { opacity: 1; transform: scale(1.2); }
 }
+.metric-value { transition: color 300ms var(--ease); }
 
 .toast {
   position: fixed;

@@ -1483,6 +1483,17 @@ function renderHourlySummary(w) {
   if (totalMm >= 0.4) {
     const label = totalMm >= 1 ? `${totalMm.toFixed(1)} mm` : `${totalMm.toFixed(2)} mm`;
     chips.push(`<span class="chip rain" title="Expected precipitation in the next 24 hours">💧 ${label}</span>`);
+  } else {
+    // Nothing wet expected — count contiguous dry hours from now forward so
+    // the user gets a positive "clear window" signal.
+    let dryStreak = 0;
+    for (const h of hrs) {
+      if ((h.precip || 0) >= 0.1 || (h.pop || 0) >= 55) break;
+      dryStreak++;
+    }
+    if (dryStreak >= 6) {
+      chips.push(`<span class="chip dry" title="No meaningful rain expected in the next ${dryStreak}h">☂︎ dry ${dryStreak}h</span>`);
+    }
   }
   let tMin = Infinity, tMax = -Infinity;
   for (const h of hrs) {
