@@ -43,7 +43,17 @@ export function installShortcuts(handlers) {
     // even when the user is typing, since search itself is what they want.
     if ((e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey && (e.key === "k" || e.key === "K")) {
       e.preventDefault();
-      handlers.focusSearch?.();
+      // If focus is already inside the search input, treat Ctrl+K as a
+      // "clear and blur" toggle — the same way most command-palettes do.
+      const input = document.getElementById("search-input");
+      if (input && document.activeElement === input) {
+        input.value = "";
+        input.blur();
+        const results = document.getElementById("search-results");
+        if (results) results.hidden = true;
+      } else {
+        handlers.focusSearch?.();
+      }
       return;
     }
     // Let browsers handle other modifier combos (copy, find, etc.)
