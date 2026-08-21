@@ -1523,6 +1523,11 @@ kbd {
   margin-top: -4px;
 }
 .alerts-strip[hidden] { display: none; }
+.alerts-strip .alert-pill { animation: alertIn 320ms var(--ease); }
+@keyframes alertIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 .alert-pill {
   display: inline-flex;
   align-items: center;
