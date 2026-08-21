@@ -553,7 +553,11 @@ function renderMetrics(w) {
     el.windNeedle.setAttribute("transform", `rotate(${next})`);
     el.windNeedle.style.opacity = "1";
     const compass = document.querySelector(".wind-compass");
-    if (compass) compass.setAttribute("title", `Wind from ${compassDir(dir)} (${Math.round(dir)}°)`);
+    if (compass) {
+      const label = `Wind from ${compassDir(dir)} (${Math.round(dir)}°)`;
+      compass.setAttribute("title", label);
+      compass.setAttribute("aria-label", label);
+    }
   } else if (el.windNeedle) {
     el.windNeedle.style.opacity = "0.3";
   }
