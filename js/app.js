@@ -349,6 +349,13 @@ document.addEventListener("visibilitychange", () => {
   } else {
     engine.tickOnce();
   }
+  // Refresh weather when the tab regains focus after being hidden long
+  // enough for the data to feel stale (>= 15 min). Otherwise the user
+  // returns to values from the last visible session.
+  if (!document.hidden && app.weather?.fetchedAt && clock.isLive()) {
+    const age = Date.now() - app.weather.fetchedAt;
+    if (age >= 15 * 60_000) refreshWeather();
+  }
 });
 
 // Re-render scenes at the top of each minute so "live" view ticks forward.
