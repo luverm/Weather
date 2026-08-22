@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { goldenHourWindows, goldenHourCue } from "./golden-hour.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -110,6 +111,9 @@ const el = {
   heroInner: document.querySelector(".hero-inner"),
   toast: $("#toast"),
   placesStrip: $("#places-strip"),
+  sunGolden: $("#sun-golden"),
+  goldenTimes: $("#golden-times"),
+  goldenStatus: $("#golden-status"),
 };
 
 const state = {
@@ -521,8 +525,30 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderGoldenHour(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderGoldenHour(w) {
+  if (!el.sunGolden || !el.goldenTimes) return;
+  const g = goldenHourWindows(w);
+  if (!g) { el.sunGolden.hidden = true; return; }
+  el.sunGolden.hidden = false;
+  // Show the morning + evening golden ranges as a "07:12→08:12 · 20:04→21:04" pair.
+  el.goldenTimes.textContent =
+    `${fmtTime(g.morning.start)}→${fmtTime(g.morning.end)} · ${fmtTime(g.evening.start)}→${fmtTime(g.evening.end)}`;
+  updateGoldenStatus(w);
+}
+
+function updateGoldenStatus(w) {
+  if (!el.goldenStatus) return;
+  const cue = goldenHourCue(w);
+  if (!cue) { el.goldenStatus.hidden = true; return; }
+  el.goldenStatus.hidden = false;
+  el.goldenStatus.setAttribute("data-status", cue.status);
+  el.goldenStatus.setAttribute("data-kind", cue.kind);
+  el.goldenStatus.textContent = `${cue.label} · ${cue.text}`;
 }
 
 function scheduleSunArc(w) {
@@ -564,6 +590,24 @@ function scheduleSunCountdown(w) {
   if (state.sunTimer) { clearInterval(state.sunTimer); state.sunTimer = null; }
   if (!w?.daily?.length) return;
   const update = () => {
+    // Refresh the golden-hour status pill in lockstep so it never lags behind
+    // the sunrise/sunset countdown on a minute boundary.
+    updateGoldenStatus(w);
+
+    // Prefer the golden/blue-hour cue when we're inside or approaching one:
+    // the fine-grained event is more useful than "sunset in 2h 3m".
+    const cue = goldenHourCue(w);
+    if (cue) {
+      if (el.sunNextLabel) {
+        el.sunNextLabel.textContent = cue.status === "now" ? cue.label : `${cue.label} in`;
+      }
+      if (el.sunCountdown) {
+        el.sunCountdown.textContent =
+          cue.status === "now" ? `${cue.minutes}m left` : formatMinutes(cue.minutes);
+      }
+      return;
+    }
+
     const now = Date.now();
     let nextTs = null, nextKind = null;
     for (const d of w.daily) {
@@ -577,14 +621,18 @@ function scheduleSunCountdown(w) {
       return;
     }
     const mins = Math.max(0, Math.round((nextTs - now) / 60_000));
-    const label = mins >= 60
-      ? `${Math.floor(mins / 60)}h ${mins % 60}m`
-      : `${mins}m`;
     if (el.sunNextLabel) el.sunNextLabel.textContent = `${nextKind} in`;
-    if (el.sunCountdown) el.sunCountdown.textContent = label;
+    if (el.sunCountdown) el.sunCountdown.textContent = formatMinutes(mins);
   };
   update();
   state.sunTimer = setInterval(update, 30_000);
+}
+
+function formatMinutes(m) {
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  const mm = m % 60;
+  return mm ? `${h}h ${mm}m` : `${h}h`;
 }
 
 function renderAdvice(w) {

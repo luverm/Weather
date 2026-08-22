@@ -25,6 +25,7 @@ export class Scrubber {
     this.start = Date.now();
     this.sunrise = null;
     this.sunset = null;
+    this.bandEls = { goldenAm: null, goldenPm: null, blueAm: null, bluePm: null };
 
     this._bind();
     // Keep the label updating while live (otherwise the clock would freeze
@@ -32,13 +33,48 @@ export class Scrubber {
     setInterval(() => { if (clock.isLive()) this._render(0); }, 30_000);
   }
 
-  setBounds({ start, sunrise, sunset }) {
+  setBounds({ start, sunrise, sunset, golden }) {
     this.start = start || Date.now();
     this.sunrise = sunrise;
     this.sunset = sunset;
     this._placeMarker(this.sunriseEl, sunrise, "Sunrise");
     this._placeMarker(this.sunsetEl, sunset, "Sunset");
+    this._placeBands(golden);
     this._render(this._currentT());
+  }
+
+  _placeBands(g) {
+    const ensure = (key, className) => {
+      if (this.bandEls[key]) return this.bandEls[key];
+      const div = document.createElement("div");
+      div.className = className;
+      // Insert BEFORE the sunrise/sunset needle so the needle stays on top.
+      this.track.insertBefore(div, this.sunriseEl || null);
+      this.bandEls[key] = div;
+      return div;
+    };
+    const paint = (elm, range) => {
+      const totalMs = RANGE_HOURS * 3600_000;
+      if (!range || !range.start || !range.end) { elm.style.display = "none"; return; }
+      const min = (this.start - 3600_000);
+      const l = (range.start - min) / totalMs;
+      const r = (range.end - min) / totalMs;
+      if (r <= 0 || l >= 1) { elm.style.display = "none"; return; }
+      const left = Math.max(0, l), right = Math.min(1, r);
+      elm.style.display = "block";
+      elm.style.left = `${left * 100}%`;
+      elm.style.width = `${Math.max(0, right - left) * 100}%`;
+    };
+    if (!g) {
+      for (const k of Object.keys(this.bandEls)) {
+        if (this.bandEls[k]) this.bandEls[k].style.display = "none";
+      }
+      return;
+    }
+    paint(ensure("goldenAm", "scrubber-golden"), g.morning);
+    paint(ensure("goldenPm", "scrubber-golden"), g.evening);
+    paint(ensure("blueAm",   "scrubber-blue"),   g.blueMorning);
+    paint(ensure("bluePm",   "scrubber-blue"),   g.blueEvening);
   }
 
   /** Called when we externally reset to "now" (e.g. search selected). */

@@ -17,6 +17,7 @@ import { narrate } from "./narrative.js";
 import { places } from "./places.js";
 import { RadarMap } from "./radar-map.js";
 import { installShortcuts } from "./shortcuts.js";
+import { goldenHourWindows } from "./golden-hour.js";
 
 const engine = new AnimationEngine();
 
@@ -213,8 +214,15 @@ async function loadByCoords(place) {
   // Apply to scenes at current (live) time.
   applyScene(w);
 
-  // Update scrubber bounds to this location's sunrise/sunset.
-  scrubber.setBounds({ start: Date.now(), sunrise: w.sunrise, sunset: w.sunset });
+  // Update scrubber bounds — include golden/blue-hour ranges so the timeline
+  // shows the photographer's "warm" and "blue" windows as translucent bands.
+  const golden = goldenHourWindows(w);
+  scrubber.setBounds({
+    start: Date.now(),
+    sunrise: w.sunrise,
+    sunset: w.sunset,
+    golden,
+  });
 
   // Move the radar to the new location (fire-and-forget; resolves later).
   ensureRadar([place.lat, place.lon]).then((r) => r?.setCenter(place.lat, place.lon, place.name));

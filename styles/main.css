@@ -977,6 +977,98 @@ kbd {
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
 
+.sun-golden {
+  display: grid;
+  grid-template-columns: 10px auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--stroke);
+  font-size: 12px;
+}
+.golden-swatch {
+  width: 10px; height: 10px; border-radius: 999px;
+  background: linear-gradient(140deg, #ffd67a, #ff9059);
+  box-shadow: 0 0 8px rgba(255,180,90,0.55);
+}
+.golden-label {
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.golden-times {
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+  justify-self: end;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.golden-status {
+  grid-column: 1 / -1;
+  justify-self: start;
+  font-size: 10.5px;
+  color: #ffcf87;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 200, 120, 0.35);
+}
+.golden-status[data-status="now"] {
+  color: #1a0f04;
+  background: linear-gradient(140deg, #ffd67a, #ff9059);
+  border-color: transparent;
+  font-weight: 600;
+  box-shadow: 0 0 14px rgba(255,180,90,0.4);
+  animation: golden-pulse 2.6s var(--ease) infinite;
+}
+.golden-status[data-status="soon"][data-kind="blueMorning"],
+.golden-status[data-status="soon"][data-kind="blueEvening"],
+.golden-status[data-status="now"][data-kind="blueMorning"],
+.golden-status[data-status="now"][data-kind="blueEvening"] {
+  color: #c5d7ff;
+  border-color: rgba(140, 170, 255, 0.4);
+}
+.golden-status[data-status="now"][data-kind="blueMorning"],
+.golden-status[data-status="now"][data-kind="blueEvening"] {
+  color: #061024;
+  background: linear-gradient(140deg, #9ab7ff, #6f7bff);
+  border-color: transparent;
+  box-shadow: 0 0 14px rgba(120, 140, 255, 0.4);
+}
+@keyframes golden-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+/* Scrubber golden/blue bands. Drawn under the sunrise/sunset needles. */
+.scrubber-golden,
+.scrubber-blue {
+  position: absolute;
+  top: 0; bottom: 0;
+  pointer-events: none;
+  border-radius: 3px;
+  opacity: 0.6;
+}
+.scrubber-golden {
+  background: linear-gradient(180deg,
+    rgba(255, 200, 120, 0),
+    rgba(255, 200, 120, 0.28) 40%,
+    rgba(255, 200, 120, 0.28) 60%,
+    rgba(255, 200, 120, 0)
+  );
+}
+.scrubber-blue {
+  background: linear-gradient(180deg,
+    rgba(150, 180, 255, 0),
+    rgba(150, 180, 255, 0.22) 40%,
+    rgba(150, 180, 255, 0.22) 60%,
+    rgba(150, 180, 255, 0)
+  );
+}
+
 /* ---------- Radar map ---------- */
 .radar {
   padding: 12px;
