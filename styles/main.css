@@ -977,6 +977,61 @@ kbd {
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
 
+/* Golden hour + blue hour indicators. */
+.sun-magic {
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--stroke);
+}
+.sun-magic-row {
+  display: grid;
+  grid-template-columns: 10px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--fg-dim);
+  transition: color 240ms var(--ease);
+}
+.sun-magic-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 6px currentColor;
+}
+.sun-magic-row[data-kind="golden"] .sun-magic-dot {
+  background: #ffc46a;
+  color: rgba(255, 196, 106, 0.9);
+}
+.sun-magic-row[data-kind="blue"]   .sun-magic-dot {
+  background: #6fa8ff;
+  color: rgba(111, 168, 255, 0.9);
+}
+.sun-magic-label {
+  letter-spacing: 0.06em;
+}
+.sun-magic-times {
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+  opacity: 0.85;
+}
+.sun-magic-row.active {
+  color: var(--fg);
+}
+.sun-magic-row.active .sun-magic-label {
+  font-weight: 500;
+}
+.sun-magic-row.active .sun-magic-dot {
+  animation: sun-magic-pulse 2s ease-in-out infinite;
+}
+@keyframes sun-magic-pulse {
+  0%, 100% { transform: scale(1);   opacity: 1;   }
+  50%      { transform: scale(1.35); opacity: 0.6; }
+}
+:root[data-reduce-motion="true"] .sun-magic-row.active .sun-magic-dot {
+  animation: none;
+}
+
 /* ---------- Radar map ---------- */
 .radar {
   padding: 12px;

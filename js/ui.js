@@ -50,6 +50,9 @@ const el = {
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  sunMagic: $("#sun-magic"),
+  sunMagicGolden: $("#sun-magic-golden"),
+  sunMagicBlue: $("#sun-magic-blue"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -122,6 +125,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  sunMagicTimer: null,
   localTimer: null,
 };
 
@@ -523,6 +527,57 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleSunMagic(w);
+}
+
+// Golden hour: warm, low-angle light — approx. 40 min after sunrise and
+// 40 min before sunset. Blue hour: cool twilight — from ~30 min before
+// sunrise to ~10 min before, and ~10 min to ~30 min after sunset. These
+// are approximations; true angular definitions vary with latitude.
+function computeMagicWindows(w) {
+  const day = pickMagicDay(w);
+  if (!day || !day.sunrise || !day.sunset) return null;
+  const M = 60_000;
+  return {
+    goldenAm: { start: day.sunrise,       end: day.sunrise + 40 * M },
+    goldenPm: { start: day.sunset - 40 * M, end: day.sunset       },
+    blueAm:   { start: day.sunrise - 30 * M, end: day.sunrise - 10 * M },
+    bluePm:   { start: day.sunset  + 10 * M, end: day.sunset  + 30 * M },
+  };
+}
+
+// Pick the most relevant day for magic windows: today if its blue-hour tail
+// hasn't ended yet, otherwise tomorrow so the card looks ahead.
+function pickMagicDay(w) {
+  const days = w?.daily || [];
+  if (!days.length) return null;
+  const now = Date.now();
+  for (const d of days) {
+    if (!d.sunrise || !d.sunset) continue;
+    // 30 min past sunset is where evening blue hour ends.
+    if (d.sunset + 30 * 60_000 > now) return d;
+  }
+  return days.find((d) => d.sunrise && d.sunset) || null;
+}
+
+function scheduleSunMagic(w) {
+  if (!el.sunMagic) return;
+  if (state.sunMagicTimer) { clearInterval(state.sunMagicTimer); state.sunMagicTimer = null; }
+  const update = () => {
+    const win = computeMagicWindows(w);
+    if (!win) { el.sunMagic.hidden = true; return; }
+    el.sunMagic.hidden = false;
+    el.sunMagicGolden.textContent = `${fmtTime(win.goldenAm.start)}–${fmtTime(win.goldenAm.end)} · ${fmtTime(win.goldenPm.start)}–${fmtTime(win.goldenPm.end)}`;
+    el.sunMagicBlue.textContent   = `${fmtTime(win.blueAm.start)}–${fmtTime(win.blueAm.end)} · ${fmtTime(win.bluePm.start)}–${fmtTime(win.bluePm.end)}`;
+    const now = Date.now();
+    const inWin = (r) => now >= r.start && now <= r.end;
+    const activeGolden = inWin(win.goldenAm) || inWin(win.goldenPm);
+    const activeBlue   = inWin(win.blueAm)   || inWin(win.bluePm);
+    el.sunMagic.querySelector('[data-kind="golden"]')?.classList.toggle("active", activeGolden);
+    el.sunMagic.querySelector('[data-kind="blue"]')  ?.classList.toggle("active", activeBlue);
+  };
+  update();
+  state.sunMagicTimer = setInterval(update, 60_000);
 }
 
 function scheduleSunArc(w) {
