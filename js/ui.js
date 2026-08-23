@@ -45,6 +45,7 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonNext: $("#moon-next"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -504,6 +505,7 @@ function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  renderMoonNext(moon);
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
@@ -520,6 +522,23 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+}
+
+// Show whichever headline lunar phase is closer: full moon (phase 0.5) or
+// new moon (phase 0 / 1). "Tonight" when within a day, otherwise "in Nd".
+function renderMoonNext(moon) {
+  if (!el.moonNext || !moon || moon.phase == null) return;
+  const CYCLE = 29.5305882;
+  const p = moon.phase;
+  const daysToFull = ((0.5 - p) + 1) % 1 * CYCLE;
+  const daysToNew  = ((1.0 - p) + 1) % 1 * CYCLE;
+  const [days, kind] = daysToFull < daysToNew
+    ? [daysToFull, "Full"]
+    : [daysToNew,  "New"];
+  const label = days < 0.75
+    ? `${kind} moon tonight`
+    : `${kind} in ${Math.round(days)}d`;
+  el.moonNext.textContent = label;
 }
 
 function fmtTime(ts) {
