@@ -931,7 +931,10 @@ function renderDaily(w) {
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
-    const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
+    const precipMm = d.precip != null && d.precip >= 0.2
+      ? ` (${d.precip.toFixed(1)}mm)`
+      : "";
+    const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain${precipMm}` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
     item.innerHTML = `
       <span class="daily-day">${day}</span>
@@ -1012,7 +1015,22 @@ function renderDailyDelta(days) {
   if (Math.abs(dPop) >= 20) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
   }
-  el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
+  const tmr = `Tomorrow: ${parts.join(" · ")}`;
+  const week = weekRainSummary(days);
+  el.dailyDelta.textContent = week ? `${tmr}  ·  ${week}` : tmr;
+}
+
+// "12mm over 3 wet days" — helpful glanceable summary of the coming week.
+// A "wet day" needs at least 0.5mm expected precipitation.
+function weekRainSummary(days) {
+  let total = 0, wet = 0;
+  for (const d of days) {
+    const mm = d.precip ?? 0;
+    if (mm >= 0.5) { wet++; total += mm; }
+  }
+  if (wet === 0) return "dry week ahead";
+  const mmLabel = total >= 10 ? Math.round(total) : total.toFixed(1);
+  return `${mmLabel}mm over ${wet} wet day${wet === 1 ? "" : "s"}`;
 }
 
 function toggleDailyExpand(item, d, w) {
