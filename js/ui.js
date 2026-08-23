@@ -313,9 +313,11 @@ function renderMetrics(w) {
   el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
-  el.metricWindSub.textContent = dirLabel
-    ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
-    : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+  const gustText = w.windGusts != null ? `gust ${Math.round(w.windGusts)} km/h` : "gust —";
+  const peak = findPeakGust(w);
+  const peakText = peak ? ` · peak ${Math.round(peak.value)} @ ${fmtTime(peak.time)}` : "";
+  const base = dirLabel ? `${dirLabel} · ${gustText}` : gustText;
+  el.metricWindSub.textContent = `${base}${peakText}`;
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
@@ -379,6 +381,26 @@ function humidityComfort(rh, dew, temp) {
   if (rh <= 25) return { label: "Dry", cls: "up" };
   if (rh <= 35) return { label: "Crisp", cls: "flat" };
   return { label: "Comfy", cls: "down" };
+}
+
+// Find the strongest gust (or wind, if gusts aren't reported) in the next 24 h.
+// Only surface it when it's meaningfully stronger than what's blowing now.
+function findPeakGust(w) {
+  const now = Date.now();
+  const cutoff = now + 24 * 3600_000;
+  let bestVal = -Infinity, bestTs = null;
+  for (const h of (w.hourly || [])) {
+    if (h.time < now || h.time > cutoff) continue;
+    const v = h.gusts ?? h.wind;
+    if (v == null) continue;
+    if (v > bestVal) { bestVal = v; bestTs = h.time; }
+  }
+  if (bestTs == null) return null;
+  const current = w.windGusts ?? w.windSpeed ?? 0;
+  // Only show if the peak is a real bump and not just noise from the current reading.
+  if (bestVal < 25) return null;
+  if (bestVal - current < 5) return null;
+  return { value: bestVal, time: bestTs };
 }
 
 function beaufort(kmh) {
