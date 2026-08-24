@@ -1610,10 +1610,23 @@ function bindShare() {
     const week = (w.daily || []).slice(0, 7);
     const weekPrecip = week.reduce((s, d) => s + (d.precip || 0), 0);
     const wetDays = week.filter((d) => (d.precip || 0) >= 0.2).length;
+    // vs-yesterday line: same computation the on-screen chip uses, in the
+    // active temperature unit and rounded to whole degrees.
+    let vsY = null;
+    if (w.yesterday?.tempMax != null && today?.tempMax != null) {
+      const dC = today.tempMax - w.yesterday.tempMax;
+      const d = Math.round(unit === "F" ? dC * 9 / 5 : dC);
+      if (Math.abs(d) >= 1) {
+        vsY = d > 0
+          ? `${d}°${unit} warmer high than yesterday`
+          : `${Math.abs(d)}°${unit} cooler high than yesterday`;
+      }
+    }
     const lines = [
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
       today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
+      vsY,
       `Wind ${fmtWind(w.windSpeed)}${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
