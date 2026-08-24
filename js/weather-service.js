@@ -94,6 +94,7 @@ export async function getWeather(lat, lon) {
     timezone: "auto",
     forecast_days: 7,
     past_hours: 1,
+    past_days: 1, // yesterday, for hero "warmer/cooler than yesterday" chip
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -151,12 +152,18 @@ function normalize(d, aq) {
     }
   }
 
-  // 7-day daily forecast.
+  // 7-day daily forecast, and yesterday (past_days=1) split off separately so
+  // the UI arrays keep the "days[0] = today" contract.
   const dailyForecast = [];
+  let yesterday = null;
   if (daily.time) {
+    // Today's date in the target timezone, matched by the Y-M-D prefix that
+    // Open-Meteo returns.
+    const todayStr = new Date(now).toISOString().slice(0, 10);
     for (let i = 0; i < daily.time.length; i++) {
-      const ts = new Date(daily.time[i]).getTime();
-      dailyForecast.push({
+      const raw = daily.time[i];
+      const ts = new Date(raw).getTime();
+      const item = {
         time: ts,
         tempMax: daily.temperature_2m_max?.[i],
         tempMin: daily.temperature_2m_min?.[i],
@@ -168,7 +175,14 @@ function normalize(d, aq) {
         sunrise: daily.sunrise?.[i] ? new Date(daily.sunrise[i]).getTime() : null,
         sunset: daily.sunset?.[i] ? new Date(daily.sunset[i]).getTime() : null,
         ...mapWmo(daily.weather_code[i]),
-      });
+      };
+      // Anything strictly before today's date string is "yesterday"; keep only
+      // the most recent past entry.
+      if (typeof raw === "string" && raw < todayStr) {
+        yesterday = item;
+      } else {
+        dailyForecast.push(item);
+      }
     }
   }
 
@@ -211,6 +225,7 @@ function normalize(d, aq) {
     timezone: d.timezone,
     hourly,
     daily: dailyForecast,
+    yesterday,
     nowcast,
     moon,
     airQuality: normalizeAq(aq),
@@ -387,6 +402,7 @@ function mock(lat, lon) {
       condition: CONDITIONS.CLOUDS, label: "Cloudy",
     })),
     nowcast: [],
+    yesterday: { tempMax: 18, tempMin: 11, precip: 0 },
     moon: computeMoonPhase(new Date()),
     airQuality: { aqi: 42, pm25: 8, pm10: 14, o3: 40, no2: 15, co: 0.2, label: "Good" },
     pollen: {

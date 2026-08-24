@@ -441,6 +441,18 @@ html[data-reduce-motion="true"] *::after {
   margin-left: auto;
 }
 .day-range[hidden] { display: none; }
+.vs-yesterday {
+  margin: 6px 0 0 auto;
+  max-width: 240px;
+  text-align: right;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--fg-dim);
+}
+.vs-yesterday[hidden] { display: none; }
+.vs-yesterday.warm { color: #ffb196; }
+.vs-yesterday.cool { color: #9ad1ff; }
+.vs-yesterday.flat { color: var(--fg-dim); }
 .day-range-end { white-space: nowrap; }
 .day-range-track {
   position: relative;

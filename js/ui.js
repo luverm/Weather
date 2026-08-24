@@ -49,6 +49,7 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  vsYesterday: $("#vs-yesterday"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -333,6 +334,32 @@ function renderLiveValues(w, { animate = true } = {}) {
   feelsNode.textContent = `Feels like ${Math.round(feels)}°`;
   renderFeelsReason(w);
   renderDayRange(w);
+  renderVsYesterday(w);
+}
+
+function renderVsYesterday(w) {
+  if (!el.vsYesterday) return;
+  const y = w.yesterday;
+  const today = w.daily?.[0];
+  // Compare today's high to yesterday's high — the mid-day peak is the most
+  // intuitive anchor for "warmer/cooler than yesterday".
+  if (!y || y.tempMax == null || !today || today.tempMax == null) {
+    el.vsYesterday.hidden = true;
+    return;
+  }
+  const deltaC = today.tempMax - y.tempMax;
+  const rounded = Math.round(state.unit === "F" ? deltaC * 9 / 5 : deltaC);
+  if (Math.abs(rounded) < 1) {
+    el.vsYesterday.hidden = false;
+    el.vsYesterday.className = "vs-yesterday flat";
+    el.vsYesterday.textContent = "About the same high as yesterday";
+    return;
+  }
+  el.vsYesterday.hidden = false;
+  el.vsYesterday.className = `vs-yesterday ${rounded > 0 ? "warm" : "cool"}`;
+  el.vsYesterday.textContent = rounded > 0
+    ? `${rounded}° warmer high than yesterday`
+    : `${Math.abs(rounded)}° cooler high than yesterday`;
 }
 
 // When feels-like diverges from actual temp by 3+°C, add a short reason chip:
