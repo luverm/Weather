@@ -1195,17 +1195,42 @@ function renderSearchResults(results) {
   el.searchResults._items = results;
 }
 
+// A short world-tour list shown when the user opens search cold — no saved
+// places, no query typed. Coords come from Open-Meteo's own geocoder so a
+// pick behaves identically to a normal search result.
+const POPULAR_CITIES = Object.freeze([
+  { name: "Tokyo",         country: "Japan",          admin1: "Tokyo",           lat: 35.6895, lon: 139.6917 },
+  { name: "New York",      country: "United States",  admin1: "New York",        lat: 40.7128, lon: -74.0060 },
+  { name: "London",        country: "United Kingdom", admin1: "England",         lat: 51.5074, lon: -0.1278  },
+  { name: "Paris",         country: "France",         admin1: "Île-de-France",   lat: 48.8566, lon: 2.3522   },
+  { name: "Sydney",        country: "Australia",      admin1: "New South Wales", lat: -33.8688, lon: 151.2093 },
+  { name: "São Paulo",     country: "Brazil",         admin1: "São Paulo",       lat: -23.5505, lon: -46.6333 },
+]);
+
 function showRecentsIfAny() {
   const recents = places.all().slice(0, 5);
-  if (!recents.length) { el.searchResults.hidden = true; return; }
-  const itemsHtml = recents.map((r, i) => `
+  if (recents.length) {
+    const itemsHtml = recents.map((r, i) => `
+      <li role="option" data-index="${i}">
+        <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
+        <span class="sub">${escapeHtml(r.country || "")}</span>
+      </li>
+    `).join("");
+    el.searchResults.innerHTML = `<li class="recent-heading">Recent places</li>${itemsHtml}`;
+    el.searchResults._items = recents;
+    el.searchResults.hidden = false;
+    return;
+  }
+  // First-visit / no-saved-places state: offer a small world-tour list so
+  // the search dropdown never feels like a dead end.
+  const itemsHtml = POPULAR_CITIES.map((r, i) => `
     <li role="option" data-index="${i}">
-      <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
+      <span>${escapeHtml(r.name)}</span>
       <span class="sub">${escapeHtml(r.country || "")}</span>
     </li>
   `).join("");
-  el.searchResults.innerHTML = `<li class="recent-heading">Recent places</li>${itemsHtml}`;
-  el.searchResults._items = recents;
+  el.searchResults.innerHTML = `<li class="recent-heading">Explore</li>${itemsHtml}`;
+  el.searchResults._items = POPULAR_CITIES;
   el.searchResults.hidden = false;
 }
 
