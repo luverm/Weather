@@ -87,7 +87,9 @@ const el = {
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
+  settingWindMph: $("#setting-wind-mph"),
   settingClearPlaces: $("#setting-clear-places"),
+  metricWindUnit: $("#m-wind-unit"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
@@ -120,6 +122,7 @@ const el = {
 
 const state = {
   unit: localStorage.getItem("aether:unit") || "C",
+  windUnit: localStorage.getItem("aether:windUnit") || "kmh", // "kmh" | "mph"
   weather: null,
   place: null,
   sampledWeather: null, // the weather values at the current scrubber time
@@ -184,6 +187,8 @@ export const ui = {
   setWeather(weather, { narrative } = {}) {
     state.weather = weather;
     state.sampledWeather = weather; // initially same as live
+    // Keep the last narrative so re-rendering (unit toggles) doesn't wipe it.
+    if (narrative !== undefined) state.narrative = narrative;
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
@@ -202,7 +207,7 @@ export const ui = {
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
-    if (el.narrative) el.narrative.textContent = narrative || "";
+    if (el.narrative) el.narrative.textContent = (narrative !== undefined ? narrative : state.narrative) || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
@@ -246,11 +251,25 @@ export const ui = {
     el.toast._t = setTimeout(() => (el.toast.hidden = true), dur);
   },
   getUnit: () => state.unit,
+  getWindUnit: () => state.windUnit,
+  formatWind: (kmh) => fmtWind(kmh),
 };
 
 // ---------- Rendering ----------
 
 function convertTemp(c) { return state.unit === "F" ? c * 9 / 5 + 32 : c; }
+
+// Wind speed comes from the API in km/h. The user can flip the whole app to
+// mph via settings — every wind/gust readout goes through convertWind().
+function convertWind(kmh) {
+  if (kmh == null) return kmh;
+  return state.windUnit === "mph" ? kmh * 0.6213711922 : kmh;
+}
+function windUnitLabel() { return state.windUnit === "mph" ? "mph" : "km/h"; }
+function fmtWind(kmh) {
+  if (kmh == null) return "—";
+  return `${Math.round(convertWind(kmh))} ${windUnitLabel()}`;
+}
 
 function animateNumber(node, target, format) {
   if (target == null || isNaN(target)) { node.textContent = "–"; return; }
@@ -312,12 +331,14 @@ function renderDayRange(w) {
 }
 
 function renderMetrics(w) {
-  el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
+  el.metricWind.textContent = w.windSpeed != null ? Math.round(convertWind(w.windSpeed)) : "—";
+  if (el.metricWindUnit) el.metricWindUnit.textContent = windUnitLabel();
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
+  const gustStr = w.windGusts != null ? fmtWind(w.windGusts) : "—";
   el.metricWindSub.textContent = dirLabel
-    ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
-    : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+    ? `${dirLabel} · gust ${gustStr}`
+    : `gust ${gustStr}`;
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
@@ -920,7 +941,7 @@ function renderDaily(w) {
     item.className = "daily-item";
     item.dataset.ts = d.time;
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
-      ? ` · gusts ${Math.round(d.gustsMax)} km/h`
+      ? ` · gusts ${fmtWind(d.gustsMax)}`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const precipLabel = (d.precip != null && d.precip >= 0.2)
@@ -1052,7 +1073,7 @@ function toggleDailyExpand(item, d, w) {
     const summary = document.createElement("div");
     summary.className = "daily-expand";
     summary.style.gridTemplateColumns = "1fr";
-    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${Math.round(d.gustsMax ?? 0)} km/h · UV ${Math.round(d.uvMax ?? 0)}</span>`;
+    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${fmtWind(d.gustsMax ?? 0)} · UV ${Math.round(d.uvMax ?? 0)}</span>`;
     item.appendChild(summary);
     item.dataset.expanded = "true";
     return;
@@ -1351,6 +1372,15 @@ function bindSettings() {
     }
   });
 
+  el.settingWindMph?.addEventListener("change", () => {
+    const desired = el.settingWindMph.checked ? "mph" : "kmh";
+    if (state.windUnit !== desired) {
+      state.windUnit = desired;
+      localStorage.setItem("aether:windUnit", state.windUnit);
+      if (state.weather) ui.setWeather(state.weather);
+    }
+  });
+
   el.settingClearPlaces?.addEventListener("click", () => {
     if (!confirm("Clear all saved places?")) return;
     for (const p of places.all()) places.remove(p);
@@ -1369,6 +1399,8 @@ function applyStoredPreferences() {
     queueMicrotask(() => state.handlers.onReduceMotion?.(true));
   }
   if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
+  if (el.settingWindMph) el.settingWindMph.checked = state.windUnit === "mph";
+  if (el.metricWindUnit) el.metricWindUnit.textContent = windUnitLabel();
 }
 
 // Exposed so app.js can query the current preference on boot.
@@ -1409,7 +1441,7 @@ function bindShare() {
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
       today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
-      `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
+      `Wind ${fmtWind(w.windSpeed)}${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
       weekPrecip >= 0.5 ? `Week: ${weekPrecip >= 10 ? Math.round(weekPrecip) : weekPrecip.toFixed(1)} mm rain · ${wetDays} wet day${wetDays === 1 ? "" : "s"}` : null,
