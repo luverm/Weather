@@ -600,6 +600,12 @@ html[data-reduce-motion="true"] *::after {
   align-items: end;
   border-top: 1px solid var(--stroke);
   margin-top: 4px;
+  animation: dailyExpandIn 280ms var(--ease) both;
+  transform-origin: top center;
+}
+@keyframes dailyExpandIn {
+  from { opacity: 0; transform: translateY(-4px) scaleY(0.92); }
+  to   { opacity: 1; transform: translateY(0)   scaleY(1); }
 }
 .daily-expand-bar {
   position: relative;
