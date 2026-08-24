@@ -1231,7 +1231,15 @@ const runSearch = debounce(async (q) => {
 }, 200);
 
 function renderSearchResults(results) {
-  if (!results.length) { el.searchResults.hidden = true; el.searchResults.innerHTML = ""; return; }
+  if (!results.length) {
+    // Keep the dropdown open so the user gets explicit feedback instead of
+    // wondering whether the request went through — a hidden dropdown is
+    // indistinguishable from "still typing".
+    el.searchResults.innerHTML = `<li class="recent-heading no-match">No matches — try a different spelling</li>`;
+    el.searchResults._items = [];
+    el.searchResults.hidden = false;
+    return;
+  }
   el.searchResults.innerHTML = results.map((r, i) => `
     <li role="option" data-index="${i}">
       <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>

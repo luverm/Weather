@@ -269,6 +269,13 @@ html[data-reduce-motion="true"] *::after {
   color: var(--fg-dim);
   pointer-events: none;
 }
+.search-results .recent-heading.no-match {
+  padding: 12px;
+  text-transform: none;
+  letter-spacing: 0.04em;
+  font-size: 12px;
+  color: var(--fg-muted);
+}
 
 .icon-btn {
   width: 42px; height: 42px;
