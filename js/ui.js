@@ -1092,15 +1092,24 @@ function renderNowcast(w) {
     : `${kind} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
   // 2h outlook summary.
   const totalMm = nowcast.reduce((s, n) => s + (n.precip || 0), 0);
-  el.nowcastSub.textContent = `${totalMm.toFixed(1)} mm expected in the next 2 hours`;
+  // Peak bucket — call it out when a noticeable spike is coming, so users can
+  // tell "steady drizzle" apart from "10-minute downpour in half an hour".
+  const peak = nowcast.reduce((best, n) => (n.precip > (best?.precip ?? 0) ? n : best), null);
+  const peakMin = peak ? Math.max(0, Math.round((peak.time - Date.now()) / 60_000)) : null;
+  const peakWorthCalling = peak && peak.precip >= 0.4 && peak.precip >= totalMm * 0.35 && peakMin > 5;
+  const base = `${totalMm.toFixed(1)} mm expected in the next 2 hours`;
+  el.nowcastSub.textContent = peakWorthCalling
+    ? `${base} · peak ${peak.precip.toFixed(1)} mm at +${peakMin} min`
+    : base;
   // Bars (time-labeled, clickable to scrub).
   el.nowcastBars.innerHTML = "";
   const slice = nowcast.slice(0, 8);
   const maxP = Math.max(0.5, ...slice.map((n) => n.precip || 0));
-  slice.forEach((n, i) => {
+  slice.forEach((n) => {
     const bar = document.createElement("button");
     bar.type = "button";
     bar.className = "nowcast-bar";
+    if (peakWorthCalling && n === peak) bar.classList.add("peak");
     bar.style.height = `${Math.max(2, (n.precip / maxP) * 28)}px`;
     const mins = Math.round((n.time - Date.now()) / 60_000);
     bar.title = `+${Math.max(0, mins)} min · ${n.precip.toFixed(1)} mm`;
