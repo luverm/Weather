@@ -29,6 +29,19 @@ export class ComfortStrip {
     const tMax = Math.max(...temps);
     const span = Math.max(4, tMax - tMin);
 
+    // Extremes across the visible window — marked only when the day actually
+    // has a meaningful spread, so a flat-temperature day stays quiet.
+    let hotIdx = -1, coldIdx = -1;
+    if (tMax - tMin >= 4) {
+      let hi = -Infinity, lo = Infinity;
+      this.hours.forEach((h, i) => {
+        const t = h.feelsLike ?? h.temp;
+        if (t == null) return;
+        if (t > hi) { hi = t; hotIdx = i; }
+        if (t < lo) { lo = t; coldIdx = i; }
+      });
+    }
+
     const cells = this.hours.map((h, i) => {
       const t = h.feelsLike ?? h.temp;
       const color = colorForFeels(t);
@@ -37,11 +50,18 @@ export class ComfortStrip {
       const tickHour = new Date(h.time).getHours();
       const showTick = tickHour % 6 === 0;
       const tickLabel = showTick ? `${tickHour.toString().padStart(2, "0")}:00` : "";
+      const extremeCls = i === hotIdx ? " is-hot" : i === coldIdx ? " is-cold" : "";
+      const extremeMarker = i === hotIdx
+        ? `<span class="cstrip-extreme is-hot" aria-label="hottest hour">▲</span>`
+        : i === coldIdx
+        ? `<span class="cstrip-extreme is-cold" aria-label="coolest hour">▼</span>`
+        : "";
       return `
-        <button class="cstrip-cell" data-i="${i}" data-ts="${h.time}"
+        <button class="cstrip-cell${extremeCls}" data-i="${i}" data-ts="${h.time}"
                 title="${tickHour}:00 · ${display} feels · ${h.pop ?? 0}% rain"
                 style="--c:${color}">
           <span class="cstrip-bar" style="--rain:${rainOpacity}"></span>
+          ${extremeMarker}
           ${showTick ? `<span class="cstrip-tick">${tickLabel}</span>` : ""}
         </button>
       `;
