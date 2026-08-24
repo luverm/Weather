@@ -324,6 +324,8 @@ installShortcuts({
   toggleFullscreenRadar: () => document.getElementById("radar-full")?.click(),
   toggleRadar: () => document.getElementById("radar-play")?.click(),
   resetScrubber: () => scrubber.reset(),
+  refresh: () => refreshWeather(),
+  share: () => document.getElementById("share-btn")?.click(),
   cyclePlace: (dir) => {
     const list = places.all();
     if (list.length < 2) return;
