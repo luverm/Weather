@@ -42,6 +42,8 @@ const el = {
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
+  feelsLikeText: $("#feels-like-text"),
+  feelsReason: $("#feels-reason"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -325,8 +327,37 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  // Update the text span (not the whole <p>) so we don't wipe sibling nodes
+  // like the temp-trend arrow.
+  const feelsNode = el.feelsLikeText || el.feelsLike;
+  feelsNode.textContent = `Feels like ${Math.round(feels)}°`;
+  renderFeelsReason(w);
   renderDayRange(w);
+}
+
+// When feels-like diverges from actual temp by 3+°C, add a short reason chip:
+// "windchill" for cold + wind, "humid heat" for hot + humid, or a neutral
+// "cooler/warmer" fallback so the chip always names the direction.
+function renderFeelsReason(w) {
+  if (!el.feelsReason) return;
+  if (w.feelsLike == null || w.temp == null) {
+    el.feelsReason.hidden = true; return;
+  }
+  const delta = w.feelsLike - w.temp; // °C
+  if (Math.abs(delta) < 3) { el.feelsReason.hidden = true; return; }
+  let label = null, cls = "";
+  const wind = w.windSpeed ?? 0;
+  const hum = w.humidity ?? 0;
+  if (delta <= -3) {
+    label = (wind >= 15 || w.temp <= 5) ? "windchill" : "cooler";
+    cls = "cold";
+  } else {
+    label = (hum >= 60 && w.temp >= 22) ? "humid heat" : "warmer";
+    cls = "warm";
+  }
+  el.feelsReason.textContent = label;
+  el.feelsReason.className = `feels-reason ${cls}`;
+  el.feelsReason.hidden = false;
 }
 
 function renderDayRange(w) {
