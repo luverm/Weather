@@ -119,6 +119,8 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunGolden: $("#sun-golden"),
+  sunGoldenText: $("#sun-golden-text"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -606,8 +608,43 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderGoldenHour(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+// Photographer's rule-of-thumb golden hour: roughly the last hour before
+// sunset (evening) or first hour after sunrise (morning). Uses simple time
+// math — no astronomical solar-altitude solve. Prefers the upcoming golden
+// window; falls back to "in progress" or "already passed for today".
+function renderGoldenHour(w) {
+  if (!el.sunGolden || !el.sunGoldenText) return;
+  if (!w?.sunrise || !w?.sunset) { el.sunGolden.hidden = true; return; }
+  const now = Date.now();
+  const HOUR = 60 * 60_000;
+  const eveningStart = w.sunset - HOUR;
+  const eveningEnd = w.sunset;
+  const morningStart = w.sunrise;
+  const morningEnd = w.sunrise + HOUR;
+
+  let label = null;
+  if (now >= eveningStart && now <= eveningEnd) {
+    const left = Math.max(0, Math.round((eveningEnd - now) / 60_000));
+    label = `Golden hour · ${left}m of warm light left`;
+  } else if (now >= morningStart && now <= morningEnd) {
+    const left = Math.max(0, Math.round((morningEnd - now) / 60_000));
+    label = `Golden hour · ${left}m of warm light left`;
+  } else if (now < morningStart) {
+    label = `Golden hour ${fmtTime(morningStart)} – ${fmtTime(morningEnd)}`;
+  } else if (now < eveningStart) {
+    label = `Golden hour ${fmtTime(eveningStart)} – ${fmtTime(eveningEnd)}`;
+  } else {
+    // Both windows passed for today — quiet card.
+    el.sunGolden.hidden = true;
+    return;
+  }
+  el.sunGolden.hidden = false;
+  el.sunGoldenText.textContent = label;
 }
 
 function scheduleSunArc(w) {
