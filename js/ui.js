@@ -1472,6 +1472,11 @@ function bindShare() {
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
       weekPrecip >= 0.5 ? `Week: ${weekPrecip >= 10 ? Math.round(weekPrecip) : weekPrecip.toFixed(1)} mm rain · ${wetDays} wet day${wetDays === 1 ? "" : "s"}` : null,
     ].filter(Boolean);
+    // Deep link: whatever's in the URL bar right now (already includes the
+    // #place=... hash the app keeps in sync with the current place).
+    if (state.place && typeof location !== "undefined") {
+      lines.push(location.href);
+    }
     const text = lines.join("\n");
     try {
       if (navigator.share) {

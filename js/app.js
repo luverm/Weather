@@ -194,11 +194,47 @@ const scrubber = new Scrubber({
   },
 });
 
+// ---------- URL sharing ----------
+// The current place is mirrored to the URL hash as
+//   #place=<name>,<lat>,<lon>
+// so a shared or bookmarked link opens Aether on that city. Coordinates use
+// 4 decimal places (~11 m at the equator — well past what a weather forecast
+// resolves) so the hash stays short.
+function encodePlaceHash(place) {
+  if (!place || place.lat == null || place.lon == null) return "";
+  const name = (place.name || "").trim();
+  return `#place=${encodeURIComponent(name)},${place.lat.toFixed(4)},${place.lon.toFixed(4)}`;
+}
+function decodePlaceHash(hash) {
+  if (!hash || !hash.startsWith("#place=")) return null;
+  try {
+    const raw = hash.slice("#place=".length);
+    const parts = raw.split(",");
+    if (parts.length < 3) return null;
+    const lon = parseFloat(parts.pop());
+    const lat = parseFloat(parts.pop());
+    const name = decodeURIComponent(parts.join(",")).trim();
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+    if (Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
+    return { name: name || "Shared location", lat, lon };
+  } catch { return null; }
+}
+function syncPlaceHash(place) {
+  const hash = encodePlaceHash(place);
+  if (!hash || location.hash === hash) return;
+  try { history.replaceState(null, "", hash); } catch { /* ignore */ }
+}
+window.addEventListener("hashchange", () => {
+  const p = decodePlaceHash(location.hash);
+  if (p) loadByCoords(p);
+});
+
 // ---------- Load flow ----------
 async function loadByCoords(place) {
   app.place = place;
   ui.setPlace(place);
   ui.setLoading(`Fetching weather for ${place.name}…`);
+  syncPlaceHash(place);
 
   // Drop any scrubber offset so we start live on each new city.
   clock.reset();
@@ -306,6 +342,13 @@ installShortcuts({
 
 // ---------- Start ----------
 (async function init() {
+  // A URL hash beats everything else — sharing a link should open that city
+  // even for a user who already has saved places.
+  const hashPlace = decodePlaceHash(location.hash);
+  if (hashPlace) {
+    await loadByCoords(hashPlace);
+    return;
+  }
   // Prefer the most recent saved place if we have one — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();
