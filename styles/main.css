@@ -1489,6 +1489,59 @@ kbd {
 .daily-temp-min { color: var(--fg-muted); text-align: right; }
 .daily-temp-max { color: var(--fg); text-align: right; font-weight: 500; }
 
+/* Round 22: per-day precip bar + weekly rainfall pill */
+.daily-range-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+.daily-precip-track {
+  position: relative;
+  height: 3px;
+  margin-top: 3px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.05);
+  overflow: hidden;
+  opacity: 0.9;
+}
+.daily-precip-fill {
+  position: absolute; top: 0; left: 0; bottom: 0;
+  background: linear-gradient(90deg, #6bb7ff, #7c8dff);
+  border-radius: 2px;
+  box-shadow: 0 0 6px rgba(107,183,255,0.4);
+}
+.daily-precip-mm {
+  font-size: 10.5px;
+  color: #9ac5ff;
+  font-variant-numeric: tabular-nums;
+  margin-left: 6px;
+  opacity: 0.85;
+}
+.weekly-precip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(107,183,255,0.10);
+  border: 1px solid rgba(107,183,255,0.22);
+  color: #9ac5ff;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+  transition: background 200ms var(--ease), border-color 200ms var(--ease);
+}
+.weekly-precip[hidden] { display: none; }
+.weekly-precip svg { flex: 0 0 auto; }
+.weekly-precip-days {
+  color: var(--fg-dim);
+  font-size: 10px;
+  opacity: 0.85;
+}
+.weekly-precip-days:empty { display: none; }
+
 /* ---------- Hint + toast ---------- */
 .hint {
   display: flex; align-items: center; justify-content: center; gap: 10px;

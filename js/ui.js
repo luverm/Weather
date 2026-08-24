@@ -72,6 +72,9 @@ const el = {
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
+  weeklyPrecip: $("#weekly-precip"),
+  weeklyPrecipValue: $("#weekly-precip-value"),
+  weeklyPrecipDays: $("#weekly-precip-days"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -854,6 +857,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderWeeklyPrecip(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -861,6 +865,9 @@ function renderDaily(w) {
     if (d.tempMax > gMax) gMax = d.tempMax;
   }
   const span = Math.max(1, gMax - gMin);
+  // Wettest day of the week — used to scale each day's precip bar so the
+  // rainiest day fills the full track.
+  const wettest = days.reduce((m, d) => Math.max(m, d.precip || 0), 0);
   days.forEach((d, i) => {
     const dt = new Date(d.time);
     const tz = state.weather?.timezone;
@@ -877,12 +884,25 @@ function renderDaily(w) {
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
-    const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const precipLabel = (d.precip != null && d.precip >= 0.2)
+      ? `<span class="daily-precip-mm">${d.precip.toFixed(d.precip >= 10 ? 0 : 1)} mm</span>`
+      : "";
+    const extra = (gustLabel || popLabel || precipLabel)
+      ? `<span class="daily-gust">${popLabel}${gustLabel}${precipLabel}</span>`
+      : "";
+    // Precip bar: only drawn when this day is meaningfully wet AND the wettest
+    // day of the week has enough rain to give the scale headroom.
+    const precipBar = (d.precip >= 0.2 && wettest >= 0.5)
+      ? `<div class="daily-precip-track" aria-hidden="true"><div class="daily-precip-fill" style="width:${Math.min(100, (d.precip / wettest) * 100).toFixed(1)}%"></div></div>`
+      : "";
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
-      <div class="daily-range">
-        <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
+      <div class="daily-range-col">
+        <div class="daily-range">
+          <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
+        </div>
+        ${precipBar}
       </div>
       <span class="daily-temp-min">${Math.round(convertTemp(d.tempMin))}°</span>
       <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°</span>
@@ -891,6 +911,21 @@ function renderDaily(w) {
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+}
+
+function renderWeeklyPrecip(days) {
+  if (!el.weeklyPrecip || !el.weeklyPrecipValue) return;
+  const wet = days.filter((d) => (d.precip || 0) >= 0.2);
+  const total = days.reduce((s, d) => s + (d.precip || 0), 0);
+  // Hide the pill on a dry week to keep the header uncluttered.
+  if (total < 0.5 || !wet.length) {
+    el.weeklyPrecip.hidden = true;
+    return;
+  }
+  el.weeklyPrecip.hidden = false;
+  el.weeklyPrecipValue.textContent = `${total >= 10 ? Math.round(total) : total.toFixed(1)} mm this week`;
+  el.weeklyPrecipDays.textContent = `· ${wet.length} wet day${wet.length === 1 ? "" : "s"}`;
+  el.weeklyPrecip.title = `${wet.length} of ${days.length} days with ≥ 0.2 mm precipitation`;
 }
 
 function renderDailyIconStrip(days) {
@@ -1294,6 +1329,9 @@ function bindShare() {
     const unit = state.unit;
     const t = (v) => `${Math.round(unit === "F" ? v * 9 / 5 + 32 : v)}°${unit}`;
     const today = w.daily?.[0];
+    const week = (w.daily || []).slice(0, 7);
+    const weekPrecip = week.reduce((s, d) => s + (d.precip || 0), 0);
+    const wetDays = week.filter((d) => (d.precip || 0) >= 0.2).length;
     const lines = [
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
@@ -1301,6 +1339,7 @@ function bindShare() {
       `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
+      weekPrecip >= 0.5 ? `Week: ${weekPrecip >= 10 ? Math.round(weekPrecip) : weekPrecip.toFixed(1)} mm rain · ${wetDays} wet day${wetDays === 1 ? "" : "s"}` : null,
     ].filter(Boolean);
     const text = lines.join("\n");
     try {

@@ -407,6 +407,13 @@
       <div class="daily glass" aria-label="7-day forecast">
         <div class="forecast-heading">
           <span>7-day outlook</span>
+          <span id="weekly-precip" class="weekly-precip" hidden aria-label="Weekly precipitation">
+            <svg viewBox="0 0 24 24" aria-hidden="true" width="12" height="12">
+              <path d="M12 3s6 7 6 11a6 6 0 01-12 0c0-4 6-11 6-11z" fill="currentColor"/>
+            </svg>
+            <span id="weekly-precip-value">—</span>
+            <span id="weekly-precip-days" class="weekly-precip-days"></span>
+          </span>
           <span id="daily-delta" class="daily-delta"></span>
         </div>
         <button id="weekend-chip" class="weekend-chip" type="button" hidden>
