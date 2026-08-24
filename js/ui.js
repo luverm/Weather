@@ -13,6 +13,27 @@ import { weekendSnapshot } from "./weekend.js";
 
 const $ = (sel) => document.querySelector(sel);
 
+// Sensible unit defaults for a first-time visitor, based on browser locale.
+// Anywhere the user has already picked something, that pick wins — we only
+// consult these when nothing is stored yet.
+function detectDefaultTempUnit() {
+  try {
+    const locale = (navigator.languages?.[0] || navigator.language || "").toLowerCase();
+    // Fahrenheit is standard in the US and a handful of small territories.
+    if (/^en-us\b|^en-um\b|-us$|-um$/.test(locale)) return "F";
+    if (locale.includes("-us")) return "F";
+  } catch { /* ignore */ }
+  return "C";
+}
+function detectDefaultWindUnit() {
+  try {
+    const locale = (navigator.languages?.[0] || navigator.language || "").toLowerCase();
+    // mph is standard for the US and the UK; everywhere else uses km/h.
+    if (/^en-us\b|^en-gb\b|-us$|-gb$/.test(locale)) return "mph";
+  } catch { /* ignore */ }
+  return "kmh";
+}
+
 const el = {
   temp: $("#temp-value"),
   unitBtn: $("#unit-toggle"),
@@ -121,8 +142,8 @@ const el = {
 };
 
 const state = {
-  unit: localStorage.getItem("aether:unit") || "C",
-  windUnit: localStorage.getItem("aether:windUnit") || "kmh", // "kmh" | "mph"
+  unit: localStorage.getItem("aether:unit") || detectDefaultTempUnit(),
+  windUnit: localStorage.getItem("aether:windUnit") || detectDefaultWindUnit(),
   weather: null,
   place: null,
   sampledWeather: null, // the weather values at the current scrubber time
