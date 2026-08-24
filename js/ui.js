@@ -693,6 +693,9 @@ function scheduleSunCountdown(w) {
         if (ts && ts > now && (!nextTs || ts < nextTs)) { nextTs = ts; nextKind = kind; }
       }
     }
+    // Refresh the golden-hour pill on the same tick so its "N minutes left"
+    // countdown decreases in step with the next-sun countdown next to it.
+    renderGoldenHour(w);
     if (!nextTs) {
       if (el.sunCountdown) el.sunCountdown.textContent = "";
       if (el.sunNextLabel) el.sunNextLabel.textContent = "Sun";
