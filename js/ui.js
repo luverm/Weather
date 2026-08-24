@@ -1282,6 +1282,30 @@ function showRecentsIfAny() {
 }
 
 function bindSearch() {
+  const optionSelector = 'li[role="option"]';
+  const options = () => Array.from(el.searchResults.querySelectorAll(optionSelector));
+  const setActive = (idx) => {
+    const opts = options();
+    if (!opts.length) return;
+    // Normalise idx into the available range.
+    const n = opts.length;
+    const clamped = ((idx % n) + n) % n;
+    opts.forEach((li, i) => li.classList.toggle("active", i === clamped));
+    opts[clamped].scrollIntoView({ block: "nearest" });
+    el.searchInput.setAttribute("aria-activedescendant", opts[clamped].id || "");
+  };
+  const currentActive = () => options().findIndex((li) => li.classList.contains("active"));
+  const commitActive = () => {
+    const idx = currentActive();
+    const item = idx >= 0 ? el.searchResults._items?.[idx] : el.searchResults._items?.[0];
+    if (!item) return false;
+    el.searchInput.value = item.name;
+    el.searchResults.hidden = true;
+    places.add(item);
+    state.handlers.onSearchSelect?.(item);
+    return true;
+  };
+
   el.searchInput.addEventListener("input", (e) => {
     const v = e.target.value.trim();
     if (v.length < 2) {
@@ -1300,8 +1324,18 @@ function bindSearch() {
       el.searchResults.hidden = false;
     }
   });
+  el.searchInput.addEventListener("keydown", (e) => {
+    if (el.searchResults.hidden || !options().length) return;
+    if (e.key === "ArrowDown") { e.preventDefault(); setActive(Math.max(0, currentActive()) + 1); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); setActive(currentActive() - 1); }
+    else if (e.key === "Enter") {
+      if (commitActive()) e.preventDefault();
+    } else if (e.key === "Escape") {
+      el.searchResults.hidden = true;
+    }
+  });
   el.searchResults.addEventListener("click", (e) => {
-    const li = e.target.closest("li");
+    const li = e.target.closest(optionSelector);
     if (!li) return;
     const i = parseInt(li.dataset.index, 10);
     const item = el.searchResults._items?.[i];
@@ -1310,6 +1344,13 @@ function bindSearch() {
     el.searchResults.hidden = true;
     places.add(item);
     state.handlers.onSearchSelect?.(item);
+  });
+  el.searchResults.addEventListener("pointermove", (e) => {
+    const li = e.target.closest(optionSelector);
+    if (!li) return;
+    const opts = options();
+    const idx = opts.indexOf(li);
+    if (idx >= 0) setActive(idx);
   });
 }
 
