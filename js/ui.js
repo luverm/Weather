@@ -90,6 +90,9 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunTrend: $("#sun-trend"),
+  sunTrendText: $("#sun-trend-text"),
+  sunTrendArrow: $("#sun-trend-arrow"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -523,6 +526,37 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderSunTrend(w);
+}
+
+// Round 22: show whether daylight is growing or shrinking, based on the
+// average day-over-day change across the 7-day forecast.
+function renderSunTrend(w) {
+  if (!el.sunTrend) return;
+  const days = (w?.daily || []).filter((d) => d?.sunrise && d?.sunset);
+  if (days.length < 2) { el.sunTrend.hidden = true; return; }
+  const lengths = days.map((d) => d.sunset - d.sunrise);
+  const deltaMs = (lengths[lengths.length - 1] - lengths[0]) / (lengths.length - 1);
+  const deltaSec = Math.round(deltaMs / 1000);
+  const absSec = Math.abs(deltaSec);
+
+  let text, rotation;
+  if (absSec < 15) {
+    text = "Near solstice — daylight barely changing";
+    rotation = 90;
+  } else {
+    const mins = Math.floor(absSec / 60);
+    const secs = absSec % 60;
+    const amount = mins > 0
+      ? (secs > 0 ? `${mins}m ${secs}s` : `${mins}m`)
+      : `${secs}s`;
+    const dir = deltaSec > 0 ? "longer" : "shorter";
+    text = `Days getting ${dir} by ${amount} a day`;
+    rotation = deltaSec > 0 ? 0 : 180;
+  }
+  if (el.sunTrendText) el.sunTrendText.textContent = text;
+  if (el.sunTrendArrow) el.sunTrendArrow.style.transform = `rotate(${rotation}deg)`;
+  el.sunTrend.hidden = false;
 }
 
 function scheduleSunArc(w) {
