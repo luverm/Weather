@@ -356,6 +356,16 @@ html[data-reduce-motion="true"] *::after {
   width: 5px; height: 5px; border-radius: 50%;
   background: var(--accent); box-shadow: 0 0 6px var(--accent);
 }
+.place-localtime .tz-delta {
+  margin-left: 4px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--fg);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--stroke);
+}
 .narrative {
   margin: 14px 0 0;
   max-width: 52ch;

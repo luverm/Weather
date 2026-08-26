@@ -710,15 +710,60 @@ function startLocaltime(w) {
       const hour = parts.find((p) => p.type === "hour")?.value ?? "";
       const minute = parts.find((p) => p.type === "minute")?.value ?? "";
       const tzName = parts.find((p) => p.type === "timeZoneName")?.value ?? "";
+      const delta = timezoneDeltaLabel(tz);
+      const deltaHtml = delta
+        ? ` <span class="tz-delta" title="Difference from your device time">${escapeHtml(delta)}</span>`
+        : "";
       el.placeLocaltime.innerHTML =
         `<span class="clock-dot" aria-hidden="true"></span>` +
-        `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>`;
+        `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>${deltaHtml}`;
     } catch {
       el.placeLocaltime.textContent = "";
     }
   };
   update();
   state.localTimer = setInterval(update, 10_000);
+}
+
+// Human hint like "3h ahead" / "5h behind" / "" when the given timezone matches
+// the device's. Compare the local wall-clock at "now" in both zones.
+function timezoneDeltaLabel(tz) {
+  try {
+    const now = new Date();
+    const localMinutes = -now.getTimezoneOffset(); // e.g. Berlin summer = +120
+    const tzMinutes = tzOffsetMinutes(tz, now);
+    if (tzMinutes == null) return "";
+    const diff = tzMinutes - localMinutes;
+    if (Math.abs(diff) < 15) return "";
+    const hours = diff / 60;
+    const magnitude = Math.abs(hours);
+    // Show halves for zones like India (+0530) if the difference isn't a whole hour.
+    const rounded = Math.abs(magnitude - Math.round(magnitude)) < 0.05
+      ? String(Math.round(magnitude))
+      : magnitude.toFixed(1).replace(/\.0$/, "");
+    return `${rounded}h ${diff > 0 ? "ahead" : "behind"}`;
+  } catch {
+    return "";
+  }
+}
+
+// Returns the UTC offset in minutes for `tz` at the given moment, or null on error.
+function tzOffsetMinutes(tz, when) {
+  try {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", second: "2-digit",
+      hour12: false,
+    }).formatToParts(when);
+    const map = Object.fromEntries(parts.filter((p) => p.type !== "literal").map((p) => [p.type, p.value]));
+    // Some locales render midnight hour as "24" — normalize.
+    const hour = map.hour === "24" ? "00" : map.hour;
+    const asUtc = Date.UTC(+map.year, +map.month - 1, +map.day, +hour, +map.minute, +map.second);
+    return Math.round((asUtc - when.getTime()) / 60_000);
+  } catch {
+    return null;
+  }
 }
 
 function renderInsights(w) {
