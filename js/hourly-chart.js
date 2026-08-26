@@ -328,5 +328,38 @@ export class HourlyChart {
       tTxt.textContent = `${Math.round(tVal)}°`;
       labG.appendChild(tTxt);
     });
+
+    // Hi / lo annotations at the day's peak and trough.
+    const hiloG = this.svg.querySelector("#chart-hilo");
+    if (hiloG) {
+      hiloG.innerHTML = "";
+      let hiIdx = -1, loIdx = -1;
+      let hi = -Infinity, lo = Infinity;
+      for (let i = 0; i < this.hours.length; i++) {
+        const t = this.hours[i].temp;
+        if (t == null) continue;
+        if (t > hi) { hi = t; hiIdx = i; }
+        if (t < lo) { lo = t; loIdx = i; }
+      }
+      // Only draw when there's a real spread worth naming.
+      if (hi - lo >= 2 && hiIdx >= 0 && loIdx >= 0 && hiIdx !== loIdx) {
+        addHiLoPin(hiloG, iToX(hiIdx), tToY(hi), "hi", unit === "F" ? hi * 9 / 5 + 32 : hi);
+        addHiLoPin(hiloG, iToX(loIdx), tToY(lo), "lo", unit === "F" ? lo * 9 / 5 + 32 : lo);
+      }
+    }
   }
+}
+
+// Draws a labeled marker at (x,y) — glyph above for lo (so it points to the
+// low), glyph below for hi. Kept clear of the plot edges with a small clamp.
+function addHiLoPin(g, x, y, kind, tempDisplay) {
+  const isHi = kind === "hi";
+  const dy = isHi ? -14 : 16;
+  const tx = document.createElementNS("http://www.w3.org/2000/svg", "text");
+  tx.setAttribute("x", x.toFixed(1));
+  tx.setAttribute("y", Math.max(10, Math.min(H - 26, y + dy)).toFixed(1));
+  tx.setAttribute("text-anchor", "middle");
+  tx.setAttribute("class", `hilo-pin hilo-${kind}`);
+  tx.textContent = `${isHi ? "▲" : "▼"} ${Math.round(tempDisplay)}°`;
+  g.appendChild(tx);
 }
