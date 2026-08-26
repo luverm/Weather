@@ -1598,6 +1598,16 @@ kbd {
 }
 .daily-temp-min { color: var(--fg-muted); text-align: right; }
 .daily-temp-max { color: var(--fg); text-align: right; font-weight: 500; }
+.daily-trend {
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 9px;
+  vertical-align: baseline;
+  line-height: 1;
+  cursor: help;
+}
+.daily-trend-up   { color: #ffb196; text-shadow: 0 0 5px rgba(255,156,122,0.35); }
+.daily-trend-down { color: #9ad1ff; text-shadow: 0 0 5px rgba(154,209,255,0.35); }
 
 /* ---------- Hint + toast ---------- */
 .hint {

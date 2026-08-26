@@ -1016,6 +1016,10 @@ function renderDaily(w) {
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const trend = dayTrend(d, days[i - 1]);
+    const trendHtml = trend
+      ? `<span class="daily-trend daily-trend-${trend.dir}" title="${trend.title}">${trend.glyph}</span>`
+      : "";
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
@@ -1023,7 +1027,7 @@ function renderDaily(w) {
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
       </div>
       <span class="daily-temp-min">${Math.round(convertTemp(d.tempMin))}°</span>
-      <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°</span>
+      <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°${trendHtml}</span>
       ${extra}
     `;
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
@@ -1096,6 +1100,23 @@ function renderDailyDelta(days) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
   }
   el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
+}
+
+// Compares this day's high with the previous day's. Returns null (steady) when
+// the change is under 2° C so tiny wobbles don't clutter the strip.
+function dayTrend(day, prevDay) {
+  if (!prevDay || day.tempMax == null || prevDay.tempMax == null) return null;
+  const deltaC = day.tempMax - prevDay.tempMax;
+  if (Math.abs(deltaC) < 2) return null;
+  const deltaDisplay = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
+  const mag = Math.round(Math.abs(deltaDisplay));
+  if (mag === 0) return null;
+  const dir = deltaC > 0 ? "up" : "down";
+  return {
+    dir,
+    glyph: deltaC > 0 ? "▲" : "▼",
+    title: `${deltaC > 0 ? "+" : "−"}${mag}° vs previous day`,
+  };
 }
 
 function toggleDailyExpand(item, d, w) {
