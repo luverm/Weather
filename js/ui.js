@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { computePrecipTotals, fmtMm } from "./precip-totals.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -83,6 +84,10 @@ const el = {
   settingUnitF: $("#setting-unit-f"),
   settingClearPlaces: $("#setting-clear-places"),
   chartPopover: $("#chart-popover"),
+  precipTotals: $("#precip-totals"),
+  precipTotalsHeadline: $("#precip-totals-headline"),
+  precipTotalsDetail: $("#precip-totals-detail"),
+  precipTotalsPeak: $("#precip-totals-peak"),
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
   activityCard: $("#activity-card"),
@@ -186,6 +191,7 @@ export const ui = {
     renderHourly(weather);
     renderDaily(weather);
     renderNowcast(weather);
+    renderPrecipTotals(weather);
     renderAdvice(weather);
     renderPollen(weather.pollen);
     renderTrends(weather);
@@ -1035,6 +1041,51 @@ function renderNowcast(w) {
     el.nowcastBars.appendChild(bar);
   });
   el.nowcast.hidden = false;
+}
+
+function renderPrecipTotals(w) {
+  const chip = el.precipTotals;
+  if (!chip) return;
+  const totals = computePrecipTotals(w);
+  if (!totals) {
+    chip.hidden = true;
+    chip.onclick = null;
+    return;
+  }
+
+  const kindNoun = totals.kind === "snow" ? "snow"
+                 : totals.kind === "mix"  ? "wintry mix"
+                 : "rain";
+  const headline =
+    totals.tone === "heavy"  ? `Heavy ${kindNoun}` :
+    totals.tone === "steady" ? `Steady ${kindNoun}` :
+    `Light ${kindNoun}`;
+  el.precipTotalsHeadline.textContent = headline;
+
+  // "0.6 mm next 6h · 1.8 mm 24h" — omit 6h when it's zero.
+  const parts = [];
+  if (totals.next6mm >= 0.05) parts.push(`${fmtMm(totals.next6mm)} mm next 6h`);
+  parts.push(`${fmtMm(totals.next24mm)} mm 24h`);
+  el.precipTotalsDetail.textContent = parts.join(" · ");
+
+  if (totals.peak && totals.peak.pop >= 40) {
+    el.precipTotalsPeak.hidden = false;
+    el.precipTotalsPeak.textContent = `Peak ${totals.peak.pop}% at ${fmtTime(totals.peak.ts)}`;
+  } else {
+    el.precipTotalsPeak.hidden = true;
+    el.precipTotalsPeak.textContent = "";
+  }
+
+  chip.dataset.tone = totals.tone;
+  chip.dataset.kind = totals.kind;
+  chip.hidden = false;
+
+  // Clicking scrubs to the middle of the wettest 3h window — or the peak-pop
+  // hour if we didn't find a wet window (probability-only case).
+  const jumpTo = totals.wettest
+    ? Math.round((totals.wettest.start + totals.wettest.end) / 2)
+    : totals.peak?.ts;
+  chip.onclick = () => { if (jumpTo) state.handlers.onHourClick?.(jumpTo); };
 }
 
 // ---------- Icons ----------

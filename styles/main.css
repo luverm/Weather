@@ -1354,6 +1354,67 @@ kbd {
   font-variant-numeric: tabular-nums;
 }
 
+/* ---------- Precipitation totals chip (chart card) ---------- */
+.precip-totals {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  margin: 2px 2px 0;
+  border-radius: 12px;
+  background: rgba(154, 209, 255, 0.08);
+  border: 1px solid rgba(154, 209, 255, 0.22);
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  text-align: left;
+  transition: background 160ms var(--ease), transform 160ms var(--ease), border-color 160ms var(--ease);
+}
+.precip-totals[hidden] { display: none; }
+.precip-totals:hover { background: rgba(154, 209, 255, 0.14); transform: translateY(-1px); }
+.precip-totals:focus-visible {
+  outline: 2px solid rgba(154, 209, 255, 0.55);
+  outline-offset: 2px;
+}
+.precip-totals[data-tone="steady"] {
+  background: rgba(154, 209, 255, 0.12);
+  border-color: rgba(154, 209, 255, 0.32);
+}
+.precip-totals[data-tone="heavy"] {
+  background: rgba(120, 170, 255, 0.16);
+  border-color: rgba(120, 170, 255, 0.42);
+}
+.precip-totals[data-kind="snow"] {
+  background: rgba(220, 232, 255, 0.10);
+  border-color: rgba(220, 232, 255, 0.28);
+}
+.precip-totals-icon {
+  width: 18px;
+  height: 18px;
+  color: rgba(154, 209, 255, 0.9);
+  flex-shrink: 0;
+}
+.precip-totals[data-tone="heavy"] .precip-totals-icon { color: rgba(190, 210, 255, 1); }
+.precip-totals-headline {
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.precip-totals-detail {
+  font-size: 11.5px;
+  color: var(--fg-muted);
+}
+.precip-totals-peak {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--fg-dim);
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+}
+.precip-totals-peak[hidden] { display: none; }
+
 /* ---------- Daily extras ---------- */
 .daily-gust {
   grid-column: 1 / -1;
