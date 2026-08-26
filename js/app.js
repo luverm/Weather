@@ -297,6 +297,15 @@ installShortcuts({
     const next = list[(idx + dir + list.length) % list.length];
     if (next) loadByCoords(next);
   },
+  // Returns true when the jump was taken so the shortcut can preventDefault.
+  jumpToPlace: (idx) => {
+    const list = places.all();
+    if (idx < 0 || idx >= list.length) return false;
+    const target = list[idx];
+    const currentId = app.place ? places.idFor(app.place) : null;
+    if (target && places.idFor(target) !== currentId) loadByCoords(target);
+    return true;
+  },
   nudge: (hours) => {
     clock.setOffset(clock.offset() + hours * 3600_000);
     scrubber.sync();

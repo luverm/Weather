@@ -1268,10 +1268,12 @@ function renderPlaces() {
   if (!all.length) { el.placesStrip.hidden = true; el.placesStrip.innerHTML = ""; return; }
   el.placesStrip.hidden = false;
   const activeId = state.place ? places.idFor(state.place) : null;
-  el.placesStrip.innerHTML = all.map((p) => {
+  el.placesStrip.innerHTML = all.map((p, i) => {
     const active = places.idFor(p) === activeId;
+    const slot = i < 9 ? `<span class="place-chip-slot" aria-hidden="true" title="Press ${i + 1} to jump">${i + 1}</span>` : "";
     return `
       <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
+        ${slot}
         <span>${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
         <span class="close" data-action="remove" aria-label="Remove">
