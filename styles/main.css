@@ -1612,14 +1612,21 @@ kbd {
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
 .daily-range {
   position: relative;
-  height: 6px; border-radius: 3px;
+  height: 8px; border-radius: 4px;
   background: rgba(255,255,255,0.08);
   overflow: hidden;
 }
 .daily-range-fill {
-  position: absolute; top: 0; bottom: 0;
+  position: absolute; top: 0; height: 6px;
   background: linear-gradient(90deg, #9ad1ff, #ffe6c7, #ff9c7a);
   border-radius: 3px;
+}
+.daily-range-precip {
+  position: absolute; left: 0; bottom: 0;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(154,209,255,0.9), rgba(120,170,255,0.95));
+  border-radius: 0 0 3px 3px;
+  cursor: help;
 }
 .daily-temp-min, .daily-temp-max {
   font-size: 13px; font-variant-numeric: tabular-nums;

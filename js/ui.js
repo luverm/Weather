@@ -994,11 +994,15 @@ function renderDaily(w) {
   renderDailyDelta(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
+  let wetMax = 0;
   for (const d of days) {
     if (d.tempMin < gMin) gMin = d.tempMin;
     if (d.tempMax > gMax) gMax = d.tempMax;
+    if ((d.precip ?? 0) > wetMax) wetMax = d.precip;
   }
   const span = Math.max(1, gMax - gMin);
+  // Below ~0.4 mm, don't bother drawing bars — usually noise.
+  const showWet = wetMax >= 0.4;
   days.forEach((d, i) => {
     const dt = new Date(d.time);
     const tz = state.weather?.timezone;
@@ -1020,11 +1024,16 @@ function renderDaily(w) {
     const trendHtml = trend
       ? `<span class="daily-trend daily-trend-${trend.dir}" title="${trend.title}">${trend.glyph}</span>`
       : "";
+    const wetFrac = showWet && (d.precip ?? 0) > 0 ? Math.min(1, d.precip / wetMax) : 0;
+    const wetBar = wetFrac
+      ? `<div class="daily-range-precip" style="width:${(wetFrac * 100).toFixed(1)}%" title="${d.precip.toFixed(1)} mm expected"></div>`
+      : "";
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
+        ${wetBar}
       </div>
       <span class="daily-temp-min">${Math.round(convertTemp(d.tempMin))}°</span>
       <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°${trendHtml}</span>
