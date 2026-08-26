@@ -22,6 +22,8 @@ const el = {
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
+  feelsText: $("#feels-text"),
+  feelsDivergence: $("#feels-divergence"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -282,8 +284,59 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  if (el.feelsText) el.feelsText.textContent = `Feels like ${Math.round(feels)}°`;
+  else el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  renderFeelsDivergence(w);
   renderDayRange(w);
+}
+
+// Small pill next to "Feels like": surfaces WHY the perception differs.
+// Only shows when |feels - actual| >= 3°C, and picks the most likely cause:
+// wind chill when it's cool + windy, humidity when it's warm + humid,
+// otherwise a neutral "feels colder/warmer" note.
+function renderFeelsDivergence(w) {
+  const pill = el.feelsDivergence;
+  if (!pill) return;
+  const t = w.temp;
+  const f = w.feelsLike;
+  if (t == null || f == null) { pill.hidden = true; return; }
+  const deltaC = f - t;
+  if (Math.abs(deltaC) < 3) { pill.hidden = true; pill.textContent = ""; return; }
+
+  // Convert the delta into the user's display unit for the number, but keep the
+  // sign/magnitude judgement in °C so it stays consistent across units.
+  const deltaDisplay = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
+  const sign = deltaDisplay > 0 ? "+" : "−";
+  const mag = Math.round(Math.abs(deltaDisplay));
+  if (mag === 0) { pill.hidden = true; return; }
+
+  const wind = w.windSpeed ?? 0;
+  const gust = w.windGusts ?? wind;
+  const humidity = w.humidity ?? 0;
+
+  let cause = "generic";
+  let label;
+  const iconWind = '<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M3 8h12a3 3 0 100-6M3 14h16a3 3 0 100-6M3 20h9a3 3 0 100-6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const iconDrop = '<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M12 3c4 5 6 8 6 11a6 6 0 01-12 0c0-3 2-6 6-11z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>';
+  const iconSnowflake = '<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M12 3v18M4.5 7.5l15 9M4.5 16.5l15-9" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';
+
+  if (deltaC <= -2 && gust >= 15) {
+    cause = "wind";
+    label = `${iconWind}<span>${sign}${mag}° wind chill</span>`;
+  } else if (deltaC >= 2 && humidity >= 60) {
+    cause = "humid";
+    label = `${iconDrop}<span>${sign}${mag}° from humidity</span>`;
+  } else if (deltaC <= -2 && t <= 5) {
+    cause = "cold";
+    label = `${iconSnowflake}<span>${sign}${mag}° cooler than air</span>`;
+  } else {
+    cause = deltaC > 0 ? "warmer" : "cooler";
+    label = `<span>${sign}${mag}° ${deltaC > 0 ? "warmer" : "cooler"} feel</span>`;
+  }
+
+  pill.dataset.cause = cause;
+  pill.innerHTML = label;
+  pill.hidden = false;
 }
 
 function renderDayRange(w) {

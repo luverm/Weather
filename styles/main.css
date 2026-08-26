@@ -635,6 +635,29 @@ html[data-reduce-motion="true"] *::after {
 .temp-trend.down { background: rgba(154, 209, 255, 0.18); color: #9ad1ff; }
 .temp-trend.flat { background: rgba(255,255,255,0.08); color: var(--fg-dim); }
 
+/* Feels-like divergence pill — colored by cause. */
+.feels-divergence {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  color: var(--fg);
+  background: rgba(255,255,255,0.08);
+  vertical-align: baseline;
+  font-variant-numeric: tabular-nums;
+}
+.feels-divergence[hidden] { display: none; }
+.feels-divergence svg { flex-shrink: 0; opacity: 0.9; }
+.feels-divergence[data-cause="wind"]  { background: rgba(154, 209, 255, 0.18); color: #b7dcff; }
+.feels-divergence[data-cause="humid"] { background: rgba(120, 190, 220, 0.18); color: #a3d3e0; }
+.feels-divergence[data-cause="cold"]  { background: rgba(180, 200, 255, 0.16); color: #cad6ff; }
+.feels-divergence[data-cause="warmer"] { background: rgba(255, 156, 122, 0.16); color: #ffb196; }
+.feels-divergence[data-cause="cooler"] { background: rgba(154, 209, 255, 0.16); color: #9ad1ff; }
+
 /* ---------- Pollen card ---------- */
 #pollen-card[hidden] { display: none; }
 .pollen-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
