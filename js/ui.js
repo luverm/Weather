@@ -45,6 +45,7 @@ const el = {
   aqCard: $("#aq-card"),
   aqTrendLine: $("#aq-trend-line"),
   aqTrendFill: $("#aq-trend-fill"),
+  aqTrendDir: $("#aq-trend-dir"),
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
@@ -522,6 +523,28 @@ function renderAirQuality(aq) {
   el.aqDetail.textContent =
     `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
   renderAqTrend(aq);
+  renderAqTrendDir(aq);
+}
+
+// Direction badge next to the AQI label: forecast running higher over the next
+// ~12h → ▲ worsening; running lower → ▼ improving; less than 8 pts swing =
+// silent so it doesn't wobble on noise.
+function renderAqTrendDir(aq) {
+  const el2 = el.aqTrendDir;
+  if (!el2) return;
+  const pts = (aq?.trend || []).map((p) => p.aqi).filter((v) => v != null);
+  if (pts.length < 4) { el2.hidden = true; el2.textContent = ""; return; }
+  // Compare first quarter with last quarter mean for a smoother read.
+  const q = Math.max(1, Math.floor(pts.length / 4));
+  const first = pts.slice(0, q).reduce((a, b) => a + b, 0) / q;
+  const last  = pts.slice(-q).reduce((a, b) => a + b, 0) / q;
+  const delta = last - first;
+  if (Math.abs(delta) < 8) { el2.hidden = true; el2.textContent = ""; return; }
+  const worse = delta > 0;
+  el2.hidden = false;
+  el2.dataset.dir = worse ? "worse" : "better";
+  el2.title = `${worse ? "Worsening" : "Improving"} over the next few hours (${worse ? "+" : "−"}${Math.round(Math.abs(delta))} AQI)`;
+  el2.textContent = worse ? "▲" : "▼";
 }
 
 function renderAqTrend(aq) {
