@@ -8,6 +8,19 @@ const PAD_RIGHT = 6;
 const PAD_TOP = 16;
 const PAD_BOT = 22;
 
+// Find the wettest running span of `span` hourly buckets; returns
+// { startIdx, endIdx, sum } or null when nothing is wet.
+function wettestSpan(hours, span) {
+  if (!hours || hours.length < span) return null;
+  let best = null;
+  for (let i = 0; i + span <= hours.length; i++) {
+    let s = 0;
+    for (let k = 0; k < span; k++) s += hours[i + k].precip ?? 0;
+    if (!best || s > best.sum) best = { startIdx: i, endIdx: i + span - 1, sum: s };
+  }
+  return best && best.sum > 0 ? best : null;
+}
+
 export class HourlyChart {
   constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit, getTimezone }) {
     this.svg = svgEl;
@@ -243,6 +256,33 @@ export class HourlyChart {
       r.setAttribute("opacity", (0.35 + (pop / 100) * 0.55).toFixed(2));
       precipG.appendChild(r);
     });
+
+    // Wettest 3-hour window band: subtle blue rectangle under the precip bars,
+    // only when the run holds at least ~1 mm of expected precipitation.
+    const wetG = this.svg.querySelector("#chart-wet-band");
+    if (wetG) {
+      wetG.innerHTML = "";
+      const win = wettestSpan(this.hours, 3);
+      if (win && win.sum >= 1) {
+        const x1 = iToX(Math.max(0, win.startIdx - 0.5));
+        const x2 = iToX(Math.min(this.hours.length - 1, win.endIdx + 0.5));
+        const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        r.setAttribute("x", x1.toFixed(1));
+        r.setAttribute("y", "0");
+        r.setAttribute("width", Math.max(0, x2 - x1).toFixed(1));
+        r.setAttribute("height", String(H));
+        r.setAttribute("class", "wet-band-fill");
+        wetG.appendChild(r);
+        // Top tick line so the band is legible under a dark night overlay.
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", x1.toFixed(1));
+        line.setAttribute("x2", x2.toFixed(1));
+        line.setAttribute("y1", (PAD_TOP - 2).toFixed(1));
+        line.setAttribute("y2", (PAD_TOP - 2).toFixed(1));
+        line.setAttribute("class", "wet-band-tick");
+        wetG.appendChild(line);
+      }
+    }
 
     // Night shading: dim rectangles where !isDay
     const nightG = this.svg.querySelector("#chart-night");
