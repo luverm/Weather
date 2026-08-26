@@ -97,6 +97,8 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcGoldenMorning: $("#sun-arc-golden-morning"),
+  sunArcGoldenEvening: $("#sun-arc-golden-evening"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -589,6 +591,11 @@ function scheduleSunArc(w) {
   if (state.sunArcTimer) { clearInterval(state.sunArcTimer); state.sunArcTimer = null; }
   if (!w?.sunrise || !w?.sunset) return;
 
+  // Golden-hour markers: ~45 min after sunrise and ~45 min before sunset.
+  // In extreme high-latitude short days we cap the window at 20% of daylight
+  // so the two markers don't stack over each other.
+  positionGoldenHour(w);
+
   const update = () => {
     const now = Date.now();
     const sr = w.sunrise, ss = w.sunset;
@@ -618,6 +625,33 @@ function scheduleSunArc(w) {
 }
 
 function clamp01(v) { return Math.max(0, Math.min(1, v)); }
+
+function positionGoldenHour(w) {
+  const gm = el.sunArcGoldenMorning;
+  const ge = el.sunArcGoldenEvening;
+  if (!gm || !ge) return;
+  const daylight = w.sunset - w.sunrise;
+  if (!(daylight > 0)) { gm.style.opacity = "0"; ge.style.opacity = "0"; return; }
+  const window = Math.min(45 * 60_000, daylight * 0.2);
+  const fracMorning = window / daylight;
+  const fracEvening = 1 - fracMorning;
+  const [xm, ym] = bezierPoint(fracMorning);
+  const [xe, ye] = bezierPoint(fracEvening);
+  gm.setAttribute("cx", xm.toFixed(1)); gm.setAttribute("cy", ym.toFixed(1));
+  ge.setAttribute("cx", xe.toFixed(1)); ge.setAttribute("cy", ye.toFixed(1));
+  // Fade markers when night falls so the arc reads as "past" rather than active.
+  const isDay = Date.now() >= w.sunrise && Date.now() <= w.sunset;
+  gm.style.opacity = isDay ? "0.9" : "0.4";
+  ge.style.opacity = isDay ? "0.9" : "0.4";
+}
+
+// Sun-arc Bezier is fixed: (10,74) → (100,-26) → (190,74).
+function bezierPoint(t) {
+  const c = clamp01(t);
+  const x = (1 - c) ** 2 * 10 + 2 * (1 - c) * c * 100 + c ** 2 * 190;
+  const y = (1 - c) ** 2 * 74 + 2 * (1 - c) * c * -26 + c ** 2 * 74;
+  return [x, y];
+}
 
 function scheduleSunCountdown(w) {
   if (state.sunTimer) { clearInterval(state.sunTimer); state.sunTimer = null; }
