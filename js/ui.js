@@ -48,6 +48,7 @@ const el = {
   aqTrendFill: $("#aq-trend-fill"),
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
+  moonBrightHint: $("#moon-bright-hint"),
   moonIllum: $("#moon-illum"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
@@ -631,8 +632,28 @@ function renderAqTrend(aq) {
   }
 }
 
+function renderMoonBrightHint(moon) {
+  if (!el.moonBrightHint) return;
+  const w = state.weather;
+  const illum = moon?.illum ?? 0;
+  if (illum < 0.7 || !w) { el.moonBrightHint.hidden = true; return; }
+  // Find the next night hour and check its cloud cover.
+  const nightHour = (w.hourly || []).find((h) => h && h.isDay === false);
+  const cover = nightHour
+    ? (nightHour.cloudLow != null || nightHour.cloudMid != null || nightHour.cloudHigh != null
+        ? ((nightHour.cloudLow ?? 0) * 0.9 + (nightHour.cloudMid ?? 0) * 0.6 + (nightHour.cloudHigh ?? 0) * 0.35)
+        : null)
+    : null;
+  const clear = cover != null ? cover < 45 : (w.condition === "clear" || w.condition === "clouds");
+  if (!clear) { el.moonBrightHint.hidden = true; return; }
+  el.moonBrightHint.hidden = false;
+}
+
 function renderMoon(moon) {
   if (!moon) return;
+  // Bright-moon hint: illumination near full AND the sky is expected to
+  // stay relatively clear overnight. Silent otherwise.
+  renderMoonBrightHint(moon);
   // Phase < 0.5 waxes toward full; > 0.5 wanes toward new. Suffix the
   // heading with the direction and how many days out that landmark is
   // (moon cycle is 29.53 days). Skip the arrow on the landmark days
