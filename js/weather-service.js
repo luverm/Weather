@@ -84,6 +84,7 @@ export async function getWeather(lat, lon) {
       "wind_speed_10m", "wind_gusts_10m",
       "is_day", "uv_index", "pressure_msl",
       "relative_humidity_2m",
+      "cloud_cover_low", "cloud_cover_mid", "cloud_cover_high",
     ].join(","),
     daily: [
       "sunrise", "sunset",
@@ -146,6 +147,9 @@ function normalize(d, aq) {
         uv: d.hourly.uv_index?.[i] ?? null,
         pressure: d.hourly.pressure_msl?.[i] ?? null,
         humidity: d.hourly.relative_humidity_2m?.[i] ?? null,
+        cloudLow: d.hourly.cloud_cover_low?.[i] ?? null,
+        cloudMid: d.hourly.cloud_cover_mid?.[i] ?? null,
+        cloudHigh: d.hourly.cloud_cover_high?.[i] ?? null,
         ...mapWmo(d.hourly.weather_code[i]),
       });
     }
@@ -189,6 +193,10 @@ function normalize(d, aq) {
   // Moon phase is not in Open-Meteo's free tier — compute it locally.
   const moon = computeMoonPhase(new Date());
 
+  // Predict the character of the next sunset (or, if it's already past
+  // sunset, the next sunrise) from the cloud-layer mix at that hour.
+  const sunsetColor = predictTwilightColor(hourly, dailyForecast, now);
+
   return {
     temp: c.temperature_2m,
     feelsLike: c.apparent_temperature,
@@ -215,7 +223,59 @@ function normalize(d, aq) {
     moon,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
+    sunsetColor,
     fetchedAt: now,
+  };
+}
+
+// Choose whichever twilight (sunset or next sunrise) comes first from `now`
+// and score its expected colour from the low/mid/high cloud cover at that
+// hour. Returns { kind: "sunset"|"sunrise", label, tone, score, time } or null.
+function predictTwilightColor(hourly, daily, now) {
+  if (!hourly?.length || !daily?.length) return null;
+  // Pick the next twilight event.
+  let evt = null;
+  for (const d of daily) {
+    if (d.sunset && d.sunset > now && (!evt || d.sunset < evt.time)) evt = { time: d.sunset, kind: "sunset" };
+    if (d.sunrise && d.sunrise > now && (!evt || d.sunrise < evt.time)) evt = { time: d.sunrise, kind: "sunrise" };
+  }
+  if (!evt) return null;
+  // Nearest hourly bucket.
+  let near = null, best = Infinity;
+  for (const h of hourly) {
+    const dist = Math.abs(h.time - evt.time);
+    if (dist < best) { best = dist; near = h; }
+  }
+  if (!near || best > 90 * 60_000) return null;
+  const low = near.cloudLow, mid = near.cloudMid, high = near.cloudHigh;
+  if (low == null && mid == null && high == null) return null;
+  const l = low ?? 0, m = mid ?? 0, hi = high ?? 0;
+  const rainy = (near.pop ?? 0) > 60 && (near.precip ?? 0) > 0.4;
+  // Score 0..100. Vivid loves some high clouds + minimal low cover.
+  let score = 0;
+  // High clouds scatter red/orange — sweet spot around 30-70%
+  score += Math.max(0, 60 - Math.abs(50 - hi));
+  // Mid clouds add texture
+  score += Math.max(0, 25 - Math.abs(40 - m) / 2);
+  // Low clouds block the light — heavy penalty above 60%
+  score -= Math.max(0, l - 30) * 0.6;
+  // Rain kills the show
+  if (rainy) score -= 40;
+  score = Math.max(0, Math.min(100, score));
+  let label, tone;
+  if (rainy) { label = "Washed out"; tone = "muted"; }
+  else if (l > 80) { label = "Muted — heavy low cloud"; tone = "muted"; }
+  else if (score >= 70) { label = "Vivid colours likely"; tone = "vivid"; }
+  else if (score >= 45) { label = "Some colour expected"; tone = "colorful"; }
+  else if (l < 15 && m < 15 && hi < 15) { label = "Clear, pale sky"; tone = "clear"; }
+  else { label = "Flat, subtle sky"; tone = "flat"; }
+  return {
+    kind: evt.kind,
+    time: evt.time,
+    tone,
+    label,
+    score: Math.round(score),
+    clouds: { low: l, mid: m, high: hi },
   };
 }
 
@@ -400,6 +460,14 @@ function mock(lat, lon) {
       level: "Moderate",
     },
     pressureTrend: { delta: -0.4, direction: "steady" },
+    sunsetColor: {
+      kind: "sunset",
+      time: new Date().setHours(19, 0, 0, 0),
+      tone: "colorful",
+      label: "Some colour expected",
+      score: 55,
+      clouds: { low: 30, mid: 45, high: 40 },
+    },
     fetchedAt: now,
     offline: true,
   };

@@ -1045,6 +1045,61 @@ kbd {
   opacity: 0.5;
 }
 
+.sunset-color {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(255, 170, 120, 0.06);
+  border: 1px solid rgba(255, 170, 120, 0.14);
+  font-size: 11.5px;
+  color: var(--fg-muted);
+  transition: background 260ms var(--ease), border-color 260ms var(--ease);
+}
+.sunset-color-swatch {
+  width: 22px;
+  height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ffe6c7 0%, #ffb489 55%, #b04a72 100%);
+  box-shadow: 0 0 6px rgba(255, 170, 120, 0.35);
+  flex: 0 0 auto;
+}
+.sunset-color-label {
+  color: var(--fg);
+  font-weight: 500;
+}
+.sunset-color-detail {
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+  margin-left: auto;
+}
+.sunset-color[data-tone="vivid"] {
+  background: rgba(255, 130, 90, 0.14);
+  border-color: rgba(255, 130, 90, 0.4);
+}
+.sunset-color[data-tone="vivid"] .sunset-color-swatch {
+  background: linear-gradient(90deg, #ffd39a 0%, #ff6a48 50%, #7b1b4b 100%);
+  box-shadow: 0 0 10px rgba(255, 130, 90, 0.55);
+}
+.sunset-color[data-tone="colorful"] .sunset-color-swatch {
+  background: linear-gradient(90deg, #ffe6c7 0%, #ffa070 55%, #a2416b 100%);
+}
+.sunset-color[data-tone="clear"] .sunset-color-swatch {
+  background: linear-gradient(90deg, #d8e6ff 0%, #ffd7b0 100%);
+}
+.sunset-color[data-tone="muted"],
+.sunset-color[data-tone="flat"] {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+.sunset-color[data-tone="muted"] .sunset-color-swatch,
+.sunset-color[data-tone="flat"] .sunset-color-swatch {
+  background: linear-gradient(90deg, #6d7a8f 0%, #8e6d7a 100%);
+  box-shadow: none;
+}
+
 /* ---------- Radar map ---------- */
 .radar {
   padding: 12px;

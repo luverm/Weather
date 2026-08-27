@@ -95,6 +95,9 @@ const el = {
   sunGolden: $("#sun-golden"),
   sunGoldenAm: $("#sun-golden-am"),
   sunGoldenPm: $("#sun-golden-pm"),
+  sunsetColor: $("#sunset-color"),
+  sunsetColorLabel: $("#sunset-color-label"),
+  sunsetColorDetail: $("#sunset-color-detail"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -530,8 +533,25 @@ function renderSun(w) {
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
   renderGoldenHour(w);
+  renderSunsetColor(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderSunsetColor(w) {
+  if (!el.sunsetColor) return;
+  const sc = w?.sunsetColor;
+  if (!sc || !sc.time) {
+    el.sunsetColor.hidden = true;
+    return;
+  }
+  el.sunsetColor.hidden = false;
+  el.sunsetColor.dataset.tone = sc.tone;
+  const kind = sc.kind === "sunrise" ? "Sunrise" : "Sunset";
+  if (el.sunsetColorLabel) el.sunsetColorLabel.textContent = `${kind}: ${sc.label}`;
+  if (el.sunsetColorDetail) {
+    el.sunsetColorDetail.textContent = `${fmtTime(sc.time)} · ${sc.score}/100`;
+  }
 }
 
 // Golden hour: ~60 min after sunrise and ~60 min before sunset.
