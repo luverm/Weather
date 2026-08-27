@@ -1222,14 +1222,20 @@ function renderDaily(w) {
         </div>
       `;
     }
+    // Frost / heat marker on the min or max value when they cross a
+    // widely-recognised threshold. Frost priority over heat if both fire.
+    const frost = (d.tempMin != null && d.tempMin <= 2);
+    const hot = (d.tempMax != null && d.tempMax >= 30);
+    const minCls = frost ? "daily-temp-min extreme-cold" : "daily-temp-min";
+    const maxCls = hot ? "daily-temp-max extreme-hot" : "daily-temp-max";
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
       </div>
-      <span class="daily-temp-min">${Math.round(convertTemp(d.tempMin))}°</span>
-      <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°</span>
+      <span class="${minCls}" title="${frost ? "frost risk overnight" : ""}">${frost ? "❄ " : ""}${Math.round(convertTemp(d.tempMin))}°</span>
+      <span class="${maxCls}" title="${hot ? "hot day" : ""}">${hot ? "☀ " : ""}${Math.round(convertTemp(d.tempMax))}°</span>
       ${precipRow}
       ${extra}
     `;

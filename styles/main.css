@@ -1818,6 +1818,8 @@ kbd {
 }
 .daily-temp-min { color: var(--fg-muted); text-align: right; }
 .daily-temp-max { color: var(--fg); text-align: right; font-weight: 500; }
+.daily-temp-min.extreme-cold { color: rgba(198, 226, 255, 0.95); }
+.daily-temp-max.extreme-hot  { color: rgba(255, 208, 184, 1); }
 
 .daily-precip {
   grid-column: 3 / 6;
