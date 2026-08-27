@@ -1840,13 +1840,19 @@ function bindShare() {
     const unit = state.unit;
     const t = (v) => `${Math.round(unit === "F" ? v * 9 / 5 + 32 : v)}°${unit}`;
     const today = w.daily?.[0];
+    const narrative = el.narrative?.textContent?.trim() || null;
+    const alertLines = Array.from(document.querySelectorAll("#alerts-strip .alert-title"))
+      .slice(0, 2)
+      .map((n) => `⚠ ${n.textContent}`);
     const lines = [
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
+      narrative || null,
       today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
       `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
+      ...alertLines,
     ].filter(Boolean);
     const text = lines.join("\n");
     try {
