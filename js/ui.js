@@ -614,7 +614,21 @@ function renderAqTrend(aq) {
 
 function renderMoon(moon) {
   if (!moon) return;
-  el.moonName.textContent = moon.name;
+  // Phase < 0.5 waxes toward full; > 0.5 wanes toward new. Suffix the
+  // heading with the direction and how many days out that landmark is
+  // (moon cycle is 29.53 days). Skip the arrow on the landmark days
+  // themselves — the name already carries the story.
+  const cycleDays = 29.5305882;
+  const p = moon.phase;
+  let arrow = "";
+  if (p >= 0.03 && p < 0.47) {
+    const days = Math.round((0.5 - p) * cycleDays);
+    if (days >= 1) arrow = ` · → full in ${days}d`;
+  } else if (p >= 0.53 && p <= 0.97) {
+    const days = Math.round((1 - p) * cycleDays);
+    if (days >= 1) arrow = ` · → new in ${days}d`;
+  }
+  el.moonName.textContent = moon.name + arrow;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
