@@ -132,6 +132,11 @@ export function buildAlerts(weather) {
     });
   }
 
+  // ---- Rain outlook: next rain if dry now, or dry break if raining now ----
+  // Uses precipitation probability + measured precip over the visible 24h.
+  const rainOutlook = rainOutlookAlert(hours);
+  if (rainOutlook) out.push(rainOutlook);
+
   // ---- UV (only if not already mentioned by heat) ----
   if (!out.some((a) => a.id === "severe-heat" || a.id === "heat")
       && weather.uvPeak?.value >= 9) {
@@ -148,7 +153,7 @@ export function buildAlerts(weather) {
   const SEV = { danger: 3, warn: 2, info: 1 };
   return dedupe(out)
     .sort((a, b) => (SEV[b.severity] ?? 0) - (SEV[a.severity] ?? 0))
-    .slice(0, 4);
+    .slice(0, 5);
 }
 
 function hottestHour(hours) {
@@ -199,6 +204,51 @@ function wettestRunningWindow(hours, span) {
   return best;
 }
 
+function rainOutlookAlert(hours) {
+  if (!hours?.length) return null;
+  const now = Date.now();
+  const wet = (h) => (h.precip ?? 0) >= 0.3 || (h.pop ?? 0) >= 60;
+  // Are we in a wet spell right now? (nearest hour within the next 60 min)
+  const upcoming = hours.filter((h) => h.time >= now - 30 * 60_000);
+  if (!upcoming.length) return null;
+  const first = upcoming[0];
+  const inWet = wet(first);
+  const inHours = (t) => Math.max(0, Math.round((t - now) / 3600_000));
+
+  if (inWet) {
+    // Find first upcoming hour that flips dry, within 12h.
+    for (let i = 1; i < upcoming.length && i < 12; i++) {
+      if (!wet(upcoming[i])) {
+        const t = upcoming[i].time;
+        return {
+          id: "dry-break",
+          severity: "info",
+          title: `Dry break in ${inHours(t)}h`,
+          detail: `Rain eases around ${shortClock(t)}.`,
+          ts: t,
+        };
+      }
+    }
+    return null; // wet all through the window — no useful "break"
+  }
+  // Currently dry: find next wet hour within 12h.
+  for (let i = 0; i < upcoming.length && i < 12; i++) {
+    if (wet(upcoming[i])) {
+      const t = upcoming[i].time;
+      const h = inHours(t);
+      if (h < 1) return null; // handled by nowcast banner
+      return {
+        id: "next-rain",
+        severity: "info",
+        title: `Rain expected in ${h}h`,
+        detail: `Starts around ${shortClock(t)} (${upcoming[i].pop ?? 0}% chance).`,
+        ts: t,
+      };
+    }
+  }
+  return null;
+}
+
 function shortClock(ts) {
   if (!ts) return "later";
   const d = new Date(ts);
@@ -213,5 +263,7 @@ function dedupe(items) {
   if (ids.has("severe-heat")) drop.add("heat");
   if (ids.has("hard-freeze")) drop.add("frost");
   if (ids.has("heavy-rain") || ids.has("soaking-rain")) drop.add("wet-day");
+  // If a heavier rain alert is present, don't repeat "next-rain".
+  if (ids.has("heavy-rain") || ids.has("soaking-rain") || ids.has("wet-day")) drop.add("next-rain");
   return items.filter((x) => !drop.has(x.id));
 }
