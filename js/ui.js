@@ -303,7 +303,7 @@ function renderLiveValues(w, { animate = true } = {}) {
   const feels = convertTemp(w.feelsLike ?? w.temp);
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
-  el.conditionLabel.textContent = capitalize(w.label);
+  el.conditionLabel.textContent = `${conditionEmoji(w.condition, w.isDay)} ${capitalize(w.label)}`;
   if (el.feelsLikeText) el.feelsLikeText.textContent = `Feels like ${Math.round(feels)}°`;
   else el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderFeelsBadge(w);
@@ -470,6 +470,18 @@ function renderMetrics(w) {
 // Rough burn time in minutes for unprotected Type II (fair) skin, from the
 // standard MED-derived formula ~200/UV. Tightened at high UV so headline
 // stays honest ("burn <10m" is more useful than "burn 15m" at UV 12+).
+function conditionEmoji(condition, isDay) {
+  switch (condition) {
+    case "clear": return isDay === false ? "🌙" : "☀️";
+    case "clouds": return isDay === false ? "☁️" : "⛅";
+    case "rain": return "🌧";
+    case "snow": return "🌨";
+    case "storm": return "⛈";
+    case "fog": return "🌫";
+    default: return "☁";
+  }
+}
+
 function burnLabelFor(uv) {
   // Below UV 3, sunburn risk for unprotected fair skin is low enough that
   // a "burn ~Nm" number reads as false precision — skip the chip entirely.
