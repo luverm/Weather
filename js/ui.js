@@ -333,6 +333,7 @@ function renderFeelsBadge(w) {
 function renderTomorrowRange(w) {
   if (!el.tomorrowRange) return;
   const tomorrow = w.daily?.[1];
+  const today = w.daily?.[0];
   if (!tomorrow || tomorrow.tempMin == null || tomorrow.tempMax == null) {
     el.tomorrowRange.hidden = true;
     return;
@@ -340,7 +341,16 @@ function renderTomorrowRange(w) {
   el.tomorrowRange.hidden = false;
   const lo = Math.round(convertTemp(tomorrow.tempMin));
   const hi = Math.round(convertTemp(tomorrow.tempMax));
-  el.tomorrowRange.textContent = `Tomorrow ${lo}° → ${hi}°`;
+  // Trend arrow keyed on the day-high move — the most memorable number.
+  let trend = "";
+  let tone = "flat";
+  if (today?.tempMax != null) {
+    const deltaC = tomorrow.tempMax - today.tempMax;
+    if (deltaC >= 2) { trend = "▲ "; tone = "up"; }
+    else if (deltaC <= -2) { trend = "▼ "; tone = "down"; }
+  }
+  el.tomorrowRange.dataset.trend = tone;
+  el.tomorrowRange.textContent = `${trend}Tomorrow ${lo}° → ${hi}°`;
 }
 
 function renderDayRange(w) {

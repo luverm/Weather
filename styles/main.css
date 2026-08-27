@@ -414,6 +414,8 @@ html[data-reduce-motion="true"] *::after {
   font-variant-numeric: tabular-nums;
 }
 .tomorrow-range[hidden] { display: none; }
+.tomorrow-range[data-trend="up"]   { color: rgba(255, 208, 184, 0.95); }
+.tomorrow-range[data-trend="down"] { color: rgba(198, 226, 255, 0.95); }
 .day-range-end { white-space: nowrap; }
 .day-range-track {
   position: relative;
