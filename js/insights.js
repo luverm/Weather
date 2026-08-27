@@ -12,7 +12,7 @@ const ICONS = {
   sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg>',
 };
 
-export function buildInsights(weather, { fmtTime, weekday } = {}) {
+export function buildInsights(weather, { fmtTime, weekday, fmtTemp } = {}) {
   const out = [];
   if (!weather) return out;
 
@@ -20,6 +20,9 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
   const days = weather.daily || [];
   const fmt = fmtTime || ((t) => new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
   const dow = weekday || ((t) => new Date(t).toLocaleDateString([], { weekday: "short" }));
+  // Temp values must respect the user's unit toggle; default to °C for
+  // callers that don't pass a formatter.
+  const ftemp = fmtTemp || ((c) => `${Math.round(c)}°`);
 
   // 1. Next rain in the week.
   const rainyDay = days.find((d) => (d.pop ?? 0) >= 55 || (d.precip ?? 0) >= 1.5);
@@ -63,12 +66,12 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
   if (coldest && warmest && warmest.t - coldest.t >= 4) {
     out.push({
       icon: ICONS.cold, label: "Coldest",
-      value: `${Math.round(coldest.t)}° at ${fmt(coldest.ts)}`,
+      value: `${ftemp(coldest.t)} at ${fmt(coldest.ts)}`,
       ts: coldest.ts,
     });
     out.push({
       icon: ICONS.warm, label: "Warmest",
-      value: `${Math.round(warmest.t)}° at ${fmt(warmest.ts)}`,
+      value: `${ftemp(warmest.t)} at ${fmt(warmest.ts)}`,
       ts: warmest.ts,
     });
   }
@@ -84,7 +87,7 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     if (hotDay && coolDay && hotDay !== coolDay) {
       out.push({
         icon: ICONS.warm, label: "Week high",
-        value: `${Math.round(hotDay.tempMax)}° on ${dow(hotDay.time)}`,
+        value: `${ftemp(hotDay.tempMax)} on ${dow(hotDay.time)}`,
         ts: hotDay.sunrise || hotDay.time,
       });
     }
