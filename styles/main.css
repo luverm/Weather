@@ -907,6 +907,14 @@ html[data-reduce-motion="true"] *::after {
 .comfort-score[data-tone="mid"] .comfort-score-ring { color: #ffd28c; }
 .comfort-score[data-tone="poor"] { border-color: rgba(255, 130, 110, 0.4); }
 .comfort-score[data-tone="poor"] .comfort-score-ring { color: #ff826e; }
+.dress-chip {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--fg-muted);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.dress-chip[hidden] { display: none; }
 .chart-labels text {
   font-size: 9px;
   fill: var(--fg-dim);

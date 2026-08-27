@@ -59,6 +59,7 @@ const el = {
   comfortScoreLabel: $("#comfort-score-label"),
   comfortScoreDetail: $("#comfort-score-detail"),
   comfortScoreArc: $("#comfort-score-arc"),
+  dressChip: $("#dress-chip"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
   pollenCard: $("#pollen-card"),
@@ -821,6 +822,33 @@ function renderComfortScore(w) {
   // Ring: circumference of r=13 is 2π·13 ≈ 81.68.
   const C = 81.68;
   el.comfortScoreArc.setAttribute("stroke-dashoffset", (C * (1 - s.score / 100)).toFixed(2));
+  renderDressChip(w);
+}
+
+// Practical dressing suggestion from the sampled conditions. Compresses
+// into 1-3 emoji-prefixed tags ("🧥 Jacket · ☂ umbrella · 🌬 windbreak")
+// so it reads as a checklist rather than prose.
+function renderDressChip(w) {
+  if (!el.dressChip) return;
+  if (!w || w.temp == null) { el.dressChip.hidden = true; return; }
+  const tags = [];
+  const t = w.temp;
+  // Base layer keyed on air temp (not feels-like — that's what the ribbon
+  // is for). Wind chill and rain add extras below.
+  if (t < 0)          tags.push("🧥 Heavy coat");
+  else if (t < 8)     tags.push("🧥 Warm coat");
+  else if (t < 14)    tags.push("🧥 Light jacket");
+  else if (t < 19)    tags.push("👕 Long sleeves");
+  else if (t < 26)    tags.push("👕 T-shirt");
+  else if (t < 32)    tags.push("🩳 Shorts + tee");
+  else                tags.push("🩳 Stay cool");
+  if (w.condition === "rain" || w.condition === "storm"
+      || (w.hourly?.[0]?.precip ?? 0) > 0.1) tags.push("☂ umbrella");
+  if (w.condition === "snow") tags.push("🧣 warm layers");
+  if ((w.windSpeed ?? 0) >= 25) tags.push("🌬 windbreak");
+  if ((w.uv ?? 0) >= 6) tags.push("🧴 sunscreen");
+  el.dressChip.hidden = false;
+  el.dressChip.textContent = tags.slice(0, 3).join(" · ");
 }
 
 function renderAdvice(w) {
