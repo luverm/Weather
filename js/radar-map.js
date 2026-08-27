@@ -26,6 +26,7 @@ export class RadarMap {
     this.map = null;
     this.baseLayer = null;
     this.locationMarker = null;
+    this.locationRing = null;
     this.frames = [];        // [{ time, path, layer }]
     this.current = -1;       // index of current frame
     this.playing = true;
@@ -83,6 +84,19 @@ export class RadarMap {
     if (!this.map) { this._pendingCenter = [lat, lon, label]; return; }
     this.map.setView([lat, lon], 7, { animate: true });
     if (this.locationMarker) this.locationMarker.remove();
+    if (this.locationRing) this.locationRing.remove();
+    // 100 km distance ring for scale — Leaflet takes metres.
+    this.locationRing = L.circle([lat, lon], {
+      radius: 100_000,
+      color: "#9ad1ff",
+      weight: 1,
+      opacity: 0.35,
+      fillColor: "#9ad1ff",
+      fillOpacity: 0.04,
+      dashArray: "3 5",
+      interactive: false,
+      className: "radar-range",
+    }).addTo(this.map);
     // A simple circle marker — subtle, matches theme.
     this.locationMarker = L.circleMarker([lat, lon], {
       radius: 6,
