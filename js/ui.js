@@ -372,9 +372,19 @@ function renderMetrics(w) {
   el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
+  // Gusts noticeably above sustained wind ("gusty") is a distinct
+  // physical condition — plane turbulence, sailboat trim, hand-held
+  // umbrella survivability — so flag it even when neither wind nor
+  // gusts are individually alarming.
+  const gustyTag = (w.windGusts != null && w.windSpeed != null
+      && w.windSpeed >= 8 && w.windGusts >= w.windSpeed * 1.7)
+    ? " · gusty" : "";
+  const gustPart = w.windGusts != null
+    ? `gust ${Math.round(w.windGusts)} km/h${gustyTag}`
+    : "gust —";
   el.metricWindSub.textContent = dirLabel
-    ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
-    : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+    ? `${dirLabel} · ${gustPart}`
+    : gustPart;
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
