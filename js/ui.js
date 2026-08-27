@@ -1409,8 +1409,8 @@ function renderDailyDelta(days) {
     return;
   }
   const deltaC = tmrw.tempMax - today.tempMax;
-  // Scale delta to the active unit: °F spans 1.8x a °C span.
-  const deltaDisplay = Math.round(state.unit === "F" ? deltaC * 9 / 5 : deltaC);
+  const scale = (c) => Math.round(state.unit === "F" ? c * 9 / 5 : c);
+  const deltaDisplay = scale(deltaC);
   const dPop = (tmrw.pop ?? 0) - (today.pop ?? 0);
   const parts = [];
   if (deltaDisplay > 0) parts.push(`${deltaDisplay}° warmer`);
@@ -1418,6 +1418,17 @@ function renderDailyDelta(days) {
   else parts.push("similar temp");
   if (Math.abs(dPop) >= 20) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
+  }
+  // Where does today sit against the week? Uses the week's mean tempMax
+  // (excluding today itself so today can't drag its own baseline). Skip
+  // silently when the deviation is trivial.
+  const others = days.slice(1).filter((d) => d.tempMax != null).map((d) => d.tempMax);
+  if (others.length >= 3) {
+    const avg = others.reduce((s, v) => s + v, 0) / others.length;
+    const dev = scale(today.tempMax - avg);
+    if (Math.abs(dev) >= 2) {
+      parts.push(dev > 0 ? `today ${dev}° above avg` : `today ${Math.abs(dev)}° below avg`);
+    }
   }
   el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
 }
