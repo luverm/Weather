@@ -1873,6 +1873,13 @@ function startFetchedTicker() {
       `Updated ${Math.floor(minutes / 60)}h ago`;
     el.fetchedAgo.textContent = "· " + label;
     el.fetchedAgo.classList.toggle("stale", minutes >= 20);
+    // Echo the freshness onto the refresh button so screen readers hear
+    // "Refresh · updated 5m ago" instead of just "Refresh".
+    if (el.refreshBtn) {
+      const ariaLabel = `Refresh · ${label.toLowerCase()}`;
+      el.refreshBtn.setAttribute("aria-label", ariaLabel);
+      el.refreshBtn.setAttribute("title", ariaLabel);
+    }
   };
   update();
   setInterval(update, 30_000);
