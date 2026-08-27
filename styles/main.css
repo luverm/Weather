@@ -799,6 +799,25 @@ html[data-reduce-motion="true"] *::after {
 }
 .chart-sun-time.chart-sun-rise { fill: rgba(255, 220, 160, 0.85); }
 .chart-sun-time.chart-sun-set  { fill: rgba(255, 175, 130, 0.85); }
+
+.chart-extremum-dot {
+  stroke: rgba(255, 255, 255, 0.85);
+  stroke-width: 1;
+}
+.chart-extremum-dot.chart-extremum-hi { fill: #ff9c7a; filter: drop-shadow(0 0 4px rgba(255, 156, 122, 0.7)); }
+.chart-extremum-dot.chart-extremum-lo { fill: #9ad1ff; filter: drop-shadow(0 0 4px rgba(154, 209, 255, 0.7)); }
+.chart-extremum-label {
+  font-size: 9px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  paint-order: stroke;
+  stroke: rgba(11, 16, 32, 0.85);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+.chart-extremum-label.chart-extremum-hi { fill: #ffd0b8; }
+.chart-extremum-label.chart-extremum-lo { fill: #c6e2ff; }
 .chart-labels text {
   font-size: 9px;
   fill: var(--fg-dim);

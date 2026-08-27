@@ -339,5 +339,48 @@ export class HourlyChart {
       tTxt.textContent = `${Math.round(tVal)}°`;
       labG.appendChild(tTxt);
     });
+
+    // Extrema callouts: mark the visible-window high and low with small
+    // dot + labeled chip so the peaks are readable at a glance. Only when
+    // the range is wide enough that pointing them out is meaningful.
+    const extG = this.svg.querySelector("#chart-extrema");
+    if (extG) {
+      extG.innerHTML = "";
+      if (tMax - tMin >= 3) {
+        let hiIdx = 0, loIdx = 0;
+        for (let i = 1; i < this.hours.length; i++) {
+          if (this.hours[i].temp > this.hours[hiIdx].temp) hiIdx = i;
+          if (this.hours[i].temp < this.hours[loIdx].temp) loIdx = i;
+        }
+        const drawExtremum = (i, kind) => {
+          const p = this.points[i];
+          const val = this.hours[i].temp;
+          const dispVal = unit === "F" ? val * 9 / 5 + 32 : val;
+          const label = `${kind} ${Math.round(dispVal)}°`;
+          const above = kind === "hi";
+          const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          dot.setAttribute("cx", p.x.toFixed(1));
+          dot.setAttribute("cy", p.y.toFixed(1));
+          dot.setAttribute("r", "3");
+          dot.setAttribute("class", `chart-extremum-dot chart-extremum-${kind}`);
+          extG.appendChild(dot);
+          const yText = above ? p.y - 12 : p.y + 16;
+          // Nudge inside the plot area if it would clip.
+          const clampedY = Math.max(PAD_TOP + 8, Math.min(H - PAD_BOT - 2, yText));
+          const tx = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          // Nudge x away from the edge to avoid clipping.
+          const nudgedX = Math.max(PAD_LEFT + 14, Math.min(W - PAD_RIGHT - 14, p.x));
+          tx.setAttribute("x", nudgedX.toFixed(1));
+          tx.setAttribute("y", clampedY.toFixed(1));
+          tx.setAttribute("text-anchor", "middle");
+          tx.setAttribute("class", `chart-extremum-label chart-extremum-${kind}`);
+          tx.textContent = label;
+          extG.appendChild(tx);
+        };
+        drawExtremum(hiIdx, "hi");
+        // Avoid drawing lo on top of hi if they somehow ended up identical.
+        if (loIdx !== hiIdx) drawExtremum(loIdx, "lo");
+      }
+    }
   }
 }
