@@ -1532,6 +1532,27 @@ kbd {
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+.daily-rain-total {
+  margin-left: auto;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(154, 209, 255, 0.1);
+  border: 1px solid rgba(154, 209, 255, 0.2);
+  color: rgba(198, 226, 255, 0.9);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+}
+.daily-rain-total:empty { display: none; }
+.daily-rain-total + .daily-delta {
+  margin-left: 0;
+}
+.daily-rain-total[data-tone="dry"] {
+  background: rgba(255, 210, 140, 0.08);
+  border-color: rgba(255, 210, 140, 0.2);
+  color: rgba(255, 230, 190, 0.85);
+}
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;

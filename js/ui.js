@@ -72,6 +72,7 @@ const el = {
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
+  dailyRainTotal: $("#daily-rain-total"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -970,6 +971,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderDailyRainTotal(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1070,6 +1072,32 @@ function renderDailySpark(days) {
       el.dailySparkDots.appendChild(c);
     }
   });
+}
+
+function renderDailyRainTotal(days) {
+  if (!el.dailyRainTotal) return;
+  const total = days.reduce((s, d) => s + (d.precip || 0), 0);
+  // Rainiest day of the week.
+  let wettest = null;
+  for (const d of days) {
+    if ((d.precip || 0) > (wettest?.precip || 0)) wettest = d;
+  }
+  if (total < 0.5) {
+    el.dailyRainTotal.dataset.tone = "dry";
+    el.dailyRainTotal.textContent = "Dry week";
+    return;
+  }
+  delete el.dailyRainTotal.dataset.tone;
+  const tz = state.weather?.timezone;
+  let label = `${total.toFixed(total >= 10 ? 0 : 1)} mm this week`;
+  if (wettest && (wettest.precip || 0) >= 3) {
+    const wd = new Date(wettest.time).toLocaleDateString(undefined, {
+      weekday: "short",
+      ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    });
+    label += ` · wettest ${wd}`;
+  }
+  el.dailyRainTotal.textContent = label;
 }
 
 function renderDailyDelta(days) {
