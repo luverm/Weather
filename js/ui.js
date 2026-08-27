@@ -948,10 +948,29 @@ function renderHourly(w) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    // Wind arrow — meteorological convention is "wind FROM", so rotate the
+    // arrow to point in the direction the air is going (dir + 180). Skip
+    // when the hour has no direction or the breeze is essentially still.
+    const windMag = h.wind ?? 0;
+    let arrow = "";
+    if (h.windDir != null && windMag >= 3) {
+      const rot = ((h.windDir + 180) % 360).toFixed(0);
+      const dim = windMag < 8 ? " dim" : "";
+      arrow = `
+        <span class="forecast-wind${dim}" title="${Math.round(windMag)} km/h ${cardinal(h.windDir)}" aria-label="wind ${cardinal(h.windDir)} ${Math.round(windMag)} km/h">
+          <svg viewBox="0 0 16 16" style="transform:rotate(${rot}deg)">
+            <path d="M8 2 L11 9 L8 7 L5 9 Z" fill="currentColor"/>
+          </svg>
+        </span>
+      `;
+    } else {
+      arrow = `<span class="forecast-wind blank" aria-hidden="true"></span>`;
+    }
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
+      ${arrow}
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));

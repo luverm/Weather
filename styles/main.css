@@ -1597,7 +1597,7 @@ kbd {
 .forecast-track::-webkit-scrollbar { display: none; }
 .forecast-item {
   display: grid;
-  grid-template-rows: auto auto auto auto;
+  grid-template-rows: auto auto auto auto auto;
   gap: 4px;
   justify-items: center;
   padding: 10px 6px;
@@ -1606,6 +1606,22 @@ kbd {
   transition: background 200ms var(--ease), transform 200ms var(--ease);
   cursor: pointer;
 }
+.forecast-wind {
+  width: 12px;
+  height: 12px;
+  display: grid;
+  place-items: center;
+  color: rgba(198, 226, 255, 0.85);
+  opacity: 0.9;
+}
+.forecast-wind svg {
+  width: 12px;
+  height: 12px;
+  transform-origin: 50% 50%;
+  transition: transform 260ms var(--ease);
+}
+.forecast-wind.dim { opacity: 0.4; }
+.forecast-wind.blank { visibility: hidden; }
 .forecast-item:hover { background: var(--glass); transform: translateY(-2px); }
 .forecast-item.active { background: var(--glass-strong); }
 .forecast-time { font-size: 11px; letter-spacing: 0.08em; color: var(--fg-dim); text-transform: uppercase; }
