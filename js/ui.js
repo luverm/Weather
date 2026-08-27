@@ -28,6 +28,7 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  tomorrowRange: $("#tomorrow-range"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -305,6 +306,7 @@ function renderLiveValues(w, { animate = true } = {}) {
   else el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderFeelsBadge(w);
   renderDayRange(w);
+  renderTomorrowRange(w);
 }
 
 // Small badge next to "Feels like X°" that names the mechanism when it
@@ -326,6 +328,19 @@ function renderFeelsBadge(w) {
   el.feelsBadge.hidden = false;
   el.feelsBadge.textContent = label;
   el.feelsBadge.dataset.tone = tone;
+}
+
+function renderTomorrowRange(w) {
+  if (!el.tomorrowRange) return;
+  const tomorrow = w.daily?.[1];
+  if (!tomorrow || tomorrow.tempMin == null || tomorrow.tempMax == null) {
+    el.tomorrowRange.hidden = true;
+    return;
+  }
+  el.tomorrowRange.hidden = false;
+  const lo = Math.round(convertTemp(tomorrow.tempMin));
+  const hi = Math.round(convertTemp(tomorrow.tempMax));
+  el.tomorrowRange.textContent = `Tomorrow ${lo}° → ${hi}°`;
 }
 
 function renderDayRange(w) {
