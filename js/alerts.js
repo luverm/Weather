@@ -132,6 +132,10 @@ export function buildAlerts(weather) {
     });
   }
 
+  // ---- Multi-day heat wave / cold snap from the daily outlook ----
+  const spell = detectSpell(weather.daily || []);
+  if (spell) out.push(spell);
+
   // ---- Rain outlook: next rain if dry now, or dry break if raining now ----
   // Uses precipitation probability + measured precip over the visible 24h.
   const rainOutlook = rainOutlookAlert(hours);
@@ -204,6 +208,51 @@ function wettestRunningWindow(hours, span) {
   return best;
 }
 
+// Look for 3+ consecutive days above/below temperature thresholds and
+// synthesize a single alert for the streak. Heat wave gets priority
+// over cold snap when both trigger somehow.
+function detectSpell(days) {
+  if (days.length < 3) return null;
+  const runs = (predicate) => {
+    let best = 0, cur = 0, startIdx = 0, bestStart = -1;
+    for (let i = 0; i < days.length; i++) {
+      if (predicate(days[i])) {
+        if (cur === 0) startIdx = i;
+        cur += 1;
+        if (cur > best) { best = cur; bestStart = startIdx; }
+      } else {
+        cur = 0;
+      }
+    }
+    return { length: best, start: bestStart };
+  };
+  const heat = runs((d) => d.tempMax != null && d.tempMax >= 30);
+  const cold = runs((d) => d.tempMax != null && d.tempMax <= 5);
+  if (heat.length >= 3) {
+    return {
+      id: "heat-wave",
+      severity: "warn",
+      title: `Heat wave · ${heat.length} days`,
+      detail: `Highs stay at or above 30° starting ${dayName(days[heat.start].time)}.`,
+      ts: days[heat.start].sunrise || days[heat.start].time,
+    };
+  }
+  if (cold.length >= 3) {
+    return {
+      id: "cold-snap",
+      severity: "warn",
+      title: `Cold snap · ${cold.length} days`,
+      detail: `Highs stay at or below 5° starting ${dayName(days[cold.start].time)}.`,
+      ts: days[cold.start].sunrise || days[cold.start].time,
+    };
+  }
+  return null;
+}
+
+function dayName(ts) {
+  return new Date(ts).toLocaleDateString([], { weekday: "short" });
+}
+
 function rainOutlookAlert(hours) {
   if (!hours?.length) return null;
   const now = Date.now();
@@ -265,5 +314,8 @@ function dedupe(items) {
   if (ids.has("heavy-rain") || ids.has("soaking-rain")) drop.add("wet-day");
   // If a heavier rain alert is present, don't repeat "next-rain".
   if (ids.has("heavy-rain") || ids.has("soaking-rain") || ids.has("wet-day")) drop.add("next-rain");
+  // The multi-day spell alerts supersede the single-hour extremes.
+  if (ids.has("heat-wave")) drop.add("heat");
+  if (ids.has("cold-snap")) drop.add("frost");
   return items.filter((x) => !drop.has(x.id));
 }
