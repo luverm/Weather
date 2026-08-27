@@ -318,12 +318,16 @@ function renderFeelsBadge(w) {
   const f = w.feelsLike;
   if (t == null || f == null) { el.feelsBadge.hidden = true; return; }
   const delta = f - t;
-  if (Math.abs(delta) < 3) { el.feelsBadge.hidden = true; return; }
+  // Threshold is "3 degrees in the user's displayed unit". Internal data
+  // is always °C, so scale by 1/1.8 for °F viewers — otherwise a 4°F gap
+  // sits below the 3°C threshold and the badge stays hidden.
+  const thr = state.unit === "F" ? 3 / 1.8 : 3;
+  if (Math.abs(delta) < thr) { el.feelsBadge.hidden = true; return; }
   let label = null, tone = null;
-  if (delta <= -3 && t <= 12) { label = "wind chill"; tone = "cold"; }
-  else if (delta >= 3 && t >= 22) { label = "heat index"; tone = "hot"; }
-  else if (delta <= -3) { label = "feels cooler"; tone = "cold"; }
-  else if (delta >= 3) { label = "feels warmer"; tone = "hot"; }
+  if (delta <= -thr && t <= 12) { label = "wind chill"; tone = "cold"; }
+  else if (delta >= thr && t >= 22) { label = "heat index"; tone = "hot"; }
+  else if (delta <= -thr) { label = "feels cooler"; tone = "cold"; }
+  else if (delta >= thr) { label = "feels warmer"; tone = "hot"; }
   if (!label) { el.feelsBadge.hidden = true; return; }
   el.feelsBadge.hidden = false;
   el.feelsBadge.textContent = label;
@@ -912,6 +916,9 @@ function computeComfortScore(w) {
 
 function renderComfortScore(w) {
   if (!el.comfortScore) return;
+  // Dress chip has its own null-temp guard; always call so scrubbing
+  // to an hour without temp data hides both, not just the score.
+  renderDressChip(w);
   const s = computeComfortScore(w);
   if (!s) { el.comfortScore.hidden = true; return; }
   el.comfortScore.hidden = false;
@@ -925,7 +932,6 @@ function renderComfortScore(w) {
   // Ring: circumference of r=13 is 2π·13 ≈ 81.68.
   const C = 81.68;
   el.comfortScoreArc.setAttribute("stroke-dashoffset", (C * (1 - s.score / 100)).toFixed(2));
-  renderDressChip(w);
 }
 
 // Practical dressing suggestion from the sampled conditions. Compresses
@@ -1466,9 +1472,9 @@ function renderDailyDelta(days) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
   }
   // Where does today sit against the week? Uses the week's mean tempMax
-  // (excluding today itself so today can't drag its own baseline). Skip
-  // silently when the deviation is trivial.
-  const others = days.slice(1).filter((d) => d.tempMax != null).map((d) => d.tempMax);
+  // excluding *both* today (baseline can't include itself) and tomorrow
+  // (already reported above, so the two clauses stay independent).
+  const others = days.slice(2).filter((d) => d.tempMax != null).map((d) => d.tempMax);
   if (others.length >= 3) {
     const avg = others.reduce((s, v) => s + v, 0) / others.length;
     const dev = scale(today.tempMax - avg);
