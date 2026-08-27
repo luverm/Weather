@@ -415,9 +415,16 @@ function renderMetrics(w) {
     }
   }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
-  el.metricPressureSub.textContent = w.visibility != null
-    ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
-    : "visibility —";
+  if (w.visibility != null) {
+    const km = Math.round((w.visibility / 1000) * 10) / 10;
+    // Meteorological convention: <1 km = fog, 1-5 km = mist/haze, 5-10 km = light haze.
+    let visTag = "";
+    if (w.visibility < 1000) visTag = " · fog";
+    else if (w.visibility < 5000) visTag = " · haze";
+    el.metricPressureSub.textContent = `visibility ${km} km${visTag}`;
+  } else {
+    el.metricPressureSub.textContent = "visibility —";
+  }
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
