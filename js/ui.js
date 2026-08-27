@@ -176,6 +176,8 @@ export const ui = {
       getUnit: () => state.unit,
     });
     bindInstallPrompt();
+    // Seed a rotating idle hint so it varies across page loads.
+    if (el.hintText) el.hintText.innerHTML = pickIdleHint();
   },
   focusSearch() { el.searchInput?.focus(); el.searchInput?.select?.(); },
   toggleUnits() { el.unitBtn?.click(); },
@@ -253,7 +255,7 @@ export const ui = {
     if (on) {
       el.hintText.textContent = "Drag to explore future weather.";
     } else {
-      el.hintText.innerHTML = 'Drag the slider, hover the chart, or press <kbd>?</kbd> for shortcuts.';
+      el.hintText.innerHTML = pickIdleHint();
     }
   },
   setAudioState(on) {
@@ -470,6 +472,20 @@ function renderMetrics(w) {
 // Rough burn time in minutes for unprotected Type II (fair) skin, from the
 // standard MED-derived formula ~200/UV. Tightened at high UV so headline
 // stays honest ("burn <10m" is more useful than "burn 15m" at UV 12+).
+const IDLE_HINTS = [
+  'Drag the slider, hover the chart, or press <kbd>?</kbd> for shortcuts.',
+  'Press <kbd>L</kbd> to use your location, <kbd>U</kbd> to toggle °C / °F.',
+  'Press <kbd>Space</kbd> to play or pause the radar loop.',
+  'Press <kbd>[</kbd> and <kbd>]</kbd> to cycle through your saved cities.',
+  'Hover the hourly chart for a per-hour breakdown.',
+  'Click any day in the 7-day list to peek at its hourly bars.',
+  'Press <kbd>N</kbd> to snap the scrubber back to now.',
+];
+function pickIdleHint() {
+  const idx = Math.floor(Date.now() / 60_000) % IDLE_HINTS.length;
+  return IDLE_HINTS[idx];
+}
+
 function conditionEmoji(condition, isDay) {
   switch (condition) {
     case "clear": return isDay === false ? "🌙" : "☀️";
