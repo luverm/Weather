@@ -95,6 +95,7 @@ const el = {
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
   settingClearPlaces: $("#setting-clear-places"),
+  settingAudioVolume: $("#setting-audio-volume"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
@@ -1801,6 +1802,12 @@ function bindSettings() {
     ui.showToast("Saved places cleared");
     close();
   });
+
+  el.settingAudioVolume?.addEventListener("input", () => {
+    const v = Number(el.settingAudioVolume.value) / 100;
+    localStorage.setItem("aether:audioVolume", String(v));
+    state.handlers.onAudioVolume?.(v);
+  });
 }
 
 function applyStoredPreferences() {
@@ -1812,6 +1819,12 @@ function applyStoredPreferences() {
     queueMicrotask(() => state.handlers.onReduceMotion?.(true));
   }
   if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
+  const storedVol = localStorage.getItem("aether:audioVolume");
+  if (storedVol != null && el.settingAudioVolume) {
+    const v = Math.max(0, Math.min(1, Number(storedVol)));
+    el.settingAudioVolume.value = String(Math.round(v * 100));
+    queueMicrotask(() => state.handlers.onAudioVolume?.(v));
+  }
 }
 
 // Exposed so app.js can query the current preference on boot.

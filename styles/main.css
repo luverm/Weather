@@ -181,6 +181,10 @@ ul { list-style: none; margin: 0; padding: 0; }
   transition: transform 180ms var(--ease), background 180ms var(--ease);
 }
 .settings-row input[type="checkbox"]:checked { background: rgba(154, 209, 255, 0.3); }
+.settings-row input[type="range"] {
+  width: 120px;
+  accent-color: #9ad1ff;
+}
 .settings-row input[type="checkbox"]:checked::after {
   transform: translateX(12px);
   background: var(--accent);

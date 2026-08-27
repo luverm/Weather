@@ -25,6 +25,18 @@ export class AmbientAudio {
   isEnabled() { return this.enabled; }
   onChange(fn) { this.listeners.add(fn); return () => this.listeners.delete(fn); }
 
+  // 0..1 — scales master gain. Persists across enable/disable cycles.
+  setVolume(v) {
+    const clamped = Math.max(0, Math.min(1, Number(v) || 0));
+    this._volume = clamped;
+    if (this.master && this.ctx) {
+      const t = this.ctx.currentTime;
+      this.master.gain.cancelScheduledValues(t);
+      this.master.gain.linearRampToValueAtTime(clamped * 0.5, t + 0.2);
+    }
+  }
+  getVolume() { return this._volume ?? 1; }
+
   async enable() {
     if (this.enabled) return;
     const Ctx = window.AudioContext || window.webkitAudioContext;
@@ -72,9 +84,10 @@ export class AmbientAudio {
     this.nightGain.gain.value = 0;
     this.nightGain.connect(this.master);
 
-    // Fade master up.
+    // Fade master up to the current stored volume (default full).
     const t = this.ctx.currentTime;
-    this.master.gain.linearRampToValueAtTime(0.5, t + 0.6);
+    const vol = this._volume ?? 1;
+    this.master.gain.linearRampToValueAtTime(vol * 0.5, t + 0.6);
     this.enabled = true;
     for (const fn of this.listeners) fn(true);
   }
