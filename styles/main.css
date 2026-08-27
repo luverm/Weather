@@ -706,6 +706,12 @@ html[data-reduce-motion="true"] *::after {
   text-transform: uppercase;
   color: var(--fg-dim);
 }
+.popover-condition {
+  font-style: normal;
+  color: var(--fg);
+  text-transform: capitalize;
+  letter-spacing: 0.02em;
+}
 .chart-precip-total {
   padding: 2px 8px;
   border-radius: 999px;
