@@ -818,6 +818,29 @@ html[data-reduce-motion="true"] *::after {
 }
 .chart-extremum-label.chart-extremum-hi { fill: #ffd0b8; }
 .chart-extremum-label.chart-extremum-lo { fill: #c6e2ff; }
+
+.aq-dominant {
+  display: inline-block;
+  margin-top: 2px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--fg-muted);
+}
+.aq-dominant[hidden] { display: none; }
+.aq-dominant[data-severity="elevated"] {
+  background: rgba(255, 200, 100, 0.14);
+  border-color: rgba(255, 200, 100, 0.35);
+  color: rgba(255, 220, 160, 0.95);
+}
+.aq-dominant[data-severity="high"] {
+  background: rgba(255, 120, 100, 0.18);
+  border-color: rgba(255, 120, 100, 0.5);
+  color: rgba(255, 200, 190, 1);
+}
 .chart-labels text {
   font-size: 9px;
   fill: var(--fg-dim);

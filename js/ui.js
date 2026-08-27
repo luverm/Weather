@@ -39,6 +39,7 @@ const el = {
   aqValue: $("#aq-value"),
   aqLabel: $("#aq-label"),
   aqDetail: $("#aq-detail"),
+  aqDominant: $("#aq-dominant"),
   aqCard: $("#aq-card"),
   aqTrendLine: $("#aq-trend-line"),
   aqTrendFill: $("#aq-trend-fill"),
@@ -491,7 +492,34 @@ function renderAirQuality(aq) {
   el.aqArc.setAttribute("stroke-dashoffset", String(126 * (1 - frac)));
   el.aqDetail.textContent =
     `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
+  renderAqDominant(aq);
   renderAqTrend(aq);
+}
+
+// Which pollutant is most stressing the score right now? Compares each
+// measured value to a common "moderate" threshold and picks the highest
+// ratio; only shows the chip when the leader has actually crossed
+// a level worth pointing out.
+function renderAqDominant(aq) {
+  if (!el.aqDominant) return;
+  const items = [
+    { key: "pm25", label: "PM2.5", value: aq.pm25, limit: 12 },    // μg/m³ 24h WHO 2021
+    { key: "pm10", label: "PM10",  value: aq.pm10, limit: 45 },    // μg/m³ 24h WHO 2021
+    { key: "o3",   label: "Ozone", value: aq.o3,   limit: 100 },   // μg/m³ 8h  WHO 2021
+    { key: "no2",  label: "NO₂",   value: aq.no2,  limit: 25 },    // μg/m³ 24h WHO 2021
+    { key: "co",   label: "CO",    value: aq.co,   limit: 4 },     // mg/m³ 24h WHO 2021
+  ].filter((x) => x.value != null && Number.isFinite(x.value) && x.value > 0);
+  if (!items.length) { el.aqDominant.hidden = true; return; }
+  const scored = items.map((x) => ({ ...x, ratio: x.value / x.limit }));
+  scored.sort((a, b) => b.ratio - a.ratio);
+  const top = scored[0];
+  // Only surface the chip once the leader is at half its guideline or
+  // more — anything below that is "clean and it doesn't matter which".
+  if (top.ratio < 0.5) { el.aqDominant.hidden = true; return; }
+  el.aqDominant.hidden = false;
+  el.aqDominant.textContent = `${top.label} leading`;
+  el.aqDominant.dataset.severity =
+    top.ratio >= 2 ? "high" : top.ratio >= 1 ? "elevated" : "low";
 }
 
 function renderAqTrend(aq) {
