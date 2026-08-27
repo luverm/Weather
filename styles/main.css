@@ -773,6 +773,10 @@ html[data-reduce-motion="true"] *::after {
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
 }
+.chart-clouds rect {
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
 .chart-sun-line {
   stroke-width: 0.8;
   stroke-dasharray: 1.5 2.5;

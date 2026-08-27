@@ -249,6 +249,40 @@ export class HourlyChart {
       precipG.appendChild(r);
     });
 
+    // Cloud-cover shading: soft gray rectangles proportional to total
+    // cloud cover per hour. Sits *behind* the temp line so it reads as
+    // background weather without clutter. Uses combined low+mid+high
+    // when we have layered data, else the flat 0-100 field.
+    const cloudsG = this.svg.querySelector("#chart-clouds");
+    if (cloudsG) {
+      cloudsG.innerHTML = "";
+      const cellW = innerW / Math.max(1, this.hours.length - 1);
+      for (let i = 0; i < this.hours.length; i++) {
+        const h = this.hours[i];
+        let cover = null;
+        if (h.cloudLow != null || h.cloudMid != null || h.cloudHigh != null) {
+          // Combine layers into an "effective opacity" — low clouds
+          // are what actually block the sky visually, so weight them
+          // higher than high cirrus.
+          const l = h.cloudLow ?? 0, m = h.cloudMid ?? 0, hi = h.cloudHigh ?? 0;
+          cover = Math.min(100, l * 0.9 + m * 0.6 + hi * 0.35);
+        } else if (typeof h.cloudCover === "number") {
+          cover = h.cloudCover;
+        }
+        if (cover == null || cover < 15) continue;
+        const opacity = Math.min(0.22, (cover / 100) * 0.28);
+        const cx = iToX(i);
+        const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        rect.setAttribute("x", (cx - cellW / 2).toFixed(1));
+        rect.setAttribute("y", String(PAD_TOP));
+        rect.setAttribute("width", cellW.toFixed(1));
+        rect.setAttribute("height", String(innerH));
+        rect.setAttribute("fill", "rgba(210, 220, 240, 1)");
+        rect.setAttribute("opacity", opacity.toFixed(3));
+        cloudsG.appendChild(rect);
+      }
+    }
+
     // Night shading: dim rectangles where !isDay
     const nightG = this.svg.querySelector("#chart-night");
     nightG.innerHTML = "";
