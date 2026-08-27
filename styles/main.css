@@ -1612,6 +1612,33 @@ kbd {
 .daily-temp-min { color: var(--fg-muted); text-align: right; }
 .daily-temp-max { color: var(--fg); text-align: right; font-weight: 500; }
 
+.daily-precip {
+  grid-column: 3 / 6;
+  position: relative;
+  height: 5px;
+  margin-top: 4px;
+  border-radius: 3px;
+  background: rgba(154, 209, 255, 0.08);
+  overflow: visible;
+}
+.daily-precip-fill {
+  position: absolute;
+  top: 0; bottom: 0; left: 0;
+  border-radius: 3px;
+  background: linear-gradient(90deg, rgba(154, 209, 255, 0.55), rgba(120, 175, 255, 0.9));
+  box-shadow: 0 0 5px rgba(120, 175, 255, 0.35);
+  transition: width 340ms var(--ease);
+}
+.daily-precip-label {
+  position: absolute;
+  top: -14px;
+  right: 0;
+  font-size: 9.5px;
+  color: rgba(154, 209, 255, 0.85);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
 /* ---------- Hint + toast ---------- */
 .hint {
   display: flex; align-items: center; justify-content: center; gap: 10px;

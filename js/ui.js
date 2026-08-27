@@ -958,6 +958,11 @@ function renderDaily(w) {
     if (d.tempMax > gMax) gMax = d.tempMax;
   }
   const span = Math.max(1, gMax - gMin);
+  // Weekly precipitation ceiling for scaling the per-day micro-bars. A
+  // trace-only week (<= 0.6 mm total) hides the bars entirely.
+  const precips = days.map((d) => d.precip || 0);
+  const precipMax = Math.max(...precips, 0);
+  const showPrecip = precipMax >= 0.6;
   days.forEach((d, i) => {
     const dt = new Date(d.time);
     const tz = state.weather?.timezone;
@@ -975,6 +980,18 @@ function renderDaily(w) {
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    let precipRow = "";
+    if (showPrecip) {
+      const mm = d.precip || 0;
+      const pct = Math.max(0, Math.min(100, (mm / precipMax) * 100));
+      const label = mm >= 0.1 ? `${mm.toFixed(mm >= 10 ? 0 : 1)} mm` : "";
+      precipRow = `
+        <div class="daily-precip" title="${label || "trace"}">
+          <div class="daily-precip-fill" style="width:${pct.toFixed(1)}%"></div>
+          <span class="daily-precip-label">${label}</span>
+        </div>
+      `;
+    }
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
@@ -983,6 +1000,7 @@ function renderDaily(w) {
       </div>
       <span class="daily-temp-min">${Math.round(convertTemp(d.tempMin))}°</span>
       <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°</span>
+      ${precipRow}
       ${extra}
     `;
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
