@@ -54,6 +54,11 @@ export class HourlyChart {
     this.setCursor(null);
   }
 
+  setDaily(daily) {
+    this.daily = daily || [];
+    this._draw();
+  }
+
   refresh() { this._draw(); }
 
   setCursor(ts) {
@@ -261,6 +266,52 @@ export class HourlyChart {
         r.setAttribute("height", String(H));
         nightG.appendChild(r);
         runStart = null;
+      }
+    }
+
+    // Sunrise/sunset markers inside the visible window.
+    const sunsG = this.svg.querySelector("#chart-suns");
+    if (sunsG) {
+      sunsG.innerHTML = "";
+      const tStart = this.hours[0].time;
+      const tEnd = this.hours[this.hours.length - 1].time;
+      const totalMs = Math.max(1, tEnd - tStart);
+      const tToXTime = (t) => PAD_LEFT + ((t - tStart) / totalMs) * innerW;
+      const events = [];
+      for (const d of (this.daily || [])) {
+        if (d.sunrise && d.sunrise > tStart && d.sunrise < tEnd) {
+          events.push({ ts: d.sunrise, kind: "rise" });
+        }
+        if (d.sunset && d.sunset > tStart && d.sunset < tEnd) {
+          events.push({ ts: d.sunset, kind: "set" });
+        }
+      }
+      for (const ev of events) {
+        const x = tToXTime(ev.ts);
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", x.toFixed(1));
+        line.setAttribute("x2", x.toFixed(1));
+        line.setAttribute("y1", String(PAD_TOP - 4));
+        line.setAttribute("y2", String(H - PAD_BOT + 2));
+        line.setAttribute("class", `chart-sun-line chart-sun-${ev.kind}`);
+        sunsG.appendChild(line);
+        // Glyph: small arrow pointing up for rise, down for set.
+        const g = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        const y0 = PAD_TOP - 2;
+        const arrow = ev.kind === "rise"
+          ? `M ${(x - 3).toFixed(1)} ${(y0 + 4).toFixed(1)} L ${x.toFixed(1)} ${y0.toFixed(1)} L ${(x + 3).toFixed(1)} ${(y0 + 4).toFixed(1)}`
+          : `M ${(x - 3).toFixed(1)} ${(y0 + 0).toFixed(1)} L ${x.toFixed(1)} ${(y0 + 4).toFixed(1)} L ${(x + 3).toFixed(1)} ${(y0 + 0).toFixed(1)}`;
+        g.setAttribute("d", arrow);
+        g.setAttribute("class", `chart-sun-glyph chart-sun-${ev.kind}`);
+        sunsG.appendChild(g);
+        // Time text below axis.
+        const tx = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        tx.setAttribute("x", x.toFixed(1));
+        tx.setAttribute("y", String(H - 14));
+        tx.setAttribute("text-anchor", "middle");
+        tx.setAttribute("class", `chart-sun-time chart-sun-${ev.kind}`);
+        tx.textContent = this._formatHour(ev.ts);
+        sunsG.appendChild(tx);
       }
     }
 
