@@ -367,11 +367,30 @@ function renderMetrics(w) {
     }
   }
   if (w.uvPeak?.time) {
-    el.metricUVSub.textContent = `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`;
+    // For skin protection, we cite burn-time at either the current UV
+    // (if the sun is high enough that "now" matters) or at the day's
+    // peak so users can plan around the strongest hour.
+    const currentUv = Number.isFinite(w.uv) ? w.uv : null;
+    const peakVal = Math.round(w.uvPeak.value);
+    const burnRef = (currentUv != null && currentUv >= 3) ? currentUv : w.uvPeak.value;
+    const burnLabel = burnLabelFor(burnRef);
+    const suffix = burnLabel ? ` · burn ${burnLabel}` : "";
+    el.metricUVSub.textContent = `peak ${peakVal} at ${fmtTime(w.uvPeak.time)}${suffix}`;
   } else {
     el.metricUVSub.textContent = "peak —";
   }
   renderPressureSparkline(w);
+}
+
+// Rough burn time in minutes for unprotected Type II (fair) skin, from the
+// standard MED-derived formula ~200/UV. Tightened at high UV so headline
+// stays honest ("burn <10m" is more useful than "burn 15m" at UV 12+).
+function burnLabelFor(uv) {
+  if (uv == null || !Number.isFinite(uv) || uv < 1) return null;
+  const mins = Math.round(200 / Math.max(1, uv));
+  if (mins <= 10) return "<10m";
+  if (mins >= 90) return `~${Math.round(mins / 15) * 15}m`;
+  return `~${mins}m`;
 }
 
 function humidityComfort(rh, dew, temp) {
