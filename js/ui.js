@@ -610,6 +610,21 @@ function renderAqTrend(aq) {
     return;
   }
   drawSparkline(el.aqTrendLine, el.aqTrendFill, pts, { minSpan: 20 });
+  // Append a small arrow to the label when the next-few-hours trajectory
+  // is clearly rising or falling — "the number will feel different in an
+  // hour" is more actionable than the current number alone.
+  if (el.aqLabel && pts.length >= 3) {
+    const first = pts[0];
+    const last = pts[Math.min(pts.length - 1, 5)]; // ~5-6h ahead
+    const delta = last - first;
+    let arrow = "";
+    if (delta >= 15) arrow = " ▲";
+    else if (delta <= -15) arrow = " ▼";
+    // Only add if not already present (renderAirQuality sets label first).
+    if (arrow && !el.aqLabel.textContent.endsWith(arrow)) {
+      el.aqLabel.textContent = el.aqLabel.textContent + arrow;
+    }
+  }
 }
 
 function renderMoon(moon) {
