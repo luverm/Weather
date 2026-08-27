@@ -121,6 +121,21 @@
           <p id="place-sub" class="place-sub">Fetching atmosphere…</p>
           <p id="place-localtime" class="place-localtime"></p>
           <p id="narrative" class="narrative"></p>
+          <div id="comfort-score" class="comfort-score" hidden>
+            <span class="comfort-score-ring" aria-hidden="true">
+              <svg viewBox="0 0 32 32">
+                <circle cx="16" cy="16" r="13" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="3"/>
+                <circle id="comfort-score-arc" cx="16" cy="16" r="13" fill="none" stroke="currentColor" stroke-width="3"
+                        stroke-linecap="round" stroke-dasharray="81.7" stroke-dashoffset="81.7"
+                        transform="rotate(-90 16 16)"/>
+              </svg>
+              <span id="comfort-score-num">—</span>
+            </span>
+            <span class="comfort-score-meta">
+              <strong id="comfort-score-label">—</strong>
+              <span id="comfort-score-detail" class="comfort-score-detail">—</span>
+            </span>
+          </div>
           <p id="advice" class="advice" hidden>
             <svg class="advice-icon" viewBox="0 0 24 24" aria-hidden="true" width="14" height="14">
               <path d="M12 3a5 5 0 00-3 9v2h6v-2a5 5 0 00-3-9zM9 18h6M10 21h4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>

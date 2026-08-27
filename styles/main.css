@@ -841,6 +841,61 @@ html[data-reduce-motion="true"] *::after {
   border-color: rgba(255, 120, 100, 0.5);
   color: rgba(255, 200, 190, 1);
 }
+
+.comfort-score {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  transition: background 260ms var(--ease), border-color 260ms var(--ease);
+}
+.comfort-score[hidden] { display: none; }
+.comfort-score-ring {
+  position: relative;
+  width: 34px; height: 34px;
+  flex: 0 0 auto;
+  color: #7cd6a3;
+  display: grid; place-items: center;
+}
+.comfort-score-ring svg {
+  width: 34px; height: 34px;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+.comfort-score-ring #comfort-score-num {
+  position: absolute;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+#comfort-score-arc {
+  transition: stroke-dashoffset 500ms var(--ease);
+}
+.comfort-score-meta {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.comfort-score-meta strong {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fg);
+}
+.comfort-score-detail {
+  font-size: 11px;
+  color: var(--fg-dim);
+  letter-spacing: 0.02em;
+}
+.comfort-score[data-tone="good"] { border-color: rgba(124, 214, 163, 0.35); }
+.comfort-score[data-tone="good"] .comfort-score-ring { color: #7cd6a3; }
+.comfort-score[data-tone="mid"] { border-color: rgba(255, 210, 140, 0.35); }
+.comfort-score[data-tone="mid"] .comfort-score-ring { color: #ffd28c; }
+.comfort-score[data-tone="poor"] { border-color: rgba(255, 130, 110, 0.4); }
+.comfort-score[data-tone="poor"] .comfort-score-ring { color: #ff826e; }
 .chart-labels text {
   font-size: 9px;
   fill: var(--fg-dim);

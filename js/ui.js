@@ -54,6 +54,11 @@ const el = {
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
+  comfortScore: $("#comfort-score"),
+  comfortScoreNum: $("#comfort-score-num"),
+  comfortScoreLabel: $("#comfort-score-label"),
+  comfortScoreDetail: $("#comfort-score-detail"),
+  comfortScoreArc: $("#comfort-score-arc"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
   pollenCard: $("#pollen-card"),
@@ -197,6 +202,7 @@ export const ui = {
     renderDaily(weather);
     renderNowcast(weather);
     renderAdvice(weather);
+    renderComfortScore(weather);
     renderPollen(weather.pollen);
     renderTrends(weather);
     renderInsights(weather);
@@ -225,6 +231,7 @@ export const ui = {
     renderLiveValues(sampled, { animate: false });
     renderMetrics(sampled);
     renderAdvice(sampled);
+    renderComfortScore(sampled);
     highlightHour(highlightHourIndex);
     if (state.comfortStrip) state.comfortStrip.highlight(highlightHourIndex);
     if (state.chart && sampled._sampledTs != null) {
@@ -730,6 +737,90 @@ function scheduleSunCountdown(w) {
   };
   update();
   state.sunTimer = setInterval(update, 30_000);
+}
+
+// Score outdoor comfort right now on a 0..100 scale from the sampled
+// temp/humidity/wind/precip/UV. Deductions sum, then clamp. This is a
+// rule of thumb for "how pleasant is it to be outside" — not a
+// scientific index.
+function computeComfortScore(w) {
+  if (!w || w.temp == null) return null;
+  const factors = [];
+  let score = 100;
+
+  // Temperature: sweet spot 15-25°C, sharper penalty as we drift.
+  const t = w.temp;
+  const tPen = 2.5 * Math.max(0, 15 - t) + 2.5 * Math.max(0, t - 25);
+  if (tPen >= 4) factors.push(t < 15 ? "cold" : "hot");
+  score -= Math.min(35, tPen);
+
+  // Humidity: comfort 35-65%.
+  const rh = w.humidity;
+  if (rh != null) {
+    const hPen = 0.8 * Math.max(0, 35 - rh) + 0.8 * Math.max(0, rh - 65);
+    if (hPen >= 5) factors.push(rh < 35 ? "dry" : "humid");
+    score -= Math.min(20, hPen);
+  }
+
+  // Wind: penalty above 20 km/h.
+  const wind = w.windSpeed;
+  if (wind != null) {
+    const wPen = Math.max(0, wind - 20) * 1.2;
+    if (wPen >= 4) factors.push("windy");
+    score -= Math.min(25, wPen);
+  }
+
+  // Precipitation right now.
+  const precipNow = w.hourly?.[0]?.precip ?? 0;
+  if (w.condition === "storm") {
+    factors.push("stormy");
+    score -= 28;
+  } else if (precipNow > 0.1 || w.condition === "rain") {
+    factors.push("wet");
+    score -= 22;
+  }
+  if (w.condition === "snow") {
+    factors.push("snow");
+    score -= 14;
+  }
+
+  // Extreme UV.
+  if ((w.uv ?? 0) >= 8) {
+    factors.push("intense UV");
+    score -= 12;
+  }
+  // Fog / low visibility.
+  if (w.visibility != null && w.visibility < 500) {
+    factors.push("fog");
+    score -= 10;
+  }
+
+  score = Math.max(0, Math.min(100, Math.round(score)));
+  let label;
+  if (score >= 85) label = "Excellent outside";
+  else if (score >= 70) label = "Great outside";
+  else if (score >= 55) label = "Comfortable";
+  else if (score >= 40) label = "OK outside";
+  else if (score >= 25) label = "Uncomfortable";
+  else label = "Harsh";
+  return { score, label, factors };
+}
+
+function renderComfortScore(w) {
+  if (!el.comfortScore) return;
+  const s = computeComfortScore(w);
+  if (!s) { el.comfortScore.hidden = true; return; }
+  el.comfortScore.hidden = false;
+  el.comfortScore.dataset.tone =
+    s.score >= 70 ? "good" : s.score >= 40 ? "mid" : "poor";
+  el.comfortScoreNum.textContent = String(s.score);
+  el.comfortScoreLabel.textContent = s.label;
+  el.comfortScoreDetail.textContent = s.factors.length
+    ? `too ${s.factors.slice(0, 3).join(", ")}`
+    : "no major issues";
+  // Ring: circumference of r=13 is 2π·13 ≈ 81.68.
+  const C = 81.68;
+  el.comfortScoreArc.setAttribute("stroke-dashoffset", (C * (1 - s.score / 100)).toFixed(2));
 }
 
 function renderAdvice(w) {
