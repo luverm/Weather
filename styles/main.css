@@ -976,6 +976,48 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+.sun-arc-pip {
+  filter: drop-shadow(0 0 3px rgba(255,196,120,0.55));
+  transition: cx 600ms var(--ease), cy 600ms var(--ease), opacity 400ms var(--ease), r 400ms var(--ease);
+}
+.sun-arc-pip.now {
+  fill: #ffd39a;
+  filter: drop-shadow(0 0 6px rgba(255,196,120,0.9));
+}
+
+.sun-golden {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  font-size: 11.5px;
+  color: var(--fg-dim);
+}
+.sun-golden-label {
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+.sun-golden-chip {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255, 196, 120, 0.08);
+  border: 1px solid rgba(255, 196, 120, 0.16);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-muted);
+  transition: background 260ms var(--ease), border-color 260ms var(--ease), color 260ms var(--ease), box-shadow 260ms var(--ease);
+}
+.sun-golden-chip.now {
+  background: rgba(255, 196, 120, 0.22);
+  border-color: rgba(255, 196, 120, 0.55);
+  color: #fff4dd;
+  box-shadow: 0 0 12px rgba(255, 196, 120, 0.35);
+}
+.sun-golden-chip.past {
+  opacity: 0.5;
+}
 
 /* ---------- Radar map ---------- */
 .radar {

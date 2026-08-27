@@ -90,6 +90,11 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcGoldenAm: $("#sun-arc-golden-am"),
+  sunArcGoldenPm: $("#sun-arc-golden-pm"),
+  sunGolden: $("#sun-golden"),
+  sunGoldenAm: $("#sun-golden-am"),
+  sunGoldenPm: $("#sun-golden-pm"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -521,14 +526,71 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderGoldenHour(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+// Golden hour: ~60 min after sunrise and ~60 min before sunset.
+// Clamped so a very short polar day still leaves a middle-of-the-day segment.
+function goldenWindows(w) {
+  if (!w?.sunrise || !w?.sunset) return null;
+  const dayMs = w.sunset - w.sunrise;
+  if (dayMs < 20 * 60_000) return null; // barely any daylight — skip
+  const window = Math.min(60 * 60_000, dayMs / 4);
+  return {
+    dayMs,
+    window,
+    amStart: w.sunrise,
+    amEnd: w.sunrise + window,
+    pmStart: w.sunset - window,
+    pmEnd: w.sunset,
+    fracStart: window / dayMs,
+    fracEnd: 1 - window / dayMs,
+  };
+}
+
+function renderGoldenHour(w) {
+  if (!el.sunGolden) return;
+  const g = goldenWindows(w);
+  if (!g) {
+    el.sunGolden.hidden = true;
+    if (el.sunArcGoldenAm) el.sunArcGoldenAm.style.opacity = "0";
+    if (el.sunArcGoldenPm) el.sunArcGoldenPm.style.opacity = "0";
+    return;
+  }
+  el.sunGolden.hidden = false;
+  if (el.sunGoldenAm) el.sunGoldenAm.textContent = `${fmtTime(g.amStart)}–${fmtTime(g.amEnd)}`;
+  if (el.sunGoldenPm) el.sunGoldenPm.textContent = `${fmtTime(g.pmStart)}–${fmtTime(g.pmEnd)}`;
+}
+
+// Quadratic Bezier P0=(10,74), P1=(100,-26), P2=(190,74).
+function sunArcPoint(t) {
+  const u = 1 - t;
+  return {
+    x: u * u * 10 + 2 * u * t * 100 + t * t * 190,
+    y: u * u * 74 + 2 * u * t * -26 + t * t * 74,
+  };
 }
 
 function scheduleSunArc(w) {
   if (!el.sunArcMarker || !el.sunArcPath) return;
   if (state.sunArcTimer) { clearInterval(state.sunArcTimer); state.sunArcTimer = null; }
   if (!w?.sunrise || !w?.sunset) return;
+
+  const g = goldenWindows(w);
+  if (g && el.sunArcGoldenAm) {
+    const p = sunArcPoint(g.fracStart);
+    el.sunArcGoldenAm.setAttribute("cx", p.x.toFixed(1));
+    el.sunArcGoldenAm.setAttribute("cy", p.y.toFixed(1));
+    el.sunArcGoldenAm.style.opacity = "0.9";
+  }
+  if (g && el.sunArcGoldenPm) {
+    const p = sunArcPoint(g.fracEnd);
+    el.sunArcGoldenPm.setAttribute("cx", p.x.toFixed(1));
+    el.sunArcGoldenPm.setAttribute("cy", p.y.toFixed(1));
+    el.sunArcGoldenPm.style.opacity = "0.9";
+  }
 
   const update = () => {
     const now = Date.now();
@@ -542,17 +604,29 @@ function scheduleSunArc(w) {
     } else {
       frac = (now - sr) / (ss - sr);
     }
-    // Quadratic Bezier from (10,74) to (190,74) via (100,-26). The midpoint
-    // (50% t) reaches y = 0.5*(74) + 0.5*(74 + 2*(-26-74)/2*(...)) — easier
-    // to evaluate the curve directly.
     const t = clamp01(frac);
-    const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
-    const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
-    el.sunArcMarker.setAttribute("cx", x.toFixed(1));
-    el.sunArcMarker.setAttribute("cy", y.toFixed(1));
+    const p = sunArcPoint(t);
+    el.sunArcMarker.setAttribute("cx", p.x.toFixed(1));
+    el.sunArcMarker.setAttribute("cy", p.y.toFixed(1));
     // After sunset, dim the marker so it visually settles.
     const isUp = now >= sr && now <= ss;
     el.sunArcMarker.style.opacity = isUp ? "1" : "0.45";
+
+    // Highlight the golden-hour chips and pips based on "now".
+    if (g) {
+      const inAm = now >= g.amStart && now <= g.amEnd;
+      const inPm = now >= g.pmStart && now <= g.pmEnd;
+      if (el.sunGoldenAm) {
+        el.sunGoldenAm.classList.toggle("now", inAm);
+        el.sunGoldenAm.classList.toggle("past", !inAm && now > g.amEnd);
+      }
+      if (el.sunGoldenPm) {
+        el.sunGoldenPm.classList.toggle("now", inPm);
+        el.sunGoldenPm.classList.toggle("past", !inPm && now > g.pmEnd);
+      }
+      if (el.sunArcGoldenAm) el.sunArcGoldenAm.classList.toggle("now", inAm);
+      if (el.sunArcGoldenPm) el.sunArcGoldenPm.classList.toggle("now", inPm);
+    }
   };
   update();
   state.sunArcTimer = setInterval(update, 60_000);
