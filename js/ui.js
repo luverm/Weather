@@ -1217,6 +1217,50 @@ function renderDailySpark(days) {
       el.dailySparkDots.appendChild(c);
     }
   });
+  // Warmest and coldest day of the week get a highlighted marker + label.
+  // Only when the week's swing is meaningful (≥4°) so a flat week stays clean.
+  if (days.length >= 2 && tMax - tMin >= 4) {
+    let hiIdx = 0, loIdx = 0;
+    for (let i = 1; i < days.length; i++) {
+      if ((days[i].tempMax ?? -Infinity) > (days[hiIdx].tempMax ?? -Infinity)) hiIdx = i;
+      if ((days[i].tempMin ??  Infinity) < (days[loIdx].tempMin ??  Infinity)) loIdx = i;
+    }
+    const tz = state.weather?.timezone;
+    const dayName = (ts) => new Date(ts).toLocaleDateString(undefined, {
+      weekday: "short",
+      ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    });
+    const drawPin = (i, val, kind) => {
+      const cx = x(i);
+      const cy = y(val);
+      const pin = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      pin.setAttribute("cx", cx.toFixed(1));
+      pin.setAttribute("cy", cy.toFixed(1));
+      pin.setAttribute("r", "4");
+      pin.setAttribute("class", `daily-spark-pin daily-spark-pin-${kind}`);
+      el.dailySparkDots.appendChild(pin);
+      const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      const labelText = `${kind === "hi" ? "warmest" : "coolest"} ${dayName(days[i].time)}`;
+      // Nudge labels away from horizontal edges so long weekdays don't clip.
+      const nudgedX = Math.max(PAD + 32, Math.min(W - PAD - 32, cx));
+      // Flip label to the opposite side when the dot is pinned to the top
+      // or bottom edge of the sparkline, so the text always stays inside.
+      let labelY;
+      if (kind === "hi") {
+        labelY = cy < 10 ? cy + 12 : cy - 8;
+      } else {
+        labelY = cy > H - 10 ? cy - 6 : cy + 12;
+      }
+      label.setAttribute("x", nudgedX.toFixed(1));
+      label.setAttribute("y", labelY.toFixed(1));
+      label.setAttribute("text-anchor", "middle");
+      label.setAttribute("class", `daily-spark-pin-label daily-spark-pin-label-${kind}`);
+      label.textContent = labelText;
+      el.dailySparkDots.appendChild(label);
+    };
+    drawPin(hiIdx, days[hiIdx].tempMax, "hi");
+    if (loIdx !== hiIdx) drawPin(loIdx, days[loIdx].tempMin, "lo");
+  }
 }
 
 function renderDailyRainTotal(days) {

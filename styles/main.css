@@ -1677,6 +1677,23 @@ kbd {
 .daily-spark circle { transition: r 160ms var(--ease); }
 .daily-spark .dot-hi { fill: #ff9c7a; }
 .daily-spark .dot-lo { fill: #9ad1ff; }
+.daily-spark .daily-spark-pin {
+  stroke: rgba(255, 255, 255, 0.9);
+  stroke-width: 1.2;
+}
+.daily-spark .daily-spark-pin-hi { fill: #ff9c7a; filter: drop-shadow(0 0 4px rgba(255, 156, 122, 0.7)); }
+.daily-spark .daily-spark-pin-lo { fill: #9ad1ff; filter: drop-shadow(0 0 4px rgba(154, 209, 255, 0.7)); }
+.daily-spark .daily-spark-pin-label {
+  font-size: 8.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  paint-order: stroke;
+  stroke: rgba(11, 16, 32, 0.85);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+.daily-spark .daily-spark-pin-label-hi { fill: #ffd0b8; }
+.daily-spark .daily-spark-pin-label-lo { fill: #c6e2ff; }
 .forecast-track {
   display: grid;
   grid-auto-flow: column;
