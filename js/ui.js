@@ -64,6 +64,7 @@ const el = {
   dressChip: $("#dress-chip"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
+  chartPrecipTotal: $("#chart-precip-total"),
   pollenCard: $("#pollen-card"),
   pollenLevel: $("#pollen-level"),
   pollenDominant: $("#pollen-dominant"),
@@ -217,6 +218,7 @@ export const ui = {
       state.chart.setDaily(weather.daily);
       state.chart.setHours(weather.hourly);
     }
+    renderChartPrecipTotal(weather);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
@@ -879,6 +881,20 @@ function renderDressChip(w) {
   if ((w.uv ?? 0) >= 6) tags.push("🧴 sunscreen");
   el.dressChip.hidden = false;
   el.dressChip.textContent = tags.slice(0, 3).join(" · ");
+}
+
+function renderChartPrecipTotal(w) {
+  if (!el.chartPrecipTotal) return;
+  const total = (w.hourly || []).reduce((s, h) => s + (h.precip || 0), 0);
+  // Show the total only when it's actually meaningful; otherwise a "0 mm"
+  // label is just visual clutter on a dry day.
+  if (total < 0.2) {
+    el.chartPrecipTotal.hidden = true;
+    return;
+  }
+  el.chartPrecipTotal.hidden = false;
+  const rounded = total >= 10 ? Math.round(total) : total.toFixed(1);
+  el.chartPrecipTotal.textContent = `24h · ${rounded} mm`;
 }
 
 function renderAdvice(w) {
