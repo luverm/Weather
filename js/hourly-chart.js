@@ -160,6 +160,13 @@ export class HourlyChart {
     this.popover.style.left = `${pxX.toFixed(1)}px`;
     this.popover.style.top = `${pxY.toFixed(1)}px`;
     this.popover.hidden = false;
+    // Anchor the popover left/center/right depending on where in the chart
+    // the point is, so it never clips at the edges. Read the wrap width
+    // from the parent bounds; use px offset within the wrap.
+    let anchor = "center";
+    if (pxX < wrapRect.width * 0.18) anchor = "left";
+    else if (pxX > wrapRect.width * 0.82) anchor = "right";
+    this.popover.dataset.anchor = anchor;
     // Next frame to allow transition.
     requestAnimationFrame(() => this.popover.classList.add("show"));
   }
