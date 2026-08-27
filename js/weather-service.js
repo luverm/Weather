@@ -94,6 +94,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
+    past_days: 1,
     past_hours: 1,
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
@@ -156,12 +157,14 @@ function normalize(d, aq) {
     }
   }
 
-  // 7-day daily forecast.
-  const dailyForecast = [];
+  // 8-day daily payload (yesterday + today + next 6). Split so consumers
+  // that expect [today, tomorrow, …] keep working, and expose yesterday
+  // separately for "vs yesterday" comparisons.
+  const dailyAll = [];
   if (daily.time) {
     for (let i = 0; i < daily.time.length; i++) {
       const ts = new Date(daily.time[i]).getTime();
-      dailyForecast.push({
+      dailyAll.push({
         time: ts,
         tempMax: daily.temperature_2m_max?.[i],
         tempMin: daily.temperature_2m_min?.[i],
@@ -177,6 +180,12 @@ function normalize(d, aq) {
       });
     }
   }
+  // With past_days=1 the API returns [yesterday, today, ...] in the
+  // location's local day. Split off yesterday for a "vs yesterday"
+  // comparison and keep the forward-looking list starting at today so
+  // every consumer that assumed `daily[0] === today` keeps working.
+  const yesterday = dailyAll.length > 1 ? dailyAll[0] : null;
+  const dailyForecast = dailyAll.length > 1 ? dailyAll.slice(1) : dailyAll;
 
   // 15-min nowcast for the next ~2h — used for "rain in 12 min" banner.
   const nowcast = [];
@@ -221,6 +230,7 @@ function normalize(d, aq) {
     timezone: d.timezone,
     hourly,
     daily: dailyForecast,
+    yesterday,
     nowcast,
     moon,
     airQuality: normalizeAq(aq),
@@ -462,6 +472,7 @@ function mock(lat, lon) {
       level: "Moderate",
     },
     pressureTrend: { delta: -0.4, direction: "steady" },
+    yesterday: { tempMax: 17, tempMin: 10, precip: 0 },
     sunsetColor: {
       kind: "sunset",
       time: new Date().setHours(19, 0, 0, 0),

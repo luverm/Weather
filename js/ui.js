@@ -29,6 +29,7 @@ const el = {
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
   tomorrowRange: $("#tomorrow-range"),
+  yesterdayChip: $("#yesterday-chip"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -312,6 +313,25 @@ function renderLiveValues(w, { animate = true } = {}) {
   renderFeelsBadge(w);
   renderDayRange(w);
   renderTomorrowRange(w);
+  renderYesterdayChip(w);
+}
+
+function renderYesterdayChip(w) {
+  if (!el.yesterdayChip) return;
+  const y = w.yesterday;
+  const today = w.daily?.[0];
+  if (!y || y.tempMax == null || !today || today.tempMax == null) {
+    el.yesterdayChip.hidden = true;
+    return;
+  }
+  const scale = (c) => Math.round(state.unit === "F" ? c * 9 / 5 : c);
+  const delta = scale(today.tempMax - y.tempMax);
+  if (delta === 0) { el.yesterdayChip.hidden = true; return; }
+  const abs = Math.abs(delta);
+  const dir = delta > 0 ? "warmer" : "cooler";
+  el.yesterdayChip.hidden = false;
+  el.yesterdayChip.textContent = `${abs}° ${dir} than yesterday`;
+  el.yesterdayChip.dataset.trend = delta > 0 ? "up" : "down";
 }
 
 // Small badge next to "Feels like X°" that names the mechanism when it

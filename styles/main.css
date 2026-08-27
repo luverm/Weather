@@ -430,6 +430,17 @@ html[data-reduce-motion="true"] *::after {
 .tomorrow-range[hidden] { display: none; }
 .tomorrow-range[data-trend="up"]   { color: rgba(255, 208, 184, 0.95); }
 .tomorrow-range[data-trend="down"] { color: rgba(198, 226, 255, 0.95); }
+.yesterday-chip {
+  margin-top: 2px;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--fg-dim);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.yesterday-chip[hidden] { display: none; }
+.yesterday-chip[data-trend="up"]   { color: rgba(255, 208, 184, 0.9); }
+.yesterday-chip[data-trend="down"] { color: rgba(198, 226, 255, 0.9); }
 .day-range-end { white-space: nowrap; }
 .day-range-track {
   position: relative;
