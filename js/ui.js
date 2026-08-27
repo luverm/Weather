@@ -305,7 +305,8 @@ function renderLiveValues(w, { animate = true } = {}) {
   const feels = convertTemp(w.feelsLike ?? w.temp);
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
-  el.conditionLabel.textContent = `${conditionEmoji(w.condition, w.isDay)} ${capitalize(w.label)}`;
+  el.conditionLabel.innerHTML =
+    `<span class="condition-emoji">${conditionEmoji(w.condition, w.isDay)}</span> ${escapeHtml(capitalize(w.label))}`;
   if (el.feelsLikeText) el.feelsLikeText.textContent = `Feels like ${Math.round(feels)}°`;
   else el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderFeelsBadge(w);
