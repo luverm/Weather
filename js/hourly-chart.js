@@ -142,7 +142,16 @@ export class HourlyChart {
       : null;
     const feelsStr = (feels != null && Math.abs(feels - t) >= 1)
       ? `<em>feels ${Math.round(feels)}°</em>` : "";
-    const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h` : "";
+    // Compact cardinal for the hover popover — matches the wind arrows
+    // on the forecast strip so the two readouts read consistently.
+    const cardinalOf = (deg) => {
+      if (deg == null) return "";
+      const dirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
+                    "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+      return dirs[Math.round(((deg % 360) + 360) % 360 / 22.5) % 16];
+    };
+    const dirStr = h.windDir != null ? ` ${cardinalOf(h.windDir)}` : "";
+    const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h${dirStr}` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
     this.popover.innerHTML =
       `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
