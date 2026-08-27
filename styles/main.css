@@ -915,6 +915,31 @@ html[data-reduce-motion="true"] *::after {
   font-variant-numeric: tabular-nums;
 }
 .dress-chip[hidden] { display: none; }
+
+.feels-badge {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--fg-muted);
+}
+.feels-badge[hidden] { display: none; }
+.feels-badge[data-tone="cold"] {
+  background: rgba(154, 209, 255, 0.14);
+  border-color: rgba(154, 209, 255, 0.35);
+  color: rgba(198, 226, 255, 0.95);
+}
+.feels-badge[data-tone="hot"] {
+  background: rgba(255, 156, 122, 0.18);
+  border-color: rgba(255, 156, 122, 0.45);
+  color: rgba(255, 208, 184, 0.95);
+}
 .chart-labels text {
   font-size: 9px;
   fill: var(--fg-dim);

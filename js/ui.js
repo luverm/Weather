@@ -21,6 +21,8 @@ const el = {
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
+  feelsLikeText: $("#feels-like-text"),
+  feelsBadge: $("#feels-badge"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -297,8 +299,31 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  if (el.feelsLikeText) el.feelsLikeText.textContent = `Feels like ${Math.round(feels)}°`;
+  else el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  renderFeelsBadge(w);
   renderDayRange(w);
+}
+
+// Small badge next to "Feels like X°" that names the mechanism when it
+// meaningfully diverges from air temperature — wind chill on cold days,
+// heat index on warm humid days. Silent when the two are within 3°.
+function renderFeelsBadge(w) {
+  if (!el.feelsBadge) return;
+  const t = w.temp;
+  const f = w.feelsLike;
+  if (t == null || f == null) { el.feelsBadge.hidden = true; return; }
+  const delta = f - t;
+  if (Math.abs(delta) < 3) { el.feelsBadge.hidden = true; return; }
+  let label = null, tone = null;
+  if (delta <= -3 && t <= 12) { label = "wind chill"; tone = "cold"; }
+  else if (delta >= 3 && t >= 22) { label = "heat index"; tone = "hot"; }
+  else if (delta <= -3) { label = "feels cooler"; tone = "cold"; }
+  else if (delta >= 3) { label = "feels warmer"; tone = "hot"; }
+  if (!label) { el.feelsBadge.hidden = true; return; }
+  el.feelsBadge.hidden = false;
+  el.feelsBadge.textContent = label;
+  el.feelsBadge.dataset.tone = tone;
 }
 
 function renderDayRange(w) {
