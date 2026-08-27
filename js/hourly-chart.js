@@ -212,10 +212,10 @@ export class HourlyChart {
 
     // Feels-like dashed line — only draw when it meaningfully diverges.
     const feelsLine = this.svg.querySelector("#chart-feels-line");
+    const hasFeels = this.hours.some((h) =>
+      h.feelsLike != null && Math.abs(h.feelsLike - h.temp) >= 2
+    );
     if (feelsLine) {
-      const hasFeels = this.hours.some((h) =>
-        h.feelsLike != null && Math.abs(h.feelsLike - h.temp) >= 2
-      );
       if (hasFeels) {
         let fPath = "";
         this.hours.forEach((h, i) => {
@@ -226,6 +226,51 @@ export class HourlyChart {
         feelsLine.setAttribute("opacity", "0.55");
       } else {
         feelsLine.setAttribute("d", "");
+      }
+    }
+
+    // Feels-like divergence ribbon: fill between temp and feels lines for
+    // runs where they disagree by ≥2°. Blue where feels cooler than temp
+    // (wind chill), warm where feels hotter (heat index).
+    const cold = this.svg.querySelector("#chart-feels-ribbon-cold");
+    const hot = this.svg.querySelector("#chart-feels-ribbon-hot");
+    if (cold && hot) {
+      const buildRibbon = (predicate) => {
+        let path = "";
+        let run = [];
+        const flush = () => {
+          if (run.length < 2) { run = []; return; }
+          const top = run.map((i) => {
+            const v = this.hours[i].feelsLike ?? this.hours[i].temp;
+            const t = this.hours[i].temp;
+            return { x: iToX(i), y1: tToY(t), y2: tToY(v) };
+          });
+          let seg = "M" + top[0].x.toFixed(1) + "," + top[0].y1.toFixed(1);
+          for (let k = 1; k < top.length; k++) {
+            seg += " L" + top[k].x.toFixed(1) + "," + top[k].y1.toFixed(1);
+          }
+          for (let k = top.length - 1; k >= 0; k--) {
+            seg += " L" + top[k].x.toFixed(1) + "," + top[k].y2.toFixed(1);
+          }
+          seg += " Z";
+          path += (path ? " " : "") + seg;
+          run = [];
+        };
+        for (let i = 0; i < this.hours.length; i++) {
+          const h = this.hours[i];
+          const d = (h.feelsLike ?? h.temp) - h.temp;
+          if (predicate(d)) run.push(i);
+          else flush();
+        }
+        flush();
+        return path;
+      };
+      if (hasFeels) {
+        cold.setAttribute("d", buildRibbon((d) => d <= -2));
+        hot.setAttribute("d", buildRibbon((d) => d >= 2));
+      } else {
+        cold.setAttribute("d", "");
+        hot.setAttribute("d", "");
       }
     }
 

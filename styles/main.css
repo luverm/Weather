@@ -777,6 +777,13 @@ html[data-reduce-motion="true"] *::after {
   pointer-events: none;
   mix-blend-mode: screen;
 }
+.chart-feels-ribbon {
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0.6;
+}
+.chart-feels-ribbon-cold { fill: rgba(154, 209, 255, 0.35); }
+.chart-feels-ribbon-hot  { fill: rgba(255, 156, 122, 0.32); }
 .chart-sun-line {
   stroke-width: 0.8;
   stroke-dasharray: 1.5 2.5;
