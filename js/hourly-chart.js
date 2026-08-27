@@ -461,5 +461,26 @@ export class HourlyChart {
         if (loIdx !== hiIdx) drawExtremum(loIdx, "lo");
       }
     }
+
+    // "Now" marker — a persistent thin vertical line at Date.now() within
+    // the visible window. Distinct from the interactive cursor so users
+    // always see where they are relative to the future forecast.
+    const nowLine = this.svg.querySelector("#chart-now");
+    if (nowLine) {
+      const nowT = Date.now();
+      const first = this.hours[0]?.time;
+      const last = this.hours[this.hours.length - 1]?.time;
+      if (first != null && last != null && nowT >= first && nowT <= last) {
+        const totalMs = Math.max(1, last - first);
+        const nx = PAD_LEFT + ((nowT - first) / totalMs) * innerW;
+        nowLine.setAttribute("x1", nx.toFixed(1));
+        nowLine.setAttribute("x2", nx.toFixed(1));
+        nowLine.setAttribute("y1", String(PAD_TOP - 2));
+        nowLine.setAttribute("y2", String(H - PAD_BOT + 2));
+      } else {
+        nowLine.setAttribute("x1", "-10");
+        nowLine.setAttribute("x2", "-10");
+      }
+    }
   }
 }
