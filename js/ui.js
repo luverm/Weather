@@ -950,6 +950,10 @@ function renderComfortScore(w) {
   el.comfortScoreDetail.textContent = s.factors.length
     ? s.factors.slice(0, 3).join(" · ")
     : "no major issues";
+  el.comfortScore.setAttribute(
+    "aria-label",
+    `Comfort ${s.score} of 100 — ${s.label}${s.factors.length ? ", " + s.factors.slice(0, 3).join(", ") : ""}`
+  );
   // Ring: circumference of r=13 is 2π·13 ≈ 81.68.
   const C = 81.68;
   el.comfortScoreArc.setAttribute("stroke-dashoffset", (C * (1 - s.score / 100)).toFixed(2));
@@ -979,6 +983,7 @@ function renderDressChip(w) {
   if ((w.uv ?? 0) >= 6) tags.push("🧴 sunscreen");
   el.dressChip.hidden = false;
   el.dressChip.textContent = tags.slice(0, 3).join(" · ");
+  el.dressChip.setAttribute("aria-label", `Suggested: ${tags.slice(0, 3).join(", ")}`);
 }
 
 function renderChartPrecipTotal(w) {
