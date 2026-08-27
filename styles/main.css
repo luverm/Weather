@@ -1796,12 +1796,18 @@ kbd {
 
 .daily-precip {
   grid-column: 3 / 6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+.daily-precip-bar {
+  flex: 1 1 auto;
   position: relative;
   height: 5px;
-  margin-top: 4px;
   border-radius: 3px;
   background: rgba(154, 209, 255, 0.08);
-  overflow: visible;
+  overflow: hidden;
 }
 .daily-precip-fill {
   position: absolute;
@@ -1812,9 +1818,9 @@ kbd {
   transition: width 340ms var(--ease);
 }
 .daily-precip-label {
-  position: absolute;
-  top: -14px;
-  right: 0;
+  flex: 0 0 auto;
+  min-width: 44px;
+  text-align: right;
   font-size: 9.5px;
   color: rgba(154, 209, 255, 0.85);
   font-variant-numeric: tabular-nums;

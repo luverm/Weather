@@ -396,8 +396,10 @@ function renderMetrics(w) {
 // standard MED-derived formula ~200/UV. Tightened at high UV so headline
 // stays honest ("burn <10m" is more useful than "burn 15m" at UV 12+).
 function burnLabelFor(uv) {
-  if (uv == null || !Number.isFinite(uv) || uv < 1) return null;
-  const mins = Math.round(200 / Math.max(1, uv));
+  // Below UV 3, sunburn risk for unprotected fair skin is low enough that
+  // a "burn ~Nm" number reads as false precision — skip the chip entirely.
+  if (uv == null || !Number.isFinite(uv) || uv < 3) return null;
+  const mins = Math.round(200 / uv);
   if (mins <= 10) return "<10m";
   if (mins >= 90) return `~${Math.round(mins / 15) * 15}m`;
   return `~${mins}m`;
@@ -771,28 +773,31 @@ function computeComfortScore(w) {
     score -= Math.min(25, wPen);
   }
 
-  // Precipitation right now.
-  const precipNow = w.hourly?.[0]?.precip ?? 0;
+  // Precipitation right now — read from the sampled hour so the score
+  // moves with the scrubber, not the earliest bucket.
+  const idx = Number.isInteger(w._sampledIndex) ? w._sampledIndex : 0;
+  const precipHere = w.hourly?.[idx]?.precip ?? w.hourly?.[0]?.precip ?? 0;
+  // Precipitation category is mutually exclusive: a snowy hour shouldn't
+  // also count as "wet" (that would double-penalise).
   if (w.condition === "storm") {
     factors.push("stormy");
     score -= 28;
-  } else if (precipNow > 0.1 || w.condition === "rain") {
+  } else if (w.condition === "snow") {
+    factors.push("snowy");
+    score -= 14;
+  } else if (precipHere > 0.1 || w.condition === "rain") {
     factors.push("wet");
     score -= 22;
-  }
-  if (w.condition === "snow") {
-    factors.push("snow");
-    score -= 14;
   }
 
   // Extreme UV.
   if ((w.uv ?? 0) >= 8) {
-    factors.push("intense UV");
+    factors.push("sunburn risk");
     score -= 12;
   }
   // Fog / low visibility.
   if (w.visibility != null && w.visibility < 500) {
-    factors.push("fog");
+    factors.push("foggy");
     score -= 10;
   }
 
@@ -817,7 +822,7 @@ function renderComfortScore(w) {
   el.comfortScoreNum.textContent = String(s.score);
   el.comfortScoreLabel.textContent = s.label;
   el.comfortScoreDetail.textContent = s.factors.length
-    ? `too ${s.factors.slice(0, 3).join(", ")}`
+    ? s.factors.slice(0, 3).join(" · ")
     : "no major issues";
   // Ring: circumference of r=13 is 2π·13 ≈ 81.68.
   const C = 81.68;
@@ -1181,7 +1186,9 @@ function renderDaily(w) {
       const label = mm >= 0.1 ? `${mm.toFixed(mm >= 10 ? 0 : 1)} mm` : "";
       precipRow = `
         <div class="daily-precip" title="${label || "trace"}">
-          <div class="daily-precip-fill" style="width:${pct.toFixed(1)}%"></div>
+          <div class="daily-precip-bar">
+            <div class="daily-precip-fill" style="width:${pct.toFixed(1)}%"></div>
+          </div>
           <span class="daily-precip-label">${label}</span>
         </div>
       `;

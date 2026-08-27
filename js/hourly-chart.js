@@ -160,8 +160,9 @@ export class HourlyChart {
     const innerH = H - PAD_TOP - PAD_BOT;
 
     const temps = this.hours.map((h) => h.temp).filter((v) => v != null);
-    let tMin = Math.min(...temps);
-    let tMax = Math.max(...temps);
+    const rawTMin = Math.min(...temps);
+    const rawTMax = Math.max(...temps);
+    let tMin = rawTMin, tMax = rawTMax;
     if (tMax - tMin < 4) {
       const mid = (tMin + tMax) / 2;
       tMin = mid - 2; tMax = mid + 2;
@@ -425,7 +426,9 @@ export class HourlyChart {
     const extG = this.svg.querySelector("#chart-extrema");
     if (extG) {
       extG.innerHTML = "";
-      if (tMax - tMin >= 3) {
+      // Guard on the *raw* swing so a flat 24h doesn't get a lone "hi" pin
+      // painted by the clamped view range.
+      if (rawTMax - rawTMin >= 3) {
         let hiIdx = 0, loIdx = 0;
         for (let i = 1; i < this.hours.length; i++) {
           if (this.hours[i].temp > this.hours[hiIdx].temp) hiIdx = i;
