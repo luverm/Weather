@@ -1593,6 +1593,10 @@ kbd {
   margin-top: 2px;
   letter-spacing: 0.04em;
 }
+.daily-snow {
+  color: rgba(210, 232, 255, 0.95);
+  font-weight: 500;
+}
 .daily-gust.show { display: block; }
 .daily-item { grid-auto-rows: auto; }
 

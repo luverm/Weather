@@ -1138,7 +1138,14 @@ function renderDaily(w) {
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
-    const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    // Snowfall gets its own dedicated tag so a "6 cm snow" line stands
+    // out — a lot of people plan around snow but not rain-in-mm.
+    const snowLabel = (d.snow && d.snow >= 0.5)
+      ? ` · <span class="daily-snow">❄ ${d.snow >= 5 ? Math.round(d.snow) : d.snow.toFixed(1)} cm snow</span>`
+      : "";
+    const extra = gustLabel || popLabel || snowLabel
+      ? `<span class="daily-gust">${popLabel}${snowLabel}${gustLabel}</span>`
+      : "";
     let precipRow = "";
     if (showPrecip) {
       const mm = d.precip || 0;
