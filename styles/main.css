@@ -1421,6 +1421,72 @@ kbd {
 .daily-spark circle { transition: r 160ms var(--ease); }
 .daily-spark .dot-hi { fill: #ff9c7a; }
 .daily-spark .dot-lo { fill: #9ad1ff; }
+
+.week-precip {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--fg-muted);
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+}
+.week-precip:empty { display: none; }
+.week-precip[data-tone="dry"]   { color: rgba(255,220,180,0.62); }
+.week-precip[data-tone="light"] { color: rgba(154,209,255,0.75); }
+.week-precip[data-tone="damp"]  { color: rgba(154,209,255,0.95); }
+.week-precip[data-tone="wet"]   { color: #9ad1ff; }
+
+.daily-precip-strip {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 4px;
+  padding: 2px 10px 6px;
+  align-items: end;
+  height: 36px;
+}
+.daily-precip-strip[hidden] { display: none; }
+.precip-col {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: 2px;
+  height: 100%;
+  align-items: end;
+  justify-items: center;
+  min-width: 0;
+}
+.precip-bar-track {
+  position: relative;
+  width: 60%;
+  max-width: 22px;
+  min-width: 6px;
+  height: 100%;
+  background: rgba(154,209,255,0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.precip-bar-fill {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  border-radius: 3px 3px 2px 2px;
+  background: linear-gradient(180deg, #7cc0ff, #4a86c9);
+  box-shadow: 0 0 8px rgba(154,209,255,0.35);
+  transition: height 320ms var(--ease);
+}
+.precip-bar-fill[data-wet="1"] {
+  background: linear-gradient(180deg, #b8e0ff, #3a6aa8);
+}
+.precip-col.is-today .precip-bar-track {
+  outline: 1px solid rgba(255,255,255,0.18);
+  outline-offset: 1px;
+}
+.precip-mm {
+  font-size: 9px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  min-height: 9px;
+}
 .forecast-track {
   display: grid;
   grid-auto-flow: column;

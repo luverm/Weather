@@ -77,6 +77,8 @@ const el = {
   refreshBtn: $("#refresh-btn"),
   fetchedAgo: $("#fetched-ago"),
   dailyIconStrip: $("#daily-icon-strip"),
+  dailyPrecipStrip: $("#daily-precip-strip"),
+  weekPrecip: $("#week-precip"),
   settingsBtn: $("#settings-btn"),
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
@@ -852,6 +854,7 @@ function renderDaily(w) {
   const days = (w.daily || []).slice(0, 7);
   if (!days.length) return;
   renderDailyIconStrip(days);
+  renderDailyPrecipStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
   // Global min/max for the range bar.
@@ -898,6 +901,44 @@ function renderDailyIconStrip(days) {
   el.dailyIconStrip.innerHTML = days.map((d) =>
     `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
   ).join("");
+}
+
+function renderDailyPrecipStrip(days) {
+  if (!el.dailyPrecipStrip || !el.weekPrecip) return;
+  const values = days.map((d) => Math.max(0, d.precip ?? 0));
+  const total = values.reduce((a, b) => a + b, 0);
+  const anyRain = values.some((v) => v > 0.05);
+  if (!anyRain) {
+    el.dailyPrecipStrip.hidden = true;
+    el.dailyPrecipStrip.innerHTML = "";
+    el.weekPrecip.textContent = "· dry week";
+    el.weekPrecip.dataset.tone = "dry";
+    return;
+  }
+  el.dailyPrecipStrip.hidden = false;
+  // Scale bars against the wettest day so a light-rain week still reads.
+  const peak = Math.max(...values, 0.5);
+  el.dailyPrecipStrip.innerHTML = days.map((d, i) => {
+    const v = values[i];
+    const pct = Math.min(100, Math.round((v / peak) * 100));
+    const pop = Math.round(d.pop ?? 0);
+    const isToday = i === 0;
+    const labelBits = [];
+    if (v > 0) labelBits.push(`${v < 1 ? v.toFixed(1) : Math.round(v)} mm`);
+    if (pop) labelBits.push(`${pop}%`);
+    const title = labelBits.length ? `${labelBits.join(" · ")} on day ${i + 1}` : "no rain";
+    return `
+      <div class="precip-col${isToday ? " is-today" : ""}" title="${escapeHtml(title)}">
+        <div class="precip-bar-track">
+          <div class="precip-bar-fill" style="height:${pct}%" data-wet="${v >= 1 ? "1" : "0"}"></div>
+        </div>
+        <span class="precip-mm">${v >= 0.1 ? (v < 1 ? v.toFixed(1) : Math.round(v)) : ""}</span>
+      </div>
+    `;
+  }).join("");
+  const totalDisplay = total < 1 ? total.toFixed(1) : total < 10 ? total.toFixed(1) : Math.round(total);
+  el.weekPrecip.textContent = `· ${totalDisplay} mm this week`;
+  el.weekPrecip.dataset.tone = total >= 15 ? "wet" : total >= 3 ? "damp" : "light";
 }
 
 function renderDailySpark(days) {
