@@ -1022,6 +1022,20 @@ kbd {
 .moon-meta strong { display: block; font-size: 14px; font-weight: 500; }
 .moon-detail { font-size: 11.5px; color: var(--fg-dim); display: block; }
 .moon-next:empty { display: none; }
+.stargazing {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  border: 1px solid transparent;
+  cursor: help;
+}
+.stargazing[hidden] { display: none; }
+.stargazing.good { background: rgba(154, 209, 255, 0.14); color: #9ad1ff; border-color: rgba(154, 209, 255, 0.28); }
+.stargazing.fair { background: rgba(255, 211, 106, 0.14); color: #ffdc8a; border-color: rgba(255, 211, 106, 0.30); }
+.stargazing.bad  { background: rgba(160, 170, 190, 0.14); color: var(--fg-dim); border-color: rgba(160, 170, 190, 0.24); }
 
 .sun-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .sun-row .sun-item { flex: 1 1 60px; min-width: 0; }

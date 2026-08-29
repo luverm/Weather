@@ -46,6 +46,7 @@ const el = {
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
   moonNext: $("#moon-next"),
+  stargazing: $("#stargazing"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -563,6 +564,7 @@ function renderMoon(moon) {
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
   renderMoonNext(moon);
+  renderStargazing(state.weather, moon);
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
@@ -579,6 +581,36 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+}
+
+function renderStargazing(w, moon) {
+  if (!el.stargazing) return;
+  // Grade tonight's sky using the average cloud cover for the ~4 h after
+  // sunset combined with the moon's illumination (bright moon washes stars).
+  const hrs = w?.hourly || [];
+  const sunset = w?.sunset;
+  if (!sunset || !hrs.length || moon == null) {
+    el.stargazing.hidden = true;
+    return;
+  }
+  const start = sunset + 30 * 60_000;
+  const end = sunset + 4 * 3600_000;
+  const window = hrs.filter((h) => h.time >= start && h.time <= end && h.cloudCover != null);
+  if (window.length < 2) { el.stargazing.hidden = true; return; }
+  const avgCloud = window.reduce((s, h) => s + h.cloudCover, 0) / window.length;
+  // Simple scoring: cloud cover dominates; moon illumination shaves 0-25 points.
+  const cloudScore = Math.max(0, 100 - avgCloud);      // 0..100
+  const moonPenalty = Math.round(moon.illum * 25);     // 0..25
+  const score = Math.max(0, Math.round(cloudScore - moonPenalty));
+  let label, cls;
+  if (score >= 75) { label = "Excellent"; cls = "good"; }
+  else if (score >= 55) { label = "Good"; cls = "good"; }
+  else if (score >= 35) { label = "Fair"; cls = "fair"; }
+  else { label = "Poor"; cls = "bad"; }
+  el.stargazing.hidden = false;
+  el.stargazing.className = `stargazing ${cls}`;
+  el.stargazing.textContent = `Stargazing tonight · ${label}`;
+  el.stargazing.title = `${Math.round(avgCloud)}% average cloud cover after sunset · moon ${Math.round(moon.illum * 100)}%`;
 }
 
 function renderMoonNext(moon) {
