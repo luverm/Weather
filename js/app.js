@@ -228,6 +228,29 @@ async function loadByCoords(place) {
 
   // Move the radar to the new location (fire-and-forget; resolves later).
   ensureRadar([place.lat, place.lon]).then((r) => r?.setCenter(place.lat, place.lon, place.name));
+
+  // Warm the cache for other saved places so [] cycling and the chip strip
+  // are instant even on the second visit today. Fires idle to avoid competing
+  // with the active render pass.
+  prefetchOtherSavedPlaces(place);
+}
+
+function prefetchOtherSavedPlaces(activePlace) {
+  const others = places.all().filter((p) => places.idFor(p) !== places.idFor(activePlace)).slice(0, 3);
+  if (!others.length) return;
+  const run = () => {
+    for (const p of others) {
+      // Skip if we already have a fresh cache entry — getCachedWeather returns
+      // null when stale, so re-fetch only when needed.
+      if (getCachedWeather(p.lat, p.lon)) continue;
+      getWeather(p.lat, p.lon).catch(() => { /* silent — best effort */ });
+    }
+  };
+  if ("requestIdleCallback" in window) {
+    requestIdleCallback(run, { timeout: 4000 });
+  } else {
+    setTimeout(run, 1500);
+  }
 }
 
 async function useGeolocation() {
