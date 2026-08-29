@@ -88,6 +88,8 @@ const el = {
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
   settingClearPlaces: $("#setting-clear-places"),
+  settingWakeRow: $("#setting-wake-row"),
+  settingWakeLock: $("#setting-wake-lock"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
@@ -1560,6 +1562,40 @@ function bindSettings() {
     renderPlaces();
     ui.showToast("Saved places cleared");
     close();
+  });
+
+  bindWakeLock();
+}
+
+// Screen Wake Lock: only surface the toggle when the API is available. Auto
+// re-acquires the sentinel after visibility changes because browsers release
+// it when the tab is hidden.
+function bindWakeLock() {
+  if (!("wakeLock" in navigator)) return;
+  if (el.settingWakeRow) el.settingWakeRow.hidden = false;
+  let sentinel = null;
+  const request = async () => {
+    try {
+      sentinel = await navigator.wakeLock.request("screen");
+      sentinel.addEventListener("release", () => { sentinel = null; });
+    } catch { /* denied — ignore */ }
+  };
+  const release = async () => {
+    try { await sentinel?.release?.(); } catch { /* ignore */ }
+    sentinel = null;
+  };
+  const stored = localStorage.getItem("aether:wakeLock") === "1";
+  if (el.settingWakeLock) el.settingWakeLock.checked = stored;
+  if (stored) request();
+  el.settingWakeLock?.addEventListener("change", async () => {
+    const on = el.settingWakeLock.checked;
+    localStorage.setItem("aether:wakeLock", on ? "1" : "0");
+    if (on) { await request(); ui.showToast("Screen will stay awake"); }
+    else { await release(); ui.showToast("Screen wake lock off"); }
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible") return;
+    if (localStorage.getItem("aether:wakeLock") === "1" && !sentinel) request();
   });
 }
 
