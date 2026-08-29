@@ -53,6 +53,17 @@ function findGusts(hourly) {
   return null;
 }
 
+function totalPrecipNext(hourly, hours) {
+  if (!hourly?.length) return 0;
+  const cutoff = Date.now() + hours * 3600_000;
+  let total = 0;
+  for (const h of hourly) {
+    if (h.time > cutoff) break;
+    if (h.precip) total += h.precip;
+  }
+  return total;
+}
+
 /**
  * Return a one or two-sentence narrative for the current weather.
  */
@@ -61,17 +72,25 @@ export function narrate(weather) {
   const bits = [];
   const { condition, label, temp, feelsLike, uvPeak, windSpeed } = weather;
 
-  // Lead: describe current state.
+  // Lead: describe current state, weaving in a strong yesterday delta.
   const feels = Math.abs((feelsLike ?? temp) - temp) >= 3
     ? ` — feels closer to ${Math.round(feelsLike)}°`
     : "";
-  bits.push(`${label} at ${Math.round(temp)}°${feels}.`);
+  const yDelta = weather.yesterday?.delta;
+  let lead = `${label} at ${Math.round(temp)}°${feels}.`;
+  if (yDelta != null && Math.abs(yDelta) >= 4) {
+    const abs = Math.round(Math.abs(yDelta));
+    lead = `${label} at ${Math.round(temp)}°${feels} — ${abs}° ${yDelta > 0 ? "warmer" : "cooler"} than yesterday.`;
+  }
+  bits.push(lead);
 
-  // Precipitation arriving.
+  // Precipitation arriving — enrich with a rough 24 h total when we have it.
   const rain = findNextPrecip(weather.nowcast, weather.hourly);
+  const total24 = totalPrecipNext(weather.hourly, 24);
   if (rain && condition !== "rain" && condition !== "storm" && condition !== "snow") {
     if (rain.inMin <= 120) {
-      bits.push(`${rain.kind === "snow" ? "Snow" : "Rain"} starting around ${fmtHour(rain.ts)}.`);
+      const suffix = total24 >= 3 ? ` (~${total24.toFixed(1)} mm through tomorrow)` : "";
+      bits.push(`${rain.kind === "snow" ? "Snow" : "Rain"} starting around ${fmtHour(rain.ts)}${suffix}.`);
     }
   } else if (condition === "rain" || condition === "storm") {
     // If it's raining now, look ahead for when it stops.
