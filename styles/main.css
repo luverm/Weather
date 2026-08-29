@@ -1461,6 +1461,20 @@ kbd {
   width: 22px; height: 22px;
   display: block;
 }
+.daily-icon-strip .strip-day {
+  position: relative;
+  gap: 2px;
+}
+.strip-pop {
+  display: block;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: rgba(120,180,255,0.55);
+  margin-top: 2px;
+}
+.strip-pop.hi { background: #6aa9ff; box-shadow: 0 0 4px rgba(106,169,255,0.9); }
+.strip-pop.mid { background: rgba(120,180,255,0.75); }
+.strip-pop.lo { background: rgba(120,180,255,0.5); }
 
 .daily-spark {
   width: 100%;

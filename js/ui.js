@@ -277,12 +277,25 @@ function animateNumber(node, target, format) {
 
 function capitalize(s) { return (s || "").charAt(0).toUpperCase() + (s || "").slice(1); }
 
+function conditionLabelWithClouds(w) {
+  const base = capitalize(w.label);
+  const cc = w.cloudCover;
+  // Only append a cloud-cover reading when it adds information — skip if the
+  // label already implies it ("Overcast", "Clear sky") or the sample is
+  // missing.
+  if (cc == null) return base;
+  const lower = (w.label || "").toLowerCase();
+  if (lower.includes("overcast") || lower.includes("clear")) return base;
+  if (cc < 10 || cc > 92) return base;
+  return `${base} · ${Math.round(cc)}% clouds`;
+}
+
 function renderLiveValues(w, { animate = true } = {}) {
   const temp = convertTemp(w.temp);
   const feels = convertTemp(w.feelsLike ?? w.temp);
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
-  el.conditionLabel.textContent = capitalize(w.label);
+  el.conditionLabel.textContent = conditionLabelWithClouds(w);
   // Rebuild the "Feels like" text without touching the sibling pills so the
   // temp-trend and vs-yesterday spans survive re-renders.
   const feelsText = `Feels like ${Math.round(feels)}° `;
@@ -997,9 +1010,18 @@ function renderDaily(w) {
 
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
-  el.dailyIconStrip.innerHTML = days.map((d) =>
-    `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
-  ).join("");
+  el.dailyIconStrip.innerHTML = days.map((d) => {
+    const pop = d.pop ?? 0;
+    // Three tiers: none / risk / likely — for the dot under the icon.
+    const dotClass = pop >= 60 ? "hi" : pop >= 25 ? "mid" : "lo";
+    const dot = pop >= 25
+      ? `<span class="strip-pop ${dotClass}" title="${pop}% chance of rain"></span>`
+      : "";
+    return `
+      <span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">
+        ${iconFor(d.condition)}${dot}
+      </span>`;
+  }).join("");
 }
 
 function renderDailySpark(days) {
