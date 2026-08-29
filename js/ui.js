@@ -26,6 +26,8 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  dayRangeTickLo: $("#day-range-tick-lo"),
+  dayRangeTickHi: $("#day-range-tick-hi"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -389,6 +391,30 @@ function renderDayRange(w) {
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+  el.dayRangeMarker.title = `Now · ${Math.round(convertTemp(t))}°`;
+  // Add today's peak-time and low-time tick marks so users see when the min
+  // and max occur on the range, not just their values.
+  const todayHrs = (w.hourly || []).filter((h) => {
+    const d = new Date(h.time);
+    const now = new Date();
+    return d.getDate() === now.getDate() && d.getMonth() === now.getMonth();
+  });
+  const findExtreme = (arr, cmp) => arr.reduce((best, h) => (
+    best == null || cmp(h.temp, best.temp) ? h : best
+  ), null);
+  const hiHour = todayHrs.length > 1 ? findExtreme(todayHrs, (a, b) => a > b) : null;
+  const loHour = todayHrs.length > 1 ? findExtreme(todayHrs, (a, b) => a < b) : null;
+  positionRangeTick(el.dayRangeTickHi, hiHour, lo, hi, "Peak");
+  positionRangeTick(el.dayRangeTickLo, loHour, lo, hi, "Low");
+}
+
+function positionRangeTick(node, hour, lo, hi, kind) {
+  if (!node) return;
+  if (!hour || hi - lo < 0.5) { node.hidden = true; return; }
+  const frac = Math.max(0, Math.min(1, (hour.temp - lo) / (hi - lo)));
+  node.style.left = `${(frac * 100).toFixed(1)}%`;
+  node.hidden = false;
+  node.title = `${kind} ${Math.round(convertTemp(hour.temp))}° at ${fmtTime(hour.time)}`;
 }
 
 function renderMetrics(w) {

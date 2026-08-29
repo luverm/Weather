@@ -451,7 +451,19 @@ html[data-reduce-motion="true"] *::after {
   transform: translateY(-50%);
   box-shadow: 0 2px 8px rgba(0,0,0,0.35);
   transition: left 380ms var(--ease);
+  z-index: 2;
 }
+.day-range-tick {
+  position: absolute;
+  top: -3px; bottom: -3px;
+  width: 2px; margin-left: -1px;
+  border-radius: 2px;
+  cursor: help;
+  transition: left 380ms var(--ease);
+}
+.day-range-tick[hidden] { display: none; }
+.day-range-tick.hi { background: rgba(255, 138, 106, 0.95); box-shadow: 0 0 6px rgba(255,138,106,0.6); }
+.day-range-tick.lo { background: rgba(106, 162, 255, 0.95); box-shadow: 0 0 6px rgba(106,162,255,0.6); }
 
 /* ---------- Nowcast banner ---------- */
 .nowcast {
