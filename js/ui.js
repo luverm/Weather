@@ -1282,7 +1282,7 @@ function renderPlaces() {
     const active = places.idFor(p) === activeId;
     const icon = p.condition ? iconFor(p.condition) : "";
     return `
-      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
+      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}" tabindex="0" role="button" aria-label="Load ${escapeHtml(p.name)}">
         ${icon ? `<span class="place-chip-icon" aria-hidden="true">${icon}</span>` : ""}
         <span class="place-chip-name">${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
@@ -1300,6 +1300,11 @@ function renderPlaces() {
         renderPlaces();
         return;
       }
+      state.handlers.onPlaceClick?.(item);
+    });
+    chip.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      e.preventDefault();
       state.handlers.onPlaceClick?.(item);
     });
   });

@@ -281,6 +281,11 @@ html[data-reduce-motion="true"] *::after {
 }
 .icon-btn:hover { color: var(--fg); transform: translateY(-1px); background: var(--glass-strong); }
 .icon-btn:active { transform: translateY(0) scale(0.97); }
+.icon-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent), 0 0 0 4px rgba(154, 209, 255, 0.28);
+  color: var(--fg);
+}
 .icon-btn svg { width: 20px; height: 20px; }
 .icon-btn .sound-waves { opacity: 0; transition: opacity 240ms var(--ease); }
 .icon-btn.on { color: var(--accent); }
@@ -302,6 +307,11 @@ html[data-reduce-motion="true"] *::after {
 }
 .place-chip:hover { background: var(--glass-strong); transform: translateY(-1px); }
 .place-chip.active { background: var(--glass-strong); border-color: rgba(255,255,255,0.35); }
+.place-chip:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent);
+  transform: translateY(-1px);
+}
 .place-chip .temp { color: var(--fg-muted); font-variant-numeric: tabular-nums; }
 .place-chip .close {
   width: 16px; height: 16px; display: grid; place-items: center;
