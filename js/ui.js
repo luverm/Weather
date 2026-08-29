@@ -1377,6 +1377,31 @@ function bindSearch() {
     places.add(item);
     state.handlers.onSearchSelect?.(item);
   });
+  // Arrow-key navigation for the results list.
+  el.searchInput.addEventListener("keydown", (e) => {
+    const items = el.searchResults.querySelectorAll('li[role="option"]');
+    if (!items.length || el.searchResults.hidden) return;
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      const cur = [...items].findIndex((li) => li.classList.contains("active"));
+      let next = e.key === "ArrowDown" ? cur + 1 : cur - 1;
+      if (next < 0) next = items.length - 1;
+      if (next >= items.length) next = 0;
+      items.forEach((li, i) => li.classList.toggle("active", i === next));
+      items[next].scrollIntoView({ block: "nearest" });
+    } else if (e.key === "Enter") {
+      const active = el.searchResults.querySelector('li[role="option"].active');
+      if (!active) return;
+      e.preventDefault();
+      const idx = parseInt(active.dataset.index, 10);
+      const item = el.searchResults._items?.[idx];
+      if (!item) return;
+      el.searchInput.value = item.name;
+      el.searchResults.hidden = true;
+      places.add(item);
+      state.handlers.onSearchSelect?.(item);
+    }
+  });
 }
 
 function bindUnitToggle() {
