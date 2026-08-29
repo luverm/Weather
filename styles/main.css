@@ -1475,6 +1475,7 @@ kbd {
 }
 .forecast-track::-webkit-scrollbar { display: none; }
 .forecast-item {
+  position: relative;
   display: grid;
   grid-template-rows: auto auto auto auto;
   gap: 4px;
@@ -1484,6 +1485,7 @@ kbd {
   scroll-snap-align: start;
   transition: background 200ms var(--ease), transform 200ms var(--ease);
   cursor: pointer;
+  overflow: hidden;
 }
 .forecast-item:hover { background: var(--glass); transform: translateY(-2px); }
 .forecast-item.active { background: var(--glass-strong); }
@@ -1495,6 +1497,20 @@ kbd {
   opacity: 0.9;
 }
 .forecast-pop.dim { opacity: 0; }
+.forecast-precip-bar {
+  position: absolute;
+  left: 50%;
+  bottom: 4px;
+  transform: translateX(-50%);
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, rgba(120,180,255,0.55), rgba(80,150,240,0.9));
+  pointer-events: none;
+  transition: width 240ms var(--ease);
+}
+.forecast-precip-bar.snow {
+  background: linear-gradient(90deg, rgba(230,240,255,0.55), rgba(200,220,255,0.9));
+}
 
 .daily-track {
   display: grid;

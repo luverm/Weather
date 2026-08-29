@@ -917,15 +917,26 @@ function cardinal(deg) {
 
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
-  for (const h of (w.hourly || []).slice(0, 24)) {
+  // Scale precip bar width against the wettest upcoming hour so light-rain
+  // stretches don't wash to invisibility.
+  const upcoming = (w.hourly || []).slice(0, 24);
+  const maxPrecip = Math.max(0.4, ...upcoming.map((h) => h.precip || 0));
+  for (const h of upcoming) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    const precip = h.precip || 0;
+    const barWidth = precip > 0 ? Math.min(100, (precip / maxPrecip) * 100) : 0;
+    const isSnow = h.condition === "snow";
+    const barTitle = precip > 0
+      ? ` title="${precip.toFixed(1)} mm${isSnow ? " snow" : ""}"`
+      : "";
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
+      <span class="forecast-precip-bar${isSnow ? " snow" : ""}" style="width:${barWidth.toFixed(1)}%"${barTitle}></span>
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
