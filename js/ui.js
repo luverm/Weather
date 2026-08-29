@@ -92,6 +92,9 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcGoldenAm: $("#sun-arc-golden-am"),
+  sunArcGoldenPm: $("#sun-arc-golden-pm"),
+  sunGolden: $("#sun-golden"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -569,9 +572,36 @@ function scheduleSunArc(w) {
   if (state.sunArcTimer) { clearInterval(state.sunArcTimer); state.sunArcTimer = null; }
   if (!w?.sunrise || !w?.sunset) return;
 
+  const sr = w.sunrise, ss = w.sunset;
+  const dayMs = ss - sr;
+
+  // Place the golden-hour ticks (~1 h window after sunrise / before sunset).
+  // Skip the markers if the day is very short (polar edge cases).
+  if (el.sunArcGoldenAm && el.sunArcGoldenPm) {
+    if (dayMs > 2 * 3600_000) {
+      const goldenMs = Math.min(3600_000, dayMs / 4);
+      const tAm = goldenMs / dayMs;
+      const tPm = 1 - goldenMs / dayMs;
+      for (const [node, t] of [[el.sunArcGoldenAm, tAm], [el.sunArcGoldenPm, tPm]]) {
+        const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
+        const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
+        node.setAttribute("cx", x.toFixed(1));
+        node.setAttribute("cy", y.toFixed(1));
+        node.style.opacity = "1";
+      }
+      if (el.sunGolden) {
+        el.sunGolden.hidden = false;
+        el.sunGolden.textContent = `Golden hour · ${fmtTime(sr + goldenMs)} & ${fmtTime(ss - goldenMs)}`;
+      }
+    } else {
+      el.sunArcGoldenAm.style.opacity = "0";
+      el.sunArcGoldenPm.style.opacity = "0";
+      if (el.sunGolden) el.sunGolden.hidden = true;
+    }
+  }
+
   const update = () => {
     const now = Date.now();
-    const sr = w.sunrise, ss = w.sunset;
     let frac;
     if (now < sr) {
       // Before sunrise: ride the night arc fraction toward 0 (left horizon).

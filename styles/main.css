@@ -995,6 +995,20 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+.sun-arc-golden {
+  fill: rgba(255, 178, 92, 0.85);
+  filter: drop-shadow(0 0 4px rgba(255,180,100,0.6));
+  opacity: 0;
+  transition: opacity 400ms var(--ease);
+}
+.sun-golden {
+  margin: -2px 0 6px;
+  font-size: 11px;
+  color: var(--fg-muted);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.sun-golden[hidden] { display: none; }
 
 /* ---------- Radar map ---------- */
 .radar {
