@@ -83,7 +83,7 @@ export async function getWeather(lat, lon) {
       "precipitation_probability", "precipitation",
       "wind_speed_10m", "wind_gusts_10m",
       "is_day", "uv_index", "pressure_msl",
-      "relative_humidity_2m",
+      "relative_humidity_2m", "cloud_cover",
     ].join(","),
     daily: [
       "sunrise", "sunset",
@@ -146,6 +146,7 @@ function normalize(d, aq) {
         uv: d.hourly.uv_index?.[i] ?? null,
         pressure: d.hourly.pressure_msl?.[i] ?? null,
         humidity: d.hourly.relative_humidity_2m?.[i] ?? null,
+        cloudCover: d.hourly.cloud_cover?.[i] ?? null,
         ...mapWmo(d.hourly.weather_code[i]),
       });
     }
@@ -216,7 +217,38 @@ function normalize(d, aq) {
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
     yesterday: computeYesterdayCompare(d.hourly, c.temperature_2m, now),
+    sunshine: computeSunshineToday(d.hourly, daily),
     fetchedAt: now,
+  };
+}
+
+// Estimate today's sunshine hours: count hours between today's sunrise and
+// sunset where cloud_cover is below ~40 %. Returns {hours, total, isEstimate}
+// or null when we don't have enough data.
+function computeSunshineToday(hourly, daily) {
+  if (!hourly?.time || !hourly?.cloud_cover) return null;
+  const sr = daily?.sunrise?.[0] ? new Date(daily.sunrise[0]).getTime() : null;
+  const ss = daily?.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null;
+  if (!sr || !ss || ss <= sr) return null;
+  const totalHours = (ss - sr) / 3600_000;
+  let sunny = 0, counted = 0;
+  for (let i = 0; i < hourly.time.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    if (t < sr) continue;
+    if (t >= ss) break;
+    const cc = hourly.cloud_cover[i];
+    if (cc == null) continue;
+    counted++;
+    // Linear model: 100% cloud -> 0 sunshine; 0% cloud -> 1 sunshine.
+    // A cloud fraction cap around 88 % counts as fully overcast.
+    const frac = Math.max(0, Math.min(1, (88 - cc) / 88));
+    sunny += frac;
+  }
+  if (counted === 0) return null;
+  return {
+    hours: sunny,
+    total: totalHours,
+    isEstimate: counted < totalHours - 1,
   };
 }
 
@@ -427,6 +459,7 @@ function mock(lat, lon) {
     },
     pressureTrend: { delta: -0.4, direction: "steady" },
     yesterday: { time: now - 24 * 3600_000, yesterdayTemp: 15.6, delta: 2.4 },
+    sunshine: { hours: 6.2, total: 12.5, isEstimate: false },
     fetchedAt: now,
     offline: true,
   };

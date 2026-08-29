@@ -48,6 +48,8 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunSunshineWrap: $("#sun-sunshine-wrap"),
+  sunSunshine: $("#sun-sunshine"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -563,8 +565,27 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderSunshine(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderSunshine(w) {
+  if (!el.sunSunshineWrap || !el.sunSunshine) return;
+  const s = w.sunshine;
+  if (!s || s.total <= 0) {
+    el.sunSunshineWrap.hidden = true;
+    return;
+  }
+  const hours = Math.max(0, Math.min(s.total, s.hours));
+  const label = hours >= 10
+    ? `${Math.round(hours)}h`
+    : `${(Math.round(hours * 10) / 10).toFixed(1)}h`;
+  el.sunSunshineWrap.hidden = false;
+  el.sunSunshine.textContent = label;
+  el.sunSunshineWrap.title =
+    `${label} of the ${s.total.toFixed(1)}h daylight window is expected to be sun-filled` +
+    (s.isEstimate ? " (partial data)" : "");
 }
 
 function scheduleSunArc(w) {
