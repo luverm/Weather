@@ -782,6 +782,16 @@ function renderAdvice(w) {
   }
 }
 
+// Return the offset in hours between the given IANA timezone and the user's
+// local timezone at the moment `now`, positive when the place is ahead.
+function tzOffsetHours(now, tz) {
+  try {
+    const target = new Date(now.toLocaleString("en-US", { timeZone: tz }));
+    const here = new Date(now.toLocaleString("en-US"));
+    return (target.getTime() - here.getTime()) / 3600_000;
+  } catch { return 0; }
+}
+
 function startLocaltime(w) {
   if (state.localTimer) { clearInterval(state.localTimer); state.localTimer = null; }
   if (!el.placeLocaltime) return;
@@ -793,17 +803,22 @@ function startLocaltime(w) {
   }
   const update = () => {
     try {
+      const now = new Date();
       const parts = new Intl.DateTimeFormat([], {
         timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
         weekday: "short", timeZoneName: "short",
-      }).formatToParts(new Date());
+      }).formatToParts(now);
       const day = parts.find((p) => p.type === "weekday")?.value ?? "";
       const hour = parts.find((p) => p.type === "hour")?.value ?? "";
       const minute = parts.find((p) => p.type === "minute")?.value ?? "";
       const tzName = parts.find((p) => p.type === "timeZoneName")?.value ?? "";
+      const diffHrs = tzOffsetHours(now, tz);
+      const diffLabel = diffHrs && Math.abs(diffHrs) >= 1
+        ? ` <span class="tz-diff" title="Difference vs your local time">(${diffHrs > 0 ? "+" : ""}${Math.round(diffHrs)} h)</span>`
+        : "";
       el.placeLocaltime.innerHTML =
         `<span class="clock-dot" aria-hidden="true"></span>` +
-        `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>`;
+        `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>${diffLabel}`;
     } catch {
       el.placeLocaltime.textContent = "";
     }
