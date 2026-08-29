@@ -186,6 +186,7 @@ export const ui = {
     state.weather = weather;
     state.sampledWeather = weather; // initially same as live
     renderLiveValues(weather);
+    updateDocTitle(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
     renderMoon(weather.moon);
@@ -276,6 +277,25 @@ function animateNumber(node, target, format) {
 }
 
 function capitalize(s) { return (s || "").charAt(0).toUpperCase() + (s || "").slice(1); }
+
+function conditionEmoji(w) {
+  const c = w.condition;
+  if (c === "storm") return "⛈️";
+  if (c === "snow") return "❄️";
+  if (c === "rain") return "🌧️";
+  if (c === "fog") return "🌫️";
+  if (c === "clouds") return w.isDay === false ? "☁️" : "⛅";
+  if (c === "clear") return w.isDay === false ? "🌙" : "☀️";
+  return "🌡️";
+}
+
+function updateDocTitle(w) {
+  const placeName = state.place?.name;
+  const temp = w.temp != null ? `${Math.round(convertTemp(w.temp))}°` : "—";
+  const emoji = conditionEmoji(w);
+  const suffix = placeName ? ` · ${placeName}` : "";
+  document.title = `${emoji} ${temp}${suffix} · Aether`;
+}
 
 function conditionLabelWithClouds(w) {
   const base = capitalize(w.label);
