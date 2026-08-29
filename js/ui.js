@@ -992,7 +992,11 @@ function renderDaily(w) {
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
-    const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const mmLabel = d.precip >= 1
+      ? ` · ${d.precip >= 10 ? Math.round(d.precip) : d.precip.toFixed(1)} mm`
+      : "";
+    const extraText = `${popLabel}${mmLabel}${gustLabel}`;
+    const extra = extraText ? `<span class="daily-gust">${extraText}</span>` : "";
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
