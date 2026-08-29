@@ -421,9 +421,11 @@ function renderMetrics(w) {
   el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
-  el.metricWindSub.textContent = dirLabel
+  const gustNote = gustFactorNote(w.windSpeed, w.windGusts);
+  el.metricWindSub.textContent = (dirLabel
     ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
-    : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+    : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
+  ) + gustNote;
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
@@ -473,6 +475,15 @@ function renderMetrics(w) {
     el.metricUVSub.textContent = "peak —";
   }
   renderPressureSparkline(w);
+}
+
+function gustFactorNote(steady, gusts) {
+  if (steady == null || gusts == null) return "";
+  if (steady < 8 || gusts < steady + 8) return "";
+  const factor = gusts / Math.max(0.1, steady);
+  if (factor >= 1.8) return " · gusty";
+  if (factor >= 1.4) return " · breezy";
+  return "";
 }
 
 function humidityComfort(rh, dew, temp) {
