@@ -73,6 +73,7 @@ const el = {
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
+  weekSummary: $("#week-summary"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -892,6 +893,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderWeekSummary(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -996,6 +998,48 @@ function renderDailyDelta(days) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
   }
   el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
+}
+
+function renderWeekSummary(days) {
+  if (!el.weekSummary) return;
+  if (!days || days.length < 3) {
+    el.weekSummary.hidden = true;
+    return;
+  }
+  // Skip today for the "ahead" framing.
+  const ahead = days.slice(1);
+  if (!ahead.length) { el.weekSummary.hidden = true; return; }
+  const tz = state.weather?.timezone;
+  const dayName = (d) => new Date(d.time).toLocaleDateString(undefined, {
+    weekday: "short",
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  const wet = ahead.filter((d) => (d.precip ?? 0) >= 1 || (d.pop ?? 0) >= 50);
+  const warmest = ahead.reduce((best, d) => (
+    d.tempMax != null && (best == null || d.tempMax > best.tempMax) ? d : best
+  ), null);
+  const coolest = ahead.reduce((best, d) => (
+    d.tempMin != null && (best == null || d.tempMin < best.tempMin) ? d : best
+  ), null);
+
+  const parts = [];
+  if (!wet.length) parts.push("Dry stretch ahead");
+  else if (wet.length === 1) parts.push(`Rain likely ${dayName(wet[0])}`);
+  else if (wet.length >= 4) parts.push("Wet week ahead");
+  else parts.push(`${wet.length} wet days ahead`);
+
+  if (warmest) {
+    parts.push(`warmest ${dayName(warmest)} ${Math.round(convertTemp(warmest.tempMax))}°`);
+  }
+  if (coolest && warmest && coolest.time !== warmest.time) {
+    const span = warmest.tempMax - coolest.tempMin;
+    if (span >= 6) {
+      parts.push(`coolest ${dayName(coolest)} ${Math.round(convertTemp(coolest.tempMin))}°`);
+    }
+  }
+
+  el.weekSummary.hidden = false;
+  el.weekSummary.textContent = parts.join(" · ");
 }
 
 function toggleDailyExpand(item, d, w) {

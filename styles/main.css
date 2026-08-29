@@ -1409,6 +1409,13 @@ kbd {
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+.week-summary {
+  margin: -2px 12px 8px;
+  font-size: 12px;
+  color: var(--fg-muted);
+  letter-spacing: 0.02em;
+}
+.week-summary[hidden] { display: none; }
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;
