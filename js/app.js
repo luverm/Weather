@@ -315,7 +315,29 @@ installShortcuts({
 });
 
 // ---------- Start ----------
+function parseDeepLink() {
+  try {
+    const p = new URLSearchParams(window.location.search);
+    const lat = parseFloat(p.get("lat"));
+    const lon = parseFloat(p.get("lon"));
+    if (!isFinite(lat) || !isFinite(lon)) return null;
+    return {
+      name: p.get("name") || "Shared location",
+      country: p.get("country") || undefined,
+      admin1: p.get("admin1") || undefined,
+      lat, lon,
+    };
+  } catch { return null; }
+}
+
 (async function init() {
+  // Shared deep-link takes precedence — someone opened a link to a specific
+  // city and expects to see that.
+  const linked = parseDeepLink();
+  if (linked) {
+    await loadByCoords(linked);
+    return;
+  }
   // Prefer the most recent saved place if we have one — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();

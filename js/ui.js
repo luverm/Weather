@@ -1566,6 +1566,21 @@ function startFetchedTicker() {
   setInterval(update, 30_000);
 }
 
+function buildShareUrl(place) {
+  if (!place || place.lat == null || place.lon == null) return "";
+  try {
+    const u = new URL(window.location.href);
+    u.search = "";
+    u.searchParams.set("lat", place.lat.toFixed(3));
+    u.searchParams.set("lon", place.lon.toFixed(3));
+    if (place.name) u.searchParams.set("name", place.name);
+    if (place.country) u.searchParams.set("country", place.country);
+    if (place.admin1) u.searchParams.set("admin1", place.admin1);
+    u.hash = "";
+    return u.toString();
+  } catch { return ""; }
+}
+
 function bindShare() {
   if (!el.shareBtn) return;
   el.shareBtn.addEventListener("click", async () => {
@@ -1583,13 +1598,14 @@ function bindShare() {
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
     ].filter(Boolean);
-    const text = lines.join("\n");
+    const shareUrl = buildShareUrl(state.place);
+    const text = lines.join("\n") + (shareUrl ? `\n${shareUrl}` : "");
     try {
       if (navigator.share) {
-        await navigator.share({ title: `Aether — ${placeName}`, text });
+        await navigator.share({ title: `Aether — ${placeName}`, text, url: shareUrl || undefined });
       } else {
         await navigator.clipboard.writeText(text);
-        ui.showToast("Summary copied to clipboard");
+        ui.showToast("Summary + link copied to clipboard");
       }
       el.shareBtn.classList.add("just-copied");
       setTimeout(() => el.shareBtn.classList.remove("just-copied"), 600);
