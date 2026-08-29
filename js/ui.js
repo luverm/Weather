@@ -1056,6 +1056,7 @@ function renderDaily(w) {
     const item = document.createElement("div");
     item.className = "daily-item";
     item.dataset.ts = d.time;
+    item.dataset.dayIndex = i;
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
@@ -1076,8 +1077,16 @@ function renderDaily(w) {
       ${extra}
     `;
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
+    item.addEventListener("mouseenter", () => highlightDailySpark(i));
+    item.addEventListener("mouseleave", () => highlightDailySpark(-1));
     el.dailyTrack.appendChild(item);
   });
+}
+
+function highlightDailySpark(idx) {
+  if (!el.dailySparkDots) return;
+  const nodes = el.dailySparkDots.querySelectorAll("circle");
+  nodes.forEach((c) => c.classList.toggle("active", parseInt(c.dataset.i ?? "-1", 10) === idx));
 }
 
 function renderDailyIconStrip(days) {
@@ -1121,6 +1130,7 @@ function renderDailySpark(days) {
       c.setAttribute("cy", y(d.tempMax).toFixed(1));
       c.setAttribute("r", "2.5");
       c.setAttribute("class", "dot-hi");
+      c.dataset.i = i;
       el.dailySparkDots.appendChild(c);
     }
     if (d.tempMin != null) {
@@ -1129,6 +1139,7 @@ function renderDailySpark(days) {
       c.setAttribute("cy", y(d.tempMin).toFixed(1));
       c.setAttribute("r", "2.5");
       c.setAttribute("class", "dot-lo");
+      c.dataset.i = i;
       el.dailySparkDots.appendChild(c);
     }
   });
