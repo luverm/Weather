@@ -1684,3 +1684,46 @@ kbd {
   .temp { font-size: 78px; }
   .narrative { font-size: 13px; }
 }
+
+/* ---------- Print ---------- */
+@media print {
+  :root {
+    --fg: #000;
+    --fg-muted: #333;
+    --fg-dim: #555;
+    --stroke: #ccc;
+    --glass: transparent;
+    --glass-strong: transparent;
+  }
+  body { background: #fff !important; color: #000 !important; }
+  .stage, .vignette, .toolbar, .scrubber, .search, #install-btn, .radar,
+  .nowcast, .hint, #shortcuts, .toast, .comfort-strip, #daily-icon-strip,
+  .settings-menu, .places-strip, .chart-extremes, .weekend-chip,
+  .forecast-precip-bar, .radar-legend, .radar-attrib, .radar-time,
+  .sun-arc-golden, .day-range-marker, .day-range-track { display: none !important; }
+  .stage { display: none !important; }
+  main.app {
+    background: #fff !important;
+    color: #000 !important;
+    max-width: 100%;
+    padding: 12px !important;
+  }
+  .glass {
+    background: #fff !important;
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  .brand, .place-name, .temp-value, .condition-label, .feels-like { color: #000 !important; }
+  .hero-inner { transform: none !important; }
+  .metric, .extra-card, .forecast, .daily, .insights, .chart-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .chart-svg .chart-precip, .chart-svg .chart-night { display: none !important; }
+  #forecast-track { overflow: visible !important; display: grid !important; grid-template-columns: repeat(8, 1fr) !important; }
+  #daily-track { padding: 0 !important; }
+  .daily-item { padding: 4px 6px !important; }
+  .radar-map-wrap { display: none !important; }
+}
