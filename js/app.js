@@ -312,6 +312,19 @@ installShortcuts({
     if (app.weather) applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
   },
+  saveCurrent: () => {
+    if (!app.place) return;
+    const saved = places.isSaved(app.place);
+    if (saved) {
+      places.remove(app.place);
+      ui.showToast(`Removed ${app.place.name} from saved`);
+    } else {
+      places.add(app.place);
+      ui.showToast(`Saved ${app.place.name}`);
+    }
+    ui.rerenderPlaces?.();
+  },
+  refresh: () => refreshWeather(),
 });
 
 // ---------- Start ----------
