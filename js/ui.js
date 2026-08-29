@@ -89,6 +89,7 @@ const el = {
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
   settingClearPlaces: $("#setting-clear-places"),
+  settingReset: $("#setting-reset"),
   settingWakeRow: $("#setting-wake-row"),
   settingWakeLock: $("#setting-wake-lock"),
   chartPopover: $("#chart-popover"),
@@ -1608,6 +1609,24 @@ function bindSettings() {
     for (const p of places.all()) places.remove(p);
     renderPlaces();
     ui.showToast("Saved places cleared");
+    close();
+  });
+
+  el.settingReset?.addEventListener("click", () => {
+    if (!confirm("Reset unit, motion and wake preferences?")) return;
+    // Wipe just the preference keys — leaves saved places and weather cache.
+    for (const key of ["aether:unit", "aether:reduceMotion", "aether:wakeLock"]) {
+      try { localStorage.removeItem(key); } catch { /* ignore */ }
+    }
+    state.unit = "C";
+    if (el.unitBtn) el.unitBtn.textContent = "°C";
+    if (el.settingUnitF) el.settingUnitF.checked = false;
+    if (el.settingReduceMotion) el.settingReduceMotion.checked = false;
+    if (el.settingWakeLock) el.settingWakeLock.checked = false;
+    document.documentElement.setAttribute("data-reduce-motion", "false");
+    state.handlers.onReduceMotion?.(false);
+    if (state.weather) ui.setWeather(state.weather);
+    ui.showToast("Preferences reset");
     close();
   });
 
