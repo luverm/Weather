@@ -1522,6 +1522,11 @@ kbd {
 }
 .forecast-item:hover { background: var(--glass); transform: translateY(-2px); }
 .forecast-item.active { background: var(--glass-strong); }
+.forecast-item[data-night="true"] {
+  background: linear-gradient(180deg, rgba(60,80,140,0.06) 0%, rgba(20,30,80,0.10) 100%);
+}
+.forecast-item[data-night="true"]:hover { background: linear-gradient(180deg, rgba(60,80,140,0.14) 0%, rgba(20,30,80,0.18) 100%); }
+.forecast-item[data-night="true"].active { background: linear-gradient(180deg, rgba(60,80,140,0.22) 0%, rgba(20,30,80,0.26) 100%); }
 .forecast-time { font-size: 11px; letter-spacing: 0.08em; color: var(--fg-dim); text-transform: uppercase; }
 .forecast-icon { width: 26px; height: 26px; display: grid; place-items: center; color: var(--fg-muted); }
 .forecast-temp { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }

@@ -968,6 +968,7 @@ function renderHourly(w) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    item.dataset.night = h.isDay === false ? "true" : "false";
     const precip = h.precip || 0;
     const barWidth = precip > 0 ? Math.min(100, (precip / maxPrecip) * 100) : 0;
     const isSnow = h.condition === "snow";
