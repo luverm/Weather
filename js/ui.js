@@ -45,6 +45,7 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonNext: $("#moon-next"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -556,6 +557,7 @@ function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  renderMoonNext(moon);
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
@@ -572,6 +574,27 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+}
+
+function renderMoonNext(moon) {
+  if (!el.moonNext || moon?.phase == null) return;
+  // Phase 0 = new, 0.5 = full. Days-per-phase = 29.5305882.
+  const cycleDays = 29.5305882;
+  const distToFull = ((0.5 - moon.phase) + 1) % 1; // 0..1 to the next full moon
+  const distToNew = ((1 - moon.phase) + 1) % 1;    // 0..1 to the next new moon
+  const nextIsFull = distToFull < distToNew;
+  const days = (nextIsFull ? distToFull : distToNew) * cycleDays;
+  if (days < 0.5) {
+    el.moonNext.textContent = nextIsFull ? "Full tonight" : "New tonight";
+    return;
+  }
+  const targetTs = Date.now() + days * 86_400_000;
+  const label = new Intl.DateTimeFormat(undefined, {
+    month: "short", day: "numeric",
+  }).format(new Date(targetTs));
+  const kind = nextIsFull ? "Full" : "New";
+  const rounded = Math.round(days);
+  el.moonNext.textContent = `${kind} moon in ${rounded}d · ${label}`;
 }
 
 function fmtTime(ts) {
