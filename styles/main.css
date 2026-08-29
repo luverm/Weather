@@ -755,6 +755,28 @@ html[data-reduce-motion="true"] *::after {
 }
 .legend-swatch.precip { background: rgba(154, 209, 255, 0.55); }
 
+.chart-extremes {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  padding: 4px 4px 0;
+}
+.chart-extremes[hidden] { display: none; }
+.extreme-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 10px; border-radius: 999px;
+  font-size: 11px; font-variant-numeric: tabular-nums;
+  background: var(--glass); border: 1px solid var(--stroke);
+  color: var(--fg-muted);
+  cursor: pointer;
+  transition: background 160ms var(--ease), transform 160ms var(--ease), color 160ms var(--ease);
+}
+.extreme-chip:hover { background: var(--glass-strong); color: var(--fg); transform: translateY(-1px); }
+.extreme-chip .chip-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  box-shadow: 0 0 4px currentColor;
+}
+.extreme-chip.warm .chip-dot { background: #ff9c7a; color: #ff9c7a; }
+.extreme-chip.cool .chip-dot { background: #9ad1ff; color: #9ad1ff; }
+
 .chart-wrap {
   position: relative;
 }

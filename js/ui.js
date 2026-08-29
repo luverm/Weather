@@ -58,6 +58,7 @@ const el = {
   adviceText: $("#advice-text"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
+  chartExtremes: $("#chart-extremes"),
   pollenCard: $("#pollen-card"),
   pollenLevel: $("#pollen-level"),
   pollenDominant: $("#pollen-dominant"),
@@ -193,6 +194,7 @@ export const ui = {
     renderMoon(weather.moon);
     renderSun(weather);
     renderHourly(weather);
+    renderChartExtremes(weather);
     renderDaily(weather);
     renderNowcast(weather);
     renderAdvice(weather);
@@ -1009,6 +1011,33 @@ function renderHourly(w) {
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
   }
+}
+
+function renderChartExtremes(w) {
+  if (!el.chartExtremes) return;
+  const hrs = (w.hourly || []).slice(0, 24);
+  if (hrs.length < 3) { el.chartExtremes.hidden = true; return; }
+  let hi = hrs[0], lo = hrs[0];
+  for (const h of hrs) {
+    if (h.temp > hi.temp) hi = h;
+    if (h.temp < lo.temp) lo = h;
+  }
+  // Skip when the swing is tiny — a "warmest 3 PM · coolest 4 PM" chip is noise.
+  if (hi.temp - lo.temp < 2) { el.chartExtremes.hidden = true; return; }
+  el.chartExtremes.hidden = false;
+  el.chartExtremes.innerHTML = `
+    <button type="button" class="extreme-chip warm" data-ts="${hi.time}">
+      <span class="chip-dot"></span>Warmest ${fmtTime(hi.time)} · ${Math.round(convertTemp(hi.temp))}°
+    </button>
+    <button type="button" class="extreme-chip cool" data-ts="${lo.time}">
+      <span class="chip-dot"></span>Coolest ${fmtTime(lo.time)} · ${Math.round(convertTemp(lo.temp))}°
+    </button>`;
+  el.chartExtremes.querySelectorAll(".extreme-chip").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const ts = parseInt(btn.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
 }
 
 function highlightHour(index) {
