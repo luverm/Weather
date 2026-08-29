@@ -85,6 +85,32 @@ export class Scrubber {
     this.track.addEventListener("pointerup", onUp);
     this.track.addEventListener("pointercancel", onUp);
 
+    // Ghost tooltip: hovering the track without dragging shows the target
+    // time so the user knows where they'll land before committing.
+    const ghost = document.createElement("span");
+    ghost.className = "scrubber-ghost";
+    ghost.hidden = true;
+    this.track.appendChild(ghost);
+    this.track.addEventListener("pointermove", (e) => {
+      if (this.dragging) { ghost.hidden = true; return; }
+      const r = this.track.getBoundingClientRect();
+      const frac = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+      const totalMs = RANGE_HOURS * 3600_000;
+      const offsetMs = frac * totalMs - 3600_000;
+      const targetTs = Date.now() + offsetMs;
+      const label = new Date(targetTs).toLocaleTimeString(undefined, {
+        hour: "2-digit", minute: "2-digit", hour12: false,
+      });
+      const hLabel = Math.round(offsetMs / 60_000);
+      const rel = !hLabel ? "now"
+        : Math.abs(hLabel) < 60 ? `${hLabel > 0 ? "+" : ""}${hLabel}m`
+        : `${hLabel > 0 ? "+" : ""}${Math.round(hLabel / 60)}h`;
+      ghost.textContent = `${label} · ${rel}`;
+      ghost.style.left = `${(frac * 100).toFixed(1)}%`;
+      ghost.hidden = false;
+    });
+    this.track.addEventListener("pointerleave", () => { ghost.hidden = true; });
+
     // Keyboard: arrow keys nudge by 1h, shift+arrow by 6h.
     this.track.addEventListener("keydown", (e) => {
       const step = e.shiftKey ? 6 : 1;
