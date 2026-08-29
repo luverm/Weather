@@ -195,9 +195,23 @@ const scrubber = new Scrubber({
 });
 
 // ---------- Load flow ----------
+function syncUrlToPlace(place) {
+  if (!place || place.lat == null || place.lon == null) return;
+  try {
+    const u = new URL(window.location.href);
+    u.searchParams.set("lat", place.lat.toFixed(3));
+    u.searchParams.set("lon", place.lon.toFixed(3));
+    if (place.name) u.searchParams.set("name", place.name); else u.searchParams.delete("name");
+    if (place.country) u.searchParams.set("country", place.country); else u.searchParams.delete("country");
+    if (place.admin1) u.searchParams.set("admin1", place.admin1); else u.searchParams.delete("admin1");
+    window.history.replaceState(null, "", u.toString());
+  } catch { /* URL API unavailable — ignore */ }
+}
+
 async function loadByCoords(place) {
   app.place = place;
   ui.setPlace(place);
+  syncUrlToPlace(place);
   ui.setLoading(`Fetching weather for ${place.name}…`);
 
   // Drop any scrubber offset so we start live on each new city.
