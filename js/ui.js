@@ -206,6 +206,7 @@ export const ui = {
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
+    else if (weather.stale) ui.showToast(`Offline — last update ${weather.staleAgeMin ?? "?"} min ago`);
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
       places.updateSummary(state.place, {

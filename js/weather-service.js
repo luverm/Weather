@@ -67,6 +67,29 @@ export async function searchCities(query) {
   }
 }
 
+const CACHE_KEY_PREFIX = "aether:weather:";
+const CACHE_MAX_AGE = 30 * 60 * 1000;
+
+function cacheKey(lat, lon) {
+  return `${CACHE_KEY_PREFIX}${lat.toFixed(3)},${lon.toFixed(3)}`;
+}
+
+function loadCached(lat, lon) {
+  try {
+    const raw = localStorage.getItem(cacheKey(lat, lon));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (Date.now() - (parsed?.fetchedAt ?? 0) > 6 * 3600_000) return null;
+    return parsed;
+  } catch { return null; }
+}
+
+function saveCached(lat, lon, weather) {
+  try {
+    localStorage.setItem(cacheKey(lat, lon), JSON.stringify(weather));
+  } catch { /* quota / disabled — ignore */ }
+}
+
 export async function getWeather(lat, lon) {
   const params = new URLSearchParams({
     latitude: lat,
@@ -115,11 +138,30 @@ export async function getWeather(lat, lon) {
   try {
     const [forecast, air] = await Promise.allSettled([fetchJson(url), fetchJson(aqUrl)]);
     if (forecast.status !== "fulfilled") throw forecast.reason;
-    return normalize(forecast.value, air.status === "fulfilled" ? air.value : null);
+    const normalized = normalize(forecast.value, air.status === "fulfilled" ? air.value : null);
+    saveCached(lat, lon, normalized);
+    return normalized;
   } catch (err) {
-    console.warn("Weather fetch failed, using mock", err);
+    console.warn("Weather fetch failed", err);
+    // Prefer a cached-but-recent snapshot over the deterministic mock so the
+    // app comes back to life on flaky connections showing something real.
+    const cached = loadCached(lat, lon);
+    if (cached) {
+      const ageMin = Math.round((Date.now() - (cached.fetchedAt ?? 0)) / 60_000);
+      return { ...cached, stale: true, staleAgeMin: ageMin };
+    }
     return mock(lat, lon);
   }
+}
+
+// Returns a synchronously-available cached weather snapshot if one exists
+// and is recent enough. Used for instant paint on cold starts while the
+// fresh fetch is in flight.
+export function getCachedWeather(lat, lon) {
+  const cached = loadCached(lat, lon);
+  if (!cached) return null;
+  if (Date.now() - (cached.fetchedAt ?? 0) > CACHE_MAX_AGE) return null;
+  return { ...cached, fromCache: true };
 }
 
 function normalize(d, aq) {
