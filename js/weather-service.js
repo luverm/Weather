@@ -93,7 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
-    past_hours: 1,
+    past_days: 1, // 24 h of hourly history for "vs yesterday" comparison
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -215,7 +215,33 @@ function normalize(d, aq) {
     moon,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
+    yesterday: computeYesterdayCompare(d.hourly, c.temperature_2m, now),
     fetchedAt: now,
+  };
+}
+
+// Compare current temp to the same hour ~24h earlier so the UI can show
+// "3° warmer than yesterday". Returns null when past data isn't present or
+// the delta is tiny enough not to be worth mentioning.
+function computeYesterdayCompare(hourly, currentTemp, now) {
+  if (!hourly?.time || !hourly?.temperature_2m || currentTemp == null) return null;
+  const target = now - 24 * 3600_000;
+  let bestIdx = -1, bestDiff = Infinity;
+  for (let i = 0; i < hourly.time.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    const diff = Math.abs(t - target);
+    if (diff < bestDiff) { bestDiff = diff; bestIdx = i; }
+  }
+  if (bestIdx < 0) return null;
+  const yTemp = hourly.temperature_2m[bestIdx];
+  if (yTemp == null) return null;
+  // If the closest sample isn't actually near ~24h ago, ignore.
+  if (bestDiff > 90 * 60_000) return null;
+  const delta = currentTemp - yTemp;
+  return {
+    time: new Date(hourly.time[bestIdx]).getTime(),
+    yesterdayTemp: yTemp,
+    delta,
   };
 }
 
@@ -400,6 +426,7 @@ function mock(lat, lon) {
       level: "Moderate",
     },
     pressureTrend: { delta: -0.4, direction: "steady" },
+    yesterday: { time: now - 24 * 3600_000, yesterdayTemp: 15.6, delta: 2.4 },
     fetchedAt: now,
     offline: true,
   };

@@ -61,6 +61,7 @@ const el = {
   pollenItems: $("#pollen-items"),
   pressureTrend: $("#m-pressure-trend"),
   tempTrend: $("#temp-trend"),
+  vsYesterday: $("#vs-yesterday"),
   uvLevel: $("#m-uv-level"),
   humidityComfort: $("#m-humidity-comfort"),
   pressureSparkLine: $("#pressure-spark-line"),
@@ -276,8 +277,45 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  // Rebuild the "Feels like" text without touching the sibling pills so the
+  // temp-trend and vs-yesterday spans survive re-renders.
+  const feelsText = `Feels like ${Math.round(feels)}° `;
+  const textNode = [...el.feelsLike.childNodes].find(
+    (n) => n.nodeType === Node.TEXT_NODE
+  );
+  if (textNode) textNode.nodeValue = feelsText;
+  else el.feelsLike.insertBefore(document.createTextNode(feelsText), el.vsYesterday);
+  renderYesterdayDelta(w);
   renderDayRange(w);
+}
+
+function renderYesterdayDelta(w) {
+  if (!el.vsYesterday) return;
+  const y = w.yesterday;
+  if (!y || y.delta == null || !isFinite(y.delta)) {
+    el.vsYesterday.hidden = true;
+    el.vsYesterday.textContent = "";
+    return;
+  }
+  const deltaC = y.delta;
+  // Only surface a delta worth noticing (>= ~0.5°C, or ~1°F).
+  if (Math.abs(deltaC) < 0.5) {
+    el.vsYesterday.hidden = false;
+    el.vsYesterday.className = "vs-yesterday flat";
+    el.vsYesterday.textContent = "≈ yesterday";
+    el.vsYesterday.title = `Same time yesterday: ${Math.round(convertTemp(y.yesterdayTemp))}°`;
+    return;
+  }
+  const converted = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
+  const rounded = Math.abs(converted) >= 10
+    ? Math.round(converted)
+    : Math.round(converted * 10) / 10;
+  const abs = Math.abs(rounded);
+  const warmer = deltaC > 0;
+  el.vsYesterday.hidden = false;
+  el.vsYesterday.className = `vs-yesterday ${warmer ? "up" : "down"}`;
+  el.vsYesterday.textContent = `${warmer ? "▲" : "▼"} ${abs}° vs yesterday`;
+  el.vsYesterday.title = `Same time yesterday: ${Math.round(convertTemp(y.yesterdayTemp))}°`;
 }
 
 function renderDayRange(w) {
