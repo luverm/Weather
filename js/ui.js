@@ -930,6 +930,15 @@ function cardinal(deg) {
 
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
+  if (!el.forecastTrack._scrollHooked) {
+    // Note the last user scroll/touch so highlightHour() won't scroll while
+    // the user is actively swiping through the strip.
+    const noteScroll = () => { el.forecastTrack._userScrolledAt = performance.now(); };
+    ["wheel", "touchstart", "pointerdown"].forEach((ev) =>
+      el.forecastTrack.addEventListener(ev, noteScroll, { passive: true })
+    );
+    el.forecastTrack._scrollHooked = true;
+  }
   // Scale precip bar width against the wettest upcoming hour so light-rain
   // stretches don't wash to invisibility.
   const upcoming = (w.hourly || []).slice(0, 24);
@@ -959,6 +968,20 @@ function renderHourly(w) {
 function highlightHour(index) {
   const items = el.forecastTrack.querySelectorAll(".forecast-item");
   items.forEach((it, i) => it.classList.toggle("active", i === index));
+  // Keep the active tile centred in the horizontal strip while scrubbing —
+  // otherwise pushing +6h means the highlight vanishes off-screen. Skip if
+  // the user is mid-touch to avoid fighting their scroll.
+  if (typeof index !== "number" || index < 0) return;
+  const active = items[index];
+  if (!active) return;
+  const track = el.forecastTrack;
+  const now = performance.now();
+  if (track._userScrolledAt && now - track._userScrolledAt < 1200) return;
+  const target = active.offsetLeft - (track.clientWidth - active.clientWidth) / 2;
+  const max = track.scrollWidth - track.clientWidth;
+  const clamped = Math.max(0, Math.min(max, target));
+  if (Math.abs(track.scrollLeft - clamped) < 6) return;
+  track.scrollTo({ left: clamped, behavior: "smooth" });
 }
 
 function renderDaily(w) {
