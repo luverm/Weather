@@ -1210,9 +1210,11 @@ function renderPlaces() {
   const activeId = state.place ? places.idFor(state.place) : null;
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
+    const icon = p.condition ? iconFor(p.condition) : "";
     return `
       <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
-        <span>${escapeHtml(p.name)}</span>
+        ${icon ? `<span class="place-chip-icon" aria-hidden="true">${icon}</span>` : ""}
+        <span class="place-chip-name">${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
         <span class="close" data-action="remove" aria-label="Remove">
           <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>

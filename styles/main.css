@@ -309,6 +309,14 @@ html[data-reduce-motion="true"] *::after {
   transition: background 150ms var(--ease), color 150ms var(--ease);
 }
 .place-chip .close:hover { background: rgba(255,255,255,0.12); color: var(--fg); }
+.place-chip-icon {
+  display: inline-grid; place-items: center;
+  width: 18px; height: 18px;
+  color: var(--fg-muted);
+  flex-shrink: 0;
+}
+.place-chip-icon svg { width: 100%; height: 100%; }
+.place-chip.active .place-chip-icon { color: var(--fg); }
 
 /* ---------- Hero ---------- */
 .hero { align-self: start; display: grid; gap: 14px; }
