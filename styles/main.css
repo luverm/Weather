@@ -2047,4 +2047,9 @@ a:focus-visible,
   .place-name { font-size: 28px; }
   .temp { font-size: 78px; }
   .narrative { font-size: 13px; }
+  /* Slightly taller strip cells so touch targets are usable on narrow
+     phones (24 cells across a ~360px viewport is only ~14px wide). */
+  .comfort-strip { height: 36px; }
+  .cstrip-cell { min-height: 18px; }
+  .precip-timeline, .cloud-strip, .score-strip { height: 38px; }
 }
