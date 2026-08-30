@@ -51,6 +51,7 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDelta: $("#sun-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -544,8 +545,38 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderSunDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+// Show how tomorrow's daylight compares to today's. Small but nice —
+// gives a sense of the seasonal trend. Hides when we cannot compare.
+function renderSunDelta(w) {
+  if (!el.sunDelta) return;
+  const today = w?.daily?.[0], tomorrow = w?.daily?.[1];
+  if (!today?.sunrise || !today?.sunset || !tomorrow?.sunrise || !tomorrow?.sunset) {
+    el.sunDelta.hidden = true;
+    el.sunDelta.textContent = "";
+    return;
+  }
+  const todayLen = today.sunset - today.sunrise;
+  const tomorrowLen = tomorrow.sunset - tomorrow.sunrise;
+  const diffSec = Math.round((tomorrowLen - todayLen) / 1000);
+  if (Math.abs(diffSec) < 5) {
+    el.sunDelta.hidden = false;
+    el.sunDelta.dataset.trend = "flat";
+    el.sunDelta.textContent = "same tomorrow";
+    return;
+  }
+  const grow = diffSec > 0;
+  const abs = Math.abs(diffSec);
+  const label = abs >= 60
+    ? `${Math.floor(abs / 60)}m ${abs % 60 ? (abs % 60) + "s" : ""}`.trim()
+    : `${abs}s`;
+  el.sunDelta.hidden = false;
+  el.sunDelta.dataset.trend = grow ? "up" : "down";
+  el.sunDelta.textContent = `${grow ? "+" : "−"}${label} tomorrow`;
 }
 
 function scheduleSunArc(w) {
