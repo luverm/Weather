@@ -17,6 +17,7 @@ import { narrate } from "./narrative.js";
 import { places } from "./places.js";
 import { RadarMap } from "./radar-map.js";
 import { installShortcuts } from "./shortcuts.js";
+import { searchCities } from "./weather-service.js";
 
 const engine = new AnimationEngine();
 
@@ -200,7 +201,7 @@ const scrubber = new Scrubber({
 });
 
 // ---------- Load flow ----------
-async function loadByCoords(place) {
+async function loadByCoords(place, { updateHash = true } = {}) {
   app.place = place;
   ui.setPlace(place);
   ui.setLoading(`Fetching weather for ${place.name}…`);
@@ -223,7 +224,48 @@ async function loadByCoords(place) {
 
   // Move the radar to the new location (fire-and-forget; resolves later).
   ensureRadar([place.lat, place.lon]).then((r) => r?.setCenter(place.lat, place.lon, place.name));
+
+  if (updateHash) writeHash(place);
 }
+
+// ---------- URL hash routing (bookmarkable cities) ----------
+// #city=Paris  → geocode + load
+// #ll=48.85,2.35  → load raw coordinates
+function writeHash(place) {
+  if (!place) return;
+  const hasName = place.name && place.name !== "Current location";
+  const hash = hasName
+    ? `#city=${encodeURIComponent(place.name)}`
+    : `#ll=${place.lat.toFixed(4)},${place.lon.toFixed(4)}`;
+  if (window.location.hash !== hash) {
+    history.replaceState(null, "", hash);
+  }
+}
+async function loadFromHash() {
+  const h = window.location.hash.replace(/^#/, "");
+  if (!h) return false;
+  const params = new URLSearchParams(h);
+  const ll = params.get("ll");
+  if (ll) {
+    const [lat, lon] = ll.split(",").map(parseFloat);
+    if (Number.isFinite(lat) && Number.isFinite(lon)) {
+      await loadByCoords({ name: `${lat.toFixed(2)}, ${lon.toFixed(2)}`, lat, lon }, { updateHash: false });
+      return true;
+    }
+  }
+  const city = params.get("city");
+  if (city) {
+    try {
+      const results = await searchCities(city);
+      if (results.length) {
+        await loadByCoords(results[0], { updateHash: false });
+        return true;
+      }
+    } catch { /* fall through */ }
+  }
+  return false;
+}
+window.addEventListener("hashchange", () => { loadFromHash(); });
 
 async function useGeolocation() {
   ui.setLoading("Locating…");
@@ -312,6 +354,8 @@ installShortcuts({
 
 // ---------- Start ----------
 (async function init() {
+  // URL hash wins if present — makes bookmarks and shared links work.
+  if (await loadFromHash()) return;
   // Prefer the most recent saved place if we have one — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();
