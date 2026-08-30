@@ -217,7 +217,10 @@ export const ui = {
     renderAlerts(weather);
     renderWeekend(weather);
     startLocaltime(weather);
-    if (state.chart) state.chart.setHours(weather.hourly);
+    if (state.chart) {
+      state.chart.setHours(weather.hourly);
+      state.chart.setSunEvents(sunEventsFor(weather));
+    }
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (state.precipTimeline) state.precipTimeline.setHours(weather.hourly);
     if (state.cloudStrip) state.cloudStrip.setHours(weather.hourly);
@@ -961,6 +964,18 @@ function pressureTooltip(direction, delta) {
       : `Slow drop (${rate}) — change may be coming`;
   }
   return rate;
+}
+
+// Flatten the daily forecast into the sunrise/sunset events that fall
+// inside the current chart's 24-hour window. Kept in ui.js so the chart
+// module stays purely a renderer.
+function sunEventsFor(weather) {
+  const out = [];
+  for (const d of (weather?.daily || []).slice(0, 3)) {
+    if (d.sunrise) out.push({ ts: d.sunrise, kind: "rise" });
+    if (d.sunset)  out.push({ ts: d.sunset,  kind: "set" });
+  }
+  return out;
 }
 
 // Small helpers used by the share brief.

@@ -805,6 +805,15 @@ html[data-reduce-motion="true"] *::after {
 }
 .chart-cloud { color: rgba(200, 210, 225, 0.9); }
 .chart-cloud rect { pointer-events: none; }
+.chart-sun-line {
+  stroke-width: 0.6;
+  stroke-dasharray: 3 3;
+  opacity: 0.55;
+  pointer-events: none;
+}
+.chart-sun-rise { stroke: #ffcf7a; fill: #ffcf7a; }
+.chart-sun-set  { stroke: #7ea8ff; fill: #7ea8ff; }
+.chart-sun-glyph { font-size: 8px; font-weight: 600; }
 .chart-labels text {
   font-size: 9px;
   fill: var(--fg-dim);

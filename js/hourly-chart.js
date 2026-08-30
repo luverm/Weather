@@ -54,6 +54,11 @@ export class HourlyChart {
     this.setCursor(null);
   }
 
+  setSunEvents(events) {
+    this.sunEvents = Array.isArray(events) ? events.filter((e) => e?.ts) : [];
+    this._draw();
+  }
+
   refresh() { this._draw(); }
 
   setCursor(ts) {
@@ -266,6 +271,38 @@ export class HourlyChart {
         r.setAttribute("opacity", (Math.max(0, Math.min(100, cover)) / 100 * 0.35).toFixed(2));
         cloudG.appendChild(r);
       });
+    }
+
+    // Sunrise / sunset marker lines — thin gold verticals with a small
+    // "sun" or "moon" glyph in the top gutter. Draws any event whose
+    // timestamp falls inside the current 24-hour window.
+    const sunsG = this.svg.querySelector("#chart-suns");
+    if (sunsG) {
+      sunsG.innerHTML = "";
+      const events = this.sunEvents || [];
+      if (this.hours.length >= 2) {
+        const t0 = this.hours[0].time;
+        const t1 = this.hours[this.hours.length - 1].time;
+        for (const ev of events) {
+          if (ev.ts < t0 || ev.ts > t1) continue;
+          const frac = (ev.ts - t0) / (t1 - t0);
+          const xVal = PAD_LEFT + frac * innerW;
+          const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+          line.setAttribute("x1", xVal.toFixed(1));
+          line.setAttribute("x2", xVal.toFixed(1));
+          line.setAttribute("y1", "10");
+          line.setAttribute("y2", String(H - PAD_BOT));
+          line.setAttribute("class", `chart-sun-line chart-sun-${ev.kind}`);
+          sunsG.appendChild(line);
+          const glyph = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          glyph.setAttribute("x", xVal.toFixed(1));
+          glyph.setAttribute("y", "8");
+          glyph.setAttribute("text-anchor", "middle");
+          glyph.setAttribute("class", `chart-sun-glyph chart-sun-${ev.kind}`);
+          glyph.textContent = ev.kind === "rise" ? "↑" : "↓";
+          sunsG.appendChild(glyph);
+        }
+      }
     }
 
     // Night shading: dim rectangles where !isDay
