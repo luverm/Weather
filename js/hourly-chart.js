@@ -118,7 +118,8 @@ export class HourlyChart {
     if (!this.hoverEl) return;
     const unit = this.getUnit();
     const t = unit === "F" ? h.temp * 9 / 5 + 32 : h.temp;
-    this.hoverEl.textContent = `${this._formatHour(h.time)} · ${Math.round(t)}° · ${h.pop}% chance`;
+    const cloud = h.cloudCover != null ? ` · ${Math.round(h.cloudCover)}% sky` : "";
+    this.hoverEl.textContent = `${this._formatHour(h.time)} · ${Math.round(t)}° · ${h.pop}% chance${cloud}`;
     this.hoverEl.hidden = false;
   }
 
@@ -139,9 +140,10 @@ export class HourlyChart {
       ? `<em>feels ${Math.round(feels)}°</em>` : "";
     const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
+    const cloud = h.cloudCover != null ? ` · ${Math.round(h.cloudCover)}% sky` : "";
     this.popover.innerHTML =
       `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
-      `<em>${h.pop}% precip${wind}${hum}</em>`;
+      `<em>${h.pop}% precip${wind}${hum}${cloud}</em>`;
     this.popover.style.left = `${pxX.toFixed(1)}px`;
     this.popover.style.top = `${pxY.toFixed(1)}px`;
     this.popover.hidden = false;
@@ -243,6 +245,28 @@ export class HourlyChart {
       r.setAttribute("opacity", (0.35 + (pop / 100) * 0.55).toFixed(2));
       precipG.appendChild(r);
     });
+
+    // Cloud cover band across the top: one rect per hour, height caps
+    // at 6px, opacity scales with cover %. Sits above the temp line so
+    // it reads as sky above the day.
+    const cloudG = this.svg.querySelector("#chart-cloud");
+    if (cloudG) {
+      cloudG.innerHTML = "";
+      const cellW = innerW / this.hours.length;
+      this.hours.forEach((h, i) => {
+        const cover = h.cloudCover;
+        if (cover == null) return;
+        const cx = iToX(i);
+        const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        r.setAttribute("x", (cx - cellW / 2).toFixed(1));
+        r.setAttribute("y", "0");
+        r.setAttribute("width", cellW.toFixed(1));
+        r.setAttribute("height", "6");
+        r.setAttribute("fill", "currentColor");
+        r.setAttribute("opacity", (Math.max(0, Math.min(100, cover)) / 100 * 0.35).toFixed(2));
+        cloudG.appendChild(r);
+      });
+    }
 
     // Night shading: dim rectangles where !isDay
     const nightG = this.svg.querySelector("#chart-night");

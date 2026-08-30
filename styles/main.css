@@ -803,6 +803,8 @@ html[data-reduce-motion="true"] *::after {
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
 }
+.chart-cloud { color: rgba(200, 210, 225, 0.9); }
+.chart-cloud rect { pointer-events: none; }
 .chart-labels text {
   font-size: 9px;
   fill: var(--fg-dim);
