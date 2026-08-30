@@ -71,6 +71,8 @@ const el = {
   pressureSparkFill: $("#pressure-spark-fill"),
   humiditySparkLine: $("#humidity-spark-line"),
   humiditySparkFill: $("#humidity-spark-fill"),
+  uvSparkLine: $("#uv-spark-line"),
+  uvSparkFill: $("#uv-spark-fill"),
   dailySpark: $("#daily-spark"),
   dailyHi: $("#daily-hi"),
   dailyLo: $("#daily-lo"),
@@ -439,6 +441,22 @@ function renderPressureSparkline(w) {
     (w.hourly || []).map((h) => h.humidity).filter((v) => v != null).slice(0, 12),
     { minSpan: 10, fixedMin: 0, fixedMax: 100 }
   );
+  // UV sparkline — from now until sunset (or 12 h fallback). Baseline
+  // pinned to 0 so a low-UV bar reads as small, not as spanning the box.
+  const uvSeries = (w.hourly || [])
+    .filter((h) => h.uv != null && h.isDay !== false)
+    .slice(0, 14)
+    .map((h) => h.uv);
+  if (uvSeries.length >= 2) {
+    drawSparkline(
+      el.uvSparkLine, el.uvSparkFill,
+      uvSeries,
+      { minSpan: 3, fixedMin: 0 }
+    );
+  } else if (el.uvSparkLine && el.uvSparkFill) {
+    el.uvSparkLine.setAttribute("d", "");
+    el.uvSparkFill.setAttribute("d", "");
+  }
 }
 
 function drawSparkline(lineEl, fillEl, series, { minSpan = 1, fixedMin, fixedMax } = {}) {
