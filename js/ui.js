@@ -338,9 +338,36 @@ function renderScoreChip(w) {
   const s = scoreWeather(w);
   if (s == null) { el.scoreChip.hidden = true; return; }
   el.scoreChip.hidden = false;
-  el.scoreChip.textContent = `${s} · ${scoreLabel(s)}`;
+
+  // Compare with the score ~3h ahead so we can hint at improvement or
+  // decline. Pull from the live weather rather than the sampled one so
+  // the trend is anchored to real "now" even while scrubbing.
+  const src = state.weather || w;
+  const targetTs = Date.now() + 3 * 3600_000;
+  const future = (src.hourly || []).reduce((best, h) => {
+    if (h.time < Date.now()) return best;
+    if (!best) return h;
+    return Math.abs(h.time - targetTs) < Math.abs(best.time - targetTs) ? h : best;
+  }, null);
+  let trendGlyph = "", trendCls = "";
+  if (future) {
+    const futScore = scoreWeather({ ...future, airQuality: src.airQuality });
+    if (futScore != null) {
+      const delta = futScore - s;
+      if (delta >= 6) { trendGlyph = "▲"; trendCls = "up"; }
+      else if (delta <= -6) { trendGlyph = "▼"; trendCls = "down"; }
+      else { trendGlyph = "→"; trendCls = "flat"; }
+    }
+  }
+  el.scoreChip.textContent = `${s} · ${scoreLabel(s)}${trendGlyph ? " " + trendGlyph : ""}`;
+  el.scoreChip.dataset.trend = trendCls;
   el.scoreChip.style.color = scoreColor(s);
-  el.scoreChip.title = `Comfort score ${s}/100 — from temp, precip, wind, cloud, UV, air.`;
+  el.scoreChip.title = `Comfort score ${s}/100 — from temp, precip, wind, cloud, UV, air.`
+    + (trendGlyph
+        ? (trendCls === "flat" ? " Holding steady over the next 3 h."
+          : trendCls === "up"  ? " Improving over the next 3 h."
+          : " Worsening over the next 3 h.")
+        : "");
 }
 
 function renderDayRange(w) {
