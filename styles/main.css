@@ -1583,7 +1583,27 @@ kbd {
   transition: background 200ms var(--ease);
 }
 .daily-item:hover { background: var(--glass); }
-.daily-day { font-size: 13px; font-weight: 500; }
+.daily-item.is-best {
+  background: linear-gradient(90deg, color-mix(in srgb, #ffd27a 12%, transparent), transparent);
+  box-shadow: inset 2px 0 0 #ffd27a;
+}
+.daily-day {
+  font-size: 13px; font-weight: 500;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.daily-best {
+  display: inline-flex;
+  align-items: center; justify-content: center;
+  width: 16px; height: 16px;
+  color: #ffd27a;
+  filter: drop-shadow(0 0 4px rgba(255,210,122,0.55));
+  animation: bestPulse 3.4s ease-in-out infinite;
+}
+@keyframes bestPulse {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50%      { transform: scale(1.15); opacity: 1; }
+}
+[data-reduce-motion="true"] .daily-best { animation: none; }
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
 .daily-range {
   position: relative;
