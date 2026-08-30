@@ -1708,7 +1708,7 @@ kbd {
 .forecast-track::-webkit-scrollbar { display: none; }
 .forecast-item {
   display: grid;
-  grid-template-rows: auto auto auto auto;
+  grid-template-rows: auto auto auto auto auto;
   gap: 4px;
   justify-items: center;
   padding: 10px 6px;
@@ -1727,6 +1727,23 @@ kbd {
   opacity: 0.9;
 }
 .forecast-pop.dim { opacity: 0; }
+.forecast-wind {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 9.5px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+.forecast-wind-arrow {
+  display: inline-block;
+  line-height: 1;
+  font-size: 11px;
+  color: var(--fg-muted);
+  transform-origin: center center;
+}
+[data-reduce-motion="true"] .forecast-wind-arrow { transition: none; }
 
 .daily-track {
   display: grid;

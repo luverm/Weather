@@ -1082,11 +1082,22 @@ function renderHourly(w) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    // Wind arrow: shown only when wind is meaningful and direction known.
+    // Meteorological convention: direction is where the wind comes FROM,
+    // so rotate the arrow so it points where the wind is going.
+    const wind = h.wind ?? 0;
+    const windGlyph = (h.windDir != null && wind >= 10)
+      ? `<span class="forecast-wind" title="${Math.round(wind)} km/h from ${cardinal(h.windDir)}">
+           <span class="forecast-wind-arrow" style="transform:rotate(${((h.windDir + 180) % 360).toFixed(0)}deg)">↑</span>
+           <span class="forecast-wind-kmh">${Math.round(wind)}</span>
+         </span>`
+      : "";
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
+      ${windGlyph}
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
