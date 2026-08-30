@@ -98,6 +98,9 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcRise: $("#sun-arc-rise"),
+  sunArcSet: $("#sun-arc-set"),
+  sunArcNoon: $("#sun-arc-noon"),
   sunMoments: $("#sun-moments"),
   comfortStrip: $("#comfort-strip"),
   precipTimeline: $("#precip-timeline"),
@@ -710,6 +713,14 @@ function scheduleSunArc(w) {
   if (!el.sunArcMarker || !el.sunArcPath) return;
   if (state.sunArcTimer) { clearInterval(state.sunArcTimer); state.sunArcTimer = null; }
   if (!w?.sunrise || !w?.sunset) return;
+  // Static labels: rise time (left endpoint), set time (right endpoint),
+  // and solar noon (top of arc). Set once per weather load.
+  if (el.sunArcRise) el.sunArcRise.textContent = fmtTime(w.sunrise);
+  if (el.sunArcSet)  el.sunArcSet.textContent  = fmtTime(w.sunset);
+  if (el.sunArcNoon) {
+    const noon = w.sunrise + (w.sunset - w.sunrise) / 2;
+    el.sunArcNoon.textContent = fmtTime(noon);
+  }
 
   const update = () => {
     const now = Date.now();
