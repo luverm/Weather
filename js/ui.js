@@ -1766,9 +1766,11 @@ function bindShare() {
     const bestLine = best
       ? `Best day: ${dowFromTs(w.daily[best.index].time)} (${best.reason})`
       : null;
+    const score = scoreWeather(w);
+    const scoreStr = score != null ? ` · comfort ${score}/100 (${scoreLabel(score)})` : "";
     const lines = [
       `Aether · ${placeName}`,
-      `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
+      `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})${scoreStr}`,
       today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)}` : null,
       rainLine,
       windLine,
