@@ -134,8 +134,20 @@ const el = {
   placesStrip: $("#places-strip"),
 };
 
+// Guess the user's preferred temperature unit from their locale. The
+// short list of Fahrenheit-first countries (US, plus a couple of small
+// territories) covers the case; everything else defaults to Celsius.
+function defaultUnit() {
+  try {
+    const locale = (navigator.languages && navigator.languages[0]) || navigator.language || "";
+    const region = new Intl.Locale(locale).region;
+    if (["US", "BS", "BZ", "KY", "LR", "PW", "FM", "MH"].includes(region)) return "F";
+  } catch { /* ignore */ }
+  return "C";
+}
+
 const state = {
-  unit: localStorage.getItem("aether:unit") || "C",
+  unit: localStorage.getItem("aether:unit") || defaultUnit(),
   weather: null,
   place: null,
   sampledWeather: null, // the weather values at the current scrubber time
