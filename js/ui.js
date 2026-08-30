@@ -206,6 +206,7 @@ export const ui = {
       onCellClick: (ts) => state.handlers.onHourClick?.(ts),
       getWeather: () => state.weather,
     });
+    bindScoreChipClick();
     bindInstallPrompt();
     startHintRotation();
   },
@@ -1764,6 +1765,31 @@ function applyStoredPreferences() {
 
 // Exposed so app.js can query the current preference on boot.
 ui.isReduceMotion = () => localStorage.getItem("aether:reduceMotion") === "1";
+
+// Clicking the score chip jumps to the peak-comfort hour in the next
+// 24 h (the same peak the ScoreStrip identifies). Encourages users to
+// notice the timelapse / scrub features.
+function bindScoreChipClick() {
+  if (!el.scoreChip) return;
+  el.scoreChip.style.cursor = "pointer";
+  el.scoreChip.setAttribute("role", "button");
+  el.scoreChip.setAttribute("tabindex", "0");
+  const jump = () => {
+    const src = state.weather;
+    if (!src?.hourly?.length) return;
+    let peakI = 0, peakScore = -Infinity;
+    for (let i = 0; i < src.hourly.length; i++) {
+      const sc = scoreWeather({ ...src.hourly[i], airQuality: src.airQuality });
+      if (sc != null && sc > peakScore) { peakScore = sc; peakI = i; }
+    }
+    const ts = src.hourly[peakI]?.time;
+    if (ts) state.handlers.onHourClick?.(ts);
+  };
+  el.scoreChip.addEventListener("click", jump);
+  el.scoreChip.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); jump(); }
+  });
+}
 
 // Rotating hints in the footer — each tip surfaces a feature the user
 // might otherwise never notice. Pauses during scrubbing.
