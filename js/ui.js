@@ -963,6 +963,15 @@ function pressureTooltip(direction, delta) {
   return rate;
 }
 
+// Small helpers used by the share brief.
+function dayLen(start, end) {
+  const mins = Math.round((end - start) / 60_000);
+  return `${Math.floor(mins / 60)}h ${mins % 60}m`;
+}
+function dowFromTs(ts) {
+  return new Date(ts).toLocaleDateString(undefined, { weekday: "short" });
+}
+
 function cardinal(deg) {
   const dirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
                 "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
@@ -1467,13 +1476,32 @@ function bindShare() {
     const unit = state.unit;
     const t = (v) => `${Math.round(unit === "F" ? v * 9 / 5 + 32 : v)}°${unit}`;
     const today = w.daily?.[0];
+    // Assemble a proper mini-brief. Every optional line is dropped when
+    // the underlying data is missing so the message never has "—" holes.
+    const sunLine = (today?.sunrise && today?.sunset)
+      ? `Sun ${fmtTime(today.sunrise)}–${fmtTime(today.sunset)} · ${dayLen(today.sunrise, today.sunset)}`
+      : null;
+    const gust = today?.gustsMax;
+    const windLine = `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}${gust && gust >= 25 ? ` (gust ${Math.round(gust)})` : ""}`;
+    const cloudLine = w.cloudCover != null ? `Sky ${Math.round(w.cloudCover)}% cover` : null;
+    const rainLine = today && (today.precip > 0.3 || today.pop >= 30)
+      ? `Rain ${today.precip?.toFixed(today.precip < 10 ? 1 : 0)} mm · ${today.pop}% chance`
+      : null;
+    const best = pickBestDay(w.daily || []);
+    const bestLine = best
+      ? `Best day: ${dowFromTs(w.daily[best.index].time)} (${best.reason})`
+      : null;
     const lines = [
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
-      today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
-      `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
-      w.uv != null ? `UV ${Math.round(w.uv)}` : null,
+      today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)}` : null,
+      rainLine,
+      windLine,
+      cloudLine,
+      sunLine,
+      w.uv != null ? `UV ${Math.round(w.uv)}${w.uvPeak?.value >= 6 ? ` (peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)})` : ""}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
+      bestLine,
     ].filter(Boolean);
     const text = lines.join("\n");
     try {
