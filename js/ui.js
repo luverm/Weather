@@ -1235,6 +1235,7 @@ function renderDaily(w) {
   renderDailySpark(days);
   renderDailyDelta(days);
   const best = pickBestDay(days);
+  const todayHi = days[0]?.tempMax;
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1268,7 +1269,7 @@ function renderDaily(w) {
          </span>`
       : "";
     item.innerHTML = `
-      <span class="daily-day">${day}${bestBadge}</span>
+      <span class="daily-day">${day}${bestBadge}${dailyDeltaBadge(i, d.tempMax, todayHi)}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
@@ -1280,6 +1281,20 @@ function renderDaily(w) {
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+}
+
+// Compact "+3°" / "−4°" pill after the weekday, comparing that day's
+// high to today's high. Hidden for today itself and when we don't have
+// both highs, or when the delta is under 1°.
+function dailyDeltaBadge(index, dayHi, todayHi) {
+  if (index === 0 || dayHi == null || todayHi == null) return "";
+  const rawDelta = dayHi - todayHi;
+  const abs = Math.abs(rawDelta);
+  if (abs < 1) return "";
+  const shown = Math.round(state.unit === "F" ? rawDelta * 9 / 5 : rawDelta);
+  const cls = shown > 0 ? "up" : "down";
+  const sign = shown > 0 ? "+" : "−";
+  return `<span class="daily-delta-chip ${cls}" title="${shown > 0 ? "Warmer" : "Cooler"} than today by ${Math.abs(shown)}°">${sign}${Math.abs(shown)}°</span>`;
 }
 
 function renderDailyIconStrip(days) {

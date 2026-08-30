@@ -1914,6 +1914,21 @@ kbd {
   50%      { transform: scale(1.15); opacity: 1; }
 }
 [data-reduce-motion="true"] .daily-best { animation: none; }
+.daily-delta-chip {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+.daily-delta-chip.up   { color: #ff9c7a; }
+.daily-delta-chip.down { color: #9ad1ff; }
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
 .daily-range {
   position: relative;
