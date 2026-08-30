@@ -226,7 +226,7 @@ export const ui = {
     const sub = [place.admin1, place.country].filter(Boolean).join(", ");
     el.placeSub.textContent = sub || "—";
     // Reflect the location in the browser tab so tabs stay identifiable.
-    document.title = place.name ? `${place.name} · Aether` : "Aether — Interactive Weather";
+    updateTabTitle();
     // Reset alert dismissals so a fresh location can re-surface them.
     try { sessionStorage.removeItem("aether:dismissed-alerts"); } catch { /* ignore */ }
     renderPlaces();
@@ -254,6 +254,7 @@ export const ui = {
       state.chart.setHours(weather.hourly);
       state.chart.setSunEvents(sunEventsFor(weather));
     }
+    updateTabTitle();
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (state.precipTimeline) state.precipTimeline.setHours(weather.hourly);
     if (state.cloudStrip) state.cloudStrip.setHours(weather.hourly);
@@ -1199,6 +1200,30 @@ function dayLen(start, end) {
 }
 function dowFromTs(ts) {
   return new Date(ts).toLocaleDateString(undefined, { weekday: "short" });
+}
+
+// Compose the browser tab title from the current place + condition
+// emoji + rounded temperature. Called from setPlace and after each
+// weather load so both fields stay fresh.
+function updateTabTitle() {
+  const place = state.place?.name;
+  const w = state.weather;
+  const emoji = w ? conditionEmoji(w.condition, w.isDay) : "";
+  const temp = w?.temp != null ? ` ${Math.round(convertTemp(w.temp))}°` : "";
+  if (!place) { document.title = "Aether — Interactive Weather"; return; }
+  document.title = `${emoji ? emoji + " " : ""}${place}${temp} · Aether`;
+}
+
+function conditionEmoji(cond, isDay) {
+  switch (cond) {
+    case "clear": return isDay === false ? "🌙" : "☀️";
+    case "clouds": return isDay === false ? "☁️" : "⛅";
+    case "rain": return "🌧️";
+    case "snow": return "❄️";
+    case "storm": return "⛈️";
+    case "fog":  return "🌫️";
+    default: return "";
+  }
 }
 
 function cardinal(deg) {
