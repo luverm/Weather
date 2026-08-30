@@ -329,9 +329,32 @@ function renderLiveValues(w, { animate = true } = {}) {
   const chip = el.scoreChip;
   el.conditionLabel.textContent = capitalize(w.label) + " ";
   if (chip) el.conditionLabel.appendChild(chip);
+  // Preserve temp-trend inside feels-like when rewriting text.
+  const trendEl = el.tempTrend;
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  if (trendEl) el.feelsLike.prepend(trendEl);
+  el.feelsLike.title = feelsExplanation(w);
   renderDayRange(w);
   renderScoreChip(w);
+}
+
+// Short human explanation of why feels-like diverges from air temperature.
+// Set as a title tooltip on the "Feels like X°" line.
+function feelsExplanation(w) {
+  const delta = (w.feelsLike ?? w.temp) - w.temp;
+  const abs = Math.abs(delta);
+  if (abs < 1) return "Feels close to the actual air temperature.";
+  const wind = w.windSpeed ?? 0;
+  if (delta < -1) {
+    if (wind >= 10) return `Wind chill: about ${Math.round(delta)}° cooler due to ${Math.round(wind)} km/h wind.`;
+    return `Feels about ${Math.round(delta)}° cooler than the air.`;
+  }
+  if (delta > 1) {
+    const h = w.humidity;
+    if (h != null && h >= 60) return `Humidity makes it feel about ${Math.round(delta)}° warmer (${Math.round(h)}% RH).`;
+    return `Feels about ${Math.round(delta)}° warmer than the air.`;
+  }
+  return "";
 }
 
 function renderScoreChip(w) {
