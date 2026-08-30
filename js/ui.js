@@ -1709,10 +1709,12 @@ function startHintRotation() {
   stopHintRotation();
   hintIdx = 0;
   el.hintText.innerHTML = HINTS[hintIdx];
+  // Respect a hard reduce-motion preference: leave the first tip
+  // visible and never swap.
+  if (ui.isReduceMotion?.() || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   hintTimer = setInterval(() => {
     hintIdx = (hintIdx + 1) % HINTS.length;
     el.hintText.classList.add("hint-swap");
-    // Wait for the fade-out, then swap text and fade back in.
     setTimeout(() => {
       el.hintText.innerHTML = HINTS[hintIdx];
       el.hintText.classList.remove("hint-swap");
