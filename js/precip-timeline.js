@@ -48,6 +48,7 @@ export class PrecipTimeline {
     // register visibly (never let peak be less than 0.5 mm for scale).
     const peak = Math.max(0.5, ...this.hours.map((h) => h.precip ?? 0));
 
+    const now = Date.now();
     const cells = this.hours.map((h, i) => {
       const mm = h.precip ?? 0;
       const color = intensityColor(mm);
@@ -56,8 +57,9 @@ export class PrecipTimeline {
       const showTick = tickHour % 6 === 0;
       const titleAmt = mm >= 0.1 ? `${mm.toFixed(mm < 1 ? 2 : 1)} mm` : "trace";
       const title = `${String(tickHour).padStart(2, "0")}:00 · ${titleAmt}${h.pop != null ? ` · ${h.pop}%` : ""}`;
+      const isNow = Math.abs(h.time - now) < 30 * 60_000;
       return `
-        <button class="ptl-cell" data-i="${i}" data-ts="${h.time}" title="${title}">
+        <button class="ptl-cell${isNow ? " is-now" : ""}" data-i="${i}" data-ts="${h.time}" title="${title}">
           <span class="ptl-bar" style="height:${heightPct}%;background:${color || "transparent"}"></span>
           ${showTick ? `<span class="ptl-tick">${String(tickHour).padStart(2, "0")}</span>` : ""}
         </button>

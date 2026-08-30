@@ -1229,6 +1229,20 @@ kbd {
   border-radius: 0 0 3px 3px;
   pointer-events: none;
 }
+.cstrip-cell.is-now::before,
+.ptl-cell.is-now::before,
+.csky-cell.is-now::before {
+  content: "";
+  position: absolute;
+  top: -6px; left: 50%;
+  width: 5px; height: 5px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 60%, transparent);
+  pointer-events: none;
+  z-index: 1;
+}
 .cstrip-tick {
   position: absolute;
   bottom: -16px;

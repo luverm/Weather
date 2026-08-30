@@ -33,6 +33,7 @@ export class CloudStrip {
     }
     this.root.hidden = false;
 
+    const now = Date.now();
     const cells = this.hours.map((h, i) => {
       const c = h.cloudCover ?? 0;
       const color = coverColor(c, h.isDay);
@@ -40,8 +41,9 @@ export class CloudStrip {
       const tickHour = new Date(h.time).getHours();
       const showTick = tickHour % 6 === 0;
       const title = `${String(tickHour).padStart(2, "0")}:00 · ${Math.round(c)}% sky cover`;
+      const isNow = Math.abs(h.time - now) < 30 * 60_000;
       return `
-        <button class="csky-cell" data-i="${i}" data-ts="${h.time}" title="${title}">
+        <button class="csky-cell${isNow ? " is-now" : ""}" data-i="${i}" data-ts="${h.time}" title="${title}">
           <span class="csky-bar" style="height:${heightPct}%;background:${color}"></span>
           ${showTick ? `<span class="csky-tick">${String(tickHour).padStart(2, "0")}</span>` : ""}
         </button>

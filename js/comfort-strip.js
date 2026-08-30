@@ -29,6 +29,7 @@ export class ComfortStrip {
     const tMax = Math.max(...temps);
     const span = Math.max(4, tMax - tMin);
 
+    const now = Date.now();
     const cells = this.hours.map((h, i) => {
       const t = h.feelsLike ?? h.temp;
       const color = colorForFeels(t);
@@ -37,8 +38,9 @@ export class ComfortStrip {
       const tickHour = new Date(h.time).getHours();
       const showTick = tickHour % 6 === 0;
       const tickLabel = showTick ? `${tickHour.toString().padStart(2, "0")}:00` : "";
+      const isNow = Math.abs(h.time - now) < 30 * 60_000;
       return `
-        <button class="cstrip-cell" data-i="${i}" data-ts="${h.time}"
+        <button class="cstrip-cell${isNow ? " is-now" : ""}" data-i="${i}" data-ts="${h.time}"
                 title="${tickHour}:00 · ${display} feels · ${h.pop ?? 0}% rain"
                 style="--c:${color}">
           <span class="cstrip-bar" style="--rain:${rainOpacity}"></span>

@@ -671,6 +671,9 @@ function scheduleSunCountdown(w) {
       : `${mins}m`;
     if (el.sunNextLabel) el.sunNextLabel.textContent = `${nextKind} in`;
     if (el.sunCountdown) el.sunCountdown.textContent = label;
+    // Keep the photography-moments chips live too — their "active"
+    // state and window-times drift out of date otherwise.
+    renderSunMoments(w);
   };
   update();
   state.sunTimer = setInterval(update, 30_000);
