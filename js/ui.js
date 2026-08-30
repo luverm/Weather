@@ -6,6 +6,7 @@ import { places } from "./places.js";
 import { HourlyChart } from "./hourly-chart.js";
 import { ComfortStrip } from "./comfort-strip.js";
 import { PrecipTimeline } from "./precip-timeline.js";
+import { CloudStrip } from "./cloud-strip.js";
 import { advise } from "./advice.js";
 import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
@@ -94,6 +95,8 @@ const el = {
   comfortStrip: $("#comfort-strip"),
   precipTimeline: $("#precip-timeline"),
   precipSummary: $("#precip-summary"),
+  cloudStrip: $("#cloud-strip"),
+  cloudSummary: $("#cloud-summary"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
   weekendDetail: $("#weekend-detail"),
@@ -124,6 +127,7 @@ const state = {
   chart: null,
   comfortStrip: null,
   precipTimeline: null,
+  cloudStrip: null,
   sunTimer: null,
   sunArcTimer: null,
   localTimer: null,
@@ -160,6 +164,11 @@ export const ui = {
     state.precipTimeline = new PrecipTimeline({
       rootEl: el.precipTimeline,
       summaryEl: el.precipSummary,
+      onCellClick: (ts) => state.handlers.onHourClick?.(ts),
+    });
+    state.cloudStrip = new CloudStrip({
+      rootEl: el.cloudStrip,
+      summaryEl: el.cloudSummary,
       onCellClick: (ts) => state.handlers.onHourClick?.(ts),
     });
     bindInstallPrompt();
@@ -206,6 +215,7 @@ export const ui = {
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (state.precipTimeline) state.precipTimeline.setHours(weather.hourly);
+    if (state.cloudStrip) state.cloudStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
@@ -225,6 +235,7 @@ export const ui = {
     highlightHour(highlightHourIndex);
     if (state.comfortStrip) state.comfortStrip.highlight(highlightHourIndex);
     if (state.precipTimeline) state.precipTimeline.highlight(highlightHourIndex);
+    if (state.cloudStrip) state.cloudStrip.highlight(highlightHourIndex);
     if (state.chart && sampled._sampledTs != null) {
       state.chart.setCursor(sampled._sampledTs);
     } else if (state.chart) {
