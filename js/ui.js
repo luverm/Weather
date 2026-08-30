@@ -757,31 +757,37 @@ function renderSun(w) {
   scheduleSunArc(w);
 }
 
-// Guess whether tonight's sunset will be vivid, muted or blocked.
-// A cloud cover of 40–75 % around sunset tends to produce the classic
-// pink/orange fill; 100 % overcast blocks it; a clear sky gives a
-// subtler orange horizon. Rendered as a small note near the sun times.
+// Guess whether tonight's sunset / tomorrow's sunrise will be vivid,
+// muted or blocked. 40–75% cloud cover around the event tends to
+// produce the classic pink/orange fill; 100% overcast blocks it; a
+// clear sky gives a subtler horizon glow. Rendered as tooltip so the
+// UI stays uncluttered — nothing new to look at unless you go poking.
 function renderSunsetForecast(w) {
-  // Reuse the sun-quality element by appending a new chip after it —
-  // easier than injecting yet another DOM node.
-  if (!el.sunSet) return;
-  const sunsetTs = w?.sunset;
-  if (!sunsetTs || sunsetTs < Date.now() - 30 * 60_000) {
-    el.sunSet.title = "";
-    return;
-  }
-  const nearest = (w.hourly || []).reduce((best, h) => {
+  applyHorizonForecast(el.sunSet, w, w?.sunset, "sunset");
+  // Sunrise: use tomorrow's, or the next in daily[] that is still
+  // ahead. Falls back gracefully during the pre-dawn window when
+  // today's sunrise is future.
+  const now = Date.now();
+  const nextRise = (w?.daily || [])
+    .map((d) => d.sunrise).find((ts) => ts && ts > now);
+  applyHorizonForecast(el.sunRise, w, nextRise, "sunrise");
+}
+function applyHorizonForecast(el_, w, ts, kind) {
+  if (!el_) return;
+  if (!ts || ts < Date.now() - 30 * 60_000) { el_.title = ""; return; }
+  const nearest = (w?.hourly || []).reduce((best, h) => {
     if (h.cloudCover == null) return best;
-    return !best || Math.abs(h.time - sunsetTs) < Math.abs(best.time - sunsetTs) ? h : best;
+    return !best || Math.abs(h.time - ts) < Math.abs(best.time - ts) ? h : best;
   }, null);
-  if (!nearest) { el.sunSet.title = ""; return; }
+  if (!nearest) { el_.title = ""; return; }
   const cover = nearest.cloudCover;
+  const noun = kind === "sunrise" ? "sunrise" : "sunset";
   let verdict;
-  if (cover >= 85) verdict = "Overcast — sunset colours likely muted.";
-  else if (cover >= 40) verdict = "Broken cloud — good chance of a vivid sunset.";
-  else if (cover >= 15) verdict = "Mostly clear — soft horizon glow.";
-  else verdict = "Clear — subtle sunset without cloud drama.";
-  el.sunSet.title = `${verdict} (${Math.round(cover)}% cover near sunset)`;
+  if (cover >= 85) verdict = `Overcast — ${noun} colours likely muted.`;
+  else if (cover >= 40) verdict = `Broken cloud — good chance of a vivid ${noun}.`;
+  else if (cover >= 15) verdict = `Mostly clear — soft horizon glow at ${noun}.`;
+  else verdict = `Clear — subtle ${noun} without cloud drama.`;
+  el_.title = `${verdict} (${Math.round(cover)}% cover near ${noun})`;
 }
 
 // Summarise how bright a day it will be — average cloud cover during
