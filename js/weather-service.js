@@ -327,7 +327,7 @@ function findUvPeak(hourly) {
 
 // Conway's simplified moon-phase algorithm — accurate enough for UI glyphs.
 // Returns { phase: 0..1, name: "Waxing crescent", illum: 0..1 }
-function computeMoonPhase(date) {
+export function computeMoonPhase(date) {
   const year = date.getUTCFullYear();
   const month = date.getUTCMonth() + 1;
   const day = date.getUTCDate() + date.getUTCHours() / 24;

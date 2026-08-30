@@ -1,7 +1,7 @@
 // UI layer. Renders every data module and handles non-scene interactions
 // (search, unit toggle, saved places, tilt, audio toggle).
 
-import { searchCities } from "./weather-service.js";
+import { searchCities, computeMoonPhase } from "./weather-service.js";
 import { places } from "./places.js";
 import { HourlyChart } from "./hourly-chart.js";
 import { ComfortStrip } from "./comfort-strip.js";
@@ -48,6 +48,8 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonNext: $("#moon-next"),
+  moonPreview: $("#moon-preview"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -540,6 +542,75 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+  renderMoonNextMilestone();
+  renderMoonPreview();
+}
+
+// Compact "Full moon in 8 d · Feb 9" chip beneath the illumination line.
+function renderMoonNextMilestone() {
+  if (!el.moonNext) return;
+  const step = 24 * 3600_000;
+  const now = new Date();
+  let cursor = new Date(now.getTime());
+  let prev = computeMoonPhase(cursor);
+  for (let i = 1; i <= 30; i++) {
+    cursor = new Date(now.getTime() + i * step);
+    const cur = computeMoonPhase(cursor);
+    // Detect a crossing of phase 0 (new) or 0.5 (full) between prev and cur.
+    const crossFull = (prev.phase < 0.5 && cur.phase >= 0.5);
+    const crossNew  = (prev.phase > cur.phase); // wraps past 1.0
+    if (crossFull) {
+      el.moonNext.hidden = false;
+      el.moonNext.textContent = `Full moon · ${i}d · ${cursor.toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
+      return;
+    }
+    if (crossNew) {
+      el.moonNext.hidden = false;
+      el.moonNext.textContent = `New moon · ${i}d · ${cursor.toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
+      return;
+    }
+    prev = cur;
+  }
+  el.moonNext.hidden = true;
+}
+
+// Row of five compact moon glyphs — today plus the next four days —
+// so the current sliver of the cycle is visible at a glance.
+function renderMoonPreview() {
+  if (!el.moonPreview) return;
+  const step = 24 * 3600_000;
+  const now = new Date();
+  el.moonPreview.innerHTML = "";
+  for (let i = 0; i < 5; i++) {
+    const day = new Date(now.getTime() + i * step);
+    const m = computeMoonPhase(day);
+    const svg = moonGlyphSvg(m.phase, 14);
+    const label = i === 0 ? "Today" : day.toLocaleDateString(undefined, { weekday: "short" });
+    const wrap = document.createElement("div");
+    wrap.className = "moon-preview-cell";
+    wrap.title = `${label} · ${m.name} · ${Math.round(m.illum * 100)}%`;
+    wrap.innerHTML = `${svg}<span>${label}</span>`;
+    el.moonPreview.appendChild(wrap);
+  }
+}
+
+// Render a mini moon glyph as an SVG string. Reuses the same terminator
+// geometry as the big moon; keeps the graphics language consistent.
+function moonGlyphSvg(phase, r) {
+  const waxing = phase < 0.5;
+  const outer = waxing
+    ? `M 0 ${-r} A ${r} ${r} 0 0 1 0 ${r}`
+    : `M 0 ${-r} A ${r} ${r} 0 0 0 0 ${r}`;
+  const termX = Math.abs(Math.cos(phase * 2 * Math.PI)) * r;
+  const large = Math.cos(phase * 2 * Math.PI) > 0 ? 0 : 1;
+  const termSweep = waxing ? (Math.cos(phase * 2 * Math.PI) > 0 ? 0 : 1)
+                           : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
+  const d = outer + ` A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
+  const box = r + 2;
+  return `<svg viewBox="-${box} -${box} ${box * 2} ${box * 2}" aria-hidden="true">
+    <circle cx="0" cy="0" r="${r}" fill="rgba(255,255,255,0.08)"/>
+    <path d="${d}" fill="#f0e6cb"/>
+  </svg>`;
 }
 
 function fmtTime(ts) {
