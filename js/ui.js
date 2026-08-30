@@ -1220,7 +1220,10 @@ function renderDaily(w) {
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
-    const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
+    const rainMmLabel = (d.precip != null && d.precip >= 0.5)
+      ? ` · ${d.precip.toFixed(d.precip < 10 ? 1 : 0)} mm`
+      : "";
+    const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain${rainMmLabel}` : rainMmLabel;
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
     const bestBadge = best && best.index === i
       ? `<span class="daily-best" title="Best day this week · ${escapeHtml(best.reason)}" aria-label="Best day: ${escapeHtml(best.reason)}">
