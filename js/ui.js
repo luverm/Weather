@@ -1118,18 +1118,19 @@ function toggleDailyExpand(item, d, w) {
     item.dataset.expanded = "false";
     return;
   }
-  // Build mini hourly bars for the 12 daytime-ish hours of that day, if we
-  // have them in the hourly series (only first 24h). Otherwise skip.
   const dayStart = new Date(d.time);
   dayStart.setHours(0, 0, 0, 0);
   const dayEnd = dayStart.getTime() + 24 * 3600_000;
   const hrs = (w.hourly || []).filter((h) => h.time >= dayStart.getTime() && h.time < dayEnd);
+  const meta = document.createElement("div");
+  meta.className = "daily-expand-meta";
+  meta.innerHTML = dailyMetaChips(d);
   if (!hrs.length) {
-    // For days beyond the 24h hourly range, just show summary text.
+    // For days beyond the 24h hourly range, show just the meta chips.
     const summary = document.createElement("div");
     summary.className = "daily-expand";
     summary.style.gridTemplateColumns = "1fr";
-    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${Math.round(d.gustsMax ?? 0)} km/h · UV ${Math.round(d.uvMax ?? 0)}</span>`;
+    summary.appendChild(meta);
     item.appendChild(summary);
     item.dataset.expanded = "true";
     return;
@@ -1150,8 +1151,29 @@ function toggleDailyExpand(item, d, w) {
     const hh = new Date(h.time).getHours().toString().padStart(2, "0");
     return `<div class="daily-expand-bar" data-precip="${precipLevel}" style="height:${height.toFixed(1)}px" title="${hh}:00 · ${Math.round(convertTemp(h.temp))}° · ${h.pop}%"><span>${Math.round(convertTemp(h.temp))}°</span></div>`;
   }).join("");
+  box.appendChild(meta);
   item.appendChild(box);
   item.dataset.expanded = "true";
+}
+
+function dailyMetaChips(d) {
+  const chips = [];
+  if (d.sunrise) chips.push(`<span class="dchip"><span class="dchip-i">↑</span>${fmtTime(d.sunrise)}</span>`);
+  if (d.sunset)  chips.push(`<span class="dchip"><span class="dchip-i">↓</span>${fmtTime(d.sunset)}</span>`);
+  if (d.sunrise && d.sunset) {
+    const mins = Math.round((d.sunset - d.sunrise) / 60_000);
+    chips.push(`<span class="dchip">${Math.floor(mins / 60)}h ${mins % 60}m daylight</span>`);
+  }
+  if (d.precip != null && d.precip > 0) {
+    chips.push(`<span class="dchip">${d.precip.toFixed(d.precip < 10 ? 1 : 0)} mm rain</span>`);
+  }
+  if (d.uvMax != null && d.uvMax > 0) {
+    chips.push(`<span class="dchip">UV ${Math.round(d.uvMax)}</span>`);
+  }
+  if (d.gustsMax != null && d.gustsMax >= 25) {
+    chips.push(`<span class="dchip">gust ${Math.round(d.gustsMax)} km/h</span>`);
+  }
+  return chips.join("");
 }
 
 function renderNowcast(w) {
