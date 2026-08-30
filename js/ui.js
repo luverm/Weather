@@ -881,10 +881,13 @@ function renderTrends(w) {
       const { direction, delta } = w.pressureTrend;
       const arrow = direction === "rising" ? "▲" : direction === "falling" ? "▼" : "→";
       const cls = direction === "rising" ? "up" : direction === "falling" ? "down" : "flat";
+      const hint = pressureInterpretation(direction, delta);
       el.pressureTrend.className = `trend ${cls}`;
-      el.pressureTrend.textContent = `${arrow} ${delta >= 0 ? "+" : ""}${delta.toFixed(1)}`;
+      el.pressureTrend.textContent = `${arrow} ${delta >= 0 ? "+" : ""}${delta.toFixed(1)}${hint ? " · " + hint : ""}`;
+      el.pressureTrend.title = pressureTooltip(direction, delta);
     } else {
       el.pressureTrend.textContent = "";
+      el.pressureTrend.removeAttribute("title");
     }
   }
   // Temperature trend: next-3-hours delta vs now.
@@ -905,6 +908,38 @@ function renderTrends(w) {
       el.tempTrend.textContent = "";
     }
   }
+}
+
+// Plain-language interpretation for a 3-hour pressure change (hPa).
+// Short label appended after the number; longer form used as tooltip.
+function pressureInterpretation(direction, delta) {
+  const abs = Math.abs(delta);
+  if (abs < 0.8) return null; // "steady" — arrow alone conveys it
+  if (direction === "rising") {
+    if (abs >= 2.5) return "clearing";
+    return "fairing";
+  }
+  if (direction === "falling") {
+    if (abs >= 2.5) return "unsettled";
+    return "change";
+  }
+  return null;
+}
+function pressureTooltip(direction, delta) {
+  const rate = `${delta >= 0 ? "+" : ""}${delta.toFixed(1)} hPa / 3h`;
+  const abs = Math.abs(delta);
+  if (abs < 0.8) return `Steady pressure (${rate})`;
+  if (direction === "rising") {
+    return abs >= 2.5
+      ? `Sharp rise (${rate}) — skies clearing, wind easing`
+      : `Slow rise (${rate}) — fair weather trending in`;
+  }
+  if (direction === "falling") {
+    return abs >= 2.5
+      ? `Sharp drop (${rate}) — unsettled weather, watch for storms`
+      : `Slow drop (${rate}) — change may be coming`;
+  }
+  return rate;
 }
 
 function cardinal(deg) {
