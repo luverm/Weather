@@ -195,6 +195,7 @@ export const ui = {
       getWeather: () => state.weather,
     });
     bindInstallPrompt();
+    startHintRotation();
   },
   focusSearch() { el.searchInput?.focus(); el.searchInput?.select?.(); },
   toggleUnits() { el.unitBtn?.click(); },
@@ -273,9 +274,10 @@ export const ui = {
   setScrubbing(on) {
     document.documentElement.setAttribute("data-scrubbing", on ? "true" : "false");
     if (on) {
+      stopHintRotation();
       el.hintText.textContent = "Drag to explore future weather.";
     } else {
-      el.hintText.innerHTML = 'Drag the slider, hover the chart, or press <kbd>?</kbd> for shortcuts.';
+      startHintRotation();
     }
   },
   setAudioState(on) {
@@ -1662,6 +1664,37 @@ function applyStoredPreferences() {
 
 // Exposed so app.js can query the current preference on boot.
 ui.isReduceMotion = () => localStorage.getItem("aether:reduceMotion") === "1";
+
+// Rotating hints in the footer — each tip surfaces a feature the user
+// might otherwise never notice. Pauses during scrubbing.
+const HINTS = [
+  'Drag the slider, hover the chart, or press <kbd>?</kbd> for shortcuts.',
+  'Press <kbd>T</kbd> or the ▶ next to "Now" to timelapse the next 24 hours.',
+  'Hover any cell in a 24-hour strip to see the raw reading.',
+  'The gold ★ in the 7-day outlook marks Aether’s pick of the week.',
+  'Golden and blue hours are labelled above the sun arc.',
+  'Cloud cover appears as a soft grey band above the hourly chart.',
+  'Search cities with <kbd>/</kbd>, cycle saved with <kbd>[</kbd> <kbd>]</kbd>.',
+];
+let hintTimer = null, hintIdx = 0;
+function startHintRotation() {
+  if (!el.hintText) return;
+  stopHintRotation();
+  hintIdx = 0;
+  el.hintText.innerHTML = HINTS[hintIdx];
+  hintTimer = setInterval(() => {
+    hintIdx = (hintIdx + 1) % HINTS.length;
+    el.hintText.classList.add("hint-swap");
+    // Wait for the fade-out, then swap text and fade back in.
+    setTimeout(() => {
+      el.hintText.innerHTML = HINTS[hintIdx];
+      el.hintText.classList.remove("hint-swap");
+    }, 260);
+  }, 9000);
+}
+function stopHintRotation() {
+  if (hintTimer) { clearInterval(hintTimer); hintTimer = null; }
+}
 
 function startFetchedTicker() {
   const update = () => {

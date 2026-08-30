@@ -1920,6 +1920,12 @@ kbd {
   color: var(--fg-dim);
   user-select: none;
 }
+#hint-text {
+  transition: opacity 260ms var(--ease), transform 260ms var(--ease);
+  opacity: 1; transform: translateY(0);
+}
+#hint-text.hint-swap { opacity: 0; transform: translateY(3px); }
+[data-reduce-motion="true"] #hint-text { transition: none; transform: none; }
 .hint .dot {
   width: 6px; height: 6px; border-radius: 50%;
   background: var(--accent); box-shadow: 0 0 10px var(--accent);
