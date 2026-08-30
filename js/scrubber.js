@@ -9,7 +9,7 @@ import { clock } from "./clock.js";
 const RANGE_HOURS = 24;
 
 export class Scrubber {
-  constructor({ trackEl, thumbEl, fillEl, timeEl, deltaEl, resetEl,
+  constructor({ trackEl, thumbEl, fillEl, timeEl, deltaEl, resetEl, playEl,
                 sunriseEl, sunsetEl, appEl, onScrub }) {
     this.track = trackEl;
     this.thumb = thumbEl;
@@ -17,11 +17,14 @@ export class Scrubber {
     this.timeEl = timeEl;
     this.deltaEl = deltaEl;
     this.resetEl = resetEl;
+    this.playEl = playEl;
     this.sunriseEl = sunriseEl;
     this.sunsetEl = sunsetEl;
     this.appEl = appEl; // receives data-scrubbing attribute
     this.onScrub = onScrub;
     this.dragging = false;
+    this.playing = false;
+    this._playFrame = 0;
     this.start = Date.now();
     this.sunrise = null;
     this.sunset = null;
@@ -66,6 +69,7 @@ export class Scrubber {
 
   _bind() {
     const onDown = (e) => {
+      this.stop();
       this.dragging = true;
       this.appEl?.setAttribute("data-scrubbing", "true");
       this.track.setPointerCapture?.(e.pointerId);
@@ -98,7 +102,60 @@ export class Scrubber {
       this._setOffset(newOffset);
     });
 
-    this.resetEl?.addEventListener("click", () => this.reset());
+    this.resetEl?.addEventListener("click", () => { this.stop(); this.reset(); });
+    this.playEl?.addEventListener("click", () => this.togglePlay());
+  }
+
+  togglePlay() {
+    if (this.playing) this.stop();
+    else this.play();
+  }
+
+  play() {
+    if (this.playing) return;
+    this.playing = true;
+    this.playEl?.setAttribute("data-playing", "true");
+    const RANGE = RANGE_HOURS * 3600_000;
+    const START = -3600_000;          // scrubber's leftmost offset
+    const END = (RANGE_HOURS - 1) * 3600_000;
+    const DURATION_MS = 22_000;        // ~24 sim-hours in ~22 real seconds
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Snap to the beginning so the loop always starts from "an hour ago".
+    // Under reduced motion, jump straight to +23h so there is a state
+    // change but nothing animates.
+    if (reduced) {
+      clock.setOffset(END);
+      this.appEl?.setAttribute("data-scrubbing", "true");
+      this._render(this._currentT());
+      this.onScrub?.(clock.offset());
+      this.stop();
+      return;
+    }
+    clock.setOffset(START);
+    const t0 = performance.now();
+    const step = (t) => {
+      if (!this.playing) return;
+      const p = Math.min(1, (t - t0) / DURATION_MS);
+      const offset = START + p * (END - START);
+      clock.setOffset(offset);
+      this.appEl?.setAttribute("data-scrubbing", "true");
+      this._render(this._currentT());
+      this.onScrub?.(clock.offset());
+      if (p < 1) {
+        this._playFrame = requestAnimationFrame(step);
+      } else {
+        this.stop();
+      }
+    };
+    this._playFrame = requestAnimationFrame(step);
+  }
+
+  stop() {
+    if (!this.playing) return;
+    this.playing = false;
+    if (this._playFrame) cancelAnimationFrame(this._playFrame);
+    this._playFrame = 0;
+    this.playEl?.setAttribute("data-playing", "false");
   }
 
   reset() {
