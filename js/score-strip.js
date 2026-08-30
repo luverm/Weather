@@ -67,10 +67,21 @@ export class ScoreStrip {
     });
 
     if (this.summary) {
-      const s = peakWindow(this.hours, scores);
-      if (s) {
+      const peak = peakWindow(this.hours, scores);
+      if (peak) {
         this.summary.hidden = false;
-        this.summary.textContent = s;
+        this.summary.textContent = peak.label;
+        // Make it clickable — a shortcut for scrubbing to the peak hour.
+        this.summary.style.cursor = "pointer";
+        this.summary.setAttribute("role", "button");
+        this.summary.setAttribute("tabindex", "0");
+        this.summary.onclick = () => this.onCellClick?.(peak.ts);
+        this.summary.onkeydown = (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            this.onCellClick?.(peak.ts);
+          }
+        };
       } else {
         this.summary.hidden = true;
         this.summary.textContent = "";
@@ -80,7 +91,8 @@ export class ScoreStrip {
 }
 
 // Find the peak-score cell and its window (surrounding cells within 5
-// points of peak). Renders as "Peak comfort · 12:00 → 15:00 (86 · Excellent)".
+// points of peak). Returns { label, ts } so the caller can make it
+// clickable.
 function peakWindow(hours, scores) {
   if (!hours.length) return null;
   let peakI = 0;
@@ -94,5 +106,8 @@ function peakWindow(hours, scores) {
   const window = a === b
     ? `at ${shortT(hours[a].time)}`
     : `${shortT(hours[a].time)} → ${shortT(hours[b].time)}`;
-  return `Peak comfort · ${window} (${peak} · ${scoreLabel(peak)})`;
+  return {
+    label: `Peak comfort · ${window} (${peak} · ${scoreLabel(peak)})`,
+    ts: hours[peakI].time,
+  };
 }
