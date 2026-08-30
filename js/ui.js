@@ -447,9 +447,19 @@ function renderMetrics(w) {
     }
   }
   el.metricHumidity.textContent = Math.round(w.humidity ?? 0);
-  el.metricHumiditySub.textContent = w.dewPoint != null
-    ? `dew ${Math.round(convertTemp(w.dewPoint))}°`
-    : "dew —";
+  // Dew-point sub: append "fog risk" when the temp/dew spread is tight
+  // enough that saturation is plausible (< 2.5 °C in liquid measure).
+  if (w.dewPoint != null && w.temp != null) {
+    const spread = w.temp - w.dewPoint;
+    const fogHint = spread < 2.5 ? " · fog risk" : (spread < 4 ? " · mist likely" : "");
+    el.metricHumiditySub.textContent = `dew ${Math.round(convertTemp(w.dewPoint))}°${fogHint}`;
+    el.metricHumiditySub.title = fogHint
+      ? `Temperature and dew point are within ${spread.toFixed(1)}°C — condensation likely.`
+      : `Spread ${spread.toFixed(1)}°C — no near-term condensation.`;
+  } else {
+    el.metricHumiditySub.textContent = "dew —";
+    el.metricHumiditySub.removeAttribute("title");
+  }
   if (el.humidityComfort) {
     const pill = humidityComfort(w.humidity, w.dewPoint, w.temp);
     if (pill) {
