@@ -13,11 +13,13 @@ import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { pickBestDay } from "./best-day.js";
+import { scoreWeather, scoreLabel, scoreColor } from "./weather-score.js";
 
 const $ = (sel) => document.querySelector(sel);
 
 const el = {
   temp: $("#temp-value"),
+  scoreChip: $("#score-chip"),
   unitBtn: $("#unit-toggle"),
   placeName: $("#place-name"),
   placeSub: $("#place-sub"),
@@ -310,9 +312,23 @@ function renderLiveValues(w, { animate = true } = {}) {
   const feels = convertTemp(w.feelsLike ?? w.temp);
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
-  el.conditionLabel.textContent = capitalize(w.label);
+  // Preserve the score chip when re-writing the condition label.
+  const chip = el.scoreChip;
+  el.conditionLabel.textContent = capitalize(w.label) + " ";
+  if (chip) el.conditionLabel.appendChild(chip);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  renderScoreChip(w);
+}
+
+function renderScoreChip(w) {
+  if (!el.scoreChip) return;
+  const s = scoreWeather(w);
+  if (s == null) { el.scoreChip.hidden = true; return; }
+  el.scoreChip.hidden = false;
+  el.scoreChip.textContent = `${s} · ${scoreLabel(s)}`;
+  el.scoreChip.style.color = scoreColor(s);
+  el.scoreChip.title = `Comfort score ${s}/100 — from temp, precip, wind, cloud, UV, air.`;
 }
 
 function renderDayRange(w) {
