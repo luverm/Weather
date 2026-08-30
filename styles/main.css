@@ -313,15 +313,34 @@ html[data-reduce-motion="true"] *::after {
 /* ---------- Hero ---------- */
 .hero { align-self: start; display: grid; gap: 14px; }
 .hero-inner {
+  position: relative;
   padding: 28px clamp(20px, 3.5vw, 42px);
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: end;
   gap: 24px;
   transform: perspective(1200px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
-  transition: transform 400ms var(--ease);
+  transition: transform 400ms var(--ease), background 800ms var(--ease);
   will-change: transform;
+  overflow: hidden;
 }
+/* Ambient glow tinted by the comfort-score colour. --score-tint is
+   set by ui.js each render; falls back to the accent when unknown. */
+.hero-inner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at 82% 18%,
+    color-mix(in srgb, var(--score-tint, var(--accent)) 22%, transparent) 0%,
+    transparent 60%
+  );
+  opacity: 0.85;
+  pointer-events: none;
+  transition: background 800ms var(--ease);
+}
+[data-reduce-motion="true"] .hero-inner,
+[data-reduce-motion="true"] .hero-inner::before { transition: none; }
 .place-label {
   margin: 0 0 6px;
   font-size: 12px;

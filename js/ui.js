@@ -388,6 +388,8 @@ function renderScoreChip(w) {
   el.scoreChip.textContent = `${s} · ${scoreLabel(s)}${trendGlyph ? " " + trendGlyph : ""}`;
   el.scoreChip.dataset.trend = trendCls;
   el.scoreChip.style.color = scoreColor(s);
+  // Feed the ambient hero glow.
+  el.heroInner?.style.setProperty("--score-tint", scoreColor(s));
   el.scoreChip.title = `Comfort score ${s}/100 — from temp, precip, wind, cloud, UV, air.`
     + (trendGlyph
         ? (trendCls === "flat" ? " Holding steady over the next 3 h."
