@@ -21,10 +21,10 @@ export function scoreWeather(w) {
   if (w.condition === "snow")  s -= 18;
   if (w.condition === "fog")   s -= 12;
 
-  // Wind
-  const wind = w.windSpeed ?? 0;
+  // Wind (accept both live-shape {windSpeed} and hourly-shape {wind}).
+  const wind = w.windSpeed ?? w.wind ?? 0;
   if (wind > 20) s -= Math.min(25, (wind - 20) * 1.2);
-  const gust = w.windGusts ?? wind;
+  const gust = w.windGusts ?? w.gusts ?? wind;
   if (gust > 40) s -= Math.min(20, (gust - 40) * 1.0);
 
   // Cloud cover — a fully overcast day loses some sparkle.
