@@ -21,23 +21,38 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
   const fmt = fmtTime || ((t) => new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
   const dow = weekday || ((t) => new Date(t).toLocaleDateString([], { weekday: "short" }));
 
-  // 1. Next rain in the week.
+  // 1. If it's raining now, when does it stop? Otherwise, when does it start?
+  const rainingNow = weather.condition === "rain" || weather.condition === "storm";
+  if (rainingNow) {
+    // First hour with negligible precip and low pop after now.
+    const dryHour = hours.find((h) => h.time > Date.now() + 30 * 60_000
+      && (h.pop ?? 0) < 30 && (h.precip ?? 0) < 0.2);
+    if (dryHour) {
+      out.push({
+        icon: ICONS.sun, label: "Rain ends",
+        value: `around ${fmt(dryHour.time)}`,
+        ts: dryHour.time,
+      });
+    }
+  }
   const rainyDay = days.find((d) => (d.pop ?? 0) >= 55 || (d.precip ?? 0) >= 1.5);
   const rainyHour = hours.find((h) => (h.pop ?? 0) >= 60 || (h.precip ?? 0) > 0.4);
-  if (rainyHour) {
-    out.push({
-      icon: ICONS.rain, label: "Next rain",
-      value: `${fmt(rainyHour.time)} · ${rainyHour.pop}%`,
-      ts: rainyHour.time,
-    });
-  } else if (rainyDay) {
-    out.push({
-      icon: ICONS.rain, label: "Next rain",
-      value: `${dow(rainyDay.time)} · ${rainyDay.pop}%`,
-      ts: rainyDay.sunrise || rainyDay.time,
-    });
-  } else {
-    out.push({ icon: ICONS.sun, label: "This week", value: "No rain in the outlook" });
+  if (!rainingNow) {
+    if (rainyHour) {
+      out.push({
+        icon: ICONS.rain, label: "Next rain",
+        value: `${fmt(rainyHour.time)} · ${rainyHour.pop}%`,
+        ts: rainyHour.time,
+      });
+    } else if (rainyDay) {
+      out.push({
+        icon: ICONS.rain, label: "Next rain",
+        value: `${dow(rainyDay.time)} · ${rainyDay.pop}%`,
+        ts: rainyDay.sunrise || rainyDay.time,
+      });
+    } else {
+      out.push({ icon: ICONS.sun, label: "This week", value: "No rain in the outlook" });
+    }
   }
 
   // 2. Peak wind in next 24h.
