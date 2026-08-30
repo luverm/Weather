@@ -94,6 +94,7 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunMoments: $("#sun-moments"),
   comfortStrip: $("#comfort-strip"),
   precipTimeline: $("#precip-timeline"),
   precipSummary: $("#precip-summary"),
@@ -546,8 +547,42 @@ function renderSun(w) {
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
   renderSunDelta(w);
+  renderSunMoments(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+// Golden hour and blue hour are windows photographers plan around.
+// Show up to two upcoming moments (today or tomorrow), compact.
+function renderSunMoments(w) {
+  if (!el.sunMoments) return;
+  const now = Date.now();
+  const events = [];
+  const push = (label, start, end, kind) => {
+    if (end < now) return;
+    events.push({ label, start, end, kind });
+  };
+  for (const d of (w?.daily || []).slice(0, 2)) {
+    if (!d.sunrise || !d.sunset) continue;
+    // Blue hour ≈ sun 4–8° below horizon: pre-sunrise 40→20m and post-sunset 20→40m.
+    push("Blue hour", d.sunrise - 40 * 60_000, d.sunrise - 10 * 60_000, "blue");
+    // Golden hour ≈ sun 0–6°: sunrise → +60m; -60m → sunset.
+    push("Golden hour", d.sunrise, d.sunrise + 60 * 60_000, "gold");
+    push("Golden hour", d.sunset - 60 * 60_000, d.sunset, "gold");
+    push("Blue hour", d.sunset + 10 * 60_000, d.sunset + 40 * 60_000, "blue");
+  }
+  events.sort((a, b) => a.start - b.start);
+  const next = events.slice(0, 2);
+  if (!next.length) { el.sunMoments.hidden = true; el.sunMoments.innerHTML = ""; return; }
+  const fmt = (ts) => new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+  el.sunMoments.innerHTML = next.map((e) => {
+    const active = now >= e.start && now < e.end;
+    const range = active ? `now → ${fmt(e.end)}` : `${fmt(e.start)} → ${fmt(e.end)}`;
+    return `<span class="sun-moment" data-kind="${e.kind}"${active ? ' data-active="true"' : ""}>
+      <span class="sun-moment-dot"></span>${e.label} · ${range}
+    </span>`;
+  }).join("");
+  el.sunMoments.hidden = false;
 }
 
 // Show how tomorrow's daylight compares to today's. Small but nice —
