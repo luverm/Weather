@@ -115,6 +115,7 @@ export class Scrubber {
     if (this.playing) return;
     this.playing = true;
     this.playEl?.setAttribute("data-playing", "true");
+    this.playEl?.setAttribute("aria-label", "Stop timelapse");
     const RANGE = RANGE_HOURS * 3600_000;
     const START = -3600_000;          // scrubber's leftmost offset
     const END = (RANGE_HOURS - 1) * 3600_000;
@@ -156,6 +157,8 @@ export class Scrubber {
     if (this._playFrame) cancelAnimationFrame(this._playFrame);
     this._playFrame = 0;
     this.playEl?.setAttribute("data-playing", "false");
+    // Restore aria-label so screen readers hear the ready state.
+    this.playEl?.setAttribute("aria-label", "Timelapse the next 24 hours");
   }
 
   reset() {
