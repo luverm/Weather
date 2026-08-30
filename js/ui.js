@@ -105,6 +105,7 @@ const el = {
   sunArcSet: $("#sun-arc-set"),
   sunArcNoon: $("#sun-arc-noon"),
   sunMoments: $("#sun-moments"),
+  sunQuality: $("#sun-quality"),
   comfortStrip: $("#comfort-strip"),
   precipTimeline: $("#precip-timeline"),
   precipSummary: $("#precip-summary"),
@@ -698,8 +699,33 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   renderSunDelta(w);
   renderSunMoments(w);
+  renderSunQuality(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+// Summarise how bright a day it will be — average cloud cover during
+// daytime hours, plus a plain-language label.
+function renderSunQuality(w) {
+  if (!el.sunQuality) return;
+  const daytime = (w?.hourly || []).filter((h) => h.isDay && h.cloudCover != null);
+  if (daytime.length < 3) { el.sunQuality.hidden = true; return; }
+  const avg = daytime.reduce((s, h) => s + h.cloudCover, 0) / daytime.length;
+  const clearFrac = daytime.filter((h) => h.cloudCover <= 40).length / daytime.length;
+  const label =
+    avg <= 25 ? "Brilliant sun" :
+    avg <= 45 ? "Mostly sunny" :
+    avg <= 65 ? "Mixed sun & cloud" :
+    avg <= 85 ? "Mostly cloudy" :
+    "Overcast";
+  el.sunQuality.hidden = false;
+  el.sunQuality.innerHTML = `
+    <span class="sun-quality-bar" aria-hidden="true">
+      <span class="sun-quality-fill" style="width:${(clearFrac * 100).toFixed(0)}%"></span>
+    </span>
+    <span class="sun-quality-label">${label} · ${Math.round(clearFrac * 100)}% clear</span>
+  `;
+  el.sunQuality.title = `Avg cloud cover today: ${Math.round(avg)}%`;
 }
 
 // Golden hour and blue hour are windows photographers plan around.

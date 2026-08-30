@@ -1118,6 +1118,33 @@ kbd {
 }
 .sun-moment[data-kind="gold"] .sun-moment-dot { color: #ffcf7a; background: #ffcf7a; }
 .sun-moment[data-kind="blue"] .sun-moment-dot { color: #7ea8ff; background: #7ea8ff; }
+.sun-quality {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 2px;
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.03em;
+}
+.sun-quality[hidden] { display: none; }
+.sun-quality-bar {
+  position: relative;
+  flex: 0 0 60px;
+  height: 4px;
+  background: rgba(255,255,255,0.10);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.sun-quality-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: linear-gradient(90deg, #ffcf7a, #fff1c9);
+  border-radius: 2px;
+  transition: width 300ms var(--ease);
+  box-shadow: 0 0 4px rgba(255, 210, 122, 0.4);
+}
+[data-reduce-motion="true"] .sun-quality-fill { transition: none; }
 .sun-arc-time {
   font-size: 8px;
   fill: var(--fg-dim);
