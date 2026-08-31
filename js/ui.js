@@ -56,6 +56,8 @@ const el = {
   skyRibbonMarker: $("#sky-ribbon-marker"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
+  bestMoment: $("#best-moment"),
+  bestMomentText: $("#best-moment-text"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
   pollenCard: $("#pollen-card"),
@@ -238,6 +240,7 @@ export const ui = {
     renderPrecip(weather);
     renderStargaze(weather);
     renderCloudStrip(weather);
+    renderBestMoment(weather);
     renderTrends(weather);
     renderInsights(weather);
     renderActivity(weather);
@@ -1102,6 +1105,58 @@ function renderWindRose(w) {
     parts.push(`<path d="${d}" fill="currentColor" opacity="${(0.20 + t * 0.55).toFixed(2)}"/>`);
   }
   el.windRose.innerHTML = parts.join("");
+}
+
+// "Best moment today" pill: iterates today's remaining hourly entries,
+// scores each on temp comfort + wind + precip probability + UV, and shows
+// the peak as a tappable hero pill. Clicking scrubs to that hour.
+function renderBestMoment(w) {
+  if (!el.bestMoment) return;
+  const now = Date.now();
+  // Restrict to remaining daytime hours today.
+  const tz = w.timezone;
+  const today = w.daily?.[0];
+  const cutoff = today?.sunset ?? (now + 12 * 3600_000);
+  const daylightStart = today?.sunrise ?? now;
+  const candidates = (w.hourly || []).filter(
+    (h) => h.time > now && h.time < cutoff && h.time > daylightStart
+  );
+  if (!candidates.length) { el.bestMoment.hidden = true; return; }
+  let best = null, bestScore = -Infinity;
+  for (const h of candidates) {
+    const score = comfortScore(h);
+    if (score > bestScore) { bestScore = score; best = h; }
+  }
+  if (!best || bestScore < 45) { el.bestMoment.hidden = true; return; }
+  const hh = new Date(best.time).toLocaleTimeString(undefined, {
+    hour: "2-digit", minute: "2-digit", hour12: false,
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  const t = Math.round(convertTemp(best.temp));
+  const words =
+    bestScore >= 85 ? "Prime moment" :
+    bestScore >= 70 ? "Great window" :
+    bestScore >= 55 ? "Best window" : "Best chance";
+  const label = (best.label || best.condition || "").toLowerCase();
+  el.bestMomentText.textContent = `${words} today · ${hh} · ${t}°${label ? " · " + label : ""}`;
+  el.bestMoment.hidden = false;
+  // Rebind fresh handler on each render so we always target the latest ts.
+  el.bestMoment.onclick = () => state.handlers.onHourClick?.(best.time);
+}
+
+// Simple 0-100 comfort score used only by the best-moment pill.
+function comfortScore(h) {
+  const t = h.temp ?? 15;
+  const wind = h.wind ?? 0;
+  const gusts = h.gusts ?? 0;
+  const pop = h.pop ?? 0;
+  const uv = h.uv ?? 0;
+  // Sweet spot 21°C, gaussian-ish falloff (±14° -> 0).
+  const tempScore = Math.max(0, 100 - Math.pow((t - 21) / 1.4, 2) * 4);
+  const windPenalty = Math.max(0, wind - 15) * 2 + Math.max(0, gusts - 25) * 1.5;
+  const popPenalty = pop * 0.6;
+  const uvPenalty = Math.max(0, uv - 7) * 6;
+  return Math.max(0, Math.min(100, tempScore - windPenalty - popPenalty - uvPenalty));
 }
 
 // Cloud-cover ribbon: 24 cells tinted from clear (transparent blue) to
