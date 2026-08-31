@@ -1853,13 +1853,17 @@ function cardinal(deg) {
 
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
+  const tint = { clear: "#ffd680", clouds: "#b6c4d6", rain: "#9ad1ff",
+                 snow: "#e6f0ff", storm: "#c7a5ee", fog: "#c3c9d1" };
   for (const h of (w.hourly || []).slice(0, 24)) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    const color = tint[h.condition];
+    const style = color ? ` style="color: ${color}"` : "";
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
-      <span class="forecast-icon">${iconFor(h.condition)}</span>
+      <span class="forecast-icon"${style}>${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
     `;
