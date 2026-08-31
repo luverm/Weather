@@ -259,7 +259,9 @@ export const ui = {
     if (state.place && weather.elevation != null) {
       const parts = [state.place.admin1, state.place.country].filter(Boolean);
       const meters = Math.round(weather.elevation);
-      if (meters !== 0) {
+      // Only surface elevation when it's meaningfully non-trivial. Near-sea-
+      // level cities don't need it in their sub-line.
+      if (Math.abs(meters) >= 100) {
         parts.push(state.unit === "F"
           ? `${Math.round(meters * 3.28084)} ft`
           : `${meters} m`);
