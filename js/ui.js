@@ -402,6 +402,7 @@ function renderLiveValues(w, { animate = true } = {}) {
   }
   const conditionEmoji = CONDITION_EMOJI[w.condition] || "";
   el.conditionLabel.textContent = conditionEmoji ? `${conditionEmoji} ${capitalize(w.label)}` : capitalize(w.label);
+  el.conditionLabel.dataset.severe = (w.condition === "storm" || w.condition === "snow") ? "true" : "false";
   renderSensoryTag(w);
   // Preserve the temp-trend span that sits inside #feels-like and rebuild
   // the rest of the line so we can append a "why" explainer.

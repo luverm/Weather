@@ -624,7 +624,11 @@ html[data-reduce-motion="true"] *::after {
   transition: background 200ms var(--ease), color 200ms var(--ease);
 }
 .unit:hover { background: var(--glass); color: var(--fg); }
-.condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
+.condition-label {
+  margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em;
+  transition: color 400ms var(--ease);
+}
+.condition-label[data-severe="true"] { color: #ffbb92; }
 .sensory-tag {
   display: inline-block;
   margin: 4px 0 0;
