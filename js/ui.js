@@ -311,8 +311,41 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  // Preserve the temp-trend span that sits inside #feels-like and rebuild
+  // the rest of the line so we can append a "why" explainer.
+  const trendHtml = el.tempTrend?.outerHTML || "";
+  const whyText = feelsLikeWhy(w);
+  const whyHtml = whyText ? ` <span class="feels-why">${escapeHtml(whyText)}</span>` : "";
+  el.feelsLike.innerHTML = `${trendHtml}Feels like ${Math.round(feels)}°${whyHtml}`;
+  // Re-bind the reference after innerHTML rewrite so subsequent updates keep working.
+  el.tempTrend = document.getElementById("temp-trend");
   renderDayRange(w);
+}
+
+// Pick a short natural-language reason for why the current "feels like" temp
+// diverges from the actual temperature. Returns "" when the two are close.
+function feelsLikeWhy(w) {
+  if (w.temp == null || w.feelsLike == null) return "";
+  const delta = w.feelsLike - w.temp;
+  if (Math.abs(delta) < 1.2) return "";
+  const dispDelta = state.unit === "F" ? delta * 9 / 5 : delta;
+  const magnitude = `${dispDelta >= 0 ? "+" : "−"}${Math.abs(Math.round(dispDelta))}°`;
+  const wind = w.windSpeed || 0;
+  const gusts = w.windGusts || 0;
+  const humidity = w.humidity || 0;
+  const uv = w.uv || 0;
+  const cloud = w.cloudCover ?? 100;
+  if (delta <= -1.2) {
+    if (wind >= 20 || gusts >= 30) return `· wind chill ${magnitude}`;
+    if (wind >= 10) return `· breeze trims ${magnitude}`;
+    if (humidity < 30) return `· dry air ${magnitude}`;
+    return `· ${magnitude}`;
+  }
+  // delta > 0
+  if (humidity >= 70) return `· humid air adds ${magnitude}`;
+  if (uv >= 6 && cloud < 40) return `· direct sun adds ${magnitude}`;
+  if (wind < 5 && humidity >= 55) return `· sultry air adds ${magnitude}`;
+  return `· ${magnitude}`;
 }
 
 function renderDayRange(w) {
