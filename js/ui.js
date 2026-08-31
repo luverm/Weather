@@ -2527,12 +2527,17 @@ function renderSearchResults(results) {
 function showRecentsIfAny() {
   const recents = places.all().slice(0, 5);
   if (!recents.length) { el.searchResults.hidden = true; return; }
-  const itemsHtml = recents.map((r, i) => `
+  const itemsHtml = recents.map((r, i) => {
+    const tempHtml = r.temp != null
+      ? `<span class="recent-temp">${Math.round(convertTemp(r.temp))}°</span>`
+      : "";
+    return `
     <li role="option" data-index="${i}">
       <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
-      <span class="sub">${escapeHtml(r.country || "")}</span>
-    </li>
-  `).join("");
+      <span class="sub">${escapeHtml(r.country || "")}${tempHtml ? "" : ""}</span>
+      ${tempHtml}
+    </li>`;
+  }).join("");
   el.searchResults.innerHTML = `<li class="recent-heading">Recent places</li>${itemsHtml}`;
   el.searchResults._items = recents;
   el.searchResults.hidden = false;

@@ -268,6 +268,13 @@ html[data-reduce-motion="true"] *::after {
 .search-results li:hover,
 .search-results li[aria-selected="true"] { background: rgba(255, 255, 255, 0.08); }
 .search-results .sub { color: rgba(246, 247, 251, 0.55); font-size: 13px; }
+.search-results .recent-temp {
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  min-width: 32px;
+  text-align: right;
+}
 .search-results .recent-heading {
   padding: 8px 12px 4px;
   font-size: 10px;
