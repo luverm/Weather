@@ -136,7 +136,15 @@ export class Scrubber {
     const label = d.toLocaleString(undefined, {
       weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false,
     });
-    if (this.timeEl) this.timeEl.textContent = label;
+    // Small time-of-day glyph so the scrubbed time reads as morning / day
+    // / evening / night at a glance without doing the mental sunrise math.
+    const hr = d.getHours();
+    const glyph = hr < 5 || hr >= 21 ? "🌙"
+                : hr < 7 ? "🌅"
+                : hr < 17 ? "☀️"
+                : hr < 19 ? "🌇"
+                : "🌆";
+    if (this.timeEl) this.timeEl.textContent = `${glyph} ${label}`;
 
     const offMin = Math.round(clock.offset() / 60_000);
     if (this.deltaEl) {
