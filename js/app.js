@@ -297,7 +297,12 @@ function cyclePlace(dir) {
 }
 
 ui.init({
-  onSearchSelect: (place) => { places.add(place); loadByCoords(place); },
+  onSearchSelect: (place) => {
+    const wasNew = !places.isSaved(place);
+    places.add(place);
+    loadByCoords(place);
+    if (wasNew) ui.showToast(`Saved · ${place.name}`, 2000);
+  },
   onLocate: () => useGeolocation(),
   onAudioToggle: () => toggleAudio(),
   onRefresh: () => refreshWeather(),
