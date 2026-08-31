@@ -251,6 +251,13 @@ export const ui = {
     renderDaily(weather);
     renderNowcast(weather);
     renderSkyRibbon(weather);
+    // Once the weather is in, enrich the place-sub with elevation/timezone.
+    if (state.place && weather.elevation != null) {
+      const parts = [state.place.admin1, state.place.country].filter(Boolean);
+      const meters = Math.round(weather.elevation);
+      if (meters !== 0) parts.push(`${meters} m`);
+      el.placeSub.textContent = parts.join(" · ");
+    }
     renderAdvice(weather);
     renderPollen(weather.pollen);
     renderPrecip(weather);

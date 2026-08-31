@@ -221,6 +221,7 @@ function normalize(d, aq) {
     isDay: !!c.is_day,
     condition,
     label,
+    elevation: d.elevation,
     sunrise: dailyForecast[0]?.sunrise ?? null,
     sunset: dailyForecast[0]?.sunset ?? null,
     uv: dailyForecast[0]?.uvMax ?? null,
@@ -442,6 +443,7 @@ function mock(lat, lon) {
     },
     moon: computeMoonPhase(new Date()),
     airQuality: { aqi: 42, pm25: 8, pm10: 14, o3: 40, no2: 15, co: 0.2, label: "Good" },
+    elevation: 42,
     pollen: {
       items: [
         { key: "grass", label: "Grass", value: 1.2 },
