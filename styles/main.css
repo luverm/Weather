@@ -495,6 +495,12 @@ html[data-reduce-motion="true"] *::after {
   line-height: 0.95;
   letter-spacing: -0.05em;
 }
+.unit-flip { animation: unit-flip 380ms var(--ease); }
+@keyframes unit-flip {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
 .temp-value {
   display: inline-block;
   background: linear-gradient(180deg, var(--fg) 0%, color-mix(in oklab, var(--fg) 70%, transparent) 100%);

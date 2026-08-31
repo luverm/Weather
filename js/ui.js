@@ -2506,6 +2506,12 @@ function bindUnitToggle() {
     el.unitBtn.textContent = `°${state.unit}`;
     if (state.weather) ui.setWeather(state.weather);
     updateDocumentTitle(state.weather);
+    // Subtle pulse on the temp so the change is obvious.
+    if (el.temp) {
+      el.temp.classList.remove("unit-flip");
+      void el.temp.offsetWidth;
+      el.temp.classList.add("unit-flip");
+    }
   };
   el.unitBtn.addEventListener("click", flip);
   // Tapping the hero temp value also flips the unit — bigger tap target on
