@@ -1853,13 +1853,11 @@ function cardinal(deg) {
 
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
-  const tint = { clear: "#ffd680", clouds: "#b6c4d6", rain: "#9ad1ff",
-                 snow: "#e6f0ff", storm: "#c7a5ee", fog: "#c3c9d1" };
   for (const h of (w.hourly || []).slice(0, 24)) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
-    const color = tint[h.condition];
+    const color = CONDITION_TINT[h.condition];
     const style = color ? ` style="color: ${color}"` : "";
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
@@ -2056,9 +2054,7 @@ function renderDailyIconStrip(days) {
           : ` · ${d.precip.toFixed(1)} mm`)
       : "";
     const title = `${dayName} · ${d.label || d.condition || ""} · ${hi} / ${lo}${rain}`;
-    const tint = { clear: "#ffd680", clouds: "#b6c4d6", rain: "#9ad1ff",
-                   snow: "#e6f0ff", storm: "#c7a5ee", fog: "#c3c9d1" };
-    const color = tint[d.condition];
+    const color = CONDITION_TINT[d.condition];
     const style = color ? ` style="color: ${color}"` : "";
     return `<span class="strip-day" title="${escapeHtml(title)}"${style}>${iconFor(d.condition)}</span>`;
   }).join("");
@@ -2633,6 +2629,14 @@ let deferredInstallPrompt = null;
 const CONDITION_EMOJI = {
   clear: "☀️", clouds: "☁️", rain: "🌧️", snow: "❄️",
   storm: "⛈️", fog: "🌫️",
+};
+const CONDITION_TINT = {
+  clear:  "#ffd680",
+  clouds: "#b6c4d6",
+  rain:   "#9ad1ff",
+  snow:   "#e6f0ff",
+  storm:  "#c7a5ee",
+  fog:    "#c3c9d1",
 };
 function updateDocumentTitle(w) {
   if (w?.temp == null) { document.title = "Aether — Interactive Weather"; return; }
