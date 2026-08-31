@@ -1711,7 +1711,7 @@ function renderPlaces() {
       ? ` title="${escapeHtml(p.name)} · ${escapeHtml(p.label)}"`
       : ` title="${escapeHtml(p.name)}"`;
     return `
-      <div class="place-chip ${active ? "active" : ""} ${tone}" data-id="${p.id}"${titleAttr}>
+      <div class="place-chip ${active ? "active" : ""} ${tone}" data-id="${p.id}"${titleAttr} draggable="true">
         ${iconMarkup}
         <span class="place-name-text">${escapeHtml(p.name)}</span>
         ${tempMarkup}
@@ -1729,8 +1729,50 @@ function renderPlaces() {
         renderPlaces();
         return;
       }
+      // Don't fire a switch click when the drag lifted a chip; browsers still
+      // emit click after dragend. Skip if we just released a drop.
+      if (state._justDropped && Date.now() - state._justDropped < 250) return;
       state.handlers.onPlaceClick?.(item);
     });
+    chip.addEventListener("dragstart", (e) => {
+      state._dragId = id;
+      chip.classList.add("dragging");
+      try { e.dataTransfer.setData("text/plain", id); e.dataTransfer.effectAllowed = "move"; } catch {}
+    });
+    chip.addEventListener("dragend", () => {
+      chip.classList.remove("dragging");
+      state._dragId = null;
+      el.placesStrip.querySelectorAll(".drop-before").forEach((c) => c.classList.remove("drop-before"));
+    });
+    chip.addEventListener("dragover", (e) => {
+      if (!state._dragId || state._dragId === id) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      el.placesStrip.querySelectorAll(".drop-before").forEach((c) => c.classList.remove("drop-before"));
+      chip.classList.add("drop-before");
+    });
+    chip.addEventListener("drop", (e) => {
+      e.preventDefault();
+      const fromId = state._dragId;
+      if (!fromId || fromId === id) return;
+      places.reorder(fromId, id);
+      state._justDropped = Date.now();
+      renderPlaces();
+    });
+  });
+  // Also allow dropping at the very end of the strip.
+  el.placesStrip.addEventListener("dragover", (e) => {
+    if (!state._dragId) return;
+    e.preventDefault();
+  });
+  el.placesStrip.addEventListener("drop", (e) => {
+    if (!state._dragId) return;
+    // Only handle drops that missed a chip (i.e. beyond the last one).
+    if (e.target.closest(".place-chip")) return;
+    e.preventDefault();
+    places.reorder(state._dragId, null);
+    state._justDropped = Date.now();
+    renderPlaces();
   });
   // Kick off background refresh of stale/missing chip summaries.
   refreshPlaceSummaries();

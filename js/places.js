@@ -51,6 +51,22 @@ export const places = {
     if (!at) return true;
     return Date.now() - at > ttl;
   },
+  // Reorder the stored list so `fromId` sits just before `beforeId` (or at
+  // the end when beforeId is null). No-ops when either id is missing.
+  reorder(fromId, beforeId) {
+    const list = read();
+    const from = list.findIndex((p) => idFor(p) === fromId);
+    if (from < 0) return;
+    const [moved] = list.splice(from, 1);
+    if (beforeId == null) {
+      list.push(moved);
+    } else {
+      const before = list.findIndex((p) => idFor(p) === beforeId);
+      if (before < 0) list.push(moved);
+      else list.splice(before, 0, moved);
+    }
+    write(list);
+  },
   isSaved(place) {
     const id = idFor(place);
     return read().some((p) => idFor(p) === id);

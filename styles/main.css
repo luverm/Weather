@@ -301,6 +301,11 @@ html[data-reduce-motion="true"] *::after {
   cursor: pointer;
 }
 .place-chip:hover { background: var(--glass-strong); transform: translateY(-1px); }
+.place-chip.dragging { opacity: 0.45; }
+.place-chip.drop-before {
+  box-shadow: -3px 0 0 0 var(--accent);
+}
+.places-strip { position: relative; }
 .place-chip.active { background: var(--glass-strong); border-color: rgba(255,255,255,0.35); }
 .place-chip .temp {
   color: var(--fg-muted); font-variant-numeric: tabular-nums;
