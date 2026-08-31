@@ -1021,6 +1021,14 @@ kbd {
 .sun-item { display: grid; gap: 2px; }
 .sun-label { font-size: 10.5px; color: var(--fg-dim); letter-spacing: 0.14em; text-transform: uppercase; }
 .sun-item strong { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.daylight-delta {
+  font-size: 10.5px; font-weight: 500;
+  margin-left: 4px; padding: 1px 5px; border-radius: 999px;
+  vertical-align: 1px;
+}
+.daylight-delta.up   { color: #b4e6a6; background: rgba(120, 208, 106, 0.14); }
+.daylight-delta.down { color: #ffbb92; background: rgba(255, 159, 92, 0.14); }
+.daylight-delta.flat { color: var(--fg-dim); background: rgba(255,255,255,0.05); }
 .sun-arc {
   width: 100%;
   height: 76px;

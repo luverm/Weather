@@ -554,7 +554,28 @@ function renderSun(w) {
     const mins = Math.round((w.sunset - w.sunrise) / 60_000);
     const hh = Math.floor(mins / 60);
     const mm = mins % 60;
-    el.sunDaylight.textContent = `${hh}h ${mm}m`;
+    // Add a subtle delta vs yesterday when available.
+    let deltaStr = "";
+    if (w.yesterday?.sunrise && w.yesterday?.sunset) {
+      const y = Math.round((w.yesterday.sunset - w.yesterday.sunrise) / 60_000);
+      const diff = mins - y; // + means today is longer
+      if (Math.abs(diff) >= 1) {
+        const sign = diff > 0 ? "+" : "−";
+        const secs = Math.abs(diff * 60);
+        const dh = Math.floor(secs / 3600);
+        const dm = Math.floor((secs % 3600) / 60);
+        const ds = secs % 60;
+        const parts = [];
+        if (dh) parts.push(`${dh}h`);
+        if (dm) parts.push(`${dm}m`);
+        if (!dh && !dm) parts.push(`${ds}s`);
+        else if (ds && !dh) parts.push(`${ds}s`);
+        deltaStr = ` <small class="daylight-delta ${diff > 0 ? "up" : "down"}">${sign}${parts.join(" ")}</small>`;
+      } else {
+        deltaStr = ` <small class="daylight-delta flat">±0s</small>`;
+      }
+    }
+    el.sunDaylight.innerHTML = `${hh}h ${mm}m${deltaStr}`;
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);

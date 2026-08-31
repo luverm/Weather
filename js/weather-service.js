@@ -93,6 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
+    past_days: 1, // include yesterday for daylight-delta comparison
     past_hours: 1,
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
@@ -151,12 +152,20 @@ function normalize(d, aq) {
     }
   }
 
-  // 7-day daily forecast.
+  // 7-day daily forecast. With past_days=1 the array starts at yesterday;
+  // find today by matching the local YYYY-MM-DD stamp so we can peel
+  // yesterday off separately and keep index 0 = today for the rest of the app.
   const dailyForecast = [];
+  let yesterday = null;
+  let todayIdx = 0;
   if (daily.time) {
+    const nowLocalYmd = localYmd(new Date(), d.timezone);
+    for (let i = 0; i < daily.time.length; i++) {
+      if (daily.time[i] === nowLocalYmd) { todayIdx = i; break; }
+    }
     for (let i = 0; i < daily.time.length; i++) {
       const ts = new Date(daily.time[i]).getTime();
-      dailyForecast.push({
+      const entry = {
         time: ts,
         tempMax: daily.temperature_2m_max?.[i],
         tempMin: daily.temperature_2m_min?.[i],
@@ -168,7 +177,13 @@ function normalize(d, aq) {
         sunrise: daily.sunrise?.[i] ? new Date(daily.sunrise[i]).getTime() : null,
         sunset: daily.sunset?.[i] ? new Date(daily.sunset[i]).getTime() : null,
         ...mapWmo(daily.weather_code[i]),
-      });
+      };
+      if (i < todayIdx) {
+        // Keep only the most recent past day as "yesterday" — usually one entry.
+        yesterday = entry;
+      } else {
+        dailyForecast.push(entry);
+      }
     }
   }
 
@@ -204,19 +219,38 @@ function normalize(d, aq) {
     isDay: !!c.is_day,
     condition,
     label,
-    sunrise: daily.sunrise?.[0] ? new Date(daily.sunrise[0]).getTime() : null,
-    sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null,
-    uv: daily.uv_index_max?.[0] ?? null,
+    sunrise: dailyForecast[0]?.sunrise ?? null,
+    sunset: dailyForecast[0]?.sunset ?? null,
+    uv: dailyForecast[0]?.uvMax ?? null,
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
     hourly,
     daily: dailyForecast,
+    yesterday,
     nowcast,
     moon,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
     fetchedAt: now,
   };
+}
+
+// Compute the location-local YYYY-MM-DD stamp for a Date. Used to align the
+// daily array's "today" index when past_days is enabled.
+function localYmd(date, tz) {
+  try {
+    if (tz && tz !== "auto") {
+      const parts = new Intl.DateTimeFormat("en-CA", {
+        timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit",
+      }).formatToParts(date);
+      const p = Object.fromEntries(parts.map((x) => [x.type, x.value]));
+      return `${p.year}-${p.month}-${p.day}`;
+    }
+  } catch { /* fall through */ }
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 function computePressureTrend(hourly, now) {
@@ -387,6 +421,12 @@ function mock(lat, lon) {
       condition: CONDITIONS.CLOUDS, label: "Cloudy",
     })),
     nowcast: [],
+    yesterday: {
+      // Yesterday was 2 minutes shorter than today's mock.
+      sunrise: new Date().setHours(6, 32, 0, 0),
+      sunset: new Date().setHours(19, 0, 0, 0),
+      tempMax: 19, tempMin: 11, condition: CONDITIONS.CLOUDS, label: "Cloudy",
+    },
     moon: computeMoonPhase(new Date()),
     airQuality: { aqi: 42, pm25: 8, pm10: 14, o3: 40, no2: 15, co: 0.2, label: "Good" },
     pollen: {
