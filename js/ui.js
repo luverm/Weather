@@ -1322,16 +1322,30 @@ function drawPrecipSpark(hours) {
   const w = 240, h = 32;
   const max = Math.max(0.5, ...hours.map((x) => x.precip || 0));
   const barW = w / hours.length;
-  const parts = hours.map((x, i) => {
+  const bars = hours.map((x, i) => {
     const bh = Math.max(1, ((x.precip || 0) / max) * (h - 2));
     const bx = i * barW + 0.6;
     const by = h - bh;
-    // Color-fade by intensity for a subtle heatmap feel.
     const t = Math.min(1, (x.precip || 0) / (max || 1));
     const opacity = 0.25 + t * 0.7;
     return `<rect x="${bx.toFixed(2)}" y="${by.toFixed(2)}" width="${(barW-1.2).toFixed(2)}" height="${bh.toFixed(2)}" fill="currentColor" opacity="${opacity.toFixed(2)}" rx="0.8"/>`;
   }).join("");
-  svg.innerHTML = parts;
+  // Cumulative curve overlaid on the bars — a running total from left to right
+  // scaled to the total 24 h precipitation. Helps visualise when rain adds up.
+  const total = hours.reduce((s, x) => s + (x.precip || 0), 0);
+  let cumulativePath = "";
+  if (total > 0.05) {
+    let running = 0;
+    const pts = hours.map((x, i) => {
+      running += x.precip || 0;
+      const px = i * barW + barW / 2;
+      const py = h - 2 - (running / total) * (h - 4);
+      return `${px.toFixed(2)},${py.toFixed(2)}`;
+    });
+    cumulativePath = `<polyline points="${pts.join(" ")}" fill="none" stroke="#ffd680" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>` +
+      `<circle cx="${((hours.length - 1) * barW + barW / 2).toFixed(2)}" cy="${(h - 2 - (h - 4)).toFixed(2)}" r="2" fill="#ffd680"/>`;
+  }
+  svg.innerHTML = bars + cumulativePath;
 }
 
 function renderTrends(w) {
