@@ -2550,6 +2550,16 @@ function bindSearch() {
       showRecentsIfAny();
       return;
     }
+    // "lat, lon" shortcut: jump directly if the input parses as coordinates.
+    const coords = /^(-?\d{1,3}(?:\.\d+)?)\s*[,\s]\s*(-?\d{1,3}(?:\.\d+)?)$/.exec(v);
+    if (coords) {
+      const lat = parseFloat(coords[1]), lon = parseFloat(coords[2]);
+      if (isFinite(lat) && isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180) {
+        renderSearchResults([{ id: `${lat},${lon}`, name: `${lat.toFixed(3)}, ${lon.toFixed(3)}`,
+          country: "Coordinates", admin1: "", lat, lon }]);
+        return;
+      }
+    }
     runSearch(v);
   });
   el.searchInput.addEventListener("blur", () => {
