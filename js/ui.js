@@ -1126,6 +1126,8 @@ function renderInsights(w) {
     return;
   }
   el.insightsCard.hidden = false;
+  const countEl = document.getElementById("insights-count");
+  if (countEl) countEl.textContent = `· ${items.length}`;
   el.insightsList.innerHTML = items.map((it, i) => `
     <li data-i="${i}" ${it.ts ? `data-ts="${it.ts}" style="cursor:pointer"` : ""}>
       <span class="insight-icon">${it.icon}</span>

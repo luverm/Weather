@@ -1607,6 +1607,15 @@ kbd {
   font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums;
 }
 
+.insights-count {
+  color: var(--fg-dim);
+  font-weight: 400;
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+  margin-left: 2px;
+}
+
 /* ---------- Week narrative ---------- */
 .week-narrative {
   margin: 6px 0 2px;
