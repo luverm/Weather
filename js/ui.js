@@ -330,6 +330,15 @@ export const ui = {
     el.toast.hidden = false;
     clearTimeout(el.toast._t);
     el.toast._t = setTimeout(() => (el.toast.hidden = true), dur);
+    // Bind once — click to dismiss early.
+    if (!el.toast._boundDismiss) {
+      el.toast.addEventListener("click", () => {
+        clearTimeout(el.toast._t);
+        el.toast.hidden = true;
+      });
+      el.toast.style.cursor = "pointer";
+      el.toast._boundDismiss = true;
+    }
   },
   getUnit: () => state.unit,
 };
