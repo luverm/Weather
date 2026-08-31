@@ -406,6 +406,14 @@ html[data-reduce-motion="true"] *::after {
   line-height: 1.55;
   color: var(--fg-muted);
 }
+.next-change {
+  margin: 4px 0 0;
+  max-width: 52ch;
+  font-size: 12.5px;
+  color: var(--fg-dim);
+  font-style: italic;
+}
+.next-change[hidden] { display: none; }
 .temp-wrap { text-align: right; }
 .temp {
   display: inline-flex; align-items: flex-start; gap: 6px;

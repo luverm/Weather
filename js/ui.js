@@ -22,6 +22,7 @@ const el = {
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
   narrative: $("#narrative"),
+  nextChange: $("#next-change"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
@@ -261,6 +262,7 @@ export const ui = {
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
+    renderNextChange(weather);
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
@@ -1205,6 +1207,68 @@ function renderWindRose(w) {
     parts.push(`<path d="${d}" fill="currentColor" opacity="${(0.20 + t * 0.55).toFixed(2)}"/>`);
   }
   el.windRose.innerHTML = parts.join("");
+}
+
+// "Next change" narrator: scans the upcoming 12 h of hourly data and picks
+// the first significant transition — rain onset/stop, big cloud swing,
+// temperature dropping past a comfort threshold, or a big wind pickup.
+function renderNextChange(w) {
+  if (!el.nextChange) return;
+  const hours = (w.hourly || []).filter((h) => h.time > Date.now()).slice(0, 12);
+  if (hours.length < 3) { el.nextChange.hidden = true; return; }
+  const tz = w.timezone;
+  const clock = (ts) => new Date(ts).toLocaleTimeString(undefined, {
+    hour: "2-digit", minute: "2-digit", hour12: false,
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  const inHours = (ts) => {
+    const mins = Math.max(0, Math.round((ts - Date.now()) / 60_000));
+    return mins < 60 ? `${mins}m` : `${Math.floor(mins/60)}h ${mins%60}m`;
+  };
+
+  // 1. Rain onset (dry -> wet).
+  const currentlyDry = (w.hourly?.[0]?.precip ?? 0) < 0.1;
+  if (currentlyDry) {
+    const wet = hours.find((h) => (h.precip || 0) >= 0.4);
+    if (wet) {
+      return show(`Rain arrives in ${inHours(wet.time)} (${clock(wet.time)})`);
+    }
+  } else {
+    // Rain stopping (wet -> dry).
+    const dry = hours.find((h) => (h.precip || 0) < 0.1);
+    if (dry) return show(`Rain eases around ${clock(dry.time)}`);
+  }
+
+  // 2. Big cloud swing (>=40% delta).
+  const curCloud = w.cloudCover ?? hours[0]?.cloudCover;
+  if (curCloud != null) {
+    const clearing = hours.find((h) => h.cloudCover != null && curCloud - h.cloudCover >= 40);
+    if (clearing) return show(`Clouds clearing around ${clock(clearing.time)}`);
+    const clouding = hours.find((h) => h.cloudCover != null && h.cloudCover - curCloud >= 40);
+    if (clouding) return show(`Clouds move in around ${clock(clouding.time)}`);
+  }
+
+  // 3. Wind picks up (>=15 km/h delta or gusts crossing 30).
+  const curWind = w.windSpeed ?? hours[0]?.wind ?? 0;
+  const windy = hours.find((h) => (h.wind ?? 0) - curWind >= 15 || (h.gusts ?? 0) >= 40);
+  if (windy) return show(`Winds pick up around ${clock(windy.time)}`);
+
+  // 4. Big temp swing (>=6°).
+  const curT = w.temp ?? hours[0]?.temp;
+  if (curT != null) {
+    const cooler = hours.find((h) => curT - (h.temp ?? curT) >= 6);
+    if (cooler) return show(`Cooling to ${Math.round(convertTemp(cooler.temp))}° by ${clock(cooler.time)}`);
+    const warmer = hours.find((h) => (h.temp ?? curT) - curT >= 6);
+    if (warmer) return show(`Warming to ${Math.round(convertTemp(warmer.temp))}° by ${clock(warmer.time)}`);
+  }
+
+  // Nothing significant.
+  return show(`Steady conditions for the next ${hours.length} h`);
+
+  function show(text) {
+    el.nextChange.textContent = "· " + text;
+    el.nextChange.hidden = false;
+  }
 }
 
 // Wardrobe suggestion: one-line outfit tip driven by feels-like temperature,
