@@ -2617,7 +2617,9 @@ function bindSearch() {
     const i = parseInt(li.dataset.index, 10);
     const item = el.searchResults._items?.[i];
     if (!item) return;
-    el.searchInput.value = item.name;
+    // Clear the input so a repeat search starts fresh (and the placeholder
+    // is visible again); city name shows in the hero anyway.
+    el.searchInput.value = "";
     el.searchResults.hidden = true;
     places.add(item);
     state.handlers.onSearchSelect?.(item);
