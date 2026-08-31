@@ -84,6 +84,7 @@ const el = {
   pollenItems: $("#pollen-items"),
   pressureTrend: $("#m-pressure-trend"),
   tempTrend: $("#temp-trend"),
+  yesterdayDelta: $("#yesterday-delta"),
   uvLevel: $("#m-uv-level"),
   uvSpark: $("#uv-spark"),
   humidityComfort: $("#m-humidity-comfort"),
@@ -349,6 +350,29 @@ function renderLiveValues(w, { animate = true } = {}) {
   // Re-bind the reference after innerHTML rewrite so subsequent updates keep working.
   el.tempTrend = document.getElementById("temp-trend");
   renderDayRange(w);
+  renderYesterdayDelta(w);
+}
+
+// Compare today's high to yesterday's high (from w.yesterday) and show a
+// small pill on the temp side of the hero.
+function renderYesterdayDelta(w) {
+  if (!el.yesterdayDelta) return;
+  const todayHi = w.daily?.[0]?.tempMax;
+  const yHi = w.yesterday?.tempMax;
+  if (todayHi == null || yHi == null) { el.yesterdayDelta.hidden = true; return; }
+  const delta = todayHi - yHi;
+  const unitDelta = state.unit === "F" ? delta * 9 / 5 : delta;
+  if (Math.abs(unitDelta) < 1) {
+    el.yesterdayDelta.hidden = true;
+    return;
+  }
+  const arrow = delta > 0 ? "▲" : "▼";
+  const words = Math.abs(unitDelta) < 3 ? "similar to yesterday" :
+                Math.abs(unitDelta) < 6 ? (delta > 0 ? "warmer than yesterday" : "cooler than yesterday") :
+                                          (delta > 0 ? "much warmer than yesterday" : "much cooler than yesterday");
+  el.yesterdayDelta.textContent = `${arrow} ${Math.abs(Math.round(unitDelta))}° ${words}`;
+  el.yesterdayDelta.className = `yesterday-delta ${delta > 0 ? "up" : "down"}`;
+  el.yesterdayDelta.hidden = false;
 }
 
 // Pick a short natural-language reason for why the current "feels like" temp
