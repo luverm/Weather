@@ -471,9 +471,12 @@ function renderMetrics(w) {
     }
   }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
-  el.metricPressureSub.textContent = w.visibility != null
+  // Combine visibility with a short pressure-driven verdict.
+  const vis = w.visibility != null
     ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
     : "visibility —";
+  const verdict = pressureVerdict(w.pressure, w.pressureTrend);
+  el.metricPressureSub.textContent = verdict ? `${verdict} · ${vis}` : vis;
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
@@ -514,6 +517,22 @@ function renderUvSparkline(w) {
     return `<rect x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${(barW - 0.8).toFixed(2)}" height="${bh.toFixed(2)}" fill="${uvColor}" opacity="0.85" rx="0.6"/>`;
   }).join("");
   svg.innerHTML = bars;
+}
+
+// Short natural-language interpretation of pressure + trend. Follows the
+// classic barometer rules of thumb.
+function pressureVerdict(p, trend) {
+  if (p == null) return "";
+  const d = trend?.direction;
+  const delta = trend?.delta ?? 0;
+  const rapid = Math.abs(delta) >= 2.5;
+  if (p >= 1023 && d !== "falling") return "Fair weather";
+  if (p >= 1020 && d === "rising") return "Improving";
+  if (p <= 1000 && d === "falling") return rapid ? "Storm coming" : "Unsettled";
+  if (d === "falling" && rapid) return "Change coming";
+  if (d === "rising" && rapid)  return "Clearing soon";
+  if (p <= 1005) return "Unsettled";
+  return "";
 }
 
 function humidityComfort(rh, dew, temp) {
