@@ -2052,7 +2052,11 @@ function renderDailyIconStrip(days) {
           : ` · ${d.precip.toFixed(1)} mm`)
       : "";
     const title = `${dayName} · ${d.label || d.condition || ""} · ${hi} / ${lo}${rain}`;
-    return `<span class="strip-day" title="${escapeHtml(title)}">${iconFor(d.condition)}</span>`;
+    const tint = { clear: "#ffd680", clouds: "#b6c4d6", rain: "#9ad1ff",
+                   snow: "#e6f0ff", storm: "#c7a5ee", fog: "#c3c9d1" };
+    const color = tint[d.condition];
+    const style = color ? ` style="color: ${color}"` : "";
+    return `<span class="strip-day" title="${escapeHtml(title)}"${style}>${iconFor(d.condition)}</span>`;
   }).join("");
 }
 
