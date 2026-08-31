@@ -45,6 +45,8 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonAge: $("#moon-age"),
+  moonNext: $("#moon-next"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -566,6 +568,18 @@ function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  if (el.moonAge && moon.ageDays != null) {
+    el.moonAge.textContent = moon.ageDays.toFixed(1);
+  }
+  if (el.moonNext && moon.daysToFull != null && moon.daysToNew != null) {
+    const nextFull = moon.daysToFull;
+    const nextNew  = moon.daysToNew;
+    const pick = nextFull < nextNew
+      ? { label: "full moon", days: nextFull }
+      : { label: "new moon",  days: nextNew };
+    const rounded = Math.max(1, Math.round(pick.days));
+    el.moonNext.textContent = `Next ${pick.label} in ${rounded}d`;
+  }
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
