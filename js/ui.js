@@ -698,9 +698,16 @@ function renderAqTrend(aq) {
   drawSparkline(el.aqTrendLine, el.aqTrendFill, pts, { minSpan: 20 });
 }
 
+// Return the Unicode moon-phase glyph that best matches a 0..1 phase value.
+function moonGlyph(phase) {
+  const glyphs = ["🌑","🌒","🌓","🌔","🌕","🌖","🌗","🌘"];
+  const idx = Math.round(phase * 8) % 8;
+  return glyphs[idx];
+}
+
 function renderMoon(moon) {
   if (!moon) return;
-  el.moonName.textContent = moon.name;
+  el.moonName.textContent = `${moonGlyph(moon.phase)} ${moon.name}`;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
   if (el.moonAge && moon.ageDays != null) {
     el.moonAge.textContent = moon.ageDays.toFixed(1);
