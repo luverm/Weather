@@ -206,7 +206,9 @@ export const ui = {
     });
     bindInstallPrompt();
     bindChartFullscreen();
+    bindHeroSwipe();
   },
+  onCyclePlace(handler) { state.handlers.onCyclePlace = handler; },
   focusSearch() { el.searchInput?.focus(); el.searchInput?.select?.(); },
   toggleUnits() { el.unitBtn?.click(); },
   isSearchOpen() { return !el.searchResults.hidden; },
@@ -1930,6 +1932,34 @@ function bindAudio() {
 }
 
 let deferredInstallPrompt = null;
+// Swipe left/right on the hero to cycle to the next/previous saved city.
+// Only fires when there are 2+ saved places; the tilt binding on the same
+// element is unaffected.
+function bindHeroSwipe() {
+  if (!el.heroInner) return;
+  let startX = null, startY = null, active = false;
+  el.heroInner.addEventListener("touchstart", (e) => {
+    if (e.touches.length !== 1) return;
+    startX = e.touches[0].clientX; startY = e.touches[0].clientY; active = true;
+  }, { passive: true });
+  el.heroInner.addEventListener("touchmove", (e) => {
+    if (!active || startX == null) return;
+    const dx = e.touches[0].clientX - startX;
+    const dy = e.touches[0].clientY - startY;
+    // If motion is clearly vertical, cancel the swipe intent.
+    if (Math.abs(dy) > Math.abs(dx) + 6) active = false;
+  }, { passive: true });
+  el.heroInner.addEventListener("touchend", (e) => {
+    if (!active || startX == null) { startX = null; return; }
+    const dx = (e.changedTouches[0]?.clientX ?? startX) - startX;
+    const dy = (e.changedTouches[0]?.clientY ?? startY) - startY;
+    startX = startY = null; active = false;
+    if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) - 20) return;
+    const dir = dx < 0 ? 1 : -1;   // swipe left -> next
+    state.handlers.onCyclePlace?.(dir);
+  }, { passive: true });
+}
+
 function bindChartFullscreen() {
   if (!el.chartFullBtn || !el.chartCard) return;
   const toggle = () => {

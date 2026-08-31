@@ -261,6 +261,15 @@ function setReducedMotion(on) {
   }
 }
 
+function cyclePlace(dir) {
+  const list = places.all();
+  if (list.length < 2) return;
+  const currentId = app.place ? places.idFor(app.place) : null;
+  const idx = Math.max(0, list.findIndex((p) => places.idFor(p) === currentId));
+  const next = list[(idx + dir + list.length) % list.length];
+  if (next) loadByCoords(next);
+}
+
 ui.init({
   onSearchSelect: (place) => { places.add(place); loadByCoords(place); },
   onLocate: () => useGeolocation(),
@@ -274,7 +283,10 @@ ui.init({
     if (app.weather) applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
   },
+  onCyclePlace: cyclePlace,
 });
+// Also let the UI-level swipe handler use the same cycle behaviour.
+ui.onCyclePlace(cyclePlace);
 
 // Apply saved reduce-motion preference on boot.
 if (ui.isReduceMotion?.()) setReducedMotion(true);
@@ -288,14 +300,7 @@ installShortcuts({
   toggleFullscreenRadar: () => document.getElementById("radar-full")?.click(),
   toggleRadar: () => document.getElementById("radar-play")?.click(),
   resetScrubber: () => scrubber.reset(),
-  cyclePlace: (dir) => {
-    const list = places.all();
-    if (list.length < 2) return;
-    const currentId = app.place ? places.idFor(app.place) : null;
-    const idx = Math.max(0, list.findIndex((p) => places.idFor(p) === currentId));
-    const next = list[(idx + dir + list.length) % list.length];
-    if (next) loadByCoords(next);
-  },
+  cyclePlace,
   nudge: (hours) => {
     clock.setOffset(clock.offset() + hours * 3600_000);
     scrubber.sync();
