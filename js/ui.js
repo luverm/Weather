@@ -2500,13 +2500,22 @@ function bindSearch() {
 }
 
 function bindUnitToggle() {
-  el.unitBtn.addEventListener("click", () => {
+  const flip = () => {
     state.unit = state.unit === "C" ? "F" : "C";
     localStorage.setItem("aether:unit", state.unit);
     el.unitBtn.textContent = `°${state.unit}`;
     if (state.weather) ui.setWeather(state.weather);
     updateDocumentTitle(state.weather);
-  });
+  };
+  el.unitBtn.addEventListener("click", flip);
+  // Tapping the hero temp value also flips the unit — bigger tap target on
+  // phones and less mystery about what the little °C/°F button does.
+  if (el.temp) {
+    el.temp.style.cursor = "pointer";
+    el.temp.setAttribute("role", "button");
+    el.temp.setAttribute("aria-label", "Toggle temperature units");
+    el.temp.addEventListener("click", flip);
+  }
 }
 
 function bindLocate() {
