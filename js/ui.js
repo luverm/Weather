@@ -958,7 +958,7 @@ function renderPollen(pollen) {
 function renderSkyRibbon(w) {
   if (!el.skyRibbon) return;
   const hours = (w.hourly || []).slice(0, 24);
-  if (!hours.length) { el.skyRibbon.innerHTML = ""; return; }
+  if (!hours.length) { el.skyRibbon.innerHTML = ""; el.skyRibbon.style.background = ""; return; }
 
   const stops = hours.map((h) => skyColorAt(h.time, w));
   // Convert stops into a CSS linear-gradient. Each hour = ~1/24 of the width.
@@ -967,7 +967,23 @@ function renderSkyRibbon(w) {
     .map((c, i) => `${c} ${(i * step).toFixed(2)}%`)
     .join(", ");
   el.skyRibbon.style.background = `linear-gradient(90deg, ${gradient})`;
-  el.skyRibbon.title = `Sky preview · next ${hours.length} h`;
+  el.skyRibbon.title = `Tap to jump to that hour`;
+
+  // Interactive: click a spot to scrub to that hour. Bound once, ref stored
+  // on the element so setWeather re-renders don't accumulate listeners.
+  if (!el.skyRibbon._boundSeek) {
+    const seek = (ev) => {
+      const hours = (state.weather?.hourly || []).slice(0, 24);
+      if (!hours.length) return;
+      const rect = el.skyRibbon.getBoundingClientRect();
+      const x = clamp01(((ev.clientX ?? (ev.touches?.[0]?.clientX)) - rect.left) / rect.width);
+      const idx = Math.round(x * (hours.length - 1));
+      const ts = hours[idx]?.time;
+      if (ts != null) state.handlers.onHourClick?.(ts);
+    };
+    el.skyRibbon.addEventListener("click", seek);
+    el.skyRibbon._boundSeek = true;
+  }
 }
 
 // Given a timestamp and the weather (with daily sun times), return an rgba()
