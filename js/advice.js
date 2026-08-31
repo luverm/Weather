@@ -12,6 +12,11 @@ export function advise(weather) {
   const nextRain = (weather.hourly || []).slice(0, 4)
     .find((h) => (h.pop ?? 0) >= 55 || (h.precip ?? 0) > 0.4);
 
+  // High-altitude nudge takes precedence over pleasantry — thin air matters.
+  const alt = weather.elevation ?? 0;
+  if (alt >= 2500 && cond !== "storm" && cond !== "snow") {
+    return "Thin air at altitude — hydrate, take it slow, mind the sun.";
+  }
   if (cond === "storm") return "Thunderstorms — stay indoors and unplug sensitive gear.";
   if (cond === "snow") {
     if (t <= -5) return "Serious chill — layered thermals, beanie, and gloves.";
