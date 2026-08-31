@@ -764,6 +764,11 @@ function renderSun(w) {
   scheduleSunArc(w);
   scheduleGoldenHour(w);
   renderSunsetPreview(w);
+  const title = document.getElementById("sun-noon-title");
+  if (title && w?.sunrise && w?.sunset) {
+    const noonTs = w.sunrise + (w.sunset - w.sunrise) / 2;
+    title.textContent = `Solar noon · ${fmtTime(noonTs)}`;
+  }
 }
 
 // Predict tonight's sunset palette from cloud cover during the sunset hour.
