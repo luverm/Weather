@@ -2257,6 +2257,43 @@ function updateDocumentTitle(w) {
   const t = Math.round(state.unit === "F" ? w.temp * 9 / 5 + 32 : w.temp);
   const place = state.place?.name ? ` · ${state.place.name}` : "";
   document.title = `${emoji} ${t}°${state.unit}${place} — Aether`;
+  updateFavicon(w);
+}
+
+// Swap the tab favicon SVG based on current condition + day/night so a
+// glance at the tab shows the weather even before the title fits.
+function updateFavicon(w) {
+  const link = document.querySelector('link[rel="icon"]');
+  if (!link) return;
+  const svg = buildFaviconSvg(w.condition, !!w.isDay);
+  link.setAttribute("href", `data:image/svg+xml,${encodeURIComponent(svg)}`);
+}
+
+function buildFaviconSvg(condition, isDay) {
+  const body = isDay ? "#fff1c9" : "#c7d3ff";
+  const bg = "#0b1020";
+  const cloud = "#c9d7e6";
+  const rain = "#7cc0ff";
+  const snow = "#ffffff";
+  const bolt = "#ffd35a";
+  // 64x64 SVG. Everything sits inside a rounded square for a proper favicon.
+  const wrap = (inner) => `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='${bg}'/>${inner}</svg>`;
+  switch (condition) {
+    case "clear":
+      return wrap(`<circle cx='32' cy='32' r='16' fill='${body}'/>`);
+    case "clouds":
+      return wrap(`<circle cx='42' cy='24' r='10' fill='${body}' opacity='0.8'/><path d='M18 42a8 8 0 010-16 10 10 0 0119-2 8 8 0 011 16H18z' fill='${cloud}'/>`);
+    case "rain":
+      return wrap(`<path d='M18 34a8 8 0 010-16 10 10 0 0119-2 8 8 0 011 16H18z' fill='${cloud}'/><path d='M22 46l-2 6M32 46l-2 6M42 46l-2 6' stroke='${rain}' stroke-width='3' stroke-linecap='round'/>`);
+    case "snow":
+      return wrap(`<path d='M18 34a8 8 0 010-16 10 10 0 0119-2 8 8 0 011 16H18z' fill='${cloud}'/><circle cx='22' cy='50' r='3' fill='${snow}'/><circle cx='32' cy='50' r='3' fill='${snow}'/><circle cx='42' cy='50' r='3' fill='${snow}'/>`);
+    case "storm":
+      return wrap(`<path d='M18 30a8 8 0 010-16 10 10 0 0119-2 8 8 0 011 16H18z' fill='${cloud}'/><path d='M30 32l-6 12h6l-4 12 12-16h-6l6-8z' fill='${bolt}'/>`);
+    case "fog":
+      return wrap(`<path d='M12 24h40M8 34h48M14 44h36M18 54h28' stroke='${cloud}' stroke-width='4' stroke-linecap='round'/>`);
+    default:
+      return wrap(`<circle cx='32' cy='32' r='16' fill='${body}'/>`);
+  }
 }
 
 // Screen wake lock — best-effort. Held while the user is actively scrubbing
