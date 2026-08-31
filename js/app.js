@@ -375,6 +375,11 @@ document.addEventListener("visibilitychange", () => {
     engine.tickOnce();
     audio.resume();
   }
+  // Coming back after a while → refresh if the data is stale enough to matter.
+  if (!document.hidden && app.weather?.fetchedAt && clock.isLive()) {
+    const age = Date.now() - app.weather.fetchedAt;
+    if (age > 10 * 60_000) refreshWeather();
+  }
 });
 
 // Re-render scenes at the top of each minute so "live" view ticks forward.
