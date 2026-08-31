@@ -2235,11 +2235,11 @@ function renderPlaces() {
       ? ` title="${escapeHtml(p.name)} · ${escapeHtml(p.label)}"`
       : ` title="${escapeHtml(p.name)}"`;
     return `
-      <div class="place-chip ${active ? "active" : ""} ${tone}" data-id="${p.id}"${titleAttr} draggable="true">
+      <div class="place-chip ${active ? "active" : ""} ${tone}" data-id="${p.id}"${titleAttr} draggable="true" role="button" tabindex="0" aria-label="Load ${escapeHtml(p.name)}">
         ${iconMarkup}
         <span class="place-name-text">${escapeHtml(p.name)}</span>
         ${tempMarkup}
-        <span class="close" data-action="remove" aria-label="Remove">
+        <span class="close" data-action="remove" aria-label="Remove ${escapeHtml(p.name)}" role="button" tabindex="-1">
           <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
         </span>
       </div>`;
@@ -2257,6 +2257,16 @@ function renderPlaces() {
       // emit click after dragend. Skip if we just released a drop.
       if (state._justDropped && Date.now() - state._justDropped < 250) return;
       state.handlers.onPlaceClick?.(item);
+    });
+    chip.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        state.handlers.onPlaceClick?.(item);
+      } else if (e.key === "Delete" || e.key === "Backspace") {
+        e.preventDefault();
+        places.remove(item);
+        renderPlaces();
+      }
     });
     // Long-press → info popover with the chip's cached summary.
     let pressTimer = null;
