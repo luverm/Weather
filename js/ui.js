@@ -2796,6 +2796,15 @@ function bindSettings() {
   const open = () => {
     el.settingsMenu.hidden = false;
     el.settingsBtn.setAttribute("aria-expanded", "true");
+    // Show the saved-places count on the Clear button so the destructive
+    // action's scope is obvious before the confirm prompt.
+    if (el.settingClearPlaces) {
+      const n = places.all().length;
+      el.settingClearPlaces.textContent = n
+        ? `Clear saved places (${n})`
+        : "No saved places";
+      el.settingClearPlaces.disabled = n === 0;
+    }
     // Refresh coordinates each open so they reflect the active place.
     const coordsEl = document.getElementById("settings-coords");
     if (coordsEl) {
