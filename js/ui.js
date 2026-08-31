@@ -502,11 +502,12 @@ function renderMetrics(w) {
   if (windUnitEl) windUnitEl.textContent = speedUnit;
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
+  const dirArrow = dir != null ? cardinalArrow(dir) : "";
   const gustDisplay = w.windGusts != null
     ? `${Math.round(toSpeed(w.windGusts))} ${speedUnit}`
     : "—";
   el.metricWindSub.textContent = dirLabel
-    ? `${dirLabel} · gust ${gustDisplay}`
+    ? `${dirLabel} ${dirArrow} · gust ${gustDisplay}`
     : `gust ${gustDisplay}`;
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
@@ -1781,6 +1782,17 @@ function renderTrends(w) {
       el.tempTrend.textContent = "";
     }
   }
+}
+
+// Direction arrow matching the cardinal — the wind is going TO this direction
+// (opposite of where it comes from). Rounded to eight arrows.
+function cardinalArrow(deg) {
+  // Wind direction from Open-Meteo is "coming from" — the arrow should point
+  // in the reverse direction (where the wind is going).
+  const going = (deg + 180) % 360;
+  const arrows = ["↑","↗","→","↘","↓","↙","←","↖"];
+  const i = Math.round(going / 45) % 8;
+  return arrows[i];
 }
 
 function cardinal(deg) {
