@@ -1541,9 +1541,20 @@ function renderStargaze(w) {
     avgCloud <= 40 ? "some clouds" :
     avgCloud <= 70 ? "mostly cloudy" : "overcast";
   const moonDesc = `${Math.round(moonIllum * 100)}% moon`;
+  // Find the calmest tonight-hour by wind (with cloud cover under 50% preferred).
+  let calm = null;
+  for (const h of nightHours) {
+    if (h.wind == null) continue;
+    if (!calm || h.wind < calm.wind) calm = h;
+  }
+  const tz = w.timezone;
+  const calmChip = calm ? ` · calmest ${new Date(calm.time).toLocaleTimeString(undefined, {
+    hour: "2-digit", minute: "2-digit", hour12: false,
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  })}` : "";
   el.stargazeCard.hidden = false;
   el.stargazeHeadline.textContent = headline;
-  el.stargazeDetail.textContent = `${cloudDesc} · ${moonDesc}`;
+  el.stargazeDetail.textContent = `${cloudDesc} · ${moonDesc}${calmChip}`;
   // Render 5 star SVGs, filled up to `stars`.
   el.stargazeStars.innerHTML = Array.from({ length: 5 }, (_, i) =>
     `<svg class="star ${i < stars ? "on" : "off"}" viewBox="0 0 16 16" width="14" height="14"><path d="M8 1.5l1.9 4.3 4.6.5-3.5 3.2 1 4.6L8 11.8 3.9 14.1l1-4.6-3.5-3.2 4.6-.5z" fill="currentColor"/></svg>`
