@@ -2784,10 +2784,11 @@ function bindSettings() {
     const coordsEl = document.getElementById("settings-coords");
     if (coordsEl) {
       if (state.place?.lat != null && state.place?.lon != null) {
-        const lat = state.place.lat.toFixed(3);
-        const lon = state.place.lon.toFixed(3);
+        const lat = state.place.lat, lon = state.place.lon;
+        const latStr = `${Math.abs(lat).toFixed(3)}° ${lat >= 0 ? "N" : "S"}`;
+        const lonStr = `${Math.abs(lon).toFixed(3)}° ${lon >= 0 ? "E" : "W"}`;
         const tz = state.weather?.timezone;
-        coordsEl.innerHTML = `<span>${state.place.name || "Location"}</span> · ${lat}, ${lon}${tz && tz !== "auto" ? ` · ${tz}` : ""}`;
+        coordsEl.innerHTML = `<span>${state.place.name || "Location"}</span> · ${latStr}, ${lonStr}${tz && tz !== "auto" ? ` · ${tz}` : ""}`;
         coordsEl.hidden = false;
       } else {
         coordsEl.hidden = true;
