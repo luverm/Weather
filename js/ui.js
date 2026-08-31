@@ -973,6 +973,14 @@ function scheduleSunArc(w) {
     // After sunset, dim the marker so it visually settles.
     const isUp = now >= sr && now <= ss;
     el.sunArcMarker.style.opacity = isUp ? "1" : "0.45";
+    const title = document.getElementById("sun-arc-title");
+    if (title) {
+      const pct = Math.round(frac * 100);
+      const nowTime = fmtTime(now);
+      title.textContent = isUp
+        ? `Sun · ${nowTime} · ${pct}% through daylight`
+        : `Sun below horizon · ${nowTime}`;
+    }
   };
   update();
   state.sunArcTimer = setInterval(update, 60_000);
