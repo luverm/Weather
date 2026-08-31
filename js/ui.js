@@ -2526,6 +2526,19 @@ function bindSettings() {
   const open = () => {
     el.settingsMenu.hidden = false;
     el.settingsBtn.setAttribute("aria-expanded", "true");
+    // Refresh coordinates each open so they reflect the active place.
+    const coordsEl = document.getElementById("settings-coords");
+    if (coordsEl) {
+      if (state.place?.lat != null && state.place?.lon != null) {
+        const lat = state.place.lat.toFixed(3);
+        const lon = state.place.lon.toFixed(3);
+        const tz = state.weather?.timezone;
+        coordsEl.innerHTML = `<span>${state.place.name || "Location"}</span> · ${lat}, ${lon}${tz && tz !== "auto" ? ` · ${tz}` : ""}`;
+        coordsEl.hidden = false;
+      } else {
+        coordsEl.hidden = true;
+      }
+    }
   };
   el.settingsBtn.addEventListener("click", (e) => {
     e.stopPropagation();
