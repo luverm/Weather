@@ -390,6 +390,16 @@ function renderLiveValues(w, { animate = true } = {}) {
   const feels = convertTemp(w.feelsLike ?? w.temp);
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
+  // Faint tone tint on the hero temp based on the raw °C temperature.
+  if (el.temp && w.temp != null) {
+    const c = w.temp;
+    const tempTone =
+      c <= 0 ? "icy" :
+      c <= 10 ? "cool" :
+      c <= 22 ? "mild" :
+      c <= 30 ? "warm" : "hot";
+    el.temp.dataset.tone = tempTone;
+  }
   const conditionEmoji = CONDITION_EMOJI[w.condition] || "";
   el.conditionLabel.textContent = conditionEmoji ? `${conditionEmoji} ${capitalize(w.label)}` : capitalize(w.label);
   renderSensoryTag(w);

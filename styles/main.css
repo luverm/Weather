@@ -565,6 +565,11 @@ html[data-reduce-motion="true"] *::after {
   transition: filter 260ms var(--ease);
 }
 .temp:hover { filter: drop-shadow(0 0 20px rgba(255,255,255,0.18)); }
+.temp[data-tone="icy"]  { filter: drop-shadow(0 0 20px rgba(154, 209, 255, 0.35)); }
+.temp[data-tone="cool"] { filter: drop-shadow(0 0 14px rgba(154, 209, 255, 0.22)); }
+.temp[data-tone="mild"] { filter: drop-shadow(0 0 14px rgba(255, 246, 220, 0.18)); }
+.temp[data-tone="warm"] { filter: drop-shadow(0 0 16px rgba(255, 200, 130, 0.25)); }
+.temp[data-tone="hot"]  { filter: drop-shadow(0 0 22px rgba(255, 150, 100, 0.4)); }
 .unit-flip { animation: unit-flip 380ms var(--ease); }
 @keyframes unit-flip {
   0%   { transform: scale(1); }
