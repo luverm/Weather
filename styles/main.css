@@ -867,6 +867,12 @@ html[data-reduce-motion="true"] *::after {
   transform-origin: 0 0;
   transition: transform 900ms var(--ease);
 }
+.wind-rose {
+  color: #9ad1ff;
+  transition: opacity 400ms var(--ease);
+  opacity: 0.75;
+  pointer-events: none;
+}
 
 /* ---------- Sun countdown ---------- */
 .sun-countdown {

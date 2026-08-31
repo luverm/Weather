@@ -51,6 +51,7 @@ const el = {
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
+  windRose: $("#wind-rose"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
   chartSvg: $("#chart-svg"),
@@ -396,6 +397,7 @@ function renderMetrics(w) {
       el.windBft.textContent = "";
     }
   }
+  renderWindRose(w);
   el.metricHumidity.textContent = Math.round(w.humidity ?? 0);
   el.metricHumiditySub.textContent = w.dewPoint != null
     ? `dew ${Math.round(convertTemp(w.dewPoint))}°`
@@ -939,6 +941,46 @@ function renderPollen(pollen) {
   el.pollenItems.innerHTML = pollen.items.map((p) =>
     `<span>${escapeHtml(p.label)} ${p.value.toFixed(1)}</span>`
   ).join("");
+}
+
+// Wind rose (next 12 h of wind direction, weighted by wind speed). Renders
+// 16 radial petals inside the wind compass, scaled to fit around the needle.
+function renderWindRose(w) {
+  if (!el.windRose) return;
+  const hours = (w.hourly || []).slice(0, 12).filter((h) => h.windDir != null);
+  if (!hours.length) { el.windRose.innerHTML = ""; return; }
+  const BINS = 16;
+  const bins = new Array(BINS).fill(0);
+  let maxWeight = 0;
+  for (const h of hours) {
+    const b = Math.floor(((h.windDir % 360) / 360) * BINS + 0.5) % BINS;
+    const weight = Math.max(1, h.wind || 1);
+    bins[b] += weight;
+    if (bins[b] > maxWeight) maxWeight = bins[b];
+  }
+  if (maxWeight === 0) { el.windRose.innerHTML = ""; return; }
+  // Compass viewBox is -24 -24 48 48 with radius 22. Petals grow inward from
+  // the ring toward the centre, capped at ~14 units so the needle stays visible.
+  const R_OUTER = 21;
+  const MAX_PETAL = 12;
+  const halfSectorDeg = 360 / BINS / 2;
+  const parts = [];
+  for (let i = 0; i < BINS; i++) {
+    if (!bins[i]) continue;
+    const t = bins[i] / maxWeight;
+    const len = 3 + t * MAX_PETAL;
+    const rInner = R_OUTER - len;
+    const angleMid = (i * 360) / BINS;
+    const a0 = (angleMid - halfSectorDeg) * Math.PI / 180 - Math.PI / 2;
+    const a1 = (angleMid + halfSectorDeg) * Math.PI / 180 - Math.PI / 2;
+    const p0 = { x: Math.cos(a0) * R_OUTER, y: Math.sin(a0) * R_OUTER };
+    const p1 = { x: Math.cos(a1) * R_OUTER, y: Math.sin(a1) * R_OUTER };
+    const p2 = { x: Math.cos(a1) * rInner, y: Math.sin(a1) * rInner };
+    const p3 = { x: Math.cos(a0) * rInner, y: Math.sin(a0) * rInner };
+    const d = `M${p0.x.toFixed(1)} ${p0.y.toFixed(1)} A${R_OUTER} ${R_OUTER} 0 0 1 ${p1.x.toFixed(1)} ${p1.y.toFixed(1)} L${p2.x.toFixed(1)} ${p2.y.toFixed(1)} A${rInner} ${rInner} 0 0 0 ${p3.x.toFixed(1)} ${p3.y.toFixed(1)} Z`;
+    parts.push(`<path d="${d}" fill="currentColor" opacity="${(0.20 + t * 0.55).toFixed(2)}"/>`);
+  }
+  el.windRose.innerHTML = parts.join("");
 }
 
 // Precipitation totals card: 24h total, today's remainder, wet-hour count,
