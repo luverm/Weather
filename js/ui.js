@@ -3008,9 +3008,10 @@ function bindShare() {
     const unit = state.unit;
     const t = (v) => `${Math.round(unit === "F" ? v * 9 / 5 + 32 : v)}°${unit}`;
     const today = w.daily?.[0];
+    const sensory = el.sensoryTag?.hidden ? "" : (el.sensoryTag?.textContent || "");
     const lines = [
       `Aether · ${placeName}`,
-      `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
+      `${sensory ? sensory + " · " : ""}${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
       today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
       `Wind ${Math.round(unit === "F" ? w.windSpeed * 0.621371 : w.windSpeed)} ${unit === "F" ? "mph" : "km/h"}${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
