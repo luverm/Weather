@@ -283,6 +283,7 @@ export const ui = {
     renderNextChange(weather);
     updateDocumentTitle(weather);
     if (weather.offline) ui.showToast("Offline — showing sample weather");
+    else showOnboardingHintOnce();
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
       places.updateSummary(state.place, {
@@ -424,6 +425,18 @@ function feelsLikeWhy(w) {
   if (uv >= 6 && cloud < 40) return `· direct sun adds ${magnitude}`;
   if (wind < 5 && humidity >= 55) return `· sultry air adds ${magnitude}`;
   return `· ${magnitude}`;
+}
+
+// Show a one-time "welcome hint" toast the first time weather loads on a
+// fresh install so first-time users learn about ? for shortcuts. Persists a
+// flag so we don't nag on later visits.
+function showOnboardingHintOnce() {
+  try {
+    if (localStorage.getItem("aether:onboarded") === "1") return;
+    localStorage.setItem("aether:onboarded", "1");
+    // Delay slightly so the toast lands after the initial paint settles.
+    setTimeout(() => ui.showToast("Press ? for shortcuts · drag chips to reorder", 5000), 900);
+  } catch { /* ignore storage errors */ }
 }
 
 // One-word sensory descriptor for the current moment ("crisp", "muggy",
