@@ -377,7 +377,13 @@ html[data-reduce-motion="true"] *::after {
   width: 6px; height: 6px; border-radius: 50%;
   background: var(--accent); box-shadow: 0 0 8px var(--accent);
   animation: pulse 2.4s ease-in-out infinite;
+  transition: background 400ms var(--ease), box-shadow 400ms var(--ease);
 }
+/* Freshness-driven colour: fresh (green) -> aging (accent) -> stale (amber) -> old (red). */
+.live-dot[data-freshness="fresh"] { background: #78d06a; box-shadow: 0 0 8px rgba(120, 208, 106, 0.7); }
+.live-dot[data-freshness="aging"] { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+.live-dot[data-freshness="stale"] { background: #ffb86b; box-shadow: 0 0 8px rgba(255, 184, 107, 0.75); animation-duration: 3.6s; }
+.live-dot[data-freshness="old"]   { background: #ff6a6a; box-shadow: 0 0 8px rgba(255, 106, 106, 0.75); animation: none; }
 [data-scrubbing="true"] .live-dot { background: #ffb86b; box-shadow: 0 0 8px #ffb86b; animation: none; }
 .place-name {
   margin: 0;

@@ -2299,19 +2299,33 @@ function applyStoredPreferences() {
 ui.isReduceMotion = () => localStorage.getItem("aether:reduceMotion") === "1";
 
 function startFetchedTicker() {
+  const dot = document.getElementById("place-live-dot");
   const update = () => {
-    if (!el.fetchedAgo || !state.weather?.fetchedAt) {
+    const at = state.weather?.fetchedAt;
+    if (!at) {
       if (el.fetchedAgo) el.fetchedAgo.textContent = "";
+      if (dot) dot.dataset.freshness = "unknown";
       return;
     }
-    const ms = Date.now() - state.weather.fetchedAt;
+    const ms = Date.now() - at;
     const minutes = Math.max(0, Math.floor(ms / 60_000));
-    const label =
-      minutes < 1 ? "Just now" :
-      minutes < 60 ? `Updated ${minutes}m ago` :
-      `Updated ${Math.floor(minutes / 60)}h ago`;
-    el.fetchedAgo.textContent = "· " + label;
-    el.fetchedAgo.classList.toggle("stale", minutes >= 20);
+    if (el.fetchedAgo) {
+      const label =
+        minutes < 1 ? "Just now" :
+        minutes < 60 ? `Updated ${minutes}m ago` :
+        `Updated ${Math.floor(minutes / 60)}h ago`;
+      el.fetchedAgo.textContent = "· " + label;
+      el.fetchedAgo.classList.toggle("stale", minutes >= 20);
+    }
+    if (dot) {
+      // Map data age to a semantic freshness bucket picked up by CSS.
+      const bucket =
+        minutes < 5   ? "fresh" :
+        minutes < 20  ? "aging" :
+        minutes < 60  ? "stale" :
+                        "old";
+      dot.dataset.freshness = bucket;
+    }
   };
   update();
   setInterval(update, 30_000);
