@@ -309,6 +309,7 @@ installShortcuts({
   cyclePlace,
   toggleSettings: () => document.getElementById("settings-btn")?.click(),
   refresh: () => refreshWeather(),
+  expandChart: () => document.getElementById("chart-full")?.click(),
   nudge: (hours) => {
     clock.setOffset(clock.offset() + hours * 3600_000);
     scrubber.sync();
