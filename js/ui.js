@@ -270,6 +270,16 @@ export const ui = {
       }
       el.placeSub.textContent = parts.join(" · ");
     }
+    // Screen-reader summary: a single sentence covering place, condition,
+    // temp, feels-like — announced politely on each weather load.
+    const srEl = document.getElementById("sr-summary");
+    if (srEl && weather.temp != null) {
+      const placeStr = state.place?.name ? `${state.place.name}: ` : "";
+      const tempU = state.unit === "F" ? "F" : "C";
+      const t = Math.round(convertTemp(weather.temp));
+      const feels = Math.round(convertTemp(weather.feelsLike ?? weather.temp));
+      srEl.textContent = `${placeStr}${weather.label || "weather"}, ${t} degrees ${tempU}, feels like ${feels}.`;
+    }
     renderAdvice(weather);
     renderPollen(weather.pollen);
     renderPrecip(weather);
