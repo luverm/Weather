@@ -275,6 +275,7 @@ export const ui = {
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     renderNextChange(weather);
+    updateDocumentTitle(weather);
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
@@ -2230,6 +2231,7 @@ function bindUnitToggle() {
     localStorage.setItem("aether:unit", state.unit);
     el.unitBtn.textContent = `°${state.unit}`;
     if (state.weather) ui.setWeather(state.weather);
+    updateDocumentTitle(state.weather);
   });
 }
 
@@ -2242,6 +2244,21 @@ function bindAudio() {
 }
 
 let deferredInstallPrompt = null;
+// Set the browser tab title to show current temp + a condition emoji so it's
+// legible in a background tab. Only touches document.title when the values
+// are ready; falls back to the static app name.
+const CONDITION_EMOJI = {
+  clear: "☀️", clouds: "☁️", rain: "🌧️", snow: "❄️",
+  storm: "⛈️", fog: "🌫️",
+};
+function updateDocumentTitle(w) {
+  if (w?.temp == null) { document.title = "Aether — Interactive Weather"; return; }
+  const emoji = CONDITION_EMOJI[w.condition] || "🌤️";
+  const t = Math.round(state.unit === "F" ? w.temp * 9 / 5 + 32 : w.temp);
+  const place = state.place?.name ? ` · ${state.place.name}` : "";
+  document.title = `${emoji} ${t}°${state.unit}${place} — Aether`;
+}
+
 // Screen wake lock — best-effort. Held while the user is actively scrubbing
 // so the phone doesn't dim mid-exploration. Silently no-ops on browsers
 // without the Wake Lock API, or if a prior release rejected.
