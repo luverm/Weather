@@ -1831,9 +1831,17 @@ function renderWeekHighlights(days, w) {
 
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
-  el.dailyIconStrip.innerHTML = days.map((d) =>
-    `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
-  ).join("");
+  const tz = state.weather?.timezone;
+  el.dailyIconStrip.innerHTML = days.map((d) => {
+    const dayName = new Date(d.time).toLocaleDateString(undefined, {
+      weekday: "short", ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    });
+    const hi = d.tempMax != null ? `${Math.round(convertTemp(d.tempMax))}°` : "—";
+    const lo = d.tempMin != null ? `${Math.round(convertTemp(d.tempMin))}°` : "—";
+    const rain = (d.precip ?? 0) >= 0.1 ? ` · ${d.precip.toFixed(1)} mm` : "";
+    const title = `${dayName} · ${d.label || d.condition || ""} · ${hi} / ${lo}${rain}`;
+    return `<span class="strip-day" title="${escapeHtml(title)}">${iconFor(d.condition)}</span>`;
+  }).join("");
 }
 
 function renderDailySpark(days) {
