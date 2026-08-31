@@ -490,6 +490,13 @@ function renderSensoryTag(w) {
   else                    { word = "mild"; emoji = "🌡️"; }
   el.sensoryTag.textContent = `${emoji} ${word}`;
   el.sensoryTag.hidden = false;
+  // Reveal the reasoning on hover so users understand where the label comes from.
+  const feelsPart = w.feelsLike != null
+    ? `feels ${Math.round(convertTemp(feels))}°${state.unit}`
+    : "";
+  const humPart = w.humidity != null ? `humidity ${Math.round(w.humidity)}%` : "";
+  const windPart = w.windSpeed != null ? `wind ${Math.round(w.windSpeed)} km/h` : "";
+  el.sensoryTag.title = [feelsPart, humPart, windPart].filter(Boolean).join(" · ");
 }
 
 function renderDayRange(w) {
