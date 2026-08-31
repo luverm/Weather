@@ -2547,6 +2547,16 @@ function updateDocumentTitle(w) {
   const place = state.place?.name ? ` · ${state.place.name}` : "";
   document.title = `${emoji} ${t}°${state.unit}${place} — Aether`;
   updateFavicon(w);
+  updateAppBadge(t);
+}
+
+// Set the PWA app-icon badge to the current temperature so an installed
+// Aether shows the number without opening it. Best-effort; the Badging API
+// isn't universal, and the browser may cap the value at 99.
+function updateAppBadge(t) {
+  if (typeof navigator.setAppBadge !== "function") return;
+  const value = Math.max(0, Math.min(99, Math.abs(t)));
+  try { navigator.setAppBadge(value); } catch { /* ignore */ }
 }
 
 // Swap the tab favicon SVG based on current condition + day/night so a
