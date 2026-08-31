@@ -2928,6 +2928,19 @@ function bindSettings() {
     ui.showToast("Saved places cleared");
     close();
   });
+  const resetBtn = document.getElementById("setting-reset-all");
+  resetBtn?.addEventListener("click", () => {
+    if (!confirm("Reset all Aether preferences? (Unit, saved places, and settings all cleared.)")) return;
+    try {
+      // Only clear Aether keys — leaves other origin data alone.
+      for (const k of Object.keys(localStorage)) {
+        if (k.startsWith("aether:")) localStorage.removeItem(k);
+      }
+    } catch { /* ignore */ }
+    close();
+    ui.showToast("Reset · reloading…", 1500);
+    setTimeout(() => location.reload(), 400);
+  });
 }
 
 function applyStoredPreferences() {
