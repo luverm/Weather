@@ -2580,7 +2580,7 @@ function renderSearchResults(results) {
     // Show a subtle 'no match' hint instead of collapsing entirely — reassures
     // the user they typed something the app noticed.
     if (el.searchInput?.value?.trim()?.length >= 2) {
-      el.searchResults.innerHTML = `<li class="recent-heading no-match">No matches — try a nearby city</li>`;
+      el.searchResults.innerHTML = `<li class="recent-heading no-match">No matches — try a nearby city or paste coordinates (lat, lon)</li>`;
       el.searchResults._items = [];
       el.searchResults.hidden = false;
       return;
