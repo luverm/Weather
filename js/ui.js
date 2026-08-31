@@ -2601,7 +2601,9 @@ function showRecentsIfAny() {
       ${tempHtml}
     </li>`;
   }).join("");
-  el.searchResults.innerHTML = `<li class="recent-heading">Recent places</li>${itemsHtml}`;
+  const total = places.all().length;
+  const suffix = total > recents.length ? ` · ${recents.length} of ${total}` : "";
+  el.searchResults.innerHTML = `<li class="recent-heading">Recent places${suffix}</li>${itemsHtml}`;
   el.searchResults._items = recents;
   el.searchResults.hidden = false;
 }
