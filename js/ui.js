@@ -2246,7 +2246,7 @@ function renderPlaces() {
       ? ` title="${escapeHtml(p.name)} · ${escapeHtml(p.label)}"`
       : ` title="${escapeHtml(p.name)}"`;
     return `
-      <div class="place-chip ${active ? "active" : ""} ${tone}" data-id="${p.id}"${titleAttr} draggable="true" role="button" tabindex="0" aria-label="Load ${escapeHtml(p.name)}">
+      <div class="place-chip ${active ? "active" : ""} ${tone}" data-id="${p.id}"${titleAttr} draggable="true" role="button" tabindex="0" aria-label="Load ${escapeHtml(p.name)}"${active ? ' aria-current="true"' : ""}>
         ${iconMarkup}
         <span class="place-name-text">${escapeHtml(p.name)}</span>
         ${tempMarkup}
