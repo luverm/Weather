@@ -326,6 +326,7 @@ installShortcuts({
     const name = hashMatch[3] ? decodeURIComponent(hashMatch[3]) : "Shared location";
     if (isFinite(lat) && isFinite(lon)) {
       await loadByCoords({ name, lat, lon });
+      ui.showToast(`Opened from shared link · ${name}`, 3000);
       return;
     }
   }
