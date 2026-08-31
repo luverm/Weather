@@ -574,6 +574,24 @@ html[data-reduce-motion="true"] *::after {
   pointer-events: none;
   opacity: 0;
 }
+.sky-ribbon-tick {
+  position: absolute;
+  top: 50%; left: 0%;
+  transform: translate(-50%, -50%);
+  width: 2px; height: 14px;
+  background: rgba(255, 255, 255, 0.45);
+  border-radius: 1px;
+  pointer-events: none;
+  transition: left 320ms var(--ease);
+}
+.sky-ribbon-tick span {
+  position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+  font-size: 10px; color: rgba(255,255,255,0.75);
+  letter-spacing: 0.06em; line-height: 1;
+  text-shadow: 0 0 4px rgba(0,0,0,0.55);
+  pointer-events: none;
+}
+.sky-ribbon-tick[hidden] { display: none; }
 .scrubber-track {
   position: relative;
   height: 36px;

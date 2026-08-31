@@ -56,6 +56,8 @@ const el = {
   windRose: $("#wind-rose"),
   skyRibbon: $("#sky-ribbon"),
   skyRibbonMarker: $("#sky-ribbon-marker"),
+  skyRibbonSunrise: $("#sky-ribbon-sunrise"),
+  skyRibbonSunset:  $("#sky-ribbon-sunset"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
   bestMoment: $("#best-moment"),
@@ -1002,6 +1004,11 @@ function renderSkyRibbon(w) {
   el.skyRibbon.style.background = `linear-gradient(90deg, ${gradient})`;
   el.skyRibbon.title = `Tap to jump to that hour`;
   updateSkyRibbonMarker(Date.now());
+  placeSkyRibbonTick(el.skyRibbonSunrise, w?.sunrise, hours);
+  placeSkyRibbonTick(el.skyRibbonSunset,  w?.sunset,  hours);
+  // If tomorrow's sunrise/sunset fall inside the ribbon window (long enough
+  // past 24h), skip — we don't want double markers. The 24-hour hourly window
+  // is short enough that at most one sunrise + one sunset appear inside it.
 
   // Interactive: click a spot to scrub to that hour. Bound once, ref stored
   // on the element so setWeather re-renders don't accumulate listeners.
@@ -1018,6 +1025,26 @@ function renderSkyRibbon(w) {
     el.skyRibbon.addEventListener("click", seek);
     el.skyRibbon._boundSeek = true;
   }
+}
+
+// Position a tick element at the point in the ribbon corresponding to `ts`.
+// Hidden if the timestamp falls outside the ribbon window; when there's a
+// tomorrow sun-time inside the window and today's has already passed, prefer
+// tomorrow so the tick still shows.
+function placeSkyRibbonTick(el, ts, hours) {
+  if (!el) return;
+  if (!hours?.length) { el.hidden = true; return; }
+  const first = hours[0].time;
+  const last = hours[hours.length - 1].time;
+  // If today's ts already passed the window, try +24h (tomorrow's equivalent).
+  let use = ts;
+  if (use != null && use < first - 30 * 60_000) use = ts + 24 * 3600_000;
+  if (use == null || use < first - 30 * 60_000 || use > last + 30 * 60_000) {
+    el.hidden = true; return;
+  }
+  const t = clamp01((use - first) / Math.max(1, last - first));
+  el.style.left = `${(t * 100).toFixed(2)}%`;
+  el.hidden = false;
 }
 
 // Slide the marker to the right position for the given timestamp along the
