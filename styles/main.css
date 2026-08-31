@@ -306,6 +306,28 @@ html[data-reduce-motion="true"] *::after {
   box-shadow: -3px 0 0 0 var(--accent);
 }
 .places-strip { position: relative; }
+
+/* ---------- City deltas ---------- */
+.city-deltas {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-top: 6px;
+  padding: 0 2px;
+}
+.city-deltas[hidden] { display: none; }
+.city-delta {
+  display: inline-flex; align-items: baseline; gap: 6px;
+  padding: 3px 10px; border-radius: 999px;
+  font-size: 11px; letter-spacing: 0.01em;
+  cursor: pointer;
+  border: 1px solid var(--stroke);
+  transition: background 150ms var(--ease), transform 150ms var(--ease);
+}
+.city-delta:hover { background: var(--glass-strong); transform: translateY(-1px); }
+.city-delta strong { font-weight: 500; }
+.city-delta span { font-variant-numeric: tabular-nums; }
+.city-delta.warmer { color: #ffbb92; border-color: rgba(255, 156, 122, 0.35); }
+.city-delta.cooler { color: #9ad1ff; border-color: rgba(154, 209, 255, 0.35); }
+.city-delta.flat   { color: var(--fg-dim); }
 .place-chip.active { background: var(--glass-strong); border-color: rgba(255,255,255,0.35); }
 .place-chip .temp {
   color: var(--fg-muted); font-variant-numeric: tabular-nums;

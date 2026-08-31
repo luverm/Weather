@@ -148,6 +148,7 @@ const el = {
   heroInner: document.querySelector(".hero-inner"),
   toast: $("#toast"),
   placesStrip: $("#places-strip"),
+  cityDeltas: $("#city-deltas"),
 };
 
 const state = {
@@ -2097,6 +2098,39 @@ function renderPlaces() {
   });
   // Kick off background refresh of stale/missing chip summaries.
   refreshPlaceSummaries();
+  renderCityDeltas();
+}
+
+// Render a compact row of "London −3° · Tokyo +8°" chips comparing saved
+// cities' current temperature against the active city's. Hidden when only
+// the active city is saved or no summaries have arrived yet.
+function renderCityDeltas() {
+  if (!el.cityDeltas) return;
+  const all = places.all();
+  const activeId = state.place ? places.idFor(state.place) : null;
+  const anchorTemp = state.weather?.temp;
+  if (anchorTemp == null) { el.cityDeltas.hidden = true; return; }
+  const others = all.filter((p) => places.idFor(p) !== activeId && p.temp != null);
+  if (!others.length) { el.cityDeltas.hidden = true; return; }
+  const parts = others.slice(0, 4).map((p) => {
+    const delta = p.temp - anchorTemp;
+    const unitDelta = state.unit === "F" ? delta * 9 / 5 : delta;
+    const rounded = Math.round(unitDelta);
+    if (rounded === 0) {
+      return `<span class="city-delta flat" data-id="${p.id}"><strong>${escapeHtml(p.name)}</strong><span>same</span></span>`;
+    }
+    const sign = rounded > 0 ? "+" : "−";
+    const cls = rounded > 0 ? "warmer" : "cooler";
+    return `<span class="city-delta ${cls}" data-id="${p.id}"><strong>${escapeHtml(p.name)}</strong><span>${sign}${Math.abs(rounded)}°</span></span>`;
+  });
+  el.cityDeltas.hidden = false;
+  el.cityDeltas.innerHTML = parts.join("");
+  el.cityDeltas.querySelectorAll(".city-delta").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      const p = all.find((x) => x.id === chip.dataset.id);
+      if (p) state.handlers.onPlaceClick?.(p);
+    });
+  });
 }
 
 // Fetch a lightweight "current conditions" summary for every saved place that
@@ -2139,6 +2173,8 @@ async function refreshPlaceSummaries() {
 }
 
 function patchChip(id, s) {
+  // Also refresh the deltas row so newly-arrived summaries show up there.
+  renderCityDeltas();
   const chip = el.placesStrip?.querySelector(`.place-chip[data-id="${CSS.escape(id)}"]`);
   if (!chip) return;
   // Update tone class in place.
