@@ -458,6 +458,11 @@ function renderMetrics(w) {
 
 function humidityComfort(rh, dew, temp) {
   if (rh == null) return null;
+  // Fog risk: dew point within 2° of air temp and humidity very high — likely
+  // saturation, mist rolling in. Overrides normal comfort labels.
+  if (temp != null && dew != null && rh >= 92 && (temp - dew) <= 2) {
+    return { label: "Fog risk", cls: "down" };
+  }
   // Prioritize dew-point-based mugginess at warm temps.
   if (temp != null && temp >= 18 && dew != null) {
     if (dew >= 21) return { label: "Muggy", cls: "up" };
