@@ -52,6 +52,7 @@ const el = {
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
   windRose: $("#wind-rose"),
+  skyRibbon: $("#sky-ribbon"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
   chartSvg: $("#chart-svg"),
@@ -221,6 +222,7 @@ export const ui = {
     renderHourly(weather);
     renderDaily(weather);
     renderNowcast(weather);
+    renderSkyRibbon(weather);
     renderAdvice(weather);
     renderPollen(weather.pollen);
     renderPrecip(weather);
@@ -941,6 +943,79 @@ function renderPollen(pollen) {
   el.pollenItems.innerHTML = pollen.items.map((p) =>
     `<span>${escapeHtml(p.label)} ${p.value.toFixed(1)}</span>`
   ).join("");
+}
+
+// Sky-color ribbon that runs under the scrubber head — a horizontal preview
+// of what the sky will look like across the next 24 h, blending sunrise
+// warmth into midday blue, evening amber, and night deep-blue. Uses per-day
+// sunrise/sunset from the daily forecast so multi-day previews stay accurate.
+function renderSkyRibbon(w) {
+  if (!el.skyRibbon) return;
+  const hours = (w.hourly || []).slice(0, 24);
+  if (!hours.length) { el.skyRibbon.innerHTML = ""; return; }
+
+  const stops = hours.map((h) => skyColorAt(h.time, w));
+  // Convert stops into a CSS linear-gradient. Each hour = ~1/24 of the width.
+  const step = 100 / (stops.length - 1);
+  const gradient = stops
+    .map((c, i) => `${c} ${(i * step).toFixed(2)}%`)
+    .join(", ");
+  el.skyRibbon.style.background = `linear-gradient(90deg, ${gradient})`;
+  el.skyRibbon.title = `Sky preview · next ${hours.length} h`;
+}
+
+// Given a timestamp and the weather (with daily sun times), return an rgba()
+// color representing the dominant sky tone at that instant.
+function skyColorAt(ts, w) {
+  const day = pickClosestDay(w, ts);
+  const sr = day?.sunrise, ss = day?.sunset;
+  const dawnMs = 60 * 60_000;
+  if (!sr || !ss) return "#26314a";
+  if (ts < sr - dawnMs || ts > ss + dawnMs) return "#0b1224";  // deep night
+  if (ts < sr) {
+    const t = (dawnMs - (sr - ts)) / dawnMs; // 0 -> 1
+    return blendHex("#0b1224", "#ff9c7a", t);  // night -> dawn warm
+  }
+  if (ts < sr + dawnMs) {
+    const t = (ts - sr) / dawnMs;
+    return blendHex("#ff9c7a", "#7cc0ff", t);  // dawn warm -> day blue
+  }
+  if (ts <= ss - dawnMs) {
+    return "#7cc0ff";  // full day
+  }
+  if (ts <= ss) {
+    const t = (ts - (ss - dawnMs)) / dawnMs;
+    return blendHex("#7cc0ff", "#ff8a5c", t);  // day -> sunset orange
+  }
+  const t = (ts - ss) / dawnMs;
+  return blendHex("#ff8a5c", "#0b1224", t);   // sunset -> night
+}
+
+function pickClosestDay(w, ts) {
+  const days = w.daily || [];
+  if (!days.length) return null;
+  let best = days[0], bd = Infinity;
+  for (const d of days) {
+    if (!d.sunrise) continue;
+    const centre = d.sunrise + 12 * 3600_000;
+    const dist = Math.abs(ts - centre);
+    if (dist < bd) { bd = dist; best = d; }
+  }
+  return best;
+}
+
+function blendHex(a, b, t) {
+  const pa = parseHex(a), pb = parseHex(b);
+  const c = (i) => Math.round(pa[i] + (pb[i] - pa[i]) * clamp01(t));
+  return `rgb(${c(0)}, ${c(1)}, ${c(2)})`;
+}
+function parseHex(h) {
+  const s = h.replace("#", "");
+  return [
+    parseInt(s.slice(0, 2), 16),
+    parseInt(s.slice(2, 4), 16),
+    parseInt(s.slice(4, 6), 16),
+  ];
 }
 
 // Wind rose (next 12 h of wind direction, weighted by wind speed). Renders
