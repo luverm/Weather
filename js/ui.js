@@ -85,6 +85,7 @@ const el = {
   pressureTrend: $("#m-pressure-trend"),
   tempTrend: $("#temp-trend"),
   uvLevel: $("#m-uv-level"),
+  uvSpark: $("#uv-spark"),
   humidityComfort: $("#m-humidity-comfort"),
   pressureSparkLine: $("#pressure-spark-line"),
   pressureSparkFill: $("#pressure-spark-fill"),
@@ -458,6 +459,30 @@ function renderMetrics(w) {
     el.metricUVSub.textContent = "peak —";
   }
   renderPressureSparkline(w);
+  renderUvSparkline(w);
+}
+
+function renderUvSparkline(w) {
+  const svg = el.uvSpark;
+  if (!svg) return;
+  const hours = (w.hourly || []).slice(0, 12).filter((h) => h.uv != null);
+  if (hours.length < 4) { svg.innerHTML = ""; return; }
+  const width = 100, height = 24;
+  const max = Math.max(1, ...hours.map((h) => h.uv));
+  const barW = width / hours.length;
+  const bars = hours.map((h, i) => {
+    const bh = Math.max(1.5, (h.uv / max) * (height - 3));
+    const x = i * barW + 0.4;
+    const y = height - bh;
+    const uvColor =
+      h.uv < 3  ? "#78d06a" :
+      h.uv < 6  ? "#ffd35a" :
+      h.uv < 8  ? "#ff9f5c" :
+      h.uv < 11 ? "#ff6a6a" :
+                  "#c77bff";
+    return `<rect x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${(barW - 0.8).toFixed(2)}" height="${bh.toFixed(2)}" fill="${uvColor}" opacity="0.85" rx="0.6"/>`;
+  }).join("");
+  svg.innerHTML = bars;
 }
 
 function humidityComfort(rh, dew, temp) {
