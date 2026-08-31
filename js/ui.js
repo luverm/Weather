@@ -2532,7 +2532,13 @@ function bindSettings() {
 }
 
 function applyStoredPreferences() {
-  const reduce = localStorage.getItem("aether:reduceMotion") === "1";
+  // Honour the OS's Reduce Motion setting as the initial default when the
+  // user hasn't explicitly set the app-level toggle yet.
+  const storedRaw = localStorage.getItem("aether:reduceMotion");
+  const systemPrefers = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+  const reduce = storedRaw != null
+    ? storedRaw === "1"
+    : !!systemPrefers;
   if (reduce) {
     document.documentElement.setAttribute("data-reduce-motion", "true");
     if (el.settingReduceMotion) el.settingReduceMotion.checked = true;
@@ -2543,7 +2549,11 @@ function applyStoredPreferences() {
 }
 
 // Exposed so app.js can query the current preference on boot.
-ui.isReduceMotion = () => localStorage.getItem("aether:reduceMotion") === "1";
+ui.isReduceMotion = () => {
+  const raw = localStorage.getItem("aether:reduceMotion");
+  if (raw != null) return raw === "1";
+  return !!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+};
 
 function startFetchedTicker() {
   const dot = document.getElementById("place-live-dot");
