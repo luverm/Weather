@@ -243,7 +243,27 @@ async function toggleAudio() {
     await audio.enable();
     if (app.sampled) audio.setWeather(app.sampled, app.bucket);
   }
+  // Persist preference so returning users don't have to re-enable each visit.
+  try { localStorage.setItem("aether:audio", audio.isEnabled() ? "1" : "0"); } catch {}
   ui.setAudioState(audio.isEnabled());
+}
+
+// After the first weather load and a small delay, restore the saved audio
+// preference if the user had enabled it previously. Guarded to only fire once.
+let _audioRestored = false;
+async function maybeRestoreAudio() {
+  if (_audioRestored) return;
+  _audioRestored = true;
+  try {
+    if (localStorage.getItem("aether:audio") !== "1") return;
+  } catch { return; }
+  // Modern browsers still gate audio on a user gesture; if enable() throws
+  // silently before that, we quietly no-op and let the user toggle it later.
+  try {
+    await audio.enable();
+    if (app.sampled) audio.setWeather(app.sampled, app.bucket);
+    ui.setAudioState(audio.isEnabled());
+  } catch { /* silent */ }
 }
 
 async function refreshWeather() {
@@ -394,6 +414,11 @@ setInterval(() => {
   if (!app.weather || !clock.isLive()) return;
   refreshWeather();
 }, 15 * 60_000);
+
+// Restore ambient audio on the first user gesture (browsers require a
+// gesture to unmute); silently no-ops if the user had never enabled it.
+window.addEventListener("pointerdown", maybeRestoreAudio, { once: true });
+window.addEventListener("keydown", maybeRestoreAudio, { once: true });
 
 // PWA service worker — optional, best-effort.
 if ("serviceWorker" in navigator) {
