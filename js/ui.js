@@ -20,6 +20,7 @@ const el = {
   placeSub: $("#place-sub"),
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
+  sensoryTag: $("#sensory-tag"),
   feelsLike: $("#feels-like"),
   narrative: $("#narrative"),
   nextChange: $("#next-change"),
@@ -364,6 +365,7 @@ function renderLiveValues(w, { animate = true } = {}) {
   else el.temp.textContent = `${Math.round(temp)}°`;
   const conditionEmoji = CONDITION_EMOJI[w.condition] || "";
   el.conditionLabel.textContent = conditionEmoji ? `${conditionEmoji} ${capitalize(w.label)}` : capitalize(w.label);
+  renderSensoryTag(w);
   // Preserve the temp-trend span that sits inside #feels-like and rebuild
   // the rest of the line so we can append a "why" explainer.
   const trendHtml = el.tempTrend?.outerHTML || "";
@@ -422,6 +424,33 @@ function feelsLikeWhy(w) {
   if (uv >= 6 && cloud < 40) return `· direct sun adds ${magnitude}`;
   if (wind < 5 && humidity >= 55) return `· sultry air adds ${magnitude}`;
   return `· ${magnitude}`;
+}
+
+// One-word sensory descriptor for the current moment ("crisp", "muggy",
+// "sweltering"). Picks a single tag based on temp + humidity + wind + rain.
+function renderSensoryTag(w) {
+  if (!el.sensoryTag) return;
+  if (w.temp == null) { el.sensoryTag.hidden = true; return; }
+  const feels = w.feelsLike ?? w.temp;
+  const hum = w.humidity ?? 50;
+  const wind = w.windSpeed ?? 0;
+  const cond = w.condition;
+  let word = "", emoji = "";
+  if (cond === "storm") { word = "electric"; emoji = "⛈️"; }
+  else if (cond === "snow") { word = "snowy"; emoji = "❄️"; }
+  else if (cond === "fog") { word = "hushed"; emoji = "🌫️"; }
+  else if (feels <= -10) { word = "brutal cold"; emoji = "🥶"; }
+  else if (feels <= 0)   { word = "freezing"; emoji = "🥶"; }
+  else if (feels <= 8 && wind >= 25) { word = "biting"; emoji = "🌬️"; }
+  else if (feels <= 10)  { word = "chilly"; emoji = "🧣"; }
+  else if (feels <= 15 && hum <= 45) { word = "crisp"; emoji = "🌬️"; }
+  else if (feels >= 32 && hum >= 65) { word = "sweltering"; emoji = "🥵"; }
+  else if (feels >= 30)  { word = "hot"; emoji = "☀️"; }
+  else if (feels >= 24 && hum >= 70) { word = "muggy"; emoji = "💧"; }
+  else if (wind >= 25)   { word = "breezy"; emoji = "🌬️"; }
+  else                    { word = "mild"; emoji = "🌡️"; }
+  el.sensoryTag.textContent = `${emoji} ${word}`;
+  el.sensoryTag.hidden = false;
 }
 
 function renderDayRange(w) {
