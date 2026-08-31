@@ -132,6 +132,26 @@ export function buildAlerts(weather) {
     });
   }
 
+  // ---- Big temperature swing tomorrow ----
+  if (today?.tempMax != null && tomorrow?.tempMax != null) {
+    const diff = tomorrow.tempMax - today.tempMax;
+    if (diff <= -12) {
+      out.push({
+        id: "temp-swing-cool",
+        severity: "info",
+        title: "Big cool-down tomorrow",
+        detail: `High drops ${Math.abs(Math.round(diff))}° from today — dress warmer.`,
+      });
+    } else if (diff >= 12) {
+      out.push({
+        id: "temp-swing-warm",
+        severity: "info",
+        title: "Big warm-up tomorrow",
+        detail: `High jumps ${Math.round(diff)}° from today — dress lighter.`,
+      });
+    }
+  }
+
   // ---- UV (only if not already mentioned by heat) ----
   if (!out.some((a) => a.id === "severe-heat" || a.id === "heat")
       && weather.uvPeak?.value >= 9) {
