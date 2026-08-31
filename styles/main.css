@@ -316,6 +316,42 @@ html[data-reduce-motion="true"] *::after {
 }
 .places-strip { position: relative; }
 
+/* ---------- Chip long-press popover ---------- */
+.chip-popover {
+  position: fixed;
+  z-index: 200;
+  min-width: 200px; max-width: 260px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  color: var(--fg);
+  background: rgba(11, 16, 32, 0.94);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid var(--stroke);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.45);
+  display: grid; gap: 8px;
+  animation: slideInUp 240ms var(--ease) both;
+}
+.chip-popover-head strong { font-size: 15px; font-weight: 500; }
+.chip-popover-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.chip-popover-sub { font-size: 11px; color: var(--fg-dim); }
+.chip-popover-row { display: flex; align-items: baseline; gap: 10px; }
+.chip-popover-temp {
+  font-size: 24px; font-weight: 300; letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.chip-popover-label { font-size: 12px; color: var(--fg-muted); }
+.chip-popover-meta { font-size: 10.5px; color: var(--fg-dim); letter-spacing: 0.06em; text-transform: uppercase; }
+.chip-popover-actions { display: flex; justify-content: flex-end; }
+.chip-popover-load {
+  padding: 4px 10px; border-radius: 999px;
+  background: rgba(154, 209, 255, 0.12);
+  color: #cee9ff; font-size: 11.5px;
+  border: 1px solid rgba(154, 209, 255, 0.35);
+  cursor: pointer;
+}
+.chip-popover-load:hover { background: rgba(154, 209, 255, 0.2); }
+
 /* ---------- City deltas ---------- */
 .city-deltas {
   display: flex; flex-wrap: wrap; gap: 6px;

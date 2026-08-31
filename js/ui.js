@@ -2156,6 +2156,26 @@ function renderPlaces() {
       if (state._justDropped && Date.now() - state._justDropped < 250) return;
       state.handlers.onPlaceClick?.(item);
     });
+    // Long-press → info popover with the chip's cached summary.
+    let pressTimer = null;
+    let pressCanceled = false;
+    chip.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      pressCanceled = false;
+      pressTimer = setTimeout(() => {
+        pressCanceled = true;
+        showChipPopover(chip, item);
+      }, 550);
+    });
+    ["pointerup", "pointerleave", "pointercancel", "pointermove"].forEach((ev) =>
+      chip.addEventListener(ev, () => {
+        if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+      })
+    );
+    chip.addEventListener("click", (e) => {
+      // Prevent the click-through when a long-press just fired.
+      if (pressCanceled) { pressCanceled = false; e.stopPropagation(); }
+    }, true);
     chip.addEventListener("dragstart", (e) => {
       state._dragId = id;
       chip.classList.add("dragging");
@@ -2231,6 +2251,64 @@ function renderCityDeltas() {
       if (p) state.handlers.onPlaceClick?.(p);
     });
   });
+}
+
+// Long-press popover for a saved-place chip. Shows the cached summary
+// (condition, temp, freshness) and offers a "Load" action. Dismisses on
+// outside tap or scroll.
+let _chipPopoverEl = null;
+function showChipPopover(chip, place) {
+  hideChipPopover();
+  const rect = chip.getBoundingClientRect();
+  const box = document.createElement("div");
+  box.className = "chip-popover glass";
+  const staleSecs = place.summaryAt ? Math.round((Date.now() - place.summaryAt) / 1000) : null;
+  const staleStr =
+    staleSecs == null ? "no summary yet" :
+    staleSecs < 90 ? "just now" :
+    staleSecs < 3600 ? `${Math.round(staleSecs / 60)} min ago` :
+    `${Math.round(staleSecs / 3600)} h ago`;
+  const tempStr = place.temp != null ? `${Math.round(convertTemp(place.temp))}°` : "—";
+  box.innerHTML = `
+    <div class="chip-popover-head">
+      <strong>${escapeHtml(place.name)}</strong>
+      <span class="chip-popover-sub">${escapeHtml(place.country || "")}</span>
+    </div>
+    <div class="chip-popover-row">
+      <span class="chip-popover-temp">${tempStr}</span>
+      <span class="chip-popover-label">${escapeHtml(place.label || place.condition || "—")}</span>
+    </div>
+    <div class="chip-popover-meta">Fetched ${staleStr}</div>
+    <div class="chip-popover-actions">
+      <button type="button" class="chip-popover-load">Load city</button>
+    </div>
+  `;
+  document.body.appendChild(box);
+  const bw = box.offsetWidth;
+  const left = Math.min(window.innerWidth - bw - 8, Math.max(8, rect.left + rect.width / 2 - bw / 2));
+  const top = rect.bottom + 6;
+  box.style.left = `${left}px`;
+  box.style.top = `${top}px`;
+  box.querySelector(".chip-popover-load").addEventListener("click", (e) => {
+    e.stopPropagation();
+    hideChipPopover();
+    state.handlers.onPlaceClick?.(place);
+  });
+  _chipPopoverEl = box;
+  const dismiss = (e) => {
+    if (e && e.target && box.contains(e.target)) return;
+    hideChipPopover();
+    document.removeEventListener("pointerdown", dismiss, true);
+    document.removeEventListener("scroll", dismiss, true);
+  };
+  setTimeout(() => {
+    document.addEventListener("pointerdown", dismiss, true);
+    document.addEventListener("scroll", dismiss, true);
+  }, 0);
+}
+function hideChipPopover() {
+  if (_chipPopoverEl && _chipPopoverEl.parentNode) _chipPopoverEl.parentNode.removeChild(_chipPopoverEl);
+  _chipPopoverEl = null;
 }
 
 // Fetch a lightweight "current conditions" summary for every saved place that
