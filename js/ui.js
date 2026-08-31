@@ -119,6 +119,8 @@ const el = {
   sunArcPath: $("#sun-arc-path"),
   sunArcGoldenAm: $("#sun-arc-golden-am"),
   sunArcGoldenPm: $("#sun-arc-golden-pm"),
+  sunsetPreview: $("#sunset-preview"),
+  sunsetPreviewLabel: $("#sunset-preview-label"),
   goldenHourPill: $("#golden-hour-pill"),
   goldenHourText: $("#golden-hour-text"),
   comfortStrip: $("#comfort-strip"),
@@ -729,6 +731,46 @@ function renderSun(w) {
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   scheduleGoldenHour(w);
+  renderSunsetPreview(w);
+}
+
+// Predict tonight's sunset palette from cloud cover during the sunset hour.
+// Clear skies read as a saturated pink→orange→purple gradient; overcast reads
+// as muted grey/blue. The label doubles as the caption ("Vivid", "Muted"…).
+function renderSunsetPreview(w) {
+  if (!el.sunsetPreview) return;
+  const sunset = w?.sunset;
+  if (!sunset) { el.sunsetPreview.hidden = true; return; }
+  // Find the hourly entry closest to sunset (± 60 min).
+  const hours = w.hourly || [];
+  let nearest = null, bestDelta = 90 * 60_000;
+  for (const h of hours) {
+    const d = Math.abs(h.time - sunset);
+    if (d < bestDelta && h.cloudCover != null) { nearest = h; bestDelta = d; }
+  }
+  const cloud = nearest?.cloudCover ?? w.cloudCover ?? 40;
+  const humid = nearest?.humidity ?? w.humidity ?? 60;
+  // Cloud sweet spot for vivid sunsets is 30-60%. Very clear or very cloudy
+  // both dull the colour. Humidity below 60% tends to sharpen the palette.
+  const cloudFit = 1 - Math.abs(cloud - 45) / 45;
+  const humidPenalty = Math.max(0, humid - 70) / 30;
+  const vividness = clamp01(cloudFit - humidPenalty);
+  const [lo, hi] = vividness > 0.6
+    ? [["#ff9c7a", "#ff5b8a", "#5b3ea0"], "Vivid"]
+    : vividness > 0.35
+      ? [["#ffbb92", "#ff8a5c", "#7b4b9a"], "Warm"]
+      : cloud > 80
+        ? [["#889cb0", "#6b7a95", "#3d4864"], "Muted"]
+        : [["#ffd6b0", "#c88b8f", "#5b6a94"], "Soft"];
+  const grad = `linear-gradient(90deg, ${lo[0]} 0%, ${lo[1]} 55%, ${lo[2]} 100%)`;
+  el.sunsetPreview.style.background = grad;
+  const desc = hi;
+  const timeStr = new Date(sunset).toLocaleTimeString(undefined, {
+    hour: "2-digit", minute: "2-digit", hour12: false,
+    ...(w.timezone && w.timezone !== "auto" ? { timeZone: w.timezone } : {}),
+  });
+  if (el.sunsetPreviewLabel) el.sunsetPreviewLabel.textContent = `Tonight's sunset · ${desc} · ${timeStr}`;
+  el.sunsetPreview.hidden = false;
 }
 
 // Draw the two golden-hour bands on the sun arc and keep a live countdown

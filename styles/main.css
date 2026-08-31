@@ -1213,6 +1213,21 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+.sunset-preview {
+  position: relative;
+  height: 22px; width: 100%;
+  border-radius: 6px;
+  margin: -2px 0 6px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06), 0 6px 18px rgba(0,0,0,0.18);
+  display: flex; align-items: center; justify-content: flex-start;
+  padding: 0 8px;
+}
+.sunset-preview[hidden] { display: none; }
+.sunset-label {
+  font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: rgba(255,255,255,0.9); font-weight: 500;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
 .sun-arc-golden {
   filter: drop-shadow(0 0 3px rgba(255, 190, 120, 0.55));
   transition: opacity 400ms var(--ease);
