@@ -199,6 +199,12 @@ async function loadByCoords(place) {
   app.place = place;
   ui.setPlace(place);
   ui.setLoading(`Fetching weather for ${place.name}…`);
+  // Reflect the active place in the URL hash so the address bar becomes a
+  // shareable deep link. history.replaceState avoids polluting Back history.
+  try {
+    const hash = `#${place.lat.toFixed(3)},${place.lon.toFixed(3)},${encodeURIComponent(place.name || "")}`;
+    if (location.hash !== hash) history.replaceState(null, "", hash);
+  } catch { /* ignore */ }
 
   // Drop any scrubber offset so we start live on each new city.
   clock.reset();
@@ -311,6 +317,18 @@ installShortcuts({
 
 // ---------- Start ----------
 (async function init() {
+  // If the URL hash names a coordinate (#lat,lon[,name]) jump straight there
+  // so links from the share flow deep-link to the exact place.
+  const hashMatch = /^#(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:,([^&]+))?/.exec(location.hash);
+  if (hashMatch) {
+    const lat = parseFloat(hashMatch[1]);
+    const lon = parseFloat(hashMatch[2]);
+    const name = hashMatch[3] ? decodeURIComponent(hashMatch[3]) : "Shared location";
+    if (isFinite(lat) && isFinite(lon)) {
+      await loadByCoords({ name, lat, lon });
+      return;
+    }
+  }
   // Prefer the most recent saved place if we have one — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();
@@ -325,6 +343,21 @@ installShortcuts({
     await loadByCoords({ name: "Reykjavík", country: "Iceland", lat: 64.1466, lon: -21.9426 });
   }
 })();
+
+// Keep the URL hash in sync when the active place changes so users can copy
+// the address bar to share the exact forecast.
+const _origLoadByCoords = loadByCoords;
+window.addEventListener("hashchange", async () => {
+  const m = /^#(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:,([^&]+))?/.exec(location.hash);
+  if (!m) return;
+  const lat = parseFloat(m[1]), lon = parseFloat(m[2]);
+  if (!isFinite(lat) || !isFinite(lon)) return;
+  const currentId = app.place ? `${app.place.lat?.toFixed?.(3)},${app.place.lon?.toFixed?.(3)}` : null;
+  const nextId = `${lat.toFixed(3)},${lon.toFixed(3)}`;
+  if (currentId === nextId) return;
+  const name = m[3] ? decodeURIComponent(m[3]) : "Shared location";
+  await _origLoadByCoords({ name, lat, lon });
+});
 
 // ---------- Lifecycle ----------
 document.addEventListener("visibilitychange", () => {
