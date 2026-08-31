@@ -83,7 +83,7 @@ export async function getWeather(lat, lon) {
       "precipitation_probability", "precipitation",
       "wind_speed_10m", "wind_gusts_10m", "wind_direction_10m",
       "is_day", "uv_index", "pressure_msl",
-      "relative_humidity_2m",
+      "relative_humidity_2m", "cloud_cover",
     ].join(","),
     daily: [
       "sunrise", "sunset",
@@ -148,6 +148,7 @@ function normalize(d, aq) {
         uv: d.hourly.uv_index?.[i] ?? null,
         pressure: d.hourly.pressure_msl?.[i] ?? null,
         humidity: d.hourly.relative_humidity_2m?.[i] ?? null,
+        cloudCover: d.hourly.cloud_cover?.[i] ?? null,
         ...mapWmo(d.hourly.weather_code[i]),
       });
     }
@@ -407,21 +408,26 @@ function mock(lat, lon) {
       pop: 20, precip: 0,
       wind: 8 + Math.sin(i) * 3, gusts: 12 + Math.sin(i) * 4,
       windDir: (200 + Math.sin(i / 3) * 40 + i * 3) % 360,
+      cloudCover: Math.round(40 + Math.sin(i / 4) * 35),
       isDay: (i + hour) % 24 >= 6 && (i + hour) % 24 < 19,
       uv: Math.max(0, Math.sin((i - 6) * Math.PI / 13) * 6),
       condition: CONDITIONS.CLOUDS, label: "Cloudy",
     })),
-    daily: Array.from({ length: 7 }, (_, i) => ({
-      time: now + i * 86400_000,
-      tempMax: 20 + Math.sin(i) * 4,
-      tempMin: 12 + Math.sin(i) * 3,
-      precip: i % 3 === 0 ? 2.1 : 0,
-      pop: i % 3 === 0 ? 65 : 15,
-      windMax: 12, gustsMax: 20, uvMax: 5,
-      sunrise: new Date().setHours(6, 30, 0, 0),
-      sunset: new Date().setHours(19, 0, 0, 0),
-      condition: CONDITIONS.CLOUDS, label: "Cloudy",
-    })),
+    daily: Array.from({ length: 7 }, (_, i) => {
+      const dayBase = new Date(); dayBase.setHours(0, 0, 0, 0);
+      const dayStart = dayBase.getTime() + i * 86400_000;
+      return {
+        time: dayStart,
+        tempMax: 20 + Math.sin(i) * 4,
+        tempMin: 12 + Math.sin(i) * 3,
+        precip: i % 3 === 0 ? 2.1 : 0,
+        pop: i % 3 === 0 ? 65 : 15,
+        windMax: 12, gustsMax: 20, uvMax: 5,
+        sunrise: dayStart + (6 * 60 + 30) * 60_000,
+        sunset: dayStart + 19 * 3600_000,
+        condition: CONDITIONS.CLOUDS, label: "Cloudy",
+      };
+    }),
     nowcast: [],
     yesterday: {
       // Yesterday was 2 minutes shorter than today's mock.

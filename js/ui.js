@@ -65,6 +65,11 @@ const el = {
   precipFirst: $("#precip-first"),
   precipStatus: $("#precip-status"),
   precipSpark: $("#precip-spark"),
+  stargazeCard: $("#stargaze-card"),
+  stargazeStars: $("#stargaze-stars"),
+  stargazeHeadline: $("#stargaze-headline"),
+  stargazeDetail: $("#stargaze-detail"),
+  stargazeStatus: $("#stargaze-status"),
   pollenLevel: $("#pollen-level"),
   pollenDominant: $("#pollen-dominant"),
   pollenItems: $("#pollen-items"),
@@ -226,6 +231,7 @@ export const ui = {
     renderAdvice(weather);
     renderPollen(weather.pollen);
     renderPrecip(weather);
+    renderStargaze(weather);
     renderTrends(weather);
     renderInsights(weather);
     renderActivity(weather);
@@ -1056,6 +1062,66 @@ function renderWindRose(w) {
     parts.push(`<path d="${d}" fill="currentColor" opacity="${(0.20 + t * 0.55).toFixed(2)}"/>`);
   }
   el.windRose.innerHTML = parts.join("");
+}
+
+// Stargazing tonight: combines cloud cover forecast over the night hours,
+// moon illumination (bright moon washes out stars), and humidity (haze) into
+// a 0-5 star rating with a headline verdict.
+function renderStargaze(w) {
+  if (!el.stargazeCard) return;
+  // Determine "tonight" window: from the next sunset until tomorrow's sunrise.
+  const today = w.daily?.[0];
+  const tomorrow = w.daily?.[1];
+  const now = Date.now();
+  let ns, nr;
+  if (today?.sunset && now < today.sunset && tomorrow?.sunrise) {
+    // Still before sunset — tonight is today's sunset through tomorrow's rise.
+    ns = today.sunset; nr = tomorrow.sunrise;
+  } else if (today?.sunset && tomorrow?.sunrise) {
+    // After sunset — use tonight (today.sunset -> tomorrow.sunrise).
+    ns = today.sunset; nr = tomorrow.sunrise;
+  } else {
+    el.stargazeCard.hidden = true; return;
+  }
+  const nightHours = (w.hourly || []).filter((h) => h.time >= ns && h.time <= nr && h.cloudCover != null);
+  if (!nightHours.length) {
+    // Fallback: hide if we have no cloud data for tonight (e.g. next 24h window doesn't cover it).
+    el.stargazeCard.hidden = true;
+    return;
+  }
+  const avgCloud = nightHours.reduce((s, h) => s + h.cloudCover, 0) / nightHours.length;
+  const avgHum = nightHours.reduce((s, h) => s + (h.humidity ?? 60), 0) / nightHours.length;
+  const moonIllum = (w.moon?.illum ?? 0.5);
+  // Score in 0..5. Weights: cloud 60%, moon 25%, humidity 15%.
+  const cloudScore = Math.max(0, 1 - avgCloud / 100);            // 1 = clear
+  const moonScore  = Math.max(0, 1 - moonIllum);                  // 1 = new moon
+  const humScore   = Math.max(0, 1 - Math.max(0, avgHum - 60) / 40); // hazy above 60
+  const raw = cloudScore * 0.6 + moonScore * 0.25 + humScore * 0.15;
+  const stars = Math.max(0, Math.min(5, Math.round(raw * 5)));
+
+  const headline =
+    stars >= 5 ? "Prime skies" :
+    stars >= 4 ? "Excellent" :
+    stars >= 3 ? "Decent" :
+    stars >= 2 ? "Some hope" :
+    stars >= 1 ? "Poor" : "Washed out";
+  const cloudDesc =
+    avgCloud <= 15 ? "clear skies" :
+    avgCloud <= 40 ? "some clouds" :
+    avgCloud <= 70 ? "mostly cloudy" : "overcast";
+  const moonDesc = `${Math.round(moonIllum * 100)}% moon`;
+  el.stargazeCard.hidden = false;
+  el.stargazeHeadline.textContent = headline;
+  el.stargazeDetail.textContent = `${cloudDesc} · ${moonDesc}`;
+  // Render 5 star SVGs, filled up to `stars`.
+  el.stargazeStars.innerHTML = Array.from({ length: 5 }, (_, i) =>
+    `<svg class="star ${i < stars ? "on" : "off"}" viewBox="0 0 16 16" width="14" height="14"><path d="M8 1.5l1.9 4.3 4.6.5-3.5 3.2 1 4.6L8 11.8 3.9 14.1l1-4.6-3.5-3.2 4.6-.5z" fill="currentColor"/></svg>`
+  ).join("");
+  if (el.stargazeStatus) {
+    const cls = stars >= 4 ? "up" : stars >= 2 ? "flat" : "down";
+    el.stargazeStatus.className = `trend ${cls}`;
+    el.stargazeStatus.textContent = `${stars}/5`;
+  }
 }
 
 // Precipitation totals card: 24h total, today's remainder, wet-hour count,
