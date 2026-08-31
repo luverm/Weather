@@ -323,6 +323,7 @@ html[data-reduce-motion="true"] *::after {
   min-width: 32px;
   text-align: right;
 }
+.search-results .recent-heading.no-match { color: var(--fg-muted); font-style: italic; letter-spacing: 0; text-transform: none; font-size: 12px; }
 .search-results .recent-heading {
   padding: 8px 12px 4px;
   font-size: 10px;

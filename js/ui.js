@@ -2542,7 +2542,17 @@ const runSearch = debounce(async (q) => {
 }, 200);
 
 function renderSearchResults(results) {
-  if (!results.length) { el.searchResults.hidden = true; el.searchResults.innerHTML = ""; return; }
+  if (!results.length) {
+    // Show a subtle 'no match' hint instead of collapsing entirely — reassures
+    // the user they typed something the app noticed.
+    if (el.searchInput?.value?.trim()?.length >= 2) {
+      el.searchResults.innerHTML = `<li class="recent-heading no-match">No matches — try a nearby city</li>`;
+      el.searchResults._items = [];
+      el.searchResults.hidden = false;
+      return;
+    }
+    el.searchResults.hidden = true; el.searchResults.innerHTML = ""; return;
+  }
   el.searchResults.innerHTML = results.map((r, i) => `
     <li role="option" data-index="${i}">
       <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
