@@ -1440,7 +1440,11 @@ function renderDaily(w) {
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
-    const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    // Peak time — the local hour of the day's high (only when we have hourly
+    // coverage for that day, i.e. today and often tomorrow morning).
+    const peakLabel = dailyPeakLabel(d, w);
+    const extraBits = [popLabel, gustLabel, peakLabel].filter(Boolean).join("");
+    const extra = extraBits ? `<span class="daily-gust">${extraBits}</span>` : "";
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
@@ -1454,6 +1458,23 @@ function renderDaily(w) {
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+}
+
+// Return " · peak 14:00" when the day has enough hourly coverage to pinpoint
+// its high; empty string otherwise.
+function dailyPeakLabel(d, w) {
+  const tz = w?.timezone;
+  const dayStart = new Date(d.time); dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = dayStart.getTime() + 24 * 3600_000;
+  const hrs = (w?.hourly || []).filter((h) => h.time >= dayStart.getTime() && h.time < dayEnd);
+  if (hrs.length < 6) return "";
+  let peak = hrs[0];
+  for (const h of hrs) if ((h.temp ?? -Infinity) > (peak.temp ?? -Infinity)) peak = h;
+  const hh = new Date(peak.time).toLocaleTimeString(undefined, {
+    hour: "2-digit", minute: "2-digit", hour12: false,
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  return ` · peak ${hh}`;
 }
 
 function renderDailyIconStrip(days) {
