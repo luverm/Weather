@@ -2790,6 +2790,19 @@ function bindSettings() {
         const tz = state.weather?.timezone;
         coordsEl.innerHTML = `<span>${state.place.name || "Location"}</span> · ${latStr}, ${lonStr}${tz && tz !== "auto" ? ` · ${tz}` : ""}`;
         coordsEl.hidden = false;
+        coordsEl.title = "Click to copy lat, lon";
+        coordsEl.style.cursor = "pointer";
+        if (!coordsEl._boundCopy) {
+          coordsEl.addEventListener("click", async () => {
+            const p = state.place;
+            if (!p) return;
+            try {
+              await navigator.clipboard.writeText(`${p.lat.toFixed(4)}, ${p.lon.toFixed(4)}`);
+              ui.showToast("Coordinates copied");
+            } catch { ui.showToast("Copy failed"); }
+          });
+          coordsEl._boundCopy = true;
+        }
       } else {
         coordsEl.hidden = true;
       }
