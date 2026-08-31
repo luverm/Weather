@@ -358,7 +358,8 @@ function renderLiveValues(w, { animate = true } = {}) {
   const feels = convertTemp(w.feelsLike ?? w.temp);
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
-  el.conditionLabel.textContent = capitalize(w.label);
+  const conditionEmoji = CONDITION_EMOJI[w.condition] || "";
+  el.conditionLabel.textContent = conditionEmoji ? `${conditionEmoji} ${capitalize(w.label)}` : capitalize(w.label);
   // Preserve the temp-trend span that sits inside #feels-like and rebuild
   // the rest of the line so we can append a "why" explainer.
   const trendHtml = el.tempTrend?.outerHTML || "";
