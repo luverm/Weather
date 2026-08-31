@@ -303,8 +303,10 @@ export const ui = {
     document.documentElement.setAttribute("data-scrubbing", on ? "true" : "false");
     if (on) {
       el.hintText.textContent = "Drag to explore future weather.";
+      acquireWakeLock();
     } else {
       el.hintText.innerHTML = 'Drag the slider, hover the chart, or press <kbd>?</kbd> for shortcuts.';
+      releaseWakeLock();
     }
   },
   setAudioState(on) {
@@ -2240,6 +2242,27 @@ function bindAudio() {
 }
 
 let deferredInstallPrompt = null;
+// Screen wake lock — best-effort. Held while the user is actively scrubbing
+// so the phone doesn't dim mid-exploration. Silently no-ops on browsers
+// without the Wake Lock API, or if a prior release rejected.
+let _wakeLock = null;
+async function acquireWakeLock() {
+  if (_wakeLock || !("wakeLock" in navigator)) return;
+  try {
+    _wakeLock = await navigator.wakeLock.request("screen");
+    _wakeLock.addEventListener?.("release", () => { _wakeLock = null; });
+  } catch { _wakeLock = null; }
+}
+function releaseWakeLock() {
+  if (!_wakeLock) return;
+  try { _wakeLock.release(); } catch {}
+  _wakeLock = null;
+}
+// If the tab is hidden, drop the lock cleanly.
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) releaseWakeLock();
+});
+
 // Swipe left/right on the hero to cycle to the next/previous saved city.
 // Only fires when there are 2+ saved places; the tilt binding on the same
 // element is unaffected.
