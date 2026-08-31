@@ -1095,9 +1095,13 @@ function startLocaltime(w) {
       const hour = parts.find((p) => p.type === "hour")?.value ?? "";
       const minute = parts.find((p) => p.type === "minute")?.value ?? "";
       const tzName = parts.find((p) => p.type === "timeZoneName")?.value ?? "";
+      // Extra: the local date (e.g. "Aug 31") shown after the time in a dimmed tone.
+      const dateStr = new Intl.DateTimeFormat([], {
+        timeZone: tz, month: "short", day: "numeric",
+      }).format(new Date());
       el.placeLocaltime.innerHTML =
         `<span class="clock-dot" aria-hidden="true"></span>` +
-        `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>`;
+        `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)} · ${escapeHtml(dateStr)}</span>`;
     } catch {
       el.placeLocaltime.textContent = "";
     }
