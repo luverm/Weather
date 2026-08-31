@@ -79,6 +79,18 @@ export class AmbientAudio {
     for (const fn of this.listeners) fn(true);
   }
 
+  // Suspend/resume the audio context — call these on tab visibilitychange so
+  // ambient audio pauses cleanly when the user tabs away and picks back up on
+  // return, without user having to re-toggle.
+  async suspend() {
+    if (!this.enabled || !this.ctx || this.ctx.state !== "running") return;
+    try { await this.ctx.suspend(); } catch {}
+  }
+  async resume() {
+    if (!this.enabled || !this.ctx || this.ctx.state === "running") return;
+    try { await this.ctx.resume(); } catch {}
+  }
+
   async disable() {
     if (!this.enabled || !this.ctx) return;
     const t = this.ctx.currentTime;

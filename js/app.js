@@ -330,10 +330,13 @@ installShortcuts({
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
     engine.stop();
+    audio.suspend();
   } else if (!app.reducedMotion) {
     engine.start();
+    audio.resume();
   } else {
     engine.tickOnce();
+    audio.resume();
   }
 });
 
