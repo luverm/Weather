@@ -37,6 +37,27 @@
   --accent: #ffd39a;
 }
 
+/* High-contrast mode: bump muted/dim text and stroke opacity so labels and
+   card borders stay readable at OS-level 'increase contrast'. */
+@media (prefers-contrast: more) {
+  :root {
+    --fg-muted: rgba(246, 247, 251, 0.9);
+    --fg-dim: rgba(246, 247, 251, 0.72);
+    --stroke: rgba(255, 255, 255, 0.35);
+    --glass-strong: rgba(255, 255, 255, 0.22);
+  }
+  [data-tone="bright"] {
+    --fg-muted: rgba(15, 20, 40, 0.92);
+    --fg-dim: rgba(15, 20, 40, 0.72);
+    --stroke: rgba(15, 20, 40, 0.28);
+  }
+  [data-tone="warm"] {
+    --fg-muted: rgba(255, 246, 236, 0.95);
+    --fg-dim: rgba(255, 246, 236, 0.75);
+    --stroke: rgba(255, 220, 190, 0.4);
+  }
+}
+
 /* ---------- Reset ---------- */
 *,
 *::before,
