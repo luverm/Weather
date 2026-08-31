@@ -2774,6 +2774,20 @@ ui.isReduceMotion = () => {
 
 function startFetchedTicker() {
   const dot = document.getElementById("place-live-dot");
+  // Make the "Updated Xm ago" text tappable — same as clicking the refresh
+  // button, but discoverable from the footer where users read the age.
+  if (el.fetchedAgo && !el.fetchedAgo._boundRefresh) {
+    el.fetchedAgo.style.cursor = "pointer";
+    el.fetchedAgo.setAttribute("role", "button");
+    el.fetchedAgo.setAttribute("tabindex", "0");
+    el.fetchedAgo.setAttribute("aria-label", "Refresh weather");
+    const trigger = () => document.getElementById("refresh-btn")?.click();
+    el.fetchedAgo.addEventListener("click", trigger);
+    el.fetchedAgo.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); trigger(); }
+    });
+    el.fetchedAgo._boundRefresh = true;
+  }
   const update = () => {
     const at = state.weather?.fetchedAt;
     if (!at) {
