@@ -710,10 +710,24 @@ function renderAirQuality(aq) {
   // Circumference of r=20 is ~125.66 — we use 126 in the SVG.
   const frac = Math.max(0, Math.min(1, (aq.aqi ?? 0) / 200));
   el.aqArc.setAttribute("stroke-dashoffset", String(126 * (1 - frac)));
+  const health = aqiHealthTip(aq.aqi);
   el.aqDetail.textContent =
-    `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
+    `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}` +
+    (health ? ` · ${health}` : "");
   renderAqTrend(aq);
   renderAqArrow(aq);
+}
+
+// One-line health guidance for the current AQI band. Kept concise so it fits
+// beside the pollutant read-out. Returns empty for good air.
+function aqiHealthTip(aqi) {
+  if (aqi == null) return "";
+  if (aqi <= 50)  return "";
+  if (aqi <= 100) return "sensitive groups take it easy";
+  if (aqi <= 150) return "mask outdoors if sensitive";
+  if (aqi <= 200) return "mask outdoors";
+  if (aqi <= 300) return "avoid outdoor exertion";
+  return "stay indoors";
 }
 
 // Show a short trend arrow (improving / steady / worsening) based on how AQI
