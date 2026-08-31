@@ -522,7 +522,9 @@ html[data-reduce-motion="true"] *::after {
   font-size: clamp(64px, 12vw, 148px);
   line-height: 0.95;
   letter-spacing: -0.05em;
+  transition: filter 260ms var(--ease);
 }
+.temp:hover { filter: drop-shadow(0 0 20px rgba(255,255,255,0.18)); }
 .unit-flip { animation: unit-flip 380ms var(--ease); }
 @keyframes unit-flip {
   0%   { transform: scale(1); }
