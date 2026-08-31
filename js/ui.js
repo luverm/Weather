@@ -2988,6 +2988,12 @@ function startFetchedTicker() {
         `Updated ${Math.floor(minutes / 60)}h ago`;
       el.fetchedAgo.textContent = "· " + label;
       el.fetchedAgo.classList.toggle("stale", minutes >= 20);
+      // Match the live-dot freshness bucket so the age reads at a glance.
+      el.fetchedAgo.dataset.freshness =
+        minutes < 5   ? "fresh" :
+        minutes < 20  ? "aging" :
+        minutes < 60  ? "stale" :
+                        "old";
     }
     if (dot) {
       // Map data age to a semantic freshness bucket picked up by CSS.
