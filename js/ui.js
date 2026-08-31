@@ -239,6 +239,16 @@ export const ui = {
     el.placeName.classList.remove("flip-in"); void el.placeName.offsetWidth;
     el.placeName.classList.add("flip-in");
     el.placeName.textContent = place.name || "Unknown";
+    // Hover title: country + coordinates so users can see the exact spot
+    // that the current forecast is anchored to without opening settings.
+    if (place.lat != null && place.lon != null) {
+      const latStr = `${Math.abs(place.lat).toFixed(2)}° ${place.lat >= 0 ? "N" : "S"}`;
+      const lonStr = `${Math.abs(place.lon).toFixed(2)}° ${place.lon >= 0 ? "E" : "W"}`;
+      const parts = [place.country, latStr + ", " + lonStr].filter(Boolean);
+      el.placeName.title = parts.join(" · ");
+    } else {
+      el.placeName.title = place.country || "";
+    }
     const sub = [place.admin1, place.country].filter(Boolean).join(", ");
     el.placeSub.textContent = sub || "—";
     // Reset alert dismissals so a fresh location can re-surface them.
