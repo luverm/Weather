@@ -56,6 +56,13 @@ const el = {
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
   pollenCard: $("#pollen-card"),
+  precipCard: $("#precip-card"),
+  precip24h: $("#precip-24h"),
+  precipToday: $("#precip-today"),
+  precipWet: $("#precip-wet"),
+  precipFirst: $("#precip-first"),
+  precipStatus: $("#precip-status"),
+  precipSpark: $("#precip-spark"),
   pollenLevel: $("#pollen-level"),
   pollenDominant: $("#pollen-dominant"),
   pollenItems: $("#pollen-items"),
@@ -215,6 +222,7 @@ export const ui = {
     renderNowcast(weather);
     renderAdvice(weather);
     renderPollen(weather.pollen);
+    renderPrecip(weather);
     renderTrends(weather);
     renderInsights(weather);
     renderActivity(weather);
@@ -877,6 +885,82 @@ function renderPollen(pollen) {
   el.pollenItems.innerHTML = pollen.items.map((p) =>
     `<span>${escapeHtml(p.label)} ${p.value.toFixed(1)}</span>`
   ).join("");
+}
+
+// Precipitation totals card: 24h total, today's remainder, wet-hour count,
+// time-to-first-rain, and a tiny bar sparkline of hourly precipitation.
+function renderPrecip(w) {
+  if (!el.precipCard) return;
+  const hours = (w.hourly || []).slice(0, 24);
+  if (!hours.length) { el.precipCard.hidden = true; return; }
+  const now = Date.now();
+  // Sum next 24h of precipitation (mm).
+  const total24 = hours.reduce((s, h) => s + (h.precip || 0), 0);
+  // Sum precipitation left today (in the location's local timezone if we can).
+  const tz = w.timezone;
+  const endOfLocalDay = (() => {
+    try {
+      const d = tz && tz !== "auto"
+        ? new Date(new Date().toLocaleString("en-US", { timeZone: tz }))
+        : new Date();
+      d.setHours(23, 59, 59, 999);
+      const delta = d.getTime() - (tz && tz !== "auto"
+        ? new Date(new Date().toLocaleString("en-US", { timeZone: tz })).getTime()
+        : new Date().getTime());
+      return Date.now() + delta;
+    } catch { const d = new Date(); d.setHours(23, 59, 59, 999); return d.getTime(); }
+  })();
+  const totalToday = hours
+    .filter((h) => h.time <= endOfLocalDay)
+    .reduce((s, h) => s + (h.precip || 0), 0);
+  const wetHours = hours.filter((h) => (h.precip || 0) >= 0.1).length;
+  const firstWet = hours.find((h) => (h.precip || 0) >= 0.1);
+  const heaviest = hours.reduce((best, h) =>
+    (h.precip || 0) > (best?.precip || 0) ? h : best, null);
+
+  el.precipCard.hidden = false;
+  el.precip24h.textContent = total24.toFixed(1);
+  el.precipToday.textContent = totalToday > 0
+    ? `Rest of today: ${totalToday.toFixed(1)} mm`
+    : "Rest of today: dry";
+  el.precipWet.textContent = wetHours === 0
+    ? "No wet hours ahead"
+    : `${wetHours} wet ${wetHours === 1 ? "hour" : "hours"} · peak ${(heaviest?.precip || 0).toFixed(1)} mm`;
+  if (firstWet) {
+    const mins = Math.max(0, Math.round((firstWet.time - now) / 60_000));
+    const when = mins < 60 ? `${mins} min` : `${Math.floor(mins/60)}h ${mins%60}m`;
+    el.precipFirst.textContent = `First rain in ${when}`;
+  } else {
+    el.precipFirst.textContent = "Dry stretch continues";
+  }
+  // Status pill: dry / passing / soggy.
+  if (el.precipStatus) {
+    let label = "Dry", cls = "flat";
+    if (total24 >= 8) { label = "Wet"; cls = "down"; }
+    else if (total24 >= 1) { label = "Passing"; cls = "up"; }
+    el.precipStatus.className = `trend ${cls}`;
+    el.precipStatus.textContent = label;
+  }
+  // Draw hourly sparkline.
+  drawPrecipSpark(hours);
+}
+
+function drawPrecipSpark(hours) {
+  const svg = el.precipSpark;
+  if (!svg) return;
+  const w = 240, h = 32;
+  const max = Math.max(0.5, ...hours.map((x) => x.precip || 0));
+  const barW = w / hours.length;
+  const parts = hours.map((x, i) => {
+    const bh = Math.max(1, ((x.precip || 0) / max) * (h - 2));
+    const bx = i * barW + 0.6;
+    const by = h - bh;
+    // Color-fade by intensity for a subtle heatmap feel.
+    const t = Math.min(1, (x.precip || 0) / (max || 1));
+    const opacity = 0.25 + t * 0.7;
+    return `<rect x="${bx.toFixed(2)}" y="${by.toFixed(2)}" width="${(barW-1.2).toFixed(2)}" height="${bh.toFixed(2)}" fill="currentColor" opacity="${opacity.toFixed(2)}" rx="0.8"/>`;
+  }).join("");
+  svg.innerHTML = parts;
 }
 
 function renderTrends(w) {

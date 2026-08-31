@@ -302,6 +302,22 @@
           </div>
         </div>
 
+        <div class="extra-card glass" id="precip-card" hidden>
+          <span class="metric-label">Precipitation <span id="precip-status" class="trend"></span></span>
+          <div class="precip-row">
+            <div class="precip-fig">
+              <strong id="precip-24h">—</strong>
+              <span class="precip-unit">mm · next 24h</span>
+            </div>
+            <div class="precip-meta">
+              <span class="precip-line" id="precip-today">Today —</span>
+              <span class="precip-line" id="precip-wet">— wet hours</span>
+              <span class="precip-line" id="precip-first">—</span>
+            </div>
+          </div>
+          <svg id="precip-spark" class="precip-spark" viewBox="0 0 240 32" preserveAspectRatio="none" aria-hidden="true"></svg>
+        </div>
+
         <div class="extra-card glass" id="pollen-card" hidden>
           <span class="metric-label">Pollen</span>
           <div class="pollen-row">
