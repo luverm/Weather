@@ -2845,6 +2845,8 @@ ui.isReduceMotion = () => {
 
 function startFetchedTicker() {
   const dot = document.getElementById("place-live-dot");
+  const refreshBtn = document.getElementById("refresh-btn");
+  const AUTO_REFRESH_MS = 15 * 60_000;
   // Make the "Updated Xm ago" text tappable — same as clicking the refresh
   // button, but discoverable from the footer where users read the age.
   if (el.fetchedAgo && !el.fetchedAgo._boundRefresh) {
@@ -2884,6 +2886,13 @@ function startFetchedTicker() {
         minutes < 60  ? "stale" :
                         "old";
       dot.dataset.freshness = bucket;
+    }
+    if (refreshBtn) {
+      const nextIn = Math.max(0, AUTO_REFRESH_MS - ms);
+      const nextMin = Math.ceil(nextIn / 60_000);
+      refreshBtn.title = nextIn > 0
+        ? `Refresh weather · auto in ${nextMin}m`
+        : "Refresh weather · auto refresh due";
     }
   };
   update();
