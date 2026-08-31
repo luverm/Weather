@@ -1579,6 +1579,21 @@ kbd {
   border-radius: 3px;
   position: relative;
 }
+.condition-strip {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  gap: 1px;
+  padding: 0 4px 2px;
+  margin-top: 4px;
+  height: 6px;
+  border-radius: 3px;
+}
+.condition-strip[hidden] { display: none; }
+.cond-cell {
+  display: block; height: 100%; border-radius: 2px;
+  transition: filter 160ms var(--ease);
+}
+.cond-cell:hover { filter: brightness(1.25); }
 .cloud-strip[hidden] { display: none; }
 .cloud-strip::before {
   content: "cloud cover";

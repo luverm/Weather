@@ -126,6 +126,7 @@ const el = {
   goldenHourText: $("#golden-hour-text"),
   comfortStrip: $("#comfort-strip"),
   cloudStrip: $("#cloud-strip"),
+  conditionStrip: $("#condition-strip"),
   chartCard: $("#chart-card"),
   chartFullBtn: $("#chart-full"),
   weekendChip: $("#weekend-chip"),
@@ -269,6 +270,7 @@ export const ui = {
     renderPrecip(weather);
     renderStargaze(weather);
     renderCloudStrip(weather);
+    renderConditionStrip(weather);
     renderBestMoment(weather);
     renderWardrobe(weather);
     renderTrends(weather);
@@ -1517,6 +1519,34 @@ function comfortScore(h) {
   const popPenalty = pop * 0.6;
   const uvPenalty = Math.max(0, uv - 7) * 6;
   return Math.max(0, Math.min(100, tempScore - windPenalty - popPenalty - uvPenalty));
+}
+
+// 24-cell condition ribbon: each cell tinted by hourly weather condition
+// (yellow=clear, grey=clouds, blue=rain, white=snow, purple=storm, muted=fog).
+function renderConditionStrip(w) {
+  if (!el.conditionStrip) return;
+  const hours = (w.hourly || []).slice(0, 24);
+  if (!hours.length) { el.conditionStrip.hidden = true; el.conditionStrip.innerHTML = ""; return; }
+  el.conditionStrip.hidden = false;
+  const tz = w.timezone;
+  const palette = {
+    clear:  "#ffd68a",
+    clouds: "#a8b7c9",
+    rain:   "#7cc0ff",
+    snow:   "#e6f0ff",
+    storm:  "#b791e6",
+    fog:    "#c3c9d1",
+  };
+  el.conditionStrip.innerHTML = hours.map((h) => {
+    const color = palette[h.condition] || "#7f8ba0";
+    const hh = new Date(h.time).toLocaleTimeString(undefined, {
+      hour: "2-digit", minute: "2-digit", hour12: false,
+      ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    });
+    // Alpha is subtler for daytime (sun) so the yellow doesn't shout.
+    const alpha = h.condition === "clear" ? 0.55 : 0.72;
+    return `<span class="cond-cell" style="background: ${color}; opacity:${alpha}" title="${hh} · ${escapeHtml(h.label || h.condition || "")}"></span>`;
+  }).join("");
 }
 
 // Cloud-cover ribbon: 24 cells tinted from clear (transparent blue) to
