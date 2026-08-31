@@ -405,6 +405,35 @@ function mock(lat, lon) {
   };
 }
 
+// Small in-memory cache for the compact "chip summary" fetches used by the
+// saved-places strip. Keeps repeated renders cheap and avoids hammering the
+// forecast endpoint when several chips are visible.
+const _summaryCache = new Map(); // key `${lat},${lon}` -> { at, value }
+const SUMMARY_TTL_MS = 10 * 60 * 1000;
+
+export async function getCurrentSummary(lat, lon) {
+  const key = `${(+lat).toFixed(3)},${(+lon).toFixed(3)}`;
+  const hit = _summaryCache.get(key);
+  if (hit && Date.now() - hit.at < SUMMARY_TTL_MS) return hit.value;
+  const url = `${FORECAST}?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day&timezone=auto`;
+  try {
+    const data = await fetchJson(url);
+    const c = data.current || {};
+    const { condition, label } = mapWmo(c.weather_code);
+    const value = {
+      temp: c.temperature_2m,
+      condition,
+      label,
+      isDay: !!c.is_day,
+      fetchedAt: Date.now(),
+    };
+    _summaryCache.set(key, { at: Date.now(), value });
+    return value;
+  } catch {
+    return null;
+  }
+}
+
 export function getLocation() {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) { reject(new Error("Geolocation not supported")); return; }

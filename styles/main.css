@@ -302,7 +302,45 @@ html[data-reduce-motion="true"] *::after {
 }
 .place-chip:hover { background: var(--glass-strong); transform: translateY(-1px); }
 .place-chip.active { background: var(--glass-strong); border-color: rgba(255,255,255,0.35); }
-.place-chip .temp { color: var(--fg-muted); font-variant-numeric: tabular-nums; }
+.place-chip .temp {
+  color: var(--fg-muted); font-variant-numeric: tabular-nums;
+  min-width: 22px; text-align: right;
+  font-size: 13px; font-weight: 500; letter-spacing: 0;
+  line-height: 1; display: inline-block;
+}
+.place-chip .temp.placeholder { color: var(--fg-dim); opacity: 0.5; }
+.place-chip .place-glyph {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; flex: 0 0 16px; color: var(--fg-muted);
+  transition: color 200ms var(--ease);
+}
+.place-chip .place-glyph svg { width: 16px; height: 16px; display: block; }
+.place-chip .place-glyph.placeholder {
+  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.14), rgba(255,255,255,0.06));
+  background-size: 200% 100%;
+  border-radius: 50%;
+  animation: chip-shimmer 1.4s linear infinite;
+}
+@keyframes chip-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.chip-fade-in { animation: chip-fade-in 320ms var(--ease); }
+@keyframes chip-fade-in {
+  from { opacity: 0; transform: translateY(-2px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+/* Temperature-based tone borders — subtle, doesn't fight the theme. */
+.place-chip.tone-icy  { border-color: rgba(160, 210, 255, 0.45); box-shadow: inset 0 0 0 1px rgba(160,210,255,0.10); }
+.place-chip.tone-cool { border-color: rgba(150, 200, 240, 0.35); }
+.place-chip.tone-mild { border-color: rgba(180, 220, 190, 0.35); }
+.place-chip.tone-warm { border-color: rgba(255, 200, 150, 0.45); box-shadow: inset 0 0 0 1px rgba(255,200,150,0.08); }
+.place-chip.tone-hot  { border-color: rgba(255, 150, 120, 0.55); box-shadow: inset 0 0 0 1px rgba(255,150,120,0.14); }
+.place-chip.tone-icy .place-glyph  { color: #a9d3ff; }
+.place-chip.tone-cool .place-glyph { color: #b8d4ea; }
+.place-chip.tone-mild .place-glyph { color: #cfe6d7; }
+.place-chip.tone-warm .place-glyph { color: #ffd5b0; }
+.place-chip.tone-hot .place-glyph  { color: #ffb6a0; }
 .place-chip .close {
   width: 16px; height: 16px; display: grid; place-items: center;
   border-radius: 50%; color: var(--fg-dim);

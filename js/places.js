@@ -43,8 +43,13 @@ export const places = {
     const list = read();
     const i = list.findIndex((p) => idFor(p) === id);
     if (i < 0) return;
-    list[i] = { ...list[i], ...summary };
+    list[i] = { ...list[i], ...summary, summaryAt: Date.now() };
     write(list);
+  },
+  isStale(place, ttl = 10 * 60_000) {
+    const at = place?.summaryAt;
+    if (!at) return true;
+    return Date.now() - at > ttl;
   },
   isSaved(place) {
     const id = idFor(place);

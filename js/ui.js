@@ -1,7 +1,7 @@
 // UI layer. Renders every data module and handles non-scene interactions
 // (search, unit toggle, saved places, tilt, audio toggle).
 
-import { searchCities } from "./weather-service.js";
+import { searchCities, getCurrentSummary } from "./weather-service.js";
 import { places } from "./places.js";
 import { HourlyChart } from "./hourly-chart.js";
 import { ComfortStrip } from "./comfort-strip.js";
@@ -201,7 +201,7 @@ export const ui = {
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
       places.updateSummary(state.place, {
-        temp: weather.temp, condition: weather.condition,
+        temp: weather.temp, condition: weather.condition, label: weather.label,
       });
     }
     renderPlaces();
@@ -1059,6 +1059,16 @@ function iconFor(condition) {
 }
 
 // ---------- Saved places strip ----------
+function tempTone(c) {
+  // Return a css class that tints the chip warm/cool based on temperature.
+  if (c == null) return "";
+  if (c <= 0) return "tone-icy";
+  if (c <= 10) return "tone-cool";
+  if (c <= 20) return "tone-mild";
+  if (c <= 28) return "tone-warm";
+  return "tone-hot";
+}
+
 function renderPlaces() {
   const all = places.all();
   if (!all.length) { el.placesStrip.hidden = true; el.placesStrip.innerHTML = ""; return; }
@@ -1066,10 +1076,22 @@ function renderPlaces() {
   const activeId = state.place ? places.idFor(state.place) : null;
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
+    const tone = tempTone(p.temp);
+    const hasTemp = p.temp != null;
+    const iconMarkup = p.condition
+      ? `<span class="place-glyph" aria-hidden="true">${iconFor(p.condition)}</span>`
+      : `<span class="place-glyph placeholder" aria-hidden="true"></span>`;
+    const tempMarkup = hasTemp
+      ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>`
+      : `<span class="temp placeholder" aria-hidden="true">–</span>`;
+    const titleAttr = p.label
+      ? ` title="${escapeHtml(p.name)} · ${escapeHtml(p.label)}"`
+      : ` title="${escapeHtml(p.name)}"`;
     return `
-      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
-        <span>${escapeHtml(p.name)}</span>
-        ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
+      <div class="place-chip ${active ? "active" : ""} ${tone}" data-id="${p.id}"${titleAttr}>
+        ${iconMarkup}
+        <span class="place-name-text">${escapeHtml(p.name)}</span>
+        ${tempMarkup}
         <span class="close" data-action="remove" aria-label="Remove">
           <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
         </span>
@@ -1087,6 +1109,73 @@ function renderPlaces() {
       state.handlers.onPlaceClick?.(item);
     });
   });
+  // Kick off background refresh of stale/missing chip summaries.
+  refreshPlaceSummaries();
+}
+
+// Fetch a lightweight "current conditions" summary for every saved place that
+// doesn't have a fresh one, and patch the chip in place as each resolves.
+// Skips the currently-loaded place — that one is refreshed by the main load.
+let _summaryInFlight = new Set();
+async function refreshPlaceSummaries() {
+  const all = places.all();
+  const activeId = state.place ? places.idFor(state.place) : null;
+  const stale = all.filter((p) =>
+    places.idFor(p) !== activeId &&
+    places.isStale(p) &&
+    !_summaryInFlight.has(p.id)
+  );
+  if (!stale.length) return;
+  // Limit parallelism to be gentle with the API.
+  const CONCURRENCY = 3;
+  let idx = 0;
+  async function worker() {
+    while (idx < stale.length) {
+      const p = stale[idx++];
+      _summaryInFlight.add(p.id);
+      try {
+        const s = await getCurrentSummary(p.lat, p.lon);
+        if (s) {
+          places.updateSummary(p, {
+            temp: s.temp,
+            condition: s.condition,
+            label: s.label,
+          });
+          patchChip(p.id, s);
+        }
+      } finally {
+        _summaryInFlight.delete(p.id);
+      }
+    }
+  }
+  const workers = Array.from({ length: Math.min(CONCURRENCY, stale.length) }, worker);
+  await Promise.all(workers);
+}
+
+function patchChip(id, s) {
+  const chip = el.placesStrip?.querySelector(`.place-chip[data-id="${CSS.escape(id)}"]`);
+  if (!chip) return;
+  // Update tone class in place.
+  const tone = tempTone(s.temp);
+  chip.classList.remove("tone-icy", "tone-cool", "tone-mild", "tone-warm", "tone-hot");
+  if (tone) chip.classList.add(tone);
+  // Swap glyph.
+  const glyph = chip.querySelector(".place-glyph");
+  if (glyph) {
+    glyph.classList.remove("placeholder");
+    glyph.innerHTML = iconFor(s.condition);
+  }
+  // Swap temperature.
+  const temp = chip.querySelector(".temp");
+  if (temp) {
+    temp.classList.remove("placeholder");
+    temp.textContent = `${Math.round(convertTemp(s.temp))}°`;
+    temp.classList.remove("chip-fade-in"); void temp.offsetWidth;
+    temp.classList.add("chip-fade-in");
+  }
+  // Update title.
+  const name = chip.querySelector(".place-name-text")?.textContent || "";
+  chip.setAttribute("title", `${name} · ${s.label}`);
 }
 
 // ---------- Bindings ----------
