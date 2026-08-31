@@ -39,6 +39,7 @@ const el = {
   aqArc: $("#aq-arc"),
   aqValue: $("#aq-value"),
   aqLabel: $("#aq-label"),
+  aqArrow: $("#aq-arrow"),
   aqDetail: $("#aq-detail"),
   aqCard: $("#aq-card"),
   aqTrendLine: $("#aq-trend-line"),
@@ -614,6 +615,23 @@ function renderAirQuality(aq) {
   el.aqDetail.textContent =
     `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
   renderAqTrend(aq);
+  renderAqArrow(aq);
+}
+
+// Show a short trend arrow (improving / steady / worsening) based on how AQI
+// changes over the next 6 hourly samples. Lower AQI = better air.
+function renderAqArrow(aq) {
+  if (!el.aqArrow) return;
+  const pts = (aq?.trend || []).slice(0, 6).map((p) => p.aqi).filter((v) => v != null);
+  if (pts.length < 2 || aq?.aqi == null) { el.aqArrow.textContent = ""; return; }
+  const later = pts[pts.length - 1];
+  const delta = later - aq.aqi;
+  let cls, arrow, word;
+  if (Math.abs(delta) < 5) { cls = "flat"; arrow = "→"; word = "steady"; }
+  else if (delta > 0)      { cls = "up";   arrow = "▲"; word = "worsening"; }
+  else                     { cls = "down"; arrow = "▼"; word = "improving"; }
+  el.aqArrow.className = `trend ${cls}`;
+  el.aqArrow.textContent = `${arrow} ${word}`;
 }
 
 function renderAqTrend(aq) {
