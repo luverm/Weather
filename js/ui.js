@@ -450,12 +450,20 @@ function renderDayRange(w) {
 }
 
 function renderMetrics(w) {
-  el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
+  const speedUnit = state.unit === "F" ? "mph" : "km/h";
+  const toSpeed = (kmh) => state.unit === "F" ? kmh * 0.621371 : kmh;
+  el.metricWind.textContent = Math.round(toSpeed(w.windSpeed ?? 0));
+  // Update the sibling unit label if the DOM has one right after the value.
+  const windUnitEl = el.metricWind?.parentElement?.querySelector(".metric-unit");
+  if (windUnitEl) windUnitEl.textContent = speedUnit;
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
+  const gustDisplay = w.windGusts != null
+    ? `${Math.round(toSpeed(w.windGusts))} ${speedUnit}`
+    : "—";
   el.metricWindSub.textContent = dirLabel
-    ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
-    : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+    ? `${dirLabel} · gust ${gustDisplay}`
+    : `gust ${gustDisplay}`;
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
@@ -488,9 +496,15 @@ function renderMetrics(w) {
   }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
   // Combine visibility with a short pressure-driven verdict.
-  const vis = w.visibility != null
-    ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
-    : "visibility —";
+  let vis;
+  if (w.visibility != null) {
+    if (state.unit === "F") {
+      const miles = Math.round((w.visibility / 1609.344) * 10) / 10;
+      vis = `visibility ${miles} mi`;
+    } else {
+      vis = `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`;
+    }
+  } else vis = "visibility —";
   const verdict = pressureVerdict(w.pressure, w.pressureTrend);
   el.metricPressureSub.textContent = verdict ? `${verdict} · ${vis}` : vis;
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
