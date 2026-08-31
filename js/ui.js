@@ -1922,7 +1922,7 @@ function renderHourly(w) {
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon"${style}>${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
-      <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}${h.pop >= 60 ? " high" : h.pop >= 30 ? " med" : ""}">${h.pop}%</span>
+      <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}${h.pop >= 80 ? " very-high" : h.pop >= 60 ? " high" : h.pop >= 30 ? " med" : ""}">${h.pop}%</span>
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);

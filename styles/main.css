@@ -2028,6 +2028,7 @@ kbd {
 .forecast-pop.dim { opacity: 0; }
 .forecast-pop.med  { color: #ffd68a; opacity: 1; font-weight: 600; }
 .forecast-pop.high { color: #ff9c7a; opacity: 1; font-weight: 600; }
+.forecast-pop.very-high { color: #ff6a6a; opacity: 1; font-weight: 700; }
 
 .daily-track {
   display: grid;
