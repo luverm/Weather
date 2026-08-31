@@ -132,6 +132,7 @@ const el = {
   weekendIconSun: $("#weekend-icon-sun"),
   forecastTrack: $("#forecast-track"),
   dailyTrack: $("#daily-track"),
+  weekHighlights: $("#week-highlights"),
   nowcast: $("#nowcast"),
   nowcastHeadline: $("#nowcast-headline"),
   nowcastSub: $("#nowcast-sub"),
@@ -1616,6 +1617,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderWeekHighlights(days, w);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1674,6 +1676,37 @@ function dailyPeakLabel(d, w) {
     ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
   });
   return ` · peak ${hh}`;
+}
+
+// Compact "week highlights" strip: pill chips for warmest / coldest /
+// wettest days across the 7-day forecast. Skipped for uninteresting weeks
+// (all similar temps, all dry).
+function renderWeekHighlights(days, w) {
+  if (!el.weekHighlights) return;
+  if (!days || days.length < 3) { el.weekHighlights.hidden = true; return; }
+  const tz = w?.timezone;
+  const dayName = (ts) => new Date(ts).toLocaleDateString(undefined, {
+    weekday: "short", ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  let hottest = days[0], coldest = days[0], wettest = days[0];
+  for (const d of days) {
+    if ((d.tempMax ?? -Infinity) > (hottest.tempMax ?? -Infinity)) hottest = d;
+    if ((d.tempMin ?? Infinity) < (coldest.tempMin ?? Infinity)) coldest = d;
+    if ((d.precip ?? 0) > (wettest.precip ?? 0)) wettest = d;
+  }
+  const chips = [];
+  // Only surface hottest/coldest if the range is meaningful (>4°).
+  const range = (hottest.tempMax ?? 0) - (coldest.tempMin ?? 0);
+  if (range >= 4) {
+    chips.push(`<span class="wh-chip hot"><span>Warmest</span><strong>${dayName(hottest.time)} ${Math.round(convertTemp(hottest.tempMax))}°</strong></span>`);
+    chips.push(`<span class="wh-chip cold"><span>Coolest</span><strong>${dayName(coldest.time)} ${Math.round(convertTemp(coldest.tempMin))}°</strong></span>`);
+  }
+  if ((wettest.precip ?? 0) >= 1) {
+    chips.push(`<span class="wh-chip wet"><span>Wettest</span><strong>${dayName(wettest.time)} ${wettest.precip.toFixed(1)} mm</strong></span>`);
+  }
+  if (!chips.length) { el.weekHighlights.hidden = true; return; }
+  el.weekHighlights.hidden = false;
+  el.weekHighlights.innerHTML = chips.join("");
 }
 
 function renderDailyIconStrip(days) {

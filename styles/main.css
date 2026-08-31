@@ -1416,6 +1416,25 @@ kbd {
   font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums;
 }
 
+/* ---------- Week highlights strip ---------- */
+.week-highlights {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin: 6px 0 2px;
+}
+.week-highlights[hidden] { display: none; }
+.wh-chip {
+  display: inline-flex; align-items: baseline; gap: 6px;
+  padding: 4px 10px; border-radius: 999px;
+  font-size: 10.5px; letter-spacing: 0.02em;
+  background: var(--glass);
+  border: 1px solid var(--stroke);
+}
+.wh-chip span { color: var(--fg-dim); text-transform: uppercase; letter-spacing: 0.14em; font-size: 9px; }
+.wh-chip strong { font-weight: 500; font-size: 12px; font-variant-numeric: tabular-nums; }
+.wh-chip.hot  { border-color: rgba(255, 156, 122, 0.35); color: #ffb196; }
+.wh-chip.cold { border-color: rgba(154, 209, 255, 0.35); color: #9ad1ff; }
+.wh-chip.wet  { border-color: rgba(120, 192, 255, 0.35); color: #78c0ff; }
+
 /* ---------- Comfort strip (24-cell heat band under the chart) ---------- */
 .comfort-strip {
   display: grid;
