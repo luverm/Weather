@@ -307,6 +307,8 @@ installShortcuts({
   toggleRadar: () => document.getElementById("radar-play")?.click(),
   resetScrubber: () => scrubber.reset(),
   cyclePlace,
+  toggleSettings: () => document.getElementById("settings-btn")?.click(),
+  refresh: () => refreshWeather(),
   nudge: (hours) => {
     clock.setOffset(clock.offset() + hours * 3600_000);
     scrubber.sync();
