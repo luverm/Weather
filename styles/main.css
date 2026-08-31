@@ -37,6 +37,23 @@
   --accent: #ffd39a;
 }
 
+/* Reduced-transparency mode: users who dislike blurred glass panels get
+   more opaque cards (still blurred but with a solid backing) so text sits
+   on a clear surface. */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass: rgba(255, 255, 255, 0.14);
+    --glass-strong: rgba(255, 255, 255, 0.22);
+  }
+  .glass, .glass::before {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background-color: rgba(11, 16, 32, 0.82);
+  }
+  [data-tone="bright"] .glass { background-color: rgba(238, 244, 252, 0.85); }
+  [data-tone="warm"] .glass   { background-color: rgba(38, 26, 22, 0.82); }
+}
+
 /* High-contrast mode: bump muted/dim text and stroke opacity so labels and
    card borders stay readable at OS-level 'increase contrast'. */
 @media (prefers-contrast: more) {
