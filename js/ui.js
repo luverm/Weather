@@ -53,6 +53,7 @@ const el = {
   windNeedle: $("#wind-needle"),
   windRose: $("#wind-rose"),
   skyRibbon: $("#sky-ribbon"),
+  skyRibbonMarker: $("#sky-ribbon-marker"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
   chartSvg: $("#chart-svg"),
@@ -263,6 +264,7 @@ export const ui = {
     } else if (state.chart) {
       state.chart.setCursor(sampled.hourly?.[highlightHourIndex]?.time);
     }
+    updateSkyRibbonMarker(sampled._sampledTs ?? Date.now());
   },
   setScrubbing(on) {
     document.documentElement.setAttribute("data-scrubbing", on ? "true" : "false");
@@ -958,16 +960,16 @@ function renderPollen(pollen) {
 function renderSkyRibbon(w) {
   if (!el.skyRibbon) return;
   const hours = (w.hourly || []).slice(0, 24);
-  if (!hours.length) { el.skyRibbon.innerHTML = ""; el.skyRibbon.style.background = ""; return; }
+  if (!hours.length) { el.skyRibbon.style.background = ""; return; }
 
   const stops = hours.map((h) => skyColorAt(h.time, w));
-  // Convert stops into a CSS linear-gradient. Each hour = ~1/24 of the width.
   const step = 100 / (stops.length - 1);
   const gradient = stops
     .map((c, i) => `${c} ${(i * step).toFixed(2)}%`)
     .join(", ");
   el.skyRibbon.style.background = `linear-gradient(90deg, ${gradient})`;
   el.skyRibbon.title = `Tap to jump to that hour`;
+  updateSkyRibbonMarker(Date.now());
 
   // Interactive: click a spot to scrub to that hour. Bound once, ref stored
   // on the element so setWeather re-renders don't accumulate listeners.
@@ -984,6 +986,23 @@ function renderSkyRibbon(w) {
     el.skyRibbon.addEventListener("click", seek);
     el.skyRibbon._boundSeek = true;
   }
+}
+
+// Slide the marker to the right position for the given timestamp along the
+// 24-hour hourly window. Hidden if the timestamp falls outside the window.
+function updateSkyRibbonMarker(ts) {
+  if (!el.skyRibbonMarker) return;
+  const hours = (state.weather?.hourly || []).slice(0, 24);
+  if (!hours.length || ts == null) { el.skyRibbonMarker.style.opacity = "0"; return; }
+  const first = hours[0].time;
+  const last = hours[hours.length - 1].time;
+  if (ts < first - 30 * 60_000 || ts > last + 30 * 60_000) {
+    el.skyRibbonMarker.style.opacity = "0";
+    return;
+  }
+  const t = clamp01((ts - first) / Math.max(1, last - first));
+  el.skyRibbonMarker.style.left = `${(t * 100).toFixed(2)}%`;
+  el.skyRibbonMarker.style.opacity = "1";
 }
 
 // Given a timestamp and the weather (with daily sun times), return an rgba()
