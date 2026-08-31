@@ -1741,6 +1741,20 @@ function renderDaily(w) {
       weekday: "short",
       ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
     });
+    // Day-to-day high delta (skipped for the first entry).
+    let dayDeltaHtml = "";
+    if (i > 0) {
+      const prev = days[i - 1].tempMax;
+      if (prev != null && d.tempMax != null) {
+        const diff = d.tempMax - prev;
+        const shown = state.unit === "F" ? diff * 9 / 5 : diff;
+        if (Math.abs(shown) >= 2) {
+          const arrow = shown > 0 ? "▲" : "▼";
+          const cls = shown > 0 ? "up" : "down";
+          dayDeltaHtml = `<span class="daily-delta-arrow ${cls}" aria-hidden="true">${arrow}${Math.abs(Math.round(shown))}°</span>`;
+        }
+      }
+    }
     const left = ((d.tempMin - gMin) / span) * 100;
     const width = ((d.tempMax - d.tempMin) / span) * 100;
     const item = document.createElement("div");
@@ -1762,7 +1776,7 @@ function renderDaily(w) {
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
       </div>
       <span class="daily-temp-min">${Math.round(convertTemp(d.tempMin))}°</span>
-      <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°</span>
+      <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°${dayDeltaHtml}</span>
       ${extra}
     `;
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));

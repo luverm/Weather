@@ -1864,6 +1864,16 @@ kbd {
 }
 .daily-temp-min { color: var(--fg-muted); text-align: right; }
 .daily-temp-max { color: var(--fg); text-align: right; font-weight: 500; }
+.daily-delta-arrow {
+  margin-left: 6px;
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  font-weight: 500;
+  vertical-align: 1px;
+}
+.daily-delta-arrow.up   { color: #ffb196; background: rgba(255, 156, 122, 0.14); }
+.daily-delta-arrow.down { color: #9ad1ff; background: rgba(154, 209, 255, 0.14); }
 
 /* ---------- Hint + toast ---------- */
 .hint {
