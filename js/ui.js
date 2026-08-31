@@ -111,6 +111,8 @@ const el = {
   goldenHourText: $("#golden-hour-text"),
   comfortStrip: $("#comfort-strip"),
   cloudStrip: $("#cloud-strip"),
+  chartCard: $("#chart-card"),
+  chartFullBtn: $("#chart-full"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
   weekendDetail: $("#weekend-detail"),
@@ -197,6 +199,7 @@ export const ui = {
       getUnit: () => state.unit,
     });
     bindInstallPrompt();
+    bindChartFullscreen();
   },
   focusSearch() { el.searchInput?.focus(); el.searchInput?.select?.(); },
   toggleUnits() { el.unitBtn?.click(); },
@@ -1742,6 +1745,21 @@ function bindAudio() {
 }
 
 let deferredInstallPrompt = null;
+function bindChartFullscreen() {
+  if (!el.chartFullBtn || !el.chartCard) return;
+  const toggle = () => {
+    const on = el.chartCard.getAttribute("data-fullscreen") !== "true";
+    el.chartCard.setAttribute("data-fullscreen", on ? "true" : "false");
+    el.chartFullBtn.setAttribute("aria-label", on ? "Collapse chart" : "Expand chart");
+    el.chartFullBtn.setAttribute("title", on ? "Collapse chart" : "Expand chart");
+    document.documentElement.setAttribute("data-chart-fullscreen", on ? "true" : "false");
+  };
+  el.chartFullBtn.addEventListener("click", toggle);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && el.chartCard.getAttribute("data-fullscreen") === "true") toggle();
+  });
+}
+
 function bindInstallPrompt() {
   if (!el.installBtn) return;
   window.addEventListener("beforeinstallprompt", (e) => {
