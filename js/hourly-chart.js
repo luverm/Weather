@@ -138,10 +138,14 @@ export class HourlyChart {
     const feelsStr = (feels != null && Math.abs(feels - t) >= 1)
       ? `<em>feels ${Math.round(feels)}°</em>` : "";
     const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h` : "";
+    // Only note gusts when they meaningfully exceed sustained wind.
+    const gustStr = (h.gusts != null && h.wind != null && (h.gusts - h.wind) >= 8)
+      ? ` (gust ${Math.round(h.gusts)})` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
+    const uvStr = (h.uv != null && h.uv >= 3) ? ` · UV ${Math.round(h.uv)}` : "";
     this.popover.innerHTML =
       `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
-      `<em>${h.pop}% precip${wind}${hum}</em>`;
+      `<em>${h.pop}% precip${wind}${gustStr}${hum}${uvStr}</em>`;
     this.popover.style.left = `${pxX.toFixed(1)}px`;
     this.popover.style.top = `${pxY.toFixed(1)}px`;
     this.popover.hidden = false;
