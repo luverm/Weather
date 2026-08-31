@@ -2806,10 +2806,16 @@ function bindShare() {
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
     ].filter(Boolean);
+    // Append a deep link so the recipient can open the exact same forecast.
+    const url = new URL(location.href);
+    if (state.place?.lat != null && state.place?.lon != null) {
+      url.hash = `${state.place.lat.toFixed(3)},${state.place.lon.toFixed(3)},${encodeURIComponent(placeName)}`;
+    }
+    lines.push(url.toString());
     const text = lines.join("\n");
     try {
       if (navigator.share) {
-        await navigator.share({ title: `Aether — ${placeName}`, text });
+        await navigator.share({ title: `Aether — ${placeName}`, text, url: url.toString() });
       } else {
         await navigator.clipboard.writeText(text);
         ui.showToast("Summary copied to clipboard");
