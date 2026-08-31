@@ -60,6 +60,8 @@ const el = {
   adviceText: $("#advice-text"),
   bestMoment: $("#best-moment"),
   bestMomentText: $("#best-moment-text"),
+  wardrobe: $("#wardrobe"),
+  wardrobeText: $("#wardrobe-text"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
   pollenCard: $("#pollen-card"),
@@ -243,6 +245,7 @@ export const ui = {
     renderStargaze(weather);
     renderCloudStrip(weather);
     renderBestMoment(weather);
+    renderWardrobe(weather);
     renderTrends(weather);
     renderInsights(weather);
     renderActivity(weather);
@@ -1119,6 +1122,37 @@ function renderWindRose(w) {
     parts.push(`<path d="${d}" fill="currentColor" opacity="${(0.20 + t * 0.55).toFixed(2)}"/>`);
   }
   el.windRose.innerHTML = parts.join("");
+}
+
+// Wardrobe suggestion: one-line outfit tip driven by feels-like temperature,
+// short-term rain risk, sun exposure, and wind. Doesn't repeat what the hazard
+// advice pill already says; sticks to clothes.
+function renderWardrobe(w) {
+  if (!el.wardrobe) return;
+  const feels = w.feelsLike ?? w.temp;
+  if (feels == null) { el.wardrobe.hidden = true; return; }
+  // Look ahead 6 h for rain / high UV so we can suggest an umbrella or hat.
+  const soon = (w.hourly || []).filter((h) => h.time <= Date.now() + 6 * 3600_000);
+  const rainSoon = soon.some((h) => (h.precip || 0) >= 0.5 || (h.pop || 0) >= 60);
+  const uvHigh = soon.some((h) => (h.uv || 0) >= 6);
+  const cloudy = (w.cloudCover ?? 100) >= 60;
+  const wind = w.windSpeed ?? 0;
+  const gusts = w.windGusts ?? 0;
+  const heavyWind = wind >= 30 || gusts >= 45;
+  const parts = [];
+  // Base layer by feels-like °C (unit-aware display kept simple by using °C).
+  if (feels <= -5) parts.push("Winter parka, hat and gloves");
+  else if (feels <= 5) parts.push("Heavy coat and scarf");
+  else if (feels <= 12) parts.push("Warm jacket and jeans");
+  else if (feels <= 18) parts.push("Light sweater or long sleeve");
+  else if (feels <= 24) parts.push("T-shirt weather");
+  else if (feels <= 30) parts.push("Shorts and a t-shirt");
+  else parts.push("Loose, breathable clothes and shade");
+  if (rainSoon) parts.push("bring an umbrella");
+  if (uvHigh && !cloudy && feels >= 12) parts.push("sunscreen + shades");
+  if (heavyWind) parts.push("windbreaker");
+  el.wardrobeText.textContent = parts.join(" · ");
+  el.wardrobe.hidden = false;
 }
 
 // "Best moment today" pill: iterates today's remaining hourly entries,
