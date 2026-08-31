@@ -90,6 +90,10 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcGoldenAm: $("#sun-arc-golden-am"),
+  sunArcGoldenPm: $("#sun-arc-golden-pm"),
+  goldenHourPill: $("#golden-hour-pill"),
+  goldenHourText: $("#golden-hour-text"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -122,8 +126,31 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  goldenTimer: null,
   localTimer: null,
 };
+
+// Sun arc bezier: matches path d="M10 74 Q100 -26 190 74" in index.html.
+const SUN_ARC = { x0: 10, y0: 74, cx: 100, cy: -26, x1: 190, y1: 74 };
+
+function sunArcPoint(t) {
+  const u = 1 - t;
+  return {
+    x: u * u * SUN_ARC.x0 + 2 * u * t * SUN_ARC.cx + t * t * SUN_ARC.x1,
+    y: u * u * SUN_ARC.y0 + 2 * u * t * SUN_ARC.cy + t * t * SUN_ARC.y1,
+  };
+}
+
+function sunArcSegmentPath(tStart, tEnd, steps = 12) {
+  if (tEnd <= tStart) return "";
+  let d = "";
+  for (let i = 0; i <= steps; i++) {
+    const t = tStart + ((tEnd - tStart) * i) / steps;
+    const p = sunArcPoint(t);
+    d += (i === 0 ? "M" : "L") + p.x.toFixed(1) + " " + p.y.toFixed(1);
+  }
+  return d;
+}
 
 export const ui = {
   init(handlers) {
@@ -523,6 +550,73 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleGoldenHour(w);
+}
+
+// Draw the two golden-hour bands on the sun arc and keep a live countdown
+// under it. Golden hour ~= first 60 min after sunrise and last 60 min before
+// sunset (compressed when the day is short).
+function scheduleGoldenHour(w) {
+  if (state.goldenTimer) { clearInterval(state.goldenTimer); state.goldenTimer = null; }
+  const pill = el.goldenHourPill, txt = el.goldenHourText;
+  const amPath = el.sunArcGoldenAm, pmPath = el.sunArcGoldenPm;
+  if (!pill || !txt || !amPath || !pmPath) return;
+  const sr = w?.sunrise, ss = w?.sunset;
+  if (!sr || !ss || ss <= sr) {
+    pill.hidden = true;
+    amPath.setAttribute("d", "");
+    pmPath.setAttribute("d", "");
+    return;
+  }
+  const daylight = ss - sr;
+  // Golden hour = min(60 min, 1/6 of daylight). Short days get a shorter band.
+  const bandMs = Math.max(15 * 60_000, Math.min(60 * 60_000, daylight / 6));
+  const amStart = sr, amEnd = sr + bandMs;
+  const pmStart = ss - bandMs, pmEnd = ss;
+  // Draw the two bands on the arc (t=0 at sunrise, t=1 at sunset).
+  const amT0 = 0, amT1 = bandMs / daylight;
+  const pmT0 = 1 - bandMs / daylight, pmT1 = 1;
+  amPath.setAttribute("d", sunArcSegmentPath(amT0, amT1));
+  pmPath.setAttribute("d", sunArcSegmentPath(pmT0, pmT1));
+
+  const fmt = (ms) => {
+    const m = Math.max(0, Math.round(ms / 60_000));
+    return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`;
+  };
+  const update = () => {
+    const now = Date.now();
+    let text = "", tone = "am";
+    if (now < amStart) {
+      // Before dawn — countdown to morning golden.
+      text = `Golden hour in ${fmt(amStart - now)} · lasts ${fmt(bandMs)}`;
+    } else if (now < amEnd) {
+      // In morning golden — show remaining.
+      text = `Morning golden · ${fmt(amEnd - now)} left`;
+      pill.classList.add("live");
+    } else if (now < pmStart) {
+      // Between goldens — count down to evening.
+      text = `Evening golden in ${fmt(pmStart - now)} · lasts ${fmt(bandMs)}`;
+      tone = "pm";
+    } else if (now < pmEnd) {
+      // In evening golden — show remaining.
+      text = `Evening golden · ${fmt(pmEnd - now)} left`;
+      pill.classList.add("live");
+      tone = "pm";
+    } else {
+      // Past both — hide.
+      pill.hidden = true;
+      return;
+    }
+    // Reset live class if not in a golden window.
+    if (!(now >= amStart && now < amEnd) && !(now >= pmStart && now < pmEnd)) {
+      pill.classList.remove("live");
+    }
+    pill.dataset.tone = tone;
+    txt.textContent = text;
+    pill.hidden = false;
+  };
+  update();
+  state.goldenTimer = setInterval(update, 30_000);
 }
 
 function scheduleSunArc(w) {
