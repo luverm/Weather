@@ -1437,6 +1437,16 @@ kbd {
   font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums;
 }
 
+/* ---------- Week narrative ---------- */
+.week-narrative {
+  margin: 6px 0 2px;
+  color: var(--fg-muted);
+  font-size: 12.5px;
+  font-style: italic;
+  max-width: 62ch;
+}
+.week-narrative[hidden] { display: none; }
+
 /* ---------- Week highlights strip ---------- */
 .week-highlights {
   display: flex; flex-wrap: wrap; gap: 6px;

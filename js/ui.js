@@ -135,6 +135,7 @@ const el = {
   forecastTrack: $("#forecast-track"),
   dailyTrack: $("#daily-track"),
   weekHighlights: $("#week-highlights"),
+  weekNarrative: $("#week-narrative"),
   nowcast: $("#nowcast"),
   nowcastHeadline: $("#nowcast-headline"),
   nowcastSub: $("#nowcast-sub"),
@@ -1660,6 +1661,7 @@ function renderDaily(w) {
   renderDailySpark(days);
   renderDailyDelta(days);
   renderWeekHighlights(days, w);
+  renderWeekNarrative(days, w);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1718,6 +1720,53 @@ function dailyPeakLabel(d, w) {
     ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
   });
   return ` · peak ${hh}`;
+}
+
+// One-line narrator for the week — reads the trend of highs and the wet/dry
+// pattern across the coming days and produces a short sentence like
+// "Cool and cloudy until Thursday, then warming and clearing".
+function renderWeekNarrative(days, w) {
+  if (!el.weekNarrative) return;
+  if (!days || days.length < 3) { el.weekNarrative.hidden = true; return; }
+  const tz = w?.timezone;
+  const dayName = (ts) => new Date(ts).toLocaleDateString(undefined, {
+    weekday: "long", ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  // Overall temperature trend: linear slope over the week's highs.
+  const highs = days.map((d) => d.tempMax).filter((v) => v != null);
+  const slope = highs.length >= 3
+    ? (highs[highs.length - 1] - highs[0]) / (highs.length - 1)
+    : 0;
+  // Wet days by index.
+  const wetIdx = days.map((d, i) => (d.precip ?? 0) >= 2 ? i : -1).filter((i) => i >= 0);
+  // Find the first day of a distinctly different regime (transition day).
+  let transitionIdx = -1;
+  for (let i = 1; i < days.length; i++) {
+    const priorWet = (days[i - 1].precip ?? 0) >= 2;
+    const nowWet = (days[i].precip ?? 0) >= 2;
+    const priorHot = (days[i - 1].tempMax ?? 0) >= (highs[0] + 4);
+    const nowHot   = (days[i].tempMax ?? 0)     >= (highs[0] + 4);
+    if (priorWet !== nowWet || priorHot !== nowHot) { transitionIdx = i; break; }
+  }
+  const trendWord =
+    slope > 0.8 ? "warming" :
+    slope < -0.8 ? "cooling" : "steady";
+  const wetPattern =
+    wetIdx.length >= 4 ? "wet stretches most days" :
+    wetIdx.length >= 2 ? "showers on and off" :
+    wetIdx.length === 1 ? `some rain on ${dayName(days[wetIdx[0]].time)}` :
+                          "mostly dry";
+  let sentence;
+  if (transitionIdx >= 2) {
+    const beforeHot = (days[0].tempMax ?? 0) >= (days[transitionIdx].tempMax ?? 0);
+    const before = beforeHot ? "warm early" : "cool early";
+    const after = beforeHot ? "cooling later" : "warming later";
+    sentence = `${before}, ${after} — ${wetPattern}.`;
+  } else {
+    sentence = `A ${trendWord} week — ${wetPattern}.`;
+  }
+  el.weekNarrative.textContent = sentence.charAt(0).toUpperCase() + sentence.slice(1);
+  el.weekNarrative.hidden = false;
 }
 
 // Compact "week highlights" strip: pill chips for warmest / coldest /
