@@ -50,6 +50,7 @@ const el = {
   moonIllum: $("#moon-illum"),
   moonAge: $("#moon-age"),
   moonNext: $("#moon-next"),
+  moonColdest: $("#moon-coldest"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -248,7 +249,7 @@ export const ui = {
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
-    renderMoon(weather.moon);
+    renderMoon(weather.moon, weather);
     renderSun(weather);
     renderHourly(weather);
     renderDaily(weather);
@@ -764,10 +765,33 @@ function moonGlyph(phase) {
   return glyphs[idx];
 }
 
-function renderMoon(moon) {
+function renderMoon(moon, w) {
   if (!moon) return;
   el.moonName.textContent = `${moonGlyph(moon.phase)} ${moon.name}`;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  // Coldest hour in tonight's forecast — helps decide whether to bundle up.
+  if (el.moonColdest && w?.hourly?.length) {
+    const today = w.daily?.[0], tomorrow = w.daily?.[1];
+    const ns = today?.sunset, nr = tomorrow?.sunrise ?? today?.sunrise;
+    if (ns && nr && ns < nr) {
+      const nightHrs = w.hourly.filter((h) => h.time >= ns && h.time <= nr && h.temp != null);
+      if (nightHrs.length) {
+        let cold = nightHrs[0];
+        for (const h of nightHrs) if (h.temp < cold.temp) cold = h;
+        const tz = w.timezone;
+        const hh = new Date(cold.time).toLocaleTimeString(undefined, {
+          hour: "2-digit", minute: "2-digit", hour12: false,
+          ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+        });
+        el.moonColdest.textContent = `Coldest ${Math.round(convertTemp(cold.temp))}° at ${hh}`;
+        el.moonColdest.hidden = false;
+      } else {
+        el.moonColdest.hidden = true;
+      }
+    } else {
+      el.moonColdest.hidden = true;
+    }
+  }
   if (el.moonAge && moon.ageDays != null) {
     el.moonAge.textContent = moon.ageDays.toFixed(1);
   }
