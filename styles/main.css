@@ -601,6 +601,12 @@ html[data-reduce-motion="true"] *::after {
   border: 1px solid var(--stroke);
 }
 .sensory-tag[hidden] { display: none; }
+.sensory-tag[data-tone="cold"]  { background: rgba(154, 209, 255, 0.14); color: #cee9ff; border-color: rgba(154, 209, 255, 0.35); }
+.sensory-tag[data-tone="hot"]   { background: rgba(255, 156, 122, 0.18); color: #ffb196; border-color: rgba(255, 156, 122, 0.4); }
+.sensory-tag[data-tone="humid"] { background: rgba(180, 240, 210, 0.16); color: #b8e6c8; border-color: rgba(180, 240, 210, 0.35); }
+.sensory-tag[data-tone="crisp"] { background: rgba(200, 220, 240, 0.12); color: #cfe1ee; border-color: rgba(200, 220, 240, 0.3); }
+.sensory-tag[data-tone="storm"] { background: rgba(199, 165, 238, 0.16); color: #d7c1ee; border-color: rgba(199, 165, 238, 0.35); }
+.sensory-tag[data-tone="snow"]  { background: rgba(230, 240, 255, 0.14); color: #e6f0ff; border-color: rgba(230, 240, 255, 0.3); }
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
 .yesterday-delta {
   margin: 4px 0 0;

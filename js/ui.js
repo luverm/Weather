@@ -490,6 +490,17 @@ function renderSensoryTag(w) {
   else                    { word = "mild"; emoji = "🌡️"; }
   el.sensoryTag.textContent = `${emoji} ${word}`;
   el.sensoryTag.hidden = false;
+  // Tone-tint the pill background by sensory bucket so cold reads blue-ish,
+  // hot reads warm-orange, mild reads neutral.
+  const tone =
+    ["freezing", "brutal cold", "biting", "chilly"].includes(word) ? "cold" :
+    ["sweltering", "hot"].includes(word) ? "hot" :
+    ["muggy", "humid"].includes(word) ? "humid" :
+    ["crisp", "breezy"].includes(word) ? "crisp" :
+    word === "electric" ? "storm" :
+    word === "snowy" ? "snow" :
+    "mild";
+  el.sensoryTag.dataset.tone = tone;
   // Reveal the reasoning on hover so users understand where the label comes from.
   const feelsPart = w.feelsLike != null
     ? `feels ${Math.round(convertTemp(feels))}°${state.unit}`
