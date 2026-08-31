@@ -1781,6 +1781,7 @@ kbd {
   max-width: 100%;
 }
 .alert-pill:hover { transform: translateY(-1px); background: rgba(255,255,255,0.1); }
+.alert-pill .alert-glyph { font-size: 14px; line-height: 1; }
 .alert-pill .alert-dot {
   width: 8px; height: 8px; border-radius: 50%;
   background: currentColor;

@@ -1197,11 +1197,24 @@ function renderAlerts(w) {
     return;
   }
   el.alertsStrip.hidden = false;
+  const alertGlyph = (id) => {
+    if (id.startsWith("heavy") || id.startsWith("soaking") || id === "wet-day") return "🌧️";
+    if (id.startsWith("severe-heat") || id === "heat") return "🥵";
+    if (id === "hard-freeze" || id === "frost") return "🥶";
+    if (id === "storm-wind" || id === "gale") return "🌬️";
+    if (id === "thunder") return "⛈️";
+    if (id === "snow") return "❄️";
+    if (id === "fog") return "🌫️";
+    if (id === "uv") return "☀️";
+    if (id.startsWith("temp-swing")) return "🌡️";
+    return "⚠️";
+  };
   el.alertsStrip.innerHTML = visible.map((a) => `
     <button class="alert-pill alert-${a.severity}" type="button"
             data-id="${escapeHtml(a.id)}" ${a.ts ? `data-ts="${a.ts}"` : ""}
             title="${escapeHtml(a.detail)}">
       <span class="alert-dot" aria-hidden="true"></span>
+      <span class="alert-glyph" aria-hidden="true">${alertGlyph(a.id)}</span>
       <span class="alert-title">${escapeHtml(a.title)}</span>
       <span class="alert-detail">${escapeHtml(a.detail)}</span>
       <span class="alert-close" aria-label="Dismiss alert">×</span>
