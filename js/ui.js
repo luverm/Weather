@@ -1408,6 +1408,19 @@ function updateSkyRibbonMarker(ts) {
   const t = clamp01((ts - first) / Math.max(1, last - first));
   el.skyRibbonMarker.style.left = `${(t * 100).toFixed(2)}%`;
   el.skyRibbonMarker.style.opacity = "1";
+  // Live tooltip: find the nearest hourly entry and show time · condition · temp.
+  let nearest = hours[0], bestDelta = Infinity;
+  for (const h of hours) {
+    const d = Math.abs(h.time - ts);
+    if (d < bestDelta) { nearest = h; bestDelta = d; }
+  }
+  const tz = state.weather?.timezone;
+  const hh = new Date(nearest.time).toLocaleTimeString(undefined, {
+    hour: "2-digit", minute: "2-digit", hour12: false,
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  const tt = nearest.temp != null ? `${Math.round(convertTemp(nearest.temp))}°` : "";
+  el.skyRibbonMarker.title = `${hh} · ${nearest.label || nearest.condition || ""}${tt ? " · " + tt : ""}`;
 }
 
 // Given a timestamp and the weather (with daily sun times), return an rgba()
