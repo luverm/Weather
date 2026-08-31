@@ -612,6 +612,20 @@ html[data-reduce-motion="true"] *::after {
 }
 .nowcast-bars .nowcast-bar:hover { opacity: 1; transform: scaleY(1.1); }
 .nowcast-bars .nowcast-bar:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Consistent keyboard-only focus ring on interactive elements. */
+button:focus-visible,
+[role="button"]:focus-visible,
+.place-chip:focus-visible,
+.alert-pill:focus-visible,
+.wh-chip:focus-visible,
+.city-delta:focus-visible,
+.forecast-item:focus-visible,
+.daily-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
 @keyframes slideInUp {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
