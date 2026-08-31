@@ -110,6 +110,7 @@ const el = {
   goldenHourPill: $("#golden-hour-pill"),
   goldenHourText: $("#golden-hour-text"),
   comfortStrip: $("#comfort-strip"),
+  cloudStrip: $("#cloud-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
   weekendDetail: $("#weekend-detail"),
@@ -233,6 +234,7 @@ export const ui = {
     renderPollen(weather.pollen);
     renderPrecip(weather);
     renderStargaze(weather);
+    renderCloudStrip(weather);
     renderTrends(weather);
     renderInsights(weather);
     renderActivity(weather);
@@ -1097,6 +1099,31 @@ function renderWindRose(w) {
     parts.push(`<path d="${d}" fill="currentColor" opacity="${(0.20 + t * 0.55).toFixed(2)}"/>`);
   }
   el.windRose.innerHTML = parts.join("");
+}
+
+// Cloud-cover ribbon: 24 cells tinted from clear (transparent blue) to
+// overcast (dim grey). Tooltip on each cell reveals the hour + %.
+function renderCloudStrip(w) {
+  if (!el.cloudStrip) return;
+  const hours = (w.hourly || []).slice(0, 24).filter((h) => h.cloudCover != null);
+  if (!hours.length) { el.cloudStrip.hidden = true; el.cloudStrip.innerHTML = ""; return; }
+  el.cloudStrip.hidden = false;
+  const tz = w.timezone;
+  el.cloudStrip.innerHTML = hours.map((h) => {
+    const c = Math.max(0, Math.min(100, h.cloudCover));
+    // Clear hours read as a saturated blue; overcast reads as heavier grey.
+    // Alpha grows with cloudiness so the cover band stays legible.
+    const r = Math.round(120 + (c / 100) * 90);
+    const g = Math.round(190 - (c / 100) * 60);
+    const b = Math.round(255 - (c / 100) * 80);
+    const alpha = 0.35 + (c / 100) * 0.5;
+    const hh = new Date(h.time).toLocaleTimeString(undefined, {
+      hour: "2-digit", minute: "2-digit", hour12: false,
+      ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    });
+    const label = c <= 15 ? "clear" : c <= 40 ? "few clouds" : c <= 75 ? "cloudy" : "overcast";
+    return `<span class="cloud-cell" style="background: rgba(${r}, ${g}, ${b}, ${alpha.toFixed(2)})" title="${hh} · ${Math.round(c)}% · ${label}"></span>`;
+  }).join("");
 }
 
 // Stargazing tonight: combines cloud cover forecast over the night hours,
