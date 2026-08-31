@@ -352,8 +352,12 @@ html[data-reduce-motion="true"] *::after {
 .icon-btn.on .sound-waves { opacity: 1; }
 /* Keyboard-hint badge — a tiny letter appearing top-right of a toolbar
    button that has data-kbd, visible on hover / focus / keyboard focus. */
-.icon-btn[data-kbd] { position: relative; }
-.icon-btn[data-kbd]::after {
+.icon-btn[data-kbd],
+.radar-btn[data-kbd],
+.chart-full-btn[data-kbd] { position: relative; }
+.icon-btn[data-kbd]::after,
+.radar-btn[data-kbd]::after,
+.chart-full-btn[data-kbd]::after {
   content: attr(data-kbd);
   position: absolute;
   bottom: -6px; right: -6px;
@@ -369,7 +373,11 @@ html[data-reduce-motion="true"] *::after {
   pointer-events: none;
 }
 .icon-btn[data-kbd]:hover::after,
-.icon-btn[data-kbd]:focus-visible::after {
+.icon-btn[data-kbd]:focus-visible::after,
+.radar-btn[data-kbd]:hover::after,
+.radar-btn[data-kbd]:focus-visible::after,
+.chart-full-btn[data-kbd]:hover::after,
+.chart-full-btn[data-kbd]:focus-visible::after {
   opacity: 1; transform: translateY(0);
 }
 
