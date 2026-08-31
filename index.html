@@ -119,11 +119,11 @@
       <div class="hero-inner glass" data-tilt>
         <div class="place">
           <p class="place-label"><span id="place-live-dot" class="live-dot"></span><span id="place-label-text">Now in</span></p>
-          <h1 id="place-name" class="place-name">—</h1>
+          <h1 id="place-name" class="place-name" aria-live="polite">—</h1>
           <p id="place-sub" class="place-sub">Fetching atmosphere…</p>
           <p id="place-localtime" class="place-localtime"></p>
-          <p id="narrative" class="narrative"></p>
-          <p id="next-change" class="next-change" hidden></p>
+          <p id="narrative" class="narrative" aria-live="polite"></p>
+          <p id="next-change" class="next-change" aria-live="polite" hidden></p>
           <p id="advice" class="advice" hidden>
             <svg class="advice-icon" viewBox="0 0 24 24" aria-hidden="true" width="14" height="14">
               <path d="M12 3a5 5 0 00-3 9v2h6v-2a5 5 0 00-3-9zM9 18h6M10 21h4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -146,7 +146,7 @@
         </div>
 
         <div class="temp-wrap">
-          <div class="temp">
+          <div class="temp" aria-live="polite">
             <span id="temp-value" class="temp-value">–</span>
             <button id="unit-toggle" class="unit" title="Toggle units" aria-label="Toggle temperature units">°C</button>
           </div>
