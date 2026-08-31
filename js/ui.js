@@ -1685,13 +1685,20 @@ function renderPrecip(w) {
     (h.precip || 0) > (best?.precip || 0) ? h : best, null);
 
   el.precipCard.hidden = false;
-  el.precip24h.textContent = total24.toFixed(1);
+  const imperial = state.unit === "F";
+  const toDepth = (mm) => imperial ? (mm * 0.0393701) : mm;
+  const depthUnit = imperial ? "in" : "mm";
+  const fmtDepth = (mm) => imperial ? toDepth(mm).toFixed(2) : toDepth(mm).toFixed(1);
+  el.precip24h.textContent = fmtDepth(total24);
+  // Also update the neighbouring unit label if present.
+  const precipUnitEl = el.precip24h?.parentElement?.querySelector(".precip-unit");
+  if (precipUnitEl) precipUnitEl.textContent = `${depthUnit} · next 24h`;
   el.precipToday.textContent = totalToday > 0
-    ? `Rest of today: ${totalToday.toFixed(1)} mm`
+    ? `Rest of today: ${fmtDepth(totalToday)} ${depthUnit}`
     : "Rest of today: dry";
   el.precipWet.textContent = wetHours === 0
     ? "No wet hours ahead"
-    : `${wetHours} wet ${wetHours === 1 ? "hour" : "hours"} · peak ${(heaviest?.precip || 0).toFixed(1)} mm`;
+    : `${wetHours} wet ${wetHours === 1 ? "hour" : "hours"} · peak ${fmtDepth(heaviest?.precip || 0)} ${depthUnit}`;
   if (firstWet) {
     const mins = Math.max(0, Math.round((firstWet.time - now) / 60_000));
     const when = mins < 60 ? `${mins} min` : `${Math.floor(mins/60)}h ${mins%60}m`;
@@ -1959,7 +1966,10 @@ function renderWeekHighlights(days, w) {
     chips.push(`<span class="wh-chip cold"><span>Coolest</span><strong>${dayName(coldest.time)} ${Math.round(convertTemp(coldest.tempMin))}°</strong></span>`);
   }
   if ((wettest.precip ?? 0) >= 1) {
-    chips.push(`<span class="wh-chip wet"><span>Wettest</span><strong>${dayName(wettest.time)} ${wettest.precip.toFixed(1)} mm</strong></span>`);
+    const imperial = state.unit === "F";
+    const val = imperial ? (wettest.precip * 0.0393701).toFixed(2) : wettest.precip.toFixed(1);
+    const unit = imperial ? "in" : "mm";
+    chips.push(`<span class="wh-chip wet"><span>Wettest</span><strong>${dayName(wettest.time)} ${val} ${unit}</strong></span>`);
   }
   if (!chips.length) { el.weekHighlights.hidden = true; return; }
   el.weekHighlights.hidden = false;
@@ -1975,7 +1985,11 @@ function renderDailyIconStrip(days) {
     });
     const hi = d.tempMax != null ? `${Math.round(convertTemp(d.tempMax))}°` : "—";
     const lo = d.tempMin != null ? `${Math.round(convertTemp(d.tempMin))}°` : "—";
-    const rain = (d.precip ?? 0) >= 0.1 ? ` · ${d.precip.toFixed(1)} mm` : "";
+    const rain = (d.precip ?? 0) >= 0.1
+      ? (state.unit === "F"
+          ? ` · ${(d.precip * 0.0393701).toFixed(2)} in`
+          : ` · ${d.precip.toFixed(1)} mm`)
+      : "";
     const title = `${dayName} · ${d.label || d.condition || ""} · ${hi} / ${lo}${rain}`;
     return `<span class="strip-day" title="${escapeHtml(title)}">${iconFor(d.condition)}</span>`;
   }).join("");
