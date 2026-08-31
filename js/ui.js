@@ -256,7 +256,11 @@ export const ui = {
     if (state.place && weather.elevation != null) {
       const parts = [state.place.admin1, state.place.country].filter(Boolean);
       const meters = Math.round(weather.elevation);
-      if (meters !== 0) parts.push(`${meters} m`);
+      if (meters !== 0) {
+        parts.push(state.unit === "F"
+          ? `${Math.round(meters * 3.28084)} ft`
+          : `${meters} m`);
+      }
       el.placeSub.textContent = parts.join(" · ");
     }
     renderAdvice(weather);
