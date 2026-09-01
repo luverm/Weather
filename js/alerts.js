@@ -3,7 +3,7 @@
 // derive them locally. Each alert is { id, severity, title, detail, ts? }.
 // `ts` lets the UI scrub to the exact moment of the alert when clicked.
 
-import { fmtSpeed } from "./units.js";
+import { fmtSpeed, getUnit } from "./units.js";
 
 export function buildAlerts(weather) {
   if (!weather) return [];
@@ -134,15 +134,17 @@ export function buildAlerts(weather) {
       id: "heavy-snow",
       severity: "danger",
       title: "Heavy snow expected",
-      detail: `${snowyDay.snow.toFixed(1)} cm forecast on ${new Date(snowyDay.time).toLocaleDateString(undefined, { weekday: "long" })}.`,
+      detail: `${fmtSnow(snowyDay.snow)} forecast on ${new Date(snowyDay.time).toLocaleDateString(undefined, { weekday: "long" })}.`,
       ts: snowyDay.sunrise || snowyDay.time,
     });
   } else if (snowyDay && (snowyDay.snow || 0) >= 5) {
+    // Distinct id from the hourly "Snow in forecast" alert so dismissals
+    // of one don't silently silence the other.
     out.push({
-      id: "snow",
+      id: "snow-accum",
       severity: "warn",
       title: "Snow accumulating",
-      detail: `${snowyDay.snow.toFixed(1)} cm expected on ${new Date(snowyDay.time).toLocaleDateString(undefined, { weekday: "long" })}.`,
+      detail: `${fmtSnow(snowyDay.snow)} expected on ${new Date(snowyDay.time).toLocaleDateString(undefined, { weekday: "long" })}.`,
       ts: snowyDay.sunrise || snowyDay.time,
     });
   }
@@ -185,6 +187,12 @@ export function buildAlerts(weather) {
   return dedupe(out)
     .sort((a, b) => (SEV[b.severity] ?? 0) - (SEV[a.severity] ?? 0))
     .slice(0, 4);
+}
+
+// Format snowfall in cm or inches depending on the active unit toggle.
+function fmtSnow(cm) {
+  if (getUnit() === "F") return `${(cm * 0.3937).toFixed(1)} in`;
+  return `${cm.toFixed(1)} cm`;
 }
 
 function hottestHour(hours) {
