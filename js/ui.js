@@ -1133,19 +1133,29 @@ function cardinal(deg) {
 
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
-  for (const h of (w.hourly || []).slice(0, 24)) {
+  const now = Date.now();
+  const hours = (w.hourly || []).slice(0, 24);
+  // Find the entry nearest to "now" so we can pin a durable marker.
+  let nowIdx = 0;
+  for (let i = 1; i < hours.length; i++) {
+    if (Math.abs(hours[i].time - now) < Math.abs(hours[nowIdx].time - now)) nowIdx = i;
+  }
+  hours.forEach((h, i) => {
     const item = document.createElement("div");
-    item.className = "forecast-item";
+    item.className = "forecast-item" + (i === nowIdx ? " is-now" : "");
     item.dataset.ts = h.time;
+    const timeLabel = i === nowIdx
+      ? `<span class="forecast-time now-pill">Now</span>`
+      : `<span class="forecast-time">${fmtTime(h.time)}</span>`;
     item.innerHTML = `
-      <span class="forecast-time">${fmtTime(h.time)}</span>
+      ${timeLabel}
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
-  }
+  });
 }
 
 function highlightHour(index) {
