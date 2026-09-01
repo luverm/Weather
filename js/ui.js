@@ -1709,6 +1709,16 @@ function bindAudio() {
 let deferredInstallPrompt = null;
 function bindInstallPrompt() {
   if (!el.installBtn) return;
+  // If the page is already running as an installed PWA (standalone display
+  // mode), the install button is meaningless — hide it permanently and
+  // ignore any beforeinstallprompt that fires anyway.
+  const isStandalone =
+    (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
+    window.navigator.standalone === true;
+  if (isStandalone) {
+    el.installBtn.hidden = true;
+    return;
+  }
   window.addEventListener("beforeinstallprompt", (e) => {
     e.preventDefault();
     deferredInstallPrompt = e;
