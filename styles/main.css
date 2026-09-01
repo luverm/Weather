@@ -977,6 +977,105 @@ kbd {
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
 
+/* ---------- Precipitation outlook card ---------- */
+#rain-card { color: #9ad1ff; }
+#rain-card[data-dry="true"] { color: #9fb7d8; }
+#rain-card[data-heavy="true"] { color: #c8b4ff; }
+.rain-headline {
+  margin-left: auto;
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  font-variant-numeric: tabular-nums;
+}
+.rain-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: center;
+}
+.rain-drop {
+  position: relative;
+  width: 48px; height: 48px;
+  color: currentColor;
+}
+.rain-drop svg { width: 48px; height: 48px; display: block; }
+#rain-drop-fill {
+  transition: opacity 400ms var(--ease);
+}
+.rain-drop-value {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  font-size: 12.5px; font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+  padding-top: 6px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.35);
+}
+.rain-meta { display: grid; gap: 2px; min-width: 0; }
+.rain-meta strong { font-size: 14px; font-weight: 500; color: var(--fg); }
+.rain-secondary { font-size: 11.5px; color: var(--fg-dim); }
+.rain-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--stroke);
+}
+.rain-week-day {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: 4px;
+  align-items: end;
+  justify-items: center;
+  padding: 2px 0 0;
+  border-radius: 6px;
+  transition: background 150ms var(--ease);
+  cursor: default;
+}
+.rain-week-day:hover { background: rgba(255,255,255,0.05); }
+.rain-week-day[data-today="true"] .rain-week-label { color: var(--fg); font-weight: 600; }
+.rain-week-bar-wrap {
+  width: 100%;
+  height: 28px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.rain-week-bar {
+  width: 10px;
+  min-height: 2px;
+  border-radius: 4px 4px 2px 2px;
+  background: linear-gradient(180deg, #cfe4ff 0%, #79b8ff 55%, #4d8dd8 100%);
+  transition: height 500ms var(--ease), opacity 300ms var(--ease);
+  opacity: 0.9;
+  box-shadow: 0 1px 3px rgba(120,180,255,0.28) inset;
+}
+.rain-week-day[data-level="0"] .rain-week-bar {
+  background: rgba(255,255,255,0.14);
+  opacity: 0.6;
+}
+.rain-week-day[data-level="3"] .rain-week-bar {
+  background: linear-gradient(180deg, #d6c4ff 0%, #a184ff 55%, #6a52c8 100%);
+}
+.rain-week-day[data-level="4"] .rain-week-bar {
+  background: linear-gradient(180deg, #ffc9d6 0%, #ff6f8a 55%, #c8425e 100%);
+}
+.rain-week-label {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+}
+@media (prefers-reduced-motion: reduce) {
+  #rain-drop-fill, .rain-week-bar { transition: none; }
+}
+
 /* ---------- Radar map ---------- */
 .radar {
   padding: 12px;

@@ -87,6 +87,13 @@ const el = {
   insightsList: $("#insights-list"),
   activityCard: $("#activity-card"),
   activityList: $("#activity-list"),
+  rainCard: $("#rain-card"),
+  rainHeadline: $("#rain-headline"),
+  rainDropFill: $("#rain-drop-fill"),
+  rainDropValue: $("#rain-drop-value"),
+  rainPrimary: $("#rain-primary"),
+  rainSecondary: $("#rain-secondary"),
+  rainWeek: $("#rain-week"),
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
@@ -193,6 +200,7 @@ export const ui = {
     renderActivity(weather);
     renderAlerts(weather);
     renderWeekend(weather);
+    renderRainOutlook(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -494,6 +502,114 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+}
+
+function renderRainOutlook(w) {
+  if (!el.rainCard) return;
+  const hours = w.hourly || [];
+  const days = w.daily || [];
+  if (!hours.length && !days.length) { el.rainCard.hidden = true; return; }
+
+  // Next 24h aggregates.
+  const now = Date.now();
+  const next24 = hours.filter((h) => h.time >= now - 30 * 60_000 && h.time < now + 24 * 3600_000);
+  const total24 = next24.reduce((s, h) => s + Math.max(0, h.precip || 0), 0);
+  const wetHours = next24.filter((h) => (h.precip || 0) >= 0.1).length;
+  const peakPop = next24.reduce((m, h) => Math.max(m, h.pop || 0), 0);
+  const peakHour = next24.reduce(
+    (best, h) => (!best || (h.pop || 0) > (best.pop || 0) ? h : best), null
+  );
+
+  // Weekly aggregates.
+  const weekDays = days.slice(0, 7);
+  const totalWeek = weekDays.reduce((s, d) => s + Math.max(0, d.precip || 0), 0);
+  const maxDaily = Math.max(...weekDays.map((d) => d.precip || 0), 0.5);
+
+  // Big-number: prefer 24h total; if truly dry, fall back to peak probability.
+  const isDry = total24 < 0.1;
+  const primaryLabel = isDry
+    ? (peakPop >= 30 ? `${Math.round(peakPop)}% chance of rain` : "Dry stretch ahead")
+    : `${fmtMm(total24)} expected next 24h`;
+  const wetHoursLabel = wetHours > 0
+    ? `${wetHours} wet hour${wetHours === 1 ? "" : "s"}`
+    : "No wet hours";
+  const peakLabel = (peakHour && peakPop >= 30)
+    ? `peak ${peakPop}% ${fmtHourShort(peakHour.time)}`
+    : "";
+  const secondary = isDry
+    ? (totalWeek >= 0.5 ? `Week total ${fmtMm(totalWeek)}` : "Dry all week")
+    : [wetHoursLabel, peakLabel].filter(Boolean).join(" · ");
+
+  el.rainCard.hidden = false;
+  el.rainCard.dataset.dry = String(isDry);
+  el.rainCard.dataset.heavy = String(total24 >= 10);
+  el.rainHeadline.textContent = totalWeek >= 0.1 ? `Week ${fmtMm(totalWeek)}` : "Week dry";
+  el.rainDropValue.textContent = isDry ? "0" : shortMm(total24);
+  if (el.rainDropFill) {
+    // Fill opacity mirrors intensity: 0 → 0.10, ≥10mm → 0.7
+    const fillFrac = Math.max(0.1, Math.min(0.7, 0.1 + total24 * 0.06));
+    el.rainDropFill.setAttribute("opacity", fillFrac.toFixed(2));
+  }
+  el.rainPrimary.textContent = primaryLabel;
+  el.rainSecondary.textContent = secondary || "—";
+
+  renderRainWeek(weekDays, maxDaily);
+}
+
+function renderRainWeek(days, maxDaily) {
+  if (!el.rainWeek) return;
+  const tz = state.weather?.timezone;
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayTs = todayStart.getTime();
+  el.rainWeek.innerHTML = days.map((d, i) => {
+    const p = Math.max(0, d.precip || 0);
+    const level = precipLevel(p);
+    const heightPx = p > 0 ? Math.max(3, Math.round((p / maxDaily) * 26)) : 2;
+    const dt = new Date(d.time);
+    const label = dt.toLocaleDateString(undefined, {
+      weekday: "narrow",
+      ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    });
+    const isToday = d.time === todayTs || i === 0;
+    const popPart = (d.pop || 0) >= 15 ? ` · ${Math.round(d.pop)}%` : "";
+    const title = `${dt.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })} · ${fmtMm(p)}${popPart}`;
+    return `
+      <div class="rain-week-day" role="listitem"
+           data-level="${level}" data-today="${isToday}" title="${escapeHtml(title)}">
+        <div class="rain-week-bar-wrap"><div class="rain-week-bar" style="height:${heightPx}px"></div></div>
+        <span class="rain-week-label">${escapeHtml(label)}</span>
+      </div>`;
+  }).join("");
+}
+
+function precipLevel(mm) {
+  if (mm < 0.1) return 0;
+  if (mm < 2) return 1;
+  if (mm < 8) return 2;
+  if (mm < 20) return 3;
+  return 4;
+}
+
+function fmtMm(mm) {
+  if (mm < 0.1) return "0 mm";
+  if (mm < 1) return `${mm.toFixed(1)} mm`;
+  if (mm < 10) return `${mm.toFixed(1)} mm`;
+  return `${Math.round(mm)} mm`;
+}
+
+function shortMm(mm) {
+  if (mm < 1) return mm.toFixed(1);
+  if (mm < 10) return mm.toFixed(1);
+  return Math.round(mm).toString();
+}
+
+function fmtHourShort(ts) {
+  const tz = state.weather?.timezone;
+  const opts = { hour: "numeric", hour12: false };
+  if (tz && tz !== "auto") opts.timeZone = tz;
+  try { return new Intl.DateTimeFormat(undefined, opts).format(new Date(ts)) + "h"; }
+  catch { return new Date(ts).getHours() + "h"; }
 }
 
 function fmtTime(ts) {

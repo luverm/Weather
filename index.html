@@ -318,6 +318,27 @@
           <ul id="activity-list" class="activity-list"></ul>
         </div>
 
+        <div class="extra-card glass" id="rain-card" hidden>
+          <span class="metric-label">Precipitation <span id="rain-headline" class="rain-headline" aria-hidden="true"></span></span>
+          <div class="rain-row">
+            <div class="rain-drop" aria-hidden="true">
+              <svg viewBox="0 0 48 48">
+                <path d="M24 4 C 16 16, 10 24, 10 32 a 14 14 0 0 0 28 0 C 38 24, 32 16, 24 4 Z"
+                      fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                <path id="rain-drop-fill"
+                      d="M24 4 C 16 16, 10 24, 10 32 a 14 14 0 0 0 28 0 C 38 24, 32 16, 24 4 Z"
+                      fill="currentColor" opacity="0.22"/>
+              </svg>
+              <span id="rain-drop-value" class="rain-drop-value">—</span>
+            </div>
+            <div class="rain-meta">
+              <strong id="rain-primary">—</strong>
+              <span id="rain-secondary" class="rain-secondary">—</span>
+            </div>
+          </div>
+          <div id="rain-week" class="rain-week" role="list" aria-label="Weekly precipitation totals"></div>
+        </div>
+
         <div class="extra-card glass" id="sun-card">
           <span class="metric-label"><span id="sun-next-label">Sun</span> <span id="sun-countdown" class="sun-countdown"></span></span>
           <svg id="sun-arc" class="sun-arc" viewBox="0 0 200 84" aria-hidden="true">
