@@ -80,6 +80,7 @@ const el = {
   refreshBtn: $("#refresh-btn"),
   fetchedAgo: $("#fetched-ago"),
   dailyIconStrip: $("#daily-icon-strip"),
+  dailyHighlights: $("#daily-highlights"),
   settingsBtn: $("#settings-btn"),
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
@@ -990,6 +991,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderDailyHighlights(days, w);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1027,6 +1029,98 @@ function renderDaily(w) {
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+}
+
+function renderDailyHighlights(days, w) {
+  if (!el.dailyHighlights) return;
+  if (days.length < 2) { el.dailyHighlights.hidden = true; return; }
+  const chips = [];
+
+  const hottest = days.reduce((best, d) => (d.tempMax > (best?.tempMax ?? -Infinity) ? d : best), null);
+  const coldest = days.reduce((best, d) => (d.tempMin < (best?.tempMin ?? Infinity) ? d : best), null);
+  const wettest = days.reduce((best, d) => ((d.precip || 0) > (best?.precip ?? 0) ? d : best), null);
+  const windiest = days.reduce((best, d) => ((d.gustsMax || d.windMax || 0) > ((best?.gustsMax || best?.windMax) ?? 0) ? d : best), null);
+
+  const spanC = (Math.max(...days.map(d => d.tempMax)) - Math.min(...days.map(d => d.tempMin)));
+
+  if (hottest && (hottest.tempMax - Math.min(...days.map(d => d.tempMax))) >= 3) {
+    chips.push(highlightChip("hot",
+      svgHot(),
+      dayLabel(hottest, days),
+      `${Math.round(convertTemp(hottest.tempMax))}°`,
+      "Warmest day"));
+  }
+  if (coldest && coldest !== hottest && spanC >= 5 &&
+      (Math.max(...days.map(d => d.tempMin)) - coldest.tempMin) >= 3) {
+    chips.push(highlightChip("cold",
+      svgCold(),
+      dayLabel(coldest, days),
+      `${Math.round(convertTemp(coldest.tempMin))}°`,
+      "Coldest morning"));
+  }
+  if (wettest && (wettest.precip || 0) >= 1) {
+    chips.push(highlightChip("wet",
+      svgDrop(),
+      dayLabel(wettest, days),
+      wettest.precip >= 10 ? `${Math.round(wettest.precip)} mm` : `${wettest.precip.toFixed(1)} mm`,
+      "Wettest day"));
+  }
+  if (windiest && ((windiest.gustsMax || windiest.windMax || 0) >= 35)) {
+    const g = Math.round(windiest.gustsMax || windiest.windMax || 0);
+    chips.push(highlightChip("windy",
+      svgWind(),
+      dayLabel(windiest, days),
+      `${g} km/h`,
+      "Windiest day"));
+  }
+
+  if (!chips.length) { el.dailyHighlights.hidden = true; el.dailyHighlights.innerHTML = ""; return; }
+  el.dailyHighlights.hidden = false;
+  el.dailyHighlights.innerHTML = chips.join("");
+  el.dailyHighlights.querySelectorAll("[data-ts]").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      const ts = Number(chip.dataset.ts);
+      const item = el.dailyTrack.querySelector(`.daily-item[data-ts="${ts}"]`);
+      if (item) {
+        item.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+        item.click();
+      }
+    });
+  });
+}
+
+function highlightChip(kind, icon, day, value, title) {
+  return `<button type="button" class="daily-highlight ${kind}" title="${escapeHtml(title)}" data-ts="${day.ts}">
+    <span class="dh-icon">${icon}</span>
+    <span class="dh-day">${escapeHtml(day.label)}</span>
+    <span class="dh-value">${escapeHtml(value)}</span>
+  </button>`;
+}
+
+function dayLabel(d, days) {
+  const idx = days.indexOf(d);
+  if (idx === 0) return { label: "Today", ts: d.time };
+  if (idx === 1) return { label: "Tmrw", ts: d.time };
+  const tz = state.weather?.timezone;
+  const label = new Date(d.time).toLocaleDateString(undefined, {
+    weekday: "short",
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  return { label, ts: d.time };
+}
+
+// Little inline SVG icons for highlight chips.
+function svgHot() {
+  return `<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 1c1 2 4 3 4 6a4 4 0 11-8 0c0-2 2-2 2-4 0-1 1-1 2-2z" fill="currentColor"/></svg>`;
+}
+function svgCold() {
+  return `<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 1v14M2.5 4.5l11 7M2.5 11.5l11-7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>`;
+}
+function svgDrop() {
+  return `<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 1c3 4 5 6 5 9a5 5 0 11-10 0c0-3 2-5 5-9z" fill="currentColor"/></svg>`;
+}
+function svgWind() {
+  return `<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M2 6h9a2 2 0 100-4M2 10h11a2 2 0 110 4M2 12h5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>`;
 }
 
 function renderDailyIconStrip(days) {

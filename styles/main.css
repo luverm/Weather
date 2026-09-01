@@ -1520,6 +1520,40 @@ kbd {
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+.daily-highlights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 2px 2px;
+}
+.daily-highlight {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 8px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  color: var(--fg);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--stroke);
+  cursor: pointer;
+  transition: background 150ms var(--ease), transform 150ms var(--ease);
+  font-variant-numeric: tabular-nums;
+}
+.daily-highlight:hover { background: rgba(255,255,255,0.12); transform: translateY(-1px); }
+.daily-highlight .dh-icon { display: inline-flex; }
+.daily-highlight .dh-day {
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  margin-right: 2px;
+}
+.daily-highlight.hot { color: #ffb98a; }
+.daily-highlight.wet { color: #9ad1ff; }
+.daily-highlight.windy { color: #cfe8ff; }
+.daily-highlight.cold { color: #b7c9ff; }
+
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;
