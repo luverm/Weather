@@ -1197,6 +1197,14 @@ function renderHourly(w) {
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
   });
+  // Center the "Now" cell so users see current + immediate-future hours
+  // without having to scroll on load.
+  requestAnimationFrame(() => {
+    const now = el.forecastTrack.querySelector(".forecast-item.is-now");
+    if (!now) return;
+    const target = now.offsetLeft - el.forecastTrack.clientWidth / 2 + now.offsetWidth / 2;
+    el.forecastTrack.scrollTo({ left: Math.max(0, target), behavior: "auto" });
+  });
 }
 
 function highlightHour(index) {
