@@ -347,7 +347,8 @@ function computeMoonPhase(date) {
   if (month < 3) r += 2;
   r -= (year < 2000 ? 4 : 8.3);
   r = ((r % 30) + 30) % 30; // 0..29.53
-  const phase = r / 29.5305882;
+  const cycle = 29.5305882;
+  const phase = r / cycle;
   const illum = 0.5 * (1 - Math.cos(2 * Math.PI * phase));
   const name =
     phase < 0.03 || phase > 0.97 ? "New moon" :
@@ -358,7 +359,15 @@ function computeMoonPhase(date) {
     phase < 0.72 ? "Waning gibbous" :
     phase < 0.78 ? "Last quarter" :
     "Waning crescent";
-  return { phase, illum, name };
+  // Days until the next full moon (phase == 0.5) and next new moon (0 or 1).
+  const daysTo = (targetPhase) => {
+    let diff = targetPhase - phase;
+    if (diff <= 0) diff += 1;
+    return Math.max(0, Math.round(diff * cycle));
+  };
+  const daysToFull = daysTo(0.5);
+  const daysToNew = daysTo(1);
+  return { phase, illum, name, daysToFull, daysToNew };
 }
 
 function mock(lat, lon) {
