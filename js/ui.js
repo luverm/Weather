@@ -268,6 +268,13 @@ export const ui = {
 // ---------- Rendering ----------
 
 function convertTemp(c) { return state.unit === "F" ? c * 9 / 5 + 32 : c; }
+function flagFor(code) {
+  if (!code || typeof code !== "string" || code.length !== 2) return "";
+  const up = code.toUpperCase();
+  if (!/^[A-Z]{2}$/.test(up)) return "";
+  const base = 0x1F1E6 - 0x41;
+  return String.fromCodePoint(base + up.charCodeAt(0), base + up.charCodeAt(1));
+}
 function convertSpeed(kmh) { return state.unit === "F" ? kmh * 0.621371 : kmh; }
 function speedUnit() { return state.unit === "F" ? "mph" : "km/h"; }
 function fmtSpeed(kmh) {
@@ -1453,9 +1460,11 @@ function renderPlaces() {
     const cond = p.condition
       ? `<span class="place-cond" aria-hidden="true">${iconFor(p.condition)}</span>`
       : "";
+    const flag = flagFor(p.countryCode);
+    const flagPart = flag ? `<span class="place-flag" aria-hidden="true">${flag}</span>` : "";
     return `
       <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
-        ${cond}
+        ${cond}${flagPart}
         <span>${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
         <span class="close" data-action="remove" aria-label="Remove">
@@ -1490,12 +1499,16 @@ const runSearch = debounce(async (q) => {
 
 function renderSearchResults(results) {
   if (!results.length) { el.searchResults.hidden = true; el.searchResults.innerHTML = ""; return; }
-  el.searchResults.innerHTML = results.map((r, i) => `
+  el.searchResults.innerHTML = results.map((r, i) => {
+    const flag = flagFor(r.countryCode);
+    const flagPart = flag ? `<span class="flag" aria-hidden="true">${flag}</span> ` : "";
+    return `
     <li role="option" data-index="${i}">
-      <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
+      <span>${flagPart}${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
       <span class="sub">${escapeHtml(r.country || "")}</span>
     </li>
-  `).join("");
+  `;
+  }).join("");
   el.searchResults.hidden = false;
   el.searchResults._items = results;
 }
@@ -1503,12 +1516,16 @@ function renderSearchResults(results) {
 function showRecentsIfAny() {
   const recents = places.all().slice(0, 5);
   if (!recents.length) { el.searchResults.hidden = true; return; }
-  const itemsHtml = recents.map((r, i) => `
+  const itemsHtml = recents.map((r, i) => {
+    const flag = flagFor(r.countryCode);
+    const flagPart = flag ? `<span class="flag" aria-hidden="true">${flag}</span> ` : "";
+    return `
     <li role="option" data-index="${i}">
-      <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
+      <span>${flagPart}${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
       <span class="sub">${escapeHtml(r.country || "")}</span>
     </li>
-  `).join("");
+  `;
+  }).join("");
   el.searchResults.innerHTML = `<li class="recent-heading">Recent places</li>${itemsHtml}`;
   el.searchResults._items = recents;
   el.searchResults.hidden = false;

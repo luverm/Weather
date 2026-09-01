@@ -308,6 +308,12 @@ html[data-reduce-motion="true"] *::after {
   color: var(--fg-dim); opacity: 0.9;
 }
 .place-chip .place-cond svg { width: 14px; height: 14px; }
+.place-chip .place-flag { font-size: 13px; line-height: 1; }
+.search-results .flag {
+  font-size: 14px;
+  margin-right: 2px;
+  vertical-align: -1px;
+}
 .place-chip .close {
   width: 16px; height: 16px; display: grid; place-items: center;
   border-radius: 50%; color: var(--fg-dim);
