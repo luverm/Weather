@@ -290,6 +290,29 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  updateDocumentTitle(w);
+}
+
+function conditionEmoji(condition, isDay = true) {
+  switch (condition) {
+    case "clear": return isDay ? "☀️" : "🌙";
+    case "clouds": return isDay ? "⛅️" : "☁️";
+    case "rain": return "🌧️";
+    case "snow": return "🌨️";
+    case "storm": return "⛈️";
+    case "fog": return "🌫️";
+    default: return "🌡️";
+  }
+}
+
+function updateDocumentTitle(w) {
+  if (!w || w.temp == null) return;
+  const emoji = conditionEmoji(w.condition, w.isDay !== false);
+  const t = Math.round(convertTemp(w.temp));
+  const place = state.place?.name || "";
+  document.title = place
+    ? `${emoji} ${t}° · ${place} — Aether`
+    : `${emoji} ${t}° — Aether`;
 }
 
 function renderDayRange(w) {
