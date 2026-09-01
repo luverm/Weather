@@ -1160,7 +1160,9 @@ function renderHourly(w) {
   }
   hours.forEach((h, i) => {
     const item = document.createElement("div");
-    item.className = "forecast-item" + (i === nowIdx ? " is-now" : "");
+    item.className = "forecast-item"
+      + (i === nowIdx ? " is-now" : "")
+      + (h.isDay === false ? " is-night" : "");
     item.dataset.ts = h.time;
     const timeLabel = i === nowIdx
       ? `<span class="forecast-time now-pill">Now</span>`
