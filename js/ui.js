@@ -449,6 +449,15 @@ function renderMetrics(w) {
     ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
     : "visibility —";
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
+  // Tint the UV card by the day's peak so glance-catches severity.
+  const uvForTint = Math.max(w.uv ?? 0, w.uvPeak?.value ?? 0);
+  const uvCard = el.metricUV?.closest?.(".metric");
+  if (uvCard) {
+    uvCard.dataset.uvLevel = uvForTint >= 11 ? "extreme"
+      : uvForTint >= 8 ? "very-high"
+      : uvForTint >= 6 ? "high"
+      : "moderate";
+  }
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
     if (lvl) {
