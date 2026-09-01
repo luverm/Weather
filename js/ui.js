@@ -1334,6 +1334,18 @@ function renderDailyHighlights(days, w) {
       fmtSpeed(g),
       "Windiest day"));
   }
+  const snowiest = days.reduce((best, d) => ((d.snow || 0) > (best?.snow ?? 0) ? d : best), null);
+  if (snowiest && (snowiest.snow || 0) >= 1) {
+    const cm = snowiest.snow;
+    const snowStr = state.unit === "F"
+      ? `${(cm * 0.3937).toFixed(1)} in`
+      : `${cm.toFixed(1)} cm`;
+    chips.push(highlightChip("snowy",
+      svgSnow(),
+      dayLabel(snowiest, days),
+      snowStr,
+      "Snowiest day"));
+  }
 
   if (!chips.length) { el.dailyHighlights.hidden = true; el.dailyHighlights.innerHTML = ""; return; }
   el.dailyHighlights.hidden = false;
@@ -1382,6 +1394,9 @@ function svgDrop() {
 }
 function svgWind() {
   return `<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M2 6h9a2 2 0 100-4M2 10h11a2 2 0 110 4M2 12h5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>`;
+}
+function svgSnow() {
+  return `<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 1v14M2 4l12 8M2 12l12-8M4.5 3.5V6H2M11.5 3.5V6h2.5M4.5 12.5V10H2M11.5 12.5V10h2.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>`;
 }
 
 function renderDailyIconStrip(days) {

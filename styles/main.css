@@ -1710,6 +1710,7 @@ kbd {
 .daily-highlight.wet { color: #9ad1ff; }
 .daily-highlight.windy { color: #cfe8ff; }
 .daily-highlight.cold { color: #b7c9ff; }
+.daily-highlight.snowy { color: #dbe8fb; }
 
 .daily-icon-strip {
   display: grid;
