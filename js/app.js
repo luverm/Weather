@@ -218,6 +218,36 @@ async function loadByCoords(place) {
 
   // Move the radar to the new location (fire-and-forget; resolves later).
   ensureRadar([place.lat, place.lon]).then((r) => r?.setCenter(place.lat, place.lon, place.name));
+
+  // Reflect the loaded place in the URL so users can bookmark / share it.
+  syncUrl(place);
+}
+
+// Reflect / read the place in the URL query string.
+function syncUrl(place) {
+  if (!place || place.lat == null || place.lon == null) return;
+  try {
+    const u = new URL(window.location.href);
+    u.searchParams.set("lat", place.lat.toFixed(4));
+    u.searchParams.set("lon", place.lon.toFixed(4));
+    if (place.name && place.name !== "Current location") {
+      u.searchParams.set("name", place.name);
+    } else {
+      u.searchParams.delete("name");
+    }
+    window.history.replaceState({}, "", u);
+  } catch { /* URL API unavailable — nothing to do */ }
+}
+
+function placeFromUrl() {
+  try {
+    const p = new URL(window.location.href).searchParams;
+    const lat = parseFloat(p.get("lat"));
+    const lon = parseFloat(p.get("lon"));
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+    if (Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
+    return { name: p.get("name") || "Shared location", lat, lon };
+  } catch { return null; }
 }
 
 async function useGeolocation() {
@@ -306,6 +336,14 @@ installShortcuts({
 
 // ---------- Start ----------
 (async function init() {
+  // Deep-link takes priority over stored preferences — this is the only
+  // way opening a shared URL loads the sender's city instead of the
+  // receiver's saved default.
+  const urlPlace = placeFromUrl();
+  if (urlPlace) {
+    await loadByCoords(urlPlace);
+    return;
+  }
   // Prefer the most recent saved place if we have one — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();
