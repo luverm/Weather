@@ -56,6 +56,7 @@ const el = {
   goldenHour: $("#golden-hour"),
   ghGoldenTimes: $("#gh-golden-times"),
   ghBlueTimes: $("#gh-blue-times"),
+  ghNoonTime: $("#gh-noon-time"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -825,6 +826,8 @@ function renderGoldenHour(w) {
   const blueEvening = `${fmtTime(w.sunset)}–${fmtTime(w.sunset + BLUE)}`;
   el.ghGoldenTimes.textContent = `${goldMorning} · ${goldEvening}`;
   el.ghBlueTimes.textContent = `${blueMorning} · ${blueEvening}`;
+  const solarNoon = w.sunrise + (w.sunset - w.sunrise) / 2;
+  if (el.ghNoonTime) el.ghNoonTime.textContent = fmtTime(solarNoon);
   el.goldenHour.hidden = false;
 }
 
