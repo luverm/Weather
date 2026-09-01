@@ -139,9 +139,10 @@ export class HourlyChart {
       ? `<em>feels ${Math.round(feels)}°</em>` : "";
     const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
+    const cloud = h.cloudCover != null ? ` · ${Math.round(h.cloudCover)}% cloud` : "";
     this.popover.innerHTML =
       `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
-      `<em>${h.pop}% precip${wind}${hum}</em>`;
+      `<em>${h.pop}% precip${wind}${hum}${cloud}</em>`;
     this.popover.style.left = `${pxX.toFixed(1)}px`;
     this.popover.style.top = `${pxY.toFixed(1)}px`;
     this.popover.hidden = false;
@@ -243,6 +244,29 @@ export class HourlyChart {
       r.setAttribute("opacity", (0.35 + (pop / 100) * 0.55).toFixed(2));
       precipG.appendChild(r);
     });
+
+    // Cloud cover band across the top: a soft white bar per hour whose
+    // opacity encodes cloud_cover (%). Sits above the temp curve so users
+    // see when the sky thickens even if temp barely moves.
+    const cloudsG = this.svg.querySelector("#chart-clouds");
+    if (cloudsG) {
+      cloudsG.innerHTML = "";
+      const cellW = innerW / this.hours.length;
+      const bandTop = 0;
+      const bandH = PAD_TOP - 2; // ~14px above the plot area
+      this.hours.forEach((h, i) => {
+        const cc = h.cloudCover;
+        if (cc == null || cc < 8) return;
+        const rectEl = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        rectEl.setAttribute("x", (iToX(i) - cellW / 2).toFixed(1));
+        rectEl.setAttribute("y", bandTop.toString());
+        rectEl.setAttribute("width", cellW.toFixed(1));
+        rectEl.setAttribute("height", bandH.toFixed(1));
+        // Opacity scales from 0.08 (near-clear) up to 0.55 (overcast).
+        rectEl.setAttribute("opacity", (0.08 + (cc / 100) * 0.47).toFixed(2));
+        cloudsG.appendChild(rectEl);
+      });
+    }
 
     // Night shading: dim rectangles where !isDay
     const nightG = this.svg.querySelector("#chart-night");
