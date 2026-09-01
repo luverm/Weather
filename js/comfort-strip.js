@@ -37,9 +37,10 @@ export class ComfortStrip {
       const tickHour = new Date(h.time).getHours();
       const showTick = tickHour % 6 === 0;
       const tickLabel = showTick ? `${tickHour.toString().padStart(2, "0")}:00` : "";
+      const cloudPart = h.cloudCover != null ? ` · ${Math.round(h.cloudCover)}% cloud` : "";
       return `
         <button class="cstrip-cell" data-i="${i}" data-ts="${h.time}"
-                title="${tickHour}:00 · ${display} feels · ${h.pop ?? 0}% rain"
+                title="${tickHour}:00 · ${display} feels · ${h.pop ?? 0}% rain${cloudPart}"
                 style="--c:${color}">
           <span class="cstrip-bar" style="--rain:${rainOpacity}"></span>
           ${showTick ? `<span class="cstrip-tick">${tickLabel}</span>` : ""}
