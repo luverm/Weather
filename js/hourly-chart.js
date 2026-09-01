@@ -193,6 +193,27 @@ export class HourlyChart {
     this.svg.querySelector("#chart-temp-line").setAttribute("d", linePath.trim());
     this.svg.querySelector("#chart-temp-fill").setAttribute("d", fillPath);
 
+    // Freezing (0°C) reference line — only when temperatures span 0°.
+    const freezing = this.svg.querySelector("#chart-freezing");
+    const freezingLabel = this.svg.querySelector("#chart-freezing-label");
+    if (freezing && tMin < 0 && tMax > 0) {
+      const y = tToY(0);
+      freezing.setAttribute("x1", PAD_LEFT.toFixed(1));
+      freezing.setAttribute("x2", (W - PAD_RIGHT).toFixed(1));
+      freezing.setAttribute("y1", y.toFixed(1));
+      freezing.setAttribute("y2", y.toFixed(1));
+      if (freezingLabel) {
+        freezingLabel.setAttribute("x", (PAD_LEFT + 4).toFixed(1));
+        freezingLabel.setAttribute("y", (y - 3).toFixed(1));
+        freezingLabel.textContent = "0°";
+        freezingLabel.setAttribute("opacity", "0.8");
+      }
+    } else if (freezing) {
+      freezing.setAttribute("y1", "-10");
+      freezing.setAttribute("y2", "-10");
+      if (freezingLabel) freezingLabel.setAttribute("opacity", "0");
+    }
+
     // Gust dashed line — mapped onto the lower half of the plot so it
     // doesn't collide with the temperature line. Shows relative magnitude.
     const gustLine = this.svg.querySelector("#chart-gust-line");

@@ -837,6 +837,19 @@ html[data-reduce-motion="true"] *::after {
 .chart-clouds rect {
   fill: rgba(255, 255, 255, 0.55);
 }
+.chart-freezing {
+  stroke: #9ad1ff;
+  stroke-width: 0.8;
+  stroke-dasharray: 3 3;
+  opacity: 0.55;
+  pointer-events: none;
+}
+.chart-freezing-label {
+  fill: #9ad1ff;
+  font-size: 8.5px;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
 .chart-labels text {
   font-size: 9px;
   fill: var(--fg-dim);
