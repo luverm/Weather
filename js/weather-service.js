@@ -414,6 +414,9 @@ function mock(lat, lon) {
       tempMax: 20 + Math.sin(i) * 4,
       tempMin: 12 + Math.sin(i) * 3,
       precip: i % 3 === 0 ? 2.1 : 0,
+      rain: i % 3 === 0 ? 2.1 : 0,
+      showers: 0,
+      snow: i === 5 ? 3.4 : 0, // one representative snowy day in the mock week
       pop: i % 3 === 0 ? 65 : 15,
       windMax: 12, gustsMax: 20, uvMax: 5,
       sunrise: new Date().setHours(6, 30, 0, 0),
