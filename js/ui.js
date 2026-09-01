@@ -664,9 +664,38 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   renderGoldenHour(w);
+}
+
+function renderDaylightDelta(w) {
+  if (!el.sunDaylight) return;
+  // Remove any prior delta node so re-renders don't stack.
+  const parent = el.sunDaylight.parentNode;
+  if (!parent) return;
+  const prev = parent.querySelector(".daylight-delta");
+  if (prev) prev.remove();
+
+  const days = w?.daily || [];
+  const today = days[0];
+  const tmrw = days[1];
+  if (!today?.sunrise || !today?.sunset || !tmrw?.sunrise || !tmrw?.sunset) return;
+  const todayMin = Math.round((today.sunset - today.sunrise) / 60_000);
+  const tmrwMin = Math.round((tmrw.sunset - tmrw.sunrise) / 60_000);
+  const delta = tmrwMin - todayMin;
+  if (delta === 0) return;
+  const sign = delta > 0 ? "+" : "−";
+  const abs = Math.abs(delta);
+  const mm = abs % 60;
+  const hh = Math.floor(abs / 60);
+  const txt = hh > 0 ? `${sign}${hh}h ${mm}m` : `${sign}${mm}m`;
+  const chip = document.createElement("span");
+  chip.className = "daylight-delta " + (delta > 0 ? "up" : "down");
+  chip.title = `${delta > 0 ? "Longer" : "Shorter"} day tomorrow`;
+  chip.textContent = txt;
+  parent.appendChild(chip);
 }
 
 function renderGoldenHour(w) {
