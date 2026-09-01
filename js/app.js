@@ -230,7 +230,9 @@ function syncUrl(place) {
     const u = new URL(window.location.href);
     u.searchParams.set("lat", place.lat.toFixed(4));
     u.searchParams.set("lon", place.lon.toFixed(4));
-    if (place.name && place.name !== "Current location") {
+    // Skip the two ephemeral placeholder names — they'd become a "sticky
+    // wrong name" if a bare-coords deep link were reshared.
+    if (place.name && place.name !== "Current location" && place.name !== "Shared location") {
       u.searchParams.set("name", place.name);
     } else {
       u.searchParams.delete("name");

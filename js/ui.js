@@ -1199,11 +1199,15 @@ function renderHourly(w) {
     el.forecastTrack.appendChild(item);
   });
   // Center the "Now" cell so users see current + immediate-future hours
-  // without having to scroll on load.
+  // without having to scroll on load. Uses bounding rects to avoid
+  // offsetLeft's ancestor-of-positioned-parent quirk.
   requestAnimationFrame(() => {
     const now = el.forecastTrack.querySelector(".forecast-item.is-now");
     if (!now) return;
-    const target = now.offsetLeft - el.forecastTrack.clientWidth / 2 + now.offsetWidth / 2;
+    const trackRect = el.forecastTrack.getBoundingClientRect();
+    const nowRect = now.getBoundingClientRect();
+    const delta = (nowRect.left - trackRect.left) - trackRect.width / 2 + nowRect.width / 2;
+    const target = el.forecastTrack.scrollLeft + delta;
     el.forecastTrack.scrollTo({ left: Math.max(0, target), behavior: "auto" });
   });
 }
@@ -1612,7 +1616,9 @@ function rotatePlaceholder() {
     i = (i + 1) % cities.length;
   };
   setHint();
-  setInterval(setHint, 4200);
+  // Guard against a second ui.init() (hot-reload, tests) leaving old timers.
+  if (state._placeholderTimer) clearInterval(state._placeholderTimer);
+  state._placeholderTimer = setInterval(setHint, 4200);
 }
 
 function bindSearch() {

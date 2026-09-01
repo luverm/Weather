@@ -205,7 +205,8 @@ export class HourlyChart {
       if (freezingLabel) {
         freezingLabel.setAttribute("x", (PAD_LEFT + 4).toFixed(1));
         freezingLabel.setAttribute("y", (y - 3).toFixed(1));
-        freezingLabel.textContent = "0°";
+        // 0°C is 32°F — label in the active unit so it matches the rest.
+        freezingLabel.textContent = this.getUnit() === "F" ? "32°" : "0°";
         freezingLabel.setAttribute("opacity", "0.8");
       }
     } else if (freezing) {
