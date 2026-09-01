@@ -1240,6 +1240,19 @@ kbd {
 .rain-week-day[data-level="4"] .rain-week-bar {
   background: linear-gradient(180deg, #ffc9d6 0%, #ff6f8a 55%, #c8425e 100%);
 }
+.rain-week-day[data-snow="true"] .rain-week-bar {
+  background: linear-gradient(180deg, #f6faff 0%, #d0e6ff 55%, #a6c9ee 100%);
+  box-shadow: 0 0 6px rgba(210, 230, 255, 0.5) inset;
+}
+.rain-week-day[data-snow="true"]::after {
+  content: "❄";
+  position: absolute;
+  top: -2px; right: 2px;
+  font-size: 9px;
+  color: #dbe8fb;
+  pointer-events: none;
+}
+.rain-week-day { position: relative; }
 .rain-week-label {
   font-size: 10px;
   letter-spacing: 0.08em;

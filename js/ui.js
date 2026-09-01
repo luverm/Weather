@@ -751,7 +751,8 @@ function renderRainWeek(days, maxDaily) {
     const isToday = d.time === todayTs || i === 0;
     const popPart = (d.pop || 0) >= 15 ? ` · ${Math.round(d.pop)}%` : "";
     const snowCm = d.snow || 0;
-    const snowPart = snowCm >= 0.5
+    const isSnowy = snowCm >= 0.5;
+    const snowPart = isSnowy
       ? (state.unit === "F"
           ? ` · snow ${(snowCm * 0.3937).toFixed(1)} in`
           : ` · snow ${snowCm.toFixed(1)} cm`)
@@ -759,7 +760,7 @@ function renderRainWeek(days, maxDaily) {
     const title = `${dt.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })} · ${fmtMm(p)}${popPart}${snowPart}`;
     return `
       <div class="rain-week-day" role="listitem"
-           data-level="${level}" data-today="${isToday}" title="${escapeHtml(title)}">
+           data-level="${level}" data-today="${isToday}" data-snow="${isSnowy}" title="${escapeHtml(title)}">
         <div class="rain-week-bar-wrap"><div class="rain-week-bar" style="height:${heightPx}px"></div></div>
         <span class="rain-week-label">${escapeHtml(label)}</span>
       </div>`;
