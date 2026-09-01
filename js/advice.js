@@ -27,12 +27,17 @@ export function advise(weather) {
   if (t <= 0) return "Freezing — heavy coat, scarf, gloves.";
   if (t <= 8) return "Brisk — sweater plus a jacket.";
   if (t <= 14) return "Cool — a light jacket does the trick.";
-  if (t <= 20) return "Mild and pleasant — a long sleeve is plenty.";
+  if (t <= 20) {
+    if (uv >= 8) return "Mild but very strong sun — SPF 30+ if you're out.";
+    return "Mild and pleasant — a long sleeve is plenty.";
+  }
   if (t <= 26) {
+    if (uv >= 8) return "Warm with intense sun — SPF, hat, and shade after noon.";
     if (uv >= 6) return "Warm and sunny — sunscreen and a hat.";
     return "Comfortable tee-shirt weather.";
   }
   if (t <= 32) {
+    if (uv >= 8) return "Hot and burning — reapply sunscreen, avoid 11–3.";
     if (uv >= 7) return "Hot with strong sun — hydrate and stay shaded.";
     return "Hot — loose layers, plenty of water.";
   }
