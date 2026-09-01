@@ -1558,6 +1558,35 @@ function bindSearch() {
       el.searchResults.hidden = false;
     }
   });
+  el.searchInput.addEventListener("keydown", (e) => {
+    const list = el.searchResults;
+    const items = list.querySelectorAll("li[data-index]");
+    if (!items.length) return;
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      const cur = list.querySelector("li.kbd-active");
+      const curIdx = cur ? [...items].indexOf(cur) : -1;
+      const next = e.key === "ArrowDown"
+        ? (curIdx + 1) % items.length
+        : (curIdx <= 0 ? items.length - 1 : curIdx - 1);
+      items.forEach((it) => it.classList.remove("kbd-active"));
+      items[next].classList.add("kbd-active");
+      items[next].scrollIntoView({ block: "nearest" });
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      const active = list.querySelector("li.kbd-active") || items[0];
+      const i = parseInt(active.dataset.index, 10);
+      const item = list._items?.[i];
+      if (!item) return;
+      el.searchInput.value = item.name;
+      list.hidden = true;
+      places.add(item);
+      state.handlers.onSearchSelect?.(item);
+    } else if (e.key === "Escape") {
+      list.hidden = true;
+      el.searchInput.blur();
+    }
+  });
   el.searchResults.addEventListener("click", (e) => {
     const li = e.target.closest("li");
     if (!li) return;
