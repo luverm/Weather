@@ -750,7 +750,13 @@ function renderRainWeek(days, maxDaily) {
     });
     const isToday = d.time === todayTs || i === 0;
     const popPart = (d.pop || 0) >= 15 ? ` · ${Math.round(d.pop)}%` : "";
-    const title = `${dt.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })} · ${fmtMm(p)}${popPart}`;
+    const snowCm = d.snow || 0;
+    const snowPart = snowCm >= 0.5
+      ? (state.unit === "F"
+          ? ` · snow ${(snowCm * 0.3937).toFixed(1)} in`
+          : ` · snow ${snowCm.toFixed(1)} cm`)
+      : "";
+    const title = `${dt.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })} · ${fmtMm(p)}${popPart}${snowPart}`;
     return `
       <div class="rain-week-day" role="listitem"
            data-level="${level}" data-today="${isToday}" title="${escapeHtml(title)}">

@@ -90,6 +90,7 @@ export async function getWeather(lat, lon) {
       "sunrise", "sunset",
       "temperature_2m_max", "temperature_2m_min",
       "weather_code", "precipitation_sum", "precipitation_probability_max",
+      "rain_sum", "snowfall_sum", "showers_sum",
       "wind_speed_10m_max", "wind_gusts_10m_max", "uv_index_max",
     ].join(","),
     timezone: "auto",
@@ -171,6 +172,9 @@ function normalize(d, aq) {
         tempMax: daily.temperature_2m_max?.[i],
         tempMin: daily.temperature_2m_min?.[i],
         precip: daily.precipitation_sum?.[i] ?? 0,
+        rain: daily.rain_sum?.[i] ?? 0,
+        showers: daily.showers_sum?.[i] ?? 0,
+        snow: daily.snowfall_sum?.[i] ?? 0, // cm
         pop: daily.precipitation_probability_max?.[i] ?? 0,
         windMax: daily.wind_speed_10m_max?.[i],
         gustsMax: daily.wind_gusts_10m_max?.[i],
