@@ -185,7 +185,12 @@ export const ui = {
     state.place = place;
     el.placeName.classList.remove("flip-in"); void el.placeName.offsetWidth;
     el.placeName.classList.add("flip-in");
-    el.placeName.textContent = place.name || "Unknown";
+    const flag = flagFor(place.countryCode);
+    if (flag) {
+      el.placeName.innerHTML = `${escapeHtml(place.name || "Unknown")} <span class="place-flag-hero" aria-hidden="true">${flag}</span>`;
+    } else {
+      el.placeName.textContent = place.name || "Unknown";
+    }
     const sub = [place.admin1, place.country].filter(Boolean).join(", ");
     el.placeSub.textContent = sub || "—";
     // Reset alert dismissals so a fresh location can re-surface them.

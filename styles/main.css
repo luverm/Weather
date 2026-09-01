@@ -314,6 +314,12 @@ html[data-reduce-motion="true"] *::after {
   margin-right: 2px;
   vertical-align: -1px;
 }
+.place-flag-hero {
+  font-size: 0.7em;
+  opacity: 0.9;
+  vertical-align: 0.18em;
+  line-height: 1;
+}
 .place-chip .close {
   width: 16px; height: 16px; display: grid; place-items: center;
   border-radius: 50%; color: var(--fg-dim);
@@ -356,6 +362,9 @@ html[data-reduce-motion="true"] *::after {
   font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.02;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 12px;
 }
 .place-sub { margin: 8px 0 0; color: var(--fg-muted); font-size: 14px; }
 .place-localtime {
