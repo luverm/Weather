@@ -124,6 +124,29 @@ export function buildAlerts(weather) {
     });
   }
 
+  // ---- Snowfall ----
+  const dailies = (weather.daily || []).slice(0, 3);
+  const snowyDay = dailies.reduce(
+    (best, d) => ((d.snow || 0) > (best?.snow ?? 0) ? d : best), null
+  );
+  if (snowyDay && (snowyDay.snow || 0) >= 15) {
+    out.push({
+      id: "heavy-snow",
+      severity: "danger",
+      title: "Heavy snow expected",
+      detail: `${snowyDay.snow.toFixed(1)} cm forecast on ${new Date(snowyDay.time).toLocaleDateString(undefined, { weekday: "long" })}.`,
+      ts: snowyDay.sunrise || snowyDay.time,
+    });
+  } else if (snowyDay && (snowyDay.snow || 0) >= 5) {
+    out.push({
+      id: "snow",
+      severity: "warn",
+      title: "Snow accumulating",
+      detail: `${snowyDay.snow.toFixed(1)} cm expected on ${new Date(snowyDay.time).toLocaleDateString(undefined, { weekday: "long" })}.`,
+      ts: snowyDay.sunrise || snowyDay.time,
+    });
+  }
+
   // ---- Rapid pressure drop (proxy for approaching front / storm) ----
   const pt = weather.pressureTrend;
   if (pt && pt.direction === "falling" && pt.delta <= -3) {
