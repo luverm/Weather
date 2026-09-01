@@ -3,6 +3,8 @@
 // derive them locally. Each alert is { id, severity, title, detail, ts? }.
 // `ts` lets the UI scrub to the exact moment of the alert when clicked.
 
+import { fmtSpeed } from "./units.js";
+
 export function buildAlerts(weather) {
   if (!weather) return [];
   const out = [];
@@ -57,7 +59,7 @@ export function buildAlerts(weather) {
       id: "storm-wind",
       severity: "danger",
       title: "Damaging wind",
-      detail: `Gusts to ${Math.round(gust.v)} km/h near ${shortClock(gust.ts)}.`,
+      detail: `Gusts to ${fmtSpeed(gust.v)} near ${shortClock(gust.ts)}.`,
       ts: gust.ts,
     });
   } else if (gust && gust.v >= 50) {
@@ -65,7 +67,7 @@ export function buildAlerts(weather) {
       id: "gale",
       severity: "warn",
       title: "Gale-force gusts",
-      detail: `Up to ${Math.round(gust.v)} km/h around ${shortClock(gust.ts)}.`,
+      detail: `Up to ${fmtSpeed(gust.v)} around ${shortClock(gust.ts)}.`,
       ts: gust.ts,
     });
   }

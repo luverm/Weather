@@ -1,6 +1,8 @@
 // Build a short natural-language summary from the weather data.
 // Picks the most noteworthy signal: rain arrival, cold snap, heat, wind, etc.
 
+import { fmtSpeed } from "./units.js";
+
 function fmtHour(ts) {
   const d = new Date(ts);
   const m = d.getMinutes();
@@ -112,7 +114,7 @@ export function narrate(weather) {
   // Wind gusts.
   if (bits.length < 2) {
     const gust = findGusts(weather.hourly);
-    if (gust) bits.push(`Gusts up to ${gust.kmh} km/h around ${fmtHour(gust.ts)}.`);
+    if (gust) bits.push(`Gusts up to ${fmtSpeed(gust.kmh)} around ${fmtHour(gust.ts)}.`);
   }
 
   // UV warning.
