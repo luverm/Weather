@@ -906,6 +906,10 @@ function scheduleSunArc(w) {
     // After sunset, dim the marker so it visually settles.
     const isUp = now >= sr && now <= ss;
     el.sunArcMarker.style.opacity = isUp ? "1" : "0.45";
+    // Pulse when within 15 minutes of a sunrise/sunset transition.
+    const nearTransition =
+      Math.abs(now - sr) <= 15 * 60_000 || Math.abs(now - ss) <= 15 * 60_000;
+    el.sunArcMarker.classList.toggle("horizon-pulse", nearTransition);
   };
   update();
   state.sunArcTimer = setInterval(update, 60_000);

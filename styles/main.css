@@ -1084,6 +1084,18 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+#sun-arc-marker.horizon-pulse {
+  animation: horizonPulse 1.8s ease-in-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+@keyframes horizonPulse {
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(255,225,170,0.8)); }
+  50% { filter: drop-shadow(0 0 14px rgba(255,180,120,1)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #sun-arc-marker.horizon-pulse { animation: none; }
+}
 .golden-hour {
   display: flex;
   flex-wrap: wrap;
