@@ -131,7 +131,21 @@ const el = {
 };
 
 const state = {
-  unit: localStorage.getItem("aether:unit") || "C",
+  unit: (() => {
+    const stored = localStorage.getItem("aether:unit");
+    if (stored === "C" || stored === "F") return stored;
+    // First visit: bias US/Bahamas/Cayman/Liberia/Palau to Fahrenheit — the
+    // only countries where °F is the everyday temperature unit. Persist the
+    // decision so units.js (which reads localStorage) stays in sync.
+    let detected = "C";
+    try {
+      const region = (Intl.DateTimeFormat().resolvedOptions().locale || "")
+        .split("-").pop().toUpperCase();
+      if (["US", "BS", "KY", "LR", "PW"].includes(region)) detected = "F";
+    } catch { /* fall through */ }
+    try { localStorage.setItem("aether:unit", detected); } catch { /* */ }
+    return detected;
+  })(),
   weather: null,
   place: null,
   sampledWeather: null, // the weather values at the current scrubber time
