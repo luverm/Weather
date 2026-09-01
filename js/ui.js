@@ -414,6 +414,12 @@ function renderDayRange(w) {
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+  // Explicit hover tooltip on the whole bar summarizing the range vs "now".
+  const unit = state.unit;
+  const summary = `Today ${Math.round(convertTemp(lo))}° to ${Math.round(convertTemp(hi))}°${unit}`
+    + ` · now ${Math.round(convertTemp(t))}° (${Math.round(frac * 100)}% through the range)`;
+  el.dayRange.title = summary;
+  el.dayRangeMarker.title = `Now ${Math.round(convertTemp(t))}°${unit}`;
 }
 
 function renderMetrics(w) {
