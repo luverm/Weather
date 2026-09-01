@@ -660,6 +660,7 @@ html[data-reduce-motion="true"] *::after {
 
 /* ---------- Share button flash ---------- */
 #share-btn.just-copied { color: var(--accent); animation: pulseOnce 560ms var(--ease); }
+.place-name.just-copied { color: var(--accent); transition: color 320ms var(--ease); }
 @keyframes pulseOnce {
   0% { transform: scale(1); }
   40% { transform: scale(1.1); }

@@ -165,6 +165,7 @@ export const ui = {
     rotatePlaceholder();
     bindUnitToggle();
     bindLocate();
+    bindPlaceNameCopy();
     bindAudio();
     bindShare();
     bindRefresh();
@@ -1839,6 +1840,22 @@ function bindShare() {
       setTimeout(() => el.shareBtn.classList.remove("just-copied"), 600);
     } catch (err) {
       if (err?.name !== "AbortError") ui.showToast("Share failed");
+    }
+  });
+}
+
+function bindPlaceNameCopy() {
+  if (!el.placeName) return;
+  el.placeName.title = "Click to copy shareable link";
+  el.placeName.style.cursor = "copy";
+  el.placeName.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      ui.showToast("Link copied");
+      el.placeName.classList.add("just-copied");
+      setTimeout(() => el.placeName.classList.remove("just-copied"), 700);
+    } catch {
+      ui.showToast("Copy failed");
     }
   });
 }
