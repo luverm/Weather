@@ -70,6 +70,9 @@ const el = {
   pressureSparkFill: $("#pressure-spark-fill"),
   humiditySparkLine: $("#humidity-spark-line"),
   humiditySparkFill: $("#humidity-spark-fill"),
+  uvSparkLine: $("#uv-spark-line"),
+  uvSparkFill: $("#uv-spark-fill"),
+  uvSparkNow: $("#uv-spark-now"),
   dailySpark: $("#daily-spark"),
   dailyHi: $("#daily-hi"),
   dailyLo: $("#daily-lo"),
@@ -451,6 +454,30 @@ function renderPressureSparkline(w) {
     (w.hourly || []).map((h) => h.humidity).filter((v) => v != null).slice(0, 12),
     { minSpan: 10, fixedMin: 0, fixedMax: 100 }
   );
+  renderUvSpark(w);
+}
+
+function renderUvSpark(w) {
+  if (!el.uvSparkLine || !el.uvSparkFill) return;
+  const hours = (w.hourly || []).slice(0, 12);
+  const pts = hours.map((h) => Math.max(0, h.uv ?? 0));
+  drawSparkline(el.uvSparkLine, el.uvSparkFill, pts, { minSpan: 3, fixedMin: 0 });
+  // Position the "now" marker line: find the hour nearest to now.
+  if (el.uvSparkNow && hours.length > 1) {
+    const now = Date.now();
+    let nearestIdx = 0;
+    for (let i = 1; i < hours.length; i++) {
+      if (Math.abs(hours[i].time - now) < Math.abs(hours[nearestIdx].time - now)) nearestIdx = i;
+    }
+    const frac = nearestIdx / (hours.length - 1);
+    const W = 100, PAD = 1.5;
+    const x = PAD + frac * (W - PAD * 2);
+    el.uvSparkNow.setAttribute("x1", x.toFixed(1));
+    el.uvSparkNow.setAttribute("x2", x.toFixed(1));
+    el.uvSparkNow.setAttribute("opacity", "0.6");
+  } else if (el.uvSparkNow) {
+    el.uvSparkNow.setAttribute("opacity", "0");
+  }
 }
 
 function drawSparkline(lineEl, fillEl, series, { minSpan = 1, fixedMin, fixedMax } = {}) {
