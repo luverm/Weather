@@ -42,6 +42,26 @@ function findTempSwing(hourly) {
   return null;
 }
 
+function findCloudChange(hourly) {
+  if (!hourly?.length) return null;
+  const now = hourly[0];
+  if (now?.cloudCover == null) return null;
+  // Compare the current hour with the next 6 hours: look for a big shift
+  // that also crosses the 55% "mostly clear ⇄ overcast" threshold.
+  for (let i = 1; i < Math.min(hourly.length, 8); i++) {
+    const h = hourly[i];
+    if (h.cloudCover == null) continue;
+    const delta = h.cloudCover - now.cloudCover;
+    if (delta <= -30 && now.cloudCover >= 55 && h.cloudCover < 55) {
+      return { kind: "clearing", ts: h.time };
+    }
+    if (delta >= 30 && now.cloudCover < 55 && h.cloudCover >= 55) {
+      return { kind: "thickening", ts: h.time };
+    }
+  }
+  return null;
+}
+
 function findGusts(hourly) {
   if (!hourly?.length) return null;
   let peak = { t: null, v: -Infinity };
@@ -98,6 +118,14 @@ export function narrate(weather) {
   // UV warning.
   if (bits.length < 2 && uvPeak?.value >= 6) {
     bits.push(`UV peaks at ${Math.round(uvPeak.value)} near ${fmtHour(uvPeak.time)}.`);
+  }
+
+  // Cloud cover shift.
+  if (bits.length < 2) {
+    const cloud = findCloudChange(weather.hourly);
+    if (cloud) bits.push(cloud.kind === "clearing"
+      ? `Skies clearing by ${fmtHour(cloud.ts)}.`
+      : `Clouds thickening by ${fmtHour(cloud.ts)}.`);
   }
 
   // Pressure trend narrative.
