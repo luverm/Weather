@@ -660,6 +660,29 @@ html[data-reduce-motion="true"] *::after {
 
 /* ---------- Share button flash ---------- */
 #share-btn.just-copied { color: var(--accent); animation: pulseOnce 560ms var(--ease); }
+
+/* ---------- Back-to-top button ---------- */
+.to-top {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--glass-strong);
+  border: 1px solid var(--stroke);
+  color: var(--fg-muted);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  transition: background 180ms var(--ease), color 180ms var(--ease), transform 180ms var(--ease), opacity 220ms var(--ease);
+  opacity: 0.85;
+  z-index: 15;
+}
+.to-top:hover { background: var(--glass); color: var(--fg); transform: translateY(-2px); opacity: 1; }
+.to-top[hidden] { display: none !important; }
+@media (prefers-reduced-motion: reduce) { .to-top { transition: none; } }
 .place-name.just-copied { color: var(--accent); transition: color 320ms var(--ease); }
 @keyframes pulseOnce {
   0% { transform: scale(1); }

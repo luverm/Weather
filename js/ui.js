@@ -166,6 +166,7 @@ export const ui = {
     bindUnitToggle();
     bindLocate();
     bindPlaceNameCopy();
+    bindBackToTop();
     bindAudio();
     bindShare();
     bindRefresh();
@@ -1862,6 +1863,20 @@ function bindShare() {
       if (err?.name !== "AbortError") ui.showToast("Share failed");
     }
   });
+}
+
+function bindBackToTop() {
+  const btn = document.getElementById("to-top");
+  if (!btn) return;
+  const check = () => {
+    const scrolled = window.scrollY || document.documentElement.scrollTop;
+    btn.hidden = scrolled < 400;
+  };
+  window.addEventListener("scroll", check, { passive: true });
+  btn.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+  check();
 }
 
 function bindPlaceNameCopy() {
