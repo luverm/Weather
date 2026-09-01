@@ -395,6 +395,15 @@ function renderDayRange(w) {
 
 function renderMetrics(w) {
   el.metricWind.textContent = Math.round(convertSpeed(w.windSpeed ?? 0));
+  // Tint the wind card by gust intensity (kept in km/h — pressure-independent).
+  const gustK = w.windGusts ?? w.windSpeed ?? 0;
+  const windCard = el.metricWind?.closest?.(".metric");
+  if (windCard) {
+    windCard.dataset.gustLevel = gustK >= 70 ? "danger"
+      : gustK >= 50 ? "warn"
+      : gustK >= 35 ? "notable"
+      : "calm";
+  }
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
   const gustStr = w.windGusts != null ? fmtSpeed(w.windGusts) : "—";
