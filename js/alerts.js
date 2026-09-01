@@ -124,6 +124,17 @@ export function buildAlerts(weather) {
     });
   }
 
+  // ---- Rapid pressure drop (proxy for approaching front / storm) ----
+  const pt = weather.pressureTrend;
+  if (pt && pt.direction === "falling" && pt.delta <= -3) {
+    out.push({
+      id: "pressure-drop",
+      severity: "warn",
+      title: "Pressure dropping fast",
+      detail: `${Math.abs(pt.delta).toFixed(1)} hPa in the last 3 h — weather change likely.`,
+    });
+  }
+
   // ---- Fog ----
   if (weather.visibility != null && weather.visibility < 500) {
     out.push({
