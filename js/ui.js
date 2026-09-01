@@ -377,9 +377,10 @@ function updateDocumentTitle(w) {
   const emoji = conditionEmoji(w.condition, w.isDay !== false);
   const t = Math.round(convertTemp(w.temp));
   const place = state.place?.name || "";
+  const unit = state.unit;
   document.title = place
-    ? `${emoji} ${t}° · ${place} — Aether`
-    : `${emoji} ${t}° — Aether`;
+    ? `${emoji} ${t}°${unit} · ${place} — Aether`
+    : `${emoji} ${t}°${unit} — Aether`;
 }
 
 function renderDayRange(w) {
