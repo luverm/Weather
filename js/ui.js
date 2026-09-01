@@ -1156,7 +1156,7 @@ function renderDailyHighlights(days, w) {
     chips.push(highlightChip("wet",
       svgDrop(),
       dayLabel(wettest, days),
-      wettest.precip >= 10 ? `${Math.round(wettest.precip)} mm` : `${wettest.precip.toFixed(1)} mm`,
+      fmtMm(wettest.precip),
       "Wettest day"));
   }
   if (windiest && ((windiest.gustsMax || windiest.windMax || 0) >= 35)) {
@@ -1342,7 +1342,7 @@ function renderNowcast(w) {
     : `${kind} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
   // 2h outlook summary.
   const totalMm = nowcast.reduce((s, n) => s + (n.precip || 0), 0);
-  el.nowcastSub.textContent = `${totalMm.toFixed(1)} mm expected in the next 2 hours`;
+  el.nowcastSub.textContent = `${fmtMm(totalMm)} expected in the next 2 hours`;
   // Bars (time-labeled, clickable to scrub).
   el.nowcastBars.innerHTML = "";
   const slice = nowcast.slice(0, 8);
@@ -1353,7 +1353,7 @@ function renderNowcast(w) {
     bar.className = "nowcast-bar";
     bar.style.height = `${Math.max(2, (n.precip / maxP) * 28)}px`;
     const mins = Math.round((n.time - Date.now()) / 60_000);
-    bar.title = `+${Math.max(0, mins)} min · ${n.precip.toFixed(1)} mm`;
+    bar.title = `+${Math.max(0, mins)} min · ${fmtMm(n.precip)}`;
     bar.setAttribute("aria-label", bar.title);
     bar.addEventListener("click", () => state.handlers.onHourClick?.(n.time));
     el.nowcastBars.appendChild(bar);
