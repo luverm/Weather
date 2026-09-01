@@ -18,6 +18,8 @@ const el = {
   unitBtn: $("#unit-toggle"),
   placeName: $("#place-name"),
   placeSub: $("#place-sub"),
+  placeLive: $("#place-live-dot"),
+  placeLabelText: $("#place-label-text"),
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
@@ -213,6 +215,11 @@ export const ui = {
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
+    // Persistent hero label so users never mistake mock data for a live fetch.
+    if (el.placeLive) el.placeLive.classList.toggle("offline", !!weather.offline);
+    if (el.placeLabelText) {
+      el.placeLabelText.textContent = weather.offline ? "Offline · sample data" : "Now in";
+    }
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
       places.updateSummary(state.place, {
