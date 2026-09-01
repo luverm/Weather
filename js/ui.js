@@ -648,6 +648,13 @@ function precipLevel(mm) {
 }
 
 function fmtMm(mm) {
+  if (state.unit === "F") {
+    const inches = mm / 25.4;
+    if (inches < 0.005) return "0 in";
+    if (inches < 0.1) return `${inches.toFixed(2)} in`;
+    if (inches < 1) return `${inches.toFixed(2)} in`;
+    return `${inches.toFixed(1)} in`;
+  }
   if (mm < 0.1) return "0 mm";
   if (mm < 1) return `${mm.toFixed(1)} mm`;
   if (mm < 10) return `${mm.toFixed(1)} mm`;
@@ -655,6 +662,12 @@ function fmtMm(mm) {
 }
 
 function shortMm(mm) {
+  if (state.unit === "F") {
+    const inches = mm / 25.4;
+    if (inches < 0.1) return inches.toFixed(2);
+    if (inches < 1) return inches.toFixed(2);
+    return inches.toFixed(1);
+  }
   if (mm < 1) return mm.toFixed(1);
   if (mm < 10) return mm.toFixed(1);
   return Math.round(mm).toString();
