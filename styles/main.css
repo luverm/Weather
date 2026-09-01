@@ -976,6 +976,37 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+.golden-hour {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 4px;
+  margin-top: 2px;
+  border-top: 1px solid var(--stroke);
+}
+.gh-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px 3px 6px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  background: rgba(255,255,255,0.06);
+  font-variant-numeric: tabular-nums;
+}
+.gh-chip svg { flex-shrink: 0; }
+.gh-chip em {
+  font-style: normal;
+  color: var(--fg);
+  letter-spacing: 0.02em;
+  text-transform: none;
+  margin-left: 4px;
+}
+.gh-golden { color: #ffd58a; }
+.gh-blue   { color: #93a9ff; }
 
 /* ---------- Precipitation outlook card ---------- */
 #rain-card { color: #9ad1ff; }

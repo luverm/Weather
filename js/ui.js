@@ -50,6 +50,9 @@ const el = {
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  goldenHour: $("#golden-hour"),
+  ghGoldenTimes: $("#gh-golden-times"),
+  ghBlueTimes: $("#gh-blue-times"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -639,6 +642,23 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderGoldenHour(w);
+}
+
+function renderGoldenHour(w) {
+  if (!el.goldenHour) return;
+  if (!w?.sunrise || !w?.sunset) { el.goldenHour.hidden = true; return; }
+  // Golden hour: ~30 min around sunrise/sunset.
+  // Blue hour: 30 min before sunrise / 30 min after sunset.
+  const GOLD = 30 * 60_000;
+  const BLUE = 30 * 60_000;
+  const goldMorning = `${fmtTime(w.sunrise)}–${fmtTime(w.sunrise + GOLD)}`;
+  const goldEvening = `${fmtTime(w.sunset - GOLD)}–${fmtTime(w.sunset)}`;
+  const blueMorning = `${fmtTime(w.sunrise - BLUE)}–${fmtTime(w.sunrise)}`;
+  const blueEvening = `${fmtTime(w.sunset)}–${fmtTime(w.sunset + BLUE)}`;
+  el.ghGoldenTimes.textContent = `${goldMorning} · ${goldEvening}`;
+  el.ghBlueTimes.textContent = `${blueMorning} · ${blueEvening}`;
+  el.goldenHour.hidden = false;
 }
 
 function scheduleSunArc(w) {
