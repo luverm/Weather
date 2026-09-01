@@ -701,6 +701,7 @@ function renderRainOutlook(w) {
   const weekDays = days.slice(0, 7);
   const totalWeek = weekDays.reduce((s, d) => s + Math.max(0, d.precip || 0), 0);
   const maxDaily = Math.max(...weekDays.map((d) => d.precip || 0), 0.5);
+  const totalSnow = weekDays.reduce((s, d) => s + Math.max(0, d.snow || 0), 0); // cm
 
   // Big-number: prefer 24h total; if truly dry, fall back to peak probability.
   const isDry = total24 < 0.1;
@@ -720,7 +721,15 @@ function renderRainOutlook(w) {
   el.rainCard.hidden = false;
   el.rainCard.dataset.dry = String(isDry);
   el.rainCard.dataset.heavy = String(total24 >= 10);
-  el.rainHeadline.textContent = totalWeek >= 0.1 ? `Week ${fmtMm(totalWeek)}` : "Week dry";
+  const snowStr = totalSnow >= 0.5
+    ? (state.unit === "F"
+        ? `+${(totalSnow * 0.3937).toFixed(1)}\" snow`
+        : `+${totalSnow.toFixed(1)} cm snow`)
+    : "";
+  const headline = totalWeek >= 0.1
+    ? `Week ${fmtMm(totalWeek)}${snowStr ? ` · ${snowStr}` : ""}`
+    : (snowStr ? `Week ${snowStr}` : "Week dry");
+  el.rainHeadline.textContent = headline;
   el.rainDropValue.textContent = isDry ? "0" : shortMm(total24);
   if (el.rainDropFill) {
     // Fill opacity mirrors intensity: 0 → 0.10, ≥10mm → 0.7
