@@ -360,7 +360,13 @@ function renderYesterdayDelta(w) {
   feelsLine.parentNode.insertBefore(chip, feelsLine.nextSibling);
 }
 
-function conditionEmoji(condition, isDay = true) {
+function conditionEmoji(condition, isDay = true, moonPhase = null) {
+  if (!isDay && condition === "clear" && moonPhase != null) {
+    // Map the phase 0..1 to one of the 8 moon glyphs.
+    const glyphs = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"];
+    const idx = Math.round(moonPhase * 8) % 8;
+    return glyphs[idx];
+  }
   switch (condition) {
     case "clear": return isDay ? "☀️" : "🌙";
     case "clouds": return isDay ? "⛅️" : "☁️";
@@ -374,7 +380,7 @@ function conditionEmoji(condition, isDay = true) {
 
 function updateDocumentTitle(w) {
   if (!w || w.temp == null) return;
-  const emoji = conditionEmoji(w.condition, w.isDay !== false);
+  const emoji = conditionEmoji(w.condition, w.isDay !== false, state.weather?.moon?.phase);
   const t = Math.round(convertTemp(w.temp));
   const place = state.place?.name || "";
   const unit = state.unit;
