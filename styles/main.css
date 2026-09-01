@@ -414,6 +414,15 @@ html[data-reduce-motion="true"] *::after {
 }
 .cond-icon svg { width: 20px; height: 20px; }
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
+.yday-delta {
+  margin: 4px 0 0;
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+}
+.yday-delta.up { color: #ffb196; }
+.yday-delta.down { color: #9ad1ff; }
 .day-range {
   margin-top: 10px;
   display: grid;

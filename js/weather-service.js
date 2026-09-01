@@ -93,7 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
-    past_hours: 1,
+    past_hours: 24,
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -128,12 +128,20 @@ function normalize(d, aq) {
   const daily = d.daily || {};
   const now = Date.now();
 
-  // 24-hour hourly forecast starting from the next hour.
+  // Hourly split into past (yesterday-same-hour window) and future
+  // (the 24-h forecast displayed in the chart / comfort strip).
   const hourly = [];
+  let yesterdayTemp = null;
   if (d.hourly?.time) {
-    for (let i = 0; i < d.hourly.time.length && hourly.length < 24; i++) {
+    for (let i = 0; i < d.hourly.time.length; i++) {
       const t = new Date(d.hourly.time[i]).getTime();
+      // ~24 hours ago ± 30 minutes → yesterday's same-hour reading.
+      const diffFrom24hAgo = Math.abs(t - (now - 24 * 3600_000));
+      if (yesterdayTemp == null && diffFrom24hAgo <= 30 * 60_000) {
+        yesterdayTemp = d.hourly.temperature_2m?.[i] ?? null;
+      }
       if (t < now - 30 * 60 * 1000) continue; // allow slight past for scrubbing
+      if (hourly.length >= 24) continue;
       hourly.push({
         time: t,
         temp: d.hourly.temperature_2m[i],
@@ -209,6 +217,7 @@ function normalize(d, aq) {
     sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null,
     uv: daily.uv_index_max?.[0] ?? null,
     uvPeak: findUvPeak(d.hourly),
+    yesterdayTemp,
     timezone: d.timezone,
     hourly,
     daily: dailyForecast,

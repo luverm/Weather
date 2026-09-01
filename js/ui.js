@@ -308,7 +308,28 @@ function renderLiveValues(w, { animate = true } = {}) {
     `<span class="cond-text">${escapeHtml(capitalize(w.label))}</span>`;
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  renderYesterdayDelta(w);
   updateDocumentTitle(w);
+}
+
+function renderYesterdayDelta(w) {
+  const feelsLine = el.feelsLike;
+  if (!feelsLine) return;
+  const prev = feelsLine.parentNode?.querySelector(".yday-delta");
+  if (prev) prev.remove();
+  if (w?.yesterdayTemp == null || w.temp == null) return;
+  const deltaC = w.temp - w.yesterdayTemp;
+  // °F spans 1.8× the °C span; scale to keep the number in the active unit.
+  const deltaShown = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
+  const rounded = Math.round(deltaShown);
+  if (rounded === 0) return;
+  const abs = Math.abs(rounded);
+  const dir = rounded > 0 ? "warmer" : "cooler";
+  const chip = document.createElement("p");
+  chip.className = "yday-delta " + (rounded > 0 ? "up" : "down");
+  chip.title = "Compared with this hour yesterday";
+  chip.textContent = `${abs}° ${dir} than yesterday`;
+  feelsLine.parentNode.insertBefore(chip, feelsLine.nextSibling);
 }
 
 function conditionEmoji(condition, isDay = true) {
