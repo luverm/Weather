@@ -162,6 +162,7 @@ export const ui = {
     state.handlers = handlers || {};
     el.unitBtn.textContent = `°${state.unit}`;
     bindSearch();
+    rotatePlaceholder();
     bindUnitToggle();
     bindLocate();
     bindAudio();
@@ -1596,6 +1597,22 @@ function showRecentsIfAny() {
   el.searchResults.innerHTML = `<li class="recent-heading">Recent places</li>${itemsHtml}`;
   el.searchResults._items = recents;
   el.searchResults.hidden = false;
+}
+
+function rotatePlaceholder() {
+  if (!el.searchInput) return;
+  const cities = ["Tokyo", "Reykjavík", "Buenos Aires", "Marrakech", "Kyoto",
+                  "Sydney", "Cape Town", "Lisbon", "Vancouver", "Istanbul",
+                  "Wellington", "Zanzibar", "Ushuaia", "Osaka", "Bergen"];
+  let i = Math.floor(Math.random() * cities.length);
+  const setHint = () => {
+    if (document.activeElement === el.searchInput) return;
+    if (el.searchInput.value) return;
+    el.searchInput.setAttribute("placeholder", `Search any city…  e.g. ${cities[i]}`);
+    i = (i + 1) % cities.length;
+  };
+  setHint();
+  setInterval(setHint, 4200);
 }
 
 function bindSearch() {
