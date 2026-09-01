@@ -137,7 +137,11 @@ export class HourlyChart {
       : null;
     const feelsStr = (feels != null && Math.abs(feels - t) >= 1)
       ? `<em>feels ${Math.round(feels)}°</em>` : "";
-    const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h` : "";
+    const useMph = unit === "F";
+    const windVal = h.wind != null
+      ? Math.round(useMph ? h.wind * 0.621371 : h.wind)
+      : null;
+    const wind = windVal != null ? ` · ${windVal} ${useMph ? "mph" : "km/h"}` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
     const cloud = h.cloudCover != null ? ` · ${Math.round(h.cloudCover)}% cloud` : "";
     this.popover.innerHTML =

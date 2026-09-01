@@ -267,6 +267,12 @@ export const ui = {
 // ---------- Rendering ----------
 
 function convertTemp(c) { return state.unit === "F" ? c * 9 / 5 + 32 : c; }
+function convertSpeed(kmh) { return state.unit === "F" ? kmh * 0.621371 : kmh; }
+function speedUnit() { return state.unit === "F" ? "mph" : "km/h"; }
+function fmtSpeed(kmh) {
+  if (kmh == null) return "—";
+  return `${Math.round(convertSpeed(kmh))} ${speedUnit()}`;
+}
 
 function animateNumber(node, target, format) {
   if (target == null || isNaN(target)) { node.textContent = "–"; return; }
@@ -353,12 +359,18 @@ function renderDayRange(w) {
 }
 
 function renderMetrics(w) {
-  el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
+  el.metricWind.textContent = Math.round(convertSpeed(w.windSpeed ?? 0));
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
+  const gustStr = w.windGusts != null ? fmtSpeed(w.windGusts) : "—";
   el.metricWindSub.textContent = dirLabel
-    ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
-    : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+    ? `${dirLabel} · gust ${gustStr}`
+    : `gust ${gustStr}`;
+  // Keep the static unit label in sync with the current preference.
+  const windUnitEl = el.metricWind?.nextElementSibling;
+  if (windUnitEl && windUnitEl.classList.contains("metric-unit")) {
+    windUnitEl.textContent = speedUnit();
+  }
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
@@ -1113,7 +1125,7 @@ function renderDaily(w) {
     item.className = "daily-item";
     item.dataset.ts = d.time;
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
-      ? ` · gusts ${Math.round(d.gustsMax)} km/h`
+      ? ` · gusts ${fmtSpeed(d.gustsMax)}`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
@@ -1167,11 +1179,11 @@ function renderDailyHighlights(days, w) {
       "Wettest day"));
   }
   if (windiest && ((windiest.gustsMax || windiest.windMax || 0) >= 35)) {
-    const g = Math.round(windiest.gustsMax || windiest.windMax || 0);
+    const g = windiest.gustsMax || windiest.windMax || 0;
     chips.push(highlightChip("windy",
       svgWind(),
       dayLabel(windiest, days),
-      `${g} km/h`,
+      fmtSpeed(g),
       "Windiest day"));
   }
 
@@ -1309,7 +1321,7 @@ function toggleDailyExpand(item, d, w) {
     const summary = document.createElement("div");
     summary.className = "daily-expand";
     summary.style.gridTemplateColumns = "1fr";
-    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${Math.round(d.gustsMax ?? 0)} km/h · UV ${Math.round(d.uvMax ?? 0)}</span>`;
+    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${fmtSpeed(d.gustsMax ?? 0)} · UV ${Math.round(d.uvMax ?? 0)}</span>`;
     item.appendChild(summary);
     item.dataset.expanded = "true";
     return;
@@ -1633,7 +1645,7 @@ function bindShare() {
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
       today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
-      `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
+      `Wind ${fmtSpeed(w.windSpeed)}${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
     ].filter(Boolean);
