@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { buildPrecipSummary, fmtMm, precipIntensity } from "./precip.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -88,6 +89,11 @@ const el = {
   activityCard: $("#activity-card"),
   activityList: $("#activity-list"),
   alertsStrip: $("#alerts-strip"),
+  precipCard: $("#precip-card"),
+  precip24h: $("#precip-24h"),
+  precipWeek: $("#precip-week"),
+  precipBars: $("#precip-bars"),
+  precipHeadline: $("#precip-headline-chip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
   comfortStrip: $("#comfort-strip"),
@@ -193,6 +199,7 @@ export const ui = {
     renderActivity(weather);
     renderAlerts(weather);
     renderWeekend(weather);
+    renderPrecip(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -680,6 +687,55 @@ function renderWeekend(w) {
   el.weekendChip.onclick = () => {
     if (snap.ts) state.handlers.onHourClick?.(snap.ts);
   };
+}
+
+function renderPrecip(w) {
+  if (!el.precipCard) return;
+  const tz = w?.timezone;
+  const weekday = (ts) => new Date(ts).toLocaleDateString(undefined, {
+    weekday: "short",
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  const summary = buildPrecipSummary(w, { weekday });
+  if (!summary) {
+    el.precipCard.hidden = true;
+    return;
+  }
+  el.precipCard.hidden = false;
+  el.precipCard.dataset.dry = summary.dry ? "true" : "false";
+
+  el.precip24h.innerHTML = summary.dry && summary.next24.total <= 0
+    ? `0 <span class="precip-total-unit">mm</span>`
+    : `${escapeHtml(fmtMm(summary.next24.total).replace(" mm", ""))} <span class="precip-total-unit">mm</span>`;
+  el.precipWeek.innerHTML =
+    `${escapeHtml(fmtMm(summary.week.total).replace(" mm", ""))} <span class="precip-total-unit">mm</span>`;
+
+  if (el.precipHeadline) {
+    el.precipHeadline.textContent = summary.headline;
+    el.precipHeadline.dataset.tone = summary.dry ? "dry" : "wet";
+  }
+
+  const bars = summary.week.days;
+  const wettestTs = summary.week.wettest?.time;
+  el.precipBars.innerHTML = bars.map((d) => {
+    const intensity = precipIntensity(d.precip);
+    const height = Math.max(6, Math.round(intensity * 100)); // percent of column
+    const isWettest = d.time === wettestTs && d.precip > 0;
+    const title = `${d.label}: ${fmtMm(d.precip)} · ${Math.round(d.pop || 0)}%`;
+    return `
+      <li class="precip-bar${isWettest ? " is-wettest" : ""}"
+          data-ts="${d.time}" title="${escapeHtml(title)}">
+        <span class="precip-bar-fill" style="height:${height}%; --intensity:${intensity.toFixed(2)}"></span>
+        <span class="precip-bar-label">${escapeHtml(d.label)}</span>
+      </li>
+    `;
+  }).join("");
+  el.precipBars.querySelectorAll("li[data-ts]").forEach((li) => {
+    li.addEventListener("click", () => {
+      const ts = parseInt(li.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
 }
 
 function renderAlerts(w) {

@@ -663,6 +663,100 @@ html[data-reduce-motion="true"] *::after {
 }
 .pollen-items span { font-variant-numeric: tabular-nums; }
 
+/* ---------- Precipitation outlook card ---------- */
+#precip-card[hidden] { display: none; }
+#precip-card[data-dry="true"] .precip-total-value { color: var(--fg-muted); }
+.precip-chip {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(154, 209, 255, 0.14);
+  color: #b8dcff;
+  border: 1px solid rgba(154, 209, 255, 0.28);
+  vertical-align: middle;
+}
+.precip-chip:empty { display: none; }
+.precip-chip[data-tone="dry"] {
+  background: rgba(255, 226, 170, 0.14);
+  color: #f6dea0;
+  border-color: rgba(255, 226, 170, 0.28);
+}
+.precip-row {
+  display: grid;
+  grid-template-columns: minmax(0, 88px) 1fr;
+  gap: 14px;
+  align-items: center;
+}
+.precip-totals { display: grid; gap: 6px; }
+.precip-total { display: grid; gap: 1px; }
+.precip-total-label {
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.precip-total-value {
+  font-size: 16px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+.precip-total-unit { font-size: 11px; color: var(--fg-dim); font-weight: 400; }
+
+.precip-bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  align-items: end;
+  height: 74px;
+}
+.precip-bar {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  height: 100%;
+  align-items: end;
+  cursor: pointer;
+  gap: 4px;
+  min-width: 0;
+}
+.precip-bar-fill {
+  display: block;
+  width: 100%;
+  min-height: 3px;
+  border-radius: 4px 4px 2px 2px;
+  background: linear-gradient(
+    to top,
+    rgba(154, 209, 255, calc(0.35 + var(--intensity, 0) * 0.5)),
+    rgba(199, 180, 255, calc(0.55 + var(--intensity, 0) * 0.4))
+  );
+  box-shadow: 0 0 0 1px rgba(154, 209, 255, 0.14) inset;
+  transition: height 480ms var(--ease), background 320ms var(--ease);
+}
+.precip-bar:hover .precip-bar-fill { filter: brightness(1.15); }
+.precip-bar.is-wettest .precip-bar-fill {
+  background: linear-gradient(to top, #6aa8ff, #c7b4ff);
+  box-shadow: 0 0 12px rgba(154, 209, 255, 0.35);
+}
+.precip-bar-label {
+  text-align: center;
+  font-size: 10px;
+  color: var(--fg-dim);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.precip-bar.is-wettest .precip-bar-label { color: var(--fg-muted); font-weight: 500; }
+
 /* ---------- Advice ---------- */
 .advice {
   margin: 10px 0 0;
