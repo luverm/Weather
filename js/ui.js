@@ -26,6 +26,7 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  dayRangeFeels: $("#day-range-feels"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -304,6 +305,22 @@ function renderDayRange(w) {
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+  // "Feels like" pip — only shown when it differs meaningfully from actual.
+  if (el.dayRangeFeels) {
+    const feels = w.feelsLike;
+    if (feels != null && Math.abs(feels - t) >= 1.5) {
+      const fFrac = Math.max(0, Math.min(1, (feels - lo) / (hi - lo)));
+      el.dayRangeFeels.style.left = `${(fFrac * 100).toFixed(1)}%`;
+      el.dayRangeFeels.dataset.dir = feels < t ? "cooler" : "warmer";
+      el.dayRangeFeels.setAttribute(
+        "title",
+        `Feels like ${Math.round(convertTemp(feels))}° — ${feels < t ? "cooler" : "warmer"} than actual`
+      );
+      el.dayRangeFeels.hidden = false;
+    } else {
+      el.dayRangeFeels.hidden = true;
+    }
+  }
 }
 
 function renderMetrics(w) {

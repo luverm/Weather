@@ -425,7 +425,23 @@ html[data-reduce-motion="true"] *::after {
   transform: translateY(-50%);
   box-shadow: 0 2px 8px rgba(0,0,0,0.35);
   transition: left 380ms var(--ease);
+  z-index: 2;
 }
+.day-range-feels {
+  position: absolute;
+  top: 50%;
+  width: 6px; height: 6px;
+  margin-left: -3px;
+  border-radius: 50%;
+  background: var(--fg-muted, rgba(255,255,255,0.7));
+  transform: translateY(-50%);
+  transition: left 380ms var(--ease), background 260ms var(--ease);
+  z-index: 1;
+  box-shadow: 0 0 0 2px rgba(11, 16, 32, 0.55);
+}
+.day-range-feels[data-dir="cooler"] { background: #9ad1ff; }
+.day-range-feels[data-dir="warmer"] { background: #ff9c7a; }
+.day-range-feels[hidden] { display: none; }
 
 /* ---------- Nowcast banner ---------- */
 .nowcast {
