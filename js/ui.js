@@ -890,6 +890,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  const bestIdx = pickBestDay(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -914,8 +915,14 @@ function renderDaily(w) {
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const bestBadge = i === bestIdx
+      ? `<span class="daily-best" title="Best-looking day ahead">★ Best</span>` : "";
+    if (i === bestIdx) {
+      item.classList.add("is-best");
+      item.setAttribute("aria-label", `${day} — best-looking day this week`);
+    }
     item.innerHTML = `
-      <span class="daily-day">${day}</span>
+      <span class="daily-day">${day}${bestBadge}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
@@ -927,6 +934,40 @@ function renderDaily(w) {
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+}
+
+// Score each upcoming day and return the index of the standout, or -1 if
+// nothing meaningfully beats the average. Today is skipped — the badge is
+// meant to help plan ahead, not label the day already in progress.
+function pickBestDay(days) {
+  if (days.length < 3) return -1;
+  const scores = days.map((d, i) => (i === 0 ? -Infinity : scoreDay(d)));
+  const candidates = scores.filter((s) => Number.isFinite(s));
+  if (candidates.length < 2) return -1;
+  const avg = candidates.reduce((a, b) => a + b, 0) / candidates.length;
+  let bestIdx = -1, bestScore = -Infinity;
+  scores.forEach((s, i) => { if (s > bestScore) { bestScore = s; bestIdx = i; } });
+  // Only crown a "best" if it's clearly better than average — otherwise
+  // the badge would just decorate a middling week.
+  if (bestScore - avg < 8) return -1;
+  return bestIdx;
+}
+
+function scoreDay(d) {
+  if (d?.tempMax == null || d?.tempMin == null) return -Infinity;
+  const midTemp = (d.tempMax + d.tempMin) / 2;
+  // Bell curve around 22°C — points fall off ~1 per °C away.
+  const tempScore = Math.max(0, 40 - Math.abs(midTemp - 22) * 2);
+  const popPenalty = (d.pop ?? 0) * 0.4; // 100% rain → -40
+  const precipPenalty = Math.min(30, (d.precip ?? 0) * 5); // heavy accumulation matters
+  const windPenalty = Math.max(0, (d.windMax ?? 0) - 20) * 0.6; // fine up to 20km/h
+  const gustPenalty = Math.max(0, (d.gustsMax ?? 0) - 40) * 0.5;
+  const uvPenalty = Math.max(0, (d.uvMax ?? 0) - 8) * 3; // extreme UV isn't ideal outdoor
+  const stormBonus = d.condition === "clear" ? 12
+    : d.condition === "clouds" ? 4
+    : d.condition === "storm" ? -25
+    : 0;
+  return tempScore + stormBonus - popPenalty - precipPenalty - windPenalty - gustPenalty - uvPenalty;
 }
 
 function renderDailyIconStrip(days) {
