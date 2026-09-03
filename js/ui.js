@@ -48,6 +48,7 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -521,8 +522,43 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderDaylightDelta(w) {
+  if (!el.sunDaylightDelta) return;
+  const today = w.daily?.[0];
+  const tomorrow = w.daily?.[1];
+  if (!today?.sunrise || !today?.sunset || !tomorrow?.sunrise || !tomorrow?.sunset) {
+    el.sunDaylightDelta.textContent = "";
+    el.sunDaylightDelta.removeAttribute("data-dir");
+    el.sunDaylightDelta.removeAttribute("title");
+    return;
+  }
+  const todayMs = today.sunset - today.sunrise;
+  const tomorrowMs = tomorrow.sunset - tomorrow.sunrise;
+  const deltaSec = Math.round((tomorrowMs - todayMs) / 1000);
+  const absSec = Math.abs(deltaSec);
+  // Astronomically the day-over-day change is at most ~4 min; anything wildly
+  // larger is likely a DST transition and would be misleading as "longer".
+  if (absSec < 30 || absSec > 30 * 60) {
+    el.sunDaylightDelta.textContent = deltaSec === 0 ? "same tomorrow" : "";
+    el.sunDaylightDelta.dataset.dir = "flat";
+    el.sunDaylightDelta.setAttribute("title", "Daylight is essentially unchanged tomorrow");
+    return;
+  }
+  const m = Math.floor(absSec / 60);
+  const s = absSec % 60;
+  const dur = m > 0 ? `${m}m ${s.toString().padStart(2, "0")}s` : `${s}s`;
+  const arrow = deltaSec > 0 ? "▲" : "▼";
+  const kind = deltaSec > 0 ? "longer" : "shorter";
+  el.sunDaylightDelta.textContent = `${arrow} ${dur} ${kind}`;
+  el.sunDaylightDelta.dataset.dir = deltaSec > 0 ? "up" : "down";
+  el.sunDaylightDelta.setAttribute(
+    "title", `Tomorrow will have ${dur} ${kind === "longer" ? "more" : "less"} daylight than today`
+  );
 }
 
 function scheduleSunArc(w) {
