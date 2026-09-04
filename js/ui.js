@@ -2010,8 +2010,17 @@ function bindShare() {
 
 function bindTilt() {
   if (!el.heroInner) return;
+  // Skip on coarse-pointer / touch-only devices — the effect is designed
+  // for a mouse and reads as glitchy on touch. Also skip when the user
+  // has asked for reduced motion.
+  const coarse = window.matchMedia?.("(pointer: coarse)")?.matches;
+  const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches
+    || document.documentElement.getAttribute("data-reduce-motion") === "true";
+  if (coarse || reduced) return;
+
   let frame = 0;
   const onMove = (e) => {
+    if (e.pointerType && e.pointerType !== "mouse") return;
     if (frame) return;
     frame = requestAnimationFrame(() => {
       frame = 0;
