@@ -297,11 +297,17 @@ installShortcuts({
   toggleFeelsPopover: () => ui.toggleFeelsPopover(),
   cyclePlace: (dir) => {
     const list = places.all();
-    if (list.length < 2) return;
+    if (list.length < 2) {
+      ui.showToast(list.length ? "Save another place with search first" : "No saved places yet");
+      return;
+    }
     const currentId = app.place ? places.idFor(app.place) : null;
     const idx = Math.max(0, list.findIndex((p) => places.idFor(p) === currentId));
     const next = list[(idx + dir + list.length) % list.length];
-    if (next) loadByCoords(next);
+    if (next) {
+      ui.showToast(`→ ${next.name}`);
+      loadByCoords(next);
+    }
   },
   nudge: (hours) => {
     clock.setOffset(clock.offset() + hours * 3600_000);
