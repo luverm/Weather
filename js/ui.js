@@ -208,8 +208,6 @@ export const ui = {
     el.placeName.textContent = place.name || "Unknown";
     const sub = [place.admin1, place.country].filter(Boolean).join(", ");
     el.placeSub.textContent = sub || "—";
-    // Reset alert dismissals so a fresh location can re-surface them.
-    try { sessionStorage.removeItem("aether:dismissed-alerts"); } catch { /* ignore */ }
     renderPlaces();
   },
   setWeather(weather, { narrative } = {}) {
@@ -1204,21 +1202,56 @@ function renderAlerts(w) {
   });
 }
 
-function getDismissedAlerts() {
+// Per-place, TTL-bounded alert dismissals in localStorage. Structure:
+//   { "<placeId>": { "<alertId>": <dismissedAtMs>, ... }, ... }
+// Entries older than DISMISS_TTL_MS are dropped on read so a re-occurring
+// alert can eventually re-surface without the user having to un-dismiss.
+const DISMISS_TTL_MS = 24 * 3600_000;
+
+function readDismissMap() {
   try {
-    const raw = sessionStorage.getItem("aether:dismissed-alerts");
-    return new Set(raw ? JSON.parse(raw) : []);
+    const raw = localStorage.getItem("aether:dismissed-alerts");
+    return raw ? JSON.parse(raw) : {};
   } catch {
-    return new Set();
+    return {};
   }
 }
 
+function writeDismissMap(map) {
+  try { localStorage.setItem("aether:dismissed-alerts", JSON.stringify(map)); }
+  catch { /* ignore */ }
+}
+
+function currentDismissKey() {
+  if (!state.place) return "_";
+  return places.idFor(state.place);
+}
+
+function getDismissedAlerts() {
+  const map = readDismissMap();
+  const key = currentDismissKey();
+  const entry = map[key] || {};
+  const now = Date.now();
+  const alive = new Set();
+  let changed = false;
+  for (const [id, at] of Object.entries(entry)) {
+    if (typeof at === "number" && now - at < DISMISS_TTL_MS) alive.add(id);
+    else changed = true;
+  }
+  if (changed) {
+    map[key] = Object.fromEntries([...alive].map((id) => [id, entry[id]]));
+    writeDismissMap(map);
+  }
+  return alive;
+}
+
 function rememberDismissedAlert(id) {
-  try {
-    const set = getDismissedAlerts();
-    set.add(id);
-    sessionStorage.setItem("aether:dismissed-alerts", JSON.stringify([...set]));
-  } catch { /* ignore */ }
+  const map = readDismissMap();
+  const key = currentDismissKey();
+  const entry = map[key] || {};
+  entry[id] = Date.now();
+  map[key] = entry;
+  writeDismissMap(map);
 }
 
 function renderActivity(w) {
