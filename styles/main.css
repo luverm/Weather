@@ -309,6 +309,11 @@ html[data-reduce-motion="true"] *::after {
   transition: background 150ms var(--ease), color 150ms var(--ease);
 }
 .place-chip .close:hover { background: rgba(255,255,255,0.12); color: var(--fg); }
+.place-chip .chip-emoji {
+  font-size: 12px;
+  line-height: 1;
+  filter: drop-shadow(0 0 4px rgba(255,255,255,0.15));
+}
 .place-chip .pin {
   width: 14px; height: 14px; display: grid; place-items: center;
   color: var(--fg-dim);
