@@ -51,6 +51,7 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   goldenHour: $("#golden-hour"),
@@ -601,9 +602,41 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   scheduleGoldenHour(w);
+}
+
+// Compare today's daylight length with tomorrow's to show how the day is
+// gaining or losing minutes. Uses the daily forecast we already have.
+function renderDaylightDelta(w) {
+  if (!el.sunDaylightDelta) return;
+  const days = w?.daily || [];
+  const today = days[0], tmrw = days[1];
+  const dt = today && tmrw && today.sunrise && today.sunset && tmrw.sunrise && tmrw.sunset;
+  if (!dt) { el.sunDaylightDelta.textContent = ""; el.sunDaylightDelta.className = "sun-daylight-delta"; return; }
+  const todayLen = today.sunset - today.sunrise;
+  const tmrwLen  = tmrw.sunset  - tmrw.sunrise;
+  const deltaMs  = tmrwLen - todayLen;
+  const absSec = Math.round(Math.abs(deltaMs) / 1000);
+  if (absSec < 30) {
+    el.sunDaylightDelta.textContent = "steady";
+    el.sunDaylightDelta.className = "sun-daylight-delta flat";
+    return;
+  }
+  const minPart = Math.floor(absSec / 60);
+  const secPart = absSec % 60;
+  const magnitude = minPart >= 1 ? `${minPart}m ${secPart.toString().padStart(2, "0")}s` : `${secPart}s`;
+  if (deltaMs > 0) {
+    el.sunDaylightDelta.textContent = `+${magnitude}/day`;
+    el.sunDaylightDelta.className = "sun-daylight-delta up";
+    el.sunDaylightDelta.title = "Gaining daylight compared to today";
+  } else {
+    el.sunDaylightDelta.textContent = `−${magnitude}/day`;
+    el.sunDaylightDelta.className = "sun-daylight-delta down";
+    el.sunDaylightDelta.title = "Losing daylight compared to today";
+  }
 }
 
 // Golden hour: a rough ±40 min window around sunrise / sunset. Shows the
