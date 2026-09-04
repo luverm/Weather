@@ -345,13 +345,27 @@ html[data-reduce-motion="true"] *::after {
   animation: pulse 2.4s ease-in-out infinite;
 }
 [data-scrubbing="true"] .live-dot { background: #ffb86b; box-shadow: 0 0 8px #ffb86b; animation: none; }
-.place-name {
+.place-name-row {
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
   font-size: clamp(30px, 4.8vw, 52px);
   font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.02;
 }
+.place-name {
+  display: inline-block;
+}
+.place-emoji {
+  font-size: 0.55em;
+  filter: drop-shadow(0 0 8px rgba(255,255,255,0.15));
+  transition: transform 300ms var(--ease);
+}
+.place-emoji:empty { display: none; }
+.place-name-row:hover .place-emoji { transform: scale(1.15); }
 .place-sub { margin: 8px 0 0; color: var(--fg-muted); font-size: 14px; }
 .place-localtime {
   margin: 6px 0 0;

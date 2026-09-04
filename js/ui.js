@@ -19,6 +19,7 @@ const el = {
   temp: $("#temp-value"),
   unitBtn: $("#unit-toggle"),
   placeName: $("#place-name"),
+  placeEmoji: $("#place-emoji"),
   placeSub: $("#place-sub"),
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
@@ -282,6 +283,17 @@ export const ui = {
 // ---------- Rendering ----------
 
 function convertTemp(c) { return state.unit === "F" ? c * 9 / 5 + 32 : c; }
+function conditionEmoji(cond, isDay) {
+  switch (cond) {
+    case "clear":  return isDay ? "☀️" : "🌙";
+    case "clouds": return isDay ? "⛅" : "☁️";
+    case "rain":   return "🌧️";
+    case "snow":   return "❄️";
+    case "storm":  return "⛈️";
+    case "fog":    return "🌫️";
+    default:       return "";
+  }
+}
 function convertWind(kmh) { return state.unit === "F" ? kmh * 0.621371 : kmh; }
 function windUnitLabel() { return state.unit === "F" ? "mph" : "km/h"; }
 
@@ -315,6 +327,10 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
+  if (el.placeEmoji) {
+    el.placeEmoji.textContent = conditionEmoji(w.condition, w.isDay);
+    el.placeEmoji.title = capitalize(w.label || "");
+  }
   if (el.feelsLikeText) {
     el.feelsLikeText.textContent = `Feels like ${Math.round(feels)}°`;
   }
