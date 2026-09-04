@@ -430,6 +430,10 @@ html[data-reduce-motion="true"] *::after {
   border-color: rgba(255,255,255,0.08);
   color: var(--fg-muted);
 }
+.compare-steady .compare-arrow {
+  color: var(--fg-dim);
+  font-weight: 400;
+}
 .temp-wrap { text-align: right; }
 .temp {
   display: inline-flex; align-items: flex-start; gap: 6px;

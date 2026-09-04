@@ -1116,6 +1116,13 @@ function renderCompare(w) {
     const dy = currentTemp - w.yesterday.temp;
     if (Math.abs(dy) >= 1.5) {
       parts.push(yesterdayChip(dy, state.unit));
+    } else if (Math.abs(dy) < 0.5) {
+      // Weather essentially unchanged — small confirmation chip.
+      parts.push(`
+        <span class="compare-chip compare-yesterday compare-steady" title="Compared to this time yesterday">
+          <span class="compare-arrow">≈</span>
+          <span class="compare-word">same as yesterday</span>
+        </span>`);
     }
   }
   const currentId = places.idFor(state.place);
