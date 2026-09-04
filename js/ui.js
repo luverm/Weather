@@ -15,6 +15,12 @@ import { predictSunsetOutlook } from "./sunset-outlook.js";
 
 const $ = (sel) => document.querySelector(sel);
 
+// Safe wrappers around localStorage so private-mode / storage-disabled
+// browsers throw once at boot rather than at every code path that touches
+// a preference.
+function lsGet(key) { try { return localStorage.getItem(key); } catch { return null; } }
+function lsSet(key, val) { try { localStorage.setItem(key, val); } catch { /* ignore */ } }
+
 // Guess the user's temperature preference from their locale. The handful of
 // jurisdictions that still use °F today: US, Bahamas, Belize, Cayman
 // Islands, Palau, and the historically Fahrenheit-only Liberia, Marshall
@@ -154,7 +160,7 @@ const el = {
 };
 
 const state = {
-  unit: localStorage.getItem("aether:unit") || defaultUnit(),
+  unit: lsGet("aether:unit") || defaultUnit(),
   weather: null,
   place: null,
   sampledWeather: null, // the weather values at the current scrubber time
@@ -1857,7 +1863,7 @@ function bindSearch() {
 function bindUnitToggle() {
   el.unitBtn.addEventListener("click", () => {
     state.unit = state.unit === "C" ? "F" : "C";
-    localStorage.setItem("aether:unit", state.unit);
+    lsSet("aether:unit", state.unit);
     el.unitBtn.textContent = `°${state.unit}`;
     if (state.weather) ui.setWeather(state.weather);
   });
@@ -1924,7 +1930,7 @@ function bindSettings() {
   el.settingReduceMotion?.addEventListener("change", () => {
     const on = el.settingReduceMotion.checked;
     document.documentElement.setAttribute("data-reduce-motion", on ? "true" : "false");
-    localStorage.setItem("aether:reduceMotion", on ? "1" : "0");
+    lsSet("aether:reduceMotion", on ? "1" : "0");
     state.handlers.onReduceMotion?.(on);
   });
 
@@ -1933,7 +1939,7 @@ function bindSettings() {
     const desired = wantF ? "F" : "C";
     if (state.unit !== desired) {
       state.unit = desired;
-      localStorage.setItem("aether:unit", state.unit);
+      lsSet("aether:unit", state.unit);
       el.unitBtn.textContent = `°${state.unit}`;
       if (state.weather) ui.setWeather(state.weather);
     }
@@ -1949,7 +1955,7 @@ function bindSettings() {
 }
 
 function applyStoredPreferences() {
-  const reduce = localStorage.getItem("aether:reduceMotion") === "1";
+  const reduce = lsGet("aether:reduceMotion") === "1";
   if (reduce) {
     document.documentElement.setAttribute("data-reduce-motion", "true");
     if (el.settingReduceMotion) el.settingReduceMotion.checked = true;
@@ -1960,7 +1966,7 @@ function applyStoredPreferences() {
 }
 
 // Exposed so app.js can query the current preference on boot.
-ui.isReduceMotion = () => localStorage.getItem("aether:reduceMotion") === "1";
+ui.isReduceMotion = () => lsGet("aether:reduceMotion") === "1";
 
 function startFetchedTicker() {
   const update = () => {
