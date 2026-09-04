@@ -111,6 +111,8 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcGoldenAm: $("#sun-arc-golden-am"),
+  sunArcGoldenPm: $("#sun-arc-golden-pm"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -825,6 +827,9 @@ function scheduleSunArc(w) {
   if (state.sunArcTimer) { clearInterval(state.sunArcTimer); state.sunArcTimer = null; }
   if (!w?.sunrise || !w?.sunset) return;
 
+  // Fixed golden-hour markers along the arc — placed once per weather load.
+  positionGoldenArcDots(w);
+
   const update = () => {
     const now = Date.now();
     const sr = w.sunrise, ss = w.sunset;
@@ -854,6 +859,32 @@ function scheduleSunArc(w) {
 }
 
 function clamp01(v) { return Math.max(0, Math.min(1, v)); }
+
+// Position the golden-hour markers along the sun arc. Golden hour is roughly
+// the first ~40 min after sunrise and the last ~40 min before sunset; on the
+// arc that's a fraction 40/daylight_min from each end.
+function positionGoldenArcDots(w) {
+  const daylightMs = w.sunset - w.sunrise;
+  if (daylightMs <= 0) return;
+  const GOLDEN_MS = 40 * 60_000;
+  const fracAm = Math.min(0.5, GOLDEN_MS / daylightMs);
+  const fracPm = 1 - fracAm;
+  const posAt = (t) => {
+    const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
+    const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
+    return { x, y };
+  };
+  if (el.sunArcGoldenAm) {
+    const p = posAt(fracAm);
+    el.sunArcGoldenAm.setAttribute("cx", p.x.toFixed(1));
+    el.sunArcGoldenAm.setAttribute("cy", p.y.toFixed(1));
+  }
+  if (el.sunArcGoldenPm) {
+    const p = posAt(fracPm);
+    el.sunArcGoldenPm.setAttribute("cx", p.x.toFixed(1));
+    el.sunArcGoldenPm.setAttribute("cy", p.y.toFixed(1));
+  }
+}
 
 function scheduleSunCountdown(w) {
   if (state.sunTimer) { clearInterval(state.sunTimer); state.sunTimer = null; }
