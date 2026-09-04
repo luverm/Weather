@@ -397,6 +397,16 @@ html[data-reduce-motion="true"] *::after {
 .compare-num { font-weight: 600; color: var(--fg); }
 .compare-word { color: var(--fg-dim); }
 .compare-name { color: var(--fg); font-weight: 500; }
+.compare-yesterday {
+  cursor: default;
+  background: rgba(255,255,255,0.03);
+  border-style: dashed;
+}
+.compare-yesterday:hover {
+  background: rgba(255,255,255,0.03);
+  border-color: rgba(255,255,255,0.08);
+  color: var(--fg-muted);
+}
 .temp-wrap { text-align: right; }
 .temp {
   display: inline-flex; align-items: flex-start; gap: 6px;

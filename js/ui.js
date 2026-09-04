@@ -993,6 +993,14 @@ function renderCompare(w) {
   if (!el.placeCompare) return;
   const currentTemp = w?.temp;
   if (currentTemp == null || !state.place) { el.placeCompare.hidden = true; return; }
+  const parts = [];
+  // Yesterday-at-this-hour chip — leads the row when we have the data.
+  if (w.yesterday?.temp != null) {
+    const dy = currentTemp - w.yesterday.temp;
+    if (Math.abs(dy) >= 1.5) {
+      parts.push(yesterdayChip(dy, state.unit));
+    }
+  }
   const currentId = places.idFor(state.place);
   // Only include saved places whose cached temp is recent (<= 6h old).
   // Older readings mislead more than they help.
@@ -1003,23 +1011,31 @@ function renderCompare(w) {
     && p.temp != null
     && (p.summaryAt == null || now - p.summaryAt <= FRESH_MS)
   );
-  if (others.length < 1) { el.placeCompare.hidden = true; el.placeCompare.innerHTML = ""; return; }
+  // No other saved place AND no yesterday chip -> nothing to show.
+  if (others.length < 1 && !parts.length) {
+    el.placeCompare.hidden = true; el.placeCompare.innerHTML = ""; return;
+  }
+  if (others.length < 1) {
+    el.placeCompare.hidden = false;
+    el.placeCompare.innerHTML = parts.join("");
+    return;
+  }
   // Sort by delta ascending (coldest first).
   const rows = others
     .map((p) => ({ ...p, delta: p.temp - currentTemp }))
     .sort((a, b) => a.delta - b.delta);
   const warmest = rows[rows.length - 1];
   const coolest = rows[0];
-  const uniq = new Set(rows.map((r) => r.id));
-  const parts = [];
+  const beforeOtherChips = parts.length;
   if (warmest && warmest.delta >= 1) {
     parts.push(compareChip(warmest, "warmer", state.unit));
   }
   if (coolest && coolest.delta <= -1 && (!warmest || coolest.id !== warmest.id)) {
     parts.push(compareChip(coolest, "cooler", state.unit));
   }
-  if (!parts.length && rows.length === 1) {
-    // Small delta — still show something for a saved-place pair.
+  // If no warmer/cooler chip made it and there's exactly one other saved
+  // place, still show it so the row isn't blank when the user has a pair.
+  if (parts.length === beforeOtherChips && rows.length === 1) {
     const only = rows[0];
     parts.push(compareChip(only, only.delta >= 0 ? "warmer" : "cooler", state.unit));
   }
@@ -1034,6 +1050,21 @@ function renderCompare(w) {
     });
   });
   uniq.clear();
+}
+
+function yesterdayChip(deltaC, unit) {
+  const scaled = unit === "F" ? Math.abs(deltaC) * 9 / 5 : Math.abs(deltaC);
+  const warmer = deltaC >= 0;
+  const arrow = warmer ? "▲" : "▼";
+  const cls = warmer ? "compare-warmer" : "compare-cooler";
+  const word = warmer ? "warmer" : "cooler";
+  return `
+    <span class="compare-chip ${cls} compare-yesterday" title="Compared to this time yesterday">
+      <span class="compare-arrow">${arrow}</span>
+      <span class="compare-num">${Math.round(scaled)}°</span>
+      <span class="compare-word">${word}</span>
+      <span class="compare-name">than yesterday</span>
+    </span>`;
 }
 
 function compareChip(place, direction, unit) {
