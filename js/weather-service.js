@@ -355,10 +355,15 @@ function aqiLabel(v) {
 
 function findUvPeak(hourly) {
   if (!hourly?.uv_index) return null;
+  const now = Date.now();
   let peak = { t: null, v: -Infinity };
   for (let i = 0; i < hourly.uv_index.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    // Skip past hours (past_days=1 puts yesterday at the front).
+    if (t < now - 30 * 60_000) continue;
     const v = hourly.uv_index[i];
-    if (v > peak.v) peak = { t: new Date(hourly.time[i]).getTime(), v };
+    if (v == null) continue;
+    if (v > peak.v) peak = { t, v };
   }
   if (peak.t == null) return null;
   return { time: peak.t, value: peak.v };
