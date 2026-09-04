@@ -363,6 +363,40 @@ html[data-reduce-motion="true"] *::after {
   line-height: 1.55;
   color: var(--fg-muted);
 }
+.place-compare {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0 0;
+}
+.place-compare[hidden] { display: none; }
+.compare-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 8px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-family: inherit;
+  color: var(--fg-muted);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  cursor: pointer;
+  transition: background 160ms var(--ease), color 160ms var(--ease), border-color 160ms var(--ease);
+  font-variant-numeric: tabular-nums;
+}
+.compare-chip:hover, .compare-chip:focus-visible {
+  color: var(--fg);
+  background: rgba(255,255,255,0.09);
+  border-color: rgba(255,255,255,0.14);
+  outline: none;
+}
+.compare-arrow { font-size: 9px; opacity: 0.8; }
+.compare-warmer .compare-arrow { color: #ffb196; }
+.compare-cooler .compare-arrow { color: #9ad1ff; }
+.compare-num { font-weight: 600; color: var(--fg); }
+.compare-word { color: var(--fg-dim); }
+.compare-name { color: var(--fg); font-weight: 500; }
 .temp-wrap { text-align: right; }
 .temp {
   display: inline-flex; align-items: flex-start; gap: 6px;

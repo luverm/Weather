@@ -25,6 +25,7 @@ const el = {
   feelsLikeText: $("#feels-like-text"),
   feelsPopover: $("#feels-popover"),
   narrative: $("#narrative"),
+  placeCompare: $("#place-compare"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
@@ -203,6 +204,7 @@ export const ui = {
     renderActivity(weather);
     renderAlerts(weather);
     renderWeekend(weather);
+    renderCompare(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -817,6 +819,62 @@ function renderInsights(w) {
       if (ts) state.handlers.onHourClick?.(ts);
     });
   });
+}
+
+// Compare the current place's temp against the user's other saved places.
+// Uses the cached `temp` each saved place stores on its last visit, so the
+// comparison is a rough "when I last checked" figure — good enough for
+// a quick sense of scale.
+function renderCompare(w) {
+  if (!el.placeCompare) return;
+  const currentTemp = w?.temp;
+  if (currentTemp == null || !state.place) { el.placeCompare.hidden = true; return; }
+  const currentId = places.idFor(state.place);
+  const others = places.all().filter((p) => places.idFor(p) !== currentId && p.temp != null);
+  if (others.length < 1) { el.placeCompare.hidden = true; el.placeCompare.innerHTML = ""; return; }
+  // Sort by delta ascending (coldest first).
+  const rows = others
+    .map((p) => ({ ...p, delta: p.temp - currentTemp }))
+    .sort((a, b) => a.delta - b.delta);
+  const warmest = rows[rows.length - 1];
+  const coolest = rows[0];
+  const uniq = new Set(rows.map((r) => r.id));
+  const parts = [];
+  if (warmest && warmest.delta >= 1) {
+    parts.push(compareChip(warmest, "warmer", state.unit));
+  }
+  if (coolest && coolest.delta <= -1 && (!warmest || coolest.id !== warmest.id)) {
+    parts.push(compareChip(coolest, "cooler", state.unit));
+  }
+  if (!parts.length && rows.length === 1) {
+    // Small delta — still show something for a saved-place pair.
+    const only = rows[0];
+    parts.push(compareChip(only, only.delta >= 0 ? "warmer" : "cooler", state.unit));
+  }
+  if (!parts.length) { el.placeCompare.hidden = true; return; }
+  el.placeCompare.hidden = false;
+  el.placeCompare.innerHTML = parts.join("");
+  el.placeCompare.querySelectorAll("[data-id]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.id;
+      const p = places.all().find((x) => x.id === id);
+      if (p) state.handlers.onPlaceClick?.(p);
+    });
+  });
+  uniq.clear();
+}
+
+function compareChip(place, direction, unit) {
+  const scaled = unit === "F" ? Math.abs(place.delta) * 9 / 5 : Math.abs(place.delta);
+  const arrow = direction === "warmer" ? "▲" : "▼";
+  return `
+    <button type="button" class="compare-chip compare-${direction}" data-id="${escapeHtml(place.id)}"
+            title="Open ${escapeHtml(place.name)}">
+      <span class="compare-arrow">${arrow}</span>
+      <span class="compare-num">${Math.round(scaled)}°</span>
+      <span class="compare-word">${direction}</span>
+      <span class="compare-name">${escapeHtml(place.name)}</span>
+    </button>`;
 }
 
 function renderWeekend(w) {
