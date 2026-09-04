@@ -164,9 +164,22 @@ function normalize(d, aq) {
 
   // 7-day daily forecast. past_days=1 (added for the vs-yesterday chip)
   // makes Open-Meteo return yesterday at index 0, so filter to today+7.
+  // First capture yesterday's sun times for the sunrise/sunset delta chips.
   const dailyForecast = [];
   const todayStart = new Date(now);
   todayStart.setHours(0, 0, 0, 0);
+  let yesterdaySun = null;
+  if (daily.time) {
+    for (let i = 0; i < daily.time.length; i++) {
+      const ts = new Date(daily.time[i]).getTime();
+      if (ts + 12 * 3600_000 < todayStart.getTime()) {
+        yesterdaySun = {
+          sunrise: daily.sunrise?.[i] ? new Date(daily.sunrise[i]).getTime() : null,
+          sunset:  daily.sunset?.[i]  ? new Date(daily.sunset[i]).getTime()  : null,
+        };
+      }
+    }
+  }
   if (daily.time) {
     for (let i = 0; i < daily.time.length; i++) {
       const ts = new Date(daily.time[i]).getTime();
@@ -225,6 +238,7 @@ function normalize(d, aq) {
     // the top-level sunrise/sunset/uv values so they always reflect today.
     sunrise: dailyForecast[0]?.sunrise ?? null,
     sunset: dailyForecast[0]?.sunset ?? null,
+    yesterdaySun,
     uv: dailyForecast[0]?.uvMax ?? null,
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,

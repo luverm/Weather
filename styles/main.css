@@ -1203,6 +1203,15 @@ kbd {
   color: var(--fg-dim);
 }
 .sun-daylight-delta:empty { display: none; }
+.sun-delta {
+  display: block;
+  margin-top: 1px;
+  font-size: 10px;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+}
+.sun-delta.later { color: #ffd899; }
+.sun-delta.earlier { color: #b4e6a6; }
 .sun-daylight-delta.up { color: #b4e6a6; }
 .sun-daylight-delta.down { color: #c7b4ff; }
 .sun-daylight-delta.flat { color: var(--fg-dim); }

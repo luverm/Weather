@@ -793,6 +793,8 @@ function fmtTime(ts) {
 function renderSun(w) {
   el.sunRise.textContent = fmtTime(w.sunrise);
   el.sunSet.textContent = fmtTime(w.sunset);
+  annotateSunDelta(el.sunRise, w.sunrise, w.yesterdaySun?.sunrise);
+  annotateSunDelta(el.sunSet, w.sunset, w.yesterdaySun?.sunset);
   if (w.sunrise && w.sunset) {
     const mins = Math.round((w.sunset - w.sunrise) / 60_000);
     const hh = Math.floor(mins / 60);
@@ -805,6 +807,39 @@ function renderSun(w) {
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   scheduleGoldenHour(w);
+}
+
+// Compare today's sunrise/sunset time to yesterday's and hang a small
+// '+42s' or '−1m 12s' badge as the sun-item's title / a data attribute
+// used by CSS. We put the delta in the element's tooltip and append a
+// tiny `<small>` chip so the value is visible on hover only, keeping
+// the sun row un-crowded.
+function annotateSunDelta(strongEl, todayTs, yesterdayTs) {
+  if (!strongEl) return;
+  const item = strongEl.parentElement;
+  if (!item) return;
+  // Remove any previous badge.
+  item.querySelector(".sun-delta")?.remove();
+  if (!todayTs || !yesterdayTs) return;
+  // Compare time-of-day only, using UTC to avoid DST issues.
+  const timeOfDay = (ts) => {
+    const d = new Date(ts);
+    return d.getUTCHours() * 3600 + d.getUTCMinutes() * 60 + d.getUTCSeconds();
+  };
+  let deltaSec = timeOfDay(todayTs) - timeOfDay(yesterdayTs);
+  // Wrap around midnight (e.g. 00:12 vs 23:58 previous day).
+  if (deltaSec > 12 * 3600) deltaSec -= 24 * 3600;
+  if (deltaSec < -12 * 3600) deltaSec += 24 * 3600;
+  const absSec = Math.abs(deltaSec);
+  if (absSec < 20) return; // essentially no change
+  const min = Math.floor(absSec / 60);
+  const sec = absSec % 60;
+  const magnitude = min >= 1 ? `${min}m ${sec.toString().padStart(2, "0")}s` : `${sec}s`;
+  const chip = document.createElement("small");
+  chip.className = `sun-delta ${deltaSec > 0 ? "later" : "earlier"}`;
+  chip.textContent = `${deltaSec > 0 ? "+" : "−"}${magnitude}`;
+  chip.title = `${deltaSec > 0 ? "Later" : "Earlier"} than yesterday`;
+  item.appendChild(chip);
 }
 
 function renderSolarNoon(w) {
