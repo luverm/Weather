@@ -10,7 +10,7 @@ const RANGE_HOURS = 24;
 
 export class Scrubber {
   constructor({ trackEl, thumbEl, fillEl, timeEl, deltaEl, resetEl,
-                sunriseEl, sunsetEl, appEl, onScrub }) {
+                sunriseEl, sunsetEl, noonEl, appEl, onScrub }) {
     this.track = trackEl;
     this.thumb = thumbEl;
     this.fill = fillEl;
@@ -19,6 +19,7 @@ export class Scrubber {
     this.resetEl = resetEl;
     this.sunriseEl = sunriseEl;
     this.sunsetEl = sunsetEl;
+    this.noonEl = noonEl;
     this.appEl = appEl; // receives data-scrubbing attribute
     this.onScrub = onScrub;
     this.dragging = false;
@@ -38,6 +39,11 @@ export class Scrubber {
     this.sunset = sunset;
     this._placeMarker(this.sunriseEl, sunrise, "Sunrise");
     this._placeMarker(this.sunsetEl, sunset, "Sunset");
+    if (sunrise && sunset) {
+      this._placeMarker(this.noonEl, (sunrise + sunset) / 2, "Solar noon");
+    } else if (this.noonEl) {
+      this.noonEl.style.display = "none";
+    }
     this._render(this._currentT());
   }
 

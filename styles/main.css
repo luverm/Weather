@@ -693,19 +693,36 @@ html[data-reduce-motion="true"] *::after {
   pointer-events: none;
 }
 .scrubber-sunrise,
-.scrubber-sunset {
+.scrubber-sunset,
+.scrubber-noon {
   position: absolute; top: 0; bottom: 0; width: 2px;
   pointer-events: none;
 }
 .scrubber-sunrise { background: linear-gradient(180deg, transparent, rgba(255, 210, 160, 0.8), transparent); }
 .scrubber-sunset { background: linear-gradient(180deg, transparent, rgba(255, 160, 120, 0.8), transparent); }
+.scrubber-noon {
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(255, 240, 200, 0.5), transparent);
+}
+.scrubber-noon::before {
+  content: "";
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(255,240,200,0.85);
+  box-shadow: 0 0 6px rgba(255,225,170,0.55);
+}
 .scrubber-sunrise::after,
-.scrubber-sunset::after {
+.scrubber-sunset::after,
+.scrubber-noon::after {
   content: attr(data-label);
   position: absolute; top: -16px; left: 50%; transform: translateX(-50%);
   font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
   color: var(--fg-dim); white-space: nowrap;
 }
+.scrubber-noon::after { opacity: 0; transition: opacity 200ms var(--ease); }
+.scrubber-noon:hover::after { opacity: 1; }
 .scrubber-thumb {
   position: absolute; top: 50%; left: calc(var(--scrub) * 100%);
   transform: translate(-50%, -50%);
