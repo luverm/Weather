@@ -1364,10 +1364,15 @@ function renderDaily(w) {
   days.forEach((d, i) => {
     const dt = new Date(d.time);
     const tz = state.weather?.timezone;
-    const day = i === 0 ? "Today" : dt.toLocaleDateString(undefined, {
+    const dayOfMonth = dt.toLocaleDateString(undefined, {
+      day: "numeric",
+      ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    });
+    const dayWord = dt.toLocaleDateString(undefined, {
       weekday: "short",
       ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
     });
+    const day = i === 0 ? `Today · ${dayOfMonth}` : `${dayWord} ${dayOfMonth}`;
     const left = ((d.tempMin - gMin) / span) * 100;
     const width = ((d.tempMax - d.tempMin) / span) * 100;
     // Marker showing where "now" sits inside today's min-max range.
