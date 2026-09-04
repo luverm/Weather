@@ -51,6 +51,7 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonNext: $("#moon-next"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -655,6 +656,7 @@ function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  renderMoonNext(moon);
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
@@ -671,6 +673,29 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+}
+
+function renderMoonNext(moon) {
+  if (!el.moonNext) return;
+  const next = moon?.next;
+  if (!next) { el.moonNext.textContent = ""; return; }
+  const now = Date.now();
+  // Pick whichever event is sooner.
+  const events = [
+    { ts: next.fullMoon, label: "Full moon" },
+    { ts: next.newMoon,  label: "New moon"  },
+  ].sort((a, b) => a.ts - b.ts);
+  const soonest = events[0];
+  const days = Math.max(0, (soonest.ts - now) / 86400_000);
+  const dateStr = new Date(soonest.ts).toLocaleDateString(undefined, {
+    month: "short", day: "numeric",
+  });
+  const inStr = days < 1
+    ? "today"
+    : days < 2
+      ? "tomorrow"
+      : `in ${Math.round(days)}d`;
+  el.moonNext.textContent = `${soonest.label} · ${dateStr} (${inStr})`;
 }
 
 function fmtTime(ts) {

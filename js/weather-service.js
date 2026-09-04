@@ -189,6 +189,7 @@ function normalize(d, aq) {
 
   // Moon phase is not in Open-Meteo's free tier — compute it locally.
   const moon = computeMoonPhase(new Date());
+  moon.next = computeNextMoonEvents(moon.phase, now);
 
   return {
     temp: c.temperature_2m,
@@ -352,6 +353,22 @@ function computeMoonPhase(date) {
   return { phase, illum, name };
 }
 
+// Given the current fractional phase (0..1) return timestamps for the next
+// new moon (phase 0) and full moon (phase 0.5). One synodic month is 29.5306
+// days; we solve for the smallest positive interval that reaches each target.
+function computeNextMoonEvents(phase, now) {
+  const SYNODIC_MS = 29.5305882 * 86400_000;
+  const distTo = (target) => {
+    let d = target - phase;
+    if (d <= 0) d += 1;
+    return d * SYNODIC_MS;
+  };
+  return {
+    fullMoon: now + distTo(0.5),
+    newMoon:  now + distTo(0),
+  };
+}
+
 function mock(lat, lon) {
   const hour = new Date().getHours();
   const isDay = hour >= 6 && hour < 19;
@@ -388,7 +405,7 @@ function mock(lat, lon) {
       condition: CONDITIONS.CLOUDS, label: "Cloudy",
     })),
     nowcast: [],
-    moon: computeMoonPhase(new Date()),
+    moon: (() => { const m = computeMoonPhase(new Date()); m.next = computeNextMoonEvents(m.phase, now); return m; })(),
     airQuality: { aqi: 42, pm25: 8, pm10: 14, o3: 40, no2: 15, co: 0.2, label: "Good" },
     pollen: {
       items: [
