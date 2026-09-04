@@ -1264,9 +1264,13 @@ function cardinal(deg) {
 
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
+  const now = Date.now();
+  const currentHourStart = new Date(now).setMinutes(0, 0, 0);
   for (const h of (w.hourly || []).slice(0, 24)) {
     const item = document.createElement("div");
-    item.className = "forecast-item";
+    // Mark the hour whose slot brackets "now" with a subtle indicator.
+    const isNow = Math.abs(h.time - currentHourStart) < 30 * 60_000;
+    item.className = `forecast-item${isNow ? " now" : ""}`;
     item.dataset.ts = h.time;
     const popIntensity = h.pop >= 70 ? "high" : h.pop >= 40 ? "mid" : h.pop >= 15 ? "low" : "none";
     const popWidth = Math.max(0, Math.min(100, h.pop || 0));
@@ -1277,7 +1281,7 @@ function renderHourly(w) {
                 style="transform:rotate(${((h.windDir + 180) % 360).toFixed(0)}deg)">↑</span>`
       : `<span class="forecast-wind forecast-wind-empty" aria-hidden="true"></span>`;
     item.innerHTML = `
-      <span class="forecast-time">${fmtTime(h.time)}</span>
+      <span class="forecast-time">${isNow ? "Now" : fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
