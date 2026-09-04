@@ -1759,7 +1759,7 @@ kbd {
 .forecast-track::-webkit-scrollbar { display: none; }
 .forecast-item {
   display: grid;
-  grid-template-rows: auto auto auto auto;
+  grid-template-rows: auto auto auto auto auto;
   gap: 4px;
   justify-items: center;
   padding: 10px 6px;
@@ -1778,6 +1778,27 @@ kbd {
   opacity: 0.9;
 }
 .forecast-pop.dim { opacity: 0; }
+.forecast-pop-bar {
+  display: block;
+  width: 24px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+}
+.forecast-pop-bar[data-intensity="none"] { opacity: 0.35; }
+.forecast-pop-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #9ad1ff, #7cc0ff);
+  transition: width 220ms var(--ease);
+}
+.forecast-pop-bar[data-intensity="mid"] .forecast-pop-fill {
+  background: linear-gradient(90deg, #7cc0ff, #6a9cff);
+}
+.forecast-pop-bar[data-intensity="high"] .forecast-pop-fill {
+  background: linear-gradient(90deg, #6a9cff, #b75cff);
+}
 
 .daily-track {
   display: grid;
