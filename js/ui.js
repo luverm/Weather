@@ -1545,8 +1545,14 @@ function renderPlaces() {
   const activeId = state.place ? places.idFor(state.place) : null;
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
+    const pinned = !!p.pinned;
     return `
-      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
+      <div class="place-chip ${active ? "active" : ""} ${pinned ? "pinned" : ""}" data-id="${p.id}">
+        <span class="pin" data-action="pin" aria-label="${pinned ? "Unpin" : "Pin"}" title="${pinned ? "Unpin" : "Pin"}">
+          <svg viewBox="0 0 16 16" width="10" height="10" fill="${pinned ? "currentColor" : "none"}" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round">
+            <path d="M8 1.5l2 4.4 4.7.6-3.5 3.3.9 4.7L8 12.2l-4.1 2.3.9-4.7L1.3 6.5l4.7-.6z"/>
+          </svg>
+        </span>
         <span>${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
         <span class="close" data-action="remove" aria-label="Remove">
@@ -1560,6 +1566,12 @@ function renderPlaces() {
     chip.addEventListener("click", (e) => {
       if (e.target.closest('[data-action="remove"]')) {
         places.remove(item);
+        renderPlaces();
+        return;
+      }
+      if (e.target.closest('[data-action="pin"]')) {
+        e.stopPropagation();
+        places.togglePin(item);
         renderPlaces();
         return;
       }
