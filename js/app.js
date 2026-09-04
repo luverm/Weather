@@ -303,9 +303,11 @@ installShortcuts({
     }
     const currentId = app.place ? places.idFor(app.place) : null;
     const idx = Math.max(0, list.findIndex((p) => places.idFor(p) === currentId));
-    const next = list[(idx + dir + list.length) % list.length];
+    const nextIdx = (idx + dir + list.length) % list.length;
+    const next = list[nextIdx];
     if (next) {
-      ui.showToast(`→ ${next.name}`);
+      const pinMark = next.pinned ? "★ " : "";
+      ui.showToast(`${pinMark}${next.name}  ·  ${nextIdx + 1}/${list.length}`);
       loadByCoords(next);
     }
   },
