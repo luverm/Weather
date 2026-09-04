@@ -1324,8 +1324,22 @@ function renderDaily(w) {
     });
     const left = ((d.tempMin - gMin) / span) * 100;
     const width = ((d.tempMax - d.tempMin) / span) * 100;
+    // Marker showing where "now" sits inside today's min-max range.
+    const isToday = i === 0;
+    let nowMarker = "";
+    if (isToday && state.weather?.temp != null) {
+      const t = state.weather.temp;
+      if (t >= d.tempMin && t <= d.tempMax) {
+        const totalWidth = Math.max(8, width);
+        const inner = (totalWidth <= 0 || d.tempMax === d.tempMin)
+          ? 0.5
+          : (t - d.tempMin) / (d.tempMax - d.tempMin);
+        const markerLeft = left + totalWidth * inner;
+        nowMarker = `<span class="daily-range-now" style="left:${markerLeft.toFixed(1)}%" title="Now"></span>`;
+      }
+    }
     const item = document.createElement("div");
-    item.className = "daily-item";
+    item.className = `daily-item${isToday ? " today" : ""}`;
     item.dataset.ts = d.time;
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(convertWind(d.gustsMax))} ${windUnitLabel()}`
@@ -1337,6 +1351,7 @@ function renderDaily(w) {
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
+        ${nowMarker}
       </div>
       <span class="daily-temp-min">${Math.round(convertTemp(d.tempMin))}°</span>
       <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°</span>
