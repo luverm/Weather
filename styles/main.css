@@ -1783,7 +1783,7 @@ kbd {
 .forecast-track::-webkit-scrollbar { display: none; }
 .forecast-item {
   display: grid;
-  grid-template-rows: auto auto auto auto auto;
+  grid-template-rows: auto auto auto auto auto auto;
   gap: 4px;
   justify-items: center;
   padding: 10px 6px;
@@ -1823,6 +1823,16 @@ kbd {
 .forecast-pop-bar[data-intensity="high"] .forecast-pop-fill {
   background: linear-gradient(90deg, #6a9cff, #b75cff);
 }
+.forecast-wind {
+  display: inline-block;
+  font-size: 11px;
+  color: var(--fg-dim);
+  line-height: 1;
+  transform-origin: 50% 50%;
+  transition: transform 300ms var(--ease);
+  min-height: 12px;
+}
+.forecast-wind-empty { opacity: 0; }
 
 .daily-track {
   display: grid;

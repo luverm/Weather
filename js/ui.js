@@ -1256,6 +1256,12 @@ function renderHourly(w) {
     item.dataset.ts = h.time;
     const popIntensity = h.pop >= 70 ? "high" : h.pop >= 40 ? "mid" : h.pop >= 15 ? "low" : "none";
     const popWidth = Math.max(0, Math.min(100, h.pop || 0));
+    // Only show a wind arrow when the hour is genuinely breezy — reduces noise.
+    const showWind = h.windDir != null && (h.gusts ?? h.wind ?? 0) >= 12;
+    const windGlyph = showWind
+      ? `<span class="forecast-wind" title="from ${cardinal(h.windDir)} · ${Math.round(h.wind ?? 0)} km/h" aria-hidden="true"
+                style="transform:rotate(${((h.windDir + 180) % 360).toFixed(0)}deg)">↑</span>`
+      : `<span class="forecast-wind forecast-wind-empty" aria-hidden="true"></span>`;
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
@@ -1264,6 +1270,7 @@ function renderHourly(w) {
       <span class="forecast-pop-bar" data-intensity="${popIntensity}" aria-hidden="true">
         <span class="forecast-pop-fill" style="width:${popWidth}%"></span>
       </span>
+      ${windGlyph}
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
