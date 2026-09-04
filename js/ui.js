@@ -830,7 +830,15 @@ function renderCompare(w) {
   const currentTemp = w?.temp;
   if (currentTemp == null || !state.place) { el.placeCompare.hidden = true; return; }
   const currentId = places.idFor(state.place);
-  const others = places.all().filter((p) => places.idFor(p) !== currentId && p.temp != null);
+  // Only include saved places whose cached temp is recent (<= 6h old).
+  // Older readings mislead more than they help.
+  const FRESH_MS = 6 * 3600_000;
+  const now = Date.now();
+  const others = places.all().filter((p) =>
+    places.idFor(p) !== currentId
+    && p.temp != null
+    && (p.summaryAt == null || now - p.summaryAt <= FRESH_MS)
+  );
   if (others.length < 1) { el.placeCompare.hidden = true; el.placeCompare.innerHTML = ""; return; }
   // Sort by delta ascending (coldest first).
   const rows = others
@@ -867,9 +875,11 @@ function renderCompare(w) {
 function compareChip(place, direction, unit) {
   const scaled = unit === "F" ? Math.abs(place.delta) * 9 / 5 : Math.abs(place.delta);
   const arrow = direction === "warmer" ? "▲" : "▼";
+  const ageMin = place.summaryAt ? Math.max(0, Math.round((Date.now() - place.summaryAt) / 60_000)) : null;
+  const ageStr = ageMin == null ? "" : ageMin < 1 ? " · just now" : ageMin < 60 ? ` · ${ageMin}m ago` : ` · ${Math.floor(ageMin / 60)}h ago`;
   return `
     <button type="button" class="compare-chip compare-${direction}" data-id="${escapeHtml(place.id)}"
-            title="Open ${escapeHtml(place.name)}">
+            title="Open ${escapeHtml(place.name)}${ageStr}">
       <span class="compare-arrow">${arrow}</span>
       <span class="compare-num">${Math.round(scaled)}°</span>
       <span class="compare-word">${direction}</span>
