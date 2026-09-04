@@ -1093,6 +1093,55 @@ kbd {
 .sun-item { display: grid; gap: 2px; }
 .sun-label { font-size: 10.5px; color: var(--fg-dim); letter-spacing: 0.14em; text-transform: uppercase; }
 .sun-item strong { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.golden-hour {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  color: #ffe0b0;
+  background: linear-gradient(90deg,
+    rgba(255, 204, 130, 0.14),
+    rgba(255, 156, 122, 0.10));
+  border: 1px solid rgba(255, 204, 130, 0.28);
+  font-variant-numeric: tabular-nums;
+}
+.golden-hour[hidden] { display: none; }
+.golden-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #fff6d6, #ffcf7a 70%);
+  box-shadow: 0 0 10px rgba(255, 207, 122, 0.55);
+  flex-shrink: 0;
+}
+.golden-hour[data-state="now"] .golden-dot {
+  animation: golden-pulse 2.2s ease-in-out infinite;
+}
+@keyframes golden-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 10px rgba(255, 207, 122, 0.55); }
+  50%      { transform: scale(1.15); box-shadow: 0 0 14px rgba(255, 207, 122, 0.85); }
+}
+.golden-label {
+  font-weight: 500;
+  color: #fff1c9;
+  letter-spacing: 0.02em;
+}
+.golden-time {
+  color: rgba(255, 240, 200, 0.75);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.golden-count {
+  margin-left: auto;
+  color: #ffd899;
+  font-weight: 500;
+}
+:root[data-reduce-motion="true"] .golden-hour[data-state="now"] .golden-dot {
+  animation: none;
+}
 .sun-arc {
   width: 100%;
   height: 76px;

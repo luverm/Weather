@@ -53,6 +53,10 @@ const el = {
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  goldenHour: $("#golden-hour"),
+  goldenLabel: $("#golden-label"),
+  goldenTime: $("#golden-time"),
+  goldenCount: $("#golden-count"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -125,6 +129,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  goldenTimer: null,
   localTimer: null,
 };
 
@@ -598,6 +603,53 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleGoldenHour(w);
+}
+
+// Golden hour: a rough ±40 min window around sunrise / sunset. Shows the
+// nearest upcoming window as a chip, and a live countdown; while inside a
+// window, the chip switches to "Golden hour now · Xm left".
+function scheduleGoldenHour(w) {
+  if (!el.goldenHour) return;
+  if (state.goldenTimer) { clearInterval(state.goldenTimer); state.goldenTimer = null; }
+  const days = w?.daily || [];
+  if (!days.length) { el.goldenHour.hidden = true; return; }
+
+  const HALF = 40 * 60_000;
+  // Build all golden-hour windows across the daily forecast.
+  const windows = [];
+  for (const d of days) {
+    if (d.sunrise) windows.push({ kind: "morning", start: d.sunrise - HALF, end: d.sunrise + HALF });
+    if (d.sunset)  windows.push({ kind: "evening", start: d.sunset  - HALF, end: d.sunset  + HALF });
+  }
+  windows.sort((a, b) => a.start - b.start);
+
+  const update = () => {
+    const now = Date.now();
+    const current = windows.find((win) => now >= win.start && now <= win.end);
+    const next    = windows.find((win) => win.start > now);
+    if (!current && !next) { el.goldenHour.hidden = true; return; }
+    el.goldenHour.hidden = false;
+    if (current) {
+      el.goldenHour.dataset.state = "now";
+      el.goldenLabel.textContent = current.kind === "morning" ? "Golden hour now" : "Golden hour now";
+      el.goldenTime.textContent = `${fmtTime(current.start)} – ${fmtTime(current.end)}`;
+      const mins = Math.max(0, Math.round((current.end - now) / 60_000));
+      el.goldenCount.textContent = `${mins}m left`;
+    } else if (next) {
+      // Hide when the next window is more than 6 hours away — otherwise the
+      // chip would be a permanent fixture with no signal.
+      const wait = next.start - now;
+      if (wait > 6 * 3600_000) { el.goldenHour.hidden = true; return; }
+      el.goldenHour.dataset.state = "soon";
+      el.goldenLabel.textContent = next.kind === "morning" ? "Morning golden" : "Evening golden";
+      el.goldenTime.textContent = `${fmtTime(next.start)} – ${fmtTime(next.end)}`;
+      const mins = Math.max(0, Math.round(wait / 60_000));
+      el.goldenCount.textContent = mins >= 60 ? `in ${Math.floor(mins / 60)}h ${mins % 60}m` : `in ${mins}m`;
+    }
+  };
+  update();
+  state.goldenTimer = setInterval(update, 30_000);
 }
 
 function scheduleSunArc(w) {
