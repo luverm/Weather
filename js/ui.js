@@ -1231,7 +1231,7 @@ function renderWeekend(w) {
 
 function renderAlerts(w) {
   if (!el.alertsStrip) return;
-  const alerts = buildAlerts(w);
+  const alerts = buildAlerts(w, { unit: state.unit });
   // Respect per-place dismissals so the user isn't nagged.
   const dismissed = getDismissedAlerts();
   const visible = alerts.filter((a) => !dismissed.has(a.id));

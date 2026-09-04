@@ -3,12 +3,16 @@
 // derive them locally. Each alert is { id, severity, title, detail, ts? }.
 // `ts` lets the UI scrub to the exact moment of the alert when clicked.
 
-export function buildAlerts(weather) {
+export function buildAlerts(weather, { unit = "C" } = {}) {
   if (!weather) return [];
   const out = [];
   const hours = (weather.hourly || []).slice(0, 24);
   const today = (weather.daily || [])[0];
   const tomorrow = (weather.daily || [])[1];
+  const t = (c) => unit === "F" ? Math.round(c * 9 / 5 + 32) : Math.round(c);
+  const tUnit = unit === "F" ? "°F" : "°";
+  const w = (kmh) => unit === "F" ? Math.round(kmh * 0.621371) : Math.round(kmh);
+  const wUnit = unit === "F" ? "mph" : "km/h";
 
   // ---- Heat ----
   const hottest = hottestHour(hours);
@@ -17,7 +21,7 @@ export function buildAlerts(weather) {
       id: "severe-heat",
       severity: "danger",
       title: "Severe heat",
-      detail: `Up to ${Math.round(hottest.t)}° at ${shortClock(hottest.ts)} — hydrate, avoid sun.`,
+      detail: `Up to ${t(hottest.t)}${tUnit} at ${shortClock(hottest.ts)} — hydrate, avoid sun.`,
       ts: hottest.ts,
     });
   } else if (hottest && hottest.t >= 30) {
@@ -25,7 +29,7 @@ export function buildAlerts(weather) {
       id: "heat",
       severity: "warn",
       title: "Heat advisory",
-      detail: `Peaks near ${Math.round(hottest.t)}° around ${shortClock(hottest.ts)}.`,
+      detail: `Peaks near ${t(hottest.t)}${tUnit} around ${shortClock(hottest.ts)}.`,
       ts: hottest.ts,
     });
   }
@@ -37,7 +41,7 @@ export function buildAlerts(weather) {
       id: "hard-freeze",
       severity: "danger",
       title: "Hard freeze tonight",
-      detail: `Lows near ${Math.round(coldest.t)}° — bring plants in, drip pipes.`,
+      detail: `Lows near ${t(coldest.t)}${tUnit} — bring plants in, drip pipes.`,
       ts: coldest.ts,
     });
   } else if (coldest && coldest.t <= 2) {
@@ -45,7 +49,7 @@ export function buildAlerts(weather) {
       id: "frost",
       severity: "warn",
       title: "Frost overnight",
-      detail: `Drops to ${Math.round(coldest.t)}° around ${shortClock(coldest.ts)}.`,
+      detail: `Drops to ${t(coldest.t)}${tUnit} around ${shortClock(coldest.ts)}.`,
       ts: coldest.ts,
     });
   }
@@ -57,7 +61,7 @@ export function buildAlerts(weather) {
       id: "storm-wind",
       severity: "danger",
       title: "Damaging wind",
-      detail: `Gusts to ${Math.round(gust.v)} km/h near ${shortClock(gust.ts)}.`,
+      detail: `Gusts to ${w(gust.v)} ${wUnit} near ${shortClock(gust.ts)}.`,
       ts: gust.ts,
     });
   } else if (gust && gust.v >= 50) {
@@ -65,7 +69,7 @@ export function buildAlerts(weather) {
       id: "gale",
       severity: "warn",
       title: "Gale-force gusts",
-      detail: `Up to ${Math.round(gust.v)} km/h around ${shortClock(gust.ts)}.`,
+      detail: `Up to ${w(gust.v)} ${wUnit} around ${shortClock(gust.ts)}.`,
       ts: gust.ts,
     });
   }
