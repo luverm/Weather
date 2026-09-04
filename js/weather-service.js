@@ -93,8 +93,11 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
-    past_hours: 1,
-    past_days: 1,          // needed for the yesterday-vs-today chip
+    // past_days=1 gives us yesterday's + today's already-elapsed hours; this
+    // covers both the scrubber's slight-past window and the vs-yesterday
+    // comparison chip, so past_hours is unnecessary (and, combined here,
+    // makes Open-Meteo return a 16-day series instead of one).
+    past_days: 1,
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
