@@ -342,7 +342,7 @@ function renderFeelsPopover(w) {
             <span class="feels-label">${escapeHtml(p.label)}</span>
             <span class="feels-bar-wrap"><span class="feels-bar" style="width:${barPct.toFixed(0)}%"></span></span>
             <span class="feels-delta">${dispDelta(p.delta)}</span>
-            <span class="feels-hint-text">${escapeHtml(p.hint || "")}</span>
+            <span class="feels-hint-text">${escapeHtml(feelsHintText(p))}</span>
           </li>`;
       }).join("")
     : `<li class="feels-row feels-row-flat"><span class="feels-label">No modifiers</span><span class="feels-hint-text">Wind &amp; humidity aren't tilting perception right now.</span></li>`;
@@ -359,6 +359,27 @@ function renderFeelsPopover(w) {
   el.feelsPopover.querySelector(".feels-close")?.addEventListener("click", () => {
     hideFeelsPopover();
   });
+}
+
+// Render the small explanatory hint under each row, using the user's
+// current unit preference so mph/°F show up in imperial mode.
+function feelsHintText(part) {
+  const c = part.cause || {};
+  if (part.key === "wind" && c.wind != null && c.tempC != null) {
+    return `${Math.round(convertWind(c.wind))} ${windUnitLabel()} wind at ${Math.round(convertTemp(c.tempC))}°`;
+  }
+  if (part.key === "humidity" && c.dewC != null) {
+    return `dew point ${Math.round(convertTemp(c.dewC))}°`;
+  }
+  if (part.key === "sun") {
+    const uv = c.uv != null ? `UV ${Math.round(c.uv)}` : "UV";
+    const cloud = c.cloud != null ? `, ${Math.round(c.cloud)}% cloud` : "";
+    return `${uv}${cloud}`;
+  }
+  if (part.key === "dry" && c.humidity != null) {
+    return `${Math.round(c.humidity)}% humidity`;
+  }
+  return "";
 }
 
 function showFeelsPopover() {

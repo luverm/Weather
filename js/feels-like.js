@@ -35,7 +35,7 @@ export function breakdownFeelsLike(w) {
         key: "wind",
         label: "Wind chill",
         delta,
-        hint: `${Math.round(V)} km/h wind at ${Math.round(T)}°`,
+        cause: { wind: V, tempC: T },
       });
     }
   }
@@ -50,7 +50,7 @@ export function breakdownFeelsLike(w) {
         key: "humidity",
         label: "Humidity",
         delta,
-        hint: `dew point ${Math.round(Td)}°`,
+        cause: { dewC: Td },
       });
     }
   }
@@ -63,7 +63,7 @@ export function breakdownFeelsLike(w) {
         key: "sun",
         label: "Sun",
         delta,
-        hint: `UV ${Math.round(uv)}${cloud != null ? `, ${Math.round(cloud)}% cloud` : ""}`,
+        cause: { uv, cloud },
       });
     }
   }
@@ -75,7 +75,7 @@ export function breakdownFeelsLike(w) {
       key: "dry",
       label: "Dry air",
       delta: -1,
-      hint: `${Math.round(w.humidity)}% humidity`,
+      cause: { humidity: w.humidity },
     });
   }
 
