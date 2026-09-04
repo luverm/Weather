@@ -15,6 +15,21 @@ import { predictSunsetOutlook } from "./sunset-outlook.js";
 
 const $ = (sel) => document.querySelector(sel);
 
+// Guess the user's temperature preference from their locale. The handful of
+// jurisdictions that still use °F today: US, Bahamas, Belize, Cayman
+// Islands, Palau, and the historically Fahrenheit-only Liberia, Marshall
+// Islands, Micronesia. Everyone else defaults to °C.
+function defaultUnit() {
+  try {
+    const locales = [navigator.language, ...(navigator.languages || [])];
+    const F_REGIONS = /^(en-US|en-BS|en-BZ|en-KY|en-LR|en-MH|en-FM|en-PW)$/i;
+    for (const l of locales) {
+      if (l && F_REGIONS.test(l)) return "F";
+    }
+  } catch { /* ignore */ }
+  return "C";
+}
+
 const el = {
   temp: $("#temp-value"),
   unitBtn: $("#unit-toggle"),
@@ -139,7 +154,7 @@ const el = {
 };
 
 const state = {
-  unit: localStorage.getItem("aether:unit") || "C",
+  unit: localStorage.getItem("aether:unit") || defaultUnit(),
   weather: null,
   place: null,
   sampledWeather: null, // the weather values at the current scrubber time
