@@ -11,6 +11,7 @@ import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { breakdownFeelsLike } from "./feels-like.js";
+import { predictSunsetOutlook } from "./sunset-outlook.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -55,6 +56,9 @@ const el = {
   sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  sunsetOutlook: $("#sunset-outlook"),
+  sunsetOutlookWord: $("#sunset-outlook-word"),
+  sunsetOutlookHint: $("#sunset-outlook-hint"),
   goldenHour: $("#golden-hour"),
   goldenLabel: $("#golden-label"),
   goldenTime: $("#golden-time"),
@@ -644,9 +648,23 @@ function renderSun(w) {
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
   renderDaylightDelta(w);
+  renderSunsetOutlook(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   scheduleGoldenHour(w);
+}
+
+function renderSunsetOutlook(w) {
+  if (!el.sunsetOutlook || !el.sunsetOutlookWord) return;
+  const p = predictSunsetOutlook(w);
+  if (!p) { el.sunsetOutlook.hidden = true; return; }
+  el.sunsetOutlook.hidden = false;
+  el.sunsetOutlook.dataset.tone = p.tone;
+  el.sunsetOutlookWord.textContent = p.label;
+  if (el.sunsetOutlookHint) {
+    el.sunsetOutlookHint.textContent = p.hint || "";
+  }
+  el.sunsetOutlook.title = `Predicted for ${fmtTime(p.at)} · confidence heuristic`;
 }
 
 // Compare today's daylight length with tomorrow's to show how the day is

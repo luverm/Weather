@@ -1139,6 +1139,49 @@ kbd {
 .sun-daylight-delta.up { color: #b4e6a6; }
 .sun-daylight-delta.down { color: #c7b4ff; }
 .sun-daylight-delta.flat { color: var(--fg-dim); }
+.sunset-outlook {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.03);
+  color: var(--fg-muted);
+  transition: background 200ms var(--ease), border-color 200ms var(--ease);
+}
+.sunset-outlook[hidden] { display: none; }
+.sunset-outlook-swatch {
+  width: 12px; height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--sw-top, #ffcc7a), var(--sw-bot, #ff7a6a));
+  box-shadow: 0 0 8px var(--sw-glow, rgba(255, 156, 122, 0.45));
+  flex-shrink: 0;
+}
+.sunset-outlook-label { text-transform: uppercase; letter-spacing: 0.14em; color: var(--fg-dim); font-size: 10px; }
+.sunset-outlook strong { color: var(--fg); font-weight: 500; }
+.sunset-outlook-hint { margin-left: auto; color: var(--fg-dim); font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 12ch; }
+.sunset-outlook[data-tone="hot"] {
+  --sw-top: #ffe7a1; --sw-bot: #ff5b5b; --sw-glow: rgba(255,91,91,0.55);
+  border-color: rgba(255,120,90,0.35);
+  background: linear-gradient(90deg, rgba(255,120,90,0.09), rgba(255,180,90,0.05));
+}
+.sunset-outlook[data-tone="warm"] {
+  --sw-top: #ffd6a1; --sw-bot: #ff8c6a; --sw-glow: rgba(255,140,106,0.5);
+  border-color: rgba(255,180,120,0.28);
+}
+.sunset-outlook[data-tone="mid"] {
+  --sw-top: #ffe0b0; --sw-bot: #ffab8c; --sw-glow: rgba(255,180,120,0.35);
+}
+.sunset-outlook[data-tone="cool"] {
+  --sw-top: #d6bce8; --sw-bot: #7c8ec9; --sw-glow: rgba(140,150,200,0.28);
+}
+.sunset-outlook[data-tone="flat"] {
+  --sw-top: #b0b6c0; --sw-bot: #6a7180; --sw-glow: rgba(120,128,140,0.24);
+}
+
 .golden-hour {
   display: flex;
   align-items: center;
