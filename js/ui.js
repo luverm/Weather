@@ -182,6 +182,15 @@ export const ui = {
   },
   focusSearch() { el.searchInput?.focus(); el.searchInput?.select?.(); },
   toggleUnits() { el.unitBtn?.click(); },
+  toggleFeelsPopover() {
+    if (!el.feelsPopover || !el.feelsLike) return;
+    if (el.feelsPopover.hidden) {
+      showFeelsPopover();
+      el.feelsLike.focus?.();
+    } else {
+      hideFeelsPopover();
+    }
+  },
   isSearchOpen() { return !el.searchResults.hidden; },
   closeSearch() { el.searchResults.hidden = true; el.searchInput?.blur(); },
   markRefreshSpin(on) {
