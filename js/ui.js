@@ -76,6 +76,9 @@ const el = {
   pressureSparkFill: $("#pressure-spark-fill"),
   humiditySparkLine: $("#humidity-spark-line"),
   humiditySparkFill: $("#humidity-spark-fill"),
+  windSparkLine: $("#wind-spark-line"),
+  windSparkGustLine: $("#wind-spark-gust-line"),
+  windSparkGustFill: $("#wind-spark-gust-fill"),
   dailySpark: $("#daily-spark"),
   dailyHi: $("#daily-hi"),
   dailyLo: $("#daily-lo"),
@@ -395,9 +398,13 @@ function renderMetrics(w) {
   el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
+  const gustPart = w.windGusts != null ? `gust ${Math.round(w.windGusts)} km/h` : "gust —";
+  const variability = gustVariability(w.windSpeed, w.windGusts);
+  const varSuffix = variability ? ` · ${variability}` : "";
   el.metricWindSub.textContent = dirLabel
-    ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
-    : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+    ? `${dirLabel} · ${gustPart}${varSuffix}`
+    : `${gustPart}${varSuffix}`;
+  renderWindSparkline(w);
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
@@ -463,6 +470,16 @@ function humidityComfort(rh, dew, temp) {
   return { label: "Comfy", cls: "down" };
 }
 
+function gustVariability(wind, gust) {
+  if (wind == null || gust == null || wind < 2) return null;
+  const ratio = gust / wind;
+  if (ratio < 1.15) return null;         // barely a puff
+  if (ratio < 1.35) return "steady";
+  if (ratio < 1.7)  return "gusty";
+  if (ratio < 2.3)  return "very gusty";
+  return "erratic";
+}
+
 function beaufort(kmh) {
   if (kmh == null) return null;
   if (kmh < 1) return { label: "Calm", cls: "down" };
@@ -502,11 +519,30 @@ function renderPressureSparkline(w) {
   );
 }
 
+// Wind sparkline is a paired line: solid = wind, dashed = gusts, with a
+// faint gust fill so the "spread" between them is visible at a glance.
+function renderWindSparkline(w) {
+  if (!el.windSparkLine) return;
+  const hrs = (w.hourly || []).slice(0, 12);
+  const wind = hrs.map((h) => h.wind).filter((v) => v != null);
+  const gust = hrs.map((h) => h.gusts).filter((v) => v != null);
+  if (wind.length < 2) {
+    el.windSparkLine.setAttribute("d", "");
+    el.windSparkGustLine?.setAttribute("d", "");
+    el.windSparkGustFill?.setAttribute("d", "");
+    return;
+  }
+  // Shared axis so the two lines are directly comparable.
+  const maxV = Math.max(6, ...wind, ...gust);
+  drawSparkline(el.windSparkLine, null, wind, { fixedMin: 0, fixedMax: maxV });
+  drawSparkline(el.windSparkGustLine, el.windSparkGustFill, gust, { fixedMin: 0, fixedMax: maxV });
+}
+
 function drawSparkline(lineEl, fillEl, series, { minSpan = 1, fixedMin, fixedMax } = {}) {
-  if (!lineEl || !fillEl) return;
+  if (!lineEl) return;
   if (series.length < 2) {
     lineEl.setAttribute("d", "");
-    fillEl.setAttribute("d", "");
+    fillEl?.setAttribute("d", "");
     return;
   }
   const min = fixedMin != null ? fixedMin : Math.min(...series);
@@ -521,7 +557,7 @@ function drawSparkline(lineEl, fillEl, series, { minSpan = 1, fixedMin, fixedMax
   series.forEach((v, i) => { line += (i === 0 ? "M" : "L") + x(i).toFixed(1) + "," + y(v).toFixed(1) + " "; });
   const fill = `${line}L${x(series.length - 1).toFixed(1)},${(H - PAD).toFixed(1)} L${x(0).toFixed(1)},${(H - PAD).toFixed(1)} Z`;
   lineEl.setAttribute("d", line.trim());
-  fillEl.setAttribute("d", fill);
+  fillEl?.setAttribute("d", fill);
 }
 
 function aqColor(aqi) {
