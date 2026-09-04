@@ -47,6 +47,7 @@ const el = {
   aqCard: $("#aq-card"),
   aqTrendLine: $("#aq-trend-line"),
   aqTrendFill: $("#aq-trend-fill"),
+  aqSummary: $("#aq-summary"),
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
@@ -587,6 +588,56 @@ function renderAirQuality(aq) {
   el.aqDetail.textContent =
     `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
   renderAqTrend(aq);
+  renderAqSummary(aq);
+}
+
+// Turn the AQ trend into a single sentence — direction, extreme, and (when
+// meaningfully different) the category name at that extreme. If there's no
+// trend data we just describe the current level.
+function renderAqSummary(aq) {
+  if (!el.aqSummary) return;
+  const pts = (aq?.trend || []).map((p) => p.aqi).filter((v) => v != null);
+  if (!pts.length) {
+    el.aqSummary.textContent = aq?.label && aq.aqi != null
+      ? `${aq.label} right now.`
+      : "";
+    return;
+  }
+  const now = aq.aqi ?? pts[0];
+  const maxIdx = pts.reduce((best, v, i) => (v > pts[best] ? i : best), 0);
+  const minIdx = pts.reduce((best, v, i) => (v < pts[best] ? i : best), 0);
+  const peak = pts[maxIdx];
+  const trough = pts[minIdx];
+  const range = peak - trough;
+  const nowCat = aqCategory(now);
+  const peakCat = aqCategory(peak);
+  const peakHour = aq.trend[maxIdx]?.time;
+  const peakStr = peakHour ? fmtTime(peakHour) : "";
+
+  let sentence;
+  if (range < 15) {
+    sentence = `${nowCat} — steady around ${Math.round(now)}.`;
+  } else if (maxIdx > minIdx && Math.round(peak - now) >= 8) {
+    // Worsening ahead.
+    const catNote = peakCat !== nowCat ? ` (${peakCat.toLowerCase()})` : "";
+    sentence = `Worsening — peaks ${Math.round(peak)}${catNote} around ${peakStr}.`;
+  } else if (minIdx > maxIdx && Math.round(now - trough) >= 8) {
+    // Improving ahead.
+    sentence = `Improving — down to ${Math.round(trough)} in a few hours.`;
+  } else {
+    sentence = `${nowCat} — swings between ${Math.round(trough)} and ${Math.round(peak)}.`;
+  }
+  el.aqSummary.textContent = sentence;
+}
+
+function aqCategory(v) {
+  if (v == null) return "—";
+  if (v <= 50) return "Good";
+  if (v <= 100) return "Moderate";
+  if (v <= 150) return "Sensitive alert";
+  if (v <= 200) return "Unhealthy";
+  if (v <= 300) return "Very unhealthy";
+  return "Hazardous";
 }
 
 function renderAqTrend(aq) {
