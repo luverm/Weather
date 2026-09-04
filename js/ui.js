@@ -1488,6 +1488,26 @@ function renderDailySpark(days) {
       c.setAttribute("class", "dot-lo");
       el.dailySparkDots.appendChild(c);
     }
+    // Today gets a subtle vertical "now" line + ringed dot at the current
+    // temperature so users can see where we are on the week's curve.
+    if (i === 0 && state.weather?.temp != null && d.tempMax != null && d.tempMin != null) {
+      const t = state.weather.temp;
+      const bounded = Math.max(d.tempMin, Math.min(d.tempMax, t));
+      const cx = x(0);
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("x1", cx.toFixed(1));
+      line.setAttribute("x2", cx.toFixed(1));
+      line.setAttribute("y1", "2");
+      line.setAttribute("y2", String(H - 2));
+      line.setAttribute("class", "spark-now-line");
+      el.dailySparkDots.appendChild(line);
+      const now = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      now.setAttribute("cx", cx.toFixed(1));
+      now.setAttribute("cy", y(bounded).toFixed(1));
+      now.setAttribute("r", "3.5");
+      now.setAttribute("class", "spark-now-dot");
+      el.dailySparkDots.appendChild(now);
+    }
   });
 }
 
