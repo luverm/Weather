@@ -57,6 +57,7 @@ const el = {
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
   sunDaylightDelta: $("#sun-daylight-delta"),
+  solarNoon: $("#solar-noon"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   sunsetOutlook: $("#sunset-outlook"),
@@ -761,10 +762,18 @@ function renderSun(w) {
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
   renderDaylightDelta(w);
+  renderSolarNoon(w);
   renderSunsetOutlook(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   scheduleGoldenHour(w);
+}
+
+function renderSolarNoon(w) {
+  if (!el.solarNoon) return;
+  if (!w?.sunrise || !w?.sunset) { el.solarNoon.textContent = ""; return; }
+  const noonTs = (w.sunrise + w.sunset) / 2;
+  el.solarNoon.textContent = `Solar noon · ${fmtTime(noonTs)}`;
 }
 
 function renderSunsetOutlook(w) {

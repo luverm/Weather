@@ -1192,6 +1192,16 @@ kbd {
 .sun-daylight-delta.up { color: #b4e6a6; }
 .sun-daylight-delta.down { color: #c7b4ff; }
 .sun-daylight-delta.flat { color: var(--fg-dim); }
+.solar-noon {
+  margin: 8px 0 0;
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+.solar-noon:empty { display: none; }
+
 .sunset-outlook {
   display: flex;
   align-items: center;
