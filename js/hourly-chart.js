@@ -269,24 +269,50 @@ export class HourlyChart {
     const labG = this.svg.querySelector("#chart-labels");
     labG.innerHTML = "";
     const labelStep = Math.max(3, Math.floor(this.hours.length / 8));
+    // Precompute peak (max) and trough (min) indices so we can mark them.
+    let peakIdx = 0, troughIdx = 0;
     this.hours.forEach((h, i) => {
-      if (i % labelStep !== 0) return;
+      if (h.temp > this.hours[peakIdx].temp) peakIdx = i;
+      if (h.temp < this.hours[troughIdx].temp) troughIdx = i;
+    });
+    // If peak and trough are the same or the swing is tiny, skip markers.
+    const swing = this.hours[peakIdx].temp - this.hours[troughIdx].temp;
+    const showExtremes = swing >= 4;
+    this.hours.forEach((h, i) => {
+      const isPeak = showExtremes && i === peakIdx;
+      const isTrough = showExtremes && i === troughIdx;
+      if (i % labelStep !== 0 && !isPeak && !isTrough) return;
+      // Skip the periodic label if it coincides with an extreme marker so
+      // the two don't overlap; the extreme marker's own label wins.
+      if (i % labelStep === 0 && (isPeak || isTrough)) { /* fall through */ }
       const hh = this._hourOf(h.time);
-      const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      txt.setAttribute("x", iToX(i).toFixed(1));
-      txt.setAttribute("y", String(H - 4));
-      txt.setAttribute("text-anchor", "middle");
-      txt.textContent = `${hh}`;
-      labG.appendChild(txt);
-      // Temp label above point
+      if (i % labelStep === 0) {
+        const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        txt.setAttribute("x", iToX(i).toFixed(1));
+        txt.setAttribute("y", String(H - 4));
+        txt.setAttribute("text-anchor", "middle");
+        txt.textContent = `${hh}`;
+        labG.appendChild(txt);
+      }
+      // Temp label above point — normal at label steps, prominent for extremes.
       const tVal = unit === "F" ? h.temp * 9 / 5 + 32 : h.temp;
       const tTxt = document.createElementNS("http://www.w3.org/2000/svg", "text");
       tTxt.setAttribute("x", iToX(i).toFixed(1));
       tTxt.setAttribute("y", (tToY(h.temp) - 8).toFixed(1));
       tTxt.setAttribute("text-anchor", "middle");
-      tTxt.setAttribute("class", "temp-point");
-      tTxt.textContent = `${Math.round(tVal)}°`;
+      tTxt.setAttribute("class", isPeak ? "temp-point extreme peak" : isTrough ? "temp-point extreme trough" : "temp-point");
+      const prefix = isPeak ? "▲ " : isTrough ? "▼ " : "";
+      tTxt.textContent = `${prefix}${Math.round(tVal)}°`;
       labG.appendChild(tTxt);
+      // Ringed dot on extreme.
+      if (isPeak || isTrough) {
+        const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        dot.setAttribute("cx", iToX(i).toFixed(1));
+        dot.setAttribute("cy", tToY(h.temp).toFixed(1));
+        dot.setAttribute("r", "2.4");
+        dot.setAttribute("class", isPeak ? "extreme-dot peak" : "extreme-dot trough");
+        labG.appendChild(dot);
+      }
     });
   }
 }

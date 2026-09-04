@@ -993,6 +993,10 @@ html[data-reduce-motion="true"] *::after {
   fill: var(--fg-muted);
   font-size: 9.5px;
 }
+.chart-labels text.temp-point.extreme.peak { fill: #ffb196; font-weight: 600; }
+.chart-labels text.temp-point.extreme.trough { fill: #9ad1ff; font-weight: 600; }
+.chart-labels .extreme-dot.peak { fill: #ffb196; }
+.chart-labels .extreme-dot.trough { fill: #9ad1ff; }
 .chart-cursor {
   stroke: var(--accent);
   stroke-width: 1.2;
