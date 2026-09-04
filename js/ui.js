@@ -350,6 +350,8 @@ function renderLiveValues(w, { animate = true } = {}) {
     el.placeEmoji.textContent = conditionEmoji(w.condition, w.isDay);
     el.placeEmoji.title = capitalize(w.label || "");
   }
+  // Tint the hero glow subtly to the current condition.
+  if (el.heroInner) el.heroInner.dataset.tone = w.condition || "";
   if (el.feelsLikeText) {
     el.feelsLikeText.textContent = `Feels like ${Math.round(feels)}°`;
   }
