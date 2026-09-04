@@ -302,6 +302,14 @@ export const ui = {
 // ---------- Rendering ----------
 
 function convertTemp(c) { return state.unit === "F" ? c * 9 / 5 + 32 : c; }
+function updateTabTitle(w) {
+  const name = state.place?.name;
+  if (!name || w?.temp == null) return;
+  const emoji = conditionEmoji(w.condition, w.isDay);
+  const tempStr = `${Math.round(convertTemp(w.temp))}°${state.unit}`;
+  document.title = `${emoji ? emoji + " " : ""}${tempStr} · ${name} · Aether`;
+}
+
 function conditionEmoji(cond, isDay) {
   switch (cond) {
     case "clear":  return isDay ? "☀️" : "🌙";
@@ -352,6 +360,7 @@ function renderLiveValues(w, { animate = true } = {}) {
   }
   // Tint the hero glow subtly to the current condition.
   if (el.heroInner) el.heroInner.dataset.tone = w.condition || "";
+  updateTabTitle(w);
   if (el.feelsLikeText) {
     el.feelsLikeText.textContent = `Feels like ${Math.round(feels)}°`;
   }
