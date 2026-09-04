@@ -594,8 +594,12 @@ function renderPressureSparkline(w) {
 
 // Wind sparkline is a paired line: solid = wind, dashed = gusts, with a
 // faint gust fill so the "spread" between them is visible at a glance.
+// On a nearly-flat calm day both lines would just be a straight streak
+// pressed to the bottom — hide the whole svg in that case so the card
+// doesn't advertise nothing.
 function renderWindSparkline(w) {
   if (!el.windSparkLine) return;
+  const svg = el.windSparkLine.closest("svg");
   const hrs = (w.hourly || []).slice(0, 12);
   const wind = hrs.map((h) => h.wind).filter((v) => v != null);
   const gust = hrs.map((h) => h.gusts).filter((v) => v != null);
@@ -603,10 +607,15 @@ function renderWindSparkline(w) {
     el.windSparkLine.setAttribute("d", "");
     el.windSparkGustLine?.setAttribute("d", "");
     el.windSparkGustFill?.setAttribute("d", "");
+    if (svg) svg.style.visibility = "hidden";
     return;
   }
-  // Shared axis so the two lines are directly comparable.
   const maxV = Math.max(6, ...wind, ...gust);
+  const minV = Math.min(...wind, ...gust);
+  // "Interesting" if there's a meaningful spread (>= 5 km/h between the
+  // lowest and highest sampled value or between wind and gusts).
+  const range = maxV - minV;
+  if (svg) svg.style.visibility = range >= 4 ? "" : "hidden";
   drawSparkline(el.windSparkLine, null, wind, { fixedMin: 0, fixedMax: maxV });
   drawSparkline(el.windSparkGustLine, el.windSparkGustFill, gust, { fixedMin: 0, fixedMax: maxV });
 }
