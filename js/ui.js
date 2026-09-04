@@ -81,6 +81,9 @@ const el = {
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
+  rainWeek: $("#rain-week"),
+  rainWeekBars: $("#rain-week-bars"),
+  rainWeekTotal: $("#rain-week-total"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -1082,6 +1085,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderWeeklyRain(days, w);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1163,6 +1167,49 @@ function renderDailySpark(days) {
       c.setAttribute("class", "dot-lo");
       el.dailySparkDots.appendChild(c);
     }
+  });
+}
+
+// Small horizontal bar chart of expected rainfall per day, with a running
+// total. When the whole week is dry (<0.2 mm) we hide the widget rather
+// than show a row of empty ticks.
+function renderWeeklyRain(days, w) {
+  if (!el.rainWeek || !el.rainWeekBars || !el.rainWeekTotal) return;
+  const tz = w?.timezone;
+  const total = days.reduce((s, d) => s + (d.precip || 0), 0);
+  if (total < 0.2) {
+    el.rainWeek.hidden = true;
+    el.rainWeekBars.innerHTML = "";
+    return;
+  }
+  el.rainWeek.hidden = false;
+  const max = Math.max(...days.map((d) => d.precip || 0), 1);
+  el.rainWeekBars.innerHTML = days.map((d, i) => {
+    const mm = d.precip || 0;
+    const heightPct = Math.max(4, (mm / max) * 100);
+    const isSnow = d.condition === "snow";
+    const dow = i === 0
+      ? "T"
+      : new Date(d.time).toLocaleDateString(undefined, {
+          weekday: "narrow",
+          ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+        });
+    const title = mm > 0
+      ? `${dow === "T" ? "Today" : dowLong(d.time, tz)}: ${mm.toFixed(1)} mm${isSnow ? " (snow)" : ""}`
+      : `${dow === "T" ? "Today" : dowLong(d.time, tz)}: dry`;
+    return `
+      <span class="rain-week-col" title="${escapeHtml(title)}">
+        <span class="rain-week-bar${isSnow ? " snow" : ""}" style="height:${heightPct.toFixed(0)}%"></span>
+        <span class="rain-week-day">${escapeHtml(dow)}</span>
+      </span>`;
+  }).join("");
+  el.rainWeekTotal.textContent = `${total < 10 ? total.toFixed(1) : Math.round(total)} mm`;
+}
+
+function dowLong(ts, tz) {
+  return new Date(ts).toLocaleDateString(undefined, {
+    weekday: "long",
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
   });
 }
 

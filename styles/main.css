@@ -1612,6 +1612,58 @@ kbd {
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+.rain-week {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 12px 6px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: rgba(154, 209, 255, 0.06);
+  border: 1px solid rgba(154, 209, 255, 0.14);
+  font-size: 11px;
+  color: var(--fg-muted);
+  letter-spacing: 0.02em;
+}
+.rain-week[hidden] { display: none; }
+.rain-week-label { flex-shrink: 0; text-transform: uppercase; font-size: 10px; letter-spacing: 0.14em; color: var(--fg-dim); }
+.rain-week-bars {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  align-items: end;
+  gap: 6px;
+  flex: 1;
+  height: 34px;
+}
+.rain-week-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  gap: 2px;
+  cursor: help;
+}
+.rain-week-bar {
+  width: 10px;
+  min-height: 2px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #9ad1ff, #6aa3d4);
+  transition: transform 200ms var(--ease);
+}
+.rain-week-col:hover .rain-week-bar { transform: scaleY(1.06); }
+.rain-week-bar.snow { background: linear-gradient(180deg, #f0f4ff, #c7cdd8); }
+.rain-week-day { font-size: 9px; color: var(--fg-dim); text-transform: uppercase; }
+.rain-week-total {
+  flex-shrink: 0;
+  color: #9ad1ff;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 520px) {
+  .rain-week { flex-wrap: wrap; gap: 8px; }
+  .rain-week-bars { min-width: 100%; }
+}
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;
