@@ -2043,3 +2043,44 @@ kbd {
   .temp { font-size: 78px; }
   .narrative { font-size: 13px; }
 }
+
+/* ---------- Print ---------- */
+@media print {
+  .stage,
+  .radar,
+  .scrubber,
+  .search,
+  .toolbar,
+  .places-strip,
+  #chart-popover,
+  #feels-popover,
+  .shortcuts,
+  #toast,
+  .install-btn {
+    display: none !important;
+  }
+  html, body { background: #fff !important; color: #000 !important; }
+  .app { max-width: none !important; padding: 12mm !important; }
+  .glass {
+    background: transparent !important;
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+  .hero-inner { grid-template-columns: 1fr 1fr !important; }
+  .place-name, .temp, .condition-label,
+  .metric-value, .metric-label, .aq-value, .moon-name,
+  .forecast-time, .forecast-temp, .daily-day, .daily-temp-min, .daily-temp-max {
+    color: #000 !important;
+  }
+  .narrative, .place-sub, .feels-like, .fetched-ago, .aq-detail, .metric-sub,
+  .sun-label, .rain-week-label, .sun-daylight-delta, .solar-noon {
+    color: #333 !important;
+  }
+  .hero, .forecast, .daily, .metric, .extra-card, .insights {
+    break-inside: avoid;
+  }
+  .footer, .hint { display: none !important; }
+  .brand-name { display: inline !important; }
+  a { color: #000 !important; }
+}
