@@ -1430,11 +1430,14 @@ function bindShare() {
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
     ].filter(Boolean);
     const text = lines.join("\n");
+    // If url-sync is loaded, include a link back to this exact place.
+    const url = typeof window !== "undefined" && typeof window.__aetherShareUrl === "function"
+      ? window.__aetherShareUrl() : null;
     try {
       if (navigator.share) {
-        await navigator.share({ title: `Aether — ${placeName}`, text });
+        await navigator.share({ title: `Aether — ${placeName}`, text, url: url || undefined });
       } else {
-        await navigator.clipboard.writeText(text);
+        await navigator.clipboard.writeText(url ? `${text}\n${url}` : text);
         ui.showToast("Summary copied to clipboard");
       }
       el.shareBtn.classList.add("just-copied");

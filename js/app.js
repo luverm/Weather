@@ -17,6 +17,7 @@ import { narrate } from "./narrative.js";
 import { places } from "./places.js";
 import { RadarMap } from "./radar-map.js";
 import { installShortcuts } from "./shortcuts.js";
+import { installUrlSync, currentAbsoluteUrl } from "./url-sync.js";
 
 const engine = new AnimationEngine();
 
@@ -195,7 +196,7 @@ const scrubber = new Scrubber({
 });
 
 // ---------- Load flow ----------
-async function loadByCoords(place) {
+async function loadByCoords(place, { fromHistory = false } = {}) {
   app.place = place;
   ui.setPlace(place);
   ui.setLoading(`Fetching weather for ${place.name}…`);
@@ -203,6 +204,10 @@ async function loadByCoords(place) {
   // Drop any scrubber offset so we start live on each new city.
   clock.reset();
   ui.setScrubbing(false);
+
+  // Mirror the active place into the URL. First load and popstate use
+  // replaceState; explicit user navigations push a new entry.
+  urlSync.update(place, { push: !fromHistory });
 
   const w = await getWeather(place.lat, place.lon);
   app.weather = w;
@@ -304,8 +309,25 @@ installShortcuts({
   },
 });
 
+// ---------- URL sync ----------
+// Restore from the URL on load, and update the URL whenever a place loads.
+const urlSync = installUrlSync({
+  onNavigate: (place) => { if (place) loadByCoords(place, { fromHistory: true }); },
+});
+
+// Expose a helper so the UI's share button can hand out a link.
+window.__aetherShareUrl = () => currentAbsoluteUrl(app.place);
+
 // ---------- Start ----------
 (async function init() {
+  // A hash in the URL wins over saved places so a shared link always
+  // resolves to that specific location.
+  const fromUrl = urlSync.initial();
+  if (fromUrl) {
+    await loadByCoords(fromUrl, { fromHistory: true });
+    return;
+  }
+
   // Prefer the most recent saved place if we have one — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();
