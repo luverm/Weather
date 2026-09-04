@@ -135,7 +135,21 @@
             <button id="unit-toggle" class="unit" title="Toggle units" aria-label="Toggle temperature units">°C</button>
           </div>
           <p id="condition-label" class="condition-label">—</p>
-          <p id="feels-like" class="feels-like"><span id="temp-trend" class="temp-trend" aria-hidden="true"></span>Feels like —</p>
+          <p class="feels-like-row">
+            <button id="feels-like" class="feels-like" type="button"
+                    aria-haspopup="dialog" aria-expanded="false"
+                    aria-controls="feels-popover"
+                    title="Why does it feel different?">
+              <span id="temp-trend" class="temp-trend" aria-hidden="true"></span>
+              <span id="feels-like-text">Feels like —</span>
+              <svg class="feels-hint" viewBox="0 0 24 24" width="10" height="10" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/>
+                <path d="M9 9a3 3 0 116 0c0 2-3 2-3 4M12 17h.01" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </p>
+          <div id="feels-popover" class="feels-popover glass" role="dialog"
+               aria-label="Feels-like breakdown" hidden></div>
           <div id="day-range" class="day-range" hidden aria-label="Today's temperature range">
             <span class="day-range-end" id="day-range-min">—</span>
             <div class="day-range-track">

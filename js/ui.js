@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { breakdownFeelsLike } from "./feels-like.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -21,6 +22,8 @@ const el = {
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
+  feelsLikeText: $("#feels-like-text"),
+  feelsPopover: $("#feels-popover"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -137,6 +140,7 @@ export const ui = {
     bindRefresh();
     bindSettings();
     bindTilt();
+    bindFeelsLike();
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
@@ -276,8 +280,79 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  if (el.feelsLikeText) {
+    el.feelsLikeText.textContent = `Feels like ${Math.round(feels)}°`;
+  }
+  renderFeelsPopover(w);
   renderDayRange(w);
+}
+
+function renderFeelsPopover(w) {
+  if (!el.feelsPopover) return;
+  const bd = breakdownFeelsLike(w);
+  if (!bd) { el.feelsPopover.innerHTML = ""; return; }
+  const dispDelta = (d) => {
+    const scaled = state.unit === "F" ? d * 9 / 5 : d;
+    const sign = scaled >= 0 ? "+" : "−";
+    return `${sign}${Math.abs(scaled).toFixed(1)}°`;
+  };
+  const observedTemp = w.feelsLike ?? w.temp;
+  const feelsStr = `${Math.round(convertTemp(observedTemp))}°${state.unit}`;
+  const tempStr = `${Math.round(convertTemp(w.temp))}°${state.unit}`;
+  const rows = bd.parts.length
+    ? bd.parts.map((p) => {
+        const cls = p.delta > 0 ? "up" : p.delta < 0 ? "down" : "flat";
+        const barPct = Math.min(100, Math.abs(p.delta) * 22);
+        return `
+          <li class="feels-row feels-row-${cls}">
+            <span class="feels-label">${escapeHtml(p.label)}</span>
+            <span class="feels-bar-wrap"><span class="feels-bar" style="width:${barPct.toFixed(0)}%"></span></span>
+            <span class="feels-delta">${dispDelta(p.delta)}</span>
+            <span class="feels-hint-text">${escapeHtml(p.hint || "")}</span>
+          </li>`;
+      }).join("")
+    : `<li class="feels-row feels-row-flat"><span class="feels-label">No modifiers</span><span class="feels-hint-text">Wind &amp; humidity aren't tilting perception right now.</span></li>`;
+  el.feelsPopover.innerHTML = `
+    <header class="feels-head">
+      <span>Air ${tempStr} · Feels ${feelsStr}</span>
+      <button class="feels-close" type="button" aria-label="Close">
+        <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
+      </button>
+    </header>
+    <ul class="feels-list">${rows}</ul>
+    ${bd.note ? `<p class="feels-note">${escapeHtml(bd.note)}</p>` : ""}
+  `;
+  el.feelsPopover.querySelector(".feels-close")?.addEventListener("click", () => {
+    hideFeelsPopover();
+  });
+}
+
+function showFeelsPopover() {
+  if (!el.feelsPopover || !el.feelsLike) return;
+  el.feelsPopover.hidden = false;
+  el.feelsLike.setAttribute("aria-expanded", "true");
+}
+
+function hideFeelsPopover() {
+  if (!el.feelsPopover || !el.feelsLike) return;
+  el.feelsPopover.hidden = true;
+  el.feelsLike.setAttribute("aria-expanded", "false");
+}
+
+function bindFeelsLike() {
+  if (!el.feelsLike || !el.feelsPopover) return;
+  el.feelsLike.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (el.feelsPopover.hidden) showFeelsPopover(); else hideFeelsPopover();
+  });
+  document.addEventListener("click", (e) => {
+    if (el.feelsPopover.hidden) return;
+    if (e.target.closest("#feels-popover") || e.target.closest("#feels-like")) return;
+    hideFeelsPopover();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !el.feelsPopover.hidden) hideFeelsPopover();
+  });
 }
 
 function renderDayRange(w) {
