@@ -3,8 +3,9 @@
 // derive them locally. Each alert is { id, severity, title, detail, ts? }.
 // `ts` lets the UI scrub to the exact moment of the alert when clicked.
 
-export function buildAlerts(weather) {
+export function buildAlerts(weather, { fmtTemp } = {}) {
   if (!weather) return [];
+  const fmtT = fmtTemp || ((c) => `${Math.round(c)}°`);
   const out = [];
   const hours = (weather.hourly || []).slice(0, 24);
   const today = (weather.daily || [])[0];
@@ -17,7 +18,7 @@ export function buildAlerts(weather) {
       id: "severe-heat",
       severity: "danger",
       title: "Severe heat",
-      detail: `Up to ${Math.round(hottest.t)}° at ${shortClock(hottest.ts)} — hydrate, avoid sun.`,
+      detail: `Up to ${fmtT(hottest.t)} at ${shortClock(hottest.ts)} — hydrate, avoid sun.`,
       ts: hottest.ts,
     });
   } else if (hottest && hottest.t >= 30) {
@@ -25,7 +26,7 @@ export function buildAlerts(weather) {
       id: "heat",
       severity: "warn",
       title: "Heat advisory",
-      detail: `Peaks near ${Math.round(hottest.t)}° around ${shortClock(hottest.ts)}.`,
+      detail: `Peaks near ${fmtT(hottest.t)} around ${shortClock(hottest.ts)}.`,
       ts: hottest.ts,
     });
   }
@@ -37,7 +38,7 @@ export function buildAlerts(weather) {
       id: "hard-freeze",
       severity: "danger",
       title: "Hard freeze tonight",
-      detail: `Lows near ${Math.round(coldest.t)}° — bring plants in, drip pipes.`,
+      detail: `Lows near ${fmtT(coldest.t)} — bring plants in, drip pipes.`,
       ts: coldest.ts,
     });
   } else if (coldest && coldest.t <= 2) {
@@ -45,7 +46,7 @@ export function buildAlerts(weather) {
       id: "frost",
       severity: "warn",
       title: "Frost overnight",
-      detail: `Drops to ${Math.round(coldest.t)}° around ${shortClock(coldest.ts)}.`,
+      detail: `Drops to ${fmtT(coldest.t)} around ${shortClock(coldest.ts)}.`,
       ts: coldest.ts,
     });
   }

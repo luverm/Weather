@@ -13,7 +13,6 @@ import { ui } from "./ui.js";
 import { clock } from "./clock.js";
 import { Scrubber } from "./scrubber.js";
 import { AmbientAudio } from "./audio.js";
-import { narrate } from "./narrative.js";
 import { places } from "./places.js";
 import { RadarMap } from "./radar-map.js";
 import { installShortcuts } from "./shortcuts.js";
@@ -207,8 +206,9 @@ async function loadByCoords(place) {
   const w = await getWeather(place.lat, place.lon);
   app.weather = w;
 
-  // Render full UI (live + forecasts + narrative).
-  ui.setWeather(w, { narrative: narrate(w) });
+  // Render full UI (live + forecasts + narrative). ui.setWeather builds the
+  // narrative itself so it always renders in the active display unit.
+  ui.setWeather(w);
 
   // Apply to scenes at current (live) time.
   applyScene(w);

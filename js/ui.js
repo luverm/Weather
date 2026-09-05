@@ -6,6 +6,7 @@ import { places } from "./places.js";
 import { HourlyChart } from "./hourly-chart.js";
 import { ComfortStrip } from "./comfort-strip.js";
 import { advise } from "./advice.js";
+import { narrate } from "./narrative.js";
 import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
@@ -198,7 +199,12 @@ export const ui = {
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
-    if (el.narrative) el.narrative.textContent = narrative || "";
+    // Build the narrative here so it always uses the display unit. Callers
+    // may still pass one for legacy reasons — honour it if given.
+    const narrativeText = narrative ?? narrate(weather, {
+      fmtTemp: fmtTempDisplay, fmtDelta: fmtDeltaDisplay,
+    });
+    if (el.narrative) el.narrative.textContent = narrativeText;
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
@@ -247,6 +253,8 @@ export const ui = {
 // ---------- Rendering ----------
 
 function convertTemp(c) { return state.unit === "F" ? c * 9 / 5 + 32 : c; }
+function fmtTempDisplay(c) { return c == null ? "—°" : `${Math.round(convertTemp(c))}°`; }
+function fmtDeltaDisplay(c) { return c == null ? "—°" : `${Math.round(state.unit === "F" ? c * 9 / 5 : c)}°`; }
 
 function animateNumber(node, target, format) {
   if (target == null || isNaN(target)) { node.textContent = "–"; return; }
@@ -677,7 +685,7 @@ function renderInsights(w) {
     weekday: "short",
     ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
   });
-  const items = buildInsights(w, { fmtTime: fmt, weekday });
+  const items = buildInsights(w, { fmtTime: fmt, weekday, fmtTemp: fmtTempDisplay });
   if (!items.length) {
     el.insightsCard.hidden = true;
     return;
@@ -725,7 +733,7 @@ function renderWeekend(w) {
 
 function renderAlerts(w) {
   if (!el.alertsStrip) return;
-  const alerts = buildAlerts(w);
+  const alerts = buildAlerts(w, { fmtTemp: fmtTempDisplay });
   // Respect per-place dismissals so the user isn't nagged.
   const dismissed = getDismissedAlerts();
   const visible = alerts.filter((a) => !dismissed.has(a.id));
