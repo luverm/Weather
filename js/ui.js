@@ -26,6 +26,8 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  dayRangeLoTick: $("#day-range-lo-tick"),
+  dayRangeHiTick: $("#day-range-hi-tick"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -282,15 +284,17 @@ function renderLiveValues(w, { animate = true } = {}) {
 
 function renderDayRange(w) {
   if (!el.dayRange || !el.dayRangeMarker) return;
-  // Pull today's min/max from the daily forecast; fall back to nearest hour
-  // span if the daily isn't ready yet.
+  // The axis spans today's full calendar-day range (which may include an
+  // already-passed overnight low). The ticks then point to the upcoming
+  // peak & lull inside that same axis, so you can see how far away the
+  // next high and low really are from now.
   const today = w.daily?.[0];
+  const upcoming = (w.hourly || []).slice(0, 24).filter((h) => h?.temp != null);
   let lo = today?.tempMin, hi = today?.tempMax;
   if (lo == null || hi == null) {
-    const hours = (w.hourly || []).slice(0, 24).map((h) => h.temp).filter((v) => v != null);
-    if (hours.length < 2) { el.dayRange.hidden = true; return; }
-    lo = Math.min(...hours);
-    hi = Math.max(...hours);
+    if (upcoming.length < 2) { el.dayRange.hidden = true; return; }
+    lo = Math.min(...upcoming.map((h) => h.temp));
+    hi = Math.max(...upcoming.map((h) => h.temp));
   }
   if (lo == null || hi == null || lo === hi) {
     el.dayRange.hidden = true;
@@ -303,6 +307,43 @@ function renderDayRange(w) {
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+  // Ticks: pinpoint the coming coolest/warmest hour within the 24h window.
+  let loHour = null, hiHour = null;
+  for (const h of upcoming) {
+    if (loHour == null || h.temp < loHour.temp) loHour = h;
+    if (hiHour == null || h.temp > hiHour.temp) hiHour = h;
+  }
+  positionRangeTick(
+    el.dayRangeLoTick, loHour?.temp, lo, hi,
+    loHour ? `Coolest ahead · ${formatHourShort(loHour.time)} · ${Math.round(convertTemp(loHour.temp))}°` : "",
+  );
+  positionRangeTick(
+    el.dayRangeHiTick, hiHour?.temp, lo, hi,
+    hiHour ? `Warmest ahead · ${formatHourShort(hiHour.time)} · ${Math.round(convertTemp(hiHour.temp))}°` : "",
+  );
+  el.dayRangeMin.title = loHour ? `Next low at ${formatHourShort(loHour.time)}` : "";
+  el.dayRangeMax.title = hiHour ? `Next high at ${formatHourShort(hiHour.time)}` : "";
+}
+
+function positionRangeTick(node, temp, lo, hi, title) {
+  if (!node) return;
+  if (temp == null || lo == null || hi == null || hi === lo) {
+    node.hidden = true;
+    return;
+  }
+  const frac = Math.max(0, Math.min(1, (temp - lo) / (hi - lo)));
+  node.hidden = false;
+  node.style.left = `${(frac * 100).toFixed(1)}%`;
+  node.title = title || "";
+}
+
+function formatHourShort(ts) {
+  if (!ts) return "";
+  const h = new Date(ts).getHours();
+  if (h === 0) return "12a";
+  if (h === 12) return "12p";
+  if (h < 12) return `${h}a`;
+  return `${h - 12}p`;
 }
 
 function renderMetrics(w) {
