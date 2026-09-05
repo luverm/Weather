@@ -1496,10 +1496,26 @@ kbd {
   background: rgba(255,255,255,0.08);
   overflow: hidden;
 }
+.daily-range--today { overflow: visible; }
 .daily-range-fill {
   position: absolute; top: 0; bottom: 0;
   background: linear-gradient(90deg, #9ad1ff, #ffe6c7, #ff9c7a);
   border-radius: 3px;
+}
+.daily-range-now {
+  position: absolute;
+  top: 50%;
+  width: 10px; height: 10px;
+  margin-left: -5px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--fg);
+  transform: translateY(-50%);
+  box-shadow: 0 1px 6px rgba(0,0,0,0.4);
+  transition: left 380ms var(--ease);
+  pointer-events: auto;
+  cursor: help;
+  z-index: 3;
 }
 .daily-temp-min, .daily-temp-max {
   font-size: 13px; font-variant-numeric: tabular-nums;

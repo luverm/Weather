@@ -919,11 +919,22 @@ function renderDaily(w) {
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    // On today's row (i === 0), plot a "you are here" dot so the hero temp
+    // is contextualised against the whole week's ranges below it.
+    let nowMarker = "";
+    if (i === 0 && w.temp != null && d.tempMin != null && d.tempMax != null && d.tempMax > d.tempMin) {
+      const clamped = Math.max(d.tempMin, Math.min(d.tempMax, w.temp));
+      const frac = (clamped - gMin) / span;
+      const nowPct = Math.max(0, Math.min(100, frac * 100));
+      const tempNow = Math.round(convertTemp(w.temp));
+      nowMarker = `<div class="daily-range-now" style="left:${nowPct.toFixed(1)}%" title="Now · ${tempNow}°"></div>`;
+    }
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
-      <div class="daily-range">
+      <div class="daily-range${i === 0 ? " daily-range--today" : ""}">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
+        ${nowMarker}
       </div>
       <span class="daily-temp-min">${Math.round(convertTemp(d.tempMin))}°</span>
       <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°</span>
