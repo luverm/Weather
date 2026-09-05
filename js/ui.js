@@ -22,6 +22,7 @@ const el = {
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
+  feelsLikeText: $("#feels-like-text"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -286,7 +287,11 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  // Update ONLY the text node so the sibling #temp-trend span survives.
+  // (Setting el.feelsLike.textContent used to wipe the span out on every
+  // render, silently breaking the "▲ 3°/3h" trend indicator.)
+  if (el.feelsLikeText) el.feelsLikeText.textContent = `Feels like ${Math.round(feels)}°`;
+  else el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
 }
 
@@ -853,13 +858,15 @@ function renderTrends(w) {
     const cur = w.temp;
     const future = hrs.find((h) => h.time > Date.now() + 2.5 * 3600_000);
     if (future && cur != null) {
-      const delta = future.temp - cur;
-      if (Math.abs(delta) < 1) {
+      const deltaC = future.temp - cur;
+      // Scale to the active display unit so °F users see °F deltas.
+      const deltaDisp = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
+      if (Math.abs(deltaDisp) < 1) {
         el.tempTrend.className = "temp-trend flat";
         el.tempTrend.textContent = "→ steady";
       } else {
-        el.tempTrend.className = delta > 0 ? "temp-trend up" : "temp-trend down";
-        el.tempTrend.textContent = `${delta > 0 ? "▲" : "▼"} ${Math.round(Math.abs(delta))}°/3h`;
+        el.tempTrend.className = deltaDisp > 0 ? "temp-trend up" : "temp-trend down";
+        el.tempTrend.textContent = `${deltaDisp > 0 ? "▲" : "▼"} ${Math.round(Math.abs(deltaDisp))}°/3h`;
       }
     } else {
       el.tempTrend.textContent = "";
