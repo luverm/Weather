@@ -77,6 +77,7 @@ const el = {
   refreshBtn: $("#refresh-btn"),
   fetchedAgo: $("#fetched-ago"),
   dailyIconStrip: $("#daily-icon-strip"),
+  dailyPrecipStrip: $("#daily-precip-strip"),
   settingsBtn: $("#settings-btn"),
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
@@ -852,6 +853,7 @@ function renderDaily(w) {
   const days = (w.daily || []).slice(0, 7);
   if (!days.length) return;
   renderDailyIconStrip(days);
+  renderDailyPrecipStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
   // Global min/max for the range bar.
@@ -898,6 +900,56 @@ function renderDailyIconStrip(days) {
   el.dailyIconStrip.innerHTML = days.map((d) =>
     `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
   ).join("");
+}
+
+// Show precipitation totals per day as a small bar strip. Bars scale to the
+// wettest day; the wettest is highlighted; if the whole week is dry, hide.
+function renderDailyPrecipStrip(days) {
+  if (!el.dailyPrecipStrip) return;
+  const precipMm = days.map((d) => Math.max(0, Number(d.precip) || 0));
+  const max = precipMm.reduce((m, v) => (v > m ? v : m), 0);
+  // Wet threshold in mm: even 0.2 mm rounds to 0 inches, so hide until we cross a
+  // visible amount. Dry weeks stay clean.
+  if (max < 0.2) {
+    el.dailyPrecipStrip.hidden = true;
+    el.dailyPrecipStrip.innerHTML = "";
+    return;
+  }
+  const wettestIdx = precipMm.indexOf(max);
+  const tz = state.weather?.timezone;
+  const bars = days.map((d, i) => {
+    const mm = precipMm[i];
+    const heightPct = max > 0 ? Math.max(6, (mm / max) * 100) : 0;
+    const wet = mm >= 0.2;
+    const label = formatPrecip(mm);
+    const dayName = i === 0 ? "Today" : new Date(d.time).toLocaleDateString(undefined, {
+      weekday: "short",
+      ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    });
+    const title = `${dayName}: ${wet ? label : "no rain"}`;
+    return `
+      <div class="precip-cell ${wet ? "wet" : "dry"} ${i === wettestIdx && wet ? "peak" : ""}" title="${escapeHtml(title)}">
+        <span class="precip-bar-wrap" aria-hidden="true">
+          <span class="precip-bar" style="height:${heightPct.toFixed(1)}%"></span>
+        </span>
+        <span class="precip-amount">${wet ? label : "·"}</span>
+      </div>`;
+  }).join("");
+  el.dailyPrecipStrip.innerHTML = bars;
+  el.dailyPrecipStrip.hidden = false;
+}
+
+// Precipitation in the display unit. mm for °C users, in for °F users; keep
+// one decimal for small amounts, round for larger ones.
+function formatPrecip(mm) {
+  if (!isFinite(mm) || mm <= 0) return "0";
+  if (state.unit === "F") {
+    const inches = mm / 25.4;
+    if (inches < 0.1) return `${inches.toFixed(2)}″`;
+    return `${inches.toFixed(1)}″`;
+  }
+  if (mm < 1) return `${mm.toFixed(1)} mm`;
+  return `${Math.round(mm)} mm`;
 }
 
 function renderDailySpark(days) {
