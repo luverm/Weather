@@ -1470,7 +1470,43 @@ kbd {
   transition: background 200ms var(--ease);
 }
 .daily-item:hover { background: var(--glass); }
-.daily-day { font-size: 13px; font-weight: 500; }
+.daily-day {
+  font-size: 13px; font-weight: 500;
+  display: flex; flex-direction: column; gap: 3px;
+  align-items: flex-start;
+  min-width: 0;
+}
+.daily-day-label { line-height: 1.1; }
+.daily-badge {
+  display: inline-flex; align-items: center;
+  padding: 1px 6px; border-radius: 999px;
+  font-size: 9.5px; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  line-height: 1.5;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.daily-badge + .daily-badge { margin-top: 2px; }
+.daily-badge.warm {
+  color: #ffd0b3;
+  background: rgba(255, 156, 122, 0.14);
+  border-color: rgba(255, 156, 122, 0.32);
+}
+.daily-badge.cold {
+  color: #cfe5ff;
+  background: rgba(154, 209, 255, 0.14);
+  border-color: rgba(154, 209, 255, 0.32);
+}
+.daily-badge.wet {
+  color: #c9d4ff;
+  background: rgba(160, 168, 255, 0.14);
+  border-color: rgba(160, 168, 255, 0.32);
+}
+@media (prefers-color-scheme: light) {
+  .daily-badge.warm { color: #a34216; background: rgba(255, 120, 80, 0.14); border-color: rgba(255, 120, 80, 0.35); }
+  .daily-badge.cold { color: #1e5a99; background: rgba(90, 160, 240, 0.16); border-color: rgba(90, 160, 240, 0.4); }
+  .daily-badge.wet  { color: #3a3f9c; background: rgba(120, 130, 240, 0.14); border-color: rgba(120, 130, 240, 0.35); }
+}
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
 .daily-range {
   position: relative;

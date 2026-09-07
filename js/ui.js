@@ -861,6 +861,7 @@ function renderDaily(w) {
     if (d.tempMax > gMax) gMax = d.tempMax;
   }
   const span = Math.max(1, gMax - gMin);
+  const extremes = weekExtremes(days);
   days.forEach((d, i) => {
     const dt = new Date(d.time);
     const tz = state.weather?.timezone;
@@ -878,8 +879,12 @@ function renderDaily(w) {
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const badgeHtml = badgesFor(i, extremes);
     item.innerHTML = `
-      <span class="daily-day">${day}</span>
+      <span class="daily-day">
+        <span class="daily-day-label">${day}</span>
+        ${badgeHtml}
+      </span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
@@ -891,6 +896,34 @@ function renderDaily(w) {
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+}
+
+// Which days in the visible week are the warmest, coldest, wettest?
+// We only flag a "wettest" day if it actually rained at all (> 0.5 mm), and
+// we only flag warm/cold when the spread across the week is meaningful.
+function weekExtremes(days) {
+  const out = { warmIdx: -1, coldIdx: -1, wetIdx: -1 };
+  if (!days?.length || days.length < 2) return out;
+  let warmVal = -Infinity, coldVal = Infinity, wetVal = -Infinity;
+  days.forEach((d, i) => {
+    if (d.tempMax != null && d.tempMax > warmVal) { warmVal = d.tempMax; out.warmIdx = i; }
+    if (d.tempMin != null && d.tempMin < coldVal) { coldVal = d.tempMin; out.coldIdx = i; }
+    if (d.precip != null && d.precip > wetVal) { wetVal = d.precip; out.wetIdx = i; }
+  });
+  // Suppress warm/cold badges when the week is essentially flat.
+  const tempSpread = warmVal - coldVal;
+  if (!isFinite(tempSpread) || tempSpread < 3) { out.warmIdx = -1; out.coldIdx = -1; }
+  // Suppress wet badge when there's no meaningful precip.
+  if (!(wetVal > 0.5)) out.wetIdx = -1;
+  return out;
+}
+
+function badgesFor(i, extremes) {
+  const parts = [];
+  if (i === extremes.warmIdx) parts.push(`<span class="daily-badge warm" title="Warmest of the week">Warmest</span>`);
+  if (i === extremes.coldIdx) parts.push(`<span class="daily-badge cold" title="Coldest of the week">Coldest</span>`);
+  if (i === extremes.wetIdx)  parts.push(`<span class="daily-badge wet"  title="Wettest of the week">Wettest</span>`);
+  return parts.join("");
 }
 
 function renderDailyIconStrip(days) {
