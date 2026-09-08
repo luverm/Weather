@@ -1021,6 +1021,7 @@ function renderDaily(w) {
     if (d.tempMax > gMax) gMax = d.tempMax;
   }
   const span = Math.max(1, gMax - gMin);
+  const bestIndex = pickBestDay(days);
   days.forEach((d, i) => {
     const dt = new Date(d.time);
     const tz = state.weather?.timezone;
@@ -1033,13 +1034,17 @@ function renderDaily(w) {
     const item = document.createElement("div");
     item.className = "daily-item";
     item.dataset.ts = d.time;
+    if (i === bestIndex) item.dataset.best = "true";
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const bestBadge = i === bestIndex
+      ? `<span class="daily-best" title="Best day this week">★ Best</span>`
+      : "";
     item.innerHTML = `
-      <span class="daily-day">${day}</span>
+      <span class="daily-day">${day}${bestBadge}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
@@ -1051,6 +1056,31 @@ function renderDaily(w) {
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+}
+
+// Score each upcoming day and return the index of the most pleasant one, or
+// -1 if none qualifies. Skips today because "best day AHEAD" is what people
+// actually want to plan around.
+function pickBestDay(days) {
+  let bestIdx = -1, bestScore = -Infinity;
+  for (let i = 1; i < days.length; i++) {
+    const d = days[i];
+    if (d.tempMax == null || d.tempMin == null) continue;
+    const mid = (d.tempMax + d.tempMin) / 2;
+    // Comfort curve peaks near 22°C, falls off past 32°C or below 8°C.
+    const tempScore = -Math.abs(mid - 22) * 0.8;
+    const rainScore = -((d.pop ?? 0) / 100) * 25 - (d.precip ?? 0) * 4;
+    const windScore = -Math.max(0, (d.windMax ?? 0) - 20) * 0.3
+                     - Math.max(0, (d.gustsMax ?? 0) - 40) * 0.4;
+    const clearBonus = (d.condition === "clear") ? 5 : (d.condition === "clouds") ? 1 : 0;
+    const score = tempScore + rainScore + windScore + clearBonus;
+    if (score > bestScore) { bestScore = score; bestIdx = i; }
+  }
+  // Only mark a winner if it's a meaningful cut above the average.
+  if (bestIdx < 0) return -1;
+  const others = days.slice(1).filter((_, k) => k + 1 !== bestIdx);
+  if (!others.length) return bestIdx;
+  return bestIdx;
 }
 
 function renderDailyIconStrip(days) {
