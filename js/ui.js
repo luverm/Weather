@@ -90,6 +90,10 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcGoldenAm: $("#sun-arc-golden-am"),
+  sunArcGoldenPm: $("#sun-arc-golden-pm"),
+  sunGolden: $("#sun-golden"),
+  sunGoldenText: $("#sun-golden-text"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -122,6 +126,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  sunGoldenTimer: null,
   localTimer: null,
 };
 
@@ -523,6 +528,7 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleGoldenHour(w);
 }
 
 function scheduleSunArc(w) {
@@ -585,6 +591,90 @@ function scheduleSunCountdown(w) {
   };
   update();
   state.sunTimer = setInterval(update, 30_000);
+}
+
+// Golden hour: the first ~60 min after sunrise and the last ~60 min before
+// sunset. We draw two highlighted segments on the sun arc, and surface a small
+// chip that counts down to (or through) the current window.
+function scheduleGoldenHour(w) {
+  if (state.sunGoldenTimer) { clearInterval(state.sunGoldenTimer); state.sunGoldenTimer = null; }
+  const am = el.sunArcGoldenAm, pm = el.sunArcGoldenPm;
+  const chip = el.sunGolden, chipText = el.sunGoldenText;
+  if (!am || !pm || !chip) return;
+  if (!w?.daily?.length) {
+    am.setAttribute("stroke-dasharray", "0 1"); am.style.opacity = "0";
+    pm.setAttribute("stroke-dasharray", "0 1"); pm.style.opacity = "0";
+    chip.hidden = true;
+    return;
+  }
+
+  const GOLDEN_MS = 60 * 60 * 1000;
+
+  const update = () => {
+    const now = Date.now();
+    // Pick the day whose daylight window brackets now — or the next one.
+    const day = pickGoldenDay(w.daily, now);
+    if (!day) {
+      am.setAttribute("stroke-dasharray", "0 1"); am.style.opacity = "0";
+      pm.setAttribute("stroke-dasharray", "0 1"); pm.style.opacity = "0";
+      chip.hidden = true;
+      return;
+    }
+    const daylight = Math.max(1, day.sunset - day.sunrise);
+    // Fraction of daylight covered by 60 minutes (capped so it never dominates).
+    const frac = Math.min(0.25, GOLDEN_MS / daylight);
+
+    // Morning arc: from t=0 to t=frac.
+    am.setAttribute("stroke-dasharray", `${frac.toFixed(4)} 1`);
+    am.setAttribute("stroke-dashoffset", "0");
+    // Evening arc: from t=(1-frac) to t=1. Shift the dash pattern left so the
+    // visible dash sits at the end of the path.
+    pm.setAttribute("stroke-dasharray", `${frac.toFixed(4)} 1`);
+    pm.setAttribute("stroke-dashoffset", `${(-(1 - frac)).toFixed(4)}`);
+
+    // Only reveal the arc segments when the day-in-view is today or upcoming.
+    const isTodayView = now >= day.sunrise - 3 * 3600_000 && now <= day.sunset + 3 * 3600_000;
+    am.style.opacity = isTodayView ? "1" : "0";
+    pm.style.opacity = isTodayView ? "1" : "0";
+
+    // Chip: pick the closest golden window and describe it.
+    const amStart = day.sunrise, amEnd = day.sunrise + GOLDEN_MS;
+    const pmStart = day.sunset - GOLDEN_MS, pmEnd = day.sunset;
+    let label = null;
+    if (now >= amStart && now <= amEnd) {
+      const mins = Math.max(1, Math.round((amEnd - now) / 60_000));
+      label = `Golden hour · ${mins}m left`;
+    } else if (now >= pmStart && now <= pmEnd) {
+      const mins = Math.max(1, Math.round((pmEnd - now) / 60_000));
+      label = `Golden hour · ${mins}m left`;
+    } else if (now < amStart && amStart - now <= 3 * 3600_000) {
+      label = `Golden hour in ${fmtRelMinutes(amStart - now)}`;
+    } else if (now > amEnd && now < pmStart && pmStart - now <= 3 * 3600_000) {
+      label = `Golden hour in ${fmtRelMinutes(pmStart - now)}`;
+    }
+    if (label) {
+      chipText.textContent = label;
+      chip.hidden = false;
+    } else {
+      chip.hidden = true;
+    }
+  };
+  update();
+  state.sunGoldenTimer = setInterval(update, 30_000);
+}
+
+function pickGoldenDay(daily, now) {
+  // Prefer today's window if any part is still ahead, else the next day.
+  for (const d of daily) {
+    if (!d.sunrise || !d.sunset) continue;
+    if (now <= d.sunset + 30 * 60_000) return d;
+  }
+  return daily.find((d) => d.sunrise && d.sunset) || null;
+}
+
+function fmtRelMinutes(ms) {
+  const mins = Math.max(1, Math.round(ms / 60_000));
+  return mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
 }
 
 function renderAdvice(w) {
