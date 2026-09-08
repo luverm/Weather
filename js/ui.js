@@ -291,6 +291,66 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
   renderYesterday(w);
+  updateFavicon(w);
+}
+
+// Swap the browser-tab favicon to reflect the current condition (and
+// day/night for clear skies). Static SVG string per bucket, so this is a
+// cheap update on every render.
+function updateFavicon(w) {
+  if (!w?.condition) return;
+  const isNight = w.isDay === false;
+  const key = w.condition + (w.condition === "clear" && isNight ? ":night" : "");
+  if (updateFavicon._last === key) return;
+  updateFavicon._last = key;
+  const svg = faviconSvg(w.condition, isNight);
+  const href = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+  let link = document.querySelector('link[rel="icon"]');
+  if (!link) {
+    link = document.createElement("link");
+    link.rel = "icon";
+    document.head.appendChild(link);
+  }
+  link.href = href;
+}
+
+function faviconSvg(condition, isNight) {
+  const bg = "#0b1020";
+  const wrap = (inner) =>
+    `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>` +
+    `<rect width='64' height='64' rx='14' fill='${bg}'/>${inner}</svg>`;
+  switch (condition) {
+    case "clear":
+      return isNight
+        ? wrap(`<path d='M42 22a14 14 0 1 0 0 20 12 12 0 0 1 0-20z' fill='#e6e6f2'/>`)
+        : wrap(`<circle cx='32' cy='32' r='14' fill='#ffd766'/>`);
+    case "clouds":
+      return wrap(`<path d='M18 40a8 8 0 0 1 0-16 12 12 0 0 1 22-2 8 8 0 0 1 4 18H18z' fill='#c9d3e2'/>`);
+    case "rain":
+      return wrap(
+        `<path d='M18 36a8 8 0 0 1 0-16 12 12 0 0 1 22-2 8 8 0 0 1 4 18H18z' fill='#c9d3e2'/>` +
+        `<path d='M22 44l-3 8M32 44l-3 8M42 44l-3 8' stroke='#7cb8ff' stroke-width='3.5' stroke-linecap='round'/>`
+      );
+    case "snow":
+      return wrap(
+        `<path d='M18 36a8 8 0 0 1 0-16 12 12 0 0 1 22-2 8 8 0 0 1 4 18H18z' fill='#c9d3e2'/>` +
+        `<g fill='#ffffff'><circle cx='22' cy='48' r='2.5'/><circle cx='32' cy='52' r='2.5'/><circle cx='42' cy='48' r='2.5'/></g>`
+      );
+    case "storm":
+      return wrap(
+        `<path d='M18 34a8 8 0 0 1 0-16 12 12 0 0 1 22-2 8 8 0 0 1 4 18H18z' fill='#a9b3c4'/>` +
+        `<path d='M32 34l-6 12h6l-4 10 10-14h-6l4-8z' fill='#ffd766'/>`
+      );
+    case "fog":
+      return wrap(
+        `<g stroke='#c9d3e2' stroke-width='5' stroke-linecap='round'>` +
+        `<line x1='14' y1='24' x2='50' y2='24'/>` +
+        `<line x1='14' y1='34' x2='50' y2='34'/>` +
+        `<line x1='14' y1='44' x2='42' y2='44'/></g>`
+      );
+    default:
+      return wrap(`<circle cx='32' cy='32' r='14' fill='#ffd766'/>`);
+  }
 }
 
 function renderYesterday(w) {
