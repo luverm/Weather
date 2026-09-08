@@ -288,10 +288,20 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  const cloudLabel = renderCloudCoverLabel(w);
+  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°${cloudLabel}`;
   renderDayRange(w);
   renderYesterday(w);
   updateFavicon(w);
+}
+
+// Compact " · 42% clouds" tag appended after feels-like. Skipped for extreme
+// ends (near clear or overcast) — the temperature line already tells that
+// story via the condition label.
+function renderCloudCoverLabel(w) {
+  const c = w.cloudCover;
+  if (c == null || c < 15 || c > 92) return "";
+  return ` · ${Math.round(c)}% clouds`;
 }
 
 // Swap the browser-tab favicon to reflect the current condition (and
