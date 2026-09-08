@@ -1097,6 +1097,32 @@ kbd {
 html[data-reduce-motion="true"] .sun-golden,
 html[data-reduce-motion="true"] .sun-golden-dot { animation: none; }
 
+.sun-daylight-delta {
+  margin-top: 2px;
+  padding: 3px 9px;
+  align-self: start;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-muted);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--stroke);
+  animation: fadeSlideIn 380ms var(--ease);
+}
+.sun-daylight-delta[hidden] { display: none; }
+.sun-daylight-delta[data-dir="longer"] {
+  color: #ffd9a8;
+  background: rgba(255, 210, 160, 0.12);
+  border-color: rgba(255, 210, 160, 0.28);
+}
+.sun-daylight-delta[data-dir="shorter"] {
+  color: #b3c6ea;
+  background: rgba(122, 174, 255, 0.10);
+  border-color: rgba(122, 174, 255, 0.24);
+}
+html[data-reduce-motion="true"] .sun-daylight-delta { animation: none; }
+
 /* ---------- Radar map ---------- */
 .radar {
   padding: 12px;

@@ -99,6 +99,7 @@ const el = {
   sunArcGoldenPm: $("#sun-arc-golden-pm"),
   sunGolden: $("#sun-golden"),
   sunGoldenText: $("#sun-golden-text"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -573,6 +574,31 @@ function renderSun(w) {
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   scheduleGoldenHour(w);
+  renderDaylightDelta(w);
+}
+
+// Compare tomorrow's daylight duration with today's to surface the tiny
+// astronomical drift most people never see. Hidden if we can't compute both.
+function renderDaylightDelta(w) {
+  const chip = el.sunDaylightDelta;
+  if (!chip) return;
+  const days = w?.daily || [];
+  const today = days[0], tomorrow = days[1];
+  if (!today?.sunrise || !today?.sunset || !tomorrow?.sunrise || !tomorrow?.sunset) {
+    chip.hidden = true; return;
+  }
+  const dToday = today.sunset - today.sunrise;
+  const dTomo = tomorrow.sunset - tomorrow.sunrise;
+  const deltaMin = Math.round((dTomo - dToday) / 60_000);
+  if (Math.abs(deltaMin) < 1) {
+    chip.hidden = true; return;
+  }
+  const abs = Math.abs(deltaMin);
+  const dur = abs >= 60 ? `${Math.floor(abs / 60)}h ${abs % 60}m` : `${abs}m`;
+  const dir = deltaMin > 0 ? "longer" : "shorter";
+  chip.textContent = `Tomorrow · ${deltaMin > 0 ? "+" : "−"}${dur} ${dir}`;
+  chip.dataset.dir = deltaMin > 0 ? "longer" : "shorter";
+  chip.hidden = false;
 }
 
 function scheduleSunArc(w) {
