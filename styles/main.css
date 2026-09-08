@@ -1665,16 +1665,15 @@ html[data-reduce-motion="true"] .sun-daylight-delta { animation: none; }
 .daily-best {
   display: inline-flex;
   align-items: center;
-  padding: 1px 6px;
-  border-radius: 999px;
-  font-size: 9.5px;
-  letter-spacing: 0.08em;
-  font-weight: 500;
+  justify-content: center;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  font-size: 9px;
+  line-height: 1;
   color: #ffd88a;
-  background: rgba(255, 200, 120, 0.14);
-  border: 1px solid rgba(255, 200, 120, 0.34);
-  text-transform: uppercase;
-  font-variant-numeric: tabular-nums;
+  background: rgba(255, 200, 120, 0.16);
+  border: 1px solid rgba(255, 200, 120, 0.38);
+  text-shadow: 0 0 4px rgba(255, 200, 120, 0.55);
 }
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
 .daily-range {

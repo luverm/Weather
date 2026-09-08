@@ -1150,7 +1150,7 @@ function renderDaily(w) {
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
     const bestBadge = i === bestIndex
-      ? `<span class="daily-best" title="Best day this week">★ Best</span>`
+      ? `<span class="daily-best" title="Best day ahead" aria-label="Best day ahead">★</span>`
       : "";
     item.innerHTML = `
       <span class="daily-day">${day}${bestBadge}</span>
