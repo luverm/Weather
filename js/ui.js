@@ -292,7 +292,24 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°${cloudLabel}`;
   renderDayRange(w);
   renderYesterday(w);
+  renderTempPill(w);
   updateFavicon(w);
+}
+
+// Tiny state pill next to the temperature: "Freezing" when apparent temp
+// slips to 0°C (32°F) or below, "Scorching" at 35°C (95°F) or above.
+// Silent in the comfortable middle so it stays a real signal.
+function renderTempPill(w) {
+  if (!el.conditionLabel) return;
+  const base = w.condition;
+  // Reset any previous pill state.
+  el.conditionLabel.classList.remove("condition-freezing", "condition-scorching");
+  const feels = w.feelsLike ?? w.temp;
+  if (feels == null) return;
+  if (feels <= 0) el.conditionLabel.classList.add("condition-freezing");
+  else if (feels >= 35) el.conditionLabel.classList.add("condition-scorching");
+  // Keep the underlying label text as-is; the class does the styling.
+  void base;
 }
 
 // Compact " · 42% clouds" tag appended after feels-like. Skipped for extreme

@@ -390,6 +390,34 @@ html[data-reduce-motion="true"] *::after {
 }
 .unit:hover { background: var(--glass); color: var(--fg); }
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
+.condition-label.condition-freezing::after {
+  content: "❄ Freezing";
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  vertical-align: middle;
+  color: #cfe0ff;
+  background: rgba(122, 174, 255, 0.16);
+  border: 1px solid rgba(122, 174, 255, 0.36);
+  text-shadow: 0 0 6px rgba(122, 174, 255, 0.4);
+}
+.condition-label.condition-scorching::after {
+  content: "☀ Scorching";
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  vertical-align: middle;
+  color: #ffd0a5;
+  background: rgba(255, 156, 122, 0.18);
+  border: 1px solid rgba(255, 156, 122, 0.4);
+  text-shadow: 0 0 6px rgba(255, 156, 122, 0.4);
+}
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
 .day-range {
   margin-top: 10px;
