@@ -855,6 +855,17 @@ html[data-reduce-motion="true"] .yesterday-chip { animation: none; }
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
 }
+.chart-avg-line {
+  color: var(--fg-dim);
+  pointer-events: none;
+}
+.chart-avg-label {
+  font-size: 8.5px;
+  fill: var(--fg-dim);
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
 .chart-labels text {
   font-size: 9px;
   fill: var(--fg-dim);

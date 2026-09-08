@@ -182,6 +182,29 @@ export class HourlyChart {
     this.svg.querySelector("#chart-temp-line").setAttribute("d", linePath.trim());
     this.svg.querySelector("#chart-temp-fill").setAttribute("d", fillPath);
 
+    // Average-temperature reference line + label.
+    const avgLine = this.svg.querySelector("#chart-avg-line");
+    const avgLabel = this.svg.querySelector("#chart-avg-label");
+    if (avgLine && avgLabel && temps.length >= 4) {
+      const avg = temps.reduce((s, v) => s + v, 0) / temps.length;
+      const y = tToY(avg);
+      avgLine.setAttribute("x1", String(PAD_LEFT));
+      avgLine.setAttribute("x2", String(W - PAD_RIGHT));
+      avgLine.setAttribute("y1", y.toFixed(1));
+      avgLine.setAttribute("y2", y.toFixed(1));
+      avgLine.setAttribute("opacity", "0.4");
+      const unit = this.getUnit();
+      const avgU = unit === "F" ? avg * 9 / 5 + 32 : avg;
+      avgLabel.textContent = `avg ${Math.round(avgU)}°`;
+      avgLabel.setAttribute("x", String(W - PAD_RIGHT - 2));
+      avgLabel.setAttribute("y", (y - 3).toFixed(1));
+      avgLabel.setAttribute("text-anchor", "end");
+      avgLabel.setAttribute("opacity", "0.6");
+    } else if (avgLine && avgLabel) {
+      avgLine.setAttribute("opacity", "0");
+      avgLabel.setAttribute("opacity", "0");
+    }
+
     // Gust dashed line — mapped onto the lower half of the plot so it
     // doesn't collide with the temperature line. Shows relative magnitude.
     const gustLine = this.svg.querySelector("#chart-gust-line");
