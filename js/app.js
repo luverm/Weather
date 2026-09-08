@@ -302,6 +302,26 @@ installShortcuts({
     if (app.weather) applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
   },
+  jumpToGolden: () => {
+    if (!app.weather?.daily?.length) return;
+    const now = Date.now();
+    const GOLDEN_MS = 60 * 60 * 1000;
+    // Enumerate all four golden-hour "peaks" (the middle of each morning/
+    // evening window) for the visible daily forecast and pick the next one.
+    const peaks = [];
+    for (const d of app.weather.daily) {
+      if (!d.sunrise || !d.sunset) continue;
+      peaks.push(d.sunrise + GOLDEN_MS / 2);       // morning peak
+      peaks.push(d.sunset - GOLDEN_MS / 2);        // evening peak
+    }
+    const nextPeak = peaks.filter((t) => t > now + 60_000).sort((a, b) => a - b)[0];
+    if (!nextPeak) { ui.showToast?.("No upcoming golden hour"); return; }
+    clock.setOffset(nextPeak - Date.now());
+    scrubber.sync();
+    if (app.weather) applyScene(app.weather);
+    ui.setScrubbing(!clock.isLive());
+    ui.showToast?.("Scrubbed to golden hour");
+  },
 });
 
 // ---------- Start ----------
