@@ -1020,6 +1020,9 @@ kbd {
   margin-top: 4px;
   font-variant-numeric: tabular-nums;
 }
+.metric-sub.gust-spike {
+  color: #ffc47a;
+}
 
 /* ---------- Extras row: AQ + moon + sun ---------- */
 .extras {

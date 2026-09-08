@@ -411,9 +411,16 @@ function renderMetrics(w) {
   el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
-  el.metricWindSub.textContent = dirLabel
-    ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
-    : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+  const gustParts = [];
+  if (dirLabel) gustParts.push(dirLabel);
+  gustParts.push(`gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`);
+  // Gust-vs-sustained ratio: mark punchy gusts (>= ~1.6× sustained AND at
+  // least 30 km/h absolute) so it stands out during storms.
+  const gustSpike = w.windGusts != null && w.windSpeed != null
+    && w.windSpeed >= 8 && w.windGusts >= 30 && w.windGusts >= w.windSpeed * 1.6;
+  if (gustSpike) gustParts.push("punchy");
+  el.metricWindSub.textContent = gustParts.join(" · ");
+  el.metricWindSub.classList.toggle("gust-spike", !!gustSpike);
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
