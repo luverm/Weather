@@ -93,7 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
-    past_hours: 1,
+    past_hours: 25, // enough history for a "vs yesterday" comparison
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -189,6 +189,25 @@ function normalize(d, aq) {
   // Moon phase is not in Open-Meteo's free tier — compute it locally.
   const moon = computeMoonPhase(new Date());
 
+  // Yesterday-at-this-hour comparison: pick the past hourly slot closest to
+  // 24 h ago (tolerance ±90 min) so we can surface a "vs yesterday" delta.
+  let yesterday = null;
+  if (d.hourly?.time && d.hourly.temperature_2m && c.temperature_2m != null) {
+    const target = now - 24 * 3600_000;
+    let bestIdx = -1, bestDiff = Infinity;
+    for (let i = 0; i < d.hourly.time.length; i++) {
+      const t = new Date(d.hourly.time[i]).getTime();
+      const diff = Math.abs(t - target);
+      if (diff < bestDiff) { bestDiff = diff; bestIdx = i; }
+    }
+    if (bestIdx >= 0 && bestDiff <= 90 * 60_000) {
+      const yTemp = d.hourly.temperature_2m[bestIdx];
+      if (yTemp != null) {
+        yesterday = { temp: yTemp, delta: c.temperature_2m - yTemp };
+      }
+    }
+  }
+
   return {
     temp: c.temperature_2m,
     feelsLike: c.apparent_temperature,
@@ -213,6 +232,7 @@ function normalize(d, aq) {
     daily: dailyForecast,
     nowcast,
     moon,
+    yesterday,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
     fetchedAt: now,

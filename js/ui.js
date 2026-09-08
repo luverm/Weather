@@ -26,6 +26,9 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  yesterdayChip: $("#yesterday-chip"),
+  yesterdayText: $("#yesterday-text"),
+  yesterdayArrow: $("#yesterday-arrow"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -283,6 +286,26 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  renderYesterday(w);
+}
+
+function renderYesterday(w) {
+  if (!el.yesterdayChip || !el.yesterdayText || !el.yesterdayArrow) return;
+  const y = w.yesterday;
+  if (!y || y.delta == null) { el.yesterdayChip.hidden = true; return; }
+  // Convert delta into the current display unit. Round to nearest degree; a
+  // delta below half a degree hides the chip so we don't nag with noise.
+  const deltaU = state.unit === "F" ? y.delta * 9 / 5 : y.delta;
+  const rounded = Math.round(deltaU);
+  if (Math.abs(deltaU) < 0.5) { el.yesterdayChip.hidden = true; return; }
+  let arrow, tone, phrase;
+  if (rounded > 0) { arrow = "↑"; tone = "warmer"; phrase = `+${rounded}° warmer than yesterday`; }
+  else if (rounded < 0) { arrow = "↓"; tone = "cooler"; phrase = `${rounded}° cooler than yesterday`; }
+  else { arrow = "→"; tone = "steady"; phrase = "About the same as yesterday"; }
+  el.yesterdayArrow.textContent = arrow;
+  el.yesterdayText.textContent = phrase;
+  el.yesterdayChip.dataset.tone = tone;
+  el.yesterdayChip.hidden = false;
 }
 
 function renderDayRange(w) {
