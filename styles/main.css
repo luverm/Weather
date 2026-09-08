@@ -600,6 +600,49 @@ html[data-reduce-motion="true"] .yesterday-chip { animation: none; }
 }
 .metric-humidity .pressure-spark { color: #9ad1ff; }
 
+/* ---------- UV meter (metric card) ---------- */
+.metric-uv {
+  grid-template-rows: auto auto auto auto;
+}
+.uv-meter {
+  grid-column: 1 / span 2;
+  position: relative;
+  height: 6px;
+  margin-top: 6px;
+  border-radius: 999px;
+  overflow: visible;
+}
+.uv-meter[hidden] { display: none; }
+.uv-meter-track {
+  position: absolute; inset: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg,
+    #7fd58a 0%,       /* Low: 0-2  */
+    #f7d55a 27%,      /* Moderate: 3-5 (5/11 ≈ 45%, midpoint ≈ 27%) */
+    #ff9c4b 54%,      /* High: 6-7 */
+    #ff5d5d 72%,      /* Very high: 8-10 */
+    #c060d9 100%      /* Extreme: 11+ */
+  );
+  opacity: 0.85;
+}
+.uv-meter-marker {
+  position: absolute;
+  top: 50%;
+  width: 10px; height: 10px;
+  margin-left: -5px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid #0b1020;
+  transform: translateY(-50%);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+  transition: left 500ms var(--ease);
+}
+.uv-meter[data-level="high"] .uv-meter-marker,
+.uv-meter[data-level="vhigh"] .uv-meter-marker,
+.uv-meter[data-level="extreme"] .uv-meter-marker {
+  box-shadow: 0 0 10px rgba(255, 120, 100, 0.7), 0 2px 6px rgba(0,0,0,0.35);
+}
+
 /* ---------- Daily expand ---------- */
 .daily-item { cursor: pointer; }
 .daily-item[data-expanded="true"] { background: var(--glass-strong); }

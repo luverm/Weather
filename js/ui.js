@@ -38,6 +38,8 @@ const el = {
   metricPressureSub: $("#m-pressure-sub"),
   metricUV: $("#m-uv"),
   metricUVSub: $("#m-uv-sub"),
+  uvMeter: $("#uv-meter"),
+  uvMeterMarker: $("#uv-meter-marker"),
   aqArc: $("#aq-arc"),
   aqValue: $("#aq-value"),
   aqLabel: $("#aq-label"),
@@ -388,7 +390,26 @@ function renderMetrics(w) {
   } else {
     el.metricUVSub.textContent = "peak —";
   }
+  renderUvMeter(w);
   renderPressureSparkline(w);
+}
+
+// Small horizontal meter showing where today's UV falls on the 0-11+ WHO
+// scale. Marker position clamps to 11 so extreme values sit at the far right.
+function renderUvMeter(w) {
+  if (!el.uvMeter || !el.uvMeterMarker) return;
+  const v = w.uv;
+  if (v == null) { el.uvMeter.hidden = true; return; }
+  el.uvMeter.hidden = false;
+  const clamped = Math.max(0, Math.min(11, v));
+  const frac = clamped / 11;
+  el.uvMeterMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+  let level = "low";
+  if (v >= 11) level = "extreme";
+  else if (v >= 8) level = "vhigh";
+  else if (v >= 6) level = "high";
+  else if (v >= 3) level = "moderate";
+  el.uvMeter.dataset.level = level;
 }
 
 function humidityComfort(rh, dew, temp) {
