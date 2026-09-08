@@ -1547,6 +1547,34 @@ html[data-reduce-motion="true"] .sun-daylight-delta { animation: none; }
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+.forecast-rain-badge {
+  margin-left: auto;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: none;
+  color: var(--fg-muted);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--stroke);
+  font-variant-numeric: tabular-nums;
+}
+.forecast-rain-badge[hidden] { display: none; }
+.forecast-rain-badge[data-tone="dry"] {
+  color: #a8dab0;
+  background: rgba(120, 208, 106, 0.10);
+  border-color: rgba(120, 208, 106, 0.28);
+}
+.forecast-rain-badge[data-tone="wet"] {
+  color: #a2c9ff;
+  background: rgba(122, 174, 255, 0.14);
+  border-color: rgba(122, 174, 255, 0.32);
+}
+.forecast-rain-badge[data-tone="heavy"] {
+  color: #7cb8ff;
+  background: rgba(90, 145, 240, 0.20);
+  border-color: rgba(90, 145, 240, 0.42);
+}
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;

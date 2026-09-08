@@ -107,6 +107,7 @@ const el = {
   weekendIconSat: $("#weekend-icon-sat"),
   weekendIconSun: $("#weekend-icon-sun"),
   forecastTrack: $("#forecast-track"),
+  forecastRainBadge: $("#forecast-rain-badge"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
   nowcastHeadline: $("#nowcast-headline"),
@@ -987,6 +988,7 @@ function cardinal(deg) {
 
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
+  renderForecastRainBadge(w);
   for (const h of (w.hourly || []).slice(0, 24)) {
     const item = document.createElement("div");
     item.className = "forecast-item";
@@ -1005,6 +1007,53 @@ function renderHourly(w) {
 function highlightHour(index) {
   const items = el.forecastTrack.querySelectorAll(".forecast-item");
   items.forEach((it, i) => it.classList.toggle("active", i === index));
+}
+
+// Summarise the next 24 h of rain into a compact chip: "Dry through <weekday>"
+// when nothing meaningful is forecast, else "4 wet hours · 3.2mm".
+function renderForecastRainBadge(w) {
+  const badge = el.forecastRainBadge;
+  if (!badge) return;
+  const hours = (w.hourly || []).slice(0, 24);
+  if (!hours.length) { badge.hidden = true; return; }
+  let wetHours = 0;
+  let total = 0;
+  let firstWet = null;
+  for (const h of hours) {
+    const hasRain = (h.pop ?? 0) >= 30 || (h.precip ?? 0) >= 0.2;
+    if (hasRain) {
+      wetHours += 1;
+      if (firstWet == null) firstWet = h.time;
+    }
+    total += (h.precip ?? 0);
+  }
+  if (wetHours === 0) {
+    // Look further out to name the next dry day.
+    const last = hours[hours.length - 1];
+    const tz = w.timezone && w.timezone !== "auto" ? w.timezone : undefined;
+    let label = "Dry next 24 h";
+    if (last?.time) {
+      const wk = new Intl.DateTimeFormat(undefined, { weekday: "short", ...(tz ? { timeZone: tz } : {}) })
+        .format(new Date(last.time));
+      label = `Dry through ${wk}`;
+    }
+    badge.textContent = label;
+    badge.dataset.tone = "dry";
+    badge.hidden = false;
+    return;
+  }
+  const parts = [`${wetHours} wet ${wetHours === 1 ? "hour" : "hours"}`];
+  if (total >= 0.1) parts.push(`${total.toFixed(total >= 10 ? 0 : 1)}mm`);
+  if (firstWet) {
+    const mins = Math.round((firstWet - Date.now()) / 60_000);
+    if (mins > 30) {
+      const label = mins >= 60 ? `starts in ${Math.round(mins / 60)}h` : `starts in ${mins}m`;
+      parts.push(label);
+    }
+  }
+  badge.textContent = parts.join(" · ");
+  badge.dataset.tone = wetHours >= 8 ? "heavy" : "wet";
+  badge.hidden = false;
 }
 
 function renderDaily(w) {
