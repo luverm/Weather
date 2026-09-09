@@ -50,6 +50,10 @@ const el = {
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  sunTrend: $("#sun-trend"),
+  sunTrendArrow: $("#sun-trend-arrow"),
+  sunTrendText: $("#sun-trend-text"),
+  sunSolarNoon: $("#sun-solar-noon"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -521,8 +525,49 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderSunTrend(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+// Compare today's daylight with tomorrow's, and label solar noon. The
+// underlying data is already in w.daily[0] / w.daily[1] — no new fetch.
+function renderSunTrend(w) {
+  if (!el.sunTrend) return;
+  const today = w?.daily?.[0];
+  const tomorrow = w?.daily?.[1];
+  if (!today?.sunrise || !today?.sunset) { el.sunTrend.hidden = true; return; }
+
+  const noon = (today.sunrise + today.sunset) / 2;
+  if (el.sunSolarNoon) el.sunSolarNoon.textContent = `☀ noon ${fmtTime(noon)}`;
+
+  if (!tomorrow?.sunrise || !tomorrow?.sunset) {
+    if (el.sunTrendArrow) el.sunTrendArrow.textContent = "·";
+    if (el.sunTrendText) el.sunTrendText.textContent = "";
+    el.sunTrend.hidden = false;
+    return;
+  }
+  const todayLen = today.sunset - today.sunrise;
+  const tomLen = tomorrow.sunset - tomorrow.sunrise;
+  const deltaSec = Math.round((tomLen - todayLen) / 1000);
+  const abs = Math.abs(deltaSec);
+  let arrow, text;
+  if (abs < 15) {
+    arrow = "→";
+    text = "Day length holds steady tomorrow";
+  } else {
+    const m = Math.floor(abs / 60);
+    const s = abs % 60;
+    const dur = m === 0 ? `${s}s` : s === 0 ? `${m}m` : `${m}m ${s}s`;
+    arrow = deltaSec > 0 ? "↑" : "↓";
+    text = deltaSec > 0 ? `${dur} longer tomorrow` : `${dur} shorter tomorrow`;
+  }
+  if (el.sunTrendArrow) {
+    el.sunTrendArrow.textContent = arrow;
+    el.sunTrendArrow.dataset.dir = deltaSec > 0 ? "up" : deltaSec < 0 ? "down" : "flat";
+  }
+  if (el.sunTrendText) el.sunTrendText.textContent = text;
+  el.sunTrend.hidden = false;
 }
 
 function scheduleSunArc(w) {
