@@ -376,17 +376,28 @@ function mock(lat, lon) {
     uv: 3,
     uvPeak: { time: new Date().setHours(13, 0, 0, 0), value: 5 },
     timezone: "UTC",
-    hourly: Array.from({ length: 24 }, (_, i) => ({
-      time: now + (i + 1) * 3600_000,
-      temp: 18 + Math.sin(i / 2) * 3,
-      feelsLike: 17 + Math.sin(i / 2) * 3,
-      pop: 20, precip: 0,
-      wind: 8 + Math.sin(i) * 3, gusts: 12 + Math.sin(i) * 4,
-      isDay: (i + hour) % 24 >= 6 && (i + hour) % 24 < 19,
-      uv: Math.max(0, Math.sin((i - 6) * Math.PI / 13) * 6),
-      cloud: 30 + Math.round(Math.sin(i / 3) * 25),
-      condition: CONDITIONS.CLOUDS, label: "Cloudy",
-    })),
+    hourly: Array.from({ length: 24 }, (_, i) => {
+      // Very rough synthetic weather pattern for mock mode: overcast start,
+      // sun mid-morning, brief afternoon shower, clearing at dusk. Realistic
+      // enough that the transition markers and rain-windows badge have
+      // something to show even offline.
+      const isDay = (i + hour) % 24 >= 6 && (i + hour) % 24 < 19;
+      let condition = CONDITIONS.CLOUDS, label = "Cloudy", pop = 20, precip = 0;
+      if (i >= 4 && i <= 6) { condition = CONDITIONS.CLEAR; label = "Mostly clear"; pop = 5; }
+      else if (i >= 10 && i <= 12) { condition = CONDITIONS.RAIN; label = "Light showers"; pop = 65; precip = 0.6; }
+      else if (i >= 17 && i <= 19) { condition = CONDITIONS.CLEAR; label = "Clear evening"; pop = 10; }
+      return {
+        time: now + (i + 1) * 3600_000,
+        temp: 18 + Math.sin(i / 2) * 3,
+        feelsLike: 17 + Math.sin(i / 2) * 3,
+        pop, precip,
+        wind: 8 + Math.sin(i) * 3, gusts: 12 + Math.sin(i) * 4,
+        isDay,
+        uv: Math.max(0, Math.sin((i - 6) * Math.PI / 13) * 6),
+        cloud: 30 + Math.round(Math.sin(i / 3) * 25),
+        condition, label,
+      };
+    }),
     daily: Array.from({ length: 7 }, (_, i) => {
       const dayBase = new Date(now + i * 86400_000);
       const dayStart = new Date(dayBase.getFullYear(), dayBase.getMonth(), dayBase.getDate()).getTime();
