@@ -1310,9 +1310,10 @@ function renderDaily(w) {
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const uvBadge = uvBadgeHtml(d.uvMax);
     item.innerHTML = `
       <span class="daily-day">${day}</span>
-      <span class="daily-icon">${iconFor(d.condition)}</span>
+      <span class="daily-icon">${iconFor(d.condition)}${uvBadge}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
       </div>
@@ -1472,6 +1473,15 @@ function renderDailyDelta(days) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
   }
   el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
+}
+
+function uvBadgeHtml(uv) {
+  if (uv == null || uv < 6) return "";
+  const tier = uv >= 11 ? "extreme" : uv >= 8 ? "very-high" : "high";
+  const short = Math.round(uv);
+  return `<span class="daily-uv" data-tier="${tier}" title="UV peak ${short} — ${
+    tier === "extreme" ? "extreme" : tier === "very-high" ? "very high" : "high"
+  }">UV ${short}</span>`;
 }
 
 function toggleDailyExpand(item, d, w) {

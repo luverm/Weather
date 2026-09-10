@@ -1805,7 +1805,33 @@ kbd {
 }
 .daily-item:hover { background: var(--glass); }
 .daily-day { font-size: 13px; font-weight: 500; }
-.daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
+.daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; position: relative; }
+.daily-uv {
+  position: absolute;
+  bottom: -6px; right: -14px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: rgba(255, 210, 106, 0.22);
+  color: #ffd36a;
+  border: 1px solid rgba(255, 210, 106, 0.3);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.daily-uv[data-tier="very-high"] {
+  background: rgba(255, 159, 92, 0.24);
+  color: #ff9f5c;
+  border-color: rgba(255, 159, 92, 0.35);
+}
+.daily-uv[data-tier="extreme"] {
+  background: rgba(255, 106, 106, 0.28);
+  color: #ff8a8a;
+  border-color: rgba(255, 106, 106, 0.4);
+}
 .daily-range {
   position: relative;
   height: 6px; border-radius: 3px;
