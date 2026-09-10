@@ -1247,19 +1247,29 @@ function mergeWetWindows(hrs, isWet, gapTolerance = 0) {
 
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
-  for (const h of (w.hourly || []).slice(0, 24)) {
+  const now = Date.now();
+  // The hourly array is filtered to start near "now" in weather-service, so the
+  // current hour is whichever entry the sample is closest to — normally index 0.
+  let nowIdx = 0;
+  let bestDiff = Infinity;
+  (w.hourly || []).slice(0, 24).forEach((h, i) => {
+    const diff = Math.abs(h.time - now);
+    if (diff < bestDiff) { bestDiff = diff; nowIdx = i; }
+  });
+  (w.hourly || []).slice(0, 24).forEach((h, i) => {
     const item = document.createElement("div");
-    item.className = "forecast-item";
+    const isNow = i === nowIdx;
+    item.className = "forecast-item" + (isNow ? " now" : "");
     item.dataset.ts = h.time;
     item.innerHTML = `
-      <span class="forecast-time">${fmtTime(h.time)}</span>
+      <span class="forecast-time">${isNow ? "Now" : fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
-  }
+  });
 }
 
 function highlightHour(index) {

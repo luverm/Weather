@@ -1754,6 +1754,31 @@ kbd {
 }
 .forecast-item:hover { background: var(--glass); transform: translateY(-2px); }
 .forecast-item.active { background: var(--glass-strong); }
+.forecast-item.now {
+  position: relative;
+  background: rgba(154, 209, 255, 0.10);
+  box-shadow: inset 0 0 0 1px rgba(154, 209, 255, 0.28);
+}
+.forecast-item.now .forecast-time {
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+.forecast-item.now::before {
+  content: "";
+  position: absolute;
+  top: 6px; right: 8px;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+  animation: now-pulse 2s ease-in-out infinite;
+}
+@keyframes now-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.55; transform: scale(0.75); }
+}
+[data-reduce-motion="true"] .forecast-item.now::before { animation: none; }
 .forecast-time { font-size: 11px; letter-spacing: 0.08em; color: var(--fg-dim); text-transform: uppercase; }
 .forecast-icon { width: 26px; height: 26px; display: grid; place-items: center; color: var(--fg-muted); }
 .forecast-temp { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
