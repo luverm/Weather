@@ -1157,7 +1157,15 @@ kbd {
   width: max-content;
   max-width: 100%;
   grid-column: 1 / -1;
+  cursor: pointer;
+  transition: background 150ms var(--ease), transform 150ms var(--ease);
+  text-align: left;
 }
+.sun-golden:hover { background: linear-gradient(90deg, rgba(255,180,110,0.22), rgba(255,140,90,0.14)); transform: translateY(-1px); }
+.sunset-quality { cursor: pointer; transition: background 150ms var(--ease), transform 150ms var(--ease); text-align: left; }
+.sunset-quality:hover { background: rgba(255,255,255,0.10); transform: translateY(-1px); }
+.sky-view { cursor: pointer; transition: background 150ms var(--ease), transform 150ms var(--ease); text-align: left; }
+.sky-view:hover { transform: translateY(-1px); }
 .sun-golden .sun-golden-dot {
   width: 8px; height: 8px; border-radius: 50%;
   background: #ffb066;

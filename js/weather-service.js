@@ -386,18 +386,22 @@ function mock(lat, lon) {
       cloud: 30 + Math.round(Math.sin(i / 3) * 25),
       condition: CONDITIONS.CLOUDS, label: "Cloudy",
     })),
-    daily: Array.from({ length: 7 }, (_, i) => ({
-      time: now + i * 86400_000,
-      tempMax: 20 + Math.sin(i) * 4,
-      tempMin: 12 + Math.sin(i) * 3,
-      precip: i % 3 === 0 ? 2.1 : 0,
-      pop: i % 3 === 0 ? 65 : 15,
-      windMax: 12, gustsMax: 20,
-      uvMax: 4 + Math.round(Math.abs(Math.sin(i)) * 5),
-      sunrise: new Date().setHours(6, 30, 0, 0),
-      sunset: new Date().setHours(19, 0, 0, 0),
-      condition: CONDITIONS.CLOUDS, label: "Cloudy",
-    })),
+    daily: Array.from({ length: 7 }, (_, i) => {
+      const dayBase = new Date(now + i * 86400_000);
+      const dayStart = new Date(dayBase.getFullYear(), dayBase.getMonth(), dayBase.getDate()).getTime();
+      return {
+        time: dayStart,
+        tempMax: 20 + Math.sin(i) * 4,
+        tempMin: 12 + Math.sin(i) * 3,
+        precip: i % 3 === 0 ? 2.1 : 0,
+        pop: i % 3 === 0 ? 65 : 15,
+        windMax: 12, gustsMax: 20,
+        uvMax: 4 + Math.round(Math.abs(Math.sin(i)) * 5),
+        sunrise: dayStart + (6 * 60 + 30) * 60_000,
+        sunset: dayStart + 19 * 60 * 60_000,
+        condition: CONDITIONS.CLOUDS, label: "Cloudy",
+      };
+    }),
     yesterday: {
       time: now - 86400_000,
       tempMax: 17, tempMin: 10,

@@ -656,6 +656,16 @@ function renderSkyView(w, moon) {
   el.skyViewIcon.textContent = icon;
   el.skyViewHeadline.textContent = headline;
   el.skyViewWhy.textContent = factors.slice(0, 3).join(" · ");
+  // Aim the scrubber at the midpoint of the night when clicked, so the scene
+  // renders the actual dark-sky conditions the pill is describing.
+  const first = nightHours[0], last = nightHours[nightHours.length - 1];
+  const target = first && last ? Math.round((first.time + last.time) / 2) : null;
+  if (target) {
+    el.skyView.title = `Jump the scrubber to tonight (${fmtTime(target)})`;
+    el.skyView.onclick = () => state.handlers.onHourClick?.(target);
+  } else {
+    el.skyView.onclick = null;
+  }
 }
 
 // Return the sequence of hourly entries that fall during the upcoming night —
@@ -758,6 +768,8 @@ function renderSunsetQuality(w) {
   el.sunsetQualitySwatch.style.setProperty("--sq-b", b);
   el.sunsetQualityLabel.textContent = label;
   el.sunsetQualityDetail.textContent = `${detail} · ${fmtTime(nextSet)}`;
+  el.sunsetQuality.title = `Jump the scrubber to sunset (${fmtTime(nextSet)})`;
+  el.sunsetQuality.onclick = () => state.handlers.onHourClick?.(nextSet);
 }
 
 // "Days getting longer/shorter" — compares today to tomorrow using the daily array.
@@ -800,6 +812,12 @@ function renderGoldenHour(w) {
   const now = Date.now();
   const active = now >= wnd.start && now <= wnd.end;
   el.sunGolden.dataset.when = active ? "now" : "later";
+  el.sunGolden.title = `Jump the scrubber to ${fmtTime(wnd.start)}`;
+  el.sunGolden.onclick = () => {
+    // Aim at the midpoint of the window for the most representative snapshot.
+    const target = active ? Date.now() : Math.round((wnd.start + wnd.end) / 2);
+    state.handlers.onHourClick?.(target);
+  };
 }
 
 function pickGoldenHour(w) {
