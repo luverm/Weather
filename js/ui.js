@@ -323,6 +323,12 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
+  // Append cloud-cover % when it adds signal beyond the label — a "Clear" label
+  // already implies ~0 cover, and "Overcast" ~100, so skip those; the useful
+  // case is the ambiguous middle ("Partly cloudy · 45%").
+  if (w.cloudCover != null && w.condition === "clouds") {
+    el.conditionLabel.textContent += ` · ${Math.round(w.cloudCover)}%`;
+  }
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
   renderVsYesterday(w);
