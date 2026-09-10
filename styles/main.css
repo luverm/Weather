@@ -1624,6 +1624,33 @@ kbd {
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+
+.week-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--stroke);
+  color: var(--fg-muted);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+}
+.week-trend[data-tone="warming"] {
+  background: rgba(255, 156, 122, 0.14);
+  border-color: rgba(255, 156, 122, 0.28);
+  color: #ffb196;
+}
+.week-trend[data-tone="cooling"] {
+  background: rgba(154, 209, 255, 0.14);
+  border-color: rgba(154, 209, 255, 0.28);
+  color: #9ad1ff;
+}
+.week-trend[data-tone="steady"] { color: var(--fg-dim); }
+.week-trend[data-tone="mixed"]  { color: var(--fg-muted); }
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;

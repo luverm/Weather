@@ -92,6 +92,7 @@ const el = {
   dailyIconStrip: $("#daily-icon-strip"),
   dailyPrecipStrip: $("#daily-precip-strip"),
   vsYesterday: $("#vs-yesterday"),
+  weekTrend: $("#week-trend"),
   settingsBtn: $("#settings-btn"),
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
@@ -1225,6 +1226,7 @@ function renderDaily(w) {
   renderDailyPrecipStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderWeekTrend(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1338,6 +1340,57 @@ function renderDailySpark(days) {
       el.dailySparkDots.appendChild(c);
     }
   });
+}
+
+// Read the weekly high curve and characterize it in one short chip:
+// warming / cooling / mixed / steady, with a landmark day when meaningful.
+function renderWeekTrend(days) {
+  if (!el.weekTrend) return;
+  const highs = days.map((d) => d.tempMax).filter((v) => v != null);
+  if (highs.length < 4) { el.weekTrend.hidden = true; return; }
+  const first = highs[0];
+  const last = highs[highs.length - 1];
+  const peak = Math.max(...highs);
+  const peakIdx = highs.indexOf(peak);
+  const trough = Math.min(...highs);
+  const troughIdx = highs.indexOf(trough);
+  // Compute the day-to-day slope trend by averaging signed step deltas.
+  const steps = [];
+  for (let i = 1; i < highs.length; i++) steps.push(highs[i] - highs[i - 1]);
+  const avgStep = steps.reduce((s, v) => s + v, 0) / steps.length;
+  const spread = peak - trough;
+  const dayName = (i) => i === 0 ? "today"
+    : new Date(days[i].time).toLocaleDateString(undefined, {
+      weekday: "short",
+      ...(state.weather?.timezone && state.weather.timezone !== "auto"
+        ? { timeZone: state.weather.timezone } : {}),
+    });
+  const unit = state.unit;
+  const t = (c) => Math.round(unit === "F" ? c * 9 / 5 + 32 : c);
+
+  let tone, text;
+  if (spread < 3) {
+    tone = "steady";
+    text = `Steady week · ${t(first)}°`;
+  } else if (avgStep >= 0.6 && last - first >= 2) {
+    tone = "warming";
+    text = `Warming to ${t(peak)}° by ${dayName(peakIdx)}`;
+  } else if (avgStep <= -0.6 && first - last >= 2) {
+    tone = "cooling";
+    text = `Cooling to ${t(last)}° by ${dayName(highs.length - 1)}`;
+  } else if (peakIdx > 0 && peakIdx < highs.length - 1) {
+    tone = "mixed";
+    text = `Peaks ${t(peak)}° ${dayName(peakIdx)}`;
+  } else if (troughIdx > 0 && troughIdx < highs.length - 1) {
+    tone = "mixed";
+    text = `Coolest ${t(trough)}° ${dayName(troughIdx)}`;
+  } else {
+    tone = "mixed";
+    text = `Mixed week · ${t(first)}° → ${t(last)}°`;
+  }
+  el.weekTrend.hidden = false;
+  el.weekTrend.dataset.tone = tone;
+  el.weekTrend.textContent = text;
 }
 
 function renderDailyDelta(days) {
