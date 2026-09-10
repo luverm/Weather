@@ -218,6 +218,7 @@ function normalize(d, aq) {
     uv: dailyForecast[0]?.uvMax ?? null,
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
+    elevation: d.elevation ?? null, // meters above sea level
     hourly,
     daily: dailyForecast,
     yesterday,
@@ -420,6 +421,7 @@ function mock(lat, lon) {
         aqi: 42 + Math.round(Math.sin(i / 2) * 10),
       })),
     },
+    elevation: 61,
     pollen: {
       items: [
         { key: "grass", label: "Grass", value: 1.2 },

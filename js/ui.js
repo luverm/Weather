@@ -191,8 +191,8 @@ export const ui = {
     el.placeName.classList.remove("flip-in"); void el.placeName.offsetWidth;
     el.placeName.classList.add("flip-in");
     el.placeName.textContent = place.name || "Unknown";
-    const sub = [place.admin1, place.country].filter(Boolean).join(", ");
-    el.placeSub.textContent = sub || "—";
+    state.placeSubBase = [place.admin1, place.country].filter(Boolean).join(", ") || "—";
+    el.placeSub.textContent = state.placeSubBase;
     // Reset alert dismissals so a fresh location can re-surface them.
     try { sessionStorage.removeItem("aether:dismissed-alerts"); } catch { /* ignore */ }
     renderPlaces();
@@ -201,6 +201,7 @@ export const ui = {
     state.weather = weather;
     state.sampledWeather = weather; // initially same as live
     updateDocumentTitle(weather);
+    updatePlaceSubWithElevation(weather);
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
@@ -293,6 +294,20 @@ function animateNumber(node, target, format) {
 }
 
 function capitalize(s) { return (s || "").charAt(0).toUpperCase() + (s || "").slice(1); }
+
+function updatePlaceSubWithElevation(w) {
+  if (!el.placeSub) return;
+  const base = state.placeSubBase || el.placeSub.textContent || "—";
+  const el_ = w?.elevation;
+  if (el_ == null || Math.abs(el_) < 1) {
+    el.placeSub.textContent = base;
+    return;
+  }
+  // Round to nearest 10 m for sub-2 km, else nearest 100.
+  const step = Math.abs(el_) >= 2000 ? 100 : 10;
+  const rounded = Math.round(el_ / step) * step;
+  el.placeSub.textContent = `${base} · ${rounded} m`;
+}
 
 const DEFAULT_TITLE = "Aether — Interactive Weather";
 function updateDocumentTitle(w) {
