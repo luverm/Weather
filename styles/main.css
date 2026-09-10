@@ -635,6 +635,25 @@ html[data-reduce-motion="true"] *::after {
 .temp-trend.down { background: rgba(154, 209, 255, 0.18); color: #9ad1ff; }
 .temp-trend.flat { background: rgba(255,255,255,0.08); color: var(--fg-dim); }
 
+.vs-yesterday {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  color: var(--fg-muted);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--stroke);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+.vs-yesterday.warmer { background: rgba(255, 156, 122, 0.14); border-color: rgba(255,156,122,0.28); color: #ffb196; }
+.vs-yesterday.cooler { background: rgba(154, 209, 255, 0.14); border-color: rgba(154,209,255,0.28); color: #9ad1ff; }
+.vs-yesterday.same { color: var(--fg-dim); }
+.vs-yesterday:empty { display: none; }
+
 /* ---------- Pollen card ---------- */
 #pollen-card[hidden] { display: none; }
 .pollen-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }

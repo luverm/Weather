@@ -90,6 +90,7 @@ const el = {
   fetchedAgo: $("#fetched-ago"),
   dailyIconStrip: $("#daily-icon-strip"),
   dailyPrecipStrip: $("#daily-precip-strip"),
+  vsYesterday: $("#vs-yesterday"),
   settingsBtn: $("#settings-btn"),
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
@@ -297,6 +298,33 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  renderVsYesterday(w);
+}
+
+// Compare today's forecast high to yesterday's observed high.
+// Hidden if we don't have yesterday's data, or when comparing during scrub
+// (the sampled snapshot may not carry a `yesterday`).
+function renderVsYesterday(w) {
+  if (!el.vsYesterday) return;
+  const y = state.weather?.yesterday ?? w?.yesterday;
+  const today = state.weather?.daily?.[0] ?? w?.daily?.[0];
+  if (!y || !today || y.tempMax == null || today.tempMax == null) {
+    el.vsYesterday.hidden = true;
+    return;
+  }
+  const deltaC = today.tempMax - y.tempMax;
+  const deltaDisplay = Math.round(state.unit === "F" ? deltaC * 9 / 5 : deltaC);
+  el.vsYesterday.hidden = false;
+  if (Math.abs(deltaDisplay) < 1) {
+    el.vsYesterday.className = "vs-yesterday same";
+    el.vsYesterday.textContent = "Similar to yesterday";
+  } else if (deltaDisplay > 0) {
+    el.vsYesterday.className = "vs-yesterday warmer";
+    el.vsYesterday.textContent = `▲ ${deltaDisplay}° warmer than yesterday`;
+  } else {
+    el.vsYesterday.className = "vs-yesterday cooler";
+    el.vsYesterday.textContent = `▼ ${Math.abs(deltaDisplay)}° cooler than yesterday`;
+  }
 }
 
 function renderDayRange(w) {
