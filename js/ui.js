@@ -109,6 +109,8 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunRiseAzimuth: $("#sun-rise-azimuth"),
+  sunSetAzimuth: $("#sun-set-azimuth"),
   sunArcGolden: $("#sun-arc-golden"),
   sunDaylightDelta: $("#sun-daylight-delta"),
   sunGolden: $("#sun-golden"),
@@ -765,6 +767,7 @@ function fmtTime(ts) {
 function renderSun(w) {
   el.sunRise.textContent = fmtTime(w.sunrise);
   el.sunSet.textContent = fmtTime(w.sunset);
+  renderSunAzimuth(w);
   if (w.sunrise && w.sunset) {
     const mins = Math.round((w.sunset - w.sunrise) / 60_000);
     const hh = Math.floor(mins / 60);
@@ -823,6 +826,36 @@ function renderSunsetQuality(w) {
   el.sunsetQualityDetail.textContent = `${detail} · ${fmtTime(nextSet)}`;
   el.sunsetQuality.title = `Jump the scrubber to sunset (${fmtTime(nextSet)})`;
   el.sunsetQuality.onclick = () => state.handlers.onHourClick?.(nextSet);
+}
+
+// Approximate compass direction for today's sunrise and sunset. Uses the
+// standard solar-declination formula and a horizon-hour-angle solve. Accurate
+// to ±5° for practical latitudes, which is enough to say "the sun rises in
+// the northeast". Blank inside the polar circles when the sun doesn't rise
+// or set at all.
+function renderSunAzimuth(w) {
+  if (!el.sunRiseAzimuth || !el.sunSetAzimuth) return;
+  const lat = state.place?.lat;
+  if (lat == null || Math.abs(lat) > 90) {
+    el.sunRiseAzimuth.textContent = "";
+    el.sunSetAzimuth.textContent = "";
+    return;
+  }
+  const now = w.sunrise ? new Date(w.sunrise) : new Date();
+  const start = Date.UTC(now.getUTCFullYear(), 0, 0);
+  const N = Math.floor((now.getTime() - start) / 86400_000);
+  const decl = 23.44 * Math.sin((2 * Math.PI * (N + 284)) / 365) * Math.PI / 180;
+  const latRad = lat * Math.PI / 180;
+  const cosA = -Math.sin(decl) / Math.cos(latRad);
+  if (Math.abs(cosA) > 1) {
+    el.sunRiseAzimuth.textContent = "";
+    el.sunSetAzimuth.textContent = "";
+    return;
+  }
+  const rise = Math.acos(cosA) * 180 / Math.PI;
+  const set = 360 - rise;
+  el.sunRiseAzimuth.textContent = cardinal(rise);
+  el.sunSetAzimuth.textContent = cardinal(set);
 }
 
 // "Days getting longer/shorter" — compares today to tomorrow using the daily array.
