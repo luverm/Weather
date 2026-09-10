@@ -102,6 +102,7 @@ const el = {
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
   settingClearPlaces: $("#setting-clear-places"),
+  settingOpenShortcuts: $("#setting-open-shortcuts"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
@@ -1935,6 +1936,14 @@ function bindSettings() {
     for (const p of places.all()) places.remove(p);
     renderPlaces();
     ui.showToast("Saved places cleared");
+    close();
+  });
+
+  el.settingOpenShortcuts?.addEventListener("click", () => {
+    const overlay = document.getElementById("shortcuts");
+    if (!overlay) return;
+    overlay.hidden = false;
+    overlay.querySelector("#shortcuts-close")?.focus();
     close();
   });
 }
