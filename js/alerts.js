@@ -122,13 +122,33 @@ export function buildAlerts(weather) {
     });
   }
 
-  // ---- Fog ----
+  // ---- Fog / reduced visibility ----
   if (weather.visibility != null && weather.visibility < 500) {
     out.push({
       id: "fog",
       severity: "warn",
       title: "Dense fog",
       detail: `Visibility under ${Math.round(weather.visibility)} m right now.`,
+    });
+  } else if (weather.visibility != null && weather.visibility < 3000) {
+    out.push({
+      id: "low-vis",
+      severity: "info",
+      title: "Reduced visibility",
+      detail: `Around ${(weather.visibility / 1000).toFixed(1)} km — take care driving.`,
+    });
+  }
+
+  // ---- Rapid pressure change (barometric bomb) ----
+  const pt = weather.pressureTrend;
+  if (pt && Math.abs(pt.delta) >= 3) {
+    out.push({
+      id: pt.delta < 0 ? "pressure-drop" : "pressure-rise",
+      severity: "warn",
+      title: pt.delta < 0 ? "Pressure dropping fast" : "Pressure climbing fast",
+      detail: pt.delta < 0
+        ? `${pt.delta.toFixed(1)} hPa/3h — storms often follow.`
+        : `+${pt.delta.toFixed(1)} hPa/3h — skies tend to clear.`,
     });
   }
 
