@@ -94,6 +94,7 @@ const el = {
   dailyPrecipStrip: $("#daily-precip-strip"),
   vsYesterday: $("#vs-yesterday"),
   weekTrend: $("#week-trend"),
+  nextChange: $("#next-change"),
   settingsBtn: $("#settings-btn"),
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
@@ -209,6 +210,7 @@ export const ui = {
     renderSun(weather);
     renderHourly(weather);
     renderRainWindows(weather);
+    renderNextChange(weather);
     renderDaily(weather);
     renderNowcast(weather);
     renderAdvice(weather);
@@ -1228,6 +1230,30 @@ function cardinal(deg) {
                 "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
   const i = Math.round(((deg % 360) + 360) % 360 / 22.5) % 16;
   return dirs[i];
+}
+
+// Chip in the "Next 24 hours" header — reads condition column of the hourly
+// series and names the next transition. Silent when the day is uniform.
+function renderNextChange(w) {
+  if (!el.nextChange) return;
+  const hrs = (w?.hourly || []).slice(0, 24);
+  if (hrs.length < 2) { el.nextChange.hidden = true; return; }
+  const cur = hrs[0].condition;
+  const CONDITION_WORDS = {
+    clear: "Clear", clouds: "Cloudy", rain: "Rain",
+    snow: "Snow", storm: "Storms", fog: "Fog",
+  };
+  let change = null;
+  for (let i = 1; i < hrs.length; i++) {
+    if (hrs[i].condition !== cur) { change = hrs[i]; break; }
+  }
+  if (!change) {
+    el.nextChange.hidden = false;
+    el.nextChange.textContent = `${CONDITION_WORDS[cur] || cur} through the day`;
+    return;
+  }
+  el.nextChange.hidden = false;
+  el.nextChange.textContent = `${CONDITION_WORDS[change.condition] || change.condition} from ${fmtTime(change.time)}`;
 }
 
 // Summarize the next 24h of pop/precip into a single actionable line.

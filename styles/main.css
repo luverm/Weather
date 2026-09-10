@@ -1684,6 +1684,20 @@ kbd {
 }
 .week-trend[data-tone="steady"] { color: var(--fg-dim); }
 .week-trend[data-tone="mixed"]  { color: var(--fg-muted); }
+
+.next-change {
+  margin-left: auto;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--stroke);
+  color: var(--fg-muted);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+}
+.next-change:empty { display: none; }
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;
