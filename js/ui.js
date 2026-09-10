@@ -42,6 +42,7 @@ const el = {
   aqCard: $("#aq-card"),
   aqTrendLine: $("#aq-trend-line"),
   aqTrendFill: $("#aq-trend-fill"),
+  aqTrendText: $("#aq-trend-text"),
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
@@ -542,9 +543,57 @@ function renderAqTrend(aq) {
   if (pts.length < 2) {
     el.aqTrendLine.setAttribute("d", "");
     el.aqTrendFill.setAttribute("d", "");
+    if (el.aqTrendText) el.aqTrendText.hidden = true;
     return;
   }
   drawSparkline(el.aqTrendLine, el.aqTrendFill, pts, { minSpan: 20 });
+  renderAqTrendText(aq);
+}
+
+// Turn the AQ hourly trend into one short line: "improving through 15:00",
+// "worsening — 62 by 18:00", or "stable near 42". Threshold-band matters
+// more than raw delta — a 10-point wobble inside "Good" doesn't warrant
+// alarm, but the same delta crossing 100 (into "Unhealthy for sensitive")
+// does. So the text names the destination band when the trend is strong.
+function renderAqTrendText(aq) {
+  if (!el.aqTrendText) return;
+  const trend = aq?.trend || [];
+  if (trend.length < 3) { el.aqTrendText.hidden = true; return; }
+  const first = trend[0].aqi;
+  const last = trend[trend.length - 1].aqi;
+  const delta = last - first;
+  const bandNow = aqiLabelClient(first);
+  const bandEnd = aqiLabelClient(last);
+  let dir, text;
+  if (Math.abs(delta) < 8 && bandNow === bandEnd) {
+    dir = "stable";
+    text = `Stable near ${Math.round(last)}`;
+  } else if (delta < 0) {
+    dir = "improving";
+    text = bandEnd !== bandNow
+      ? `Improving to ${bandEnd.toLowerCase()} by ${fmtTime(trend[trend.length - 1].time)}`
+      : `Improving — ${Math.round(last)} by ${fmtTime(trend[trend.length - 1].time)}`;
+  } else {
+    dir = "worsening";
+    text = bandEnd !== bandNow
+      ? `Worsening to ${bandEnd.toLowerCase()} by ${fmtTime(trend[trend.length - 1].time)}`
+      : `Worsening — ${Math.round(last)} by ${fmtTime(trend[trend.length - 1].time)}`;
+  }
+  el.aqTrendText.hidden = false;
+  el.aqTrendText.dataset.dir = dir;
+  el.aqTrendText.textContent = text;
+}
+
+// Client-side copy of aqiLabel from weather-service — reused for band
+// comparison without importing.
+function aqiLabelClient(v) {
+  if (v == null) return "—";
+  if (v <= 50) return "Good";
+  if (v <= 100) return "Moderate";
+  if (v <= 150) return "Unhealthy for sensitive";
+  if (v <= 200) return "Unhealthy";
+  if (v <= 300) return "Very unhealthy";
+  return "Hazardous";
 }
 
 function renderMoon(moon, weather) {

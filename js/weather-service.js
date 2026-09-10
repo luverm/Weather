@@ -408,7 +408,13 @@ function mock(lat, lon) {
     },
     nowcast: [],
     moon: computeMoonPhase(new Date()),
-    airQuality: { aqi: 42, pm25: 8, pm10: 14, o3: 40, no2: 15, co: 0.2, label: "Good" },
+    airQuality: {
+      aqi: 42, pm25: 8, pm10: 14, o3: 40, no2: 15, co: 0.2, label: "Good",
+      trend: Array.from({ length: 8 }, (_, i) => ({
+        time: now + i * 3600_000,
+        aqi: 42 + Math.round(Math.sin(i / 2) * 10),
+      })),
+    },
     pollen: {
       items: [
         { key: "grass", label: "Grass", value: 1.2 },
