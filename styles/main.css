@@ -1771,6 +1771,18 @@ kbd {
 }
 .forecast-item:hover { background: var(--glass); transform: translateY(-2px); }
 .forecast-item.active { background: var(--glass-strong); }
+.forecast-item.transition {
+  position: relative;
+}
+.forecast-item.transition::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 20%; bottom: 20%;
+  width: 1px;
+  background: linear-gradient(180deg,
+    transparent, rgba(255,255,255,0.35), transparent);
+}
 .forecast-item.now {
   position: relative;
   background: rgba(154, 209, 255, 0.10);

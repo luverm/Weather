@@ -1298,11 +1298,17 @@ function renderHourly(w) {
     const diff = Math.abs(h.time - now);
     if (diff < bestDiff) { bestDiff = diff; nowIdx = i; }
   });
-  (w.hourly || []).slice(0, 24).forEach((h, i) => {
+  const hours = (w.hourly || []).slice(0, 24);
+  hours.forEach((h, i) => {
     const item = document.createElement("div");
     const isNow = i === nowIdx;
-    item.className = "forecast-item" + (isNow ? " now" : "");
+    // Flag the first hour of any new condition run (skip the very first item
+    // since there's no prior condition to compare against).
+    const prev = i > 0 ? hours[i - 1].condition : null;
+    const transitions = prev && prev !== h.condition;
+    item.className = "forecast-item" + (isNow ? " now" : "") + (transitions ? " transition" : "");
     item.dataset.ts = h.time;
+    if (transitions) item.title = `Weather turns from ${prev} to ${h.condition}`;
     item.innerHTML = `
       <span class="forecast-time">${isNow ? "Now" : fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
