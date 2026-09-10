@@ -94,6 +94,7 @@ const el = {
   dailyIconStrip: $("#daily-icon-strip"),
   dailyPrecipStrip: $("#daily-precip-strip"),
   vsYesterday: $("#vs-yesterday"),
+  uvAdvice: $("#uv-advice"),
   weekTrend: $("#week-trend"),
   nextChange: $("#next-change"),
   settingsBtn: $("#settings-btn"),
@@ -352,6 +353,32 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
   renderVsYesterday(w);
+  renderUvAdvice(w);
+}
+
+// Actionable SPF hint when UV crosses "high" — reads uvPeak (nearest hour of
+// peak UV in the coming day) and derives an approximate protection window
+// as ±2h around it, clamped to daylight.
+function renderUvAdvice(w) {
+  if (!el.uvAdvice) return;
+  const peak = w?.uvPeak;
+  if (!peak || peak.value == null || peak.value < 6) {
+    el.uvAdvice.hidden = true;
+    return;
+  }
+  const tier = peak.value >= 11 ? "extreme"
+             : peak.value >= 8 ? "very-high"
+             : "high";
+  // Window: ±2h around peak, clipped to today's sunrise/sunset if known.
+  const two = 2 * 3600_000;
+  let start = peak.time - two;
+  let end = peak.time + two;
+  if (w.sunrise) start = Math.max(start, w.sunrise);
+  if (w.sunset) end = Math.min(end, w.sunset);
+  el.uvAdvice.hidden = false;
+  el.uvAdvice.dataset.tier = tier;
+  const word = tier === "extreme" ? "Extreme UV" : tier === "very-high" ? "Very high UV" : "High UV";
+  el.uvAdvice.textContent = `☀️ ${word} · SPF ${fmtTime(start)}–${fmtTime(end)}`;
 }
 
 // Compare today's forecast high to yesterday's observed high.

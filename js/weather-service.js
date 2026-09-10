@@ -374,7 +374,7 @@ function mock(lat, lon) {
     sunrise: new Date().setHours(6, 30, 0, 0),
     sunset: new Date().setHours(19, 0, 0, 0),
     uv: 3,
-    uvPeak: { time: new Date().setHours(13, 0, 0, 0), value: 5 },
+    uvPeak: { time: new Date().setHours(13, 0, 0, 0), value: 7 },
     timezone: "UTC",
     hourly: Array.from({ length: 24 }, (_, i) => {
       // Very rough synthetic weather pattern for mock mode: overcast start,
