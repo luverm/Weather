@@ -63,6 +63,7 @@ const el = {
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
+  windGustArc: $("#wind-gust-arc"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
   chartSvg: $("#chart-svg"),
@@ -366,6 +367,7 @@ function renderMetrics(w) {
   } else if (el.windNeedle) {
     el.windNeedle.style.opacity = "0.3";
   }
+  renderGustArc(w.windSpeed, w.windGusts);
   if (el.windBft) {
     const bft = beaufort(w.windSpeed);
     if (bft) {
@@ -408,6 +410,29 @@ function renderMetrics(w) {
     el.metricUVSub.textContent = "peak —";
   }
   renderPressureSparkline(w);
+}
+
+// Paint the gust arc around the wind compass. The arc's length is the
+// gust-to-sustained ratio (capped at 2×), so a light day with matching
+// wind+gust reads as a small warm segment while a gusty day sweeps most
+// of the ring. Hidden if there's no meaningful spread.
+function renderGustArc(wind, gusts) {
+  if (!el.windGustArc) return;
+  if (wind == null || gusts == null || gusts < 5) {
+    el.windGustArc.setAttribute("stroke-dashoffset", "138");
+    el.windGustArc.style.opacity = "0";
+    return;
+  }
+  const CIRC = 2 * Math.PI * 22; // ≈138 for r=22
+  const ratio = Math.max(1, gusts / Math.max(1, wind));
+  // Map ratio 1.0 (calm/steady) → 0.15 sweep; 2.0+ (very gusty) → 0.9 sweep.
+  const sweep = Math.min(0.9, 0.15 + (ratio - 1) * 0.5);
+  const gustyEnough = gusts - wind >= 5 || ratio >= 1.4;
+  el.windGustArc.setAttribute("stroke-dashoffset", String(CIRC * (1 - sweep)));
+  el.windGustArc.style.opacity = gustyEnough ? "0.9" : "0.35";
+  el.windGustArc.setAttribute("stroke",
+    gusts >= 60 ? "#ff7a5c" : gusts >= 40 ? "#ffb066" : "#ffd39a"
+  );
 }
 
 function humidityComfort(rh, dew, temp) {
