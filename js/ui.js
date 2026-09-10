@@ -1860,13 +1860,33 @@ function bindShare() {
     const unit = state.unit;
     const t = (v) => `${Math.round(unit === "F" ? v * 9 / 5 + 32 : v)}°${unit}`;
     const today = w.daily?.[0];
+    // Fold in Round 22-31 additions where they exist so the shared summary
+    // isn't just the raw stats a viewer would already have from any weather
+    // service.
+    const vsY = w.yesterday && today && today.tempMax != null && w.yesterday.tempMax != null
+      ? (() => {
+          const dc = today.tempMax - w.yesterday.tempMax;
+          const dv = Math.round(unit === "F" ? dc * 9 / 5 : dc);
+          if (Math.abs(dv) < 1) return "Similar to yesterday";
+          return `${dv > 0 ? "+" : ""}${dv}°${unit} vs yesterday`;
+        })()
+      : null;
+    const golden = today?.sunset
+      ? `Golden hour ${new Date(today.sunset - 3600_000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })}–${new Date(today.sunset).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })}`
+      : null;
+    const sun = w.sunrise && w.sunset
+      ? `Sun ${fmtTime(w.sunrise)} → ${fmtTime(w.sunset)}`
+      : null;
     const lines = [
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
       today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
+      vsY,
       `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
+      sun,
+      golden,
     ].filter(Boolean);
     const text = lines.join("\n");
     try {
