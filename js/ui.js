@@ -46,6 +46,7 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonAge: $("#moon-age"),
   skyView: $("#sky-view"),
   skyViewIcon: $("#sky-view-icon"),
   skyViewHeadline: $("#sky-view-headline"),
@@ -647,6 +648,11 @@ function renderMoon(moon, weather) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  // Moon age: days into the synodic cycle (0..29.5).
+  if (el.moonAge) {
+    const age = moon.phase * 29.5305882;
+    el.moonAge.textContent = age.toFixed(1);
+  }
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
