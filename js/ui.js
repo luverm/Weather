@@ -89,6 +89,7 @@ const el = {
   refreshBtn: $("#refresh-btn"),
   fetchedAgo: $("#fetched-ago"),
   dailyIconStrip: $("#daily-icon-strip"),
+  dailyPrecipStrip: $("#daily-precip-strip"),
   settingsBtn: $("#settings-btn"),
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
@@ -1168,6 +1169,7 @@ function renderDaily(w) {
   const days = (w.daily || []).slice(0, 7);
   if (!days.length) return;
   renderDailyIconStrip(days);
+  renderDailyPrecipStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
   // Global min/max for the range bar.
@@ -1214,6 +1216,37 @@ function renderDailyIconStrip(days) {
   el.dailyIconStrip.innerHTML = days.map((d) =>
     `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
   ).join("");
+}
+
+function renderDailyPrecipStrip(days) {
+  if (!el.dailyPrecipStrip) return;
+  const totals = days.map((d) => d.precip ?? 0);
+  const anyRain = totals.some((v) => v > 0.05);
+  if (!anyRain) {
+    // Nothing meaningful to show; keep the daily card compact.
+    el.dailyPrecipStrip.hidden = true;
+    el.dailyPrecipStrip.innerHTML = "";
+    return;
+  }
+  const maxMm = Math.max(2, ...totals);
+  el.dailyPrecipStrip.hidden = false;
+  el.dailyPrecipStrip.innerHTML = days.map((d) => {
+    const mm = d.precip ?? 0;
+    const empty = mm < 0.05;
+    // Non-linear scale so a light shower stays legible next to a downpour.
+    const norm = Math.pow(Math.min(1, mm / maxMm), 0.7);
+    const barH = empty ? 2 : Math.max(3, Math.round(norm * 16));
+    const heavy = mm >= 10;
+    const snow = d.condition === "snow";
+    const label = empty ? "·" : (mm >= 1 ? `${mm.toFixed(mm < 10 ? 1 : 0)}` : `${mm.toFixed(1)}`);
+    return `
+      <div class="precip-col" data-kind="${snow ? "snow" : "rain"}" data-empty="${empty}" data-heavy="${heavy}"
+           title="${mm.toFixed(1)} mm${snow ? " (snow)" : ""}">
+        <div class="precip-bar" style="height:${barH}px"></div>
+        <span class="precip-label">${empty ? "·" : label}</span>
+      </div>
+    `;
+  }).join("");
 }
 
 function renderDailySpark(days) {
