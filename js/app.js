@@ -302,6 +302,17 @@ installShortcuts({
     if (app.weather) applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
   },
+  jumpTo: (kind) => {
+    if (!app.weather) return;
+    const target = kind === "sunrise" ? app.weather.sunrise
+                 : kind === "sunset" ? app.weather.sunset
+                 : null;
+    if (!target) return;
+    clock.setOffset(target - Date.now());
+    scrubber.sync();
+    applyScene(app.weather);
+    ui.setScrubbing(!clock.isLive());
+  },
 });
 
 // ---------- Start ----------
