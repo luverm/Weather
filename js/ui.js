@@ -90,6 +90,11 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcGolden: $("#sun-arc-golden"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
+  sunGolden: $("#sun-golden"),
+  sunGoldenLabel: $("#sun-golden-label"),
+  sunGoldenTime: $("#sun-golden-time"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -521,14 +526,119 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w);
+  renderGoldenHour(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+// "Days getting longer/shorter" — compares today to tomorrow using the daily array.
+function renderDaylightDelta(w) {
+  if (!el.sunDaylightDelta) return;
+  const days = (w.daily || []).filter((d) => d.sunrise && d.sunset);
+  if (days.length < 2) { el.sunDaylightDelta.textContent = ""; return; }
+  const dayLen = (d) => d.sunset - d.sunrise;
+  const deltaMs = dayLen(days[1]) - dayLen(days[0]);
+  const absSec = Math.round(Math.abs(deltaMs) / 1000);
+  if (absSec < 30) {
+    el.sunDaylightDelta.textContent = "≈ same tomorrow";
+    el.sunDaylightDelta.className = "sun-daylight-delta";
+    return;
+  }
+  const mm = Math.floor(absSec / 60);
+  const ss = absSec % 60;
+  const dur = mm ? `${mm}m ${ss}s` : `${ss}s`;
+  if (deltaMs > 0) {
+    el.sunDaylightDelta.textContent = `▲ ${dur} longer tomorrow`;
+    el.sunDaylightDelta.className = "sun-daylight-delta up";
+  } else {
+    el.sunDaylightDelta.textContent = `▼ ${dur} shorter tomorrow`;
+    el.sunDaylightDelta.className = "sun-daylight-delta down";
+  }
+}
+
+// The upcoming golden hour (last hour of daylight most days, or first hour if
+// we're past sunset — then it belongs to tomorrow's sunrise).
+function renderGoldenHour(w) {
+  if (!el.sunGolden) return;
+  const wnd = pickGoldenHour(w);
+  if (!wnd) {
+    el.sunGolden.hidden = true;
+    return;
+  }
+  el.sunGolden.hidden = false;
+  el.sunGoldenLabel.textContent = wnd.label;
+  el.sunGoldenTime.textContent = `${fmtTime(wnd.start)}–${fmtTime(wnd.end)}`;
+  const now = Date.now();
+  const active = now >= wnd.start && now <= wnd.end;
+  el.sunGolden.dataset.when = active ? "now" : "later";
+}
+
+function pickGoldenHour(w) {
+  if (!w?.daily?.length) return null;
+  const now = Date.now();
+  const HOUR = 3600_000;
+  // Look through today + tomorrow for the next golden-hour window that hasn't
+  // yet fully passed. Prefer the evening ("golden hour" in common parlance).
+  const cands = [];
+  const days = w.daily.slice(0, 2);
+  days.forEach((d, i) => {
+    if (!d.sunrise || !d.sunset) return;
+    // Evening golden hour: sunset-1h -> sunset.
+    cands.push({
+      label: i === 0 ? "Golden hour" : "Golden hour tomorrow",
+      start: d.sunset - HOUR,
+      end: d.sunset,
+      priority: 0,
+    });
+    // Morning golden hour: sunrise -> sunrise+1h.
+    cands.push({
+      label: i === 0 ? "Morning golden hour" : "Morning golden hour tomorrow",
+      start: d.sunrise,
+      end: d.sunrise + HOUR,
+      priority: 1,
+    });
+  });
+  // Keep windows that haven't ended, sort by (start time), preferring evening.
+  const upcoming = cands
+    .filter((c) => c.end > now)
+    .sort((a, b) => a.start - b.start || a.priority - b.priority);
+  return upcoming[0] || null;
 }
 
 function scheduleSunArc(w) {
   if (!el.sunArcMarker || !el.sunArcPath) return;
   if (state.sunArcTimer) { clearInterval(state.sunArcTimer); state.sunArcTimer = null; }
-  if (!w?.sunrise || !w?.sunset) return;
+  if (!w?.sunrise || !w?.sunset) {
+    if (el.sunArcGolden) el.sunArcGolden.setAttribute("d", "");
+    return;
+  }
+
+  // Paint today's evening golden-hour band on the arc — the last hour of
+  // daylight, mapped to its fraction of the sunrise→sunset span. Redrawn on
+  // every timer tick so it fades naturally as the sun moves through it.
+  const paintGolden = () => {
+    if (!el.sunArcGolden) return;
+    const sr = w.sunrise, ss = w.sunset;
+    const span = ss - sr;
+    if (!span || span <= 0) { el.sunArcGolden.setAttribute("d", ""); return; }
+    const HOUR = 3600_000;
+    const gStart = Math.max(0, (span - HOUR) / span);
+    const gEnd = 1;
+    // Only paint if the window is a meaningful fraction of the day.
+    if (gEnd - gStart < 0.05) { el.sunArcGolden.setAttribute("d", ""); return; }
+    const N = 16;
+    let d = "";
+    for (let i = 0; i <= N; i++) {
+      const t = clamp01(gStart + (gEnd - gStart) * (i / N));
+      const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
+      const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
+      d += (i === 0 ? "M" : "L") + x.toFixed(1) + " " + y.toFixed(1) + " ";
+    }
+    el.sunArcGolden.setAttribute("d", d.trim());
+    // Dim the band once the sun has set — same treatment as the marker.
+    el.sunArcGolden.style.opacity = Date.now() > ss ? "0.35" : "0.85";
+  };
 
   const update = () => {
     const now = Date.now();
@@ -553,6 +663,7 @@ function scheduleSunArc(w) {
     // After sunset, dim the marker so it visually settles.
     const isUp = now >= sr && now <= ss;
     el.sunArcMarker.style.opacity = isUp ? "1" : "0.45";
+    paintGolden();
   };
   update();
   state.sunArcTimer = setInterval(update, 60_000);
@@ -582,6 +693,9 @@ function scheduleSunCountdown(w) {
       : `${mins}m`;
     if (el.sunNextLabel) el.sunNextLabel.textContent = `${nextKind} in`;
     if (el.sunCountdown) el.sunCountdown.textContent = label;
+    // Also refresh the golden-hour pill so its "now" glow arrives on time
+    // without waiting for a full re-render.
+    renderGoldenHour(w);
   };
   update();
   state.sunTimer = setInterval(update, 30_000);
