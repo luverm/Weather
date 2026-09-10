@@ -45,6 +45,10 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  skyView: $("#sky-view"),
+  skyViewIcon: $("#sky-view-icon"),
+  skyViewHeadline: $("#sky-view-headline"),
+  skyViewWhy: $("#sky-view-why"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -186,7 +190,7 @@ export const ui = {
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
-    renderMoon(weather.moon);
+    renderMoon(weather.moon, weather);
     renderSun(weather);
     renderHourly(weather);
     renderDaily(weather);
@@ -479,7 +483,7 @@ function renderAqTrend(aq) {
   drawSparkline(el.aqTrendLine, el.aqTrendFill, pts, { minSpan: 20 });
 }
 
-function renderMoon(moon) {
+function renderMoon(moon, weather) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
@@ -499,6 +503,71 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+  renderSkyView(weather, moon);
+}
+
+// Estimate tonight's stargazing quality from cloud cover, precip, and moon.
+// Only surfaces if we have at least a couple of night-hours to average.
+function renderSkyView(w, moon) {
+  if (!el.skyView) return;
+  const nightHours = pickNightHours(w);
+  if (!nightHours.length) { el.skyView.hidden = true; return; }
+  const withCloud = nightHours.filter((h) => h.cloud != null);
+  if (!withCloud.length) { el.skyView.hidden = true; return; }
+  const avgCloud = withCloud.reduce((s, h) => s + h.cloud, 0) / withCloud.length;
+  const wetShare = nightHours.filter((h) => (h.pop ?? 0) >= 40 || (h.precip ?? 0) > 0.2).length
+    / nightHours.length;
+  const illum = moon?.illum ?? 0;
+
+  // Score: 100 = perfect. Cloudless, no rain, new moon.
+  let score = 100 - avgCloud * 0.7 - wetShare * 40 - illum * 30;
+  score = Math.max(0, Math.min(100, score));
+
+  let quality, headline, icon;
+  if (score >= 78) { quality = "excellent"; headline = "Great for stargazing"; icon = "🌌"; }
+  else if (score >= 60) { quality = "good"; headline = "Good sky viewing"; icon = "✨"; }
+  else if (score >= 40) { quality = "fair"; headline = "Fair viewing"; icon = "🌒"; }
+  else { quality = "poor"; headline = "Poor viewing"; icon = "☁️"; }
+
+  // Compose "why" from the dominant limiting factor.
+  const factors = [];
+  if (avgCloud >= 65) factors.push(`${Math.round(avgCloud)}% cloud`);
+  else if (avgCloud >= 30) factors.push(`${Math.round(avgCloud)}% cloud`);
+  else factors.push("clear skies");
+  if (wetShare > 0.15) factors.push("rain likely");
+  if (illum >= 0.85) factors.push("bright moon");
+  else if (illum <= 0.15) factors.push("dark moon");
+
+  el.skyView.hidden = false;
+  el.skyView.dataset.quality = quality;
+  el.skyViewIcon.textContent = icon;
+  el.skyViewHeadline.textContent = headline;
+  el.skyViewWhy.textContent = factors.slice(0, 3).join(" · ");
+}
+
+// Return the sequence of hourly entries that fall during the upcoming night —
+// from the next sunset (or now, if we're already past it) through the next
+// sunrise. Falls back to `!isDay` filtering if the daily times aren't usable.
+function pickNightHours(w) {
+  const hrs = (w?.hourly || []).slice();
+  if (!hrs.length) return [];
+  const now = Date.now();
+  const daily = (w?.daily || []).filter((d) => d.sunrise && d.sunset);
+  let start = null, end = null;
+  for (let i = 0; i < daily.length - 1; i++) {
+    const sunset = daily[i].sunset;
+    const nextSunrise = daily[i + 1].sunrise;
+    if (nextSunrise > now) {
+      start = Math.max(now, sunset);
+      end = nextSunrise;
+      break;
+    }
+  }
+  if (start != null && end != null && end > start) {
+    return hrs.filter((h) => h.time >= start && h.time <= end);
+  }
+  // Fallback: use isDay flags for the next 24h.
+  return hrs.filter((h) => h.time > now && !h.isDay).slice(0, 12);
 }
 
 function fmtTime(ts) {
