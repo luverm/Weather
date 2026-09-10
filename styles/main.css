@@ -989,6 +989,7 @@ kbd {
   border-radius: 12px;
   background: rgba(120, 140, 220, 0.09);
   border: 1px solid rgba(150, 170, 220, 0.16);
+  grid-column: 1 / -1;
 }
 .sky-view[data-quality="excellent"] {
   background: linear-gradient(90deg, rgba(120,180,255,0.14), rgba(180,150,255,0.09));
@@ -1078,7 +1079,7 @@ kbd {
 }
 .rain-windows-detail:empty { display: none; }
 
-.sun-row { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.sun-row { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; grid-column: 1 / -1; }
 .sun-item { display: grid; gap: 2px; }
 .sun-label { font-size: 10.5px; color: var(--fg-dim); letter-spacing: 0.14em; text-transform: uppercase; }
 .sun-item strong { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
@@ -1086,6 +1087,7 @@ kbd {
   width: 100%;
   height: 76px;
   display: block;
+  grid-column: 1 / -1;
   margin: -2px 0 4px;
 }
 #sun-arc-marker {
@@ -1108,7 +1110,7 @@ kbd {
 .sun-daylight-delta.down { color: #9ac7ff; }
 
 .sun-golden {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 8px;
   margin-top: 8px;
@@ -1122,6 +1124,7 @@ kbd {
   color: var(--fg-muted);
   width: max-content;
   max-width: 100%;
+  grid-column: 1 / -1;
 }
 .sun-golden .sun-golden-dot {
   width: 8px; height: 8px; border-radius: 50%;
@@ -1147,6 +1150,43 @@ kbd {
   50%      { box-shadow: 0 0 14px rgba(255,170,90,0.35); }
 }
 [data-reduce-motion="true"] .sun-golden[data-when="now"] { animation: none; }
+
+.sunset-quality {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--stroke);
+  font-size: 11px;
+  color: var(--fg-muted);
+  width: max-content;
+  max-width: 100%;
+  grid-column: 1 / -1;
+}
+.sunset-quality-swatch {
+  width: 22px; height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--sq-a, #666), var(--sq-b, #999));
+  box-shadow: 0 0 6px var(--sq-b, #999);
+  flex: 0 0 22px;
+}
+.sunset-quality-label {
+  color: var(--fg);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.sunset-quality-detail {
+  color: var(--fg-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.sunset-quality-detail:empty { display: none; }
 
 /* ---------- Radar map ---------- */
 .radar {

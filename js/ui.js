@@ -53,6 +53,10 @@ const el = {
   rainWindowsIcon: $("#rain-windows-icon"),
   rainWindowsHeadline: $("#rain-windows-headline"),
   rainWindowsDetail: $("#rain-windows-detail"),
+  sunsetQuality: $("#sunset-quality"),
+  sunsetQualitySwatch: $("#sunset-quality-swatch"),
+  sunsetQualityLabel: $("#sunset-quality-label"),
+  sunsetQualityDetail: $("#sunset-quality-detail"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -602,8 +606,54 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   renderDaylightDelta(w);
   renderGoldenHour(w);
+  renderSunsetQuality(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+// Predict sunset visual quality from the cloud cover near the sunset hour.
+// The sweet spot is scattered/broken mid-level cloud around ~30–70% — those
+// clouds catch the low-angle light and paint the sky. Bone-clear or fully
+// overcast skies both go quietly.
+function renderSunsetQuality(w) {
+  if (!el.sunsetQuality) return;
+  // Find the next sunset that hasn't happened yet.
+  const now = Date.now();
+  const days = (w?.daily || []).filter((d) => d.sunset);
+  const nextSet = days.map((d) => d.sunset).find((ts) => ts > now - 30 * 60_000);
+  if (!nextSet) { el.sunsetQuality.hidden = true; return; }
+  // Sample the hourly cloud cover in a ±90 min window around sunset.
+  const window = (w?.hourly || []).filter((h) =>
+    Math.abs(h.time - nextSet) <= 90 * 60_000 && h.cloud != null
+  );
+  if (!window.length) { el.sunsetQuality.hidden = true; return; }
+  const avgCloud = window.reduce((s, h) => s + h.cloud, 0) / window.length;
+  const wetShare = window.filter((h) => (h.pop ?? 0) >= 40).length / window.length;
+
+  // Score peaks around 45% cloud, drops off toward 0 and 100.
+  const sweet = 45;
+  const base = Math.max(0, 100 - Math.abs(avgCloud - sweet) * 1.8);
+  const score = Math.round(base * (1 - wetShare * 0.6));
+
+  let label, detail, a, b;
+  if (wetShare >= 0.5) {
+    label = "Grey sunset"; detail = "rain likely near sunset"; a = "#666"; b = "#8a8a8a";
+  } else if (avgCloud < 15) {
+    label = "Clear sunset"; detail = "few clouds to catch the light"; a = "#f0c48b"; b = "#ff9c7a";
+  } else if (avgCloud > 88) {
+    label = "Muted sunset"; detail = "overcast — dim horizon"; a = "#6a6f80"; b = "#8b90a0";
+  } else if (score >= 70) {
+    label = "Vibrant sunset"; detail = "scattered cloud, low-angle glow"; a = "#ff5c7a"; b = "#ffb066";
+  } else if (score >= 50) {
+    label = "Warm sunset"; detail = "some cloud in the mix"; a = "#f38a5a"; b = "#ffcf8a";
+  } else {
+    label = "Soft sunset"; detail = `${Math.round(avgCloud)}% cloud cover`; a = "#a68a80"; b = "#c8a082";
+  }
+  el.sunsetQuality.hidden = false;
+  el.sunsetQualitySwatch.style.setProperty("--sq-a", a);
+  el.sunsetQualitySwatch.style.setProperty("--sq-b", b);
+  el.sunsetQualityLabel.textContent = label;
+  el.sunsetQualityDetail.textContent = `${detail} · ${fmtTime(nextSet)}`;
 }
 
 // "Days getting longer/shorter" — compares today to tomorrow using the daily array.
