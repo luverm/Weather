@@ -49,6 +49,10 @@ const el = {
   skyViewIcon: $("#sky-view-icon"),
   skyViewHeadline: $("#sky-view-headline"),
   skyViewWhy: $("#sky-view-why"),
+  rainWindows: $("#rain-windows"),
+  rainWindowsIcon: $("#rain-windows-icon"),
+  rainWindowsHeadline: $("#rain-windows-headline"),
+  rainWindowsDetail: $("#rain-windows-detail"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -193,6 +197,7 @@ export const ui = {
     renderMoon(weather.moon, weather);
     renderSun(weather);
     renderHourly(weather);
+    renderRainWindows(weather);
     renderDaily(weather);
     renderNowcast(weather);
     renderAdvice(weather);
@@ -1006,6 +1011,84 @@ function cardinal(deg) {
                 "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
   const i = Math.round(((deg % 360) + 360) % 360 / 22.5) % 16;
   return dirs[i];
+}
+
+// Summarize the next 24h of pop/precip into a single actionable line.
+function renderRainWindows(w) {
+  if (!el.rainWindows) return;
+  const hrs = (w?.hourly || []).slice(0, 24);
+  if (hrs.length < 4) { el.rainWindows.hidden = true; return; }
+  // An hour is "wet" if it has a meaningful chance and/or measurable amount.
+  const isWet = (h) => (h.pop ?? 0) >= 40 || (h.precip ?? 0) > 0.1;
+  const isSnow = (h) => isWet(h) && h.condition === "snow";
+  const wetHours = hrs.filter(isWet);
+  const wetShare = wetHours.length / hrs.length;
+  const snowy = wetHours.length && wetHours.every(isSnow);
+  const kindWord = snowy ? "Snow" : "Rain";
+
+  let tone, icon, headline, detail = "";
+  if (wetHours.length === 0) {
+    tone = "dry"; icon = "☀️";
+    headline = "Dry for the next 24 hours";
+  } else {
+    // Merge consecutive wet hours into windows (allow single-hour gaps to
+    // avoid noisy micro-splits from wobbling probability).
+    const windows = mergeWetWindows(hrs, isWet, /* gapTolerance */ 1);
+    if (wetShare >= 0.8) {
+      tone = snowy ? "snow" : "wet";
+      icon = snowy ? "❄️" : "☔";
+      headline = `${kindWord} through the day`;
+    } else if (windows.length === 1) {
+      const [w0] = windows;
+      tone = snowy ? "snow" : "mixed";
+      icon = snowy ? "🌨" : "🌦";
+      const now = Date.now();
+      if (w0.start > now + 15 * 60_000) {
+        headline = `${kindWord} from ${fmtTime(w0.start)}`;
+        detail = `until ${fmtTime(w0.end)}`;
+      } else {
+        headline = `${kindWord} until ${fmtTime(w0.end)}`;
+        detail = "then dry";
+      }
+    } else {
+      tone = snowy ? "snow" : "mixed";
+      icon = snowy ? "🌨" : "🌦";
+      headline = `${kindWord} windows today`;
+      detail = windows.slice(0, 3)
+        .map((wn) => `${fmtTime(wn.start)}–${fmtTime(wn.end)}`)
+        .join(" · ");
+    }
+  }
+  el.rainWindows.hidden = false;
+  el.rainWindows.dataset.tone = tone;
+  el.rainWindowsIcon.textContent = icon;
+  el.rainWindowsHeadline.textContent = headline;
+  el.rainWindowsDetail.textContent = detail;
+  el.rainWindows.onclick = () => {
+    // Scrub to the first wet window's start (or noon if fully dry).
+    const first = (w?.hourly || []).find((h) => isWet(h));
+    if (first) state.handlers.onHourClick?.(first.time);
+  };
+}
+
+// Group hours into wet windows. Each window is {start, end} in ms; end is the
+// end of the last wet hour + 1 hour (approx) for readable time labels.
+function mergeWetWindows(hrs, isWet, gapTolerance = 0) {
+  const wnd = [];
+  let cur = null;
+  let gap = 0;
+  for (const h of hrs) {
+    if (isWet(h)) {
+      if (!cur) cur = { start: h.time, end: h.time + 3600_000 };
+      else cur.end = h.time + 3600_000;
+      gap = 0;
+    } else if (cur) {
+      gap += 1;
+      if (gap > gapTolerance) { wnd.push(cur); cur = null; gap = 0; }
+    }
+  }
+  if (cur) wnd.push(cur);
+  return wnd;
 }
 
 function renderHourly(w) {
