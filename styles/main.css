@@ -782,6 +782,23 @@ html[data-reduce-motion="true"] *::after {
   fill: var(--fg-muted);
   font-size: 9.5px;
 }
+.chart-extremum text {
+  font-size: 9.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  paint-order: stroke;
+  stroke: rgba(11, 16, 32, 0.55);
+  stroke-width: 2.6;
+  stroke-linejoin: round;
+}
+[data-tone="bright"] .chart-extremum text {
+  stroke: rgba(255, 255, 255, 0.7);
+}
+.chart-extremum-peak circle { fill: #ff9c7a; }
+.chart-extremum-peak text   { fill: #ffcb9a; }
+.chart-extremum-trough circle { fill: #9ad1ff; }
+.chart-extremum-trough text   { fill: #b5dcff; }
 .chart-cursor {
   stroke: var(--accent);
   stroke-width: 1.2;

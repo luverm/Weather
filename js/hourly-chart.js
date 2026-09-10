@@ -269,8 +269,10 @@ export class HourlyChart {
     const labG = this.svg.querySelector("#chart-labels");
     labG.innerHTML = "";
     const labelStep = Math.max(3, Math.floor(this.hours.length / 8));
+    const labeledIdx = new Set();
     this.hours.forEach((h, i) => {
       if (i % labelStep !== 0) return;
+      labeledIdx.add(i);
       const hh = this._hourOf(h.time);
       const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
       txt.setAttribute("x", iToX(i).toFixed(1));
@@ -288,5 +290,51 @@ export class HourlyChart {
       tTxt.textContent = `${Math.round(tVal)}°`;
       labG.appendChild(tTxt);
     });
+
+    // Peak / trough markers — the warmest and coolest hour in the window.
+    // Only draw when they land on unlabeled hours and aren't at the edges,
+    // to avoid the "▲ 21° @ 05" label crashing into the existing temp label
+    // or the y-axis. A crash-free peak reading is more valuable than adding
+    // more numbers that overlap.
+    const extrema = findExtrema(this.hours, labeledIdx);
+    extrema.forEach((ex) => {
+      if (ex.index <= 0 || ex.index >= this.hours.length - 1) return;
+      const px = iToX(ex.index);
+      const py = tToY(ex.temp);
+      const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      g.setAttribute("class", `chart-extremum chart-extremum-${ex.kind}`);
+      const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      c.setAttribute("cx", px.toFixed(1));
+      c.setAttribute("cy", py.toFixed(1));
+      c.setAttribute("r", "3");
+      g.appendChild(c);
+      const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      // Peak: pin above; trough: pin below (with room for the axis labels).
+      const above = ex.kind === "peak";
+      label.setAttribute("x", px.toFixed(1));
+      label.setAttribute("y", (py + (above ? -10 : 14)).toFixed(1));
+      label.setAttribute("text-anchor", "middle");
+      const tVal = unit === "F" ? ex.temp * 9 / 5 + 32 : ex.temp;
+      label.textContent = `${above ? "▲" : "▼"} ${Math.round(tVal)}° · ${this._hourOf(ex.time)}`;
+      g.appendChild(label);
+      labG.appendChild(g);
+    });
   }
+}
+
+// Find the warmest and coolest hour in the series. Skips hours that already
+// carry a periodic label to avoid duplicated numbers on the same x.
+function findExtrema(hours, labeledIdx) {
+  if (!hours.length) return [];
+  let hot = { index: -1, temp: -Infinity, time: 0 };
+  let cold = { index: -1, temp: Infinity, time: 0 };
+  hours.forEach((h, i) => {
+    if (h.temp == null) return;
+    if (h.temp > hot.temp) hot = { index: i, temp: h.temp, time: h.time, kind: "peak" };
+    if (h.temp < cold.temp) cold = { index: i, temp: h.temp, time: h.time, kind: "trough" };
+  });
+  const out = [];
+  if (hot.index >= 0 && !labeledIdx.has(hot.index)) out.push(hot);
+  if (cold.index >= 0 && cold.index !== hot.index && !labeledIdx.has(cold.index)) out.push(cold);
+  return out;
 }
