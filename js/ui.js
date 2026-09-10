@@ -200,6 +200,7 @@ export const ui = {
   setWeather(weather, { narrative } = {}) {
     state.weather = weather;
     state.sampledWeather = weather; // initially same as live
+    updateDocumentTitle(weather);
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
@@ -292,6 +293,29 @@ function animateNumber(node, target, format) {
 }
 
 function capitalize(s) { return (s || "").charAt(0).toUpperCase() + (s || "").slice(1); }
+
+const DEFAULT_TITLE = "Aether — Interactive Weather";
+function updateDocumentTitle(w) {
+  if (!w || w.temp == null) {
+    document.title = DEFAULT_TITLE;
+    return;
+  }
+  const emoji = titleEmojiForCondition(w.condition, w.isDay);
+  const t = Math.round(state.unit === "F" ? w.temp * 9 / 5 + 32 : w.temp);
+  const place = state.place?.name || "Aether";
+  document.title = `${emoji} ${t}° · ${place}`;
+}
+function titleEmojiForCondition(cond, isDay) {
+  switch (cond) {
+    case "clear":  return isDay === false ? "🌙" : "☀️";
+    case "clouds": return "☁️";
+    case "rain":   return "🌧";
+    case "snow":   return "❄️";
+    case "storm":  return "⛈";
+    case "fog":    return "🌫";
+    default:       return "⛅";
+  }
+}
 
 function renderLiveValues(w, { animate = true } = {}) {
   const temp = convertTemp(w.temp);
