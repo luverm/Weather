@@ -9,8 +9,14 @@ export function advise(weather) {
   const uv = weather.uv ?? 0;
   const cond = weather.condition;
   const pop = weather.hourly?.[0]?.pop ?? 0;
+  const aqi = weather.airQuality?.aqi;
   const nextRain = (weather.hourly || []).slice(0, 4)
     .find((h) => (h.pop ?? 0) >= 55 || (h.precip ?? 0) > 0.4);
+
+  // Air-quality overrides everything else when it becomes actually dangerous —
+  // the choice-of-jacket line is not the leading advice on a hazardous-air day.
+  if (aqi != null && aqi > 200) return "Hazardous air — stay indoors, close windows.";
+  if (aqi != null && aqi > 150) return "Unhealthy air — mask up if you're going out.";
 
   if (cond === "storm") return "Thunderstorms — stay indoors and unplug sensitive gear.";
   if (cond === "snow") {
@@ -27,7 +33,10 @@ export function advise(weather) {
   if (t <= 0) return "Freezing — heavy coat, scarf, gloves.";
   if (t <= 8) return "Brisk — sweater plus a jacket.";
   if (t <= 14) return "Cool — a light jacket does the trick.";
-  if (t <= 20) return "Mild and pleasant — a long sleeve is plenty.";
+  if (t <= 20) {
+    if (aqi != null && aqi > 100) return "Mild — but air is moderate, ease off cardio.";
+    return "Mild and pleasant — a long sleeve is plenty.";
+  }
   if (t <= 26) {
     if (uv >= 6) return "Warm and sunny — sunscreen and a hat.";
     return "Comfortable tee-shirt weather.";
