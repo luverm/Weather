@@ -135,7 +135,7 @@
             <button id="unit-toggle" class="unit" title="Toggle units" aria-label="Toggle temperature units">°C</button>
           </div>
           <p id="condition-label" class="condition-label">—</p>
-          <p id="feels-like" class="feels-like"><span id="temp-trend" class="temp-trend" aria-hidden="true"></span>Feels like —</p>
+          <p id="feels-like" class="feels-like"><span id="temp-trend" class="temp-trend" aria-hidden="true"></span>Feels like —<span id="temp-vs-yesterday" class="temp-vs-yesterday" hidden aria-live="polite"></span></p>
           <div id="day-range" class="day-range" hidden aria-label="Today's temperature range">
             <span class="day-range-end" id="day-range-min">—</span>
             <div class="day-range-track">
@@ -347,6 +347,7 @@
             <div class="sun-item">
               <span class="sun-label">Daylight</span>
               <strong id="sun-daylight">—</strong>
+              <span id="sun-daylight-delta" class="sun-daylight-delta" hidden></span>
             </div>
           </div>
         </div>

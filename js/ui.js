@@ -48,6 +48,8 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
+  tempVsYesterday: $("#temp-vs-yesterday"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -221,12 +223,16 @@ export const ui = {
     }
   },
   setScrubbing(on) {
+    state.scrubbing = !!on;
     document.documentElement.setAttribute("data-scrubbing", on ? "true" : "false");
     if (on) {
       el.hintText.textContent = "Drag to explore future weather.";
     } else {
       el.hintText.innerHTML = 'Drag the slider, hover the chart, or press <kbd>?</kbd> for shortcuts.';
     }
+    // Re-render the yesterday-comparison pill whenever scrub state flips —
+    // it only makes sense against the live "now" reading.
+    if (state.weather) renderVsYesterday(state.weather);
   },
   setAudioState(on) {
     el.audioBtn.classList.toggle("on", !!on);
@@ -276,8 +282,43 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  // Rebuild the feels-like text but keep the trend + yesterday pill nodes.
+  const trend = el.tempTrend;
+  const yesterdayPill = el.tempVsYesterday;
+  el.feelsLike.textContent = "";
+  if (trend) el.feelsLike.appendChild(trend);
+  el.feelsLike.appendChild(document.createTextNode(`Feels like ${Math.round(feels)}°`));
+  if (yesterdayPill) el.feelsLike.appendChild(yesterdayPill);
+  renderVsYesterday(w);
   renderDayRange(w);
+}
+
+function renderVsYesterday(w) {
+  if (!el.tempVsYesterday) return;
+  // Only meaningful when the scrubber is live — compares the actual "now"
+  // reading against yesterday's high.
+  const yh = state.weather?.yesterday?.tempMax;
+  const cur = state.scrubbing ? null : state.weather?.temp;
+  if (yh == null || cur == null) {
+    el.tempVsYesterday.hidden = true;
+    el.tempVsYesterday.textContent = "";
+    return;
+  }
+  const deltaC = cur - yh;
+  const deltaDisp = Math.round(state.unit === "F" ? deltaC * 9 / 5 : deltaC);
+  el.tempVsYesterday.hidden = false;
+  if (Math.abs(deltaDisp) < 1) {
+    el.tempVsYesterday.className = "temp-vs-yesterday flat";
+    el.tempVsYesterday.textContent = "· same as yesterday";
+    el.tempVsYesterday.title = `Yesterday's high was ${Math.round(convertTemp(yh))}°${state.unit}`;
+    return;
+  }
+  const warmer = deltaDisp > 0;
+  el.tempVsYesterday.className = `temp-vs-yesterday ${warmer ? "up" : "down"}`;
+  el.tempVsYesterday.textContent =
+    `· ${warmer ? "▲" : "▼"} ${Math.abs(deltaDisp)}° ${warmer ? "warmer" : "cooler"} than yesterday`;
+  el.tempVsYesterday.title =
+    `Yesterday's high was ${Math.round(convertTemp(yh))}°${state.unit}`;
 }
 
 function renderDayRange(w) {
@@ -521,8 +562,36 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderDaylightDelta(w) {
+  if (!el.sunDaylightDelta) return;
+  const y = w?.yesterday;
+  if (!w?.sunrise || !w?.sunset || !y?.sunrise || !y?.sunset) {
+    el.sunDaylightDelta.hidden = true;
+    el.sunDaylightDelta.textContent = "";
+    return;
+  }
+  const todayMs = w.sunset - w.sunrise;
+  const yesterdayMs = y.sunset - y.sunrise;
+  const deltaSec = Math.round((todayMs - yesterdayMs) / 1000);
+  if (Math.abs(deltaSec) < 5) {
+    el.sunDaylightDelta.className = "sun-daylight-delta flat";
+    el.sunDaylightDelta.textContent = "same as yesterday";
+    el.sunDaylightDelta.hidden = false;
+    return;
+  }
+  const longer = deltaSec > 0;
+  const abs = Math.abs(deltaSec);
+  const m = Math.floor(abs / 60);
+  const s = abs % 60;
+  const label = m > 0 ? `${m}m ${s}s` : `${s}s`;
+  el.sunDaylightDelta.className = `sun-daylight-delta ${longer ? "up" : "down"}`;
+  el.sunDaylightDelta.textContent = `${longer ? "▲" : "▼"} ${label} vs yesterday`;
+  el.sunDaylightDelta.hidden = false;
 }
 
 function scheduleSunArc(w) {

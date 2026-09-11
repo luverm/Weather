@@ -391,6 +391,20 @@ html[data-reduce-motion="true"] *::after {
 .unit:hover { background: var(--glass); color: var(--fg); }
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
+.temp-vs-yesterday {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-dim);
+  letter-spacing: 0.01em;
+  animation: fadeInSoft 400ms var(--ease) both;
+}
+.temp-vs-yesterday[hidden] { display: none; }
+.temp-vs-yesterday.up   { color: #ff9c7a; }
+.temp-vs-yesterday.down { color: #9ad1ff; }
+.temp-vs-yesterday.flat { color: var(--fg-dim); }
+@keyframes fadeInSoft { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: none; } }
 .day-range {
   margin-top: 10px;
   display: grid;
@@ -966,6 +980,18 @@ kbd {
 .sun-item { display: grid; gap: 2px; }
 .sun-label { font-size: 10.5px; color: var(--fg-dim); letter-spacing: 0.14em; text-transform: uppercase; }
 .sun-item strong { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.sun-daylight-delta {
+  display: block;
+  margin-top: 2px;
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-dim);
+}
+.sun-daylight-delta[hidden] { display: none; }
+.sun-daylight-delta.up   { color: #ffd39a; }
+.sun-daylight-delta.down { color: #9ad1ff; }
+.sun-daylight-delta.flat { color: var(--fg-dim); }
 .sun-arc {
   width: 100%;
   height: 76px;
