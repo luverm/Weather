@@ -1348,6 +1348,11 @@ function renderHourly(w) {
       ${windGlyph}
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
+    item.setAttribute("tabindex", "0");
+    item.setAttribute("role", "button");
+    item.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); item.click(); }
+    });
     el.forecastTrack.appendChild(item);
   }
 }
