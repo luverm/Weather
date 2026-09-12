@@ -218,6 +218,8 @@ export const ui = {
     renderChartSummary(weather);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
+    const offlineBanner = document.getElementById("offline-banner");
+    if (offlineBanner) offlineBanner.hidden = !weather.offline;
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
