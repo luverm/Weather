@@ -317,6 +317,7 @@ installShortcuts({
   const saved = places.all();
   if (saved.length) {
     await loadByCoords(saved[0]);
+    handleUrlActions();
     return;
   }
   try {
@@ -325,7 +326,22 @@ installShortcuts({
   } catch {
     await loadByCoords({ name: "Reykjavík", country: "Iceland", lat: 64.1466, lon: -21.9426 });
   }
+  handleUrlActions();
 })();
+
+// Handle deep-link actions from the manifest shortcuts (?action=refresh).
+function handleUrlActions() {
+  const params = new URLSearchParams(location.search);
+  const action = params.get("action");
+  if (action === "refresh" && app.place) {
+    setTimeout(() => refreshWeather(), 200);
+  }
+  // Clean the URL so a manual reload doesn't re-trigger.
+  if (action) {
+    const clean = location.pathname + location.hash;
+    history.replaceState({}, "", clean);
+  }
+}
 
 // ---------- Lifecycle ----------
 document.addEventListener("visibilitychange", () => {
