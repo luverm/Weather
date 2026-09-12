@@ -1398,7 +1398,11 @@ function renderDailyDelta(days) {
   if (Math.abs(dPop) >= 20) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
   }
-  el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
+  const weekMm = days.reduce((s, d) => s + (d.precip || 0), 0);
+  const weekTail = weekMm >= 1
+    ? ` · week ${formatMm(weekMm)}`
+    : "";
+  el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}${weekTail}`;
 }
 
 function toggleDailyExpand(item, d, w) {
