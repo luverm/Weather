@@ -358,6 +358,29 @@ export class HourlyChart {
       }
     }
 
+    // Y-axis scale ticks — three tiny labels (min / mid / max) on the left
+    // edge so absolute temperatures read at a glance.
+    const scaleG = this.svg.querySelector("#chart-scale");
+    if (scaleG) {
+      scaleG.innerHTML = "";
+      const unitLocal = this.getUnit();
+      const conv = (v) => unitLocal === "F" ? v * 9 / 5 + 32 : v;
+      const mid = (tMin + tMax) / 2;
+      const ticks = [
+        { v: tMax, y: tToY(tMax) + 8 },
+        { v: mid,  y: tToY(mid) },
+        { v: tMin, y: tToY(tMin) - 2 },
+      ];
+      for (const t of ticks) {
+        const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        txt.setAttribute("x", "2");
+        txt.setAttribute("y", t.y.toFixed(1));
+        txt.setAttribute("text-anchor", "start");
+        txt.textContent = `${Math.round(conv(t.v))}°`;
+        scaleG.appendChild(txt);
+      }
+    }
+
     // Labels: every ~3 hours
     const unit = this.getUnit();
     const labG = this.svg.querySelector("#chart-labels");
