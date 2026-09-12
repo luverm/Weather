@@ -901,6 +901,9 @@ html[data-reduce-motion="true"] *::after {
   fill: #ffb37a;
   filter: drop-shadow(0 0 3px rgba(255, 158, 90, 0.5));
 }
+.chart-clouds rect {
+  fill: rgba(200, 210, 230, 0.9);
+}
 .chart-scale text {
   font-size: 8px;
   fill: var(--fg-dim);

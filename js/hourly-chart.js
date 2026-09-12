@@ -254,6 +254,31 @@ export class HourlyChart {
       precipG.appendChild(r);
     });
 
+    // Cloud cover ribbon: thin grey bars along the bottom of the plot,
+    // opacity scaling with cover %, so overcast stretches read as denser
+    // blocks and mostly-clear stretches almost fade out.
+    const cloudsG = this.svg.querySelector("#chart-clouds");
+    if (cloudsG) {
+      cloudsG.innerHTML = "";
+      const barW = Math.max(4, innerW / this.hours.length - 3);
+      const cloudsAvailable = this.hours.some((h) => h.cloudCover != null);
+      if (cloudsAvailable) {
+        this.hours.forEach((h, i) => {
+          const cc = h.cloudCover ?? 0;
+          if (cc < 5) return;
+          const y = H - PAD_BOT - 1;
+          const rectH = 2;
+          const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+          r.setAttribute("x", (iToX(i) - barW / 2).toFixed(1));
+          r.setAttribute("y", (y - rectH).toFixed(1));
+          r.setAttribute("width", barW.toFixed(1));
+          r.setAttribute("height", rectH.toFixed(1));
+          r.setAttribute("opacity", (0.15 + (cc / 100) * 0.55).toFixed(2));
+          cloudsG.appendChild(r);
+        });
+      }
+    }
+
     // UV high tick bar: paints an amber ridge along the top of the chart
     // for any hour where UV ≥ 6 (sunscreen threshold). Reads as "these are
     // the burn-risk hours" without a legend.
