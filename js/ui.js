@@ -504,6 +504,7 @@ function renderDayRange(w) {
 
 function renderMetrics(w) {
   el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
+  renderWindRose(w);
   // Threshold tint on the numeric values so extreme readings visually
   // stand out from the fold — wind ≥ 40 km/h reads as warn; pressure
   // outside 995–1030 hPa reads as low/high pressure system.
@@ -614,6 +615,38 @@ function tintMetric(node, tone) {
   if (!node) return;
   if (tone) node.dataset.tone = tone;
   else delete node.dataset.tone;
+}
+
+// Paint short spokes on the wind compass — one per upcoming hour with a
+// bearing — so the compass shows not just the current direction but the
+// spread of directions over the day. Length scales with wind speed.
+function renderWindRose(w) {
+  const g = document.getElementById("wind-rose");
+  if (!g) return;
+  g.innerHTML = "";
+  const hrs = (w.hourly || []).slice(0, 24).filter((h) => h.windDir != null);
+  if (!hrs.length) return;
+  const maxWind = Math.max(10, ...hrs.map((h) => h.wind ?? 0));
+  for (const h of hrs) {
+    const wind = h.wind ?? 0;
+    if (wind < 5) continue; // skip near-calm hours
+    // Direction is "wind from", so line points inward from that bearing.
+    const bearing = (h.windDir + 180) % 360;
+    const rad = (bearing - 90) * Math.PI / 180; // 0° = right, so shift 90
+    const inner = 6;
+    const outer = 6 + (Math.min(wind, maxWind) / maxWind) * 12;
+    const x1 = Math.cos(rad) * inner, y1 = Math.sin(rad) * inner;
+    const x2 = Math.cos(rad) * outer, y2 = Math.sin(rad) * outer;
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", x1.toFixed(1));
+    line.setAttribute("y1", y1.toFixed(1));
+    line.setAttribute("x2", x2.toFixed(1));
+    line.setAttribute("y2", y2.toFixed(1));
+    line.setAttribute("stroke", "currentColor");
+    line.setAttribute("stroke-width", "0.8");
+    line.setAttribute("opacity", "0.35");
+    g.appendChild(line);
+  }
 }
 
 function uvLevel(v) {
