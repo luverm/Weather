@@ -475,11 +475,13 @@ function beaufort(kmh) {
 
 function uvLevel(v) {
   if (v == null) return null;
-  if (v < 3) return { label: "Low", cls: "down" };
-  if (v < 6) return { label: "Moderate", cls: "flat" };
-  if (v < 8) return { label: "High", cls: "up" };
-  if (v < 11) return { label: "Very High", cls: "up" };
-  return { label: "Extreme", cls: "up" };
+  // WHO/EPA UV index scale — colours map to the standard palette so the
+  // pill instantly reads as "safe / take cover" without needing the label.
+  if (v < 3) return { label: "Low",       cls: "uv-low" };
+  if (v < 6) return { label: "Moderate",  cls: "uv-mod" };
+  if (v < 8) return { label: "High",      cls: "uv-high" };
+  if (v < 11) return { label: "Very High", cls: "uv-vhigh" };
+  return { label: "Extreme", cls: "uv-extreme" };
 }
 
 function renderPressureSparkline(w) {

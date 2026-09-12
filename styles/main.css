@@ -647,6 +647,11 @@ html[data-reduce-motion="true"] *::after {
 .trend.up { background: rgba(255, 156, 122, 0.18); color: #ffb196; }
 .trend.down { background: rgba(154, 209, 255, 0.18); color: #9ad1ff; }
 .trend.flat { background: rgba(255,255,255,0.08); color: var(--fg-dim); }
+.trend.uv-low     { background: rgba(122, 200, 122, 0.22); color: #a5e8a5; }
+.trend.uv-mod     { background: rgba(255, 220, 100, 0.22); color: #ffe488; }
+.trend.uv-high    { background: rgba(255, 165, 90, 0.24);  color: #ffbf90; }
+.trend.uv-vhigh   { background: rgba(255, 100, 100, 0.24); color: #ff9e9e; }
+.trend.uv-extreme { background: rgba(180, 120, 220, 0.30); color: #e4b6ff; font-weight: 600; }
 .temp-trend {
   display: inline-block;
   margin-right: 8px;
