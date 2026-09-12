@@ -917,12 +917,32 @@ function scheduleSunArc(w) {
     el.sunArcMarker.setAttribute("cy", y.toFixed(1));
     const isUp = now >= sr && now <= ss;
     el.sunArcMarker.style.opacity = isUp ? "1" : "0.45";
+    // Time-of-day color: warm gold near sunrise/sunset, bright cream at
+    // solar noon. Curve peaks at t=0.5 for the whitest look.
+    const noonProx = 1 - Math.abs(t - 0.5) * 2; // 0 at rise/set, 1 at noon
+    const color = t < 0.5
+      ? mixColor("#ffd39c", "#fff5d6", noonProx)   // rise → noon
+      : mixColor("#fff5d6", "#ffb37a", 1 - noonProx); // noon → set
+    el.sunArcMarker.setAttribute("fill", color);
   };
   update();
   state.sunArcTimer = setInterval(update, 60_000);
 }
 
 function clamp01(v) { return Math.max(0, Math.min(1, v)); }
+
+// Interpolate between two "#rrggbb" hex colors; used by the sun-arc
+// marker to shift its fill with time of day.
+function mixColor(a, b, t) {
+  t = clamp01(t);
+  const parse = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+  const [ar, ag, ab] = parse(a);
+  const [br, bg, bb] = parse(b);
+  const r = Math.round(ar + (br - ar) * t);
+  const g = Math.round(ag + (bg - ag) * t);
+  const bl = Math.round(ab + (bb - ab) * t);
+  return `rgb(${r}, ${g}, ${bl})`;
+}
 
 function scheduleSunCountdown(w) {
   if (state.sunTimer) { clearInterval(state.sunTimer); state.sunTimer = null; }
