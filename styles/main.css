@@ -1906,6 +1906,17 @@ body:not([data-weather-loaded="true"]) .metric-value {
 .fetched-ago.stale { color: #ffb86b; }
 
 #refresh-btn.spinning svg { animation: spin 700ms var(--ease) both; }
+#refresh-btn.stale { position: relative; }
+#refresh-btn.stale::after {
+  content: "";
+  position: absolute;
+  top: 6px; right: 6px;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #ffb86b;
+  box-shadow: 0 0 6px #ffb86b;
+  animation: pulse 2.4s ease-in-out infinite;
+}
 @keyframes spin { from { transform: rotate(0) } to { transform: rotate(360deg) } }
 @keyframes pulse {
   0%, 100% { opacity: 0.4; transform: scale(1); }

@@ -1923,6 +1923,9 @@ function startFetchedTicker() {
       `Updated ${Math.floor(minutes / 60)}h ago`;
     el.fetchedAgo.textContent = "· " + label + " · refresh";
     el.fetchedAgo.classList.toggle("stale", minutes >= 20);
+    // Signal stale on the toolbar refresh button too — a subtle dot lets
+    // users notice from anywhere on the page, not just the footer.
+    el.refreshBtn?.classList.toggle("stale", minutes >= 15);
   };
   update();
   setInterval(update, 30_000);
