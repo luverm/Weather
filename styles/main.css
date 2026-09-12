@@ -818,6 +818,13 @@ html[data-reduce-motion="true"] *::after {
   color: #ffb37a;
 }
 .popover-wind svg { display: block; transform-origin: center; }
+.popover-cond {
+  display: inline-flex;
+  vertical-align: middle;
+  margin-right: 6px;
+  width: 14px; height: 14px;
+}
+.popover-cond svg { display: block; }
 .chart-hover {
   font-size: 12px;
   color: var(--fg);

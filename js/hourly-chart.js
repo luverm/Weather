@@ -8,6 +8,19 @@ const PAD_RIGHT = 6;
 const PAD_TOP = 16;
 const PAD_BOT = 22;
 
+function miniConditionIcon(condition) {
+  const c = 'fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"';
+  switch (condition) {
+    case "clear":  return `<svg viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="12" r="4" ${c}/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5" ${c}/></svg>`;
+    case "clouds": return `<svg viewBox="0 0 24 24" width="14" height="14"><path d="M7 17a4 4 0 010-8 5 5 0 019.9-1A4 4 0 0117 17H7z" ${c}/></svg>`;
+    case "rain":   return `<svg viewBox="0 0 24 24" width="14" height="14"><path d="M7 14a4 4 0 010-8 5 5 0 019.9-1A4 4 0 0117 14H7z" ${c}/><path d="M8 18l-1 2M12 18l-1 2M16 18l-1 2" ${c}/></svg>`;
+    case "snow":   return `<svg viewBox="0 0 24 24" width="14" height="14"><path d="M7 14a4 4 0 010-8 5 5 0 019.9-1A4 4 0 0117 14H7z" ${c}/><path d="M9 18v2M12 17v3M15 18v2" ${c}/></svg>`;
+    case "storm":  return `<svg viewBox="0 0 24 24" width="14" height="14"><path d="M7 13a4 4 0 010-8 5 5 0 019.9-1A4 4 0 0117 13H7z" ${c}/><path d="M12 13l-2 4h3l-2 4" ${c}/></svg>`;
+    case "fog":    return `<svg viewBox="0 0 24 24" width="14" height="14"><path d="M4 10h16M4 14h12M6 18h14" ${c}/></svg>`;
+    default:       return `<svg viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="12" r="4" ${c}/></svg>`;
+  }
+}
+
 export class HourlyChart {
   constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit, getTimezone }) {
     this.svg = svgEl;
@@ -147,8 +160,11 @@ export class HourlyChart {
       : "";
     const wind = h.wind != null ? ` · ${windArrow}${Math.round(h.wind)} km/h` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
+    const condIcon = h.condition
+      ? `<span class="popover-cond" data-condition="${h.condition}">${miniConditionIcon(h.condition)}</span>`
+      : "";
     this.popover.innerHTML =
-      `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
+      `${condIcon}<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
       `<em>${h.pop}% precip${wind}${hum}</em>`;
     this.popover.style.left = `${pxX.toFixed(1)}px`;
     this.popover.style.top = `${pxY.toFixed(1)}px`;
