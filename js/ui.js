@@ -89,6 +89,7 @@ const el = {
   settingUnitF: $("#setting-unit-f"),
   settingHideRadar: $("#setting-hide-radar"),
   settingClearPlaces: $("#setting-clear-places"),
+  settingReset: $("#setting-reset"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
@@ -1887,6 +1888,14 @@ function bindSettings() {
     renderPlaces();
     ui.showToast("Saved places cleared");
     close();
+  });
+
+  el.settingReset?.addEventListener("click", () => {
+    if (!confirm("Reset all preferences (unit, motion, hidden radar)? Saved places kept.")) return;
+    ["aether:unit", "aether:reduceMotion", "aether:hideRadar"].forEach((k) =>
+      localStorage.removeItem(k));
+    ui.showToast("Preferences reset — reloading");
+    setTimeout(() => location.reload(), 800);
   });
 }
 
