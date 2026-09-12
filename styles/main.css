@@ -1035,6 +1035,20 @@ kbd {
 .moon-svg { width: 48px; height: 48px; }
 .moon-meta strong { display: block; font-size: 14px; font-weight: 500; }
 .moon-detail { font-size: 11.5px; color: var(--fg-dim); }
+.moon-visibility {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 10.5px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+  font-weight: 500;
+}
+.moon-visibility[hidden] { display: none; }
+.moon-visibility[data-tone="clear"]   { background: rgba(240, 230, 203, 0.22); color: #f5ecd0; }
+.moon-visibility[data-tone="partial"] { background: rgba(200, 210, 230, 0.18); color: #dbe4f2; }
+.moon-visibility[data-tone="hazy"]    { background: rgba(140, 155, 180, 0.22); color: #c8d0dd; }
+.moon-visibility[data-tone="hidden"]  { background: rgba(90, 100, 130, 0.28); color: #a2acc0; }
 
 .sun-row { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .sun-item { display: grid; gap: 2px; }

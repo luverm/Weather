@@ -45,6 +45,7 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonVisibility: $("#moon-visibility"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -194,7 +195,7 @@ export const ui = {
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
-    renderMoon(weather.moon);
+    renderMoon(weather.moon, weather);
     renderSun(weather);
     renderHourly(weather);
     renderDaily(weather);
@@ -559,10 +560,11 @@ function renderAqTrend(aq) {
   drawSparkline(el.aqTrendLine, el.aqTrendFill, pts, { minSpan: 20 });
 }
 
-function renderMoon(moon) {
+function renderMoon(moon, w) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  renderMoonVisibility(w);
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
@@ -579,6 +581,24 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+}
+
+// Read the current cloud cover to say whether the moon is actually
+// visible right now. Silent during daytime — the moon card carries the
+// phase for planning, but the visibility hint only matters after dark.
+function renderMoonVisibility(w) {
+  if (!el.moonVisibility) return;
+  if (!w || w.isDay) { el.moonVisibility.hidden = true; return; }
+  const cc = w.cloudCover;
+  if (cc == null) { el.moonVisibility.hidden = true; return; }
+  let text, tone;
+  if (cc < 20)       { text = "Clear sky — moon is out"; tone = "clear"; }
+  else if (cc < 55)  { text = `${Math.round(cc)}% clouds — mostly visible`; tone = "partial"; }
+  else if (cc < 85)  { text = `${Math.round(cc)}% clouds — glimpses only`; tone = "hazy"; }
+  else               { text = `${Math.round(cc)}% overcast — moon hidden`; tone = "hidden"; }
+  el.moonVisibility.textContent = text;
+  el.moonVisibility.dataset.tone = tone;
+  el.moonVisibility.hidden = false;
 }
 
 function fmtTime(ts) {
