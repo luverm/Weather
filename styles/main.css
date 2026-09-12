@@ -1666,6 +1666,15 @@ kbd {
 .daily-item:hover { background: var(--glass); }
 .daily-day { font-size: 13px; font-weight: 500; }
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
+/* Condition-tinted weather icons — reads at a glance which day is sunny,
+   rainy, snowy without decoding each glyph. Applies to hourly, daily,
+   and strip icons alike since all set data-condition. */
+[data-condition="clear"]  svg { color: #ffd680; }
+[data-condition="clouds"] svg { color: #b8c4d8; }
+[data-condition="rain"]   svg { color: #7fb8ff; }
+[data-condition="storm"]  svg { color: #b284ff; }
+[data-condition="snow"]   svg { color: #e8f0ff; }
+[data-condition="fog"]    svg { color: #9aa8bd; }
 .daily-range {
   position: relative;
   height: 6px; border-radius: 3px;

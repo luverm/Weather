@@ -1104,7 +1104,7 @@ function renderHourly(w) {
       : "";
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
-      <span class="forecast-icon">${iconFor(h.condition)}</span>
+      <span class="forecast-icon" data-condition="${escapeHtml(h.condition || "")}">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
       ${windGlyph}
@@ -1157,7 +1157,7 @@ function renderDaily(w) {
       ? `<span class="daily-gust">${popLabel}${mmLabel}${gustLabel}</span>` : "";
     item.innerHTML = `
       <span class="daily-day">${day}</span>
-      <span class="daily-icon">${iconFor(d.condition)}</span>
+      <span class="daily-icon" data-condition="${escapeHtml(d.condition || "")}">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
       </div>
@@ -1173,7 +1173,7 @@ function renderDaily(w) {
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
   el.dailyIconStrip.innerHTML = days.map((d) =>
-    `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
+    `<span class="strip-day" data-condition="${escapeHtml(d.condition || "")}" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
   ).join("");
 }
 
