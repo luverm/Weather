@@ -249,6 +249,30 @@ export class HourlyChart {
       precipG.appendChild(r);
     });
 
+    // UV high tick bar: paints an amber ridge along the top of the chart
+    // for any hour where UV ≥ 6 (sunscreen threshold). Reads as "these are
+    // the burn-risk hours" without a legend.
+    const uvG = this.svg.querySelector("#chart-uv");
+    if (uvG) {
+      uvG.innerHTML = "";
+      const barW = Math.max(4, innerW / this.hours.length - 3);
+      this.hours.forEach((h, i) => {
+        const uv = h.uv ?? 0;
+        if (uv < 6) return;
+        // Height ramps with UV so extreme (11+) is fuller than moderate (6).
+        const fill = Math.min(1, (uv - 6) / 5);
+        const tickH = 3 + fill * 3;
+        const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        r.setAttribute("x", (iToX(i) - barW / 2).toFixed(1));
+        r.setAttribute("y", "2");
+        r.setAttribute("width", barW.toFixed(1));
+        r.setAttribute("height", tickH.toFixed(1));
+        r.setAttribute("rx", "1");
+        r.setAttribute("opacity", (0.55 + fill * 0.35).toFixed(2));
+        uvG.appendChild(r);
+      });
+    }
+
     // Sunrise / sunset markers: thin vertical rules with a small label so
     // the eye can locate them along the timeline without decoding shading.
     const sunG = this.svg.querySelector("#chart-sun-markers");

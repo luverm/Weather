@@ -863,6 +863,10 @@ html[data-reduce-motion="true"] *::after {
   letter-spacing: 0.02em;
 }
 .chart-sun-markers .chart-sun-set text { fill: #ffd3b8; }
+.chart-uv rect {
+  fill: #ffb37a;
+  filter: drop-shadow(0 0 3px rgba(255, 158, 90, 0.5));
+}
 
 /* ---------- Wind compass (inside wind metric) ---------- */
 .metric-wind {
