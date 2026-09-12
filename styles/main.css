@@ -1495,6 +1495,19 @@ kbd {
 .daily-mm[data-intensity="light"]    { background: #b8d9f7; }
 .daily-mm[data-intensity="moderate"] { background: #6ba7e6; color: #fff; }
 .daily-mm[data-intensity="heavy"]    { background: #3a6ec0; color: #fff; }
+.daily-sunbar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 4px 2px;
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+.daily-sunbar-daylight { color: var(--fg-muted); }
 
 /* ---------- Forecast (hourly + daily) ---------- */
 .forecast, .daily {
