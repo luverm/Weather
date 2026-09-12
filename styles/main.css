@@ -1674,6 +1674,12 @@ kbd {
 .forecast-wind-val { line-height: 1; }
 .forecast-item:hover { background: var(--glass); transform: translateY(-2px); }
 .forecast-item.active { background: var(--glass-strong); }
+.forecast-item[data-night="true"] {
+  background: linear-gradient(180deg, rgba(20, 30, 60, 0.28), rgba(20, 30, 60, 0.10));
+}
+.forecast-item[data-night="true"]:hover {
+  background: linear-gradient(180deg, rgba(30, 45, 80, 0.42), rgba(20, 30, 60, 0.18));
+}
 .forecast-time { font-size: 11px; letter-spacing: 0.08em; color: var(--fg-dim); text-transform: uppercase; }
 .forecast-icon { width: 26px; height: 26px; display: grid; place-items: center; color: var(--fg-muted); }
 .forecast-temp { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }

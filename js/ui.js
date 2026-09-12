@@ -1117,6 +1117,7 @@ function renderHourly(w) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    item.dataset.night = h.isDay === false ? "true" : "false";
     // Small wind arrow only when wind reads as notable — keeps calm hours
     // uncluttered. Direction is the "wind coming FROM" bearing; rotate the
     // arrow to point where the wind is going (add 180°).
