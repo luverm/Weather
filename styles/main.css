@@ -391,6 +391,33 @@ html[data-reduce-motion="true"] *::after {
 .unit:hover { background: var(--glass); color: var(--fg); }
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
+.next-change {
+  margin-top: 10px;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 8px;
+  background: var(--glass);
+  border: 1px solid var(--stroke);
+  color: var(--fg-muted);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 200ms var(--ease), color 200ms var(--ease), transform 200ms var(--ease);
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+.next-change[hidden] { display: none; }
+.next-change:hover { background: var(--glass-strong); color: var(--fg); transform: translateY(-1px); }
+.next-change-icon { display: inline-flex; width: 16px; height: 16px; color: var(--accent); }
+.next-change-icon svg { width: 100%; height: 100%; }
+.next-change[data-to="rain"] .next-change-icon,
+.next-change[data-to="storm"] .next-change-icon { color: #7fb8ff; }
+.next-change[data-to="snow"] .next-change-icon { color: #e0f0ff; }
+.next-change[data-to="clear"] .next-change-icon { color: #ffd680; }
+.next-change[data-to="clouds"] .next-change-icon { color: #b8c4d8; }
 .day-range {
   margin-top: 10px;
   display: grid;

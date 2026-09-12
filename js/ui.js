@@ -97,6 +97,9 @@ const el = {
   sunPhasesMarker: $("#sun-phases-marker"),
   sunPhaseBadge: $("#sun-phase-badge"),
   sunPhaseText: $("#sun-phase-text"),
+  nextChange: $("#next-change"),
+  nextChangeIcon: $("#next-change-icon"),
+  nextChangeText: $("#next-change-text"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -286,6 +289,48 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  renderNextChange(w);
+}
+
+// Look ahead in the hourly forecast for the first distinct condition
+// transition and surface it as a small pill on the hero. Answers "when
+// does it change?" without having to scan the whole strip.
+function renderNextChange(w) {
+  if (!el.nextChange) return;
+  const now = w.condition;
+  const hrs = (w.hourly || []).filter((h) => h.time > Date.now()).slice(0, 12);
+  if (!now || !hrs.length) { el.nextChange.hidden = true; return; }
+  const next = hrs.find((h) => weatherFamily(h.condition) !== weatherFamily(now));
+  if (!next) { el.nextChange.hidden = true; return; }
+  const inMs = next.time - Date.now();
+  const when = inMs < 90 * 60_000 ? `in ${Math.round(inMs / 60_000)}m` : `at ${fmtTime(next.time)}`;
+  const verb = changeVerb(now, next.condition);
+  if (el.nextChangeIcon) el.nextChangeIcon.innerHTML = iconFor(next.condition);
+  if (el.nextChangeText) el.nextChangeText.textContent = `${verb} ${when}`;
+  el.nextChange.dataset.to = next.condition;
+  el.nextChange.hidden = false;
+  el.nextChange.onclick = () => state.handlers.onHourClick?.(next.time);
+}
+
+// Group the fine-grained conditions into families so a "cloudy → partly
+// cloudy" flicker doesn't fire the chip; only genuine transitions do.
+function weatherFamily(c) {
+  if (c === "rain" || c === "storm") return "wet";
+  if (c === "snow") return "snow";
+  if (c === "clear") return "clear";
+  if (c === "clouds") return "clouds";
+  if (c === "fog") return "fog";
+  return c || "";
+}
+
+function changeVerb(from, to) {
+  const t = weatherFamily(to);
+  if (t === "wet")    return "Rain";
+  if (t === "snow")   return "Snow";
+  if (t === "clear")  return "Clearing";
+  if (t === "clouds") return "Clouding over";
+  if (t === "fog")    return "Fog rolling in";
+  return capitalize(to);
 }
 
 function renderDayRange(w) {
