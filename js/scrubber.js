@@ -101,6 +101,10 @@ export class Scrubber {
     });
 
     this.resetEl?.addEventListener("click", () => this.reset());
+    // Time label doubles as a reset target so mobile users have a bigger
+    // tap area for "back to now" than the tiny Now button alone.
+    this.timeEl?.addEventListener("click", () => this.reset());
+    if (this.timeEl) this.timeEl.style.cursor = "pointer";
   }
 
   reset() {
