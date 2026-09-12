@@ -1000,11 +1000,24 @@ function renderHourly(w) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    // Small wind arrow only when wind reads as notable — keeps calm hours
+    // uncluttered. Direction is the "wind coming FROM" bearing; rotate the
+    // arrow to point where the wind is going (add 180°).
+    const windGlyph = (h.wind != null && h.wind >= 15 && h.windDir != null)
+      ? `<span class="forecast-wind" title="${Math.round(h.wind)} km/h from ${cardinal(h.windDir)}">
+           <svg viewBox="-8 -8 16 16" width="12" height="12" aria-hidden="true"
+                style="transform: rotate(${((h.windDir + 180) % 360).toFixed(0)}deg)">
+             <path d="M0 -6 L3 4 L0 2 L-3 4 Z" fill="currentColor"/>
+           </svg>
+           <span class="forecast-wind-val">${Math.round(h.wind)}</span>
+         </span>`
+      : "";
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
+      ${windGlyph}
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
