@@ -1764,6 +1764,11 @@ function startFetchedTicker() {
 }
 
 function bindShare() {
+  // Also copy summary when the hero temperature is clicked — a quick
+  // shortcut for the most common share pattern.
+  el.temp?.addEventListener("click", () => el.shareBtn?.click());
+  el.temp?.setAttribute("title", "Click to share summary");
+  el.temp?.style.setProperty("cursor", "pointer");
   if (!el.shareBtn) return;
   el.shareBtn.addEventListener("click", async () => {
     const w = state.weather;
