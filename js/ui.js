@@ -322,8 +322,12 @@ function updateDocumentTitle(w) {
 }
 
 // Repaint the tab favicon with the current condition emoji so the tab
-// glances at the same information as the title.
+// glances at the same information as the title. Skipped when the emoji
+// hasn't changed since the last update to avoid needless DOM writes.
+let _lastFaviconEmoji = null;
 function updateFavicon(emoji) {
+  if (emoji === _lastFaviconEmoji) return;
+  _lastFaviconEmoji = emoji;
   const svg = `data:image/svg+xml,${encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><text y="52" font-size="52">${emoji}</text></svg>`
   )}`;
