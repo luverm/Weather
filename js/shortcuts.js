@@ -48,6 +48,12 @@ export function installShortcuts(handlers) {
       handlers.focusSearch?.();
       return;
     }
+    // Cmd/Ctrl+/ (or Cmd/Ctrl+?): open shortcuts overlay — alternate to ?.
+    if ((e.metaKey || e.ctrlKey) && !e.altKey && (e.key === "/" || e.key === "?")) {
+      e.preventDefault();
+      toggleOverlay();
+      return;
+    }
     // Let browsers handle other modifier combos (copy, find, etc.)
     if (e.metaKey || e.ctrlKey || e.altKey) return;
 
