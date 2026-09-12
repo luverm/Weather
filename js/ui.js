@@ -873,27 +873,31 @@ function scheduleSunArc(w) {
   if (state.sunArcTimer) { clearInterval(state.sunArcTimer); state.sunArcTimer = null; }
   if (!w?.sunrise || !w?.sunset) return;
 
+  // Scale the arc peak by today's daylight length — a proxy for the sun's
+  // maximum altitude. 12h daylight (equinox) keeps the original peak; a
+  // long midsummer day arcs higher, a short midwinter day stays close to
+  // the horizon.
+  const daylightHours = Math.max(1, (w.sunset - w.sunrise) / 3600_000);
+  const norm = Math.max(0, Math.min(1, daylightHours / 16)); // 0..1 over 0-16h
+  const peakY = 74 - (norm * 110); // 12h ≈ -8, 16h ≈ -36, 8h ≈ 19
+  el.sunArcPath.setAttribute("d", `M10 74 Q100 ${peakY.toFixed(1)} 190 74`);
+
   const update = () => {
     const now = Date.now();
     const sr = w.sunrise, ss = w.sunset;
     let frac;
     if (now < sr) {
-      // Before sunrise: ride the night arc fraction toward 0 (left horizon).
       frac = 0;
     } else if (now > ss) {
       frac = 1;
     } else {
       frac = (now - sr) / (ss - sr);
     }
-    // Quadratic Bezier from (10,74) to (190,74) via (100,-26). The midpoint
-    // (50% t) reaches y = 0.5*(74) + 0.5*(74 + 2*(-26-74)/2*(...)) — easier
-    // to evaluate the curve directly.
     const t = clamp01(frac);
     const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
-    const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
+    const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * peakY + t ** 2 * 74;
     el.sunArcMarker.setAttribute("cx", x.toFixed(1));
     el.sunArcMarker.setAttribute("cy", y.toFixed(1));
-    // After sunset, dim the marker so it visually settles.
     const isUp = now >= sr && now <= ss;
     el.sunArcMarker.style.opacity = isUp ? "1" : "0.45";
   };
