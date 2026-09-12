@@ -1759,6 +1759,10 @@ kbd {
   transition: background 200ms var(--ease);
 }
 .daily-item:hover { background: var(--glass); }
+.daily-item[data-extreme="heat"]   { background: linear-gradient(90deg, rgba(255, 140, 100, 0.10), transparent 60%); }
+.daily-item[data-extreme="freeze"] { background: linear-gradient(90deg, rgba(120, 170, 255, 0.10), transparent 60%); }
+.daily-item[data-extreme="deluge"] { background: linear-gradient(90deg, rgba(90, 130, 220, 0.14), transparent 60%); }
+.daily-item[data-extreme="wind"]   { background: linear-gradient(90deg, rgba(255, 170, 100, 0.10), transparent 60%); }
 .daily-day { font-size: 13px; font-weight: 500; }
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
 /* Condition-tinted weather icons — reads at a glance which day is sunny,

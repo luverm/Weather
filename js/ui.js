@@ -1241,6 +1241,11 @@ function renderDaily(w) {
     const item = document.createElement("div");
     item.className = "daily-item";
     item.dataset.ts = d.time;
+    // Tag extreme days for a subtle background tint (heat, freeze, deluge).
+    if (d.tempMax != null && d.tempMax >= 32) item.dataset.extreme = "heat";
+    else if (d.tempMin != null && d.tempMin <= -5) item.dataset.extreme = "freeze";
+    else if ((d.precip ?? 0) >= 15) item.dataset.extreme = "deluge";
+    else if ((d.gustsMax ?? 0) >= 60) item.dataset.extreme = "wind";
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
