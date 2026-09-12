@@ -512,8 +512,13 @@ function renderMetrics(w) {
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
     el.windNeedle.style.opacity = "1";
     const compass = el.windNeedle.closest(".wind-compass");
-    if (compass) compass.setAttribute("title",
-      `Wind from ${dirLabel} (${Math.round(dir)}°) at ${Math.round(w.windSpeed ?? 0)} km/h`);
+    if (compass) {
+      compass.setAttribute("title",
+        `Wind from ${dirLabel} (${Math.round(dir)}°) at ${Math.round(w.windSpeed ?? 0)} km/h`);
+      // Gusty days get a subtle wobble on the needle — visual acknowledgment
+      // that the wind isn't steady. Silent under 30 km/h peak gust.
+      compass.classList.toggle("gusty", (w.windGusts ?? 0) >= 30);
+    }
   } else if (el.windNeedle) {
     el.windNeedle.style.opacity = "0.3";
   }

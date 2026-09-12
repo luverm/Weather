@@ -1025,6 +1025,18 @@ html[data-reduce-motion="true"] *::after {
   transform-origin: 0 0;
   transition: transform 900ms var(--ease);
 }
+/* Gusty-day cue: pulse the compass ring rather than rotate the needle
+   itself, so the JS-set direction stays truthful. */
+.wind-compass.gusty circle {
+  animation: gustPulse 2.4s ease-in-out infinite;
+}
+@keyframes gustPulse {
+  0%,100% { stroke-opacity: 0.4; }
+  50%     { stroke-opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wind-compass.gusty circle { animation: none; }
+}
 
 /* ---------- Sun countdown ---------- */
 .sun-countdown {
