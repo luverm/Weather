@@ -246,9 +246,15 @@ export const ui = {
   setScrubbing(on) {
     document.documentElement.setAttribute("data-scrubbing", on ? "true" : "false");
     if (on) {
-      el.hintText.textContent = "Drag to explore future weather.";
+      el.hintText.innerHTML = 'Drag to explore future weather · <kbd>N</kbd> returns to now.';
     } else {
-      el.hintText.innerHTML = 'Drag the slider, hover the chart, or press <kbd>?</kbd> for shortcuts.';
+      // Context-aware idle hint: rotate through the tips that best match
+      // the user's current state (multiple places → cycle hint, first
+      // load → search hint) instead of a single generic sentence.
+      const many = places.all().length > 1;
+      el.hintText.innerHTML = many
+        ? 'Press <kbd>[</kbd> <kbd>]</kbd> to cycle saved cities, or <kbd>?</kbd> for shortcuts.'
+        : 'Press <kbd>/</kbd> or <kbd>⌘K</kbd> to search — hover the chart, drag the slider, or press <kbd>?</kbd>.';
     }
   },
   setAudioState(on) {
