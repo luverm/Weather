@@ -370,9 +370,16 @@ html[data-reduce-motion="true"] *::after {
   align-items: end;
   gap: 24px;
   transform: perspective(1200px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
-  transition: transform 400ms var(--ease);
+  transition: transform 400ms var(--ease), border-color 600ms var(--ease);
   will-change: transform;
 }
+/* Very subtle condition tint on the hero border — echoes the animated
+   scene mood without competing with it. */
+.hero-inner[data-condition="rain"]   { border-color: rgba(127, 184, 255, 0.24); }
+.hero-inner[data-condition="storm"]  { border-color: rgba(178, 132, 255, 0.28); }
+.hero-inner[data-condition="snow"]   { border-color: rgba(232, 240, 255, 0.28); }
+.hero-inner[data-condition="clear"]  { border-color: rgba(255, 214, 128, 0.22); }
+.hero-inner[data-condition="fog"]    { border-color: rgba(154, 168, 189, 0.24); }
 .place-label {
   margin: 0 0 6px;
   font-size: 12px;
