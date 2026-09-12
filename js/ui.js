@@ -73,6 +73,7 @@ const el = {
   dailySpark: $("#daily-spark"),
   dailyHi: $("#daily-hi"),
   dailyLo: $("#daily-lo"),
+  dailyEnvelope: $("#daily-envelope"),
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
   shareBtn: $("#share-btn"),
@@ -1172,6 +1173,13 @@ function renderDailySpark(days) {
   const linePath = (arr) => arr.map((v, i) => (i === 0 ? "M" : "L") + x(i).toFixed(1) + "," + y(v).toFixed(1)).join(" ");
   el.dailyHi.setAttribute("d", linePath(days.map((d) => d.tempMax)));
   el.dailyLo.setAttribute("d", linePath(days.map((d) => d.tempMin)));
+  // Envelope: shaded band between hi and lo lines so the temperature range
+  // reads as a landscape rather than two independent squiggles.
+  if (el.dailyEnvelope) {
+    const hiPath = days.map((d, i) => (i === 0 ? "M" : "L") + x(i).toFixed(1) + "," + y(d.tempMax).toFixed(1)).join(" ");
+    const loPath = days.slice().reverse().map((d, i, arr) => "L" + x(days.length - 1 - i).toFixed(1) + "," + y(d.tempMin).toFixed(1)).join(" ");
+    el.dailyEnvelope.setAttribute("d", `${hiPath} ${loPath} Z`);
+  }
   // Dots at each day + per-day temp labels above/below
   el.dailySparkDots.innerHTML = "";
   days.forEach((d, i) => {
