@@ -636,16 +636,22 @@ function renderMoon(moon, w) {
 // Read the current cloud cover to say whether the moon is actually
 // visible right now. Silent during daytime — the moon card carries the
 // phase for planning, but the visibility hint only matters after dark.
+// Also drops a "great for stargazing" note when sky is clear AND moon
+// illumination is low (a bright moon washes out faint stars).
 function renderMoonVisibility(w) {
   if (!el.moonVisibility) return;
   if (!w || w.isDay) { el.moonVisibility.hidden = true; return; }
   const cc = w.cloudCover;
   if (cc == null) { el.moonVisibility.hidden = true; return; }
+  const illum = w.moon?.illum ?? 0;
   let text, tone;
-  if (cc < 20)       { text = "Clear sky — moon is out"; tone = "clear"; }
-  else if (cc < 55)  { text = `${Math.round(cc)}% clouds — mostly visible`; tone = "partial"; }
-  else if (cc < 85)  { text = `${Math.round(cc)}% clouds — glimpses only`; tone = "hazy"; }
-  else               { text = `${Math.round(cc)}% overcast — moon hidden`; tone = "hidden"; }
+  if (cc < 20) {
+    if (illum < 0.35) { text = "Great for stargazing";        tone = "clear"; }
+    else if (illum < 0.7) { text = "Clear sky · moon washes faint stars"; tone = "clear"; }
+    else              { text = "Clear · bright moon dominates"; tone = "clear"; }
+  } else if (cc < 55)  { text = `${Math.round(cc)}% clouds — mostly visible`; tone = "partial"; }
+  else if (cc < 85)    { text = `${Math.round(cc)}% clouds — glimpses only`;  tone = "hazy"; }
+  else                 { text = `${Math.round(cc)}% overcast — moon hidden`;  tone = "hidden"; }
   el.moonVisibility.textContent = text;
   el.moonVisibility.dataset.tone = tone;
   el.moonVisibility.hidden = false;
