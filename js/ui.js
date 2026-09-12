@@ -319,6 +319,19 @@ function renderLiveValues(w, { animate = true } = {}) {
   const feels = convertTemp(w.feelsLike ?? w.temp);
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
+  // Temperature-tone glow — based on the actual °C so it doesn't flip on
+  // unit toggle. Silent (no tone) inside the comfortable middle band.
+  const tc = w.temp;
+  const tone = tc == null ? null
+             : tc >= 28 ? "hot"
+             : tc >= 22 ? "warm"
+             : tc <= 5  ? "cold"
+             : tc <= 12 ? "cool"
+             : null;
+  if (el.heroInner) {
+    if (tone) el.heroInner.setAttribute("data-temp-tone", tone);
+    else el.heroInner.removeAttribute("data-temp-tone");
+  }
   el.conditionLabel.textContent = capitalize(w.label);
   // Re-render feels-like while preserving the temp-trend span inside it,
   // which renderTrends() writes to later. Rebuild both children so the

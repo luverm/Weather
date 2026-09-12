@@ -420,8 +420,14 @@ html[data-reduce-motion="true"] *::after {
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent;
   font-variant-numeric: tabular-nums;
-  transition: opacity 200ms var(--ease);
+  transition: opacity 200ms var(--ease), text-shadow 400ms var(--ease);
 }
+/* Temperature glow: JS tags the hero-inner with data-temp-tone based on
+   current temperature so the value gets a subtle warm/cool halo. */
+[data-temp-tone="hot"]  .temp-value { text-shadow: 0 0 30px rgba(255, 140, 100, 0.28); }
+[data-temp-tone="warm"] .temp-value { text-shadow: 0 0 22px rgba(255, 180, 120, 0.18); }
+[data-temp-tone="cool"] .temp-value { text-shadow: 0 0 22px rgba(140, 190, 255, 0.18); }
+[data-temp-tone="cold"] .temp-value { text-shadow: 0 0 30px rgba(120, 170, 255, 0.28); }
 .unit {
   font-size: clamp(16px, 2vw, 24px);
   line-height: 1;
