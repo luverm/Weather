@@ -246,6 +246,8 @@ async function refreshWeather() {
   ui.markRefreshSpin(true);
   try {
     await loadByCoords(app.place);
+    // Silent toast on manual refresh success so the tap has feedback.
+    ui.showToast("Weather updated", 1400);
   } finally {
     setTimeout(() => ui.markRefreshSpin(false), 700);
   }
