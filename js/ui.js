@@ -1340,7 +1340,8 @@ function renderDailyIconStrip(days) {
     const lo = d.tempMin != null ? Math.round(convertTemp(d.tempMin)) + "°" : "—";
     const cond = d.label || d.condition || "";
     const title = `${dow} · ${hi}/${lo} · ${cond} — tap to expand`;
-    return `<button type="button" class="strip-day" data-idx="${i}" data-condition="${escapeHtml(d.condition || "")}" title="${escapeHtml(title)}">${iconFor(d.condition)}</button>`;
+    const todayClass = i === 0 ? " strip-today" : "";
+    return `<button type="button" class="strip-day${todayClass}" data-idx="${i}" data-condition="${escapeHtml(d.condition || "")}" title="${escapeHtml(title)}">${iconFor(d.condition)}</button>`;
   }).join("");
   el.dailyIconStrip.querySelectorAll(".strip-day").forEach((btn) => {
     btn.addEventListener("click", () => {
