@@ -315,6 +315,22 @@ function updateDocumentTitle(w) {
   const place = state.place?.name || "";
   const bits = [emoji, t, place, "· Aether"].filter(Boolean);
   document.title = bits.join(" ");
+  updateFavicon(emoji);
+}
+
+// Repaint the tab favicon with the current condition emoji so the tab
+// glances at the same information as the title.
+function updateFavicon(emoji) {
+  const svg = `data:image/svg+xml,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><text y="52" font-size="52">${emoji}</text></svg>`
+  )}`;
+  let link = document.querySelector('link[rel="icon"]');
+  if (!link) {
+    link = document.createElement("link");
+    link.rel = "icon";
+    document.head.appendChild(link);
+  }
+  link.href = svg;
 }
 
 function renderLiveValues(w, { animate = true } = {}) {
