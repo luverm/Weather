@@ -981,6 +981,19 @@ function cardinal(deg) {
   return dirs[i];
 }
 
+function formatMm(mm) {
+  if (mm >= 10) return `${Math.round(mm)} mm`;
+  return `${mm.toFixed(1)} mm`;
+}
+
+// Very coarse intensity buckets so the label reads as a rain-day at a glance:
+// light (< 2 mm), moderate (2–8 mm), heavy (8+ mm). The CSS uses this to tint.
+function precipIntensity(mm) {
+  if (mm >= 8) return "heavy";
+  if (mm >= 2) return "moderate";
+  return "light";
+}
+
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
   for (const h of (w.hourly || []).slice(0, 24)) {
@@ -1033,7 +1046,12 @@ function renderDaily(w) {
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
-    const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const mm = Number(d.precip) || 0;
+    const mmLabel = mm >= 0.3
+      ? ` · <span class="daily-mm" data-intensity="${precipIntensity(mm)}">${formatMm(mm)}</span>`
+      : "";
+    const extra = gustLabel || popLabel || mmLabel
+      ? `<span class="daily-gust">${popLabel}${mmLabel}${gustLabel}</span>` : "";
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
