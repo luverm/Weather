@@ -87,6 +87,7 @@ const el = {
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
+  settingHideRadar: $("#setting-hide-radar"),
   settingClearPlaces: $("#setting-clear-places"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
@@ -1636,6 +1637,12 @@ function bindSettings() {
     }
   });
 
+  el.settingHideRadar?.addEventListener("change", () => {
+    const on = el.settingHideRadar.checked;
+    applyHideRadar(on);
+    localStorage.setItem("aether:hideRadar", on ? "1" : "0");
+  });
+
   el.settingClearPlaces?.addEventListener("click", () => {
     if (!confirm("Clear all saved places?")) return;
     for (const p of places.all()) places.remove(p);
@@ -1654,6 +1661,15 @@ function applyStoredPreferences() {
     queueMicrotask(() => state.handlers.onReduceMotion?.(true));
   }
   if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
+  const hideRadar = localStorage.getItem("aether:hideRadar") === "1";
+  if (el.settingHideRadar) el.settingHideRadar.checked = hideRadar;
+  if (hideRadar) applyHideRadar(true);
+}
+
+function applyHideRadar(on) {
+  const card = document.getElementById("radar-card");
+  if (!card) return;
+  card.hidden = on;
 }
 
 // Exposed so app.js can query the current preference on boot.
