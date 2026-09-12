@@ -406,6 +406,25 @@ export class HourlyChart {
       }
     }
 
+    // Persistent "now" line — stays put on the real current time even
+    // while the user scrubs, so they can gauge how far ahead they're
+    // looking.
+    const nowLine = this.svg.querySelector("#chart-now");
+    if (nowLine) {
+      const first = this.hours[0]?.time;
+      const last = this.hours[this.hours.length - 1]?.time;
+      const now = Date.now();
+      if (first != null && last != null && now >= first && now <= last) {
+        const span = last - first;
+        const nx = PAD_LEFT + ((now - first) / span) * innerW;
+        nowLine.setAttribute("x1", nx.toFixed(1));
+        nowLine.setAttribute("x2", nx.toFixed(1));
+      } else {
+        nowLine.setAttribute("x1", "-10");
+        nowLine.setAttribute("x2", "-10");
+      }
+    }
+
     // Peak markers: warmest and coldest hour of the visible window. Small
     // arrow chips near the point so the eye latches onto the day's shape at
     // a glance without needing to scan the whole line.
