@@ -199,7 +199,14 @@ ul { list-style: none; margin: 0; padding: 0; }
   font-size: 10.5px;
   letter-spacing: 0.08em;
   color: var(--fg-dim);
+  line-height: 1.55;
 }
+.settings-foot a {
+  color: var(--fg-muted);
+  text-decoration: none;
+  border-bottom: 1px dashed rgba(255,255,255,0.2);
+}
+.settings-foot a:hover { color: var(--fg); }
 
 /* Reduced-motion opt-in (same as CSS media query, but persistent) */
 html[data-reduce-motion="true"] *,
