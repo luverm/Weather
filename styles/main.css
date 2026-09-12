@@ -53,6 +53,10 @@ body {
   text-rendering: optimizeLegibility;
   transition: color var(--dur) var(--ease);
   overscroll-behavior: none;
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html, body { scroll-behavior: auto; }
 }
 button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
 input { font: inherit; color: inherit; }
