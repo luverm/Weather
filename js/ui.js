@@ -295,9 +295,40 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  // Re-render feels-like while preserving the temp-trend span inside it,
+  // which renderTrends() writes to later. Rebuild both children so the
+  // trend stays visible instead of being wiped by a bare textContent.
+  el.feelsLike.textContent = "";
+  const trendSpan = document.createElement("span");
+  trendSpan.id = "temp-trend";
+  trendSpan.className = el.tempTrend?.className || "temp-trend";
+  trendSpan.setAttribute("aria-hidden", "true");
+  trendSpan.textContent = el.tempTrend?.textContent || "";
+  el.feelsLike.appendChild(trendSpan);
+  el.feelsLike.appendChild(document.createTextNode(feelsLabel(w)));
+  el.tempTrend = trendSpan;
   renderDayRange(w);
   renderNextChange(w);
+}
+
+// "Feels like N°" plus a short cause when there's a clear driver — a big
+// gap AND a matching condition (cold + wind, hot + humidity). Silent when
+// there's no meaningful gap so the line doesn't turn into noise.
+function feelsLabel(w) {
+  const t = w.temp;
+  const f = w.feelsLike ?? w.temp;
+  const feelsDisplay = Math.round(convertTemp(f));
+  if (t == null || f == null) return `Feels like ${feelsDisplay}°`;
+  const dispDelta = Math.round(Math.abs(convertTemp(f) - convertTemp(t)));
+  if (dispDelta < 2) return `Feels like ${feelsDisplay}°`;
+  const cause = (f < t && (w.windSpeed ?? 0) >= 15) ? "wind chill"
+              : (f > t && (w.humidity ?? 0) >= 55 && t >= 25) ? "heat index"
+              : (f < t && t <= 5) ? "cold air"
+              : (f > t) ? "muggy"
+              : null;
+  return cause
+    ? `Feels like ${feelsDisplay}° · ${cause}`
+    : `Feels like ${feelsDisplay}°`;
 }
 
 // Aggregate what the visible chart window is about to bring: rain, gusts,
