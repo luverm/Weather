@@ -1102,6 +1102,15 @@ function precipIntensity(mm) {
   return "light";
 }
 
+// Nowcast is per-15-min so intensity thresholds are smaller than the daily
+// mm scale — a "heavy" 15-min bucket is still less than 2 mm of daily total.
+function nowcastIntensity(mm) {
+  if (mm >= 1.5) return "heavy";
+  if (mm >= 0.4) return "moderate";
+  if (mm >= 0.1) return "light";
+  return "trace";
+}
+
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
   for (const h of (w.hourly || []).slice(0, 24)) {
@@ -1357,6 +1366,7 @@ function renderNowcast(w) {
     bar.type = "button";
     bar.className = "nowcast-bar";
     bar.style.height = `${Math.max(2, (n.precip / maxP) * 28)}px`;
+    bar.dataset.intensity = nowcastIntensity(n.precip);
     const mins = Math.round((n.time - Date.now()) / 60_000);
     bar.title = `+${Math.max(0, mins)} min · ${n.precip.toFixed(1)} mm`;
     bar.setAttribute("aria-label", bar.title);

@@ -504,6 +504,11 @@ html[data-reduce-motion="true"] *::after {
 }
 .nowcast-bars .nowcast-bar:hover { opacity: 1; transform: scaleY(1.1); }
 .nowcast-bars .nowcast-bar:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Radar-ish intensity coloring so a heavier 15-min bucket reads as harder. */
+.nowcast-bars .nowcast-bar[data-intensity="trace"]    { background: #8ec6ff; }
+.nowcast-bars .nowcast-bar[data-intensity="light"]    { background: #4aa0ff; }
+.nowcast-bars .nowcast-bar[data-intensity="moderate"] { background: #a05bff; }
+.nowcast-bars .nowcast-bar[data-intensity="heavy"]    { background: #ff5a72; }
 @keyframes slideInUp {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
