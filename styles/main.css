@@ -293,6 +293,21 @@ html[data-reduce-motion="true"] *::after {
 .icon-btn.on { color: var(--accent); }
 .icon-btn.on .sound-waves { opacity: 1; }
 
+/* ---------- Universal focus-visible ring ---------- */
+:where(button, [role="button"], a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+/* Preserve pill / round shapes where the outline should hug the widget. */
+.place-chip:focus-visible,
+.alert-pill:focus-visible,
+.next-change:focus-visible,
+.chart-summary:focus-visible,
+.day-swing:focus-visible {
+  border-radius: 999px;
+}
+
 /* ---------- Offline banner ---------- */
 .offline-banner {
   display: flex;
