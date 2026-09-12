@@ -1978,7 +1978,15 @@ function startFetchedTicker() {
       minutes < 1 ? "Just now" :
       minutes < 60 ? `Updated ${minutes}m ago` :
       `Updated ${Math.floor(minutes / 60)}h ago`;
-    el.fetchedAgo.textContent = "· " + label + " · refresh";
+    const prevText = el.fetchedAgo.textContent;
+    const newText = "· " + label + " · refresh";
+    el.fetchedAgo.textContent = newText;
+    // Only flash on a genuine change to "Just now" — avoids flashing on
+    // every minute-boundary tick.
+    if (newText !== prevText && minutes < 1) {
+      el.fetchedAgo.classList.add("just-updated");
+      setTimeout(() => el.fetchedAgo.classList.remove("just-updated"), 900);
+    }
     el.fetchedAgo.classList.toggle("stale", minutes >= 20);
     // Signal stale on the toolbar refresh button too — a subtle dot lets
     // users notice from anywhere on the page, not just the footer.

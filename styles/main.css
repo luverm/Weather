@@ -1917,6 +1917,13 @@ body:not([data-weather-loaded="true"]) .metric-value {
 }
 .fetched-ago:empty { display: none; }
 .fetched-ago.stale { color: #ffb86b; }
+.fetched-ago.just-updated {
+  animation: fetchedFlash 800ms var(--ease) both;
+}
+@keyframes fetchedFlash {
+  0%   { color: #78e07a; }
+  100% { color: var(--fg-dim); }
+}
 
 #refresh-btn.spinning svg { animation: spin 700ms var(--ease) both; }
 #refresh-btn.stale { position: relative; }
