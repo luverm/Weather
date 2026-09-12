@@ -1816,10 +1816,13 @@ body:not([data-weather-loaded="true"]) .metric-value {
   align-items: center;
   gap: 3px;
   font-size: 9.5px;
-  color: #ffb37a;
+  color: #d6c8b8;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
 }
+.forecast-wind[data-strength="mild"]     { color: #d6c8b8; }
+.forecast-wind[data-strength="notable"]  { color: #ffb37a; }
+.forecast-wind[data-strength="strong"]   { color: #ff7c50; font-weight: 600; }
 .forecast-wind svg { transform-origin: center; }
 .forecast-wind-val { line-height: 1; }
 .forecast-item:hover { background: var(--glass); transform: translateY(-2px); }

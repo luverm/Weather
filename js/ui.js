@@ -1301,8 +1301,14 @@ function renderHourly(w) {
     // Small wind arrow only when wind reads as notable — keeps calm hours
     // uncluttered. Direction is the "wind coming FROM" bearing; rotate the
     // arrow to point where the wind is going (add 180°).
+    // Wind arrow tint ramps with speed so a 15 km/h breeze is quieter than
+    // a 45 km/h gale even at the same icon size.
+    const windIntensity = h.wind == null ? null
+                        : h.wind >= 40 ? "strong"
+                        : h.wind >= 25 ? "notable"
+                        : "mild";
     const windGlyph = (h.wind != null && h.wind >= 15 && h.windDir != null)
-      ? `<span class="forecast-wind" title="${Math.round(h.wind)} km/h from ${cardinal(h.windDir)}">
+      ? `<span class="forecast-wind" data-strength="${windIntensity}" title="${Math.round(h.wind)} km/h from ${cardinal(h.windDir)}">
            <svg viewBox="-8 -8 16 16" width="12" height="12" aria-hidden="true"
                 style="transform: rotate(${((h.windDir + 180) % 360).toFixed(0)}deg)">
              <path d="M0 -6 L3 4 L0 2 L-3 4 Z" fill="currentColor"/>
