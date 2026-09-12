@@ -1235,9 +1235,27 @@ function renderDaily(w) {
 
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
-  el.dailyIconStrip.innerHTML = days.map((d) =>
-    `<span class="strip-day" data-condition="${escapeHtml(d.condition || "")}" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
+  el.dailyIconStrip.innerHTML = days.map((d, i) =>
+    `<button type="button" class="strip-day" data-idx="${i}" data-condition="${escapeHtml(d.condition || "")}" title="${escapeHtml(d.label || d.condition || "")} — tap to expand">${iconFor(d.condition)}</button>`
   ).join("");
+  el.dailyIconStrip.querySelectorAll(".strip-day").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const i = parseInt(btn.dataset.idx, 10);
+      const items = el.dailyTrack.querySelectorAll(".daily-item");
+      const target = items[i];
+      if (!target) return;
+      // Collapse any other open day so the view stays focused.
+      items.forEach((it) => {
+        if (it !== target && it.dataset.expanded === "true") {
+          const ex = it.querySelector(".daily-expand");
+          if (ex) ex.remove();
+          it.dataset.expanded = "false";
+        }
+      });
+      target.click();
+      target.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+  });
 }
 
 function renderDailySpark(days) {
