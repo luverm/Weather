@@ -67,6 +67,8 @@ const el = {
   pressureSparkFill: $("#pressure-spark-fill"),
   humiditySparkLine: $("#humidity-spark-line"),
   humiditySparkFill: $("#humidity-spark-fill"),
+  windSparkLine: $("#wind-spark-line"),
+  windSparkFill: $("#wind-spark-fill"),
   dailySpark: $("#daily-spark"),
   dailyHi: $("#daily-hi"),
   dailyLo: $("#daily-lo"),
@@ -419,6 +421,13 @@ function renderPressureSparkline(w) {
     el.humiditySparkLine, el.humiditySparkFill,
     (w.hourly || []).map((h) => h.humidity).filter((v) => v != null).slice(0, 12),
     { minSpan: 10, fixedMin: 0, fixedMax: 100 }
+  );
+  // Wind gusts: 12h ahead. Fall back to sustained wind when gusts are absent.
+  const hrs = (w.hourly || []).slice(0, 12);
+  const gusts = hrs.map((h) => h.gusts ?? h.wind).filter((v) => v != null);
+  drawSparkline(
+    el.windSparkLine, el.windSparkFill, gusts,
+    { minSpan: 6, fixedMin: 0 }
   );
 }
 
