@@ -264,6 +264,44 @@ export class HourlyChart {
       }
     }
 
+    // Peak markers: warmest and coldest hour of the visible window. Small
+    // arrow chips near the point so the eye latches onto the day's shape at
+    // a glance without needing to scan the whole line.
+    const peakG = this.svg.querySelector("#chart-peaks");
+    if (peakG) {
+      peakG.innerHTML = "";
+      let hotI = -1, coldI = -1, hot = -Infinity, cold = Infinity;
+      this.hours.forEach((h, i) => {
+        if (h.temp == null) return;
+        if (h.temp > hot)  { hot = h.temp;  hotI = i; }
+        if (h.temp < cold) { cold = h.temp; coldI = i; }
+      });
+      const drawPeak = (i, kind) => {
+        if (i < 0) return;
+        const h = this.hours[i];
+        const px = iToX(i);
+        const py = tToY(h.temp);
+        const unit = this.getUnit();
+        const t = unit === "F" ? h.temp * 9 / 5 + 32 : h.temp;
+        const hh = this._hourOf(h.time);
+        const above = kind === "hot";
+        const dy = above ? -14 : 14;
+        const chip = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        chip.setAttribute("class", `chart-peak chart-peak-${kind}`);
+        chip.setAttribute("transform", `translate(${px.toFixed(1)}, ${(py + dy).toFixed(1)})`);
+        chip.innerHTML = `
+          <rect x="-18" y="-8" width="36" height="16" rx="8"></rect>
+          <text x="0" y="4" text-anchor="middle">${above ? "▲" : "▼"} ${hh}·${Math.round(t)}°</text>
+        `;
+        peakG.appendChild(chip);
+      };
+      // Only annotate if the day has meaningful variation (≥ 3° span).
+      if (hotI !== coldI && (hot - cold) >= 3) {
+        drawPeak(hotI, "hot");
+        drawPeak(coldI, "cold");
+      }
+    }
+
     // Labels: every ~3 hours
     const unit = this.getUnit();
     const labG = this.svg.querySelector("#chart-labels");
