@@ -189,6 +189,11 @@ export const ui = {
     el.placeName.classList.remove("flip-in"); void el.placeName.offsetWidth;
     el.placeName.classList.add("flip-in");
     el.placeName.textContent = place.name || "Unknown";
+    if (place.lat != null && place.lon != null) {
+      el.placeName.setAttribute("title", `${place.lat.toFixed(3)}°, ${place.lon.toFixed(3)}°`);
+    } else {
+      el.placeName.removeAttribute("title");
+    }
     const flag = flagEmoji(place.countryCode);
     const sub = [place.admin1, place.country].filter(Boolean).join(", ");
     el.placeSub.textContent = sub ? `${flag} ${sub}` : "—";
