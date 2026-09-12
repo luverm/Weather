@@ -194,6 +194,7 @@ export const ui = {
   setWeather(weather, { narrative } = {}) {
     state.weather = weather;
     state.sampledWeather = weather; // initially same as live
+    updateDocumentTitle(weather);
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
@@ -289,6 +290,21 @@ function animateNumber(node, target, format) {
 }
 
 function capitalize(s) { return (s || "").charAt(0).toUpperCase() + (s || "").slice(1); }
+
+// Tab title updates so a background tab shows current temp at a glance,
+// preserving the app name at the tail. Emoji picks from condition family.
+const CONDITION_EMOJI = {
+  clear: "☀️", clouds: "⛅", rain: "🌧️", storm: "⛈️",
+  snow: "🌨️", fog: "🌫️",
+};
+function updateDocumentTitle(w) {
+  if (!w) return;
+  const t = w.temp != null ? Math.round(convertTemp(w.temp)) + "°" : "";
+  const emoji = CONDITION_EMOJI[w.condition] || "🌤️";
+  const place = state.place?.name || "";
+  const bits = [emoji, t, place, "· Aether"].filter(Boolean);
+  document.title = bits.join(" ");
+}
 
 function renderLiveValues(w, { animate = true } = {}) {
   const temp = convertTemp(w.temp);
