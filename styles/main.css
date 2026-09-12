@@ -808,6 +808,8 @@ html[data-reduce-motion="true"] *::after {
   fill: rgba(154, 209, 255, 0.42);
   transition: fill 150ms var(--ease);
 }
+.chart-precip rect.precip-snow { fill: rgba(240, 248, 255, 0.72); }
+.chart-precip rect.precip-storm { fill: rgba(178, 132, 255, 0.55); }
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
 }

@@ -246,6 +246,8 @@ export class HourlyChart {
       r.setAttribute("height", barH.toFixed(1));
       r.setAttribute("rx", "1.5");
       r.setAttribute("opacity", (0.35 + (pop / 100) * 0.55).toFixed(2));
+      if (h.condition === "snow") r.setAttribute("class", "precip-snow");
+      else if (h.condition === "storm") r.setAttribute("class", "precip-storm");
       precipG.appendChild(r);
     });
 
