@@ -830,8 +830,27 @@ function renderTomorrowSun(w) {
   const trend = dailyDelta > 1 ? ` (${dailyDelta}m later)`
               : dailyDelta < -1 ? ` (${-dailyDelta}m earlier)`
               : "";
-  el.sunTomorrow.textContent = `Tomorrow: ↑ ${rise} · ↓ ${set}${trend}`;
+  // Photo window: whichever golden hour (morning or evening) is still
+  // ahead today. Falls through to tomorrow's morning golden hour if both
+  // of today's have passed.
+  const photo = pickNextPhotoHour(w, tmr);
+  const photoTail = photo ? ` · 📸 ${photo}` : "";
+  el.sunTomorrow.textContent = `Tomorrow: ↑ ${rise} · ↓ ${set}${trend}${photoTail}`;
   el.sunTomorrow.hidden = false;
+}
+
+function pickNextPhotoHour(w, tmr) {
+  const now = Date.now();
+  const G = 45 * 60_000;
+  const candidates = [];
+  if (w?.sunrise) candidates.push({ start: w.sunrise, end: w.sunrise + G, label: "golden morning" });
+  if (w?.sunset)  candidates.push({ start: w.sunset - G, end: w.sunset, label: "golden evening" });
+  if (tmr?.sunrise) candidates.push({ start: tmr.sunrise, end: tmr.sunrise + G, label: "golden morning" });
+  const next = candidates.find((c) => c.end > now);
+  if (!next) return null;
+  const isTomorrow = tmr && next.start >= tmr.sunrise - G;
+  const from = fmtTime(next.start), to = fmtTime(next.end);
+  return `${next.label} ${from}–${to}${isTomorrow ? " (tmrw)" : ""}`;
 }
 
 // Compute the day's sun phases and paint a slim horizontal timeline that
