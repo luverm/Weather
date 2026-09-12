@@ -1130,10 +1130,14 @@ function renderHourly(w) {
            <span class="forecast-wind-val">${Math.round(h.wind)}</span>
          </span>`
       : "";
+    const feelsGlyph = (h.feelsLike != null && Math.abs(h.feelsLike - h.temp) >= 3)
+      ? `<span class="forecast-feels" title="Feels like">≈${Math.round(convertTemp(h.feelsLike))}°</span>`
+      : "";
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon" data-condition="${escapeHtml(h.condition || "")}">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
+      ${feelsGlyph}
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
       ${windGlyph}
     `;

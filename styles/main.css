@@ -1658,7 +1658,7 @@ kbd {
 .forecast-track::-webkit-scrollbar { display: none; }
 .forecast-item {
   display: grid;
-  grid-template-rows: auto auto auto auto auto;
+  grid-auto-rows: auto;
   gap: 4px;
   justify-items: center;
   padding: 10px 6px;
@@ -1666,7 +1666,7 @@ kbd {
   scroll-snap-align: start;
   transition: background 200ms var(--ease), transform 200ms var(--ease);
   cursor: pointer;
-  min-height: 96px;
+  min-height: 110px;
 }
 .forecast-wind {
   display: inline-flex;
@@ -1695,6 +1695,13 @@ kbd {
   opacity: 0.9;
 }
 .forecast-pop.dim { opacity: 0; }
+.forecast-feels {
+  font-size: 10px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  margin-top: -2px;
+}
 
 .daily-track {
   display: grid;
