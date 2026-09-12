@@ -272,6 +272,27 @@ export class HourlyChart {
       precipG.appendChild(r);
     });
 
+    // Muggy hour ticks: subtle teal dots on the top edge when humidity
+    // ≥ 75% (sticky-feeling threshold). Complements the UV ridge.
+    const humG = this.svg.querySelector("#chart-humidity");
+    if (humG) {
+      humG.innerHTML = "";
+      const barW = Math.max(4, innerW / this.hours.length - 3);
+      this.hours.forEach((h, i) => {
+        const rh = h.humidity;
+        if (rh == null || rh < 75) return;
+        const fill = Math.min(1, (rh - 75) / 25);
+        const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        r.setAttribute("x", (iToX(i) - barW / 2).toFixed(1));
+        r.setAttribute("y", "9");
+        r.setAttribute("width", barW.toFixed(1));
+        r.setAttribute("height", (2 + fill * 2).toFixed(1));
+        r.setAttribute("rx", "1");
+        r.setAttribute("opacity", (0.45 + fill * 0.35).toFixed(2));
+        humG.appendChild(r);
+      });
+    }
+
     // Cloud cover ribbon: thin grey bars along the bottom of the plot,
     // opacity scaling with cover %, so overcast stretches read as denser
     // blocks and mostly-clear stretches almost fade out.

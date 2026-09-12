@@ -960,6 +960,10 @@ html[data-reduce-motion="true"] *::after {
 .chart-clouds rect {
   fill: rgba(200, 210, 230, 0.9);
 }
+.chart-humidity rect {
+  fill: #6be0c9;
+  filter: drop-shadow(0 0 2px rgba(107, 224, 201, 0.5));
+}
 .chart-scale text {
   font-size: 8px;
   fill: var(--fg-dim);
