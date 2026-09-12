@@ -968,6 +968,12 @@ html[data-reduce-motion="true"] *::after {
   fill: #6be0c9;
   filter: drop-shadow(0 0 2px rgba(107, 224, 201, 0.5));
 }
+.chart-cond-ribbon rect.cond-clear  { fill: #ffd680; }
+.chart-cond-ribbon rect.cond-clouds { fill: #b8c4d8; }
+.chart-cond-ribbon rect.cond-rain   { fill: #7fb8ff; }
+.chart-cond-ribbon rect.cond-storm  { fill: #b284ff; }
+.chart-cond-ribbon rect.cond-snow   { fill: #e8f0ff; }
+.chart-cond-ribbon rect.cond-fog    { fill: #9aa8bd; }
 .chart-scale text {
   font-size: 8px;
   fill: var(--fg-dim);

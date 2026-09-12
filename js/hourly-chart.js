@@ -272,6 +272,25 @@ export class HourlyChart {
       precipG.appendChild(r);
     });
 
+    // Condition ribbon: tiny strip along the very top showing each hour's
+    // condition color — bird's-eye view of the day's weather pattern.
+    const condG = this.svg.querySelector("#chart-cond-ribbon");
+    if (condG) {
+      condG.innerHTML = "";
+      const barW = Math.max(4, innerW / this.hours.length - 1);
+      this.hours.forEach((h, i) => {
+        if (!h.condition) return;
+        const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        r.setAttribute("x", (iToX(i) - barW / 2).toFixed(1));
+        r.setAttribute("y", "0");
+        r.setAttribute("width", barW.toFixed(1));
+        r.setAttribute("height", "2.5");
+        r.setAttribute("class", `cond-${h.condition}`);
+        r.setAttribute("opacity", "0.75");
+        condG.appendChild(r);
+      });
+    }
+
     // Muggy hour ticks: subtle teal dots on the top edge when humidity
     // ≥ 75% (sticky-feeling threshold). Complements the UV ridge.
     const humG = this.svg.querySelector("#chart-humidity");
