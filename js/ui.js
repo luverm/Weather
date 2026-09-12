@@ -636,7 +636,8 @@ function renderAqTrend(aq) {
 
 function renderMoon(moon, w) {
   if (!moon) return;
-  el.moonName.textContent = moon.name;
+  const age = (moon.phase * 29.53).toFixed(1);
+  el.moonName.textContent = `${moon.name} · day ${age}`;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
   renderMoonVisibility(w);
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
