@@ -1571,6 +1571,18 @@ kbd {
 .daily-spark circle { transition: r 160ms var(--ease); }
 .daily-spark .dot-hi { fill: #ff9c7a; }
 .daily-spark .dot-lo { fill: #9ad1ff; }
+.daily-spark .dot-peak-hot {
+  fill: #ffe6c7;
+  stroke: #ff9c7a;
+  stroke-width: 1.4;
+  filter: drop-shadow(0 0 6px rgba(255, 156, 122, 0.6));
+}
+.daily-spark .dot-peak-cold {
+  fill: #e6f3ff;
+  stroke: #6aa2ff;
+  stroke-width: 1.4;
+  filter: drop-shadow(0 0 6px rgba(106, 162, 255, 0.6));
+}
 .forecast-track {
   display: grid;
   grid-auto-flow: column;

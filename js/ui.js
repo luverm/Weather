@@ -1180,6 +1180,12 @@ function renderDailySpark(days) {
     const loPath = days.slice().reverse().map((d, i, arr) => "L" + x(days.length - 1 - i).toFixed(1) + "," + y(d.tempMin).toFixed(1)).join(" ");
     el.dailyEnvelope.setAttribute("d", `${hiPath} ${loPath} Z`);
   }
+  // Find the week's warmest hi and coldest lo so we can emphasize them.
+  let hotI = -1, coldI = -1, hotV = -Infinity, coldV = Infinity;
+  days.forEach((d, i) => {
+    if (d.tempMax != null && d.tempMax > hotV) { hotV = d.tempMax; hotI = i; }
+    if (d.tempMin != null && d.tempMin < coldV) { coldV = d.tempMin; coldI = i; }
+  });
   // Dots at each day + per-day temp labels above/below
   el.dailySparkDots.innerHTML = "";
   days.forEach((d, i) => {
@@ -1187,16 +1193,16 @@ function renderDailySpark(days) {
       const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
       c.setAttribute("cx", x(i).toFixed(1));
       c.setAttribute("cy", y(d.tempMax).toFixed(1));
-      c.setAttribute("r", "2.5");
-      c.setAttribute("class", "dot-hi");
+      c.setAttribute("r", i === hotI ? "4" : "2.5");
+      c.setAttribute("class", i === hotI ? "dot-hi dot-peak-hot" : "dot-hi");
       el.dailySparkDots.appendChild(c);
     }
     if (d.tempMin != null) {
       const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
       c.setAttribute("cx", x(i).toFixed(1));
       c.setAttribute("cy", y(d.tempMin).toFixed(1));
-      c.setAttribute("r", "2.5");
-      c.setAttribute("class", "dot-lo");
+      c.setAttribute("r", i === coldI ? "4" : "2.5");
+      c.setAttribute("class", i === coldI ? "dot-lo dot-peak-cold" : "dot-lo");
       el.dailySparkDots.appendChild(c);
     }
   });
