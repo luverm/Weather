@@ -98,6 +98,7 @@ const el = {
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
   sunPhases: $("#sun-phases"),
+  sunTomorrow: $("#sun-tomorrow"),
   sunPhasesTrack: $("#sun-phases-track"),
   sunPhasesMarker: $("#sun-phases-marker"),
   sunPhaseBadge: $("#sun-phase-badge"),
@@ -759,6 +760,23 @@ function renderSun(w) {
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   scheduleSunPhases(w);
+  renderTomorrowSun(w);
+}
+
+// A quick preview of tomorrow's sunrise/sunset so morning planners can
+// see how the day shifts. Silent when tomorrow's data isn't loaded.
+function renderTomorrowSun(w) {
+  if (!el.sunTomorrow) return;
+  const tmr = w?.daily?.[1];
+  if (!tmr || !tmr.sunrise || !tmr.sunset) { el.sunTomorrow.hidden = true; return; }
+  const rise = fmtTime(tmr.sunrise);
+  const set = fmtTime(tmr.sunset);
+  const dailyDelta = w?.sunrise ? Math.round((tmr.sunrise - w.sunrise) / 60_000 - 24 * 60) : 0;
+  const trend = dailyDelta > 1 ? ` (${dailyDelta}m later)`
+              : dailyDelta < -1 ? ` (${-dailyDelta}m earlier)`
+              : "";
+  el.sunTomorrow.textContent = `Tomorrow: ↑ ${rise} · ↓ ${set}${trend}`;
+  el.sunTomorrow.hidden = false;
 }
 
 // Compute the day's sun phases and paint a slim horizontal timeline that

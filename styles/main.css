@@ -1205,6 +1205,15 @@ body:not([data-weather-loaded="true"]) .metric-value {
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
 
+.sun-tomorrow {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.sun-tomorrow[hidden] { display: none; }
+
 /* Sun phases: night → blue → golden → day → golden → blue → night. */
 .sun-phases { margin-top: 10px; display: grid; gap: 8px; }
 .sun-phases-track {
