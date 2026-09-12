@@ -1776,9 +1776,11 @@ function bindSearch() {
       e.preventDefault();
       active = (active - 1 + items.length) % items.length;
     } else if (e.key === "Enter") {
-      if (active < 0) return;
       e.preventDefault();
-      items[active].click();
+      // No highlight yet? Fall through to the first result — matches
+      // the "type-then-Enter" muscle memory from any search box.
+      const idx = active >= 0 ? active : 0;
+      items[idx]?.click();
       return;
     } else return;
     items.forEach((li, i) => li.classList.toggle("kb-active", i === active));
