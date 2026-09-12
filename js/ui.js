@@ -90,6 +90,11 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunPhases: $("#sun-phases"),
+  sunPhasesTrack: $("#sun-phases-track"),
+  sunPhasesMarker: $("#sun-phases-marker"),
+  sunPhaseBadge: $("#sun-phase-badge"),
+  sunPhaseText: $("#sun-phase-text"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -122,6 +127,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  sunPhaseTimer: null,
   localTimer: null,
 };
 
@@ -523,6 +529,147 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleSunPhases(w);
+}
+
+// Compute the day's sun phases and paint a slim horizontal timeline that
+// walks night → blue hour → golden hour → daylight → golden hour → blue
+// hour → night, with a live "now" marker and a badge describing the phase.
+// Uses fixed 30 / 45 min bands around sunrise/sunset — accurate enough for a
+// glanceable photo cue at nearly every latitude short of the polar circles.
+const PHASE = {
+  BLUE_MIN: 30,       // minutes of blue hour on each side of sunrise/sunset
+  GOLDEN_MIN: 45,     // minutes of golden hour on each side
+};
+
+function computeSunPhaseBands(sr, ss) {
+  if (!sr || !ss || ss <= sr) return null;
+  const dayMs = 24 * 60 * 60_000;
+  // Center the 24h window on solar noon so both sunrise and sunset stay in
+  // frame regardless of latitude / season.
+  const noon = Math.round((sr + ss) / 2);
+  const anchor = noon - 12 * 60 * 60_000;
+  const end = anchor + dayMs;
+  const B = PHASE.BLUE_MIN * 60_000;
+  // Shrink the golden band on very short days so the morning and evening
+  // segments don't cross the noon line and end up out of order.
+  const daylen = ss - sr;
+  const G = Math.min(PHASE.GOLDEN_MIN * 60_000, Math.floor(daylen / 2));
+  const raw = [
+    { t: anchor,       kind: "night"  },
+    { t: sr - B - G,   kind: "night"  },
+    { t: sr - G,       kind: "blue"   },
+    { t: sr,           kind: "golden" }, // morning golden starts at sunrise
+    { t: sr + G,       kind: "day"    },
+    { t: ss - G,       kind: "golden" }, // evening golden into sunset
+    { t: ss,           kind: "blue"   }, // evening blue after sunset
+    { t: ss + B,       kind: "night"  },
+    { t: end,          kind: "night"  },
+  ];
+  // Force monotonic timestamps in case a partial overlap remains.
+  for (let i = 1; i < raw.length; i++) {
+    if (raw[i].t < raw[i - 1].t) raw[i].t = raw[i - 1].t;
+  }
+  return { start: anchor, end, stops: raw };
+}
+
+function phaseColor(kind) {
+  switch (kind) {
+    case "night":  return "#182238";
+    case "blue":   return "#4b6ea6";
+    case "golden": return "#f4b06a";
+    case "day":    return "#ffe8b8";
+    default:       return "#182238";
+  }
+}
+
+function phaseCopy(kind) {
+  switch (kind) {
+    case "night":  return { label: "Night",       tip: "Deep dark · stars if it's clear" };
+    case "blue":   return { label: "Blue hour",   tip: "Soft blue light · long exposures shine" };
+    case "golden": return { label: "Golden hour", tip: "Warm, low sun · portraits and landscapes" };
+    case "day":    return { label: "Daylight",    tip: "Sun is well above the horizon" };
+    default:       return { label: "—", tip: "" };
+  }
+}
+
+function paintPhaseTrack(bands) {
+  if (!el.sunPhasesTrack) return;
+  const span = bands.end - bands.start;
+  // Emit a hard-stop gradient so each band reads as its own zone.
+  const stops = [];
+  for (let i = 0; i < bands.stops.length - 1; i++) {
+    const a = bands.stops[i];
+    const b = bands.stops[i + 1];
+    const p1 = ((a.t - bands.start) / span) * 100;
+    const p2 = ((b.t - bands.start) / span) * 100;
+    const color = phaseColor(a.kind);
+    stops.push(`${color} ${p1.toFixed(2)}%`);
+    stops.push(`${color} ${p2.toFixed(2)}%`);
+  }
+  el.sunPhasesTrack.style.background = `linear-gradient(to right, ${stops.join(", ")})`;
+}
+
+function currentPhase(bands, now) {
+  // Clamp into the visible window (marker sticks to an edge outside of it).
+  const t = Math.max(bands.start, Math.min(bands.end, now));
+  let kind = "night";
+  let nextChange = bands.end;
+  for (let i = 0; i < bands.stops.length - 1; i++) {
+    const a = bands.stops[i];
+    const b = bands.stops[i + 1];
+    if (t >= a.t && t < b.t) {
+      kind = a.kind;
+      nextChange = b.t;
+      break;
+    }
+  }
+  const pct = ((t - bands.start) / (bands.end - bands.start)) * 100;
+  return { kind, pct, nextChange, nextKind: nextChangeKind(bands, nextChange) };
+}
+
+function nextChangeKind(bands, t) {
+  for (const s of bands.stops) if (s.t === t) return s.kind;
+  return "night";
+}
+
+function humanMinutes(ms) {
+  const mins = Math.max(0, Math.round(ms / 60_000));
+  if (mins < 1) return "seconds";
+  if (mins < 60) return `${mins}m`;
+  return `${Math.floor(mins / 60)}h ${mins % 60}m`;
+}
+
+function scheduleSunPhases(w) {
+  if (!el.sunPhases || !el.sunPhasesTrack) return;
+  if (state.sunPhaseTimer) { clearInterval(state.sunPhaseTimer); state.sunPhaseTimer = null; }
+  const bands = computeSunPhaseBands(w?.sunrise, w?.sunset);
+  if (!bands) { el.sunPhases.hidden = true; return; }
+  el.sunPhases.hidden = false;
+  paintPhaseTrack(bands);
+
+  const update = () => {
+    const now = Date.now();
+    const { kind, pct, nextChange, nextKind } = currentPhase(bands, now);
+    if (el.sunPhasesMarker) el.sunPhasesMarker.style.left = `${pct.toFixed(2)}%`;
+    if (el.sunPhaseBadge) {
+      const copy = phaseCopy(kind);
+      el.sunPhaseBadge.textContent = copy.label;
+      el.sunPhaseBadge.dataset.phase = kind;
+    }
+    if (el.sunPhaseText) {
+      const copy = phaseCopy(kind);
+      const nextCopy = phaseCopy(nextKind);
+      const remaining = nextChange - now;
+      if (remaining > 0 && remaining < 12 * 60 * 60_000) {
+        el.sunPhaseText.textContent = `${copy.tip} · ${nextCopy.label.toLowerCase()} in ${humanMinutes(remaining)}`;
+      } else {
+        el.sunPhaseText.textContent = copy.tip;
+      }
+    }
+  };
+  update();
+  state.sunPhaseTimer = setInterval(update, 60_000);
 }
 
 function scheduleSunArc(w) {

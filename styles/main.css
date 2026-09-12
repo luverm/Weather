@@ -977,6 +977,56 @@ kbd {
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
 
+/* Sun phases: night → blue → golden → day → golden → blue → night. */
+.sun-phases { margin-top: 10px; display: grid; gap: 8px; }
+.sun-phases-track {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: #182238;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+}
+.sun-phases-marker {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 14px;
+  background: #ffffff;
+  border-radius: 2px;
+  transform: translateX(-1px);
+  box-shadow: 0 0 6px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,0,0,0.35);
+  transition: left 800ms var(--ease);
+  pointer-events: none;
+}
+.sun-phase-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 12px;
+  color: var(--fg-dim);
+  min-height: 20px;
+}
+.phase-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.phase-badge[data-phase="night"]  { background: rgba(90, 110, 160, 0.22); color: #b7c7ea; }
+.phase-badge[data-phase="blue"]   { background: linear-gradient(90deg, #6a8dc4, #4b6ea6); color: #fff; }
+.phase-badge[data-phase="golden"] { background: linear-gradient(90deg, #f4c584, #ff9c7a); color: #2b1a06; }
+.phase-badge[data-phase="day"]    { background: rgba(255, 240, 200, 0.22); color: #ffe8b8; }
+.sun-phase-text { flex: 1; min-width: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .sun-phases-marker { transition: none; }
+}
+
 /* ---------- Radar map ---------- */
 .radar {
   padding: 12px;
