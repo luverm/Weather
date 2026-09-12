@@ -1482,9 +1482,16 @@ function renderNowcast(w) {
   }
   const inMin = Math.max(0, Math.round((first.time - Date.now()) / 60_000));
   const kind = first.code >= 71 && first.code <= 86 ? "Snow" : "Rain";
+  // Intensity qualifier: peak precip in the next 2h speaks louder than
+  // the first drops. Uses 15-min bucket amounts.
+  const peakMm = Math.max(0, ...nowcast.slice(0, 8).map((n) => n.precip || 0));
+  const intensity = peakMm >= 1.5 ? "Heavy " : peakMm >= 0.4 ? "" : "Light ";
   el.nowcastHeadline.textContent = inMin === 0
-    ? `${kind} now`
-    : `${kind} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
+    ? `${intensity}${kind.toLowerCase()} now`
+    : `${intensity}${kind.toLowerCase()} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
+  el.nowcastHeadline.textContent =
+    el.nowcastHeadline.textContent.charAt(0).toUpperCase()
+    + el.nowcastHeadline.textContent.slice(1);
   // 2h outlook summary.
   const totalMm = nowcast.reduce((s, n) => s + (n.precip || 0), 0);
   el.nowcastSub.textContent = `${totalMm.toFixed(1)} mm expected in the next 2 hours`;
