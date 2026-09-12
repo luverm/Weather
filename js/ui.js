@@ -1310,9 +1310,18 @@ function renderDaily(w) {
 
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
-  el.dailyIconStrip.innerHTML = days.map((d, i) =>
-    `<button type="button" class="strip-day" data-idx="${i}" data-condition="${escapeHtml(d.condition || "")}" title="${escapeHtml(d.label || d.condition || "")} — tap to expand">${iconFor(d.condition)}</button>`
-  ).join("");
+  const tz = state.weather?.timezone;
+  el.dailyIconStrip.innerHTML = days.map((d, i) => {
+    const dow = i === 0 ? "Today" : new Date(d.time).toLocaleDateString(undefined, {
+      weekday: "short",
+      ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    });
+    const hi = d.tempMax != null ? Math.round(convertTemp(d.tempMax)) + "°" : "—";
+    const lo = d.tempMin != null ? Math.round(convertTemp(d.tempMin)) + "°" : "—";
+    const cond = d.label || d.condition || "";
+    const title = `${dow} · ${hi}/${lo} · ${cond} — tap to expand`;
+    return `<button type="button" class="strip-day" data-idx="${i}" data-condition="${escapeHtml(d.condition || "")}" title="${escapeHtml(title)}">${iconFor(d.condition)}</button>`;
+  }).join("");
   el.dailyIconStrip.querySelectorAll(".strip-day").forEach((btn) => {
     btn.addEventListener("click", () => {
       const i = parseInt(btn.dataset.idx, 10);
