@@ -26,6 +26,7 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  daySwing: $("#day-swing"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -382,6 +383,21 @@ function renderDayRange(w) {
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+  // Swing pill: how volatile is the day thermally? Skips small spans.
+  if (el.daySwing) {
+    const swingC = hi - lo;
+    const swingDisp = state.unit === "F" ? swingC * 9 / 5 : swingC;
+    if (swingDisp >= 6) {
+      const label = swingDisp >= 15 ? "big swing"
+                  : swingDisp >= 10 ? "swingy"
+                  : "gentle swing";
+      el.daySwing.textContent = `±${Math.round(swingDisp / 2)}° · ${label}`;
+      el.daySwing.dataset.tone = swingDisp >= 15 ? "high" : swingDisp >= 10 ? "mid" : "low";
+      el.daySwing.hidden = false;
+    } else {
+      el.daySwing.hidden = true;
+    }
+  }
 }
 
 function renderMetrics(w) {

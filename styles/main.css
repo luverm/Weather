@@ -432,6 +432,21 @@ html[data-reduce-motion="true"] *::after {
   margin-left: auto;
 }
 .day-range[hidden] { display: none; }
+.day-swing {
+  display: inline-block;
+  margin-top: 6px;
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  font-weight: 500;
+  color: var(--fg-dim);
+  background: rgba(255,255,255,0.06);
+}
+.day-swing[hidden] { display: none; }
+.day-swing[data-tone="mid"]  { color: #ffd69c; background: rgba(255, 200, 130, 0.12); }
+.day-swing[data-tone="high"] { color: #ff9c7a; background: rgba(255, 156, 122, 0.16); }
 .day-range-end { white-space: nowrap; }
 .day-range-track {
   position: relative;
