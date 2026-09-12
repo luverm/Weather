@@ -1103,6 +1103,8 @@ kbd {
   color: var(--fg-dim);
 }
 .metric-value { font-size: 22px; font-weight: 500; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.metric-value[data-tone="warn"] { color: #ffb37a; }
+.metric-value[data-tone="alert"] { color: #ff8a8a; }
 /* Placeholder-state shimmer for metric values that still read "—". Fades
    out the moment real data arrives. */
 .metric-value:has-text("—"),

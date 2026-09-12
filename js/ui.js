@@ -474,6 +474,10 @@ function renderDayRange(w) {
 
 function renderMetrics(w) {
   el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
+  // Threshold tint on the numeric values so extreme readings visually
+  // stand out from the fold — wind ≥ 40 km/h reads as warn; pressure
+  // outside 995–1030 hPa reads as low/high pressure system.
+  tintMetric(el.metricWind, (w.windSpeed ?? 0) >= 40 ? "warn" : null);
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
   el.metricWindSub.textContent = dirLabel
@@ -509,6 +513,11 @@ function renderMetrics(w) {
     }
   }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
+  tintMetric(el.metricPressure,
+    w.pressure == null ? null
+    : w.pressure < 995 ? "warn"
+    : w.pressure > 1030 ? "warn"
+    : null);
   el.metricPressureSub.textContent = w.visibility != null
     ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
     : "visibility —";
@@ -559,6 +568,14 @@ function beaufort(kmh) {
   if (kmh < 103) return { label: "Storm", cls: "up" };
   if (kmh < 118) return { label: "Violent storm", cls: "up" };
   return { label: "Hurricane", cls: "up" };
+}
+
+// Tag or clear a metric's threshold tone. Kept as a helper so multiple
+// metrics can share the same tinting behavior.
+function tintMetric(node, tone) {
+  if (!node) return;
+  if (tone) node.dataset.tone = tone;
+  else delete node.dataset.tone;
 }
 
 function uvLevel(v) {
