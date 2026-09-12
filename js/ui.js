@@ -122,6 +122,7 @@ const el = {
   locateBtn: $("#locate-btn"),
   audioBtn: $("#audio-btn"),
   hintText: $("#hint-text"),
+  hintFooter: document.querySelector(".hint"),
   heroInner: document.querySelector(".hero-inner"),
   toast: $("#toast"),
   placesStrip: $("#places-strip"),
@@ -152,6 +153,7 @@ export const ui = {
     bindShare();
     bindRefresh();
     bindSettings();
+    bindHintFooter();
     bindTilt();
     applyStoredPreferences();
     renderPlaces();
@@ -1708,6 +1710,19 @@ function bindInstallPrompt() {
 function bindRefresh() {
   if (!el.refreshBtn) return;
   el.refreshBtn.addEventListener("click", () => state.handlers.onRefresh?.());
+}
+
+function bindHintFooter() {
+  if (!el.hintFooter) return;
+  el.hintFooter.style.cursor = "pointer";
+  el.hintFooter.setAttribute("role", "button");
+  el.hintFooter.setAttribute("title", "Show keyboard shortcuts");
+  el.hintFooter.addEventListener("click", (e) => {
+    // Don't hijack clicks on the fetched-ago refresh button.
+    if (e.target.closest("#fetched-ago")) return;
+    const overlay = document.getElementById("shortcuts");
+    if (overlay) overlay.hidden = !overlay.hidden;
+  });
 }
 
 function bindSettings() {
