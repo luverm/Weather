@@ -1479,6 +1479,12 @@ function renderNowcast(w) {
     bar.addEventListener("click", () => state.handlers.onHourClick?.(n.time));
     el.nowcastBars.appendChild(bar);
   });
+  // Make the whole nowcast headline clickable to scrub to first rain.
+  el.nowcast.style.cursor = "pointer";
+  el.nowcast.onclick = (ev) => {
+    if (ev.target.closest(".nowcast-bar")) return; // bars handle their own
+    state.handlers.onHourClick?.(first.time);
+  };
   el.nowcast.hidden = false;
 }
 
