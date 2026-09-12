@@ -440,6 +440,12 @@ html[data-reduce-motion="true"] *::after {
 }
 .unit:hover { background: var(--glass); color: var(--fg); }
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
+.condition-label[data-condition="clear"]  { color: #ffd680; }
+.condition-label[data-condition="clouds"] { color: #d8dfe9; }
+.condition-label[data-condition="rain"]   { color: #9ecffb; }
+.condition-label[data-condition="storm"]  { color: #c9a8ff; }
+.condition-label[data-condition="snow"]   { color: #f0f5ff; }
+.condition-label[data-condition="fog"]    { color: #bcc6d5; }
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
 .next-change {
   margin-top: 10px;

@@ -353,6 +353,7 @@ function renderLiveValues(w, { animate = true } = {}) {
     else el.heroInner.removeAttribute("data-temp-tone");
   }
   el.conditionLabel.textContent = capitalize(w.label);
+  el.conditionLabel.setAttribute("data-condition", w.condition || "");
   // Re-render feels-like while preserving the temp-trend span inside it,
   // which renderTrends() writes to later. Rebuild both children so the
   // trend stays visible instead of being wiped by a bare textContent.
