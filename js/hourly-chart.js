@@ -163,9 +163,11 @@ export class HourlyChart {
     const condIcon = h.condition
       ? `<span class="popover-cond" data-condition="${h.condition}">${miniConditionIcon(h.condition)}</span>`
       : "";
+    const mmStr = (h.precip != null && h.precip >= 0.1)
+      ? ` · <span style="color:#7fb8ff">${h.precip.toFixed(1)} mm</span>` : "";
     this.popover.innerHTML =
       `${condIcon}<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
-      `<em>${h.pop}% precip${wind}${hum}</em>`;
+      `<em>${h.pop}% precip${mmStr}${wind}${hum}</em>`;
     this.popover.style.left = `${pxX.toFixed(1)}px`;
     this.popover.style.top = `${pxY.toFixed(1)}px`;
     this.popover.hidden = false;
