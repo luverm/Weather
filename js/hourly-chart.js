@@ -458,7 +458,7 @@ export class HourlyChart {
         { v: mid,  y: tToY(mid) },
         { v: tMin, y: tToY(tMin) },
       ];
-      for (const t of ticks) {
+      ticks.forEach((t, idx) => {
         const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
         line.setAttribute("x1", (PAD_LEFT + 14).toFixed(1));
         line.setAttribute("x2", (W - PAD_RIGHT).toFixed(1));
@@ -470,9 +470,11 @@ export class HourlyChart {
         txt.setAttribute("x", "2");
         txt.setAttribute("y", (t.y + 3).toFixed(1));
         txt.setAttribute("text-anchor", "start");
-        txt.textContent = `${Math.round(conv(t.v))}°`;
+        // Only the topmost tick shows the unit letter — enough context, less clutter.
+        const val = `${Math.round(conv(t.v))}°${idx === 0 ? unitLocal : ""}`;
+        txt.textContent = val;
         scaleG.appendChild(txt);
-      }
+      });
     }
 
     // Labels: every ~3 hours
