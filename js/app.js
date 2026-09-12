@@ -17,6 +17,7 @@ import { narrate } from "./narrative.js";
 import { places } from "./places.js";
 import { RadarMap } from "./radar-map.js";
 import { installShortcuts } from "./shortcuts.js";
+import { haptic, setHapticEnabled } from "./haptic.js";
 
 const engine = new AnimationEngine();
 
@@ -265,10 +266,11 @@ ui.init({
   onSearchSelect: (place) => { places.add(place); loadByCoords(place); },
   onLocate: () => useGeolocation(),
   onAudioToggle: () => toggleAudio(),
-  onRefresh: () => refreshWeather(),
-  onReduceMotion: (on) => setReducedMotion(on),
-  onPlaceClick: (place) => loadByCoords(place),
+  onRefresh: () => { haptic("tap"); refreshWeather(); },
+  onReduceMotion: (on) => { setReducedMotion(on); setHapticEnabled(!on); },
+  onPlaceClick: (place) => { haptic("tap"); loadByCoords(place); },
   onHourClick: (ts) => {
+    haptic("step");
     clock.setOffset(ts - Date.now());
     scrubber.sync();
     if (app.weather) applyScene(app.weather);

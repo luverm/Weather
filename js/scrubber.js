@@ -5,6 +5,7 @@
 // at the simulated time and re-apply to every scene + UI module.
 
 import { clock } from "./clock.js";
+import { haptic } from "./haptic.js";
 
 const RANGE_HOURS = 24;
 
@@ -69,6 +70,7 @@ export class Scrubber {
       this.dragging = true;
       this.appEl?.setAttribute("data-scrubbing", "true");
       this.track.setPointerCapture?.(e.pointerId);
+      haptic("tap");
       this._updateFromEvent(e);
     };
     const onMove = (e) => {
