@@ -147,8 +147,23 @@ export function buildAlerts(weather) {
   // De-dupe (if a daily heat triggers heat AND severe-heat, keep the worst).
   const SEV = { danger: 3, warn: 2, info: 1 };
   return dedupe(out)
+    .map(withEmoji)
     .sort((a, b) => (SEV[b.severity] ?? 0) - (SEV[a.severity] ?? 0))
     .slice(0, 4);
+}
+
+// A tiny emoji glyph on each alert so the pill catalogues at a glance.
+const ALERT_EMOJI = {
+  "severe-heat": "🔥", "heat": "🌡️",
+  "hard-freeze": "❄️", "frost": "🥶",
+  "storm-wind": "🌪️", "gale": "💨",
+  "heavy-rain": "🌊", "soaking-rain": "🌧️", "wet-day": "☔",
+  "snow": "❄", "thunder": "⛈️", "fog": "🌫️",
+  "uv": "☀️",
+};
+function withEmoji(a) {
+  const e = ALERT_EMOJI[a.id];
+  return e ? { ...a, title: `${e} ${a.title}` } : a;
 }
 
 function hottestHour(hours) {
