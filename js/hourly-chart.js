@@ -425,8 +425,9 @@ export class HourlyChart {
       }
     }
 
-    // Y-axis scale ticks — three tiny labels (min / mid / max) on the left
-    // edge so absolute temperatures read at a glance.
+    // Y-axis scale ticks + faint guide lines — labels on the left, lines
+    // spanning the plot width so the eye can read exact temperatures at
+    // the reference marks.
     const scaleG = this.svg.querySelector("#chart-scale");
     if (scaleG) {
       scaleG.innerHTML = "";
@@ -434,14 +435,21 @@ export class HourlyChart {
       const conv = (v) => unitLocal === "F" ? v * 9 / 5 + 32 : v;
       const mid = (tMin + tMax) / 2;
       const ticks = [
-        { v: tMax, y: tToY(tMax) + 8 },
+        { v: tMax, y: tToY(tMax) },
         { v: mid,  y: tToY(mid) },
-        { v: tMin, y: tToY(tMin) - 2 },
+        { v: tMin, y: tToY(tMin) },
       ];
       for (const t of ticks) {
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", (PAD_LEFT + 14).toFixed(1));
+        line.setAttribute("x2", (W - PAD_RIGHT).toFixed(1));
+        line.setAttribute("y1", t.y.toFixed(1));
+        line.setAttribute("y2", t.y.toFixed(1));
+        line.setAttribute("class", "chart-scale-line");
+        scaleG.appendChild(line);
         const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
         txt.setAttribute("x", "2");
-        txt.setAttribute("y", t.y.toFixed(1));
+        txt.setAttribute("y", (t.y + 3).toFixed(1));
         txt.setAttribute("text-anchor", "start");
         txt.textContent = `${Math.round(conv(t.v))}°`;
         scaleG.appendChild(txt);
