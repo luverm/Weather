@@ -78,6 +78,7 @@ const el = {
   dailyEnvelope: $("#daily-envelope"),
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
+  dailySummary: $("#daily-summary"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -1374,6 +1375,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderWeeklySummary(days);
   bindDailySparkHover(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
@@ -1532,6 +1534,53 @@ function bindDailySparkHover(days) {
     items.forEach((it, j) => it.classList.toggle("spark-hover", j === i));
   };
   spark.onpointerleave = clearHighlight;
+}
+
+// One-sentence natural-language summary of the coming week. Picks the
+// warmest day, the wettest day, and any big trend so the outlook has a
+// story before the row-by-row detail.
+function renderWeeklySummary(days) {
+  if (!el.dailySummary || days.length < 3) {
+    if (el.dailySummary) el.dailySummary.hidden = true;
+    return;
+  }
+  const tz = state.weather?.timezone;
+  const dayLabel = (d) => new Date(d.time).toLocaleDateString(undefined, {
+    weekday: "long",
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  // Warmest day (index and value).
+  let hotI = -1, hot = -Infinity;
+  let wetI = -1, wet = 0;
+  days.forEach((d, i) => {
+    if (d.tempMax != null && d.tempMax > hot) { hot = d.tempMax; hotI = i; }
+    if ((d.precip ?? 0) > wet) { wet = d.precip; wetI = i; }
+  });
+  const parts = [];
+  const hotDay = days[hotI];
+  if (hotDay && hotI > 0) {
+    parts.push(`Warmest on ${dayLabel(hotDay)} (${Math.round(convertTemp(hotDay.tempMax))}°)`);
+  }
+  if (wetI >= 0 && wet >= 3) {
+    const d = days[wetI];
+    parts.push(`${wetI === hotI ? "with " : ""}wettest ${dayLabel(d)} (${formatMm(wet)})`);
+  }
+  // Weekly trend across highs.
+  const first = days.slice(0, 2).map((d) => d.tempMax).filter((v) => v != null);
+  const last  = days.slice(-2).map((d) => d.tempMax).filter((v) => v != null);
+  if (first.length && last.length) {
+    const avg = (a) => a.reduce((s, v) => s + v, 0) / a.length;
+    const delta = avg(last) - avg(first);
+    if (Math.abs(delta) >= 2) {
+      parts.push(delta > 0 ? "warming through the week" : "cooling through the week");
+    }
+  }
+  if (!parts.length) {
+    el.dailySummary.hidden = true;
+    return;
+  }
+  el.dailySummary.textContent = parts.join(" · ") + ".";
+  el.dailySummary.hidden = false;
 }
 
 function renderDailyDelta(days) {
