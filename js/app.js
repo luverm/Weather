@@ -351,6 +351,14 @@ setInterval(() => {
   refreshWeather();
 }, 15 * 60_000);
 
+// When the browser regains connectivity, refetch once — the app almost
+// certainly has stale (or mock) data at that point.
+window.addEventListener("online", () => {
+  if (!app.place) return;
+  refreshWeather();
+  ui.showToast("Back online — refreshing", 1600);
+});
+
 // PWA service worker — optional, best-effort. When an update is installed
 // in the background, surface a one-time "new version" toast so users know
 // a hard-reload picks up the changes; we don't auto-reload since a scrub
