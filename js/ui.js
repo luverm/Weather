@@ -951,6 +951,22 @@ function scheduleSunArc(w) {
     el.sunArcMarker.setAttribute("cy", y.toFixed(1));
     const isUp = now >= sr && now <= ss;
     el.sunArcMarker.style.opacity = isUp ? "1" : "0.45";
+    // Tooltip: how far through the daylight window we are + time to next
+    // sun event. Rewritten each minute along with the marker position.
+    if (isUp) {
+      const pct = Math.round(frac * 100);
+      const mins = Math.max(0, Math.round((ss - now) / 60_000));
+      const untilSet = mins >= 60 ? `${Math.floor(mins/60)}h ${mins%60}m` : `${mins}m`;
+      el.sunArcMarker.setAttribute("title", `Sun ${pct}% through the day · sets in ${untilSet}`);
+    } else if (now < sr) {
+      const mins = Math.round((sr - now) / 60_000);
+      const label = mins >= 60 ? `${Math.floor(mins/60)}h ${mins%60}m` : `${mins}m`;
+      el.sunArcMarker.setAttribute("title", `Sunrise in ${label}`);
+    } else {
+      const mins = Math.round((now - ss) / 60_000);
+      const label = mins >= 60 ? `${Math.floor(mins/60)}h ${mins%60}m` : `${mins}m`;
+      el.sunArcMarker.setAttribute("title", `Sunset was ${label} ago`);
+    }
     // Time-of-day color: warm gold near sunrise/sunset, bright cream at
     // solar noon. Curve peaks at t=0.5 for the whitest look.
     const noonProx = 1 - Math.abs(t - 0.5) * 2; // 0 at rise/set, 1 at noon
