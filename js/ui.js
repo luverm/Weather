@@ -194,6 +194,7 @@ export const ui = {
   setWeather(weather, { narrative } = {}) {
     state.weather = weather;
     state.sampledWeather = weather; // initially same as live
+    document.body.setAttribute("data-weather-loaded", "true");
     updateDocumentTitle(weather);
     renderLiveValues(weather);
     renderMetrics(weather);
