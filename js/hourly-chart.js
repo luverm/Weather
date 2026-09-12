@@ -54,6 +54,11 @@ export class HourlyChart {
     this.setCursor(null);
   }
 
+  setSun(sun) {
+    this.sun = sun || null;
+    this._draw();
+  }
+
   refresh() { this._draw(); }
 
   setCursor(ts) {
@@ -243,6 +248,31 @@ export class HourlyChart {
       r.setAttribute("opacity", (0.35 + (pop / 100) * 0.55).toFixed(2));
       precipG.appendChild(r);
     });
+
+    // Sunrise / sunset markers: thin vertical rules with a small label so
+    // the eye can locate them along the timeline without decoding shading.
+    const sunG = this.svg.querySelector("#chart-sun-markers");
+    if (sunG) {
+      sunG.innerHTML = "";
+      const first = this.hours[0]?.time, last = this.hours[this.hours.length - 1]?.time;
+      if (this.sun && first != null && last != null && last > first) {
+        const span = last - first;
+        const drawSunMark = (ts, kind) => {
+          if (ts == null || ts < first || ts > last) return;
+          const px = PAD_LEFT + ((ts - first) / span) * innerW;
+          const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+          g.setAttribute("class", `chart-sun-mark chart-sun-${kind}`);
+          g.setAttribute("transform", `translate(${px.toFixed(1)}, 0)`);
+          g.innerHTML = `
+            <line x1="0" x2="0" y1="6" y2="${(H - 22)}" />
+            <text x="0" y="${(H - 26)}" text-anchor="middle">${kind === "rise" ? "☀︎ ↑" : "☀︎ ↓"} ${this._formatHour(ts)}</text>
+          `;
+          sunG.appendChild(g);
+        };
+        drawSunMark(this.sun.sunrise, "rise");
+        drawSunMark(this.sun.sunset,  "set");
+      }
+    }
 
     // Night shading: dim rectangles where !isDay
     const nightG = this.svg.querySelector("#chart-night");
