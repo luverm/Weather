@@ -1410,6 +1410,11 @@ function renderDaily(w) {
       ${extra}
     `;
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
+    item.setAttribute("tabindex", "0");
+    item.setAttribute("role", "button");
+    item.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); item.click(); }
+    });
     el.dailyTrack.appendChild(item);
   });
 }
