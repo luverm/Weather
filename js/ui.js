@@ -1642,6 +1642,28 @@ function bindSearch() {
     places.add(item);
     state.handlers.onSearchSelect?.(item);
   });
+  // Arrow keys navigate results; Enter selects. Wrap-around cycling so
+  // reaching the bottom then Down lands on the top again.
+  el.searchInput.addEventListener("keydown", (e) => {
+    if (el.searchResults.hidden) return;
+    const items = Array.from(el.searchResults.querySelectorAll("li[data-index]"));
+    if (!items.length) return;
+    let active = items.findIndex((li) => li.classList.contains("kb-active"));
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      active = (active + 1 + items.length) % items.length;
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      active = (active - 1 + items.length) % items.length;
+    } else if (e.key === "Enter") {
+      if (active < 0) return;
+      e.preventDefault();
+      items[active].click();
+      return;
+    } else return;
+    items.forEach((li, i) => li.classList.toggle("kb-active", i === active));
+    items[active]?.scrollIntoView({ block: "nearest" });
+  });
 }
 
 function bindUnitToggle() {
