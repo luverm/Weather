@@ -1767,6 +1767,19 @@ function applyHideRadar(on) {
 ui.isReduceMotion = () => localStorage.getItem("aether:reduceMotion") === "1";
 
 function startFetchedTicker() {
+  // Make the label a real button so clicking refreshes and screen readers
+  // announce it as actionable.
+  if (el.fetchedAgo) {
+    el.fetchedAgo.setAttribute("role", "button");
+    el.fetchedAgo.setAttribute("tabindex", "0");
+    el.fetchedAgo.setAttribute("title", "Click to refresh");
+    el.fetchedAgo.style.cursor = "pointer";
+    const doRefresh = () => state.handlers.onRefresh?.();
+    el.fetchedAgo.addEventListener("click", doRefresh);
+    el.fetchedAgo.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); doRefresh(); }
+    });
+  }
   const update = () => {
     if (!el.fetchedAgo || !state.weather?.fetchedAt) {
       if (el.fetchedAgo) el.fetchedAgo.textContent = "";
@@ -1778,7 +1791,7 @@ function startFetchedTicker() {
       minutes < 1 ? "Just now" :
       minutes < 60 ? `Updated ${minutes}m ago` :
       `Updated ${Math.floor(minutes / 60)}h ago`;
-    el.fetchedAgo.textContent = "· " + label;
+    el.fetchedAgo.textContent = "· " + label + " · refresh";
     el.fetchedAgo.classList.toggle("stale", minutes >= 20);
   };
   update();
