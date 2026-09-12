@@ -1750,8 +1750,12 @@ function renderPlaces() {
   const activeId = state.place ? places.idFor(state.place) : null;
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
+    const condGlyph = p.condition
+      ? `<span class="place-chip-cond" data-condition="${escapeHtml(p.condition)}">${iconFor(p.condition)}</span>`
+      : "";
     return `
       <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
+        ${condGlyph}
         <span>${flagEmoji(p.countryCode)} ${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
         <span class="close" data-action="remove" aria-label="Remove">
