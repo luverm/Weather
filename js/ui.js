@@ -633,8 +633,8 @@ function renderWindRose(w) {
     // Direction is "wind from", so line points inward from that bearing.
     const bearing = (h.windDir + 180) % 360;
     const rad = (bearing - 90) * Math.PI / 180; // 0° = right, so shift 90
-    const inner = 6;
-    const outer = 6 + (Math.min(wind, maxWind) / maxWind) * 12;
+    const inner = 4;
+    const outer = 4 + (Math.min(wind, maxWind) / maxWind) * 8;
     const x1 = Math.cos(rad) * inner, y1 = Math.sin(rad) * inner;
     const x2 = Math.cos(rad) * outer, y2 = Math.sin(rad) * outer;
     const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
