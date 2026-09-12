@@ -724,6 +724,17 @@ html[data-reduce-motion="true"] *::after {
   text-transform: uppercase;
   color: var(--fg-dim);
 }
+.chart-summary {
+  font-size: 11px;
+  color: var(--fg-muted);
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--glass);
+  border: 1px solid var(--stroke);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.chart-summary[hidden] { display: none; }
 .chart-legend {
   display: inline-flex; align-items: center; gap: 8px;
   font-size: 11px; color: var(--fg-dim);

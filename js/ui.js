@@ -55,6 +55,7 @@ const el = {
   adviceText: $("#advice-text"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
+  chartSummary: $("#chart-summary"),
   pollenCard: $("#pollen-card"),
   pollenLevel: $("#pollen-level"),
   pollenDominant: $("#pollen-dominant"),
@@ -209,6 +210,7 @@ export const ui = {
       state.chart.setHours(weather.hourly);
       state.chart.setSun({ sunrise: weather.sunrise, sunset: weather.sunset });
     }
+    renderChartSummary(weather);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
@@ -293,6 +295,25 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
   renderNextChange(w);
+}
+
+// Aggregate what the visible chart window is about to bring: rain, gusts,
+// UV — surface a one-line summary in the chart header so the chart tells a
+// story before the user hovers.
+function renderChartSummary(w) {
+  if (!el.chartSummary) return;
+  const hrs = (w.hourly || []).slice(0, 24);
+  if (!hrs.length) { el.chartSummary.hidden = true; return; }
+  const parts = [];
+  const rainMm = hrs.reduce((s, h) => s + (h.precip || 0), 0);
+  if (rainMm >= 0.3) parts.push(`${formatMm(rainMm)} rain`);
+  const peakGust = hrs.reduce((m, h) => Math.max(m, h.gusts ?? h.wind ?? 0), 0);
+  if (peakGust >= 40) parts.push(`gusts ${Math.round(peakGust)} km/h`);
+  const peakUv = hrs.reduce((m, h) => Math.max(m, h.uv ?? 0), 0);
+  if (peakUv >= 6) parts.push(`UV ${Math.round(peakUv)}`);
+  if (!parts.length) { el.chartSummary.hidden = true; return; }
+  el.chartSummary.textContent = `next 24h · ${parts.join(" · ")}`;
+  el.chartSummary.hidden = false;
 }
 
 // Look ahead in the hourly forecast for the first distinct condition
