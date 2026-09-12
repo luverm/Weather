@@ -1367,6 +1367,11 @@ kbd {
   border-radius: 10px;
   background: rgba(255,255,255,0.04);
   border: 1px solid var(--stroke);
+  transition: background 160ms var(--ease), transform 160ms var(--ease);
+}
+.insights-list li:hover {
+  background: rgba(255,255,255,0.08);
+  transform: translateY(-1px);
 }
 .insights-list .insight-icon {
   width: 24px; height: 24px;
