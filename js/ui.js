@@ -1549,7 +1549,7 @@ function renderSearchResults(results) {
   if (!results.length) { el.searchResults.hidden = true; el.searchResults.innerHTML = ""; return; }
   el.searchResults.innerHTML = results.map((r, i) => `
     <li role="option" data-index="${i}">
-      <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
+      <span>${flagEmoji(r.countryCode)} ${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
       <span class="sub">${escapeHtml(r.country || "")}</span>
     </li>
   `).join("");
@@ -1557,12 +1557,24 @@ function renderSearchResults(results) {
   el.searchResults._items = results;
 }
 
+// Two-letter ISO country code → regional-indicator flag emoji. Falls back
+// to a globe when the code is missing so layout stays consistent.
+function flagEmoji(cc) {
+  if (!cc || cc.length !== 2) return "🌐";
+  const A = 0x1f1e6;
+  const codePoints = [
+    A + (cc.toUpperCase().charCodeAt(0) - 65),
+    A + (cc.toUpperCase().charCodeAt(1) - 65),
+  ];
+  try { return String.fromCodePoint(...codePoints); } catch { return "🌐"; }
+}
+
 function showRecentsIfAny() {
   const recents = places.all().slice(0, 5);
   if (!recents.length) { el.searchResults.hidden = true; return; }
   const itemsHtml = recents.map((r, i) => `
     <li role="option" data-index="${i}">
-      <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
+      <span>${flagEmoji(r.countryCode)} ${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
       <span class="sub">${escapeHtml(r.country || "")}</span>
     </li>
   `).join("");
