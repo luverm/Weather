@@ -1051,25 +1051,40 @@ function startLocaltime(w) {
     el.placeLocaltime.textContent = "";
     return;
   }
+  const stored12 = localStorage.getItem("aether:clock12") === "1";
   const update = () => {
     try {
-      const parts = new Intl.DateTimeFormat([], {
-        timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
-        weekday: "short", timeZoneName: "short",
-      }).formatToParts(new Date());
+      const use12 = localStorage.getItem("aether:clock12") === "1";
+      const opts = { timeZone: tz, hour: "2-digit", minute: "2-digit",
+                     weekday: "short", timeZoneName: "short" };
+      if (use12) opts.hour12 = true; else opts.hour12 = false;
+      const parts = new Intl.DateTimeFormat([], opts).formatToParts(new Date());
       const day = parts.find((p) => p.type === "weekday")?.value ?? "";
       const hour = parts.find((p) => p.type === "hour")?.value ?? "";
       const minute = parts.find((p) => p.type === "minute")?.value ?? "";
+      const period = parts.find((p) => p.type === "dayPeriod")?.value ?? "";
       const tzName = parts.find((p) => p.type === "timeZoneName")?.value ?? "";
+      const clockText = use12
+        ? `${hour}:${minute}${period ? " " + period.toLowerCase() : ""}`
+        : `${hour}:${minute}`;
       el.placeLocaltime.innerHTML =
         `<span class="clock-dot" aria-hidden="true"></span>` +
-        `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>`;
+        `${escapeHtml(day)} ${escapeHtml(clockText)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>`;
     } catch {
       el.placeLocaltime.textContent = "";
     }
   };
   update();
   state.localTimer = setInterval(update, 10_000);
+  el.placeLocaltime.style.cursor = "pointer";
+  el.placeLocaltime.setAttribute("title", "Click to toggle 12/24 hour");
+  el.placeLocaltime.onclick = () => {
+    const now = localStorage.getItem("aether:clock12") === "1";
+    localStorage.setItem("aether:clock12", now ? "0" : "1");
+    update();
+  };
+  // Preserve stored12 read for lint (not used further).
+  void stored12;
 }
 
 function renderInsights(w) {
