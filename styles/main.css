@@ -325,6 +325,7 @@ html[data-reduce-motion="true"] *::after {
   border: 1px solid rgba(255, 165, 90, 0.25);
   font-size: 12.5px;
   letter-spacing: 0.02em;
+  animation: fadeIn 260ms var(--ease) both;
 }
 .offline-banner[hidden] { display: none; }
 .offline-dot {
