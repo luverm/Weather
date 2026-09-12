@@ -1673,6 +1673,11 @@ kbd {
   stroke-width: 1.4;
   filter: drop-shadow(0 0 6px rgba(106, 162, 255, 0.6));
 }
+.daily-spark { cursor: crosshair; }
+.daily-item.spark-hover {
+  background: var(--glass);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
 .forecast-track {
   display: grid;
   grid-auto-flow: column;

@@ -1220,6 +1220,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  bindDailySparkHover(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1338,6 +1339,25 @@ function renderDailySpark(days) {
       el.dailySparkDots.appendChild(c);
     }
   });
+}
+
+// Hover the 7-day sparkline to visually link a spark position to its
+// day-item row below. Simple: mouse x → day index → highlight.
+function bindDailySparkHover(days) {
+  const spark = el.dailySpark;
+  if (!spark || !days.length) return;
+  const clearHighlight = () => {
+    el.dailyTrack?.querySelectorAll(".daily-item").forEach((it) =>
+      it.classList.remove("spark-hover"));
+  };
+  spark.onpointermove = (ev) => {
+    const r = spark.getBoundingClientRect();
+    const frac = (ev.clientX - r.left) / r.width;
+    const i = Math.max(0, Math.min(days.length - 1, Math.round(frac * (days.length - 1))));
+    const items = el.dailyTrack.querySelectorAll(".daily-item");
+    items.forEach((it, j) => it.classList.toggle("spark-hover", j === i));
+  };
+  spark.onpointerleave = clearHighlight;
 }
 
 function renderDailyDelta(days) {
