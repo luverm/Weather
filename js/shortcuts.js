@@ -39,7 +39,16 @@ export function installShortcuts(handlers) {
   });
 
   window.addEventListener("keydown", (e) => {
-    // Let browsers handle modifier combos (copy, find, etc.)
+    // Cmd/Ctrl+K: focus search — a widely learned pattern that beats "/"
+    // when the search field is off-screen. Handle before the modifier
+    // early-return below.
+    if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey
+        && (e.key === "k" || e.key === "K")) {
+      e.preventDefault();
+      handlers.focusSearch?.();
+      return;
+    }
+    // Let browsers handle other modifier combos (copy, find, etc.)
     if (e.metaKey || e.ctrlKey || e.altKey) return;
 
     const typing = isTyping(e.target);
