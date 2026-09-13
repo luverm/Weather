@@ -1150,6 +1150,16 @@ function renderDaily(w) {
     if (d.tempMax > gMax) gMax = d.tempMax;
   }
   const span = Math.max(1, gMax - gMin);
+  // Find the week's warmest max and coldest min so we can tag those rows.
+  // Ties: the first day that hits the extreme wins, which keeps the badge on
+  // a single row instead of scattering.
+  let warmestIdx = -1, coldestIdx = -1;
+  days.forEach((d, i) => {
+    if (d.tempMax === gMax && warmestIdx < 0) warmestIdx = i;
+    if (d.tempMin === gMin && coldestIdx < 0) coldestIdx = i;
+  });
+  // Don't badge either extreme when the week is essentially flat.
+  const flatWeek = (gMax - gMin) < 3;
   days.forEach((d, i) => {
     const dt = new Date(d.time);
     const tz = state.weather?.timezone;
@@ -1161,14 +1171,19 @@ function renderDaily(w) {
     const width = ((d.tempMax - d.tempMin) / span) * 100;
     const item = document.createElement("div");
     item.className = "daily-item";
+    if (!flatWeek && i === warmestIdx) item.classList.add("is-warmest");
+    if (!flatWeek && i === coldestIdx && warmestIdx !== coldestIdx) item.classList.add("is-coldest");
     item.dataset.ts = d.time;
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const extremeBadge = !flatWeek && i === warmestIdx ? `<span class="daily-badge daily-badge--warm" title="Warmest day">peak</span>`
+                       : !flatWeek && i === coldestIdx ? `<span class="daily-badge daily-badge--cool" title="Coldest day">low</span>`
+                       : "";
     item.innerHTML = `
-      <span class="daily-day">${day}</span>
+      <span class="daily-day">${day}${extremeBadge}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>

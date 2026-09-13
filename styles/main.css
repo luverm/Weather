@@ -1667,7 +1667,27 @@ kbd {
   transition: background 200ms var(--ease);
 }
 .daily-item:hover { background: var(--glass); }
-.daily-day { font-size: 13px; font-weight: 500; }
+.daily-day { font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
+.daily-badge {
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.daily-badge--warm {
+  background: rgba(255, 156, 122, 0.14); color: #ffb196;
+  border-color: rgba(255, 156, 122, 0.22);
+}
+.daily-badge--cool {
+  background: rgba(154, 209, 255, 0.14); color: #9ad1ff;
+  border-color: rgba(154, 209, 255, 0.22);
+}
+.daily-item.is-warmest { background: rgba(255, 156, 122, 0.05); }
+.daily-item.is-coldest { background: rgba(154, 209, 255, 0.05); }
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
 .daily-range {
   position: relative;
