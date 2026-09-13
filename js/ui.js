@@ -1165,6 +1165,22 @@ function precipMeter(pop, mm) {
 function highlightHour(index) {
   const items = el.forecastTrack.querySelectorAll(".forecast-item");
   items.forEach((it, i) => it.classList.toggle("active", i === index));
+  // Nudge the highlighted item into view when scrubbing carries it off screen —
+  // keeps the row synced with the scrubber without stealing scroll from anyone
+  // manually browsing hours. Requires an active horizontal scroller.
+  const track = el.forecastTrack;
+  if (!track || index == null || index < 0) return;
+  const target = items[index];
+  if (!target || track.scrollWidth <= track.clientWidth) return;
+  const tRect = target.getBoundingClientRect();
+  const cRect = track.getBoundingClientRect();
+  const margin = 20;
+  if (tRect.left < cRect.left + margin || tRect.right > cRect.right - margin) {
+    // scrollIntoView with block:'nearest' can also nudge the vertical page,
+    // so scroll manually just on the horizontal axis instead.
+    const delta = tRect.left - cRect.left - (cRect.width - tRect.width) / 2;
+    track.scrollBy({ left: delta, behavior: "smooth" });
+  }
 }
 
 function renderDaily(w) {
