@@ -182,6 +182,18 @@ export const ui = {
   markRefreshSpin(on) {
     if (!el.refreshBtn) return;
     el.refreshBtn.classList.toggle("spinning", !!on);
+    // Reflect the in-flight state in the footer badge too, so users on
+    // large screens see it without hunting for the icon spinning.
+    if (el.fetchedAgo) {
+      if (on) {
+        el.fetchedAgo.textContent = "· Refreshing…";
+        el.fetchedAgo.classList.remove("stale");
+      } else {
+        // Re-assert the "Just now / Xm ago" label immediately instead of
+        // waiting up to 30s for the interval to tick.
+        state.fetchedTickerUpdate?.();
+      }
+    }
   },
   markLocating(on) {
     if (!el.locateBtn) return;
@@ -1840,6 +1852,7 @@ function startFetchedTicker() {
     el.fetchedAgo.textContent = "· " + label;
     el.fetchedAgo.classList.toggle("stale", minutes >= 20);
   };
+  state.fetchedTickerUpdate = update;
   update();
   setInterval(update, 30_000);
 }
@@ -1923,7 +1936,7 @@ function updateDocumentTitle(w) {
 
 // Displayed in the settings menu so a user (or a bug report) can tell which
 // build they're on. Bumped alongside sw.js's CACHE_VERSION each round.
-const APP_VERSION = "v0.66";
+const APP_VERSION = "v0.67";
 document.getElementById("settings-version")?.replaceChildren(document.createTextNode(APP_VERSION));
 
 function bindPlaceCopy() {
