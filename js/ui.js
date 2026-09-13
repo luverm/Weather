@@ -53,6 +53,7 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonNext: $("#moon-next"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -629,6 +630,21 @@ function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  if (el.moonNext) {
+    const full = moon.nextFullDays ?? Infinity;
+    const nw   = moon.nextNewDays ?? Infinity;
+    const closer = full <= nw
+      ? { kind: "Full", days: full }
+      : { kind: "New",  days: nw };
+    if (!isFinite(closer.days) || closer.days < 0.4) {
+      // We're already at the phase; skip the "in 0d" tautology.
+      el.moonNext.hidden = true;
+    } else {
+      const days = Math.round(closer.days);
+      el.moonNext.hidden = false;
+      el.moonNext.textContent = `${closer.kind} in ${days}d`;
+    }
+  }
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
