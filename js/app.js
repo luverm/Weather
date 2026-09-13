@@ -306,6 +306,14 @@ installShortcuts({
 
 // ---------- Start ----------
 (async function init() {
+  // A shared URL like ?lat=…&lon=…&name=… wins over everything else, so a
+  // link to a specific city always lands there. Bad numbers are ignored.
+  const fromUrl = parseUrlPlace();
+  if (fromUrl) {
+    places.add(fromUrl);
+    await loadByCoords(fromUrl);
+    return;
+  }
   // Prefer the most recent saved place if we have one — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();
@@ -320,6 +328,21 @@ installShortcuts({
     await loadByCoords({ name: "Reykjavík", country: "Iceland", lat: 64.1466, lon: -21.9426 });
   }
 })();
+
+function parseUrlPlace() {
+  try {
+    const p = new URLSearchParams(location.search);
+    const lat = parseFloat(p.get("lat"));
+    const lon = parseFloat(p.get("lon"));
+    if (!isFinite(lat) || !isFinite(lon)) return null;
+    if (lat < -90 || lat > 90 || lon < -180 || lon > 180) return null;
+    return {
+      name: p.get("name") || "Shared location",
+      country: p.get("country") || undefined,
+      lat, lon,
+    };
+  } catch { return null; }
+}
 
 // ---------- Lifecycle ----------
 document.addEventListener("visibilitychange", () => {

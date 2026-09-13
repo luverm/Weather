@@ -1565,6 +1565,7 @@ function bindShare() {
     const unit = state.unit;
     const t = (v) => `${Math.round(unit === "F" ? v * 9 / 5 + 32 : v)}°${unit}`;
     const today = w.daily?.[0];
+    const shareUrl = buildShareUrl(state.place);
     const lines = [
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
@@ -1572,14 +1573,15 @@ function bindShare() {
       `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
+      shareUrl,
     ].filter(Boolean);
     const text = lines.join("\n");
     try {
       if (navigator.share) {
-        await navigator.share({ title: `Aether — ${placeName}`, text });
+        await navigator.share({ title: `Aether — ${placeName}`, text, url: shareUrl || undefined });
       } else {
         await navigator.clipboard.writeText(text);
-        ui.showToast("Summary copied to clipboard");
+        ui.showToast("Summary + link copied");
       }
       el.shareBtn.classList.add("just-copied");
       setTimeout(() => el.shareBtn.classList.remove("just-copied"), 600);
@@ -1587,6 +1589,21 @@ function bindShare() {
       if (err?.name !== "AbortError") ui.showToast("Share failed");
     }
   });
+}
+
+// A URL that, when opened, jumps straight to this city — so a shared link
+// lands on the same view instead of the recipient's own last place.
+function buildShareUrl(place) {
+  if (!place?.lat || !place?.lon) return null;
+  try {
+    const u = new URL(location.href);
+    u.search = "";
+    u.searchParams.set("lat", place.lat.toFixed(3));
+    u.searchParams.set("lon", place.lon.toFixed(3));
+    if (place.name) u.searchParams.set("name", place.name);
+    if (place.country) u.searchParams.set("country", place.country);
+    return u.toString();
+  } catch { return null; }
 }
 
 function bindTilt() {
