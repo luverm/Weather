@@ -204,6 +204,17 @@ async function loadByCoords(place) {
   clock.reset();
   ui.setScrubbing(false);
 
+  // If we have a fresh-ish cached snapshot for this place, paint it now so
+  // the page never sits on a blank hero waiting for the network. The real
+  // fetch below will overwrite it as soon as it lands.
+  const cached = readWeatherCache(place);
+  if (cached) {
+    app.weather = cached;
+    ui.setWeather(cached, { narrative: narrate(cached) });
+    applyScene(cached);
+    scrubber.setBounds({ start: Date.now(), sunrise: cached.sunrise, sunset: cached.sunset });
+  }
+
   const w = await getWeather(place.lat, place.lon);
   app.weather = w;
 
@@ -218,6 +229,36 @@ async function loadByCoords(place) {
 
   // Move the radar to the new location (fire-and-forget; resolves later).
   ensureRadar([place.lat, place.lon]).then((r) => r?.setCenter(place.lat, place.lon, place.name));
+
+  // Persist the fresh result so the next boot for this place is instant.
+  if (!w.offline) writeWeatherCache(place, w);
+}
+
+// One-entry cache per place — keyed by rounded lat/lon so tiny geocoding
+// drift doesn't miss a hit. Expires at 30 minutes so stale-past-usefulness
+// data never boots first.
+const CACHE_KEY_PREFIX = "aether:wxcache:";
+const CACHE_TTL = 30 * 60_000;
+function cacheKey(place) {
+  if (!place?.lat || !place?.lon) return null;
+  return `${CACHE_KEY_PREFIX}${place.lat.toFixed(2)},${place.lon.toFixed(2)}`;
+}
+function readWeatherCache(place) {
+  const key = cacheKey(place);
+  if (!key) return null;
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data?.fetchedAt || Date.now() - data.fetchedAt > CACHE_TTL) return null;
+    return data;
+  } catch { return null; }
+}
+function writeWeatherCache(place, w) {
+  const key = cacheKey(place);
+  if (!key || !w) return;
+  try { localStorage.setItem(key, JSON.stringify(w)); }
+  catch { /* quota exceeded — silently drop */ }
 }
 
 async function useGeolocation() {
