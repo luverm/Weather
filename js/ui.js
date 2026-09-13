@@ -395,7 +395,9 @@ function renderNextChange(w) {
   el.nextChangeText.textContent = `${capitalize(change.label || change.to)} by ${at}`;
   el.nextChange.hidden = false;
   el.nextChange.className = `next-change ${change.diff > 0 ? "worse" : "better"}`;
-  el.nextChange.title = `${capitalize(now)} ${verb} ${change.label || change.to}`;
+  el.nextChange.title = `Click to preview ${change.label || change.to} — ${capitalize(now)} ${verb} ${change.label || change.to}`;
+  el.nextChange.style.cursor = "pointer";
+  el.nextChange.onclick = () => state.handlers.onHourClick?.(change.at);
 }
 
 // Higher = worse weather for outdoor comfort. Only the ordering matters here,
@@ -1993,7 +1995,7 @@ function updateDocumentTitle(w) {
 
 // Displayed in the settings menu so a user (or a bug report) can tell which
 // build they're on. Bumped alongside sw.js's CACHE_VERSION each round.
-const APP_VERSION = "v0.72";
+const APP_VERSION = "v0.73";
 document.getElementById("settings-version")?.replaceChildren(document.createTextNode(APP_VERSION));
 
 function bindPlaceCopy() {
