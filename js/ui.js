@@ -473,6 +473,7 @@ function renderMetrics(w) {
     ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
     : "visibility —";
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
+  el.metricUV.style.color = uvColor(w.uv);
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
     if (lvl) {
@@ -532,6 +533,16 @@ function beaufort(kmh) {
   if (kmh < 103) return { label: "Storm", cls: "up" };
   if (kmh < 118) return { label: "Violent storm", cls: "up" };
   return { label: "Hurricane", cls: "up" };
+}
+
+// EPA-style UV coloring so the number itself hints at protection level.
+// Below 3 stays default fg so morning/evening readings look calm.
+function uvColor(v) {
+  if (v == null || v < 3) return "";
+  if (v < 6) return "#f6d76a";   // yellow — moderate
+  if (v < 8) return "#f6a86a";   // orange — high
+  if (v < 11) return "#ff7c5a";  // red — very high
+  return "#d876ff";              // purple — extreme
 }
 
 function uvLevel(v) {
