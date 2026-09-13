@@ -616,9 +616,20 @@ function renderAirQuality(aq) {
   // Circumference of r=20 is ~125.66 — we use 126 in the SVG.
   const frac = Math.max(0, Math.min(1, (aq.aqi ?? 0) / 200));
   el.aqArc.setAttribute("stroke-dashoffset", String(126 * (1 - frac)));
-  el.aqDetail.textContent =
-    `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
+  const pollutants = `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
+  const advice = aqAdvice(aq.aqi);
+  el.aqDetail.innerHTML = advice
+    ? `${escapeHtml(pollutants)}<span class="aq-advice">${escapeHtml(advice)}</span>`
+    : escapeHtml(pollutants);
   renderAqTrend(aq);
+}
+
+function aqAdvice(aqi) {
+  if (aqi == null) return null;
+  if (aqi >= 201) return "avoid outdoor exertion";
+  if (aqi >= 151) return "everyone: limit strenuous outdoor activity";
+  if (aqi >= 101) return "sensitive groups: reduce outdoor exertion";
+  return null;
 }
 
 function renderAqTrend(aq) {
