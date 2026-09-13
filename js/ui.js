@@ -1566,13 +1566,26 @@ function showRecentsIfAny() {
 }
 
 function bindSearch() {
+  const clearBtn = document.getElementById("search-clear");
+  const syncClear = () => {
+    if (!clearBtn) return;
+    clearBtn.hidden = el.searchInput.value.length === 0;
+  };
   el.searchInput.addEventListener("input", (e) => {
     const v = e.target.value.trim();
+    syncClear();
     if (v.length < 2) {
       showRecentsIfAny();
       return;
     }
     runSearch(v);
+  });
+  clearBtn?.addEventListener("mousedown", (e) => e.preventDefault()); // keep focus
+  clearBtn?.addEventListener("click", () => {
+    el.searchInput.value = "";
+    syncClear();
+    el.searchInput.focus();
+    showRecentsIfAny();
   });
   el.searchInput.addEventListener("blur", () => {
     setTimeout(() => (el.searchResults.hidden = true), 150);
