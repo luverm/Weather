@@ -1652,9 +1652,12 @@ function bindSearch() {
     else if (e.key === "ArrowUp") { e.preventDefault(); setSelected(getSelected() - 1); }
     else if (e.key === "Enter") {
       const sel = getSelected();
-      if (sel >= 0) {
+      // If no explicit selection, take the first result — matches the common
+      // "type + Enter" pattern people expect from omnibars.
+      const target = sel >= 0 ? items[sel] : items[0];
+      if (target) {
         e.preventDefault();
-        items[sel].click();
+        target.click();
       }
     } else if (e.key === "Escape") {
       el.searchResults.hidden = true;
@@ -1907,7 +1910,7 @@ function updateDocumentTitle(w) {
 
 // Displayed in the settings menu so a user (or a bug report) can tell which
 // build they're on. Bumped alongside sw.js's CACHE_VERSION each round.
-const APP_VERSION = "v0.63";
+const APP_VERSION = "v0.64";
 document.getElementById("settings-version")?.replaceChildren(document.createTextNode(APP_VERSION));
 
 function bindPlaceCopy() {
