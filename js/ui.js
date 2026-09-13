@@ -243,7 +243,24 @@ export const ui = {
     renderWeekend(weather);
     renderNextChange(weather);
     startLocaltime(weather);
-    if (state.chart) state.chart.setHours(weather.hourly);
+    if (state.chart) {
+      // Feed the chart the sunrise/sunset moments that fall inside the visible
+      // window so it can draw them as slim markers on the temp curve.
+      const hoursArr = weather.hourly || [];
+      const start = hoursArr[0]?.time, end = hoursArr[hoursArr.length - 1]?.time;
+      const sunSeen = new Set();
+      const sunEvents = [];
+      for (const d of (weather.daily || [])) {
+        for (const [ts, kind] of [[d.sunrise, "sunrise"], [d.sunset, "sunset"]]) {
+          if (!ts || ts < start || ts > end) continue;
+          const k = `${kind}:${ts}`;
+          if (sunSeen.has(k)) continue;
+          sunSeen.add(k);
+          sunEvents.push({ ts, kind });
+        }
+      }
+      state.chart.setHours(hoursArr, { sunEvents });
+    }
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
@@ -1976,7 +1993,7 @@ function updateDocumentTitle(w) {
 
 // Displayed in the settings menu so a user (or a bug report) can tell which
 // build they're on. Bumped alongside sw.js's CACHE_VERSION each round.
-const APP_VERSION = "v0.69.1";
+const APP_VERSION = "v0.70";
 document.getElementById("settings-version")?.replaceChildren(document.createTextNode(APP_VERSION));
 
 function bindPlaceCopy() {

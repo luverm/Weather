@@ -992,6 +992,21 @@ html[data-reduce-motion="true"] *::after {
   stroke-dasharray: 1 4;
   pointer-events: none;
 }
+.chart-sunline {
+  stroke-width: 1;
+  stroke-dasharray: 2 4;
+  pointer-events: none;
+  opacity: 0.55;
+}
+.chart-sunline--sunrise { stroke: #ffd9a8; }
+.chart-sunline--sunset  { stroke: #ff9a7a; }
+.chart-sunlabel {
+  font-size: 8px;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  pointer-events: none;
+}
+.chart-sunlabel--sunrise { fill: #ffd9a8; }
+.chart-sunlabel--sunset  { fill: #ff9a7a; }
 .chart-now-label {
   fill: rgba(255, 255, 255, 0.4);
   font-size: 7px;

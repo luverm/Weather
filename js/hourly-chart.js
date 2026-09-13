@@ -48,11 +48,43 @@ export class HourlyChart {
     return new Date(ts).getHours().toString().padStart(2, "0");
   }
 
-  setHours(hours) {
+  setHours(hours, opts = {}) {
     this.hours = (hours || []).slice(0, 24);
+    this.sunEvents = opts.sunEvents || [];
     this._draw();
     this.setCursor(null);
     this._drawNowMarker();
+    this._drawSunMarkers();
+  }
+
+  // Slim vertical dashed lines with a small ☀ / ☾ glyph at each sunrise or
+  // sunset moment falling within the visible chart span. Uses the same
+  // interpolation as the temp curve so the markers line up with the data.
+  _drawSunMarkers() {
+    const g = this.svg.querySelector("#chart-sun");
+    if (!g) return;
+    g.innerHTML = "";
+    if (!this.points.length || !this.sunEvents?.length) return;
+    for (const ev of this.sunEvents) {
+      // Locate ev.ts within the hours array to find x pixel.
+      const idx = this.hours.findIndex((h, i) =>
+        i < this.hours.length - 1 && ev.ts >= h.time && ev.ts <= this.hours[i + 1].time);
+      if (idx < 0) continue;
+      const t0 = this.hours[idx].time, t1 = this.hours[idx + 1].time;
+      const frac = (ev.ts - t0) / (t1 - t0);
+      const x = this.points[idx].x + (this.points[idx + 1].x - this.points[idx].x) * frac;
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("x1", x.toFixed(1)); line.setAttribute("x2", x.toFixed(1));
+      line.setAttribute("y1", "10"); line.setAttribute("y2", "126");
+      line.setAttribute("class", `chart-sunline chart-sunline--${ev.kind}`);
+      g.appendChild(line);
+      const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      label.setAttribute("x", x.toFixed(1)); label.setAttribute("y", "8");
+      label.setAttribute("text-anchor", "middle");
+      label.setAttribute("class", `chart-sunlabel chart-sunlabel--${ev.kind}`);
+      label.textContent = ev.kind === "sunrise" ? "☀" : "☾";
+      g.appendChild(label);
+    }
   }
 
   // A subtle persistent "now" line so the chart shows where the real clock
