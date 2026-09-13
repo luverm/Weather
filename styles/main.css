@@ -617,7 +617,14 @@ html[data-reduce-motion="true"] *::after {
 .scrubber-sunrise,
 .scrubber-sunset {
   position: absolute; top: 0; bottom: 0; width: 2px;
-  pointer-events: none;
+  cursor: pointer;
+  transition: filter 200ms var(--ease), transform 200ms var(--ease);
+  transform-origin: center;
+}
+.scrubber-sunrise:hover,
+.scrubber-sunset:hover {
+  filter: drop-shadow(0 0 6px currentColor);
+  transform: scaleX(1.6);
 }
 .scrubber-sunrise { background: linear-gradient(180deg, transparent, rgba(255, 210, 160, 0.8), transparent); }
 .scrubber-sunset { background: linear-gradient(180deg, transparent, rgba(255, 160, 120, 0.8), transparent); }

@@ -99,6 +99,19 @@ export class Scrubber {
     });
 
     this.resetEl?.addEventListener("click", () => this.reset());
+
+    // Click a sunrise/sunset marker to jump the scrubber straight to that
+    // moment. Silence the click if the underlying track picks it up first —
+    // we don't want the pointer-down to then also treat the click as a drag.
+    const jumpTo = (ts) => (e) => {
+      if (!ts) return;
+      e.stopPropagation();
+      this._setOffset(ts - Date.now());
+    };
+    this.sunriseEl?.addEventListener("click", (e) => jumpTo(this.sunrise)(e));
+    this.sunsetEl?.addEventListener("click", (e) => jumpTo(this.sunset)(e));
+    this.sunriseEl?.addEventListener("pointerdown", (e) => e.stopPropagation());
+    this.sunsetEl?.addEventListener("pointerdown", (e) => e.stopPropagation());
   }
 
   reset() {
