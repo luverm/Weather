@@ -1835,6 +1835,11 @@ function updateDocumentTitle(w) {
   document.title = `${temp}° ${label} · ${placeName}`;
 }
 
+// Displayed in the settings menu so a user (or a bug report) can tell which
+// build they're on. Bumped alongside sw.js's CACHE_VERSION each round.
+const APP_VERSION = "v0.57";
+document.getElementById("settings-version")?.replaceChildren(document.createTextNode(APP_VERSION));
+
 function bindOnlineStatus() {
   const chip = document.getElementById("offline-chip");
   if (!chip) return;
