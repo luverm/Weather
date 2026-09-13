@@ -2007,7 +2007,7 @@ function updateDocumentTitle(w) {
 
 // Displayed in the settings menu so a user (or a bug report) can tell which
 // build they're on. Bumped alongside sw.js's CACHE_VERSION each round.
-const APP_VERSION = "v0.74";
+const APP_VERSION = "v0.75";
 document.getElementById("settings-version")?.replaceChildren(document.createTextNode(APP_VERSION));
 
 function bindPlaceCopy() {
@@ -2039,6 +2039,10 @@ function bindTilt() {
   if (!el.heroInner) return;
   let frame = 0;
   const onMove = (e) => {
+    // Tilt is a mouse-only affordance — a touch drag on a card that's meant
+    // to be swiped would feel wrong, and pointerType === "touch" fires for
+    // every tap. Skip it silently on touch/pen input.
+    if (e.pointerType && e.pointerType !== "mouse") return;
     if (frame) return;
     frame = requestAnimationFrame(() => {
       frame = 0;
@@ -2055,6 +2059,7 @@ function bindTilt() {
   };
   el.heroInner.addEventListener("pointermove", onMove);
   el.heroInner.addEventListener("pointerleave", reset);
+  el.heroInner.addEventListener("pointercancel", reset);
 }
 
 function escapeHtml(s) {
