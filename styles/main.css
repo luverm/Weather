@@ -841,6 +841,14 @@ html[data-reduce-motion="true"] *::after {
   color: var(--fg-dim);
   margin-left: 6px;
 }
+.popover-wind {
+  display: inline-block;
+  vertical-align: -2px;
+  width: 10px; height: 10px;
+  margin-right: 2px;
+  color: currentColor;
+  transform-origin: center;
+}
 .chart-hover {
   font-size: 12px;
   color: var(--fg);
