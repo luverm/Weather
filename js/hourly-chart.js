@@ -52,6 +52,35 @@ export class HourlyChart {
     this.hours = (hours || []).slice(0, 24);
     this._draw();
     this.setCursor(null);
+    this._drawNowMarker();
+  }
+
+  // A subtle persistent "now" line so the chart shows where the real clock
+  // sits even when nobody is hovering. Anchors to whichever hour is closest
+  // to Date.now within a 90-minute window; hides if no such hour exists.
+  _drawNowMarker() {
+    const line = this.svg.querySelector("#chart-now");
+    const label = this.svg.querySelector("#chart-now-label");
+    if (!line || !label) return;
+    if (!this.points.length) {
+      line.setAttribute("x1", "-10"); line.setAttribute("x2", "-10");
+      label.setAttribute("x", "-10");
+      return;
+    }
+    const now = Date.now();
+    let best = -1, bestDiff = Infinity;
+    for (let i = 0; i < this.hours.length; i++) {
+      const d = Math.abs(this.hours[i].time - now);
+      if (d < bestDiff) { bestDiff = d; best = i; }
+    }
+    if (best < 0 || bestDiff > 90 * 60_000) {
+      line.setAttribute("x1", "-10"); line.setAttribute("x2", "-10");
+      label.setAttribute("x", "-10");
+      return;
+    }
+    const p = this.points[best];
+    line.setAttribute("x1", p.x); line.setAttribute("x2", p.x);
+    label.setAttribute("x", p.x);
   }
 
   refresh() { this._draw(); }
