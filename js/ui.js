@@ -182,6 +182,10 @@ export const ui = {
     if (!el.refreshBtn) return;
     el.refreshBtn.classList.toggle("spinning", !!on);
   },
+  markLocating(on) {
+    if (!el.locateBtn) return;
+    el.locateBtn.classList.toggle("locating", !!on);
+  },
   setLoading(text) { el.placeSub.textContent = text; },
   setPlace(place) {
     state.place = place;
@@ -1867,7 +1871,7 @@ function updateDocumentTitle(w) {
 
 // Displayed in the settings menu so a user (or a bug report) can tell which
 // build they're on. Bumped alongside sw.js's CACHE_VERSION each round.
-const APP_VERSION = "v0.58";
+const APP_VERSION = "v0.59";
 document.getElementById("settings-version")?.replaceChildren(document.createTextNode(APP_VERSION));
 
 function bindOnlineStatus() {

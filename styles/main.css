@@ -1888,6 +1888,17 @@ kbd {
 
 #refresh-btn.spinning svg { animation: spin 700ms var(--ease) both; }
 @keyframes spin { from { transform: rotate(0) } to { transform: rotate(360deg) } }
+#locate-btn.locating {
+  color: var(--accent);
+  animation: locatePulse 1.4s var(--ease) infinite;
+}
+@keyframes locatePulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(0,0,0,0); }
+  50%      { box-shadow: 0 0 14px var(--accent); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #locate-btn.locating { animation: none; }
+}
 @keyframes pulse {
   0%, 100% { opacity: 0.4; transform: scale(1); }
   50% { opacity: 1; transform: scale(1.2); }
