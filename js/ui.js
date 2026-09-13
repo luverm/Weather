@@ -1768,13 +1768,25 @@ function bindShare() {
     const t = (v) => `${Math.round(unit === "F" ? v * 9 / 5 + 32 : v)}°${unit}`;
     const today = w.daily?.[0];
     const shareUrl = buildShareUrl(state.place);
+    // Precomputed helpers for the "vs yesterday" and sunrise/sunset lines.
+    let vsY = null;
+    if (w.yesterday?.temp != null && w.temp != null) {
+      const d = w.temp - w.yesterday.temp;
+      const scaled = Math.round(unit === "F" ? d * 9 / 5 : d);
+      if (scaled !== 0) {
+        vsY = scaled > 0 ? `+${scaled}° vs yesterday` : `${scaled}° vs yesterday`;
+      }
+    }
+    const sunPart = w.sunrise && w.sunset
+      ? `Sun ${fmtTime(w.sunrise)} → ${fmtTime(w.sunset)}` : null;
     const lines = [
       `Aether · ${placeName}`,
-      `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
+      `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})${vsY ? ` · ${vsY}` : ""}`,
       today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
       `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
+      sunPart,
       shareUrl,
     ].filter(Boolean);
     const text = lines.join("\n");
