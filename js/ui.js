@@ -1592,9 +1592,39 @@ function bindSearch() {
     if (!clearBtn) return;
     clearBtn.hidden = el.searchInput.value.length === 0;
   };
+  // Track keyboard selection so ↑/↓/Enter navigate the dropdown even when
+  // focus is still in the input.
+  const setSelected = (idx) => {
+    const items = el.searchResults.querySelectorAll("li[role='option']");
+    if (!items.length) return;
+    const n = items.length;
+    const clamped = ((idx % n) + n) % n;
+    items.forEach((li, i) => li.setAttribute("aria-selected", i === clamped ? "true" : "false"));
+    items[clamped].scrollIntoView({ block: "nearest" });
+    el.searchResults._selected = clamped;
+  };
+  const getSelected = () => el.searchResults._selected ?? -1;
+  el.searchInput.addEventListener("keydown", (e) => {
+    if (el.searchResults.hidden) return;
+    const items = el.searchResults.querySelectorAll("li[role='option']");
+    if (!items.length) return;
+    if (e.key === "ArrowDown") { e.preventDefault(); setSelected(getSelected() + 1); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); setSelected(getSelected() - 1); }
+    else if (e.key === "Enter") {
+      const sel = getSelected();
+      if (sel >= 0) {
+        e.preventDefault();
+        items[sel].click();
+      }
+    } else if (e.key === "Escape") {
+      el.searchResults.hidden = true;
+      el.searchInput.blur();
+    }
+  });
   el.searchInput.addEventListener("input", (e) => {
     const v = e.target.value.trim();
     syncClear();
+    el.searchResults._selected = -1;
     if (v.length < 2) {
       showRecentsIfAny();
       return;
@@ -1837,7 +1867,7 @@ function updateDocumentTitle(w) {
 
 // Displayed in the settings menu so a user (or a bug report) can tell which
 // build they're on. Bumped alongside sw.js's CACHE_VERSION each round.
-const APP_VERSION = "v0.57";
+const APP_VERSION = "v0.58";
 document.getElementById("settings-version")?.replaceChildren(document.createTextNode(APP_VERSION));
 
 function bindOnlineStatus() {
