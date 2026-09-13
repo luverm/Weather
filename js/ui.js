@@ -223,6 +223,7 @@ export const ui = {
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
+    updateDocumentTitle(weather);
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
       places.updateSummary(state.place, {
@@ -1771,6 +1772,21 @@ function buildShareUrl(place) {
     if (place.country) u.searchParams.set("country", place.country);
     return u.toString();
   } catch { return null; }
+}
+
+// Update the browser tab title to something identifying — "18° cloudy ·
+// Paris" — so a viewer with a lot of tabs can tell which weather they were
+// looking at. Falls back to the original title when weather isn't available.
+const TITLE_BASE = document.title;
+function updateDocumentTitle(w) {
+  const placeName = state.place?.name;
+  if (!w || w.temp == null || !placeName) {
+    document.title = TITLE_BASE;
+    return;
+  }
+  const temp = Math.round(convertTemp(w.temp));
+  const label = (w.label || w.condition || "").toLowerCase();
+  document.title = `${temp}° ${label} · ${placeName}`;
 }
 
 function bindOnlineStatus() {
