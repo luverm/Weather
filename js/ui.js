@@ -270,6 +270,9 @@ export const ui = {
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     updateDocumentTitle(weather);
+    // Refresh the "Just now / Sample data" badge immediately instead of
+    // waiting up to 30s for the next ticker interval.
+    state.fetchedTickerUpdate?.();
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
       places.updateSummary(state.place, {
@@ -2019,7 +2022,7 @@ function updateDocumentTitle(w) {
 
 // Displayed in the settings menu so a user (or a bug report) can tell which
 // build they're on. Bumped alongside sw.js's CACHE_VERSION each round.
-const APP_VERSION = "v0.78";
+const APP_VERSION = "v0.79";
 document.getElementById("settings-version")?.replaceChildren(document.createTextNode(APP_VERSION));
 
 function bindPlaceCopy() {
