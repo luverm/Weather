@@ -1795,6 +1795,11 @@ function bindSettings() {
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && !el.settingsMenu.hidden) close();
   });
+  document.getElementById("settings-close")?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    close();
+    el.settingsBtn?.focus();
+  });
 
   el.settingReduceMotion?.addEventListener("change", () => {
     const on = el.settingReduceMotion.checked;
@@ -1936,7 +1941,7 @@ function updateDocumentTitle(w) {
 
 // Displayed in the settings menu so a user (or a bug report) can tell which
 // build they're on. Bumped alongside sw.js's CACHE_VERSION each round.
-const APP_VERSION = "v0.67";
+const APP_VERSION = "v0.68";
 document.getElementById("settings-version")?.replaceChildren(document.createTextNode(APP_VERSION));
 
 function bindPlaceCopy() {
