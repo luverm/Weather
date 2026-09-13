@@ -448,9 +448,17 @@ function renderMetrics(w) {
   el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
-  el.metricWindSub.textContent = dirLabel
-    ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
-    : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+  const gustNum = w.windGusts;
+  const gustStr = gustNum != null ? `${Math.round(gustNum)} km/h` : "—";
+  // Call out "gusty" when peaks are noticeably stronger than the sustained
+  // wind (≥ 1.5× and ≥ 5 km/h above), because that's what actually knocks
+  // hats off — a 30 km/h gust over an 8 km/h wind reads very differently
+  // from 30 over 22.
+  const gusty = gustNum != null && w.windSpeed != null
+    && gustNum >= 1.5 * w.windSpeed && gustNum - w.windSpeed >= 5
+    ? ' · <span class="wind-gusty">gusty</span>' : "";
+  const dirPart = dirLabel ? `${dirLabel} · ` : "";
+  el.metricWindSub.innerHTML = `${dirPart}gust ${gustStr}${gusty}`;
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);

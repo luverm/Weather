@@ -1006,6 +1006,17 @@ html[data-reduce-motion="true"] *::after {
   transform-origin: 0 0;
   transition: transform 900ms var(--ease);
 }
+.wind-gusty {
+  color: #ffb894;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 9.5px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(255, 178, 140, 0.14);
+  border: 1px solid rgba(255, 178, 140, 0.25);
+}
 
 /* ---------- Sun countdown ---------- */
 .sun-countdown {
