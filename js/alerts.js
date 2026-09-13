@@ -100,7 +100,24 @@ export function buildAlerts(weather) {
 
   // ---- Snow ----
   const snowHour = hours.find((h) => h.condition === "snow");
-  if (snowHour) {
+  // Accumulation over the next 3 days from the daily snow field.
+  const snowSum = (weather.daily || []).slice(0, 3)
+    .reduce((s, d) => s + (d.snow || 0), 0);
+  if (snowSum >= 20) {
+    out.push({
+      id: "heavy-snow",
+      severity: "danger",
+      title: "Heavy snowfall",
+      detail: `~${snowSum.toFixed(0)} cm forecast over 3 days.`,
+    });
+  } else if (snowSum >= 5) {
+    out.push({
+      id: "snow-accum",
+      severity: "warn",
+      title: "Snow accumulation",
+      detail: `~${snowSum.toFixed(0)} cm expected over 3 days.`,
+    });
+  } else if (snowHour) {
     out.push({
       id: "snow",
       severity: "info",
@@ -213,5 +230,6 @@ function dedupe(items) {
   if (ids.has("severe-heat")) drop.add("heat");
   if (ids.has("hard-freeze")) drop.add("frost");
   if (ids.has("heavy-rain") || ids.has("soaking-rain")) drop.add("wet-day");
+  if (ids.has("heavy-snow") || ids.has("snow-accum")) drop.add("snow");
   return items.filter((x) => !drop.has(x.id));
 }
