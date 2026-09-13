@@ -23,6 +23,9 @@ const el = {
   feelsLike: $("#feels-like"),
   feelsText: $("#feels-text"),
   feelsWhy: $("#feels-why"),
+  cloudMeter: $("#cloud-meter"),
+  cloudMeterFill: $("#cloud-meter-fill"),
+  cloudMeterLabel: $("#cloud-meter-label"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -288,7 +291,23 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (el.feelsText) el.feelsText.textContent = `Feels like ${Math.round(feels)}°`;
   else el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderFeelsWhy(w);
+  renderCloudMeter(w);
   renderDayRange(w);
+}
+
+function renderCloudMeter(w) {
+  if (!el.cloudMeter || !el.cloudMeterFill) return;
+  const c = w.cloudCover;
+  if (c == null) { el.cloudMeter.hidden = true; return; }
+  el.cloudMeter.hidden = false;
+  const pct = Math.max(0, Math.min(100, c));
+  el.cloudMeterFill.style.width = `${pct.toFixed(0)}%`;
+  const bucket = pct < 15 ? "clear"
+              : pct < 40 ? "scattered"
+              : pct < 70 ? "broken"
+              : pct < 90 ? "mostly cloudy"
+              : "overcast";
+  if (el.cloudMeterLabel) el.cloudMeterLabel.textContent = `${Math.round(pct)}% · ${bucket}`;
 }
 
 // If actual and apparent temperature diverge noticeably, add a compact "why"
