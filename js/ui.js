@@ -186,7 +186,10 @@ export const ui = {
     if (!el.locateBtn) return;
     el.locateBtn.classList.toggle("locating", !!on);
   },
-  setLoading(text) { el.placeSub.textContent = text; },
+  setLoading(text) {
+    el.placeSub.textContent = text;
+    if (el.temp) el.temp.classList.add("loading-shimmer");
+  },
   setPlace(place) {
     state.place = place;
     el.placeName.classList.remove("flip-in"); void el.placeName.offsetWidth;
@@ -206,6 +209,7 @@ export const ui = {
       const sub = [state.place.admin1, state.place.country].filter(Boolean).join(", ");
       el.placeSub.textContent = sub || "—";
     }
+    if (el.temp) el.temp.classList.remove("loading-shimmer");
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
@@ -1871,7 +1875,7 @@ function updateDocumentTitle(w) {
 
 // Displayed in the settings menu so a user (or a bug report) can tell which
 // build they're on. Bumped alongside sw.js's CACHE_VERSION each round.
-const APP_VERSION = "v0.59";
+const APP_VERSION = "v0.60";
 document.getElementById("settings-version")?.replaceChildren(document.createTextNode(APP_VERSION));
 
 function bindOnlineStatus() {

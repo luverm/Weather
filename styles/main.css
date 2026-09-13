@@ -467,6 +467,16 @@ html[data-reduce-motion="true"] *::after {
   line-height: 0.95;
   letter-spacing: -0.05em;
 }
+.temp.loading-shimmer .temp-value {
+  animation: shimmer 1.6s var(--ease) infinite;
+}
+@keyframes shimmer {
+  0%, 100% { opacity: 0.45; }
+  50%      { opacity: 0.85; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .temp.loading-shimmer .temp-value { animation: none; opacity: 0.6; }
+}
 .temp-value {
   display: inline-block;
   background: linear-gradient(180deg, var(--fg) 0%, color-mix(in oklab, var(--fg) 70%, transparent) 100%);
