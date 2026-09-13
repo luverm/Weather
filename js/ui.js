@@ -1676,7 +1676,19 @@ const runSearch = debounce(async (q) => {
 }, 200);
 
 function renderSearchResults(results) {
-  if (!results.length) { el.searchResults.hidden = true; el.searchResults.innerHTML = ""; return; }
+  if (!results.length) {
+    // Only surface the empty state when the field still has a query — a
+    // just-blanked input should fall back to recents, not to "no matches".
+    if (el.searchInput?.value.trim().length >= 2) {
+      el.searchResults.innerHTML = `<li class="recent-heading" style="pointer-events:none;color:var(--fg-dim)">No matches — try a different spelling</li>`;
+      el.searchResults.hidden = false;
+      el.searchResults._items = [];
+    } else {
+      el.searchResults.hidden = true;
+      el.searchResults.innerHTML = "";
+    }
+    return;
+  }
   el.searchResults.innerHTML = results.map((r, i) => {
     const saved = places.isSaved(r) ? `<span class="result-saved" title="Already saved">saved</span>` : "";
     return `
@@ -1995,7 +2007,7 @@ function updateDocumentTitle(w) {
 
 // Displayed in the settings menu so a user (or a bug report) can tell which
 // build they're on. Bumped alongside sw.js's CACHE_VERSION each round.
-const APP_VERSION = "v0.73";
+const APP_VERSION = "v0.74";
 document.getElementById("settings-version")?.replaceChildren(document.createTextNode(APP_VERSION));
 
 function bindPlaceCopy() {
