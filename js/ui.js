@@ -156,6 +156,7 @@ export const ui = {
     bindSettings();
     bindTilt();
     bindOnlineStatus();
+    bindPlaceCopy();
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
@@ -195,6 +196,9 @@ export const ui = {
     el.placeName.classList.remove("flip-in"); void el.placeName.offsetWidth;
     el.placeName.classList.add("flip-in");
     el.placeName.textContent = place.name || "Unknown";
+    el.placeName.title = place.lat != null && place.lon != null
+      ? `${place.lat.toFixed(3)}, ${place.lon.toFixed(3)} — click to copy coordinates`
+      : "";
     const sub = [place.admin1, place.country].filter(Boolean).join(", ");
     el.placeSub.textContent = sub || "—";
     // Reset alert dismissals so a fresh location can re-surface them.
@@ -1903,8 +1907,24 @@ function updateDocumentTitle(w) {
 
 // Displayed in the settings menu so a user (or a bug report) can tell which
 // build they're on. Bumped alongside sw.js's CACHE_VERSION each round.
-const APP_VERSION = "v0.62";
+const APP_VERSION = "v0.63";
 document.getElementById("settings-version")?.replaceChildren(document.createTextNode(APP_VERSION));
+
+function bindPlaceCopy() {
+  if (!el.placeName) return;
+  el.placeName.style.cursor = "pointer";
+  el.placeName.addEventListener("click", async () => {
+    const p = state.place;
+    if (!p?.lat || !p?.lon) return;
+    const text = `${p.lat.toFixed(4)}, ${p.lon.toFixed(4)}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      ui.showToast(`Copied ${text}`);
+    } catch {
+      ui.showToast("Copy failed");
+    }
+  });
+}
 
 function bindOnlineStatus() {
   const chip = document.getElementById("offline-chip");
