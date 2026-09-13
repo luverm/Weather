@@ -658,6 +658,10 @@ function startLocaltime(w) {
     el.placeLocaltime.textContent = "";
     return;
   }
+  const deltaLabel = formatTzDelta(computeTzOffsetDelta(tz));
+  const deltaChip = deltaLabel
+    ? ` <span class="tz-chip" title="Offset from your local time">${escapeHtml(deltaLabel)}</span>`
+    : "";
   const update = () => {
     try {
       const parts = new Intl.DateTimeFormat([], {
@@ -670,13 +674,50 @@ function startLocaltime(w) {
       const tzName = parts.find((p) => p.type === "timeZoneName")?.value ?? "";
       el.placeLocaltime.innerHTML =
         `<span class="clock-dot" aria-hidden="true"></span>` +
-        `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>`;
+        `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>` +
+        deltaChip;
     } catch {
       el.placeLocaltime.textContent = "";
     }
   };
   update();
   state.localTimer = setInterval(update, 10_000);
+}
+
+// Whole-minute difference between a target timezone and the browser's own,
+// rounded to 15-minute steps so half-hour offsets (e.g. Kolkata +5:30) survive.
+// Returns null if we can't determine either side.
+function computeTzOffsetDelta(tz) {
+  if (!tz || tz === "auto") return null;
+  try {
+    const now = new Date();
+    const zoneToUtc = (zone) => {
+      const parts = new Intl.DateTimeFormat("en-GB", {
+        timeZone: zone, hour: "2-digit", minute: "2-digit", hour12: false,
+        year: "numeric", month: "2-digit", day: "2-digit",
+      }).formatToParts(now);
+      const get = (t) => parts.find((p) => p.type === t)?.value;
+      return Date.UTC(+get("year"), +get("month") - 1, +get("day"),
+                      +get("hour"), +get("minute"));
+    };
+    const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (!localTz || localTz === tz) return 0;
+    const diffMin = Math.round((zoneToUtc(tz) - zoneToUtc(localTz)) / 60_000 / 15) * 15;
+    return diffMin;
+  } catch { return null; }
+}
+
+function formatTzDelta(diffMin) {
+  if (diffMin == null) return "";
+  if (diffMin === 0) return "same time";
+  const sign = diffMin > 0 ? "+" : "−";
+  const abs = Math.abs(diffMin);
+  const h = Math.floor(abs / 60);
+  const m = abs % 60;
+  const parts = [];
+  if (h) parts.push(`${h}h`);
+  if (m) parts.push(`${m}m`);
+  return `${sign}${parts.join(" ")}`;
 }
 
 function renderInsights(w) {

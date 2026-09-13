@@ -356,6 +356,16 @@ html[data-reduce-motion="true"] *::after {
   width: 5px; height: 5px; border-radius: 50%;
   background: var(--accent); box-shadow: 0 0 6px var(--accent);
 }
+.place-localtime .tz-chip {
+  margin-left: 4px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(158, 208, 255, 0.12);
+  border: 1px solid rgba(158, 208, 255, 0.25);
+  color: #cfe4ff;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
 .narrative {
   margin: 14px 0 0;
   max-width: 52ch;
