@@ -1147,9 +1147,22 @@ function cardinal(deg) {
 
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
-  for (const h of (w.hourly || []).slice(0, 24)) {
+  const now = Date.now();
+  const hours = (w.hourly || []).slice(0, 24);
+  // Nearest-to-now index across the visible window — used to mark the "now"
+  // card, which may not always be index 0 (past hours can appear when the
+  // fetch just wrapped past an hour boundary).
+  let nowIdx = -1, nowDiff = Infinity;
+  hours.forEach((h, i) => {
+    const d = Math.abs(h.time - now);
+    if (d < nowDiff) { nowDiff = d; nowIdx = i; }
+  });
+  const nowValid = nowIdx >= 0 && nowDiff < 60 * 60_000;
+  for (let i = 0; i < hours.length; i++) {
+    const h = hours[i];
     const item = document.createElement("div");
     item.className = "forecast-item";
+    if (nowValid && i === nowIdx) item.classList.add("is-now");
     item.dataset.ts = h.time;
     const rainMeter = precipMeter(h.pop, h.precip);
     const windMarker = windArrow(h.wind, h.windDir);
@@ -1910,7 +1923,7 @@ function updateDocumentTitle(w) {
 
 // Displayed in the settings menu so a user (or a bug report) can tell which
 // build they're on. Bumped alongside sw.js's CACHE_VERSION each round.
-const APP_VERSION = "v0.65";
+const APP_VERSION = "v0.66";
 document.getElementById("settings-version")?.replaceChildren(document.createTextNode(APP_VERSION));
 
 function bindPlaceCopy() {
