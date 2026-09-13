@@ -1541,7 +1541,7 @@ kbd {
 .forecast-track::-webkit-scrollbar { display: none; }
 .forecast-item {
   display: grid;
-  grid-template-rows: auto auto auto auto;
+  grid-template-rows: auto auto auto auto auto;
   gap: 4px;
   justify-items: center;
   padding: 10px 6px;
@@ -1549,6 +1549,15 @@ kbd {
   scroll-snap-align: start;
   transition: background 200ms var(--ease), transform 200ms var(--ease);
   cursor: pointer;
+  position: relative;
+}
+.forecast-rainbar {
+  align-self: end;
+  height: 3px;
+  border-radius: 999px;
+  margin-top: 4px;
+  min-width: 8px;
+  max-width: 100%;
 }
 .forecast-item:hover { background: var(--glass); transform: translateY(-2px); }
 .forecast-item.active { background: var(--glass-strong); }

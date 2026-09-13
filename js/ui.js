@@ -982,15 +982,33 @@ function renderHourly(w) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    const rainMeter = precipMeter(h.pop, h.precip);
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
+      ${rainMeter}
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
   }
+}
+
+// A subtle colored underline at the base of each hourly card that visualises
+// how wet that hour is. Width tracks probability, opacity + tint track amount,
+// so a glance at the row reads as "when will it rain, and how hard".
+function precipMeter(pop, mm) {
+  const p = Math.max(0, Math.min(100, pop ?? 0));
+  if (p < 10 && (!mm || mm < 0.05)) return "";
+  const width = Math.max(20, p);
+  // 0..3+ mm/h maps roughly to light->heavy blue.
+  const intensity = Math.min(1, (mm ?? 0) / 3);
+  const alpha = 0.35 + intensity * 0.55;
+  const hue = 210 - intensity * 30; // 210 -> 180 as it intensifies
+  const color = `hsla(${hue.toFixed(0)}, 90%, ${(70 - intensity * 15).toFixed(0)}%, ${alpha.toFixed(2)})`;
+  return `<span class="forecast-rainbar" aria-hidden="true"
+    style="width:${width}%;background:${color};box-shadow:0 0 6px ${color}"></span>`;
 }
 
 function highlightHour(index) {
