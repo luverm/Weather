@@ -1280,7 +1280,13 @@ function renderDailyRain(days) {
   if (!el.dailyRain) return;
   const withRain = days.filter((d) => (d.precip ?? 0) > 0);
   const totalMm = withRain.reduce((s, d) => s + (d.precip || 0), 0);
-  if (totalMm < 0.5) { el.dailyRain.textContent = ""; return; }
+  if (totalMm < 0.5) {
+    // A dry stretch is also worth surfacing when it lasts.
+    const dryLen = longestStreak(days, (d) => (d.precip ?? 0) < 0.5);
+    if (dryLen >= 4) el.dailyRain.textContent = `${dryLen} dry days`;
+    else el.dailyRain.textContent = "";
+    return;
+  }
   const wettest = withRain.reduce((best, d) => (d.precip > (best?.precip ?? -1) ? d : best), null);
   const tz = state.weather?.timezone;
   const wettestName = wettest ? new Date(wettest.time).toLocaleDateString(undefined, {
@@ -1295,10 +1301,21 @@ function renderDailyRain(days) {
   const amount = useInches
     ? `${inches.toFixed(inches < 1 ? 2 : 1)} in`
     : `${totalMm.toFixed(totalMm < 5 ? 1 : 0)} mm`;
-  const focus = wettest && share >= 0.6 ? ` · mostly ${wettestName}`
-              : wettest && share >= 0.4 ? ` · peaks ${wettestName}`
+  const wetLen = longestStreak(days, (d) => (d.precip ?? 0) >= 0.5);
+  const streak = wetLen >= 3 ? ` · ${wetLen}-day wet stretch` : "";
+  const focus = !streak && wettest && share >= 0.6 ? ` · mostly ${wettestName}`
+              : !streak && wettest && share >= 0.4 ? ` · peaks ${wettestName}`
               : "";
-  el.dailyRain.textContent = `${amount} this week${focus}`;
+  el.dailyRain.textContent = `${amount} this week${streak || focus}`;
+}
+
+function longestStreak(items, pred) {
+  let best = 0, cur = 0;
+  for (const it of items) {
+    if (pred(it)) { cur++; if (cur > best) best = cur; }
+    else cur = 0;
+  }
+  return best;
 }
 
 function toggleDailyExpand(item, d, w) {
