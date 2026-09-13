@@ -1576,10 +1576,19 @@ kbd {
   color: var(--fg-muted);
 }
 .daily-icon-strip .strip-day {
-  display: grid; place-items: center;
+  display: grid; place-items: center; gap: 3px;
   padding: 4px;
   opacity: 0.85;
   transition: opacity 160ms var(--ease), transform 160ms var(--ease);
+}
+.strip-precip {
+  display: inline-flex; gap: 2px; align-items: center;
+  height: 4px;
+}
+.strip-precip-dot {
+  width: 3px; height: 3px; border-radius: 50%;
+  background: #9ecdff;
+  box-shadow: 0 0 4px rgba(158, 205, 255, 0.6);
 }
 .daily-icon-strip .strip-day:hover { opacity: 1; transform: translateY(-1px); }
 .daily-icon-strip .strip-day svg {

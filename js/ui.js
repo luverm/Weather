@@ -1199,9 +1199,19 @@ function renderDaily(w) {
 
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
-  el.dailyIconStrip.innerHTML = days.map((d) =>
-    `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
-  ).join("");
+  el.dailyIconStrip.innerHTML = days.map((d) => {
+    const mm = d.precip ?? 0;
+    // A tiny stack of dots below the icon that visualises the day's rainfall.
+    // Buckets align to human intuition: trace / light / moderate / heavy.
+    const dots = mm >= 15 ? 3 : mm >= 5 ? 2 : mm >= 0.5 ? 1 : 0;
+    const dotsHtml = dots
+      ? `<span class="strip-precip" aria-hidden="true">${
+          Array.from({ length: dots }, () => `<span class="strip-precip-dot"></span>`).join("")
+        }</span>`
+      : "";
+    const tip = `${d.label || d.condition || ""}${mm > 0 ? ` · ${mm.toFixed(mm < 5 ? 1 : 0)} mm` : ""}`;
+    return `<span class="strip-day" title="${escapeHtml(tip)}">${iconFor(d.condition)}${dotsHtml}</span>`;
+  }).join("");
 }
 
 function renderDailySpark(days) {
