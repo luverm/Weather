@@ -26,6 +26,7 @@ const el = {
   cloudMeter: $("#cloud-meter"),
   cloudMeterFill: $("#cloud-meter-fill"),
   cloudMeterLabel: $("#cloud-meter-label"),
+  vsYesterday: $("#vs-yesterday"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -291,8 +292,28 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (el.feelsText) el.feelsText.textContent = `Feels like ${Math.round(feels)}°`;
   else el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderFeelsWhy(w);
+  renderVsYesterday(w);
   renderCloudMeter(w);
   renderDayRange(w);
+}
+
+// Small "+3° vs yesterday" pill sourced from a past_hours=24 fetch. The
+// comparison uses the "same clock hour" yesterday, ignoring any sample more
+// than 2h away from that target, so a fresh location or a partial history
+// silently omits the chip instead of showing a nonsense delta.
+function renderVsYesterday(w) {
+  if (!el.vsYesterday) return;
+  const y = w.yesterday;
+  if (!y || y.temp == null || w.temp == null) { el.vsYesterday.hidden = true; return; }
+  const deltaC = w.temp - y.temp;
+  if (Math.abs(deltaC) < 1) { el.vsYesterday.hidden = true; return; }
+  const scaled = Math.round(state.unit === "F" ? deltaC * 9 / 5 : deltaC);
+  if (scaled === 0) { el.vsYesterday.hidden = true; return; }
+  const arrow = scaled > 0 ? "▲" : "▼";
+  el.vsYesterday.hidden = false;
+  el.vsYesterday.textContent = `${arrow} ${Math.abs(scaled)}° vs yesterday`;
+  el.vsYesterday.className = `vs-yesterday ${scaled > 0 ? "up" : "down"}`;
+  el.vsYesterday.title = scaled > 0 ? "Warmer than this time yesterday" : "Cooler than this time yesterday";
 }
 
 function renderCloudMeter(w) {

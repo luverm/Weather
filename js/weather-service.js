@@ -93,7 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
-    past_hours: 1,
+    past_hours: 24,
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -130,10 +130,24 @@ function normalize(d, aq) {
 
   // 24-hour hourly forecast starting from the next hour.
   const hourly = [];
+  let yesterday = null;
   if (d.hourly?.time) {
-    for (let i = 0; i < d.hourly.time.length && hourly.length < 24; i++) {
+    const targetYesterdayTs = now - 24 * 3600_000;
+    let bestYesterdayDiff = Infinity;
+    for (let i = 0; i < d.hourly.time.length; i++) {
       const t = new Date(d.hourly.time[i]).getTime();
+      // Track the item closest to "same clock time yesterday" for the delta chip.
+      const yDiff = Math.abs(t - targetYesterdayTs);
+      if (yDiff < bestYesterdayDiff && yDiff < 2 * 3600_000) {
+        bestYesterdayDiff = yDiff;
+        yesterday = {
+          time: t,
+          temp: d.hourly.temperature_2m?.[i],
+          feelsLike: d.hourly.apparent_temperature?.[i],
+        };
+      }
       if (t < now - 30 * 60 * 1000) continue; // allow slight past for scrubbing
+      if (hourly.length >= 24) continue;
       hourly.push({
         time: t,
         temp: d.hourly.temperature_2m[i],
@@ -215,6 +229,7 @@ function normalize(d, aq) {
     moon,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
+    yesterday,
     fetchedAt: now,
   };
 }

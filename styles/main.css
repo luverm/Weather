@@ -448,6 +448,17 @@ html[data-reduce-motion="true"] *::after {
 .feels-why[hidden] { display: none; }
 .feels-why.up   { background: rgba(255, 156, 122, 0.14); color: #ffb196; border-color: rgba(255, 156, 122, 0.25); }
 .feels-why.down { background: rgba(154, 209, 255, 0.14); color: #9ad1ff; border-color: rgba(154, 209, 255, 0.25); }
+.vs-yesterday {
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  border: 1px solid transparent;
+  font-variant-numeric: tabular-nums;
+}
+.vs-yesterday[hidden] { display: none; }
+.vs-yesterday.up   { background: rgba(255, 178, 140, 0.12); color: #ffb894; border-color: rgba(255, 178, 140, 0.24); }
+.vs-yesterday.down { background: rgba(158, 205, 255, 0.12); color: #9ecdff; border-color: rgba(158, 205, 255, 0.24); }
 .day-range {
   margin-top: 10px;
   display: grid;
