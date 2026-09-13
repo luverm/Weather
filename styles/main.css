@@ -992,6 +992,7 @@ html[data-reduce-motion="true"] *::after {
   stroke-dasharray: 1 4;
   pointer-events: none;
 }
+.chart-clouds rect { fill: #d8ddea; }
 .chart-sunline {
   stroke-width: 1;
   stroke-dasharray: 2 4;

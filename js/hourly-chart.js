@@ -309,6 +309,28 @@ export class HourlyChart {
       precipG.appendChild(r);
     });
 
+    // Cloud cover band across the top — thin rectangles per hour with
+    // opacity tracking the cloud percentage. Sits under the temp line but
+    // over the night rects, so overcast nights still read differently from
+    // clear ones.
+    const cloudG = this.svg.querySelector("#chart-clouds");
+    if (cloudG) {
+      cloudG.innerHTML = "";
+      const cW = innerW / this.hours.length;
+      this.hours.forEach((h, i) => {
+        if (h.cloud == null) return;
+        const c = Math.max(0, Math.min(100, h.cloud));
+        if (c < 5) return;
+        const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        r.setAttribute("x", (iToX(i) - cW / 2).toFixed(1));
+        r.setAttribute("y", "0");
+        r.setAttribute("width", cW.toFixed(1));
+        r.setAttribute("height", "8");
+        r.setAttribute("opacity", (0.05 + (c / 100) * 0.28).toFixed(3));
+        cloudG.appendChild(r);
+      });
+    }
+
     // Night shading: dim rectangles where !isDay
     const nightG = this.svg.querySelector("#chart-night");
     nightG.innerHTML = "";
