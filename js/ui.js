@@ -1201,15 +1201,20 @@ function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
   el.dailyIconStrip.innerHTML = days.map((d) => {
     const mm = d.precip ?? 0;
+    const snow = d.snow ?? 0;
     // A tiny stack of dots below the icon that visualises the day's rainfall.
     // Buckets align to human intuition: trace / light / moderate / heavy.
     const dots = mm >= 15 ? 3 : mm >= 5 ? 2 : mm >= 0.5 ? 1 : 0;
+    const dotClass = snow >= 0.5 ? "strip-precip-dot snow" : "strip-precip-dot";
     const dotsHtml = dots
       ? `<span class="strip-precip" aria-hidden="true">${
-          Array.from({ length: dots }, () => `<span class="strip-precip-dot"></span>`).join("")
+          Array.from({ length: dots }, () => `<span class="${dotClass}"></span>`).join("")
         }</span>`
       : "";
-    const tip = `${d.label || d.condition || ""}${mm > 0 ? ` · ${mm.toFixed(mm < 5 ? 1 : 0)} mm` : ""}`;
+    const bits = [d.label || d.condition || ""];
+    if (mm > 0) bits.push(`${mm.toFixed(mm < 5 ? 1 : 0)} mm`);
+    if (snow > 0) bits.push(`${snow.toFixed(snow < 5 ? 1 : 0)} cm snow`);
+    const tip = bits.filter(Boolean).join(" · ");
     return `<span class="strip-day" title="${escapeHtml(tip)}">${iconFor(d.condition)}${dotsHtml}</span>`;
   }).join("");
 }
@@ -1306,7 +1311,11 @@ function renderDailyRain(days) {
   const focus = !streak && wettest && share >= 0.6 ? ` · mostly ${wettestName}`
               : !streak && wettest && share >= 0.4 ? ` · peaks ${wettestName}`
               : "";
-  el.dailyRain.textContent = `${amount} this week${streak || focus}`;
+  const totalSnow = days.reduce((s, d) => s + (d.snow || 0), 0);
+  const snowPart = totalSnow >= 0.5
+    ? ` · ${totalSnow.toFixed(totalSnow < 5 ? 1 : 0)} cm snow`
+    : "";
+  el.dailyRain.textContent = `${amount} this week${streak || focus}${snowPart}`;
 }
 
 function longestStreak(items, pred) {

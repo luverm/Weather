@@ -1601,6 +1601,10 @@ kbd {
   background: #9ecdff;
   box-shadow: 0 0 4px rgba(158, 205, 255, 0.6);
 }
+.strip-precip-dot.snow {
+  background: #f3f7ff;
+  box-shadow: 0 0 5px rgba(220, 230, 255, 0.85);
+}
 .daily-icon-strip .strip-day:hover { opacity: 1; transform: translateY(-1px); }
 .daily-icon-strip .strip-day svg {
   width: 22px; height: 22px;
