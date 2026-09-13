@@ -42,6 +42,30 @@ function findTempSwing(hourly) {
   return null;
 }
 
+function findWindShift(hourly) {
+  if (!hourly?.length) return null;
+  const start = hourly[0]?.windDir;
+  if (start == null) return null;
+  const end = hourly[Math.min(hourly.length - 1, 6)];
+  if (end?.windDir == null) return null;
+  // Signed circular delta in [-180, 180). Positive = clockwise = veering.
+  let d = ((end.windDir - start + 540) % 360) - 180;
+  if (Math.abs(d) < 45) return null;
+  return {
+    direction: d > 0 ? "veering" : "backing",
+    from: cardinal(start),
+    to: cardinal(end.windDir),
+    ts: end.time,
+  };
+}
+
+// Duplicated locally because narrative.js is otherwise dependency-free —
+// keeps this module a leaf so it stays cheap to reason about.
+function cardinal(deg) {
+  const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  return dirs[Math.round((deg % 360) / 45) % 8];
+}
+
 function findGusts(hourly) {
   if (!hourly?.length) return null;
   let peak = { t: null, v: -Infinity };
@@ -93,6 +117,15 @@ export function narrate(weather) {
   if (bits.length < 2) {
     const gust = findGusts(weather.hourly);
     if (gust) bits.push(`Gusts up to ${gust.kmh} km/h around ${fmtHour(gust.ts)}.`);
+  }
+
+  // Wind direction shift over the next 6 hours — reported in
+  // meteorological terms (veering = clockwise, backing = counter-clockwise).
+  if (bits.length < 2) {
+    const shift = findWindShift(weather.hourly);
+    if (shift) {
+      bits.push(`Wind ${shift.direction} ${shift.from} → ${shift.to} by ${fmtHour(shift.ts)}.`);
+    }
   }
 
   // UV warning.
