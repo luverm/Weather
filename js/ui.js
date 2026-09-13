@@ -98,6 +98,7 @@ const el = {
   sunBlueTimes: $("#sun-blue-times"),
   sunGoldenItem: document.querySelector("#sun-photo .photo-item--gold"),
   sunBlueItem: document.querySelector("#sun-photo .photo-item--blue"),
+  sunDrift: $("#sun-drift"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -561,8 +562,32 @@ function renderSun(w) {
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
   renderPhotoHours(w);
+  renderSunDrift(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+// How the length of the day is changing across the week — a small chip like
+// "+2m 15s / day" (getting longer) or "−1m 40s / day" (getting shorter).
+// Hides itself near the equator where the drift rounds to nothing.
+function renderSunDrift(w) {
+  if (!el.sunDrift) return;
+  const days = (w.daily || []).filter((d) => d.sunrise && d.sunset);
+  if (days.length < 2) { el.sunDrift.hidden = true; return; }
+  const first = days[0].sunset - days[0].sunrise;
+  const last  = days[days.length - 1].sunset - days[days.length - 1].sunrise;
+  const spanDays = days.length - 1;
+  const perDaySec = Math.round((last - first) / spanDays / 1000);
+  if (Math.abs(perDaySec) < 15) { el.sunDrift.hidden = true; return; }
+  const sign = perDaySec > 0 ? "+" : "−";
+  const abs = Math.abs(perDaySec);
+  const m = Math.floor(abs / 60);
+  const s = abs % 60;
+  const label = m ? `${sign}${m}m ${s}s / day` : `${sign}${s}s / day`;
+  el.sunDrift.textContent = label;
+  el.sunDrift.className = `sun-drift ${perDaySec > 0 ? "up" : "down"}`;
+  el.sunDrift.title = perDaySec > 0 ? "Days getting longer" : "Days getting shorter";
+  el.sunDrift.hidden = false;
 }
 
 // Golden hour = ~50 min around sunrise/sunset when the sun is low and warm.
