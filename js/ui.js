@@ -2007,7 +2007,7 @@ function updateDocumentTitle(w) {
 
 // Displayed in the settings menu so a user (or a bug report) can tell which
 // build they're on. Bumped alongside sw.js's CACHE_VERSION each round.
-const APP_VERSION = "v0.75";
+const APP_VERSION = "v0.76";
 document.getElementById("settings-version")?.replaceChildren(document.createTextNode(APP_VERSION));
 
 function bindPlaceCopy() {
