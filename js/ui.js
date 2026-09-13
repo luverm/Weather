@@ -1171,6 +1171,7 @@ function renderDaily(w) {
     const width = ((d.tempMax - d.tempMin) / span) * 100;
     const item = document.createElement("div");
     item.className = "daily-item";
+    if (i === 0) item.classList.add("is-today");
     if (!flatWeek && i === warmestIdx) item.classList.add("is-warmest");
     if (!flatWeek && i === coldestIdx && warmestIdx !== coldestIdx) item.classList.add("is-coldest");
     item.dataset.ts = d.time;

@@ -1720,6 +1720,20 @@ kbd {
 }
 .daily-item.is-warmest { background: rgba(255, 156, 122, 0.05); }
 .daily-item.is-coldest { background: rgba(154, 209, 255, 0.05); }
+.daily-item.is-today {
+  position: relative;
+}
+.daily-item.is-today::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 22%; bottom: 22%;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--accent, #9ad1ff);
+  box-shadow: 0 0 6px currentColor;
+  color: var(--accent, #9ad1ff);
+}
+.daily-item.is-today .daily-day { color: var(--fg); }
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
 .daily-range {
   position: relative;
