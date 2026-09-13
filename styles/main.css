@@ -465,7 +465,19 @@ html[data-reduce-motion="true"] *::after {
   transition: background 200ms var(--ease), color 200ms var(--ease);
 }
 .unit:hover { background: var(--glass); color: var(--fg); }
-.condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
+.condition-label {
+  margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em;
+  display: inline-flex; align-items: center; gap: 8px;
+  justify-content: flex-end;
+}
+.condition-icon {
+  width: 20px; height: 20px;
+  display: inline-grid; place-items: center;
+  color: var(--fg-muted);
+  opacity: 0.9;
+}
+.condition-icon svg { width: 100%; height: 100%; }
+.condition-icon:empty { display: none; }
 .cloud-meter {
   margin: 6px 0 0;
   margin-left: auto;
