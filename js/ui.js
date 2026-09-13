@@ -414,12 +414,25 @@ function renderMetrics(w) {
       el.uvLevel.textContent = "";
     }
   }
+  const burn = burnMinutes(w.uv);
+  const burnPart = burn != null ? ` · burn ~${burn}m` : "";
   if (w.uvPeak?.time) {
-    el.metricUVSub.textContent = `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`;
+    el.metricUVSub.textContent = `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}${burnPart}`;
+  } else if (burn != null) {
+    el.metricUVSub.textContent = `burn ~${burn}m unprotected`;
   } else {
     el.metricUVSub.textContent = "peak —";
   }
   renderPressureSparkline(w);
+}
+
+// Rough unprotected time-to-erythema for a fair-skin baseline (type II) at
+// the current UV index. The 200/UV formula sits between the ~150 (very fair)
+// and ~300 (medium) figures the WHO publishes; capped at 90 min so the pill
+// stays readable for low-UV conditions.
+function burnMinutes(uv) {
+  if (uv == null || uv < 3) return null;
+  return Math.max(5, Math.min(90, Math.round(200 / uv)));
 }
 
 function humidityComfort(rh, dew, temp) {
