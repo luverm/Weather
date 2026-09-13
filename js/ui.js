@@ -1265,7 +1265,7 @@ function renderDaily(w) {
 
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
-  el.dailyIconStrip.innerHTML = days.map((d) => {
+  el.dailyIconStrip.innerHTML = days.map((d, i) => {
     const mm = d.precip ?? 0;
     const snow = d.snow ?? 0;
     // A tiny stack of dots below the icon that visualises the day's rainfall.
@@ -1281,8 +1281,21 @@ function renderDailyIconStrip(days) {
     if (mm > 0) bits.push(`${mm.toFixed(mm < 5 ? 1 : 0)} mm`);
     if (snow > 0) bits.push(`${snow.toFixed(snow < 5 ? 1 : 0)} cm snow`);
     const tip = bits.filter(Boolean).join(" · ");
-    return `<span class="strip-day" title="${escapeHtml(tip)}">${iconFor(d.condition)}${dotsHtml}</span>`;
+    return `<button class="strip-day" type="button" data-i="${i}" title="${escapeHtml(tip)}">${iconFor(d.condition)}${dotsHtml}</button>`;
   }).join("");
+  // Wire each icon to the same expand behaviour as clicking the corresponding
+  // row — bridging the two visualisations of the week.
+  el.dailyIconStrip.querySelectorAll(".strip-day").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const i = parseInt(btn.dataset.i, 10);
+      const rows = el.dailyTrack?.querySelectorAll(".daily-item");
+      const row = rows?.[i];
+      if (row) {
+        row.click();
+        row.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    });
+  });
 }
 
 function renderDailySpark(days) {

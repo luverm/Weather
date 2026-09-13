@@ -1688,7 +1688,13 @@ kbd {
   display: grid; place-items: center; gap: 3px;
   padding: 4px;
   opacity: 0.85;
-  transition: opacity 160ms var(--ease), transform 160ms var(--ease);
+  transition: opacity 160ms var(--ease), transform 160ms var(--ease), background 160ms var(--ease);
+  border: 0; background: transparent; color: inherit;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.daily-icon-strip .strip-day:hover {
+  background: var(--glass);
 }
 .strip-precip {
   display: inline-flex; gap: 2px; align-items: center;
