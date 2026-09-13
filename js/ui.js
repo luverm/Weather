@@ -153,6 +153,7 @@ export const ui = {
     bindRefresh();
     bindSettings();
     bindTilt();
+    bindOnlineStatus();
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
@@ -1751,6 +1752,15 @@ function buildShareUrl(place) {
     if (place.country) u.searchParams.set("country", place.country);
     return u.toString();
   } catch { return null; }
+}
+
+function bindOnlineStatus() {
+  const chip = document.getElementById("offline-chip");
+  if (!chip) return;
+  const sync = () => { chip.hidden = navigator.onLine !== false; };
+  window.addEventListener("online", sync);
+  window.addEventListener("offline", sync);
+  sync();
 }
 
 function bindTilt() {
