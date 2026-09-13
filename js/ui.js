@@ -1170,8 +1170,41 @@ function renderHourly(w) {
     if (d < nowDiff) { nowDiff = d; nowIdx = i; }
   });
   const nowValid = nowIdx >= 0 && nowDiff < 60 * 60_000;
+
+  // Pre-compute sunrise / sunset moments falling inside the visible span so
+  // we can drop a slim marker between the two hourly items that straddle
+  // them. Uses whichever daily entries actually land here.
+  const spanStart = hours[0]?.time ?? now;
+  const spanEnd = hours[hours.length - 1]?.time ?? now;
+  const sunEvents = [];
+  for (const d of (w.daily || [])) {
+    if (d.sunrise && d.sunrise >= spanStart && d.sunrise <= spanEnd) {
+      sunEvents.push({ ts: d.sunrise, kind: "sunrise" });
+    }
+    if (d.sunset && d.sunset >= spanStart && d.sunset <= spanEnd) {
+      sunEvents.push({ ts: d.sunset, kind: "sunset" });
+    }
+  }
+
   for (let i = 0; i < hours.length; i++) {
     const h = hours[i];
+    // Insert any sun events that fall between the previous hour and this one.
+    if (i > 0) {
+      const prevTs = hours[i - 1].time;
+      for (const ev of sunEvents) {
+        if (ev.ts > prevTs && ev.ts <= h.time) {
+          const marker = document.createElement("div");
+          marker.className = `forecast-sunmark forecast-sunmark--${ev.kind}`;
+          marker.innerHTML = `
+            <span class="sunmark-icon">${ev.kind === "sunrise" ? "↑" : "↓"}</span>
+            <span class="sunmark-time">${fmtTime(ev.ts)}</span>
+            <span class="sunmark-label">${ev.kind === "sunrise" ? "sunrise" : "sunset"}</span>
+          `;
+          el.forecastTrack.appendChild(marker);
+        }
+      }
+    }
+
     const item = document.createElement("div");
     item.className = "forecast-item";
     if (nowValid && i === nowIdx) item.classList.add("is-now");
@@ -1941,7 +1974,7 @@ function updateDocumentTitle(w) {
 
 // Displayed in the settings menu so a user (or a bug report) can tell which
 // build they're on. Bumped alongside sw.js's CACHE_VERSION each round.
-const APP_VERSION = "v0.68";
+const APP_VERSION = "v0.69";
 document.getElementById("settings-version")?.replaceChildren(document.createTextNode(APP_VERSION));
 
 function bindPlaceCopy() {
