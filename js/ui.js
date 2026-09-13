@@ -1914,6 +1914,13 @@ function startFetchedTicker() {
       if (el.fetchedAgo) el.fetchedAgo.textContent = "";
       return;
     }
+    // When the current weather is the offline mock, "Just now" reads as
+    // "fresh live data" and is misleading. Call it out honestly instead.
+    if (state.weather.offline) {
+      el.fetchedAgo.textContent = "· Sample data (offline)";
+      el.fetchedAgo.classList.add("stale");
+      return;
+    }
     const ms = Date.now() - state.weather.fetchedAt;
     const minutes = Math.max(0, Math.floor(ms / 60_000));
     const label =
@@ -2007,7 +2014,7 @@ function updateDocumentTitle(w) {
 
 // Displayed in the settings menu so a user (or a bug report) can tell which
 // build they're on. Bumped alongside sw.js's CACHE_VERSION each round.
-const APP_VERSION = "v0.76";
+const APP_VERSION = "v0.77";
 document.getElementById("settings-version")?.replaceChildren(document.createTextNode(APP_VERSION));
 
 function bindPlaceCopy() {
