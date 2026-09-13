@@ -194,6 +194,11 @@ export const ui = {
   setWeather(weather, { narrative } = {}) {
     state.weather = weather;
     state.sampledWeather = weather; // initially same as live
+    // Restore the place subtitle now that the "Fetching…" loading text can go.
+    if (state.place && el.placeSub) {
+      const sub = [state.place.admin1, state.place.country].filter(Boolean).join(", ");
+      el.placeSub.textContent = sub || "—";
+    }
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
