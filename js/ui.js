@@ -1177,12 +1177,14 @@ function renderHourly(w) {
   const spanStart = hours[0]?.time ?? now;
   const spanEnd = hours[hours.length - 1]?.time ?? now;
   const sunEvents = [];
+  const seenTs = new Set();
   for (const d of (w.daily || [])) {
-    if (d.sunrise && d.sunrise >= spanStart && d.sunrise <= spanEnd) {
-      sunEvents.push({ ts: d.sunrise, kind: "sunrise" });
-    }
-    if (d.sunset && d.sunset >= spanStart && d.sunset <= spanEnd) {
-      sunEvents.push({ ts: d.sunset, kind: "sunset" });
+    for (const [ts, kind] of [[d.sunrise, "sunrise"], [d.sunset, "sunset"]]) {
+      if (!ts || ts < spanStart || ts > spanEnd) continue;
+      const dedupe = `${kind}:${ts}`;
+      if (seenTs.has(dedupe)) continue;
+      seenTs.add(dedupe);
+      sunEvents.push({ ts, kind });
     }
   }
 
@@ -1974,7 +1976,7 @@ function updateDocumentTitle(w) {
 
 // Displayed in the settings menu so a user (or a bug report) can tell which
 // build they're on. Bumped alongside sw.js's CACHE_VERSION each round.
-const APP_VERSION = "v0.69";
+const APP_VERSION = "v0.69.1";
 document.getElementById("settings-version")?.replaceChildren(document.createTextNode(APP_VERSION));
 
 function bindPlaceCopy() {
