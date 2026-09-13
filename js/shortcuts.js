@@ -61,6 +61,7 @@ export function installShortcuts(handlers) {
     if (key === "f" || key === "F") { e.preventDefault(); handlers.toggleFullscreenRadar?.(); return; }
     if (key === "n" || key === "N") { e.preventDefault(); handlers.resetScrubber?.(); return; }
     if (key === "r" || key === "R") { e.preventDefault(); handlers.refresh?.(); return; }
+    if (key === "p" || key === "P") { e.preventDefault(); handlers.pinPlace?.(); return; }
     if (key === " ") {
       e.preventDefault();
       handlers.toggleRadar?.();

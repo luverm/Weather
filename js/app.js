@@ -333,6 +333,16 @@ installShortcuts({
   toggleRadar: () => document.getElementById("radar-play")?.click(),
   resetScrubber: () => scrubber.reset(),
   refresh: () => refreshWeather(),
+  pinPlace: () => {
+    if (!app.place) return;
+    if (places.isSaved(app.place)) {
+      ui.showToast(`${app.place.name} is already saved`);
+    } else {
+      places.add(app.place);
+      ui.refreshPlaces?.();
+      ui.showToast(`Saved ${app.place.name}`);
+    }
+  },
   cyclePlace: (dir) => {
     const list = places.all();
     if (list.length < 2) return;
