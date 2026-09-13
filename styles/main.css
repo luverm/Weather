@@ -400,7 +400,22 @@ html[data-reduce-motion="true"] *::after {
 }
 .unit:hover { background: var(--glass); color: var(--fg); }
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
-.feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
+.feels-like {
+  margin: 4px 0 0; font-size: 13px; color: var(--fg-muted);
+  display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.feels-why {
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
+  border: 1px solid transparent;
+}
+.feels-why[hidden] { display: none; }
+.feels-why.up   { background: rgba(255, 156, 122, 0.14); color: #ffb196; border-color: rgba(255, 156, 122, 0.25); }
+.feels-why.down { background: rgba(154, 209, 255, 0.14); color: #9ad1ff; border-color: rgba(154, 209, 255, 0.25); }
 .day-range {
   margin-top: 10px;
   display: grid;

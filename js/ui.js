@@ -21,6 +21,8 @@ const el = {
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
+  feelsText: $("#feels-text"),
+  feelsWhy: $("#feels-why"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -282,8 +284,39 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  if (el.feelsText) el.feelsText.textContent = `Feels like ${Math.round(feels)}°`;
+  else el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  renderFeelsWhy(w);
   renderDayRange(w);
+}
+
+// If actual and apparent temperature diverge noticeably, add a compact "why"
+// clause — "wind bites", "humid heat", "sun-baked", "raw" — so the number
+// stops looking like a typo and starts telling a story.
+function renderFeelsWhy(w) {
+  if (!el.feelsWhy) return;
+  const temp = w.temp, feels = w.feelsLike;
+  if (temp == null || feels == null) { el.feelsWhy.hidden = true; return; }
+  const delta = feels - temp;
+  if (Math.abs(delta) < 3) { el.feelsWhy.hidden = true; return; }
+  const wind = w.windSpeed ?? 0;
+  const humidity = w.humidity ?? 0;
+  const isDay = !!w.isDay;
+  let why = null;
+  let cls = null;
+  if (delta <= -3) {
+    if (wind >= 15) { why = "wind bites"; cls = "down"; }
+    else if (humidity <= 35) { why = "dry chill"; cls = "down"; }
+    else { why = "raw"; cls = "down"; }
+  } else if (delta >= 3) {
+    if (humidity >= 65 && temp >= 22) { why = "humid heat"; cls = "up"; }
+    else if (isDay && temp >= 20) { why = "sun-baked"; cls = "up"; }
+    else { why = "muggy"; cls = "up"; }
+  }
+  if (!why) { el.feelsWhy.hidden = true; return; }
+  el.feelsWhy.hidden = false;
+  el.feelsWhy.textContent = why;
+  el.feelsWhy.className = `feels-why ${cls}`;
 }
 
 function renderDayRange(w) {
