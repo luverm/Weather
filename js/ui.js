@@ -1521,12 +1521,16 @@ const runSearch = debounce(async (q) => {
 
 function renderSearchResults(results) {
   if (!results.length) { el.searchResults.hidden = true; el.searchResults.innerHTML = ""; return; }
-  el.searchResults.innerHTML = results.map((r, i) => `
+  el.searchResults.innerHTML = results.map((r, i) => {
+    const saved = places.isSaved(r) ? `<span class="result-saved" title="Already saved">saved</span>` : "";
+    return `
     <li role="option" data-index="${i}">
       <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
       <span class="sub">${escapeHtml(r.country || "")}</span>
+      ${saved}
     </li>
-  `).join("");
+  `;
+  }).join("");
   el.searchResults.hidden = false;
   el.searchResults._items = results;
 }
