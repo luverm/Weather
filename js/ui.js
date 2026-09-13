@@ -27,6 +27,8 @@ const el = {
   cloudMeterFill: $("#cloud-meter-fill"),
   cloudMeterLabel: $("#cloud-meter-label"),
   vsYesterday: $("#vs-yesterday"),
+  nextChange: $("#next-change"),
+  nextChangeText: $("#next-change-text"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -206,6 +208,7 @@ export const ui = {
     renderActivity(weather);
     renderAlerts(weather);
     renderWeekend(weather);
+    renderNextChange(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -314,6 +317,50 @@ function renderVsYesterday(w) {
   el.vsYesterday.textContent = `${arrow} ${Math.abs(scaled)}° vs yesterday`;
   el.vsYesterday.className = `vs-yesterday ${scaled > 0 ? "up" : "down"}`;
   el.vsYesterday.title = scaled > 0 ? "Warmer than this time yesterday" : "Cooler than this time yesterday";
+}
+
+// Watches the hourly condition sequence for the next meaningful transition
+// in the visible 8-hour window and surfaces it as a compact "→ Rain by 15:00"
+// pill under the narrative. Stays hidden when the next 8 hours are steady.
+function renderNextChange(w) {
+  if (!el.nextChange || !el.nextChangeText) return;
+  const now = w.condition;
+  const hours = (w.hourly || []).slice(0, 8);
+  if (!now || hours.length < 2) { el.nextChange.hidden = true; return; }
+  const step = (a, b) => (a === b ? 0 : conditionRank(b) - conditionRank(a));
+  let change = null;
+  for (const h of hours) {
+    const diff = step(now, h.condition);
+    if (diff !== 0 && conditionSignificance(now, h.condition) >= 2) {
+      change = { at: h.time, to: h.condition, label: h.label, diff };
+      break;
+    }
+  }
+  if (!change) { el.nextChange.hidden = true; return; }
+  const verb = change.diff > 0 ? "worsens to" : "clears to";
+  const at = fmtTime(change.at);
+  el.nextChangeText.textContent = `${capitalize(change.label || change.to)} by ${at}`;
+  el.nextChange.hidden = false;
+  el.nextChange.className = `next-change ${change.diff > 0 ? "worse" : "better"}`;
+  el.nextChange.title = `${capitalize(now)} ${verb} ${change.label || change.to}`;
+}
+
+// Higher = worse weather for outdoor comfort. Only the ordering matters here,
+// not the absolute numbers — the caller uses this to pick a direction.
+function conditionRank(c) {
+  return ({ clear: 0, clouds: 2, fog: 3, rain: 5, snow: 6, storm: 8 })[c] ?? 2;
+}
+// A small change from clear→clouds is uninteresting; rain and storm are
+// always worth flagging. Returns 0..3, callers filter at >=2.
+function conditionSignificance(from, to) {
+  const wet = new Set(["rain", "snow", "storm"]);
+  const dry = new Set(["clear", "clouds"]);
+  if (wet.has(to) && !wet.has(from)) return 3;
+  if (wet.has(from) && !wet.has(to)) return 3;
+  if (from === "fog" || to === "fog") return 2;
+  if (from === "clear" && to === "clouds") return 1;
+  if (from === "clouds" && to === "clear") return 2;
+  return 0;
 }
 
 function renderCloudMeter(w) {

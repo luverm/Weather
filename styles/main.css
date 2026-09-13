@@ -380,6 +380,31 @@ html[data-reduce-motion="true"] *::after {
   line-height: 1.55;
   color: var(--fg-muted);
 }
+.next-change {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin: 8px 0 0;
+  padding: 3px 10px;
+  font-size: 12px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-variant-numeric: tabular-nums;
+}
+.next-change[hidden] { display: none; }
+.next-change-arrow {
+  font-size: 13px;
+  line-height: 1;
+  opacity: 0.75;
+}
+.next-change.worse {
+  color: #ffb894;
+  background: rgba(255, 178, 140, 0.12);
+  border-color: rgba(255, 178, 140, 0.24);
+}
+.next-change.better {
+  color: #a4e6b3;
+  background: rgba(140, 220, 160, 0.12);
+  border-color: rgba(140, 220, 160, 0.24);
+}
 .temp-wrap { text-align: right; }
 .temp {
   display: inline-flex; align-items: flex-start; gap: 6px;
