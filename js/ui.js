@@ -1550,6 +1550,34 @@ function renderPlaces() {
       }
       state.handlers.onPlaceClick?.(item);
     });
+    // Long-press (~700 ms) to remove — the visible × is a small target on
+    // touch. If the user releases early or drags off, the timer is cancelled
+    // before it fires. Feedback: the chip shrinks slightly while held.
+    let pressTimer = null;
+    let longPressed = false;
+    const startPress = (e) => {
+      if (e.target.closest('[data-action="remove"]')) return;
+      longPressed = false;
+      pressTimer = setTimeout(() => {
+        longPressed = true;
+        chip.classList.remove("pressing");
+        if (confirm(`Remove ${item.name}?`)) {
+          places.remove(item);
+          renderPlaces();
+        }
+      }, 700);
+      chip.classList.add("pressing");
+    };
+    const endPress = () => {
+      if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+      chip.classList.remove("pressing");
+    };
+    chip.addEventListener("pointerdown", startPress);
+    chip.addEventListener("pointerup", endPress);
+    chip.addEventListener("pointerleave", endPress);
+    chip.addEventListener("pointercancel", endPress);
+    // If a long press fired, silence the follow-up click.
+    chip.addEventListener("click", (e) => { if (longPressed) e.stopImmediatePropagation(); }, true);
   });
 }
 
@@ -1875,7 +1903,7 @@ function updateDocumentTitle(w) {
 
 // Displayed in the settings menu so a user (or a bug report) can tell which
 // build they're on. Bumped alongside sw.js's CACHE_VERSION each round.
-const APP_VERSION = "v0.61";
+const APP_VERSION = "v0.62";
 document.getElementById("settings-version")?.replaceChildren(document.createTextNode(APP_VERSION));
 
 function bindOnlineStatus() {

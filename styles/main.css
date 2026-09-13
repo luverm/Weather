@@ -356,6 +356,7 @@ html[data-reduce-motion="true"] *::after {
 }
 .place-chip:hover { background: var(--glass-strong); transform: translateY(-1px); }
 .place-chip.active { background: var(--glass-strong); border-color: rgba(255,255,255,0.35); }
+.place-chip.pressing { transform: scale(0.96); transition-duration: 700ms; }
 .place-chip .temp { color: var(--fg-muted); font-variant-numeric: tabular-nums; }
 .place-chip-icon {
   width: 16px; height: 16px;
