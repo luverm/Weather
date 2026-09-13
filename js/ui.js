@@ -90,6 +90,11 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunPhoto: $("#sun-photo"),
+  sunGoldenTimes: $("#sun-golden-times"),
+  sunBlueTimes: $("#sun-blue-times"),
+  sunGoldenItem: document.querySelector("#sun-photo .photo-item--gold"),
+  sunBlueItem: document.querySelector("#sun-photo .photo-item--blue"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -521,8 +526,52 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderPhotoHours(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+// Golden hour = ~50 min around sunrise/sunset when the sun is low and warm.
+// Blue hour  = ~20 min just outside that window when the sky is deeply blue.
+// Times are approximations that work well anywhere the sun rises and sets.
+function computePhotoHours(sunrise, sunset) {
+  if (!sunrise || !sunset) return null;
+  const M = 60_000;
+  return {
+    goldenMorning: { start: sunrise - 10 * M, end: sunrise + 50 * M },
+    blueMorning:   { start: sunrise - 30 * M, end: sunrise - 10 * M },
+    goldenEvening: { start: sunset  - 50 * M, end: sunset  + 10 * M },
+    blueEvening:   { start: sunset  + 10 * M, end: sunset  + 30 * M },
+  };
+}
+
+function renderPhotoHours(w) {
+  if (!el.sunPhoto) return;
+  const hours = computePhotoHours(w?.sunrise, w?.sunset);
+  if (!hours) { el.sunPhoto.hidden = true; return; }
+  el.sunPhoto.hidden = false;
+  // Show the "peak" of each window — visually the golden peak lines up with
+  // sunrise/sunset itself, and the blue peak with mid-twilight.
+  const mid = (r) => (r.start + r.end) / 2;
+  const goldMorn = fmtTime(mid(hours.goldenMorning));
+  const goldEve  = fmtTime(mid(hours.goldenEvening));
+  const blueMorn = fmtTime(mid(hours.blueMorning));
+  const blueEve  = fmtTime(mid(hours.blueEvening));
+  if (el.sunGoldenTimes) el.sunGoldenTimes.textContent = `${goldMorn} · ${goldEve}`;
+  if (el.sunBlueTimes)   el.sunBlueTimes.textContent   = `${blueMorn} · ${blueEve}`;
+  updatePhotoActive(w);
+}
+
+function updatePhotoActive(w) {
+  if (!el.sunGoldenItem || !el.sunBlueItem) return;
+  const hours = computePhotoHours(w?.sunrise, w?.sunset);
+  if (!hours) return;
+  const now = Date.now();
+  const inRange = (r) => now >= r.start && now <= r.end;
+  const goldActive = inRange(hours.goldenMorning) || inRange(hours.goldenEvening);
+  const blueActive = inRange(hours.blueMorning)   || inRange(hours.blueEvening);
+  el.sunGoldenItem.setAttribute("data-active", goldActive ? "true" : "false");
+  el.sunBlueItem.setAttribute("data-active", blueActive ? "true" : "false");
 }
 
 function scheduleSunArc(w) {
@@ -553,6 +602,8 @@ function scheduleSunArc(w) {
     // After sunset, dim the marker so it visually settles.
     const isUp = now >= sr && now <= ss;
     el.sunArcMarker.style.opacity = isUp ? "1" : "0.45";
+    // Piggyback: keep the golden/blue-hour "active" chip in sync each tick.
+    updatePhotoActive(w);
   };
   update();
   state.sunArcTimer = setInterval(update, 60_000);

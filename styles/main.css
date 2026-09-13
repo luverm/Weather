@@ -977,6 +977,57 @@ kbd {
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
 
+/* ---------- Photographer's hour row ---------- */
+.sun-photo {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--stroke);
+  font-size: 11px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+  flex-wrap: wrap;
+}
+.sun-photo[hidden] { display: none; }
+.photo-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  transition: color 300ms var(--ease);
+}
+.photo-chip {
+  width: 8px; height: 8px; border-radius: 50%;
+  box-shadow: 0 0 0 rgba(0,0,0,0);
+  transition: box-shadow 400ms var(--ease), transform 400ms var(--ease);
+}
+.photo-item--gold .photo-chip { background: #ffbe6a; color: #ffbe6a; }
+.photo-item--blue .photo-chip { background: #6aa8ff; color: #6aa8ff; }
+.photo-label {
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 10px;
+  color: var(--fg-muted);
+}
+.photo-times { color: var(--fg-muted); }
+.photo-item[data-active="true"] { color: var(--fg); }
+.photo-item[data-active="true"] .photo-times { color: var(--fg); }
+.photo-item[data-active="true"] .photo-chip {
+  transform: scale(1.35);
+  box-shadow: 0 0 10px currentColor;
+  animation: photoPulse 2.4s var(--ease) infinite;
+}
+@keyframes photoPulse {
+  0%, 100% { box-shadow: 0 0 6px currentColor; }
+  50%      { box-shadow: 0 0 14px currentColor; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .photo-item[data-active="true"] .photo-chip { animation: none; }
+}
+
 /* ---------- Radar map ---------- */
 .radar {
   padding: 12px;
