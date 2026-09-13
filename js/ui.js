@@ -1036,16 +1036,35 @@ function renderHourly(w) {
     item.className = "forecast-item";
     item.dataset.ts = h.time;
     const rainMeter = precipMeter(h.pop, h.precip);
+    const windMarker = windArrow(h.wind, h.windDir);
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
+      ${windMarker}
       ${rainMeter}
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
   }
+}
+
+// A slim wind chevron beneath each hour — arrow rotates to blow-toward
+// direction (windDir is where the wind comes FROM), opacity tracks strength
+// so calm hours stay quiet and gusty ones pop. Skipped entirely when we
+// don't have direction data yet.
+function windArrow(kmh, dir) {
+  if (dir == null) return "";
+  const wind = kmh ?? 0;
+  const opacity = Math.max(0.25, Math.min(1, wind / 30));
+  const scale = wind >= 20 ? 1.05 : wind >= 8 ? 0.9 : 0.75;
+  return `<span class="forecast-wind" aria-hidden="true"
+    style="opacity:${opacity.toFixed(2)}">
+    <svg viewBox="-8 -8 16 16" style="transform:rotate(${(dir + 180) % 360}deg) scale(${scale})">
+      <path d="M0 -6 L3 3 L0 1 L-3 3 Z" fill="currentColor"/>
+    </svg>
+  </span>`;
 }
 
 // A subtle colored underline at the base of each hourly card that visualises
