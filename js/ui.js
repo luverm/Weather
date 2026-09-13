@@ -72,6 +72,7 @@ const el = {
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
+  dailyRain: $("#daily-rain"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -946,6 +947,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderDailyRain(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1050,6 +1052,33 @@ function renderDailyDelta(days) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
   }
   el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
+}
+
+// A little "0.4 in this week · mostly Thu" chip in the daily heading.
+// Hides itself when no rain is expected, so a dry week stays clean.
+function renderDailyRain(days) {
+  if (!el.dailyRain) return;
+  const withRain = days.filter((d) => (d.precip ?? 0) > 0);
+  const totalMm = withRain.reduce((s, d) => s + (d.precip || 0), 0);
+  if (totalMm < 0.5) { el.dailyRain.textContent = ""; return; }
+  const wettest = withRain.reduce((best, d) => (d.precip > (best?.precip ?? -1) ? d : best), null);
+  const tz = state.weather?.timezone;
+  const wettestName = wettest ? new Date(wettest.time).toLocaleDateString(undefined, {
+    weekday: "short",
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  }) : "";
+  const share = wettest ? wettest.precip / totalMm : 0;
+  // Metric users see mm; anyone on °F sees inches, since that's how they'd
+  // normally read rainfall too.
+  const inches = totalMm / 25.4;
+  const useInches = state.unit === "F";
+  const amount = useInches
+    ? `${inches.toFixed(inches < 1 ? 2 : 1)} in`
+    : `${totalMm.toFixed(totalMm < 5 ? 1 : 0)} mm`;
+  const focus = wettest && share >= 0.6 ? ` · mostly ${wettestName}`
+              : wettest && share >= 0.4 ? ` · peaks ${wettestName}`
+              : "";
+  el.dailyRain.textContent = `${amount} this week${focus}`;
 }
 
 function toggleDailyExpand(item, d, w) {

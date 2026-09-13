@@ -1451,6 +1451,27 @@ kbd {
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+.daily-rain {
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  color: #9ecdff;
+  text-transform: none;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(158, 205, 255, 0.10);
+  border: 1px solid rgba(158, 205, 255, 0.20);
+}
+.daily-rain:empty { display: none; }
+.daily-rain::before {
+  content: "";
+  width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 6px currentColor;
+}
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;
