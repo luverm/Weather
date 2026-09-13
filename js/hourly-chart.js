@@ -203,9 +203,10 @@ export class HourlyChart {
       : "";
     const wind = h.wind != null ? ` · ${dirArrow}${Math.round(h.wind)} km/h` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
+    const cloud = h.cloud != null ? ` · ${Math.round(h.cloud)}% cloud` : "";
     this.popover.innerHTML =
       `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
-      `<em>${h.pop}% precip${wind}${hum}</em>`;
+      `<em>${h.pop}% precip${wind}${hum}${cloud}</em>`;
     this.popover.style.left = `${pxX.toFixed(1)}px`;
     this.popover.style.top = `${pxY.toFixed(1)}px`;
     this.popover.hidden = false;
