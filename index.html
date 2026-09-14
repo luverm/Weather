@@ -141,9 +141,14 @@
             <div class="day-range-track">
               <div class="day-range-fill"></div>
               <div class="day-range-marker" id="day-range-marker" title="Now"></div>
+              <div class="day-range-marker day-range-marker-yesterday" id="day-range-yesterday" title="Yesterday, same hour" hidden></div>
             </div>
             <span class="day-range-end" id="day-range-max">—</span>
           </div>
+          <p id="yesterday-chip" class="yesterday-chip" hidden aria-live="polite">
+            <span id="yesterday-chip-arrow" class="yesterday-chip-arrow" aria-hidden="true"></span>
+            <span id="yesterday-chip-text">—</span>
+          </p>
         </div>
       </div>
 

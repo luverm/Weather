@@ -94,6 +94,7 @@ export async function getWeather(lat, lon) {
     timezone: "auto",
     forecast_days: 7,
     past_hours: 1,
+    past_days: 1, // one day back so we can compare today vs yesterday
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -128,6 +129,23 @@ function normalize(d, aq) {
   const daily = d.daily || {};
   const now = Date.now();
 
+  // Yesterday's temperature at "the same clock time" as now, taken directly
+  // from the hourly series — this is what the vs-yesterday chip compares
+  // against for a like-for-like feel (morning-to-morning, not vs. peak).
+  let yesterdaySameHourTemp = null;
+  if (d.hourly?.time) {
+    const target = now - 24 * 3600_000;
+    let bestDiff = Infinity;
+    for (let i = 0; i < d.hourly.time.length; i++) {
+      const t = new Date(d.hourly.time[i]).getTime();
+      const diff = Math.abs(t - target);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        yesterdaySameHourTemp = d.hourly.temperature_2m?.[i] ?? null;
+      }
+    }
+  }
+
   // 24-hour hourly forecast starting from the next hour.
   const hourly = [];
   if (d.hourly?.time) {
@@ -151,12 +169,13 @@ function normalize(d, aq) {
     }
   }
 
-  // 7-day daily forecast.
-  const dailyForecast = [];
+  // 7-day daily forecast. With past_days: 1, daily[0] is yesterday — pull
+  // it out separately and slice so callers still see today at index 0.
+  const dailyAll = [];
   if (daily.time) {
     for (let i = 0; i < daily.time.length; i++) {
       const ts = new Date(daily.time[i]).getTime();
-      dailyForecast.push({
+      dailyAll.push({
         time: ts,
         tempMax: daily.temperature_2m_max?.[i],
         tempMin: daily.temperature_2m_min?.[i],
@@ -171,6 +190,20 @@ function normalize(d, aq) {
       });
     }
   }
+  // Split into "today onward" and a single yesterday summary. Daily entries
+  // are anchored at local midnight, so a day whose 00:00 is more than 24h
+  // behind `now` is yesterday (or earlier).
+  const todayStart = dailyAll.findIndex((d) => d.time > now - 24 * 3600_000);
+  const dailyForecast = todayStart >= 0 ? dailyAll.slice(todayStart) : dailyAll;
+  const yesterdayDay = todayStart > 0 ? dailyAll[todayStart - 1] : null;
+  const yesterday = yesterdayDay ? {
+    tempMax: yesterdayDay.tempMax,
+    tempMin: yesterdayDay.tempMin,
+    precip: yesterdayDay.precip,
+    condition: yesterdayDay.condition,
+    label: yesterdayDay.label,
+    sameHourTemp: yesterdaySameHourTemp,
+  } : null;
 
   // 15-min nowcast for the next ~2h — used for "rain in 12 min" banner.
   const nowcast = [];
@@ -204,13 +237,14 @@ function normalize(d, aq) {
     isDay: !!c.is_day,
     condition,
     label,
-    sunrise: daily.sunrise?.[0] ? new Date(daily.sunrise[0]).getTime() : null,
-    sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null,
-    uv: daily.uv_index_max?.[0] ?? null,
+    sunrise: dailyForecast[0]?.sunrise ?? null,
+    sunset: dailyForecast[0]?.sunset ?? null,
+    uv: dailyForecast[0]?.uvMax ?? null,
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
     hourly,
     daily: dailyForecast,
+    yesterday,
     nowcast,
     moon,
     airQuality: normalizeAq(aq),
@@ -315,10 +349,13 @@ function aqiLabel(v) {
 
 function findUvPeak(hourly) {
   if (!hourly?.uv_index) return null;
+  const now = Date.now();
   let peak = { t: null, v: -Infinity };
   for (let i = 0; i < hourly.uv_index.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    if (t < now - 30 * 60_000) continue; // ignore past hours (past_days may include yesterday)
     const v = hourly.uv_index[i];
-    if (v > peak.v) peak = { t: new Date(hourly.time[i]).getTime(), v };
+    if (v > peak.v) peak = { t, v };
   }
   if (peak.t == null) return null;
   return { time: peak.t, value: peak.v };
@@ -387,6 +424,11 @@ function mock(lat, lon) {
       condition: CONDITIONS.CLOUDS, label: "Cloudy",
     })),
     nowcast: [],
+    yesterday: {
+      tempMax: 19, tempMin: 11, precip: 0.4,
+      condition: CONDITIONS.CLOUDS, label: "Cloudy",
+      sameHourTemp: 16,
+    },
     moon: computeMoonPhase(new Date()),
     airQuality: { aqi: 42, pm25: 8, pm10: 14, o3: 40, no2: 15, co: 0.2, label: "Good" },
     pollen: {

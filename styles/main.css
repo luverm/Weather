@@ -426,6 +426,51 @@ html[data-reduce-motion="true"] *::after {
   box-shadow: 0 2px 8px rgba(0,0,0,0.35);
   transition: left 380ms var(--ease);
 }
+.day-range-marker-yesterday {
+  width: 8px; height: 8px;
+  margin-left: -4px;
+  background: transparent;
+  border: 1.5px dashed rgba(255,255,255,0.65);
+  box-shadow: none;
+  z-index: 0;
+}
+.day-range-marker-yesterday[hidden] { display: none; }
+
+.yesterday-chip {
+  margin: 8px 0 0;
+  max-width: 240px;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--fg-muted);
+  background: var(--glass);
+  border: 1px solid var(--stroke);
+  font-variant-numeric: tabular-nums;
+  cursor: default;
+  transition: background 200ms var(--ease), color 200ms var(--ease), border-color 200ms var(--ease);
+}
+.yesterday-chip[hidden] { display: none; }
+.yesterday-chip-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  font-size: 9px;
+  line-height: 1;
+  color: var(--fg);
+  background: rgba(255,255,255,0.08);
+}
+.yesterday-chip.up { color: #ffd7b8; border-color: rgba(255,180,140,0.45); }
+.yesterday-chip.up .yesterday-chip-arrow { background: rgba(255,150,110,0.25); color: #ffcaa4; }
+.yesterday-chip.down { color: #b8dcff; border-color: rgba(140,180,255,0.4); }
+.yesterday-chip.down .yesterday-chip-arrow { background: rgba(110,160,255,0.25); color: #a8cbff; }
+.yesterday-chip.flat { color: var(--fg-muted); }
 
 /* ---------- Nowcast banner ---------- */
 .nowcast {

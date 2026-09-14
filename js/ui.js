@@ -26,6 +26,10 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  dayRangeYesterday: $("#day-range-yesterday"),
+  yesterdayChip: $("#yesterday-chip"),
+  yesterdayChipText: $("#yesterday-chip-text"),
+  yesterdayChipArrow: $("#yesterday-chip-arrow"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -193,6 +197,7 @@ export const ui = {
     renderActivity(weather);
     renderAlerts(weather);
     renderWeekend(weather);
+    renderYesterday(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -303,6 +308,67 @@ function renderDayRange(w) {
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+  // Ghost marker for yesterday's same-hour temp, so users can see where
+  // today sits versus a day ago on the same scale.
+  if (el.dayRangeYesterday) {
+    const y = w.yesterday?.sameHourTemp;
+    if (y != null && y >= lo && y <= hi) {
+      const yf = Math.max(0, Math.min(1, (y - lo) / (hi - lo)));
+      el.dayRangeYesterday.style.left = `${(yf * 100).toFixed(1)}%`;
+      el.dayRangeYesterday.hidden = false;
+      el.dayRangeYesterday.title = `Yesterday, same hour: ${Math.round(convertTemp(y))}°`;
+    } else {
+      el.dayRangeYesterday.hidden = true;
+    }
+  }
+}
+
+function renderYesterday(w) {
+  if (!el.yesterdayChip) return;
+  const y = w.yesterday;
+  if (!y) { el.yesterdayChip.hidden = true; return; }
+
+  // Prefer a same-hour comparison (like-for-like); fall back to comparing
+  // today's high against yesterday's high when the hourly slice is missing.
+  let deltaC = null, mode = "hour";
+  if (y.sameHourTemp != null && w.temp != null) {
+    deltaC = w.temp - y.sameHourTemp;
+  } else {
+    const todayHi = w.daily?.[0]?.tempMax;
+    if (y.tempMax != null && todayHi != null) {
+      deltaC = todayHi - y.tempMax;
+      mode = "high";
+    }
+  }
+  if (deltaC == null) { el.yesterdayChip.hidden = true; return; }
+
+  // Scale delta into the current unit (°F spans 1.8x a °C span).
+  const deltaDisplay = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
+  const rounded = Math.round(deltaDisplay);
+  const abs = Math.abs(rounded);
+
+  let cls, arrow, phrase;
+  if (abs === 0) {
+    cls = "flat"; arrow = "≈"; phrase = "Same as yesterday";
+  } else if (rounded > 0) {
+    cls = "up"; arrow = "▲"; phrase = `${abs}° warmer than yesterday`;
+  } else {
+    cls = "down"; arrow = "▼"; phrase = `${abs}° cooler than yesterday`;
+  }
+  // Suffix names what we compared so the number can't be misread.
+  const suffix = mode === "hour" ? " · same hour" : " · vs high";
+  el.yesterdayChipText.textContent = phrase + suffix;
+  if (el.yesterdayChipArrow) el.yesterdayChipArrow.textContent = arrow;
+  el.yesterdayChip.className = `yesterday-chip ${cls}`;
+  el.yesterdayChip.hidden = false;
+  // Tooltip: full context including yesterday's high/low.
+  const parts = [];
+  if (y.tempMax != null) parts.push(`H ${Math.round(convertTemp(y.tempMax))}°`);
+  if (y.tempMin != null) parts.push(`L ${Math.round(convertTemp(y.tempMin))}°`);
+  if (y.precip > 0.1) parts.push(`${y.precip.toFixed(1)}mm rain`);
+  el.yesterdayChip.title = parts.length
+    ? `Yesterday: ${parts.join(" · ")}`
+    : "Compared to yesterday";
 }
 
 function renderMetrics(w) {
