@@ -307,7 +307,11 @@ function convertTemp(c) { return state.unit === "F" ? c * 9 / 5 + 32 : c; }
 function animateNumber(node, target, format) {
   if (target == null || isNaN(target)) { node.textContent = "–"; return; }
   const prev = parseFloat(node.dataset.v ?? NaN);
-  if (isNaN(prev)) {
+  // In reduce-motion mode we skip the counting tween entirely.
+  const reduce =
+    document.documentElement.getAttribute("data-reduce-motion") === "true" ||
+    (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  if (isNaN(prev) || reduce) {
     node.textContent = format(target);
     node.dataset.v = String(target);
     return;
