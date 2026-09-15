@@ -425,6 +425,13 @@ function renderLiveValues(w, { animate = true } = {}) {
       el.conditionIcon.innerHTML = iconFor(w.condition);
       el.conditionIcon.dataset.condition = w.condition || "";
     }
+    const bits = [];
+    if (w.cloudCover != null) bits.push(`${Math.round(w.cloudCover)}% cloud cover`);
+    if (w.humidity != null) bits.push(`${Math.round(w.humidity)}% RH`);
+    if (w.dewPoint != null) bits.push(`dew ${Math.round(convertTemp(w.dewPoint))}°${state.unit}`);
+    if (bits.length && el.conditionLabel) {
+      el.conditionLabel.title = bits.join(" · ");
+    }
   } else {
     el.conditionLabel.textContent = capitalize(w.label);
   }
