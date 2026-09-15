@@ -1266,7 +1266,7 @@ function renderHourly(w) {
     item.innerHTML = `
       ${boundary ? `<span class="forecast-boundary" title="${boundary}">${boundaryGlyph}</span>` : ""}
       <span class="forecast-time">${escapeHtml(label)}</span>
-      <span class="forecast-icon">${iconFor(h.condition)}</span>
+      <span class="forecast-icon" data-condition="${escapeHtml(h.condition || "")}">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
       <span class="forecast-pop-bar" aria-hidden="true">

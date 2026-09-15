@@ -1781,7 +1781,13 @@ kbd {
 }
 .forecast-item[data-now="true"] .forecast-temp { color: #ffe6c7; }
 .forecast-time { font-size: 11px; letter-spacing: 0.08em; color: var(--fg-dim); text-transform: uppercase; }
-.forecast-icon { width: 26px; height: 26px; display: grid; place-items: center; color: var(--fg-muted); }
+.forecast-icon { width: 26px; height: 26px; display: grid; place-items: center; color: var(--fg-muted); transition: color 160ms var(--ease); }
+.forecast-icon[data-condition="clear"] { color: #ffd08a; }
+.forecast-icon[data-condition="clouds"] { color: #b5c6e0; }
+.forecast-icon[data-condition="rain"] { color: #9ad1ff; }
+.forecast-icon[data-condition="snow"] { color: #e6f0ff; }
+.forecast-icon[data-condition="storm"] { color: #c8a4ff; }
+.forecast-icon[data-condition="fog"] { color: #c0c8d4; }
 .forecast-temp { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .forecast-pop {
   font-size: 10px; color: var(--accent); font-variant-numeric: tabular-nums;
