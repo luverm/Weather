@@ -94,6 +94,9 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcUv: $("#sun-arc-uv"),
+  sunArcUvDot: $("#sun-arc-uv-dot"),
+  sunArcUvLabel: $("#sun-arc-uv-label"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -560,8 +563,32 @@ function renderSun(w) {
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
   renderDaylightDelta(w);
+  renderSunArcUv(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderSunArcUv(w) {
+  const g = el.sunArcUv;
+  if (!g || !el.sunArcUvDot || !el.sunArcUvLabel) return;
+  const peak = w?.uvPeak;
+  if (!peak || peak.value == null || peak.value < 3 || !w.sunrise || !w.sunset) {
+    g.setAttribute("hidden", "true");
+    return;
+  }
+  const frac = Math.max(0, Math.min(1, (peak.time - w.sunrise) / (w.sunset - w.sunrise)));
+  const t = frac;
+  const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
+  const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
+  el.sunArcUvDot.setAttribute("cx", x.toFixed(1));
+  el.sunArcUvDot.setAttribute("cy", y.toFixed(1));
+  el.sunArcUvLabel.setAttribute("x", x.toFixed(1));
+  el.sunArcUvLabel.setAttribute("y", (y - 6).toFixed(1));
+  el.sunArcUvLabel.textContent = `UV ${Math.round(peak.value)}`;
+  // Color by intensity tier.
+  const level = peak.value >= 11 ? "extreme" : peak.value >= 8 ? "very-high" : peak.value >= 6 ? "high" : "moderate";
+  g.setAttribute("data-level", level);
+  g.removeAttribute("hidden");
 }
 
 function renderDaylightDelta(w) {
