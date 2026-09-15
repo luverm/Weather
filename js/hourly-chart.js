@@ -287,6 +287,34 @@ export class HourlyChart {
     const labG = this.svg.querySelector("#chart-labels");
     labG.innerHTML = "";
     const labelStep = Math.max(3, Math.floor(this.hours.length / 8));
+    // Find peak (hottest) and cold (coldest) indices for extreme markers.
+    let peakI = 0, coldI = 0;
+    for (let i = 1; i < this.hours.length; i++) {
+      if (this.hours[i].temp > this.hours[peakI].temp) peakI = i;
+      if (this.hours[i].temp < this.hours[coldI].temp) coldI = i;
+    }
+    const drawExtreme = (i, cls, glyph) => {
+      const h = this.hours[i];
+      if (!h) return;
+      const cx = iToX(i), cy = tToY(h.temp);
+      const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      dot.setAttribute("cx", cx.toFixed(1));
+      dot.setAttribute("cy", cy.toFixed(1));
+      dot.setAttribute("r", "3");
+      dot.setAttribute("class", cls);
+      labG.appendChild(dot);
+      const tag = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      tag.setAttribute("x", cx.toFixed(1));
+      tag.setAttribute("y", (cy - (cls === "extreme-hi" ? 10 : -14)).toFixed(1));
+      tag.setAttribute("text-anchor", "middle");
+      tag.setAttribute("class", cls + " extreme-label");
+      tag.textContent = glyph;
+      labG.appendChild(tag);
+    };
+    if (peakI !== coldI) {
+      drawExtreme(peakI, "extreme-hi", "hi");
+      drawExtreme(coldI, "extreme-lo", "lo");
+    }
     this.hours.forEach((h, i) => {
       if (i % labelStep !== 0) return;
       const hh = this._hourOf(h.time);
@@ -296,7 +324,9 @@ export class HourlyChart {
       txt.setAttribute("text-anchor", "middle");
       txt.textContent = `${hh}`;
       labG.appendChild(txt);
-      // Temp label above point
+      // Temp label above point — skip labels that would collide with an
+      // extreme-marker label at the same index.
+      if (i === peakI || i === coldI) return;
       const tVal = unit === "F" ? h.temp * 9 / 5 + 32 : h.temp;
       const tTxt = document.createElementNS("http://www.w3.org/2000/svg", "text");
       tTxt.setAttribute("x", iToX(i).toFixed(1));

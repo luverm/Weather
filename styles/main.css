@@ -875,6 +875,11 @@ html[data-reduce-motion="true"] *::after {
 .chart-precip rect[data-precip="moderate"] { fill: rgba(96, 170, 255, 0.85); }
 .chart-precip rect[data-precip="heavy"]    { fill: rgba(180, 120, 255, 0.9); }
 .chart-precip rect[data-precip="snow"]     { fill: rgba(230, 240, 255, 0.85); }
+.extreme-hi { fill: #ffb196; }
+.extreme-lo { fill: #9ad1ff; }
+.extreme-label { font-size: 8px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+circle.extreme-hi { filter: drop-shadow(0 0 4px rgba(255, 156, 122, 0.8)); }
+circle.extreme-lo { filter: drop-shadow(0 0 4px rgba(154, 209, 255, 0.8)); }
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
 }
