@@ -67,6 +67,7 @@ const el = {
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
+  windCompassGust: $("#wind-compass-gust"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
   chartSvg: $("#chart-svg"),
@@ -401,6 +402,7 @@ function renderMetrics(w) {
   } else if (el.windNeedle) {
     el.windNeedle.style.opacity = "0.3";
   }
+  renderCompassGust(gustNow);
   if (el.windBft) {
     const bft = beaufort(w.windSpeed);
     if (bft) {
@@ -1097,6 +1099,26 @@ function renderTrends(w) {
       el.tempTrend.textContent = "";
     }
   }
+}
+
+function renderCompassGust(gust) {
+  const arc = el.windCompassGust;
+  if (!arc) return;
+  // Circumference of r=22 is ~138. Fill arc proportional to gust up to 80 km/h.
+  const CIRC = 138;
+  if (gust == null || gust <= 5) {
+    arc.setAttribute("stroke-dasharray", `0 ${CIRC}`);
+    arc.removeAttribute("data-level");
+    return;
+  }
+  const frac = Math.min(1, gust / 80);
+  const filled = frac * CIRC;
+  arc.setAttribute("stroke-dasharray", `${filled} ${CIRC}`);
+  const level = gust >= 60 ? "extreme"
+    : gust >= 40 ? "high"
+    : gust >= 25 ? "moderate"
+    : "low";
+  arc.setAttribute("data-level", level);
 }
 
 function peakGust24h(w) {

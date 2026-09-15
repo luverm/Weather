@@ -905,6 +905,16 @@ html[data-reduce-motion="true"] *::after {
   transform-origin: 0 0;
   transition: transform 900ms var(--ease);
 }
+#wind-compass-gust {
+  color: transparent;
+  transition: stroke-dasharray 400ms var(--ease), color 300ms var(--ease);
+  opacity: 0.85;
+  filter: drop-shadow(0 0 3px currentColor);
+}
+#wind-compass-gust[data-level="low"] { color: #9ad1ff; opacity: 0.5; }
+#wind-compass-gust[data-level="moderate"] { color: #ffd08a; }
+#wind-compass-gust[data-level="high"] { color: #ff9c7a; }
+#wind-compass-gust[data-level="extreme"] { color: #ff6a97; }
 
 /* ---------- Sun countdown ---------- */
 .sun-countdown {
