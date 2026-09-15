@@ -577,8 +577,18 @@ html[data-reduce-motion="true"] *::after {
 }
 .scrubber-sunrise,
 .scrubber-sunset {
-  position: absolute; top: 0; bottom: 0; width: 2px;
-  pointer-events: none;
+  position: absolute; top: 0; bottom: 0; width: 10px;
+  transform: translateX(-4px);
+  pointer-events: auto;
+  cursor: pointer;
+  transition: filter 200ms var(--ease);
+  background-clip: content-box;
+  padding: 0 4px;
+  border-radius: 4px;
+}
+.scrubber-sunrise:hover,
+.scrubber-sunset:hover {
+  filter: brightness(1.5) drop-shadow(0 0 6px rgba(255, 208, 138, 0.55));
 }
 .scrubber-sunrise { background: linear-gradient(180deg, transparent, rgba(255, 210, 160, 0.8), transparent); }
 .scrubber-sunset { background: linear-gradient(180deg, transparent, rgba(255, 160, 120, 0.8), transparent); }

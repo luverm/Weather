@@ -38,7 +38,22 @@ export class Scrubber {
     this.sunset = sunset;
     this._placeMarker(this.sunriseEl, sunrise, "Sunrise");
     this._placeMarker(this.sunsetEl, sunset, "Sunset");
+    this._bindMarkerJump(this.sunriseEl, sunrise);
+    this._bindMarkerJump(this.sunsetEl, sunset);
     this._render(this._currentT());
+  }
+
+  _bindMarkerJump(el, ts) {
+    if (!el || !ts) return;
+    if (el._jumpBound) return;
+    el._jumpBound = true;
+    el.style.cursor = "pointer";
+    el.title = el.getAttribute("data-label") + " — jump here";
+    el.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const target = el === this.sunriseEl ? this.sunrise : this.sunset;
+      if (target) this._setOffset(target - this.start);
+    });
   }
 
   /** Called when we externally reset to "now" (e.g. search selected). */
