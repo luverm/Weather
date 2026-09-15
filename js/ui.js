@@ -23,6 +23,29 @@ function guessDefaultClock() {
   }
 }
 
+// Best-effort locale sniffing: US/LR/MM use Fahrenheit; US/UK use mph; the
+// US typically reports pressure in inHg. Everything else stays metric.
+function localeRegion() {
+  try {
+    const l = (navigator.language || "").toLowerCase();
+    const parts = l.split("-");
+    return (parts[1] || parts[0] || "").toUpperCase();
+  } catch { return ""; }
+}
+function guessDefaultTempUnit() {
+  const r = localeRegion();
+  return (r === "US" || r === "LR" || r === "MM") ? "F" : "C";
+}
+function guessDefaultWindUnit() {
+  const r = localeRegion();
+  if (r === "US" || r === "GB" || r === "UK") return "mph";
+  return "kmh";
+}
+function guessDefaultPressureUnit() {
+  const r = localeRegion();
+  return r === "US" ? "inhg" : "hpa";
+}
+
 const el = {
   temp: $("#temp-value"),
   unitBtn: $("#unit-toggle"),
@@ -149,10 +172,10 @@ const el = {
 };
 
 const state = {
-  unit: localStorage.getItem("aether:unit") || "C",
+  unit: localStorage.getItem("aether:unit") || guessDefaultTempUnit(),
   clock: localStorage.getItem("aether:clock") || (guessDefaultClock()),
-  windUnit: localStorage.getItem("aether:windUnit") || "kmh",
-  pressureUnit: localStorage.getItem("aether:pressureUnit") || "hpa",
+  windUnit: localStorage.getItem("aether:windUnit") || guessDefaultWindUnit(),
+  pressureUnit: localStorage.getItem("aether:pressureUnit") || guessDefaultPressureUnit(),
   weather: null,
   place: null,
   sampledWeather: null, // the weather values at the current scrubber time
