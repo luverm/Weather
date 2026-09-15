@@ -584,15 +584,35 @@ html[data-reduce-motion="true"] *::after {
 /* ---------- Daily expand ---------- */
 .daily-item { cursor: pointer; }
 .daily-item[data-expanded="true"] { background: var(--glass-strong); }
-.daily-expand {
+.daily-expand-wrap {
   grid-column: 1 / -1;
+  display: grid;
+  gap: 6px;
+  border-top: 1px solid var(--stroke);
+  margin-top: 6px;
+  padding-top: 8px;
+}
+.daily-expand-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  padding: 0 6px;
+  font-size: 11px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+}
+.daily-expand-meta span {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.daily-expand {
   padding: 10px 6px 4px;
   display: grid;
   grid-template-columns: repeat(12, 1fr);
   gap: 3px;
   align-items: end;
-  border-top: 1px solid var(--stroke);
-  margin-top: 4px;
 }
 .daily-expand-bar {
   position: relative;
