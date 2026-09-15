@@ -2049,8 +2049,14 @@ function renderPlaces() {
     const icon = p.condition
       ? `<span class="chip-icon" data-condition="${escapeHtml(p.condition)}">${iconFor(p.condition)}</span>`
       : "";
+    const tipParts = [
+      [p.name, p.admin1, p.country].filter(Boolean).join(", "),
+      p.temp != null ? `${Math.round(convertTemp(p.temp))}°${state.unit}` : null,
+      p.condition ? capitalize(p.condition) : null,
+    ].filter(Boolean);
+    const title = escapeHtml(tipParts.join(" · "));
     return `
-      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
+      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}" title="${title}">
         ${icon}
         <span class="chip-name">${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
