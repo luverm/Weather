@@ -373,6 +373,8 @@ html[data-reduce-motion="true"] *::after {
   background: var(--accent); box-shadow: 0 0 8px var(--accent);
   animation: pulse 2.4s ease-in-out infinite;
 }
+.live-dot[data-fresh="stale"] { background: #ffb86b; box-shadow: 0 0 8px rgba(255,184,107,0.7); animation-duration: 4s; }
+.live-dot[data-fresh="offline"] { background: #ff7a94; box-shadow: 0 0 8px rgba(255,122,148,0.7); animation-duration: 6s; }
 [data-scrubbing="true"] .live-dot { background: #ffb86b; box-shadow: 0 0 8px #ffb86b; animation: none; }
 .place-name {
   margin: 0;

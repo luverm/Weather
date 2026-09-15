@@ -258,6 +258,16 @@ export const ui = {
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
+    // Give the live-dot an immediate freshness cue instead of waiting for
+    // the 30-second fetched-ticker to catch up.
+    const dot = document.getElementById("place-live-dot");
+    if (dot) {
+      dot.dataset.fresh = weather.offline
+        ? "offline"
+        : Math.max(0, Date.now() - (weather.fetchedAt || Date.now())) >= 45 * 60_000
+          ? "stale"
+          : "live";
+    }
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
       places.updateSummary(state.place, {
@@ -2207,6 +2217,7 @@ function applyStoredPreferences() {
 ui.isReduceMotion = () => localStorage.getItem("aether:reduceMotion") === "1";
 
 function startFetchedTicker() {
+  const dot = document.getElementById("place-live-dot");
   const update = () => {
     if (!el.fetchedAgo || !state.weather?.fetchedAt) {
       if (el.fetchedAgo) el.fetchedAgo.textContent = "";
@@ -2220,6 +2231,12 @@ function startFetchedTicker() {
       `Updated ${Math.floor(minutes / 60)}h ago`;
     el.fetchedAgo.textContent = "· " + label;
     el.fetchedAgo.classList.toggle("stale", minutes >= 20);
+    if (dot) {
+      const freshness = state.weather?.offline ? "offline"
+        : minutes >= 45 ? "stale"
+        : "live";
+      dot.dataset.fresh = freshness;
+    }
   };
   update();
   setInterval(update, 30_000);
