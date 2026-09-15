@@ -181,6 +181,7 @@ export const ui = {
       getUnit: () => state.unit,
       getTimezone: () => state.weather?.timezone,
       getClock: () => state.clock,
+      getWindUnit: () => state.windUnit,
     });
     state.comfortStrip = new ComfortStrip({
       rootEl: el.comfortStrip,

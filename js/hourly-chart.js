@@ -18,7 +18,7 @@ function precipCategory(h) {
 }
 
 export class HourlyChart {
-  constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit, getTimezone, getClock }) {
+  constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit, getTimezone, getClock, getWindUnit }) {
     this.svg = svgEl;
     this.hoverEl = hoverEl;
     this.popover = popoverEl;
@@ -26,9 +26,18 @@ export class HourlyChart {
     this.getUnit = getUnit || (() => "C");
     this.getTimezone = getTimezone || (() => null);
     this.getClock = getClock || (() => "24h");
+    this.getWindUnit = getWindUnit || (() => "kmh");
     this.hours = [];
     this.points = [];
     this._bind();
+  }
+
+  _fmtWind(kmh) {
+    if (kmh == null) return null;
+    const u = this.getWindUnit();
+    if (u === "mph") return `${Math.round(kmh * 0.621371)} mph`;
+    if (u === "ms") return `${Math.round(kmh / 3.6)} m/s`;
+    return `${Math.round(kmh)} km/h`;
   }
 
   _formatHour(ts) {
@@ -154,7 +163,7 @@ export class HourlyChart {
       : null;
     const feelsStr = (feels != null && Math.abs(feels - t) >= 1)
       ? `<em>feels ${Math.round(feels)}°</em>` : "";
-    const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h` : "";
+    const wind = h.wind != null ? ` · ${this._fmtWind(h.wind)}` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
     this.popover.innerHTML =
       `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
