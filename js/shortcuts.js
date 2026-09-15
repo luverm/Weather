@@ -70,6 +70,7 @@ export function installShortcuts(handlers) {
     if (key === "[") { handlers.cyclePlace?.(-1); e.preventDefault(); return; }
     if (key === "]") { handlers.cyclePlace?.(1); e.preventDefault(); return; }
     if (key === "s" || key === "S") { e.preventDefault(); handlers.toggleStar?.(); return; }
+    if (key === "r" || key === "R") { e.preventDefault(); handlers.refresh?.(); return; }
   });
 }
 
