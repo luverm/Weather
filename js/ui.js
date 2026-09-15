@@ -1123,13 +1123,26 @@ function renderHourly(w) {
     const d = Math.abs(hours[i].time - now);
     if (d < bestDiff && d < 60 * 60_000) { bestDiff = d; nowIdx = i; }
   }
+  // Look for isDay transitions to mark sunrise / sunset boundaries.
+  const daynightBoundary = (i) => {
+    if (i === 0) return null;
+    const prev = hours[i - 1].isDay;
+    const curr = hours[i].isDay;
+    if (prev === curr) return null;
+    return curr ? "sunrise" : "sunset";
+  };
   hours.forEach((h, i) => {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
     if (i === nowIdx) item.dataset.now = "true";
+    if (!h.isDay) item.dataset.night = "true";
+    const boundary = daynightBoundary(i);
+    if (boundary) item.dataset.boundary = boundary;
     const label = i === nowIdx ? "Now" : fmtTime(h.time);
+    const boundaryGlyph = boundary === "sunrise" ? "☀" : boundary === "sunset" ? "☾" : "";
     item.innerHTML = `
+      ${boundary ? `<span class="forecast-boundary" title="${boundary}">${boundaryGlyph}</span>` : ""}
       <span class="forecast-time">${escapeHtml(label)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>

@@ -1639,6 +1639,20 @@ kbd {
   background: rgba(154, 209, 255, 0.10);
   outline: 1px solid rgba(154, 209, 255, 0.28);
 }
+.forecast-item[data-night="true"] { background: rgba(10, 14, 32, 0.35); }
+.forecast-item[data-night="true"]:hover { background: rgba(10, 14, 32, 0.55); }
+.forecast-item[data-boundary] { position: relative; }
+.forecast-boundary {
+  position: absolute;
+  top: 2px;
+  right: 3px;
+  font-size: 10px;
+  line-height: 1;
+  color: #ffd08a;
+  filter: drop-shadow(0 0 4px rgba(255, 208, 138, 0.5));
+  opacity: 0.9;
+}
+.forecast-item[data-boundary="sunset"] .forecast-boundary { color: #c8b4ff; filter: drop-shadow(0 0 4px rgba(200, 180, 255, 0.5)); }
 .forecast-item[data-now="true"] .forecast-time {
   color: #cfe4ff;
   font-weight: 600;
