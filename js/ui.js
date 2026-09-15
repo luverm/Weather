@@ -1345,7 +1345,7 @@ function renderDaily(w) {
     const rainDot = precipDotHtml(d.precip);
     item.innerHTML = `
       <span class="daily-day">${day}${extremeBadge}</span>
-      <span class="daily-icon">${iconFor(d.condition)}${rainDot}</span>
+      <span class="daily-icon" data-condition="${escapeHtml(d.condition || "")}">${iconFor(d.condition)}${rainDot}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
       </div>
@@ -1408,7 +1408,7 @@ function renderDailyIconStrip(days) {
     return [dayName, label, range].filter(Boolean).join(" · ");
   };
   el.dailyIconStrip.innerHTML = days.map((d, i) =>
-    `<span class="strip-day" data-day-index="${i}" title="${escapeHtml(titleFor(d, i))}">${iconFor(d.condition)}</span>`
+    `<span class="strip-day" data-day-index="${i}" data-condition="${escapeHtml(d.condition || "")}" title="${escapeHtml(titleFor(d, i))}">${iconFor(d.condition)}</span>`
   ).join("");
   // Cross-highlight the matching row in the day-by-day list on hover / focus.
   const items = el.dailyTrack?.querySelectorAll(".daily-item") || [];

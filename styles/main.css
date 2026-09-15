@@ -1700,8 +1700,15 @@ kbd {
   border-radius: 8px;
   opacity: 0.85;
   cursor: pointer;
-  transition: opacity 160ms var(--ease), transform 160ms var(--ease), background 160ms var(--ease);
+  color: var(--fg-muted);
+  transition: opacity 160ms var(--ease), transform 160ms var(--ease), background 160ms var(--ease), color 160ms var(--ease);
 }
+.daily-icon-strip .strip-day[data-condition="clear"] { color: #ffd08a; }
+.daily-icon-strip .strip-day[data-condition="clouds"] { color: #b5c6e0; }
+.daily-icon-strip .strip-day[data-condition="rain"] { color: #9ad1ff; }
+.daily-icon-strip .strip-day[data-condition="snow"] { color: #e6f0ff; }
+.daily-icon-strip .strip-day[data-condition="storm"] { color: #c8a4ff; }
+.daily-icon-strip .strip-day[data-condition="fog"] { color: #c0c8d4; }
 .daily-icon-strip .strip-day:hover,
 .daily-icon-strip .strip-day.cross-hover,
 .daily-icon-strip .strip-day:focus-visible {
@@ -1829,6 +1836,12 @@ kbd {
 .daily-extreme[data-kind="hot"] { color: #ff9c7a; background: rgba(255, 156, 122, 0.14); border-color: rgba(255, 156, 122, 0.32); }
 .daily-extreme[data-kind="cold"] { color: #9ad1ff; background: rgba(154, 209, 255, 0.14); border-color: rgba(154, 209, 255, 0.32); }
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; position: relative; }
+.daily-icon[data-condition="clear"] { color: #ffd08a; }
+.daily-icon[data-condition="clouds"] { color: #b5c6e0; }
+.daily-icon[data-condition="rain"] { color: #9ad1ff; }
+.daily-icon[data-condition="snow"] { color: #e6f0ff; }
+.daily-icon[data-condition="storm"] { color: #c8a4ff; }
+.daily-icon[data-condition="fog"] { color: #c0c8d4; }
 .daily-rain-dot {
   position: absolute;
   right: -3px;
