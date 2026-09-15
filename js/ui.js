@@ -669,8 +669,10 @@ function renderMetrics(w) {
     if (bft) {
       el.windBft.className = `trend ${bft.cls}`;
       el.windBft.textContent = bft.label;
+      el.windBft.title = bft.hint;
     } else {
       el.windBft.textContent = "";
+      el.windBft.removeAttribute("title");
     }
   }
   el.metricHumidity.textContent = Math.round(w.humidity ?? 0);
@@ -735,19 +737,23 @@ function humidityComfort(rh, dew, temp) {
 
 function beaufort(kmh) {
   if (kmh == null) return null;
-  if (kmh < 1) return { label: "Calm", cls: "down" };
-  if (kmh < 6) return { label: "Light air", cls: "down" };
-  if (kmh < 12) return { label: "Light breeze", cls: "down" };
-  if (kmh < 20) return { label: "Gentle", cls: "flat" };
-  if (kmh < 29) return { label: "Moderate", cls: "flat" };
-  if (kmh < 39) return { label: "Fresh", cls: "up" };
-  if (kmh < 50) return { label: "Strong", cls: "up" };
-  if (kmh < 62) return { label: "Near gale", cls: "up" };
-  if (kmh < 75) return { label: "Gale", cls: "up" };
-  if (kmh < 89) return { label: "Strong gale", cls: "up" };
-  if (kmh < 103) return { label: "Storm", cls: "up" };
-  if (kmh < 118) return { label: "Violent storm", cls: "up" };
-  return { label: "Hurricane", cls: "up" };
+  const b = beaufortRow(kmh);
+  return { ...b, hint: `Beaufort ${b.n} — ${b.effect}` };
+}
+function beaufortRow(kmh) {
+  if (kmh < 1) return { n: 0, label: "Calm", cls: "down", effect: "smoke rises vertically" };
+  if (kmh < 6) return { n: 1, label: "Light air", cls: "down", effect: "smoke drifts" };
+  if (kmh < 12) return { n: 2, label: "Light breeze", cls: "down", effect: "leaves rustle" };
+  if (kmh < 20) return { n: 3, label: "Gentle", cls: "flat", effect: "twigs move" };
+  if (kmh < 29) return { n: 4, label: "Moderate", cls: "flat", effect: "small branches move" };
+  if (kmh < 39) return { n: 5, label: "Fresh", cls: "up", effect: "small trees sway" };
+  if (kmh < 50) return { n: 6, label: "Strong", cls: "up", effect: "large branches move" };
+  if (kmh < 62) return { n: 7, label: "Near gale", cls: "up", effect: "whole trees sway" };
+  if (kmh < 75) return { n: 8, label: "Gale", cls: "up", effect: "twigs break off" };
+  if (kmh < 89) return { n: 9, label: "Strong gale", cls: "up", effect: "shingles fly" };
+  if (kmh < 103) return { n: 10, label: "Storm", cls: "up", effect: "trees uprooted" };
+  if (kmh < 118) return { n: 11, label: "Violent storm", cls: "up", effect: "widespread damage" };
+  return { n: 12, label: "Hurricane", cls: "up", effect: "devastation" };
 }
 
 function uvLevel(v) {
