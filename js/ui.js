@@ -1117,13 +1117,25 @@ function renderHourly(w) {
 function highlightHour(index) {
   const items = el.forecastTrack.querySelectorAll(".forecast-item");
   items.forEach((it, i) => it.classList.toggle("active", i === index));
+  // Keep the active hour scrolled into view when scrubbing beyond what's
+  // currently visible. Guard against index out of range.
+  const target = items[index];
+  if (!target) return;
+  const track = el.forecastTrack;
+  const trackRect = track.getBoundingClientRect();
+  const itemRect = target.getBoundingClientRect();
+  const margin = 24;
+  if (itemRect.right > trackRect.right - margin) {
+    track.scrollBy({ left: itemRect.right - trackRect.right + margin + 20, behavior: "smooth" });
+  } else if (itemRect.left < trackRect.left + margin) {
+    track.scrollBy({ left: itemRect.left - trackRect.left - margin - 20, behavior: "smooth" });
+  }
 }
 
 function renderDaily(w) {
   el.dailyTrack.innerHTML = "";
   const days = (w.daily || []).slice(0, 7);
   if (!days.length) return;
-  renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
   renderWeekRain(days);
@@ -1167,6 +1179,9 @@ function renderDaily(w) {
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+  // Wire the icon strip AFTER the daily items exist so cross-highlight
+  // handlers can find their targets.
+  renderDailyIconStrip(days);
 }
 
 function uvBadgeHtml(uvMax) {
@@ -1180,9 +1195,33 @@ function uvBadgeHtml(uvMax) {
 
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
-  el.dailyIconStrip.innerHTML = days.map((d) =>
-    `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
+  el.dailyIconStrip.innerHTML = days.map((d, i) =>
+    `<span class="strip-day" data-day-index="${i}" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
   ).join("");
+  // Cross-highlight the matching row in the day-by-day list on hover / focus.
+  const items = el.dailyTrack?.querySelectorAll(".daily-item") || [];
+  el.dailyIconStrip.querySelectorAll(".strip-day").forEach((chip) => {
+    chip.tabIndex = 0;
+    const idx = Number(chip.dataset.dayIndex);
+    const target = items[idx];
+    if (!target) return;
+    const enter = () => {
+      target.classList.add("cross-hover");
+      chip.classList.add("cross-hover");
+    };
+    const leave = () => {
+      target.classList.remove("cross-hover");
+      chip.classList.remove("cross-hover");
+    };
+    chip.addEventListener("mouseenter", enter);
+    chip.addEventListener("mouseleave", leave);
+    chip.addEventListener("focus", enter);
+    chip.addEventListener("blur", leave);
+    chip.addEventListener("click", () => {
+      target.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      target.click();
+    });
+  });
 }
 
 function renderDailySpark(days) {
