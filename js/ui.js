@@ -21,6 +21,8 @@ const el = {
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
+  feelsLikeText: $("#feels-like-text"),
+  feelsLikeChip: $("#feels-like-chip"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -277,8 +279,37 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  if (el.feelsLikeText) {
+    el.feelsLikeText.textContent = `Feels like ${Math.round(feels)}°`;
+  } else {
+    el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  }
+  renderFeelsLikeChip(w);
   renderDayRange(w);
+}
+
+function renderFeelsLikeChip(w) {
+  const chip = el.feelsLikeChip;
+  if (!chip) return;
+  const actual = w.temp;
+  const feels = w.feelsLike;
+  if (actual == null || feels == null) { chip.hidden = true; return; }
+  const deltaC = feels - actual;
+  // Convert to active display scale for magnitude.
+  const deltaDisp = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
+  const absDisp = Math.round(Math.abs(deltaDisp));
+  if (absDisp < 2) { chip.hidden = true; return; }
+  // Choose descriptor. Wind chill if actual is cool AND feels colder; heat
+  // index if actual is warm AND feels warmer. Otherwise just show delta.
+  let label = null, tone = "neutral";
+  if (deltaC <= -1.5 && actual <= 12) { label = "wind chill"; tone = "cold"; }
+  else if (deltaC >= 1.5 && actual >= 24) { label = "heat index"; tone = "hot"; }
+  else if (deltaC <= -1.5) { label = "cooler in the wind"; tone = "cold"; }
+  else if (deltaC >= 1.5) { label = "hotter than the air"; tone = "hot"; }
+  const sign = deltaDisp > 0 ? "+" : "−";
+  chip.textContent = `${label} ${sign}${absDisp}°`;
+  chip.dataset.tone = tone;
+  chip.hidden = false;
 }
 
 function renderDayRange(w) {
@@ -911,6 +942,7 @@ function renderDaily(w) {
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const uvBadge = uvBadgeHtml(d.uvMax);
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
@@ -919,11 +951,21 @@ function renderDaily(w) {
       </div>
       <span class="daily-temp-min">${Math.round(convertTemp(d.tempMin))}°</span>
       <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°</span>
+      ${uvBadge}
       ${extra}
     `;
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+}
+
+function uvBadgeHtml(uvMax) {
+  if (uvMax == null || uvMax < 6) return "";
+  let level = "high", label = "UV high";
+  if (uvMax >= 11) { level = "extreme"; label = "UV extreme"; }
+  else if (uvMax >= 8) { level = "very-high"; label = "UV very high"; }
+  const uv = Math.round(uvMax);
+  return `<span class="daily-uv" data-level="${level}" title="${label} — index ${uv}">UV ${uv}</span>`;
 }
 
 function renderDailyIconStrip(days) {
