@@ -1427,10 +1427,22 @@ function peakGust24h(w) {
   return best;
 }
 
+function formatVisibility(meters) {
+  // Follow the wind unit: mph -> miles, m/s -> kilometers, km/h -> km.
+  if (state.windUnit === "mph") {
+    const miles = meters / 1609.344;
+    return miles >= 10
+      ? `vis ${Math.round(miles)} mi`
+      : `vis ${Math.round(miles * 10) / 10} mi`;
+  }
+  const km = meters / 1000;
+  return km >= 10
+    ? `vis ${Math.round(km)} km`
+    : `vis ${Math.round(km * 10) / 10} km`;
+}
+
 function pressureSubText(w) {
-  const visPart = w.visibility != null
-    ? `vis ${Math.round((w.visibility / 1000) * 10) / 10} km`
-    : null;
+  const visPart = w.visibility != null ? formatVisibility(w.visibility) : null;
   const trend = w.pressureTrend;
   let interp = null;
   if (trend) {
