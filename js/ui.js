@@ -38,6 +38,7 @@ const el = {
   feelsLikeText: $("#feels-like-text"),
   feelsLikeChip: $("#feels-like-chip"),
   nextHour: $("#next-hour"),
+  vsPlace: $("#vs-place"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -387,7 +388,28 @@ function renderLiveValues(w, { animate = true } = {}) {
   }
   renderFeelsLikeChip(w);
   renderNextHourChip(w);
+  renderVsPlaceChip(w);
   renderDayRange(w);
+}
+
+function renderVsPlaceChip(w) {
+  const chip = el.vsPlace;
+  if (!chip) return;
+  const all = places.all();
+  if (!state.place || w.temp == null || all.length < 2) { chip.hidden = true; return; }
+  const currentId = places.idFor(state.place);
+  const other = all.find((p) => places.idFor(p) !== currentId && p.temp != null);
+  if (!other) { chip.hidden = true; return; }
+  const deltaC = w.temp - other.temp;
+  const deltaDisp = Math.round(state.unit === "F" ? deltaC * 9 / 5 : deltaC);
+  const abs = Math.abs(deltaDisp);
+  if (abs < 1) {
+    chip.textContent = `Same as ${other.name}`;
+  } else {
+    const dir = deltaDisp > 0 ? "warmer than" : "cooler than";
+    chip.textContent = `${abs}° ${dir} ${other.name}`;
+  }
+  chip.hidden = false;
 }
 
 function renderNextHourChip(w) {

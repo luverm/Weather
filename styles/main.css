@@ -493,6 +493,14 @@ html[data-reduce-motion="true"] *::after {
   font-variant-numeric: tabular-nums;
 }
 .next-hour[hidden] { display: none; }
+.vs-place {
+  margin: 4px 0 0;
+  font-size: 11.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.vs-place[hidden] { display: none; }
 .feels-like-chip {
   display: inline-flex;
   align-items: center;
