@@ -18,13 +18,14 @@ function precipCategory(h) {
 }
 
 export class HourlyChart {
-  constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit, getTimezone }) {
+  constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit, getTimezone, getClock }) {
     this.svg = svgEl;
     this.hoverEl = hoverEl;
     this.popover = popoverEl;
     this.onHoverHour = onHoverHour;
     this.getUnit = getUnit || (() => "C");
     this.getTimezone = getTimezone || (() => null);
+    this.getClock = getClock || (() => "24h");
     this.hours = [];
     this.points = [];
     this._bind();
@@ -32,14 +33,21 @@ export class HourlyChart {
 
   _formatHour(ts) {
     const tz = this.getTimezone();
+    const h12 = this.getClock() === "12h";
     if (tz && tz !== "auto") {
       try {
         return new Intl.DateTimeFormat(undefined, {
-          timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
+          timeZone: tz,
+          hour: h12 ? "numeric" : "2-digit",
+          minute: "2-digit",
+          hour12: h12,
         }).format(new Date(ts));
       } catch { /* */ }
     }
     const d = new Date(ts);
+    if (h12) {
+      return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", hour12: true });
+    }
     return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
   }
 

@@ -13,6 +13,16 @@ import { weekendSnapshot } from "./weekend.js";
 
 const $ = (sel) => document.querySelector(sel);
 
+function guessDefaultClock() {
+  try {
+    // Sample the viewer's locale format; if it renders "AM/PM" default to 12h.
+    const sample = new Intl.DateTimeFormat(undefined, { hour: "numeric" }).format(new Date());
+    return /am|pm/i.test(sample) ? "12h" : "24h";
+  } catch {
+    return "24h";
+  }
+}
+
 const el = {
   temp: $("#temp-value"),
   unitBtn: $("#unit-toggle"),
@@ -89,6 +99,7 @@ const el = {
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
+  setting24h: $("#setting-24h"),
   settingClearPlaces: $("#setting-clear-places"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
@@ -127,6 +138,7 @@ const el = {
 
 const state = {
   unit: localStorage.getItem("aether:unit") || "C",
+  clock: localStorage.getItem("aether:clock") || (guessDefaultClock()),
   weather: null,
   place: null,
   sampledWeather: null, // the weather values at the current scrubber time
@@ -162,6 +174,7 @@ export const ui = {
       onHoverHour: (ts) => state.handlers.onHourClick?.(ts),
       getUnit: () => state.unit,
       getTimezone: () => state.weather?.timezone,
+      getClock: () => state.clock,
     });
     state.comfortStrip = new ComfortStrip({
       rootEl: el.comfortStrip,
@@ -607,14 +620,18 @@ function renderMoon(moon) {
 function fmtTime(ts) {
   if (!ts) return "—";
   const tz = state.weather?.timezone;
+  const h12 = state.clock === "12h";
   if (tz && tz !== "auto") {
     try {
       return new Intl.DateTimeFormat(undefined, {
-        timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
+        timeZone: tz, hour: h12 ? "numeric" : "2-digit", minute: "2-digit", hour12: h12,
       }).format(new Date(ts));
     } catch { /* fall through */ }
   }
   const d = new Date(ts);
+  if (h12) {
+    return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", hour12: true });
+  }
   const hh = d.getHours().toString().padStart(2, "0");
   const mm = d.getMinutes().toString().padStart(2, "0");
   return `${hh}:${mm}`;
@@ -821,20 +838,26 @@ function startLocaltime(w) {
   const shiftLabel = formatTimezoneShift(tzShift);
   const update = () => {
     try {
+      const h12 = state.clock === "12h";
       const parts = new Intl.DateTimeFormat([], {
-        timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
+        timeZone: tz,
+        hour: h12 ? "numeric" : "2-digit",
+        minute: "2-digit",
+        hour12: h12,
         weekday: "short", timeZoneName: "short",
       }).formatToParts(new Date());
       const day = parts.find((p) => p.type === "weekday")?.value ?? "";
       const hour = parts.find((p) => p.type === "hour")?.value ?? "";
       const minute = parts.find((p) => p.type === "minute")?.value ?? "";
+      const dayPeriod = parts.find((p) => p.type === "dayPeriod")?.value ?? "";
       const tzName = parts.find((p) => p.type === "timeZoneName")?.value ?? "";
       const shiftHtml = shiftLabel
         ? ` <span class="tz-shift" title="Local offset from your device">${escapeHtml(shiftLabel)}</span>`
         : "";
+      const timeStr = `${escapeHtml(hour)}:${escapeHtml(minute)}${dayPeriod ? " " + escapeHtml(dayPeriod) : ""}`;
       el.placeLocaltime.innerHTML =
         `<span class="clock-dot" aria-hidden="true"></span>` +
-        `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>${shiftHtml}`;
+        `${escapeHtml(day)} ${timeStr} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>${shiftHtml}`;
     } catch {
       el.placeLocaltime.textContent = "";
     }
@@ -1793,6 +1816,12 @@ function bindSettings() {
     }
   });
 
+  el.setting24h?.addEventListener("change", () => {
+    state.clock = el.setting24h.checked ? "24h" : "12h";
+    localStorage.setItem("aether:clock", state.clock);
+    if (state.weather) ui.setWeather(state.weather);
+  });
+
   el.settingClearPlaces?.addEventListener("click", () => {
     if (!confirm("Clear all saved places?")) return;
     for (const p of places.all()) places.remove(p);
@@ -1811,6 +1840,7 @@ function applyStoredPreferences() {
     queueMicrotask(() => state.handlers.onReduceMotion?.(true));
   }
   if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
+  if (el.setting24h) el.setting24h.checked = state.clock === "24h";
 }
 
 // Exposed so app.js can query the current preference on boot.
