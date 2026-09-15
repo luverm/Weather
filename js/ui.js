@@ -2338,6 +2338,7 @@ function applyStoredPreferences() {
 // Exposed so app.js can query the current preference on boot.
 ui.isReduceMotion = () => lsGet("aether:reduceMotion") === "1";
 
+const AUTO_REFRESH_MIN = 15;
 function startFetchedTicker() {
   const dot = document.getElementById("place-live-dot");
   const update = () => {
@@ -2347,13 +2348,17 @@ function startFetchedTicker() {
     }
     const ms = Date.now() - state.weather.fetchedAt;
     const minutes = Math.max(0, Math.floor(ms / 60_000));
+    const nextIn = Math.max(0, AUTO_REFRESH_MIN - minutes);
     const label =
       minutes < 1 ? "Just now" :
       minutes < 60 ? `Updated ${minutes}m ago` :
       `Updated ${Math.floor(minutes / 60)}h ago`;
-    el.fetchedAgo.textContent = "· " + label;
+    const nextHint = minutes < AUTO_REFRESH_MIN - 1
+      ? ` · next in ${nextIn}m`
+      : "";
+    el.fetchedAgo.textContent = "· " + label + nextHint;
     el.fetchedAgo.classList.toggle("stale", minutes >= 20);
-    el.fetchedAgo.title = new Date(state.weather.fetchedAt).toLocaleString();
+    el.fetchedAgo.title = `Last fetched: ${new Date(state.weather.fetchedAt).toLocaleString()}`;
     if (dot) {
       const freshness = state.weather?.offline ? "offline"
         : minutes >= 45 ? "stale"
