@@ -189,6 +189,7 @@ export const ui = {
       rootEl: el.comfortStrip,
       onCellClick: (ts) => state.handlers.onHourClick?.(ts),
       getUnit: () => state.unit,
+      getClock: () => state.clock,
     });
     bindInstallPrompt();
   },

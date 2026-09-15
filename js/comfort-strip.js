@@ -2,11 +2,21 @@
 // with a rain-probability overlay. Each cell is clickable to scrub.
 
 export class ComfortStrip {
-  constructor({ rootEl, onCellClick, getUnit }) {
+  constructor({ rootEl, onCellClick, getUnit, getClock }) {
     this.root = rootEl;
     this.onCellClick = onCellClick;
     this.getUnit = getUnit || (() => "C");
+    this.getClock = getClock || (() => "24h");
     this.hours = [];
+  }
+
+  _fmtHourLabel(hour) {
+    if (this.getClock() === "12h") {
+      const h = hour % 12 || 12;
+      const period = hour < 12 ? "a" : "p";
+      return `${h}${period}`;
+    }
+    return `${hour.toString().padStart(2, "0")}:00`;
   }
 
   setHours(hours) {
@@ -36,10 +46,11 @@ export class ComfortStrip {
       const display = t == null ? "—" : Math.round(unit === "F" ? t * 9 / 5 + 32 : t) + "°";
       const tickHour = new Date(h.time).getHours();
       const showTick = tickHour % 6 === 0;
-      const tickLabel = showTick ? `${tickHour.toString().padStart(2, "0")}:00` : "";
+      const tickLabel = showTick ? this._fmtHourLabel(tickHour) : "";
+      const tooltipHour = this._fmtHourLabel(tickHour);
       return `
         <button class="cstrip-cell" data-i="${i}" data-ts="${h.time}"
-                title="${tickHour}:00 · ${display} feels · ${h.pop ?? 0}% rain"
+                title="${tooltipHour} · ${display} feels · ${h.pop ?? 0}% rain"
                 style="--c:${color}">
           <span class="cstrip-bar" style="--rain:${rainOpacity}"></span>
           ${showTick ? `<span class="cstrip-tick">${tickLabel}</span>` : ""}
