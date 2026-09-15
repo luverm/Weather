@@ -1687,6 +1687,24 @@ kbd {
   opacity: 0.9;
 }
 .forecast-pop.dim { opacity: 0; }
+.forecast-pop-bar {
+  display: block;
+  width: 4px;
+  height: 18px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.05);
+  overflow: hidden;
+  position: relative;
+}
+.forecast-pop-fill {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  border-radius: 2px;
+  transition: height 200ms var(--ease), background 200ms var(--ease);
+}
+.forecast-pop-fill[data-precip="light"]    { background: rgba(154, 209, 255, 0.55); }
+.forecast-pop-fill[data-precip="moderate"] { background: rgba(96, 170, 255, 0.85); }
+.forecast-pop-fill[data-precip="heavy"]    { background: rgba(180, 120, 255, 0.9); }
 
 .daily-track {
   display: grid;

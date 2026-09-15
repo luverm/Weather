@@ -1186,12 +1186,18 @@ function renderHourly(w) {
     if (boundary) item.dataset.boundary = boundary;
     const label = i === nowIdx ? "Now" : fmtTime(h.time);
     const boundaryGlyph = boundary === "sunrise" ? "☀" : boundary === "sunset" ? "☾" : "";
+    const popLevel = h.precip >= 4 ? "heavy" : h.precip >= 1 ? "moderate" : "light";
+    const popPct = Math.max(0, Math.min(100, h.pop || 0));
+    const showBar = popPct >= 5;
     item.innerHTML = `
       ${boundary ? `<span class="forecast-boundary" title="${boundary}">${boundaryGlyph}</span>` : ""}
       <span class="forecast-time">${escapeHtml(label)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
+      <span class="forecast-pop-bar" aria-hidden="true">
+        ${showBar ? `<span class="forecast-pop-fill" data-precip="${popLevel}" style="height:${popPct}%"></span>` : ""}
+      </span>
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
