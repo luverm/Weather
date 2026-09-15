@@ -2197,12 +2197,19 @@ function bindSearch() {
 }
 
 function bindUnitToggle() {
-  el.unitBtn.addEventListener("click", () => {
+  const flip = () => {
     state.unit = state.unit === "C" ? "F" : "C";
     lsSet("aether:unit", state.unit);
     el.unitBtn.textContent = `°${state.unit}`;
     if (state.weather) ui.setWeather(state.weather);
-  });
+  };
+  el.unitBtn.addEventListener("click", flip);
+  // Also let the big temperature number itself toggle the unit.
+  if (el.temp) {
+    el.temp.style.cursor = "pointer";
+    el.temp.title = "Click to toggle °C / °F";
+    el.temp.addEventListener("click", flip);
+  }
 }
 
 function bindLocate() {
