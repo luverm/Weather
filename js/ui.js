@@ -2346,6 +2346,7 @@ function startFetchedTicker() {
       `Updated ${Math.floor(minutes / 60)}h ago`;
     el.fetchedAgo.textContent = "· " + label;
     el.fetchedAgo.classList.toggle("stale", minutes >= 20);
+    el.fetchedAgo.title = new Date(state.weather.fetchedAt).toLocaleString();
     if (dot) {
       const freshness = state.weather?.offline ? "offline"
         : minutes >= 45 ? "stale"
