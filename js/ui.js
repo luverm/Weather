@@ -677,6 +677,8 @@ function startLocaltime(w) {
     el.placeLocaltime.textContent = "";
     return;
   }
+  const tzShift = timezoneShiftHours(tz);
+  const shiftLabel = formatTimezoneShift(tzShift);
   const update = () => {
     try {
       const parts = new Intl.DateTimeFormat([], {
@@ -687,15 +689,61 @@ function startLocaltime(w) {
       const hour = parts.find((p) => p.type === "hour")?.value ?? "";
       const minute = parts.find((p) => p.type === "minute")?.value ?? "";
       const tzName = parts.find((p) => p.type === "timeZoneName")?.value ?? "";
+      const shiftHtml = shiftLabel
+        ? ` <span class="tz-shift" title="Local offset from your device">${escapeHtml(shiftLabel)}</span>`
+        : "";
       el.placeLocaltime.innerHTML =
         `<span class="clock-dot" aria-hidden="true"></span>` +
-        `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>`;
+        `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>${shiftHtml}`;
     } catch {
       el.placeLocaltime.textContent = "";
     }
   };
   update();
   state.localTimer = setInterval(update, 10_000);
+}
+
+function timezoneShiftHours(tz) {
+  try {
+    const now = new Date();
+    // UTC offset of the target tz, in minutes east of UTC.
+    const targetOffset = utcOffsetMinutes(now, tz);
+    // UTC offset of the viewer's local tz.
+    const localOffset = -now.getTimezoneOffset();
+    const deltaMin = targetOffset - localOffset;
+    // Snap to nearest quarter hour.
+    return Math.round(deltaMin / 15) * 0.25;
+  } catch {
+    return 0;
+  }
+}
+
+function utcOffsetMinutes(date, tz) {
+  // Ask Intl for the wall clock in `tz`, treat those numbers as if they were
+  // UTC, then diff against the true instant.
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz,
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+  }).formatToParts(date);
+  const pick = (t) => parts.find((p) => p.type === t)?.value;
+  const y = Number(pick("year"));
+  const mo = Number(pick("month"));
+  const d = Number(pick("day"));
+  const h = Number(pick("hour")) % 24;
+  const mi = Number(pick("minute"));
+  const s = Number(pick("second"));
+  const asUtcMs = Date.UTC(y, mo - 1, d, h, mi, s);
+  return Math.round((asUtcMs - date.getTime()) / 60_000);
+}
+
+function formatTimezoneShift(hours) {
+  if (Math.abs(hours) < 0.4) return null;
+  const abs = Math.abs(hours);
+  const whole = Math.floor(abs);
+  const frac = Math.round((abs - whole) * 60);
+  const label = frac ? `${whole}h ${frac}m` : `${whole}h`;
+  return hours > 0 ? `${label} ahead` : `${label} behind`;
 }
 
 function renderInsights(w) {
