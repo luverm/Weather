@@ -105,6 +105,7 @@ const el = {
   settingUnitF: $("#setting-unit-f"),
   setting24h: $("#setting-24h"),
   settingWindUnit: $("#setting-wind-unit"),
+  settingPressureUnit: $("#setting-pressure-unit"),
   settingClearPlaces: $("#setting-clear-places"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
@@ -145,6 +146,7 @@ const state = {
   unit: localStorage.getItem("aether:unit") || "C",
   clock: localStorage.getItem("aether:clock") || (guessDefaultClock()),
   windUnit: localStorage.getItem("aether:windUnit") || "kmh",
+  pressureUnit: localStorage.getItem("aether:pressureUnit") || "hpa",
   weather: null,
   place: null,
   sampledWeather: null, // the weather values at the current scrubber time
@@ -333,6 +335,23 @@ function fmtWind(kmh, { withUnit = true } = {}) {
   return withUnit ? `${Math.round(v)} ${windUnitLabel()}` : String(Math.round(v));
 }
 
+function convertPressure(hPa) {
+  if (hPa == null) return null;
+  if (state.pressureUnit === "inhg") return hPa * 0.02953;
+  if (state.pressureUnit === "mmhg") return hPa * 0.750062;
+  return hPa;
+}
+function pressureUnitLabel() {
+  if (state.pressureUnit === "inhg") return "inHg";
+  if (state.pressureUnit === "mmhg") return "mmHg";
+  return "hPa";
+}
+function fmtPressure(hPa) {
+  if (hPa == null) return "—";
+  const v = convertPressure(hPa);
+  return state.pressureUnit === "inhg" ? v.toFixed(2) : String(Math.round(v));
+}
+
 function renderLiveValues(w, { animate = true } = {}) {
   const temp = convertTemp(w.temp);
   const feels = convertTemp(w.feelsLike ?? w.temp);
@@ -466,7 +485,9 @@ function renderMetrics(w) {
       el.humidityComfort.textContent = "";
     }
   }
-  el.metricPressure.textContent = Math.round(w.pressure ?? 0);
+  el.metricPressure.textContent = fmtPressure(w.pressure);
+  const pressureUnitEl = document.querySelector('.metric-pressure .metric-unit');
+  if (pressureUnitEl) pressureUnitEl.textContent = pressureUnitLabel();
   el.metricPressureSub.textContent = pressureSubText(w);
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
@@ -1975,6 +1996,15 @@ function bindSettings() {
     }
   });
 
+  el.settingPressureUnit?.addEventListener("change", () => {
+    const v = el.settingPressureUnit.value;
+    if (["hpa", "inhg", "mmhg"].includes(v)) {
+      state.pressureUnit = v;
+      localStorage.setItem("aether:pressureUnit", v);
+      if (state.weather) ui.setWeather(state.weather);
+    }
+  });
+
   el.settingClearPlaces?.addEventListener("click", () => {
     if (!confirm("Clear all saved places?")) return;
     for (const p of places.all()) places.remove(p);
@@ -1995,6 +2025,7 @@ function applyStoredPreferences() {
   if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
   if (el.setting24h) el.setting24h.checked = state.clock === "24h";
   if (el.settingWindUnit) el.settingWindUnit.value = state.windUnit;
+  if (el.settingPressureUnit) el.settingPressureUnit.value = state.pressureUnit;
 }
 
 // Exposed so app.js can query the current preference on boot.
