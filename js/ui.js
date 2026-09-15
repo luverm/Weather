@@ -100,6 +100,8 @@ const el = {
   sunArcUv: $("#sun-arc-uv"),
   sunArcUvDot: $("#sun-arc-uv-dot"),
   sunArcUvLabel: $("#sun-arc-uv-label"),
+  goldenHour: $("#golden-hour"),
+  goldenHourText: $("#golden-hour-text"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -133,6 +135,7 @@ const state = {
   sunTimer: null,
   sunArcTimer: null,
   localTimer: null,
+  goldenTimer: null,
 };
 
 export const ui = {
@@ -574,8 +577,54 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   renderDaylightDelta(w);
   renderSunArcUv(w);
+  renderGoldenHour(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderGoldenHour(w) {
+  if (!el.goldenHour || !el.goldenHourText) return;
+  if (state.goldenTimer) { clearInterval(state.goldenTimer); state.goldenTimer = null; }
+  if (!w?.sunrise || !w?.sunset) { el.goldenHour.hidden = true; return; }
+  const tz = w.timezone;
+  const fmt = (ts) => new Date(ts).toLocaleTimeString(undefined, {
+    hour: "2-digit", minute: "2-digit",
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  const HOUR = 60 * 60_000;
+  const morningStart = w.sunrise;
+  const morningEnd = w.sunrise + HOUR;
+  const eveningStart = w.sunset - HOUR;
+  const eveningEnd = w.sunset;
+  const update = () => {
+    const now = Date.now();
+    let text = null, tone = "future";
+    if (now >= morningStart && now < morningEnd) {
+      const remain = Math.max(1, Math.round((morningEnd - now) / 60_000));
+      text = `Golden hour — ends in ${remain}m`;
+      tone = "active";
+    } else if (now >= eveningStart && now < eveningEnd) {
+      const remain = Math.max(1, Math.round((eveningEnd - now) / 60_000));
+      text = `Golden hour — ${remain}m to sunset`;
+      tone = "active";
+    } else if (now < morningStart) {
+      text = `Golden hours: ${fmt(morningStart)}–${fmt(morningEnd)} · ${fmt(eveningStart)}–${fmt(eveningEnd)}`;
+    } else if (now < eveningStart) {
+      text = `Evening golden hour ${fmt(eveningStart)}–${fmt(eveningEnd)}`;
+    } else {
+      // After sunset — show tomorrow's morning golden hour if we have it.
+      const tmrw = w.daily?.[1];
+      if (tmrw?.sunrise) {
+        text = `Tomorrow: golden hours ${fmt(tmrw.sunrise)}–${fmt(tmrw.sunrise + HOUR)}`;
+      }
+    }
+    if (!text) { el.goldenHour.hidden = true; return; }
+    el.goldenHourText.textContent = text;
+    el.goldenHour.dataset.tone = tone;
+    el.goldenHour.hidden = false;
+  };
+  update();
+  state.goldenTimer = setInterval(update, 60_000);
 }
 
 function renderSunArcUv(w) {
