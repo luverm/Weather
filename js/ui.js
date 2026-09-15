@@ -2152,13 +2152,25 @@ function bindShare() {
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
     ].filter(Boolean);
+    // Build a shareable deep-link so the recipient opens the same place.
+    let url = null;
+    if (state.place?.lat != null && state.place?.lon != null) {
+      const u = new URL(window.location.href);
+      u.search = "";
+      u.searchParams.set("lat", state.place.lat.toFixed(4));
+      u.searchParams.set("lon", state.place.lon.toFixed(4));
+      if (state.place.name) u.searchParams.set("name", state.place.name);
+      if (state.place.country) u.searchParams.set("country", state.place.country);
+      url = u.toString();
+    }
     const text = lines.join("\n");
     try {
       if (navigator.share) {
-        await navigator.share({ title: `Aether — ${placeName}`, text });
+        await navigator.share({ title: `Aether — ${placeName}`, text, ...(url ? { url } : {}) });
       } else {
-        await navigator.clipboard.writeText(text);
-        ui.showToast("Summary copied to clipboard");
+        const clipboard = url ? `${text}\n${url}` : text;
+        await navigator.clipboard.writeText(clipboard);
+        ui.showToast(url ? "Summary + link copied" : "Summary copied to clipboard");
       }
       el.shareBtn.classList.add("just-copied");
       setTimeout(() => el.shareBtn.classList.remove("just-copied"), 600);

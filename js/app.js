@@ -306,7 +306,31 @@ installShortcuts({
 });
 
 // ---------- Start ----------
+function placeFromUrl() {
+  try {
+    const p = new URL(window.location.href).searchParams;
+    const lat = parseFloat(p.get("lat"));
+    const lon = parseFloat(p.get("lon"));
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+    if (lat < -90 || lat > 90 || lon < -180 || lon > 180) return null;
+    return {
+      name: p.get("name") || "Shared location",
+      country: p.get("country") || null,
+      admin1: p.get("admin1") || null,
+      lat, lon,
+    };
+  } catch {
+    return null;
+  }
+}
 (async function init() {
+  // Deep link wins: /?lat=51.5&lon=-0.12&name=London opens that place
+  // directly, skipping geolocation and the last saved city.
+  const linked = placeFromUrl();
+  if (linked) {
+    await loadByCoords(linked);
+    return;
+  }
   // Prefer the most recent saved place if we have one — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();
