@@ -1682,11 +1682,21 @@ function renderNowcastImminent(w, nowcast, first) {
   const inMin = Math.max(0, Math.round((first.time - now) / 60_000));
   const kind = first.code >= 71 && first.code <= 86 ? "Snow" : "Rain";
   el.nowcast.dataset.mode = "imminent";
-  el.nowcastHeadline.textContent = inMin === 0
+  el.nowcastHeadline.textContent = inMin <= 5
     ? `${kind} now`
     : `${kind} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
   const totalMm = nowcast.reduce((s, n) => s + (n.precip || 0), 0);
-  el.nowcastSub.textContent = `${totalMm.toFixed(1)} mm expected in the next 2 hours`;
+  // When it's already raining, look ahead through the 15-min buckets +
+  // hourly forecast for the first dry stretch and surface that instead of
+  // the plain 2-hour total.
+  if (inMin <= 5) {
+    const endSuffix = predictClearingSuffix(w, nowcast);
+    el.nowcastSub.textContent = endSuffix
+      ? `${totalMm.toFixed(1)} mm ahead · ${endSuffix}`
+      : `${totalMm.toFixed(1)} mm expected in the next 2 hours`;
+  } else {
+    el.nowcastSub.textContent = `${totalMm.toFixed(1)} mm expected in the next 2 hours`;
+  }
   el.nowcastBars.hidden = false;
   el.nowcastBars.innerHTML = "";
   const slice = nowcast.slice(0, 8);
@@ -1703,6 +1713,25 @@ function renderNowcastImminent(w, nowcast, first) {
     el.nowcastBars.appendChild(bar);
   });
   el.nowcast.hidden = false;
+}
+
+function predictClearingSuffix(w, nowcast) {
+  const now = Date.now();
+  // First 15-min bucket after the current one with essentially no precip.
+  const firstDryNowcast = nowcast.find((n) => n.time > now && (n.precip || 0) < 0.1);
+  if (firstDryNowcast) {
+    const mins = Math.max(1, Math.round((firstDryNowcast.time - now) / 60_000));
+    if (mins <= 90) return `clears in ~${mins} min`;
+  }
+  // If the 2-hour nowcast is fully wet, fall back to the hourly forecast.
+  const hourly = (w.hourly || []).filter((h) => h.time > now);
+  const firstDryHour = hourly.find((h) => (h.precip ?? 0) < 0.2 && (h.pop ?? 0) < 30);
+  if (firstDryHour) {
+    const mins = Math.max(1, Math.round((firstDryHour.time - now) / 60_000));
+    if (mins < 60) return `easing in ~${mins} min`;
+    return `easing around ${fmtTime(firstDryHour.time)}`;
+  }
+  return "no clear break in the next 24h";
 }
 
 function renderNowcastOutlook(w) {
