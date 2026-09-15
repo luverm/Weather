@@ -103,6 +103,7 @@ const el = {
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
   setting24h: $("#setting-24h"),
+  settingWindUnit: $("#setting-wind-unit"),
   settingClearPlaces: $("#setting-clear-places"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
@@ -142,6 +143,7 @@ const el = {
 const state = {
   unit: localStorage.getItem("aether:unit") || "C",
   clock: localStorage.getItem("aether:clock") || (guessDefaultClock()),
+  windUnit: localStorage.getItem("aether:windUnit") || "kmh",
   weather: null,
   place: null,
   sampledWeather: null, // the weather values at the current scrubber time
@@ -312,6 +314,23 @@ function animateNumber(node, target, format) {
 
 function capitalize(s) { return (s || "").charAt(0).toUpperCase() + (s || "").slice(1); }
 
+function convertWind(kmh) {
+  if (kmh == null) return null;
+  if (state.windUnit === "mph") return kmh * 0.621371;
+  if (state.windUnit === "ms") return kmh / 3.6;
+  return kmh;
+}
+function windUnitLabel() {
+  if (state.windUnit === "mph") return "mph";
+  if (state.windUnit === "ms") return "m/s";
+  return "km/h";
+}
+function fmtWind(kmh, { withUnit = true } = {}) {
+  if (kmh == null) return "—";
+  const v = convertWind(kmh);
+  return withUnit ? `${Math.round(v)} ${windUnitLabel()}` : String(Math.round(v));
+}
+
 function renderLiveValues(w, { animate = true } = {}) {
   const temp = convertTemp(w.temp);
   const feels = convertTemp(w.feelsLike ?? w.temp);
@@ -393,7 +412,9 @@ function renderDayRange(w) {
 }
 
 function renderMetrics(w) {
-  el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
+  el.metricWind.textContent = w.windSpeed != null ? Math.round(convertWind(w.windSpeed)) : "—";
+  const windUnitEl = document.querySelector('.metric-wind .metric-unit');
+  if (windUnitEl) windUnitEl.textContent = windUnitLabel();
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
   const gustNow = w.windGusts;
@@ -402,10 +423,10 @@ function renderMetrics(w) {
   // gusts (at least 20% higher and >= 5 km/h delta) and is >= 25 km/h.
   const showPeak = peak && peak.value >= 25
     && (gustNow == null || peak.value >= gustNow * 1.2 || peak.value - gustNow >= 5);
-  const gustStr = gustNow != null ? `${Math.round(gustNow)} km/h` : "—";
+  const gustStr = fmtWind(gustNow);
   let sub;
   if (showPeak) {
-    const peakStr = `${Math.round(peak.value)} km/h at ${fmtTime(peak.time)}`;
+    const peakStr = `${fmtWind(peak.value)} at ${fmtTime(peak.time)}`;
     sub = dirLabel
       ? `${dirLabel} · gust ${gustStr} · peak ${peakStr}`
       : `gust ${gustStr} · peak ${peakStr}`;
@@ -1275,7 +1296,7 @@ function renderDaily(w) {
     item.className = "daily-item";
     item.dataset.ts = d.time;
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
-      ? ` · gusts ${Math.round(d.gustsMax)} km/h`
+      ? ` · gusts ${fmtWind(d.gustsMax)}`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
@@ -1573,7 +1594,7 @@ function buildDailyExpandMeta(d, hrs, w) {
       ? `UV max ${Math.round(d.uvMax)}`
       : null;
   const gustNote = d.gustsMax != null && d.gustsMax >= 15
-    ? `Gusts up to ${Math.round(d.gustsMax)} km/h`
+    ? `Gusts up to ${fmtWind(d.gustsMax)}`
     : null;
   const parts = [
     d.sunrise ? `Rises ${fmt(d.sunrise)}` : null,
@@ -1932,6 +1953,15 @@ function bindSettings() {
     if (state.weather) ui.setWeather(state.weather);
   });
 
+  el.settingWindUnit?.addEventListener("change", () => {
+    const v = el.settingWindUnit.value;
+    if (["kmh", "mph", "ms"].includes(v)) {
+      state.windUnit = v;
+      localStorage.setItem("aether:windUnit", v);
+      if (state.weather) ui.setWeather(state.weather);
+    }
+  });
+
   el.settingClearPlaces?.addEventListener("click", () => {
     if (!confirm("Clear all saved places?")) return;
     for (const p of places.all()) places.remove(p);
@@ -1951,6 +1981,7 @@ function applyStoredPreferences() {
   }
   if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
   if (el.setting24h) el.setting24h.checked = state.clock === "24h";
+  if (el.settingWindUnit) el.settingWindUnit.value = state.windUnit;
 }
 
 // Exposed so app.js can query the current preference on boot.
@@ -1988,7 +2019,7 @@ function bindShare() {
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
       today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
-      `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
+      `Wind ${fmtWind(w.windSpeed)}${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
     ].filter(Boolean);
