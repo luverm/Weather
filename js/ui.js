@@ -90,6 +90,7 @@ const el = {
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
   weekRain: $("#week-rain"),
+  weekUv: $("#week-uv"),
   weeklyTrend: $("#weekly-trend"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
@@ -1229,6 +1230,7 @@ function renderDaily(w) {
   renderDailySpark(days);
   renderDailyDelta(days);
   renderWeekRain(days);
+  renderWeekUv(days);
   renderWeeklyTrend(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
@@ -1419,6 +1421,28 @@ function renderWeeklyTrend(days) {
   if (!phrase) { el2.hidden = true; return; }
   el2.textContent = phrase;
   el2.hidden = false;
+}
+
+function renderWeekUv(days) {
+  const chip = el.weekUv;
+  if (!chip) return;
+  // Find the day (idx > 0 preferred to look "ahead") with the highest uvMax.
+  let peakI = -1;
+  for (let i = 0; i < days.length; i++) {
+    if (days[i].uvMax == null) continue;
+    if (peakI < 0 || days[i].uvMax > days[peakI].uvMax) peakI = i;
+  }
+  if (peakI < 0 || days[peakI].uvMax < 6) { chip.hidden = true; return; }
+  const d = days[peakI];
+  const tz = state.weather?.timezone;
+  const dayLabel = peakI === 0 ? "today" : new Date(d.time).toLocaleDateString(undefined, {
+    weekday: "short",
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  const level = d.uvMax >= 11 ? "extreme" : d.uvMax >= 8 ? "very-high" : "high";
+  chip.textContent = `UV ${Math.round(d.uvMax)} ${dayLabel}`;
+  chip.dataset.level = level;
+  chip.hidden = false;
 }
 
 function renderWeekRain(days) {
