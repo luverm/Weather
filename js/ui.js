@@ -37,6 +37,7 @@ const el = {
   feelsLike: $("#feels-like"),
   feelsLikeText: $("#feels-like-text"),
   feelsLikeChip: $("#feels-like-chip"),
+  outdoorScore: $("#outdoor-score"),
   nextHour: $("#next-hour"),
   vsPlace: $("#vs-place"),
   narrative: $("#narrative"),
@@ -387,9 +388,66 @@ function renderLiveValues(w, { animate = true } = {}) {
     el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   }
   renderFeelsLikeChip(w);
+  renderOutdoorScore(w);
   renderNextHourChip(w);
   renderVsPlaceChip(w);
   renderDayRange(w);
+}
+
+function outdoorScore(w) {
+  if (!w) return null;
+  const t = w.feelsLike ?? w.temp;
+  if (t == null) return null;
+  // Temperature comfort curve: peaks 18-22°C.
+  const tempComfort = t < -10 ? 0
+    : t < 0 ? 20
+    : t < 10 ? 50
+    : t < 15 ? 75
+    : t <= 22 ? 100
+    : t <= 27 ? 85
+    : t <= 32 ? 60
+    : t <= 38 ? 30
+    : 5;
+  // Wind penalty.
+  const wind = w.windSpeed ?? 0;
+  const windPen = wind > 60 ? 55
+    : wind > 45 ? 35
+    : wind > 30 ? 18
+    : wind > 20 ? 8
+    : 0;
+  // Rain/storm penalty via current condition + next-hour pop.
+  const condPen = w.condition === "storm" ? 55
+    : w.condition === "rain" ? 35
+    : w.condition === "snow" ? 25
+    : w.condition === "fog" ? 15
+    : 0;
+  // UV penalty: 8+ starts to bite.
+  const uv = w.uv ?? 0;
+  const uvPen = uv >= 11 ? 20 : uv >= 8 ? 10 : uv >= 6 ? 4 : 0;
+  const score = Math.max(0, Math.min(100, tempComfort - windPen - condPen - uvPen));
+  return Math.round(score);
+}
+
+function renderOutdoorScore(w) {
+  const chip = el.outdoorScore;
+  if (!chip) return;
+  const score = outdoorScore(w);
+  if (score == null) { chip.hidden = true; return; }
+  const level = score >= 80 ? "great"
+    : score >= 60 ? "good"
+    : score >= 40 ? "fair"
+    : score >= 20 ? "poor"
+    : "avoid";
+  chip.textContent = `Outside ${score}`;
+  chip.dataset.level = level;
+  chip.title = ({
+    great: "Great conditions to be outside",
+    good: "Good conditions",
+    fair: "OK — dress for it",
+    poor: "Rough conditions",
+    avoid: "Best to stay in",
+  })[level];
+  chip.hidden = false;
 }
 
 function renderVsPlaceChip(w) {

@@ -514,6 +514,24 @@ html[data-reduce-motion="true"] *::after {
 }
 .feels-like-chip[data-tone="cold"] { color: #b8dcff; background: rgba(154,209,255,0.14); border-color: rgba(154,209,255,0.28); }
 .feels-like-chip[data-tone="hot"]  { color: #ffb896; background: rgba(255,140,110,0.14); border-color: rgba(255,140,110,0.28); }
+.outdoor-score {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.06);
+  color: var(--fg-muted);
+}
+.outdoor-score[data-level="great"] { color: #7fd671; background: rgba(120,214,120,0.14); border-color: rgba(120,214,120,0.32); }
+.outdoor-score[data-level="good"]  { color: #a4d68b; background: rgba(140,214,120,0.12); border-color: rgba(140,214,120,0.24); }
+.outdoor-score[data-level="fair"]  { color: #ffd694; background: rgba(255,200,120,0.14); border-color: rgba(255,200,120,0.30); }
+.outdoor-score[data-level="poor"]  { color: #ffb098; background: rgba(255,120,90,0.16); border-color: rgba(255,120,90,0.35); }
+.outdoor-score[data-level="avoid"] { color: #ff9abc; background: rgba(255,90,140,0.18); border-color: rgba(255,90,140,0.42); }
 .day-range {
   margin-top: 10px;
   display: grid;
