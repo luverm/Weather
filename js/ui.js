@@ -396,9 +396,7 @@ function renderMetrics(w) {
     }
   }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
-  el.metricPressureSub.textContent = w.visibility != null
-    ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
-    : "visibility —";
+  el.metricPressureSub.textContent = pressureSubText(w);
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
@@ -1020,6 +1018,25 @@ function renderTrends(w) {
       el.tempTrend.textContent = "";
     }
   }
+}
+
+function pressureSubText(w) {
+  const visPart = w.visibility != null
+    ? `vis ${Math.round((w.visibility / 1000) * 10) / 10} km`
+    : null;
+  const trend = w.pressureTrend;
+  let interp = null;
+  if (trend) {
+    const { delta, direction } = trend;
+    const absD = Math.abs(delta);
+    if (direction === "rising" && absD >= 2) interp = "clearing";
+    else if (direction === "rising") interp = "improving";
+    else if (direction === "falling" && absD >= 3) interp = "storm risk";
+    else if (direction === "falling" && absD >= 1.5) interp = "wetter later";
+    else if (direction === "falling") interp = "unsettled";
+    else interp = "settled";
+  }
+  return [visPart, interp].filter(Boolean).join(" · ") || "—";
 }
 
 function cardinal(deg) {
