@@ -41,6 +41,7 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  dayRangeSwing: $("#day-range-swing"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -431,6 +432,19 @@ function renderDayRange(w) {
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+  // Swing label: show the size of today's temp spread on the marker tooltip
+  // and expose it as a subtle visible pill when the swing is dramatic.
+  const spread = hi - lo;
+  const spreadDisp = Math.round(state.unit === "F" ? spread * 9 / 5 : spread);
+  el.dayRangeMarker.title = `Now · today swings ${spreadDisp}°`;
+  if (el.dayRangeSwing) {
+    if (spread >= 10) {
+      el.dayRangeSwing.textContent = `${spreadDisp}° swing`;
+      el.dayRangeSwing.hidden = false;
+    } else {
+      el.dayRangeSwing.hidden = true;
+    }
+  }
 }
 
 function renderMetrics(w) {

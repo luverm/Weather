@@ -498,6 +498,19 @@ html[data-reduce-motion="true"] *::after {
   margin-left: auto;
 }
 .day-range[hidden] { display: none; }
+.day-range-swing {
+  grid-column: 1 / -1;
+  justify-self: end;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ffb196;
+  background: rgba(255, 156, 122, 0.14);
+  border: 1px solid rgba(255, 156, 122, 0.28);
+  padding: 1px 6px;
+  border-radius: 999px;
+  margin-top: 2px;
+}
 .day-range-end { white-space: nowrap; }
 .day-range-track {
   position: relative;
