@@ -8,6 +8,15 @@ const PAD_RIGHT = 6;
 const PAD_TOP = 16;
 const PAD_BOT = 22;
 
+function precipCategory(h) {
+  const mm = h.precip ?? 0;
+  const isSnow = h.condition === "snow";
+  if (isSnow) return "snow";
+  if (mm >= 4) return "heavy";
+  if (mm >= 1) return "moderate";
+  return "light";
+}
+
 export class HourlyChart {
   constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit, getTimezone }) {
     this.svg = svgEl;
@@ -224,7 +233,7 @@ export class HourlyChart {
       }
     }
 
-    // Precipitation probability bars (0-100% -> 0..12px height)
+    // Precipitation bars: height = probability, color/tone = intensity (mm/h).
     const precipG = this.svg.querySelector("#chart-precip");
     precipG.innerHTML = "";
     const barW = Math.max(4, innerW / this.hours.length - 3);
@@ -240,7 +249,8 @@ export class HourlyChart {
       r.setAttribute("width", barW.toFixed(1));
       r.setAttribute("height", barH.toFixed(1));
       r.setAttribute("rx", "1.5");
-      r.setAttribute("opacity", (0.35 + (pop / 100) * 0.55).toFixed(2));
+      r.setAttribute("data-precip", precipCategory(h));
+      r.setAttribute("opacity", (0.4 + (pop / 100) * 0.5).toFixed(2));
       precipG.appendChild(r);
     });
 

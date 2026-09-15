@@ -755,7 +755,9 @@ html[data-reduce-motion="true"] *::after {
   background: linear-gradient(90deg, var(--fg-muted) 0 1px, transparent 1px 3px, var(--fg-muted) 3px 4px, transparent 4px 6px, var(--fg-muted) 6px 7px, transparent 7px 9px, var(--fg-muted) 9px 10px, transparent 10px 12px);
   opacity: 0.55;
 }
-.legend-swatch.precip { background: rgba(154, 209, 255, 0.55); }
+.legend-swatch.precip {
+  background: linear-gradient(90deg, rgba(154, 209, 255, 0.55), rgba(96, 170, 255, 0.85), rgba(180, 120, 255, 0.9));
+}
 
 .chart-wrap {
   position: relative;
@@ -810,6 +812,10 @@ html[data-reduce-motion="true"] *::after {
   fill: rgba(154, 209, 255, 0.42);
   transition: fill 150ms var(--ease);
 }
+.chart-precip rect[data-precip="light"]    { fill: rgba(154, 209, 255, 0.55); }
+.chart-precip rect[data-precip="moderate"] { fill: rgba(96, 170, 255, 0.85); }
+.chart-precip rect[data-precip="heavy"]    { fill: rgba(180, 120, 255, 0.9); }
+.chart-precip rect[data-precip="snow"]     { fill: rgba(230, 240, 255, 0.85); }
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
 }
