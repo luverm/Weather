@@ -78,6 +78,7 @@ const el = {
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
   weekRain: $("#week-rain"),
+  weeklyTrend: $("#weekly-trend"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -1009,6 +1010,7 @@ function renderDaily(w) {
   renderDailySpark(days);
   renderDailyDelta(days);
   renderWeekRain(days);
+  renderWeeklyTrend(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1102,6 +1104,47 @@ function renderDailySpark(days) {
       el.dailySparkDots.appendChild(c);
     }
   });
+}
+
+function renderWeeklyTrend(days) {
+  const el2 = el.weeklyTrend;
+  if (!el2) return;
+  if (days.length < 3) { el2.textContent = ""; el2.hidden = true; return; }
+  const highs = days.map((d) => d.tempMax).filter((v) => v != null);
+  if (highs.length < 3) { el2.hidden = true; return; }
+  // Peak day + coldest day inside the 7-day window.
+  let peakI = 0, coldI = 0;
+  for (let i = 1; i < highs.length; i++) {
+    if (highs[i] > highs[peakI]) peakI = i;
+    if (highs[i] < highs[coldI]) coldI = i;
+  }
+  const range = highs[peakI] - highs[coldI];
+  const first = highs[0];
+  const last = highs[highs.length - 1];
+  const overall = last - first;
+  const tz = state.weather?.timezone;
+  const dayLabel = (i) => {
+    const dt = new Date(days[i].time);
+    return i === 0 ? "today" : dt.toLocaleDateString(undefined, {
+      weekday: "short",
+      ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    });
+  };
+  let phrase = null;
+  if (range < 3) {
+    phrase = "Steady week — very little swing";
+  } else if (peakI > 0 && peakI < highs.length - 1 && highs[peakI] - Math.min(first, last) >= 3) {
+    phrase = `Peaks ${dayLabel(peakI)}, cooler ${overall <= 0 ? "again" : "into"} ${dayLabel(highs.length - 1)}`;
+  } else if (overall >= 3) {
+    phrase = `Warming trend toward ${dayLabel(highs.length - 1)}`;
+  } else if (overall <= -3) {
+    phrase = `Cooling into ${dayLabel(highs.length - 1)}`;
+  } else if (coldI > 0 && coldI < highs.length - 1) {
+    phrase = `Coolest ${dayLabel(coldI)}, recovering after`;
+  }
+  if (!phrase) { el2.hidden = true; return; }
+  el2.textContent = phrase;
+  el2.hidden = false;
 }
 
 function renderWeekRain(days) {
