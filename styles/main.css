@@ -405,6 +405,15 @@ html[data-reduce-motion="true"] *::after {
   stroke: currentColor;
   filter: drop-shadow(0 0 6px rgba(255,208,138,0.55));
 }
+.place-star.just-saved svg {
+  animation: starPop 480ms var(--ease);
+}
+@keyframes starPop {
+  0%   { transform: scale(1) rotate(0); }
+  30%  { transform: scale(1.4) rotate(-8deg); }
+  60%  { transform: scale(1.15) rotate(6deg); }
+  100% { transform: scale(1) rotate(0); }
+}
 .place-star:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .place-sub { margin: 8px 0 0; color: var(--fg-muted); font-size: 14px; }
 .place-localtime {

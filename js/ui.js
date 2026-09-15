@@ -2403,6 +2403,9 @@ function bindPlaceStar() {
     } else {
       places.add(state.place);
       ui.showToast(`Saved ${state.place.name}`);
+      btn.classList.remove("just-saved"); void btn.offsetWidth;
+      btn.classList.add("just-saved");
+      setTimeout(() => btn.classList.remove("just-saved"), 500);
     }
     renderPlaceStar();
     renderPlaces();
