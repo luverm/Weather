@@ -363,9 +363,23 @@ function renderMetrics(w) {
   el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
-  el.metricWindSub.textContent = dirLabel
-    ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
-    : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+  const gustNow = w.windGusts;
+  const peak = peakGust24h(w);
+  // Only surface a "peak gust" line when peak is meaningfully above current
+  // gusts (at least 20% higher and >= 5 km/h delta) and is >= 25 km/h.
+  const showPeak = peak && peak.value >= 25
+    && (gustNow == null || peak.value >= gustNow * 1.2 || peak.value - gustNow >= 5);
+  const gustStr = gustNow != null ? `${Math.round(gustNow)} km/h` : "—";
+  let sub;
+  if (showPeak) {
+    const peakStr = `${Math.round(peak.value)} km/h at ${fmtTime(peak.time)}`;
+    sub = dirLabel
+      ? `${dirLabel} · gust ${gustStr} · peak ${peakStr}`
+      : `gust ${gustStr} · peak ${peakStr}`;
+  } else {
+    sub = dirLabel ? `${dirLabel} · gust ${gustStr}` : `gust ${gustStr}`;
+  }
+  el.metricWindSub.textContent = sub;
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
@@ -1018,6 +1032,17 @@ function renderTrends(w) {
       el.tempTrend.textContent = "";
     }
   }
+}
+
+function peakGust24h(w) {
+  const hrs = (w?.hourly || []).slice(0, 24);
+  let best = null;
+  for (const h of hrs) {
+    const g = h.gusts ?? h.wind;
+    if (g == null) continue;
+    if (!best || g > best.value) best = { value: g, time: h.time };
+  }
+  return best;
 }
 
 function pressureSubText(w) {
