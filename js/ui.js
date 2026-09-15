@@ -49,6 +49,7 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonNext: $("#moon-next"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -544,6 +545,21 @@ function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  if (el.moonNext) {
+    const toFull = moon.daysToFull != null ? Math.round(moon.daysToFull) : null;
+    const toNew = moon.daysToNew != null ? Math.round(moon.daysToNew) : null;
+    // Prefer whichever milestone is closer — but a moon at ~full or ~new
+    // gets a "tonight" style label instead of "in 0 days".
+    const parts = [];
+    if (toFull != null && toNew != null) {
+      const nextLabel = toFull <= toNew
+        ? (toFull === 0 ? "Full tonight" : `Full in ${toFull}d`)
+        : (toNew === 0 ? "New tonight" : `New in ${toNew}d`);
+      parts.push(nextLabel);
+    }
+    if (moon.ageDays != null) parts.push(`age ${Math.floor(moon.ageDays)}d`);
+    el.moonNext.textContent = parts.join(" · ");
+  }
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;

@@ -337,7 +337,8 @@ function computeMoonPhase(date) {
   if (month < 3) r += 2;
   r -= (year < 2000 ? 4 : 8.3);
   r = ((r % 30) + 30) % 30; // 0..29.53
-  const phase = r / 29.5305882;
+  const SYNODIC = 29.5305882;
+  const phase = r / SYNODIC;
   const illum = 0.5 * (1 - Math.cos(2 * Math.PI * phase));
   const name =
     phase < 0.03 || phase > 0.97 ? "New moon" :
@@ -348,7 +349,21 @@ function computeMoonPhase(date) {
     phase < 0.72 ? "Waning gibbous" :
     phase < 0.78 ? "Last quarter" :
     "Waning crescent";
-  return { phase, illum, name };
+  // Age in days since last new moon.
+  const ageDays = r;
+  // Next full moon: full is at phase 0.5 (age ~14.77). Days until next 0.5.
+  const fullPhaseAge = SYNODIC / 2;
+  let daysToFull = fullPhaseAge - ageDays;
+  if (daysToFull < 0) daysToFull += SYNODIC;
+  let daysToNew = SYNODIC - ageDays;
+  if (daysToNew < 0) daysToNew += SYNODIC;
+  if (daysToNew > SYNODIC) daysToNew -= SYNODIC;
+  return {
+    phase, illum, name,
+    ageDays,
+    daysToFull,
+    daysToNew,
+  };
 }
 
 function mock(lat, lon) {
