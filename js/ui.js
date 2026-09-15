@@ -50,6 +50,7 @@ const el = {
   metricPressureSub: $("#m-pressure-sub"),
   metricUV: $("#m-uv"),
   metricUVSub: $("#m-uv-sub"),
+  uvScaleMarker: $("#uv-scale-marker"),
   aqArc: $("#aq-arc"),
   aqValue: $("#aq-value"),
   aqLabel: $("#aq-label"),
@@ -480,6 +481,17 @@ function renderMetrics(w) {
     el.metricUVSub.textContent = `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`;
   } else {
     el.metricUVSub.textContent = "peak —";
+  }
+  if (el.uvScaleMarker) {
+    const uv = w.uv;
+    if (uv == null) {
+      el.uvScaleMarker.style.opacity = "0";
+    } else {
+      el.uvScaleMarker.style.opacity = "1";
+      // Scale 0-12 across the bar; anything above clamps to right edge.
+      const frac = Math.max(0, Math.min(1, uv / 12));
+      el.uvScaleMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+    }
   }
   renderPressureSparkline(w);
 }
