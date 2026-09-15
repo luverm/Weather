@@ -525,9 +525,35 @@ function renderAirQuality(aq) {
   // Circumference of r=20 is ~125.66 — we use 126 in the SVG.
   const frac = Math.max(0, Math.min(1, (aq.aqi ?? 0) / 200));
   el.aqArc.setAttribute("stroke-dashoffset", String(126 * (1 - frac)));
-  el.aqDetail.textContent =
-    `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
+  const parts = [
+    `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"}`,
+    `O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`,
+  ];
+  const trendArrow = aqTrendArrow(aq);
+  if (trendArrow) parts.push(trendArrow);
+  const advice = aqAdvice(aq.aqi);
+  if (advice) parts.push(advice);
+  el.aqDetail.textContent = parts.join(" · ");
   renderAqTrend(aq);
+}
+
+function aqTrendArrow(aq) {
+  const pts = (aq?.trend || []).map((p) => p.aqi).filter((v) => v != null);
+  if (pts.length < 3) return null;
+  const first = pts[0];
+  const last = pts[pts.length - 1];
+  const delta = last - first;
+  if (Math.abs(delta) < 8) return null;
+  return delta > 0 ? "worsening ▲" : "improving ▼";
+}
+
+function aqAdvice(v) {
+  if (v == null) return null;
+  if (v <= 50) return "OK to exercise outside";
+  if (v <= 100) return "sensitive groups: limit exertion";
+  if (v <= 150) return "limit prolonged outdoor effort";
+  if (v <= 200) return "avoid outdoor exercise";
+  return "stay indoors when possible";
 }
 
 function renderAqTrend(aq) {
