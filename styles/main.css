@@ -1625,6 +1625,16 @@ kbd {
 }
 .forecast-item:hover { background: var(--glass); transform: translateY(-2px); }
 .forecast-item.active { background: var(--glass-strong); }
+.forecast-item[data-now="true"] {
+  background: rgba(154, 209, 255, 0.10);
+  outline: 1px solid rgba(154, 209, 255, 0.28);
+}
+.forecast-item[data-now="true"] .forecast-time {
+  color: #cfe4ff;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+.forecast-item[data-now="true"] .forecast-temp { color: #ffe6c7; }
 .forecast-time { font-size: 11px; letter-spacing: 0.08em; color: var(--fg-dim); text-transform: uppercase; }
 .forecast-icon { width: 26px; height: 26px; display: grid; place-items: center; color: var(--fg-muted); }
 .forecast-temp { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }

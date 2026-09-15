@@ -1089,19 +1089,29 @@ function cardinal(deg) {
 
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
-  for (const h of (w.hourly || []).slice(0, 24)) {
+  const hours = (w.hourly || []).slice(0, 24);
+  const now = Date.now();
+  // Find the hour bucket closest to now.
+  let nowIdx = -1, bestDiff = Infinity;
+  for (let i = 0; i < hours.length; i++) {
+    const d = Math.abs(hours[i].time - now);
+    if (d < bestDiff && d < 60 * 60_000) { bestDiff = d; nowIdx = i; }
+  }
+  hours.forEach((h, i) => {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    if (i === nowIdx) item.dataset.now = "true";
+    const label = i === nowIdx ? "Now" : fmtTime(h.time);
     item.innerHTML = `
-      <span class="forecast-time">${fmtTime(h.time)}</span>
+      <span class="forecast-time">${escapeHtml(label)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
-  }
+  });
 }
 
 function highlightHour(index) {
