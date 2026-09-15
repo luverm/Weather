@@ -2044,3 +2044,64 @@ kbd {
   .temp { font-size: 78px; }
   .narrative { font-size: 13px; }
 }
+
+/* ---------- Print ---------- */
+@media print {
+  html, body {
+    background: #fff !important;
+    color: #111 !important;
+  }
+  body { font-size: 12px; }
+  .stage,
+  .radar,
+  .toolbar,
+  .search,
+  .scrubber,
+  .places-strip,
+  .shortcuts,
+  .hint,
+  .toast,
+  #install-btn,
+  #share-btn,
+  #audio-btn,
+  #locate-btn,
+  #refresh-btn,
+  #settings-btn,
+  #settings-menu,
+  .place-star {
+    display: none !important;
+  }
+  .app { padding: 8px 12px; max-width: none; }
+  .glass, .glass * {
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    color: #111 !important;
+    box-shadow: none !important;
+    border-color: #ccc !important;
+  }
+  .hero-inner,
+  .chart-card,
+  .metric,
+  .extra-card,
+  .forecast,
+  .daily,
+  .insights,
+  .nowcast,
+  .alerts-strip {
+    border: 1px solid #ddd !important;
+    padding: 8px 12px !important;
+    page-break-inside: avoid;
+  }
+  .metrics, .extras {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 8px !important;
+  }
+  .extras { grid-template-columns: repeat(3, 1fr) !important; }
+  .chart-svg { color: #333 !important; }
+  .chart-precip rect { fill: #aac !important; }
+  .chart-night rect { display: none !important; }
+  .daily-item { border-bottom: 1px dotted #ddd; padding: 6px 8px !important; }
+  .brand-name { color: #111 !important; }
+}
