@@ -594,14 +594,16 @@ function renderFeelsLikeChip(w) {
   // Convert to active display scale for magnitude.
   const deltaDisp = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
   const absDisp = Math.round(Math.abs(deltaDisp));
-  if (absDisp < 2) { chip.hidden = true; return; }
+  // Both an in-scale magnitude threshold (>=2° displayed) AND a real
+  // temperature gap (>=1.5°C) must clear before we advertise a divergence.
+  if (absDisp < 2 || Math.abs(deltaC) < 1.5) { chip.hidden = true; return; }
   // Choose descriptor. Wind chill if actual is cool AND feels colder; heat
-  // index if actual is warm AND feels warmer. Otherwise just show delta.
-  let label = null, tone = "neutral";
-  if (deltaC <= -1.5 && actual <= 12) { label = "wind chill"; tone = "cold"; }
-  else if (deltaC >= 1.5 && actual >= 24) { label = "heat index"; tone = "hot"; }
-  else if (deltaC <= -1.5) { label = "cooler in the wind"; tone = "cold"; }
-  else if (deltaC >= 1.5) { label = "hotter than the air"; tone = "hot"; }
+  // index if actual is warm AND feels warmer. Otherwise a plain qualifier.
+  let label, tone;
+  if (deltaC < 0 && actual <= 12) { label = "wind chill"; tone = "cold"; }
+  else if (deltaC > 0 && actual >= 24) { label = "heat index"; tone = "hot"; }
+  else if (deltaC < 0) { label = "cooler in the wind"; tone = "cold"; }
+  else { label = "hotter than the air"; tone = "hot"; }
   const sign = deltaDisp > 0 ? "+" : "−";
   chip.textContent = `${label} ${sign}${absDisp}°`;
   chip.dataset.tone = tone;
