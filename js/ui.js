@@ -171,11 +171,17 @@ const el = {
   placesStrip: $("#places-strip"),
 };
 
+function lsGet(key) {
+  try { return localStorage.getItem(key); } catch { return null; }
+}
+function lsSet(key, value) {
+  try { localStorage.setItem(key, value); } catch { /* private-mode / quota */ }
+}
 const state = {
-  unit: localStorage.getItem("aether:unit") || guessDefaultTempUnit(),
-  clock: localStorage.getItem("aether:clock") || (guessDefaultClock()),
-  windUnit: localStorage.getItem("aether:windUnit") || guessDefaultWindUnit(),
-  pressureUnit: localStorage.getItem("aether:pressureUnit") || guessDefaultPressureUnit(),
+  unit: lsGet("aether:unit") || guessDefaultTempUnit(),
+  clock: lsGet("aether:clock") || (guessDefaultClock()),
+  windUnit: lsGet("aether:windUnit") || guessDefaultWindUnit(),
+  pressureUnit: lsGet("aether:pressureUnit") || guessDefaultPressureUnit(),
   weather: null,
   place: null,
   sampledWeather: null, // the weather values at the current scrubber time
@@ -2172,7 +2178,7 @@ function bindSearch() {
 function bindUnitToggle() {
   el.unitBtn.addEventListener("click", () => {
     state.unit = state.unit === "C" ? "F" : "C";
-    localStorage.setItem("aether:unit", state.unit);
+    lsSet("aether:unit", state.unit);
     el.unitBtn.textContent = `°${state.unit}`;
     if (state.weather) ui.setWeather(state.weather);
   });
@@ -2239,7 +2245,7 @@ function bindSettings() {
   el.settingReduceMotion?.addEventListener("change", () => {
     const on = el.settingReduceMotion.checked;
     document.documentElement.setAttribute("data-reduce-motion", on ? "true" : "false");
-    localStorage.setItem("aether:reduceMotion", on ? "1" : "0");
+    lsSet("aether:reduceMotion", on ? "1" : "0");
     state.handlers.onReduceMotion?.(on);
   });
 
@@ -2248,7 +2254,7 @@ function bindSettings() {
     const desired = wantF ? "F" : "C";
     if (state.unit !== desired) {
       state.unit = desired;
-      localStorage.setItem("aether:unit", state.unit);
+      lsSet("aether:unit", state.unit);
       el.unitBtn.textContent = `°${state.unit}`;
       if (state.weather) ui.setWeather(state.weather);
     }
@@ -2256,7 +2262,7 @@ function bindSettings() {
 
   el.setting24h?.addEventListener("change", () => {
     state.clock = el.setting24h.checked ? "24h" : "12h";
-    localStorage.setItem("aether:clock", state.clock);
+    lsSet("aether:clock", state.clock);
     if (state.weather) ui.setWeather(state.weather);
   });
 
@@ -2264,7 +2270,7 @@ function bindSettings() {
     const v = el.settingWindUnit.value;
     if (["kmh", "mph", "ms"].includes(v)) {
       state.windUnit = v;
-      localStorage.setItem("aether:windUnit", v);
+      lsSet("aether:windUnit", v);
       if (state.weather) ui.setWeather(state.weather);
     }
   });
@@ -2273,7 +2279,7 @@ function bindSettings() {
     const v = el.settingPressureUnit.value;
     if (["hpa", "inhg", "mmhg"].includes(v)) {
       state.pressureUnit = v;
-      localStorage.setItem("aether:pressureUnit", v);
+      lsSet("aether:pressureUnit", v);
       if (state.weather) ui.setWeather(state.weather);
     }
   });
@@ -2288,7 +2294,7 @@ function bindSettings() {
 }
 
 function applyStoredPreferences() {
-  const reduce = localStorage.getItem("aether:reduceMotion") === "1";
+  const reduce = lsGet("aether:reduceMotion") === "1";
   if (reduce) {
     document.documentElement.setAttribute("data-reduce-motion", "true");
     if (el.settingReduceMotion) el.settingReduceMotion.checked = true;
@@ -2302,7 +2308,7 @@ function applyStoredPreferences() {
 }
 
 // Exposed so app.js can query the current preference on boot.
-ui.isReduceMotion = () => localStorage.getItem("aether:reduceMotion") === "1";
+ui.isReduceMotion = () => lsGet("aether:reduceMotion") === "1";
 
 function startFetchedTicker() {
   const dot = document.getElementById("place-live-dot");
