@@ -348,13 +348,20 @@ function placeFromUrl() {
 })();
 
 // ---------- Lifecycle ----------
+let hiddenAt = null;
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
     engine.stop();
-  } else if (!app.reducedMotion) {
-    engine.start();
+    hiddenAt = Date.now();
   } else {
-    engine.tickOnce();
+    if (!app.reducedMotion) engine.start();
+    else engine.tickOnce();
+    // If the tab was hidden for a meaningful stretch, quietly re-fetch
+    // so the reading isn't stale when the user comes back.
+    if (hiddenAt && Date.now() - hiddenAt > 10 * 60_000 && app.place && clock.isLive()) {
+      refreshWeather();
+    }
+    hiddenAt = null;
   }
 });
 
