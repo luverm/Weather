@@ -1227,6 +1227,7 @@ function renderDaily(w) {
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
     const uvBadge = uvBadgeHtml(d.uvMax);
+    const dowTrend = dodTrendHtml(days, i);
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
@@ -1234,7 +1235,7 @@ function renderDaily(w) {
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
       </div>
       <span class="daily-temp-min">${Math.round(convertTemp(d.tempMin))}°</span>
-      <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°</span>
+      <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°${dowTrend}</span>
       ${uvBadge}
       ${extra}
     `;
@@ -1244,6 +1245,20 @@ function renderDaily(w) {
   // Wire the icon strip AFTER the daily items exist so cross-highlight
   // handlers can find their targets.
   renderDailyIconStrip(days);
+}
+
+function dodTrendHtml(days, i) {
+  if (i === 0) return "";
+  const cur = days[i]?.tempMax;
+  const prev = days[i - 1]?.tempMax;
+  if (cur == null || prev == null) return "";
+  const deltaC = cur - prev;
+  const deltaDisp = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
+  const abs = Math.round(Math.abs(deltaDisp));
+  if (abs < 1) return "";
+  const dir = deltaC > 0 ? "up" : "down";
+  const arrow = deltaC > 0 ? "▲" : "▼";
+  return `<span class="daily-dod" data-dir="${dir}" title="vs prior day">${arrow}${abs}°</span>`;
 }
 
 function uvBadgeHtml(uvMax) {
