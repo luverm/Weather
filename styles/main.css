@@ -342,7 +342,30 @@ html[data-reduce-motion="true"] *::after {
   font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.02;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
 }
+.place-star {
+  border: 0;
+  background: transparent;
+  color: var(--fg-dim);
+  padding: 6px;
+  cursor: pointer;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 180ms var(--ease), background 180ms var(--ease), transform 180ms var(--ease);
+}
+.place-star:hover { color: var(--fg); background: rgba(255,255,255,0.06); transform: scale(1.05); }
+.place-star.is-saved { color: #ffd08a; }
+.place-star.is-saved svg path {
+  fill: currentColor;
+  stroke: currentColor;
+  filter: drop-shadow(0 0 6px rgba(255,208,138,0.55));
+}
+.place-star:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .place-sub { margin: 8px 0 0; color: var(--fg-muted); font-size: 14px; }
 .place-localtime {
   margin: 6px 0 0;

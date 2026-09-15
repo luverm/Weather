@@ -18,6 +18,8 @@ const el = {
   unitBtn: $("#unit-toggle"),
   placeName: $("#place-name"),
   placeSub: $("#place-sub"),
+  placeStar: $("#place-star"),
+  placeNameText: $("#place-name-text"),
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
@@ -144,6 +146,7 @@ export const ui = {
     bindRefresh();
     bindSettings();
     bindTilt();
+    bindPlaceStar();
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
@@ -175,12 +178,18 @@ export const ui = {
     state.place = place;
     el.placeName.classList.remove("flip-in"); void el.placeName.offsetWidth;
     el.placeName.classList.add("flip-in");
-    el.placeName.textContent = place.name || "Unknown";
+    // Preserve the star button when we own the wrapper markup.
+    if (el.placeNameText) {
+      el.placeNameText.textContent = place.name || "Unknown";
+    } else {
+      el.placeName.textContent = place.name || "Unknown";
+    }
     const sub = [place.admin1, place.country].filter(Boolean).join(", ");
     el.placeSub.textContent = sub || "—";
     // Reset alert dismissals so a fresh location can re-surface them.
     try { sessionStorage.removeItem("aether:dismissed-alerts"); } catch { /* ignore */ }
     renderPlaces();
+    renderPlaceStar();
   },
   setWeather(weather, { narrative } = {}) {
     state.weather = weather;
@@ -1618,6 +1627,34 @@ function bindShare() {
     } catch (err) {
       if (err?.name !== "AbortError") ui.showToast("Share failed");
     }
+  });
+}
+
+function renderPlaceStar() {
+  const btn = el.placeStar;
+  if (!btn || !state.place) { if (btn) btn.hidden = true; return; }
+  const saved = places.isSaved(state.place);
+  btn.hidden = false;
+  btn.classList.toggle("is-saved", saved);
+  btn.setAttribute("aria-pressed", saved ? "true" : "false");
+  btn.title = saved ? "Remove from saved places" : "Save this location";
+  btn.setAttribute("aria-label", btn.title);
+}
+
+function bindPlaceStar() {
+  const btn = el.placeStar;
+  if (!btn) return;
+  btn.addEventListener("click", () => {
+    if (!state.place) return;
+    if (places.isSaved(state.place)) {
+      places.remove(state.place);
+      ui.showToast(`Removed ${state.place.name}`);
+    } else {
+      places.add(state.place);
+      ui.showToast(`Saved ${state.place.name}`);
+    }
+    renderPlaceStar();
+    renderPlaces();
   });
 }
 
