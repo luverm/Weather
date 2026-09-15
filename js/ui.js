@@ -1811,7 +1811,9 @@ function renderPlaces() {
   const activeId = state.place ? places.idFor(state.place) : null;
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
-    const icon = p.condition ? `<span class="chip-icon">${iconFor(p.condition)}</span>` : "";
+    const icon = p.condition
+      ? `<span class="chip-icon" data-condition="${escapeHtml(p.condition)}">${iconFor(p.condition)}</span>`
+      : "";
     return `
       <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
         ${icon}
