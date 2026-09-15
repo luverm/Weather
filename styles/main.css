@@ -1770,7 +1770,18 @@ kbd {
   transition: background 200ms var(--ease);
 }
 .daily-item:hover { background: var(--glass); }
-.daily-day { font-size: 13px; font-weight: 500; }
+.daily-day { font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.daily-extreme {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+.daily-extreme[data-kind="hot"] { color: #ff9c7a; background: rgba(255, 156, 122, 0.14); border-color: rgba(255, 156, 122, 0.32); }
+.daily-extreme[data-kind="cold"] { color: #9ad1ff; background: rgba(154, 209, 255, 0.14); border-color: rgba(154, 209, 255, 0.32); }
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
 .daily-range {
   position: relative;

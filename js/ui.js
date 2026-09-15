@@ -1251,11 +1251,17 @@ function renderDaily(w) {
   renderWeeklyTrend(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
-  for (const d of days) {
+  let hottestI = 0, coldestI = 0;
+  for (let i = 0; i < days.length; i++) {
+    const d = days[i];
     if (d.tempMin < gMin) gMin = d.tempMin;
     if (d.tempMax > gMax) gMax = d.tempMax;
+    if (d.tempMax != null && d.tempMax > (days[hottestI].tempMax ?? -Infinity)) hottestI = i;
+    if (d.tempMin != null && d.tempMin < (days[coldestI].tempMin ?? Infinity)) coldestI = i;
   }
   const span = Math.max(1, gMax - gMin);
+  // Only mark extremes when they're meaningfully different from siblings.
+  const meaningfulExtreme = span >= 4;
   days.forEach((d, i) => {
     const dt = new Date(d.time);
     const tz = state.weather?.timezone;
@@ -1275,8 +1281,13 @@ function renderDaily(w) {
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
     const uvBadge = uvBadgeHtml(d.uvMax);
     const dowTrend = dodTrendHtml(days, i);
+    const extremeBadge = meaningfulExtreme && i === hottestI && hottestI !== coldestI
+      ? `<span class="daily-extreme" data-kind="hot">warmest</span>`
+      : meaningfulExtreme && i === coldestI && hottestI !== coldestI
+        ? `<span class="daily-extreme" data-kind="cold">coldest</span>`
+        : "";
     item.innerHTML = `
-      <span class="daily-day">${day}</span>
+      <span class="daily-day">${day}${extremeBadge}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
