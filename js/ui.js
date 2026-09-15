@@ -230,6 +230,12 @@ export const ui = {
       const sub = [state.place.admin1, state.place.country].filter(Boolean).join(", ");
       el.placeSub.textContent = sub || "";
     }
+    // Dynamic tab title so a pinned tab reads at a glance.
+    if (state.place && weather.temp != null) {
+      const tempDisp = Math.round(convertTemp(weather.temp));
+      const label = weather.label ? ` ${weather.label.toLowerCase()}` : "";
+      document.title = `${tempDisp}°${state.unit}${label} · ${state.place.name} · Aether`;
+    }
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
