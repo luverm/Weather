@@ -40,6 +40,7 @@ const el = {
   outdoorScore: $("#outdoor-score"),
   nextHour: $("#next-hour"),
   vsPlace: $("#vs-place"),
+  sinceLastVisit: $("#since-last-visit"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -268,6 +269,12 @@ export const ui = {
           ? "stale"
           : "live";
     }
+    // Track a "last visit" snapshot per place so we can show how the
+    // reading changed since the last time the user opened this city.
+    if (state.place && weather.temp != null && !weather.offline) {
+      recordVisitSnapshot(state.place, weather);
+    }
+    renderSinceLastVisitChip(weather);
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
       places.updateSummary(state.place, {
@@ -402,6 +409,52 @@ function renderLiveValues(w, { animate = true } = {}) {
   renderNextHourChip(w);
   renderVsPlaceChip(w);
   renderDayRange(w);
+}
+
+// Per-place "last visit" temperature snapshot, keyed by place id.
+function visitStoreRead() {
+  try { return JSON.parse(localStorage.getItem("aether:visits") || "{}"); }
+  catch { return {}; }
+}
+function visitStoreWrite(store) {
+  try { localStorage.setItem("aether:visits", JSON.stringify(store)); }
+  catch { /* ignore quota */ }
+}
+function recordVisitSnapshot(place, weather) {
+  const id = places.idFor(place);
+  const store = visitStoreRead();
+  const prev = store[id];
+  // Update AT MOST once every 5 minutes so we compare against a real
+  // "prior visit" and not the last render tick.
+  const cur = { at: Date.now(), temp: weather.temp };
+  if (!prev || cur.at - prev.at >= 5 * 60_000) {
+    // Preserve the older prev in `previous` so subsequent renders can diff.
+    store[id] = { ...cur, previous: prev || null };
+    visitStoreWrite(store);
+  }
+}
+function getPreviousVisit(place) {
+  const id = places.idFor(place);
+  return visitStoreRead()[id]?.previous || null;
+}
+function renderSinceLastVisitChip(w) {
+  const chip = el.sinceLastVisit;
+  if (!chip) return;
+  const prev = state.place ? getPreviousVisit(state.place) : null;
+  if (!prev || w.temp == null || w.offline) { chip.hidden = true; return; }
+  const ageMs = Date.now() - prev.at;
+  // Only show when the previous visit was between 20 min and 24 h ago
+  // — anything shorter is noisy, longer is stale.
+  if (ageMs < 20 * 60_000 || ageMs > 24 * 3600_000) { chip.hidden = true; return; }
+  const deltaC = w.temp - prev.temp;
+  const deltaDisp = Math.round(state.unit === "F" ? deltaC * 9 / 5 : deltaC);
+  if (Math.abs(deltaDisp) < 1) { chip.hidden = true; return; }
+  const mins = Math.round(ageMs / 60_000);
+  const ago = mins < 60 ? `${mins}m ago` : `${Math.round(mins / 60)}h ago`;
+  const dir = deltaDisp > 0 ? "warmer" : "cooler";
+  chip.textContent = `${Math.abs(deltaDisp)}° ${dir} since ${ago}`;
+  chip.dataset.dir = deltaDisp > 0 ? "up" : "down";
+  chip.hidden = false;
 }
 
 function outdoorScore(w) {
