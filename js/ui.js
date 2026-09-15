@@ -1850,17 +1850,38 @@ function renderSearchResults(results) {
   el.searchResults._items = results;
 }
 
+const POPULAR_CITIES = [
+  { name: "London", country: "United Kingdom", lat: 51.5074, lon: -0.1278, timezone: "Europe/London" },
+  { name: "New York", country: "United States", lat: 40.7128, lon: -74.0060, timezone: "America/New_York" },
+  { name: "Tokyo", country: "Japan", lat: 35.6762, lon: 139.6503, timezone: "Asia/Tokyo" },
+  { name: "Paris", country: "France", lat: 48.8566, lon: 2.3522, timezone: "Europe/Paris" },
+  { name: "Sydney", country: "Australia", lat: -33.8688, lon: 151.2093, timezone: "Australia/Sydney" },
+  { name: "Reykjavík", country: "Iceland", lat: 64.1466, lon: -21.9426, timezone: "Atlantic/Reykjavik" },
+];
+
 function showRecentsIfAny() {
   const recents = places.all().slice(0, 5);
-  if (!recents.length) { el.searchResults.hidden = true; return; }
-  const itemsHtml = recents.map((r, i) => `
+  if (recents.length) {
+    const itemsHtml = recents.map((r, i) => `
+      <li role="option" data-index="${i}">
+        <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
+        <span class="sub">${escapeHtml(r.country || "")}</span>
+      </li>
+    `).join("");
+    el.searchResults.innerHTML = `<li class="recent-heading">Recent places</li>${itemsHtml}`;
+    el.searchResults._items = recents;
+    el.searchResults.hidden = false;
+    return;
+  }
+  // First-run: offer a few popular cities to try.
+  const itemsHtml = POPULAR_CITIES.map((r, i) => `
     <li role="option" data-index="${i}">
-      <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
+      <span>${escapeHtml(r.name)}</span>
       <span class="sub">${escapeHtml(r.country || "")}</span>
     </li>
   `).join("");
-  el.searchResults.innerHTML = `<li class="recent-heading">Recent places</li>${itemsHtml}`;
-  el.searchResults._items = recents;
+  el.searchResults.innerHTML = `<li class="recent-heading">Try a city</li>${itemsHtml}`;
+  el.searchResults._items = POPULAR_CITIES;
   el.searchResults.hidden = false;
 }
 
