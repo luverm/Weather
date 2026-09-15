@@ -1342,9 +1342,10 @@ function renderDaily(w) {
       : meaningfulExtreme && i === coldestI && hottestI !== coldestI
         ? `<span class="daily-extreme" data-kind="cold">coldest</span>`
         : "";
+    const rainDot = precipDotHtml(d.precip);
     item.innerHTML = `
       <span class="daily-day">${day}${extremeBadge}</span>
-      <span class="daily-icon">${iconFor(d.condition)}</span>
+      <span class="daily-icon">${iconFor(d.condition)}${rainDot}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
       </div>
@@ -1373,6 +1374,13 @@ function dodTrendHtml(days, i) {
   const dir = deltaC > 0 ? "up" : "down";
   const arrow = deltaC > 0 ? "▲" : "▼";
   return `<span class="daily-dod" data-dir="${dir}" title="vs prior day">${arrow}${abs}°</span>`;
+}
+
+function precipDotHtml(precip) {
+  if (precip == null || precip < 0.5) return "";
+  const level = precip >= 15 ? "wet" : precip >= 5 ? "moderate" : "light";
+  const label = `${precip.toFixed(1)} mm expected`;
+  return `<span class="daily-rain-dot" data-level="${level}" title="${label}"></span>`;
 }
 
 function uvBadgeHtml(uvMax) {

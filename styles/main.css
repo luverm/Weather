@@ -1828,7 +1828,20 @@ kbd {
 }
 .daily-extreme[data-kind="hot"] { color: #ff9c7a; background: rgba(255, 156, 122, 0.14); border-color: rgba(255, 156, 122, 0.32); }
 .daily-extreme[data-kind="cold"] { color: #9ad1ff; background: rgba(154, 209, 255, 0.14); border-color: rgba(154, 209, 255, 0.32); }
-.daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
+.daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; position: relative; }
+.daily-rain-dot {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(154, 209, 255, 0.7);
+  box-shadow: 0 0 0 2px var(--bg, #0b1020);
+}
+.daily-rain-dot[data-level="light"]    { background: rgba(154, 209, 255, 0.85); }
+.daily-rain-dot[data-level="moderate"] { background: rgba(96, 170, 255, 0.95); }
+.daily-rain-dot[data-level="wet"]      { background: rgba(180, 120, 255, 1); box-shadow: 0 0 0 2px var(--bg, #0b1020), 0 0 6px rgba(180, 120, 255, 0.7); }
 .daily-range {
   position: relative;
   height: 6px; border-radius: 3px;
