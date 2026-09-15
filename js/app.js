@@ -8,7 +8,7 @@ import { RainScene } from "./scenes/rain.js";
 import { SnowScene } from "./scenes/snow.js";
 import { LightningScene } from "./scenes/lightning.js";
 import { WindScene } from "./scenes/wind.js";
-import { getWeather, getLocation } from "./weather-service.js";
+import { getWeather, getLocation, getCurrentSummary } from "./weather-service.js";
 import { ui } from "./ui.js";
 import { clock } from "./clock.js";
 import { Scrubber } from "./scrubber.js";
@@ -344,6 +344,30 @@ setInterval(() => {
   if (document.hidden) return;
   if (!app.weather || !clock.isLive()) return;
   refreshWeather();
+}, 15 * 60_000);
+
+// Refresh cached summaries for all OTHER saved places so their chip
+// temperatures don't go stale. Runs staggered to be gentle on the API.
+async function refreshOtherPlaces() {
+  const list = places.all();
+  const currentId = app.place ? places.idFor(app.place) : null;
+  const targets = list.filter((p) => places.idFor(p) !== currentId).slice(0, 6);
+  for (let i = 0; i < targets.length; i++) {
+    const p = targets[i];
+    await new Promise((r) => setTimeout(r, i * 400));
+    const summary = await getCurrentSummary(p.lat, p.lon);
+    if (summary) {
+      places.updateSummary(p, summary);
+      ui.refreshPlaces?.();
+    }
+  }
+}
+// Kick off the refresh a moment after boot so it doesn't compete with the
+// main weather fetch.
+setTimeout(() => { refreshOtherPlaces().catch(() => {}); }, 4000);
+// And every 15 minutes while the tab is visible.
+setInterval(() => {
+  if (!document.hidden) refreshOtherPlaces().catch(() => {});
 }, 15 * 60_000);
 
 // PWA service worker — optional, best-effort.

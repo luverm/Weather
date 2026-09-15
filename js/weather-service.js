@@ -48,6 +48,28 @@ async function fetchJson(url, opts) {
   }
 }
 
+// Lightweight current-conditions fetch for the places-strip chips.
+// Returns { temp, condition, label } or null on any failure. Deliberately
+// tiny so we can refresh a handful of saved cities without blowing the
+// API budget or the page-load time.
+export async function getCurrentSummary(lat, lon) {
+  const params = new URLSearchParams({
+    latitude: lat,
+    longitude: lon,
+    current: ["temperature_2m", "weather_code"].join(","),
+    timezone: "auto",
+  });
+  try {
+    const data = await fetchJson(`${FORECAST}?${params.toString()}`);
+    const c = data.current || {};
+    if (c.temperature_2m == null) return null;
+    const { condition, label } = mapWmo(c.weather_code);
+    return { temp: c.temperature_2m, condition, label };
+  } catch {
+    return null;
+  }
+}
+
 export async function searchCities(query) {
   if (!query || query.trim().length < 2) return [];
   const url = `${GEO}?name=${encodeURIComponent(query)}&count=6&language=en&format=json`;
