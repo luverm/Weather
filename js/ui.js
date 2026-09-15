@@ -48,6 +48,7 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -521,8 +522,40 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderDaylightDelta(w) {
+  const el2 = el.sunDaylightDelta;
+  if (!el2) return;
+  const daily = w?.daily || [];
+  const today = daily[0], tmrw = daily[1];
+  if (!today?.sunrise || !today?.sunset || !tmrw?.sunrise || !tmrw?.sunset) {
+    el2.hidden = true;
+    return;
+  }
+  const todayMs = today.sunset - today.sunrise;
+  const tmrwMs = tmrw.sunset - tmrw.sunrise;
+  const deltaSec = Math.round((tmrwMs - todayMs) / 1000);
+  const absSec = Math.abs(deltaSec);
+  const absMin = Math.floor(absSec / 60);
+  const remSec = absSec % 60;
+  const magnitude = absMin > 0
+    ? `${absMin}m ${remSec.toString().padStart(2, "0")}s`
+    : `${absSec}s`;
+  if (absSec < 15) {
+    el2.textContent = "≈ same tomorrow";
+    el2.dataset.dir = "flat";
+  } else if (deltaSec > 0) {
+    el2.textContent = `+${magnitude} tomorrow`;
+    el2.dataset.dir = "longer";
+  } else {
+    el2.textContent = `−${magnitude} tomorrow`;
+    el2.dataset.dir = "shorter";
+  }
+  el2.hidden = false;
 }
 
 function scheduleSunArc(w) {
@@ -1004,37 +1037,135 @@ function toggleDailyExpand(item, d, w) {
 }
 
 function renderNowcast(w) {
-  const nowcast = (w.nowcast || []).filter((n) => n.time > Date.now());
-  // Find first >0.1 precip entry.
+  const now = Date.now();
+  const nowcast = (w.nowcast || []).filter((n) => n.time > now);
+  // Path A — imminent precipitation within the 2-hour minutely nowcast.
   const first = nowcast.find((n) => n.precip > 0.1);
-  if (!first) {
-    el.nowcast.hidden = true;
+  if (first) {
+    renderNowcastImminent(w, nowcast, first);
     return;
   }
-  const inMin = Math.max(0, Math.round((first.time - Date.now()) / 60_000));
+  // Path B — look ahead through 24h hourly, then 7-day daily.
+  renderNowcastOutlook(w);
+}
+
+function renderNowcastImminent(w, nowcast, first) {
+  const now = Date.now();
+  const inMin = Math.max(0, Math.round((first.time - now) / 60_000));
   const kind = first.code >= 71 && first.code <= 86 ? "Snow" : "Rain";
+  el.nowcast.dataset.mode = "imminent";
   el.nowcastHeadline.textContent = inMin === 0
     ? `${kind} now`
     : `${kind} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
-  // 2h outlook summary.
   const totalMm = nowcast.reduce((s, n) => s + (n.precip || 0), 0);
   el.nowcastSub.textContent = `${totalMm.toFixed(1)} mm expected in the next 2 hours`;
-  // Bars (time-labeled, clickable to scrub).
+  el.nowcastBars.hidden = false;
   el.nowcastBars.innerHTML = "";
   const slice = nowcast.slice(0, 8);
   const maxP = Math.max(0.5, ...slice.map((n) => n.precip || 0));
-  slice.forEach((n, i) => {
+  slice.forEach((n) => {
     const bar = document.createElement("button");
     bar.type = "button";
     bar.className = "nowcast-bar";
     bar.style.height = `${Math.max(2, (n.precip / maxP) * 28)}px`;
-    const mins = Math.round((n.time - Date.now()) / 60_000);
+    const mins = Math.round((n.time - now) / 60_000);
     bar.title = `+${Math.max(0, mins)} min · ${n.precip.toFixed(1)} mm`;
     bar.setAttribute("aria-label", bar.title);
     bar.addEventListener("click", () => state.handlers.onHourClick?.(n.time));
     el.nowcastBars.appendChild(bar);
   });
   el.nowcast.hidden = false;
+}
+
+function renderNowcastOutlook(w) {
+  const now = Date.now();
+  const hourly = (w.hourly || []).filter((h) => h.time > now);
+  // Threshold: >=0.2mm precipitation OR >=45% pop counts as "expected rain".
+  const nextHour = hourly.find((h) => (h.precip ?? 0) >= 0.2 || (h.pop ?? 0) >= 45);
+  const tz = w.timezone;
+  const kind = (h) => {
+    const c = h.condition || h.code;
+    return c === "snow" ? "Snow" : "Rain";
+  };
+  if (nextHour) {
+    const hoursOut = Math.round((nextHour.time - now) / 3600_000);
+    const whenLabel = formatWhenHour(nextHour.time, tz, hoursOut);
+    el.nowcast.dataset.mode = "outlook";
+    el.nowcastHeadline.textContent = `Next ${kind(nextHour).toLowerCase()}: ${whenLabel}`;
+    // Sum precip through the next 6 hours after the event as a magnitude cue.
+    const window = hourly.filter((h) => h.time >= nextHour.time && h.time <= nextHour.time + 6 * 3600_000);
+    const totalMm = window.reduce((s, h) => s + (h.precip || 0), 0);
+    const peakPop = Math.max(...window.map((h) => h.pop || 0), 0);
+    el.nowcastSub.textContent = totalMm > 0.1
+      ? `${totalMm.toFixed(1)} mm · peak ${peakPop}% chance`
+      : `${peakPop}% chance in that window`;
+    // Bars: precip chance across next 12 hours starting now.
+    el.nowcastBars.hidden = false;
+    el.nowcastBars.innerHTML = "";
+    const slice = hourly.slice(0, 12);
+    const maxP = Math.max(20, ...slice.map((h) => h.pop || 0));
+    slice.forEach((h) => {
+      const bar = document.createElement("button");
+      bar.type = "button";
+      bar.className = "nowcast-bar";
+      bar.style.height = `${Math.max(2, ((h.pop || 0) / maxP) * 28)}px`;
+      const hh = Math.round((h.time - now) / 3600_000);
+      bar.title = `+${Math.max(0, hh)}h · ${h.pop || 0}%`;
+      bar.setAttribute("aria-label", bar.title);
+      bar.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
+      el.nowcastBars.appendChild(bar);
+    });
+    el.nowcast.hidden = false;
+    return;
+  }
+  // Path C — 7-day daily lookahead.
+  const daily = (w.daily || []).slice(0, 7);
+  const nextDay = daily.find((d, i) => i > 0 && ((d.precip ?? 0) >= 0.5 || (d.pop ?? 0) >= 50));
+  if (nextDay) {
+    const label = formatWhenDay(nextDay.time, tz);
+    el.nowcast.dataset.mode = "outlook-week";
+    el.nowcastHeadline.textContent = `Next rain: ${label}`;
+    el.nowcastSub.textContent = `${(nextDay.precip || 0).toFixed(1)} mm · ${nextDay.pop || 0}% chance`;
+    el.nowcastBars.hidden = true;
+    el.nowcastBars.innerHTML = "";
+    el.nowcast.hidden = false;
+    return;
+  }
+  // Path D — dry through the forecast window.
+  if (daily.length) {
+    const last = daily[daily.length - 1];
+    const label = formatWhenDay(last.time, tz);
+    el.nowcast.dataset.mode = "dry";
+    el.nowcastHeadline.textContent = `Dry through ${label}`;
+    el.nowcastSub.textContent = "No meaningful precipitation in the 7-day outlook";
+    el.nowcastBars.hidden = true;
+    el.nowcastBars.innerHTML = "";
+    el.nowcast.hidden = false;
+    return;
+  }
+  el.nowcast.hidden = true;
+}
+
+function formatWhenHour(ts, tz, hoursOut) {
+  const opts = { hour: "numeric", ...(tz && tz !== "auto" ? { timeZone: tz } : {}) };
+  const timeStr = new Date(ts).toLocaleTimeString(undefined, opts);
+  if (hoursOut < 1) return "within the hour";
+  if (hoursOut === 1) return "in about an hour";
+  if (hoursOut < 12) return `${timeStr} · in ${hoursOut}h`;
+  const dayOpts = { weekday: "short", ...(tz && tz !== "auto" ? { timeZone: tz } : {}) };
+  const day = new Date(ts).toLocaleDateString(undefined, dayOpts);
+  return `${day} ${timeStr}`;
+}
+
+function formatWhenDay(ts, tz) {
+  const target = new Date(ts);
+  const midnightToday = new Date();
+  midnightToday.setHours(0, 0, 0, 0);
+  const dayDiff = Math.round((ts - midnightToday.getTime()) / 86400_000);
+  if (dayDiff === 0) return "today";
+  if (dayDiff === 1) return "tomorrow";
+  const opts = { weekday: "long", ...(tz && tz !== "auto" ? { timeZone: tz } : {}) };
+  return target.toLocaleDateString(undefined, opts);
 }
 
 // ---------- Icons ----------
