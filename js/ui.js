@@ -35,6 +35,7 @@ const el = {
   feelsLike: $("#feels-like"),
   feelsLikeText: $("#feels-like-text"),
   feelsLikeChip: $("#feels-like-chip"),
+  nextHour: $("#next-hour"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -323,7 +324,23 @@ function renderLiveValues(w, { animate = true } = {}) {
     el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   }
   renderFeelsLikeChip(w);
+  renderNextHourChip(w);
   renderDayRange(w);
+}
+
+function renderNextHourChip(w) {
+  const chip = el.nextHour;
+  if (!chip) return;
+  const now = Date.now();
+  // Find the hour bucket ~60min in the future (skip the "current" bucket).
+  const upcoming = (w.hourly || []).find((h) => h.time > now + 30 * 60_000);
+  if (!upcoming || upcoming.temp == null) { chip.hidden = true; return; }
+  const t = Math.round(convertTemp(upcoming.temp));
+  const label = (upcoming.label || upcoming.condition || "").toLowerCase();
+  const pop = upcoming.pop || 0;
+  const rain = pop >= 40 ? ` · ${pop}% rain` : "";
+  chip.textContent = `In an hour: ${t}° ${label}${rain}`;
+  chip.hidden = false;
 }
 
 function renderFeelsLikeChip(w) {
