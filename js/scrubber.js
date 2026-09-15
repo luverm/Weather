@@ -148,8 +148,16 @@ export class Scrubber {
 
     const time = clock.now();
     const d = new Date(time);
+    const stored = (() => {
+      try { return localStorage.getItem("aether:clock"); } catch { return null; }
+    })();
+    const h12 = stored ? stored === "12h"
+      : /am|pm/i.test(new Intl.DateTimeFormat(undefined, { hour: "numeric" }).format(d));
     const label = d.toLocaleString(undefined, {
-      weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false,
+      weekday: "short",
+      hour: h12 ? "numeric" : "2-digit",
+      minute: "2-digit",
+      hour12: h12,
     });
     if (this.timeEl) this.timeEl.textContent = label;
 

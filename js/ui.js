@@ -1294,8 +1294,21 @@ function uvBadgeHtml(uvMax) {
 
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
+  const tz = state.weather?.timezone;
+  const titleFor = (d, i) => {
+    const dt = new Date(d.time);
+    const dayName = i === 0 ? "Today" : dt.toLocaleDateString(undefined, {
+      weekday: "long",
+      ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    });
+    const label = d.label || d.condition || "";
+    const range = (d.tempMin != null && d.tempMax != null)
+      ? `${Math.round(convertTemp(d.tempMin))}° / ${Math.round(convertTemp(d.tempMax))}°`
+      : null;
+    return [dayName, label, range].filter(Boolean).join(" · ");
+  };
   el.dailyIconStrip.innerHTML = days.map((d, i) =>
-    `<span class="strip-day" data-day-index="${i}" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
+    `<span class="strip-day" data-day-index="${i}" title="${escapeHtml(titleFor(d, i))}">${iconFor(d.condition)}</span>`
   ).join("");
   // Cross-highlight the matching row in the day-by-day list on hover / focus.
   const items = el.dailyTrack?.querySelectorAll(".daily-item") || [];
