@@ -1138,9 +1138,21 @@ function renderNowcast(w) {
   }
   const inMin = Math.max(0, Math.round((first.time - Date.now()) / 60_000));
   const kind = first.code >= 71 && first.code <= 86 ? "Snow" : "Rain";
-  el.nowcastHeadline.textContent = inMin === 0
-    ? `${kind} now`
-    : `${kind} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
+  // If we're already inside the wet run, hunt for the first dry bucket so
+  // we can tell the user "clearing in X min" rather than just "rain now".
+  let headline;
+  if (inMin === 0) {
+    const dry = nowcast.find((n) => n.precip <= 0.05);
+    if (dry) {
+      const dryIn = Math.max(0, Math.round((dry.time - Date.now()) / 60_000));
+      headline = dryIn === 0 ? `${kind} now` : `${kind} · clearing in ${dryIn} min`;
+    } else {
+      headline = `${kind} for the next 2 hours`;
+    }
+  } else {
+    headline = `${kind} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
+  }
+  el.nowcastHeadline.textContent = headline;
   // 2h outlook summary.
   const totalMm = nowcast.reduce((s, n) => s + (n.precip || 0), 0);
   el.nowcastSub.textContent = `${totalMm.toFixed(1)} mm expected in the next 2 hours`;
