@@ -21,6 +21,8 @@ const el = {
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
+  feelsLikeText: $("#feels-like-text"),
+  feelsLikeDelta: $("#feels-like-delta"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -278,8 +280,46 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  // Only touch the text span so the sibling temp-trend / delta pills survive.
+  if (el.feelsLikeText) el.feelsLikeText.textContent = `Feels like ${Math.round(feels)}°`;
+  else el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  renderFeelsLikeDelta(w);
   renderDayRange(w);
+}
+
+function renderFeelsLikeDelta(w) {
+  if (!el.feelsLikeDelta) return;
+  if (w.temp == null || w.feelsLike == null) {
+    el.feelsLikeDelta.hidden = true;
+    el.feelsLikeDelta.textContent = "";
+    return;
+  }
+  const diffC = w.feelsLike - w.temp;
+  if (Math.abs(diffC) < 2.5) {
+    el.feelsLikeDelta.hidden = true;
+    el.feelsLikeDelta.textContent = "";
+    return;
+  }
+  const diffDisplay = Math.round(state.unit === "F" ? Math.abs(diffC) * 9 / 5 : Math.abs(diffC));
+  if (diffDisplay < 1) {
+    el.feelsLikeDelta.hidden = true;
+    el.feelsLikeDelta.textContent = "";
+    return;
+  }
+  const colder = diffC < 0;
+  // Pick a short reason so the pill is meaningful, not just a delta.
+  let reason = "";
+  if (colder) {
+    if ((w.windSpeed ?? 0) >= 15) reason = "wind chill";
+    else reason = "cooler";
+  } else {
+    if ((w.humidity ?? 0) >= 60 && (w.temp ?? 0) >= 22) reason = "humidity";
+    else if ((w.uv ?? 0) >= 5 && w.isDay) reason = "sun";
+    else reason = "warmer";
+  }
+  el.feelsLikeDelta.dataset.dir = colder ? "cold" : "warm";
+  el.feelsLikeDelta.textContent = `${colder ? "▼" : "▲"} ${diffDisplay}° ${reason}`;
+  el.feelsLikeDelta.hidden = false;
 }
 
 function renderDayRange(w) {
