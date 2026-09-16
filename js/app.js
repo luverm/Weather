@@ -198,6 +198,7 @@ async function loadByCoords(place) {
   app.place = place;
   ui.setPlace(place);
   ui.setLoading(`Fetching weather for ${place.name}…`);
+  syncUrl(place);
 
   // Drop any scrubber offset so we start live on each new city.
   clock.reset();
@@ -304,8 +305,38 @@ installShortcuts({
   },
 });
 
+function syncUrl(place) {
+  if (!place || place.lat == null || place.lon == null) return;
+  try {
+    const params = new URLSearchParams({
+      lat: place.lat.toFixed(3),
+      lon: place.lon.toFixed(3),
+    });
+    if (place.name) params.set("name", place.name);
+    const next = `#${params.toString()}`;
+    if (location.hash !== next) history.replaceState(null, "", next);
+  } catch { /* ignore hash write failures */ }
+}
+
+function parseUrl() {
+  const raw = location.hash.startsWith("#") ? location.hash.slice(1) : "";
+  if (!raw) return null;
+  const params = new URLSearchParams(raw);
+  const lat = parseFloat(params.get("lat"));
+  const lon = parseFloat(params.get("lon"));
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  return { lat, lon, name: params.get("name") || "Shared location" };
+}
+
 // ---------- Start ----------
 (async function init() {
+  // URL-encoded location wins over saved / geolocation — lets people share a
+  // link that opens Aether pre-loaded to a specific city.
+  const fromUrl = parseUrl();
+  if (fromUrl) {
+    await loadByCoords(fromUrl);
+    return;
+  }
   // Prefer the most recent saved place if we have one — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();
