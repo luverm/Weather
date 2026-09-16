@@ -406,6 +406,20 @@ html[data-reduce-motion="true"] *::after {
 }
 .day-range[hidden] { display: none; }
 .day-range-end { white-space: nowrap; }
+.day-range-end-wrap {
+  display: grid;
+  gap: 0;
+  justify-items: center;
+  text-align: center;
+}
+.day-range-time {
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  color: var(--fg-dim);
+  opacity: 0.9;
+  margin-top: 1px;
+}
+.day-range-time:empty { display: none; }
 .day-range-track {
   position: relative;
   height: 6px;

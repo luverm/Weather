@@ -137,12 +137,18 @@
           <p id="condition-label" class="condition-label">—</p>
           <p id="feels-like" class="feels-like"><span id="temp-trend" class="temp-trend" aria-hidden="true"></span><span id="feels-like-text">Feels like —</span><span id="feels-like-delta" class="feels-like-delta" hidden></span></p>
           <div id="day-range" class="day-range" hidden aria-label="Today's temperature range">
-            <span class="day-range-end" id="day-range-min">—</span>
+            <div class="day-range-end-wrap">
+              <span class="day-range-end" id="day-range-min">—</span>
+              <span class="day-range-time" id="day-range-min-time"></span>
+            </div>
             <div class="day-range-track">
               <div class="day-range-fill"></div>
               <div class="day-range-marker" id="day-range-marker" title="Now"></div>
             </div>
-            <span class="day-range-end" id="day-range-max">—</span>
+            <div class="day-range-end-wrap">
+              <span class="day-range-end" id="day-range-max">—</span>
+              <span class="day-range-time" id="day-range-max-time"></span>
+            </div>
           </div>
         </div>
       </div>

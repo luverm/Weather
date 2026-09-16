@@ -27,6 +27,8 @@ const el = {
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
+  dayRangeMinTime: $("#day-range-min-time"),
+  dayRangeMaxTime: $("#day-range-max-time"),
   dayRangeMarker: $("#day-range-marker"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
@@ -341,10 +343,35 @@ function renderDayRange(w) {
   el.dayRange.hidden = false;
   el.dayRangeMin.textContent = `${Math.round(convertTemp(lo))}°`;
   el.dayRangeMax.textContent = `${Math.round(convertTemp(hi))}°`;
+  renderDayRangeTimes(w, lo, hi);
   // Marker position: clamp current temp to [lo,hi] so marker stays on track.
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+}
+
+function renderDayRangeTimes(w, lo, hi) {
+  if (!el.dayRangeMinTime || !el.dayRangeMaxTime) return;
+  // Find the hourly entries closest to today's low and high so we can
+  // annotate the ends of the range with WHEN they happen.
+  const hours = (w.hourly || []).slice(0, 26);
+  if (hours.length < 3) {
+    el.dayRangeMinTime.textContent = "";
+    el.dayRangeMaxTime.textContent = "";
+    return;
+  }
+  let minH = hours[0], maxH = hours[0];
+  for (const h of hours) {
+    if (h.temp == null) continue;
+    if (h.temp < minH.temp) minH = h;
+    if (h.temp > maxH.temp) maxH = h;
+  }
+  // Only show the time if the hourly extreme is close to the daily extreme
+  // (within 1°C); otherwise the sample missed the true peak and a time
+  // label would be misleading.
+  const near = (a, b) => Math.abs(a - b) <= 1.2;
+  el.dayRangeMinTime.textContent = near(minH.temp, lo) ? fmtTime(minH.time) : "";
+  el.dayRangeMaxTime.textContent = near(maxH.temp, hi) ? fmtTime(maxH.time) : "";
 }
 
 function renderMetrics(w) {
