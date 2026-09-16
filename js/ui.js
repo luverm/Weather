@@ -54,6 +54,7 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonNext: $("#moon-next"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -625,6 +626,31 @@ function renderAirQuality(aq) {
   renderAqTrend(aq);
 }
 
+function renderMoonNext(moon) {
+  if (!el.moonNext) return;
+  const CYCLE = 29.5305882;
+  const phase = moon?.phase;
+  if (phase == null) {
+    el.moonNext.hidden = true;
+    return;
+  }
+  // Distance forward around the [0,1) cycle to phase 0.5 (full) and 0 (new).
+  const daysTo = (target) => {
+    const diff = ((target - phase) + 1) % 1;
+    return Math.round(diff * CYCLE);
+  };
+  const toFull = daysTo(0.5);
+  const toNew = daysTo(0);
+  // Pick whichever milestone is closer, and describe today if we're already there.
+  let label;
+  if (toFull === 0) label = "Full moon tonight";
+  else if (toNew === 0) label = "New moon tonight";
+  else if (toFull <= toNew) label = `Full in ${toFull}d`;
+  else label = `New in ${toNew}d`;
+  el.moonNext.textContent = label;
+  el.moonNext.hidden = false;
+}
+
 function renderAqTip(aq) {
   if (!el.aqTip) return;
   const v = aq?.aqi;
@@ -659,6 +685,7 @@ function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  renderMoonNext(moon);
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
