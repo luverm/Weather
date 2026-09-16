@@ -1185,8 +1185,14 @@ function renderDaily(w) {
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(convertWind(d.gustsMax))} ${windUnitLabel()}`
       : "";
-    const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
-    const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    // Snow beats a plain rain label when there's meaningful snowfall.
+    const snowLabel = (d.snow != null && d.snow >= 1)
+      ? ` · ${d.snow >= 10 ? Math.round(d.snow) : d.snow.toFixed(1)} cm snow`
+      : "";
+    const popLabel = !snowLabel && d.pop >= 30 ? ` · ${d.pop}% rain` : "";
+    const extra = gustLabel || popLabel || snowLabel
+      ? `<span class="daily-gust">${snowLabel}${popLabel}${gustLabel}</span>`
+      : "";
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
