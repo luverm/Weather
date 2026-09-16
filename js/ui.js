@@ -1449,6 +1449,34 @@ function bindSearch() {
       el.searchResults.hidden = false;
     }
   });
+  el.searchInput.addEventListener("keydown", (e) => {
+    const items = el.searchResults._items;
+    if (el.searchResults.hidden || !items?.length) return;
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      const rows = el.searchResults.querySelectorAll("li[data-index]");
+      if (!rows.length) return;
+      let idx = -1;
+      rows.forEach((r, i) => { if (r.classList.contains("active")) idx = i; });
+      const next = e.key === "ArrowDown"
+        ? (idx + 1) % rows.length
+        : (idx <= 0 ? rows.length - 1 : idx - 1);
+      rows.forEach((r) => r.classList.remove("active"));
+      rows[next].classList.add("active");
+      rows[next].scrollIntoView({ block: "nearest" });
+    } else if (e.key === "Enter") {
+      const active = el.searchResults.querySelector("li.active[data-index]");
+      if (!active) return;
+      e.preventDefault();
+      const i = parseInt(active.dataset.index, 10);
+      const item = items[i];
+      if (!item) return;
+      el.searchInput.value = item.name;
+      el.searchResults.hidden = true;
+      places.add(item);
+      state.handlers.onSearchSelect?.(item);
+    }
+  });
   el.searchResults.addEventListener("click", (e) => {
     const li = e.target.closest("li");
     if (!li) return;
