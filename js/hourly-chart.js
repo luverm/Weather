@@ -137,7 +137,10 @@ export class HourlyChart {
       : null;
     const feelsStr = (feels != null && Math.abs(feels - t) >= 1)
       ? `<em>feels ${Math.round(feels)}°</em>` : "";
-    const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h` : "";
+    const windConv = unit === "F"
+      ? (kmh) => `${Math.round(kmh * 0.621371)} mph`
+      : (kmh) => `${Math.round(kmh)} km/h`;
+    const wind = h.wind != null ? ` · ${windConv(h.wind)}` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
     this.popover.innerHTML =
       `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
