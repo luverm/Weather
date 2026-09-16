@@ -184,6 +184,7 @@ export const ui = {
   setWeather(weather, { narrative } = {}) {
     state.weather = weather;
     state.sampledWeather = weather; // initially same as live
+    updateDocumentTitle(weather);
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
@@ -215,6 +216,7 @@ export const ui = {
   /** Called by the scrubber whenever simulated time moves. */
   setSampledWeather(sampled, { highlightHourIndex } = {}) {
     state.sampledWeather = sampled;
+    updateDocumentTitle(sampled);
     renderLiveValues(sampled, { animate: false });
     renderMetrics(sampled);
     renderAdvice(sampled);
@@ -1287,7 +1289,21 @@ function bindUnitToggle() {
     localStorage.setItem("aether:unit", state.unit);
     el.unitBtn.textContent = `°${state.unit}`;
     if (state.weather) ui.setWeather(state.weather);
+    if (state.sampledWeather) updateDocumentTitle(state.sampledWeather);
   });
+}
+
+const DEFAULT_TITLE = "Aether — Interactive Weather";
+function updateDocumentTitle(w) {
+  if (!w || w.temp == null) {
+    document.title = DEFAULT_TITLE;
+    return;
+  }
+  const t = Math.round(convertTemp(w.temp));
+  const place = state.place?.name;
+  document.title = place
+    ? `${t}° · ${place} — Aether`
+    : `${t}° — Aether`;
 }
 
 function bindLocate() {
