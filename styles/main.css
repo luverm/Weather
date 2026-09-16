@@ -1448,11 +1448,33 @@ kbd {
 }
 .daily-icon-strip .strip-day {
   display: grid; place-items: center;
-  padding: 4px;
+  padding: 4px 4px 2px;
   opacity: 0.85;
   transition: opacity 160ms var(--ease), transform 160ms var(--ease);
+  gap: 1px;
 }
 .daily-icon-strip .strip-day:hover { opacity: 1; transform: translateY(-1px); }
+.daily-icon-strip .strip-pop {
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(154, 209, 255, 0.14);
+  border: 1px solid rgba(154, 209, 255, 0.22);
+  color: #cfe6ff;
+  line-height: 1.4;
+}
+.daily-icon-strip .strip-pop[data-level="med"] {
+  background: rgba(154, 209, 255, 0.22);
+  border-color: rgba(154, 209, 255, 0.36);
+  color: #dff0ff;
+}
+.daily-icon-strip .strip-pop[data-level="high"] {
+  background: rgba(120, 168, 255, 0.30);
+  border-color: rgba(120, 168, 255, 0.48);
+  color: #ecf3ff;
+}
 .daily-icon-strip .strip-day svg {
   width: 22px; height: 22px;
   display: block;

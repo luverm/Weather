@@ -924,9 +924,18 @@ function renderDaily(w) {
 
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
-  el.dailyIconStrip.innerHTML = days.map((d) =>
-    `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
-  ).join("");
+  el.dailyIconStrip.innerHTML = days.map((d) => {
+    const pop = d.pop ?? 0;
+    // Show a rain-chance badge for meaningfully rainy days so the strip
+    // reads as both a condition summary and a "when's it going to rain".
+    let badge = "";
+    if (pop >= 30) {
+      const level = pop >= 70 ? "high" : pop >= 50 ? "med" : "low";
+      badge = `<span class="strip-pop" data-level="${level}">${pop}%</span>`;
+    }
+    const title = `${escapeHtml(d.label || d.condition || "")}${pop >= 20 ? ` · ${pop}% rain` : ""}`;
+    return `<span class="strip-day" title="${title}">${iconFor(d.condition)}${badge}</span>`;
+  }).join("");
 }
 
 function renderDailySpark(days) {
