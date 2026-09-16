@@ -1415,6 +1415,45 @@ function updateDocumentTitle(w) {
   document.title = place
     ? `${t}° · ${place} — Aether`
     : `${t}° — Aether`;
+  updateFavicon(w);
+}
+
+// Compact 32x32 favicon glyph per condition. Uses a dark backdrop
+// so it reads whether the browser theme is light or dark.
+function faviconSvg(condition, isDay) {
+  const bg = "#0b1020";
+  const glyph = (() => {
+    switch (condition) {
+      case "clear":
+        return isDay
+          ? `<circle cx='16' cy='16' r='7' fill='#ffe38b'/><g stroke='#ffe38b' stroke-width='2' stroke-linecap='round'><path d='M16 3v3M16 26v3M3 16h3M26 16h3M6 6l2 2M24 24l2 2M6 26l2-2M24 8l2-2'/></g>`
+          : `<path d='M22 20a9 9 0 11-9-13 7 7 0 009 13z' fill='#e8ecff'/>`;
+      case "clouds":
+        return `<path d='M8 21a5 5 0 010-10 6 6 0 0111.5-1 5 5 0 01-1 10H8z' fill='#c9d5e6'/>`;
+      case "rain":
+        return `<path d='M8 17a5 5 0 010-10 6 6 0 0111.5-1 5 5 0 01-1 10H8z' fill='#c9d5e6'/><g stroke='#7ec4ff' stroke-width='2' stroke-linecap='round'><path d='M10 22l-1 4M15 22l-1 4M20 22l-1 4'/></g>`;
+      case "snow":
+        return `<path d='M8 17a5 5 0 010-10 6 6 0 0111.5-1 5 5 0 01-1 10H8z' fill='#c9d5e6'/><g fill='#e8f4ff'><circle cx='11' cy='24' r='1.4'/><circle cx='16' cy='26' r='1.4'/><circle cx='21' cy='24' r='1.4'/></g>`;
+      case "storm":
+        return `<path d='M8 15a5 5 0 010-10 6 6 0 0111.5-1 5 5 0 01-1 10H8z' fill='#a8b8d0'/><path d='M16 15l-3 6h4l-3 6' fill='none' stroke='#ffd76a' stroke-width='2' stroke-linejoin='round'/>`;
+      case "fog":
+        return `<g stroke='#c9d5e6' stroke-width='2.4' stroke-linecap='round'><path d='M5 12h22M7 18h18M9 24h20'/></g>`;
+      default:
+        return `<circle cx='16' cy='16' r='7' fill='#fff1c9'/>`;
+    }
+  })();
+  return `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='${bg}'/>${glyph}</svg>`;
+}
+
+let _lastFaviconKey = null;
+function updateFavicon(w) {
+  const key = `${w.condition ?? ""}:${w.isDay ? "d" : "n"}`;
+  if (key === _lastFaviconKey) return;
+  _lastFaviconKey = key;
+  const link = document.querySelector('link[rel="icon"]');
+  if (!link) return;
+  const svg = faviconSvg(w.condition, w.isDay);
+  link.href = "data:image/svg+xml," + encodeURIComponent(svg);
 }
 
 function bindLocate() {
