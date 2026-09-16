@@ -59,6 +59,7 @@ const el = {
   sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  goldenHour: $("#golden-hour"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -135,6 +136,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  goldenTimer: null,
   localTimer: null,
 };
 
@@ -694,6 +696,47 @@ function renderSun(w) {
   renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleGoldenHour(w);
+}
+
+function scheduleGoldenHour(w) {
+  if (!el.goldenHour) return;
+  if (state.goldenTimer) { clearInterval(state.goldenTimer); state.goldenTimer = null; }
+  if (!w?.sunrise || !w?.sunset) {
+    el.goldenHour.hidden = true;
+    el.goldenHour.textContent = "";
+    return;
+  }
+  const update = () => {
+    const now = Date.now();
+    const HOUR = 60 * 60_000;
+    let label = null, kind = null;
+    if (now >= w.sunrise && now <= w.sunrise + HOUR) {
+      const mins = Math.max(0, Math.round((w.sunrise + HOUR - now) / 60_000));
+      label = `Golden hour · ${mins}m left`;
+      kind = "morning";
+    } else if (now >= w.sunset - HOUR && now < w.sunset) {
+      const mins = Math.max(0, Math.round((w.sunset - now) / 60_000));
+      label = `Golden hour · ${mins}m to sunset`;
+      kind = "evening";
+    } else if (now >= w.sunset && now <= w.sunset + 30 * 60_000) {
+      label = "Blue hour";
+      kind = "evening";
+    } else if (now >= w.sunrise - 30 * 60_000 && now < w.sunrise) {
+      label = "Blue hour";
+      kind = "morning";
+    }
+    if (label) {
+      el.goldenHour.textContent = label;
+      el.goldenHour.dataset.kind = kind;
+      el.goldenHour.hidden = false;
+    } else {
+      el.goldenHour.hidden = true;
+      el.goldenHour.textContent = "";
+    }
+  };
+  update();
+  state.goldenTimer = setInterval(update, 60_000);
 }
 
 function renderDaylightDelta(w) {
