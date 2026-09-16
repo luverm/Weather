@@ -1614,6 +1614,12 @@ kbd {
 .daily-spark circle { transition: r 160ms var(--ease); }
 .daily-spark .dot-hi { fill: #ff9c7a; }
 .daily-spark .dot-lo { fill: #9ad1ff; }
+.daily-spark .dot-today { filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.55)); }
+.daily-spark .dot-today-line {
+  stroke: rgba(255, 255, 255, 0.18);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
 .forecast-track {
   display: grid;
   grid-auto-flow: column;

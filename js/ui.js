@@ -1227,20 +1227,30 @@ function renderDailySpark(days) {
   // Dots at each day + per-day temp labels above/below
   el.dailySparkDots.innerHTML = "";
   days.forEach((d, i) => {
+    // Today gets a subtle vertical guide so the current day pops on the chart.
+    if (i === 0) {
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("x1", x(i).toFixed(1));
+      line.setAttribute("x2", x(i).toFixed(1));
+      line.setAttribute("y1", TOP.toFixed(1));
+      line.setAttribute("y2", (TOP + innerH).toFixed(1));
+      line.setAttribute("class", "dot-today-line");
+      el.dailySparkDots.appendChild(line);
+    }
     if (d.tempMax != null) {
       const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
       c.setAttribute("cx", x(i).toFixed(1));
       c.setAttribute("cy", y(d.tempMax).toFixed(1));
-      c.setAttribute("r", "2.5");
-      c.setAttribute("class", "dot-hi");
+      c.setAttribute("r", i === 0 ? "3.2" : "2.5");
+      c.setAttribute("class", i === 0 ? "dot-hi dot-today" : "dot-hi");
       el.dailySparkDots.appendChild(c);
     }
     if (d.tempMin != null) {
       const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
       c.setAttribute("cx", x(i).toFixed(1));
       c.setAttribute("cy", y(d.tempMin).toFixed(1));
-      c.setAttribute("r", "2.5");
-      c.setAttribute("class", "dot-lo");
+      c.setAttribute("r", i === 0 ? "3.2" : "2.5");
+      c.setAttribute("class", i === 0 ? "dot-lo dot-today" : "dot-lo");
       el.dailySparkDots.appendChild(c);
     }
   });
