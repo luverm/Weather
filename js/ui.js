@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { narrate } from "./narrative.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -212,7 +213,15 @@ export const ui = {
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
-    if (el.narrative) el.narrative.textContent = narrative || "";
+    if (el.narrative) {
+      // Recompute narrative in the current unit so the sentence updates
+      // when the user toggles °C / °F rather than being frozen at load.
+      el.narrative.textContent = narrate(weather, {
+        fmtTemp: (c) => `${Math.round(convertTemp(c))}°`,
+        fmtWind: (kmh) => `${Math.round(convertWind(kmh))} ${windUnitLabel()}`,
+        unit: state.unit,
+      }) || narrative || "";
+    }
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
     if (state.place) {

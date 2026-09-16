@@ -56,16 +56,18 @@ function findGusts(hourly) {
 /**
  * Return a one or two-sentence narrative for the current weather.
  */
-export function narrate(weather) {
+export function narrate(weather, opts = {}) {
   if (!weather) return "";
   const bits = [];
   const { condition, label, temp, feelsLike, uvPeak, windSpeed } = weather;
+  const fmtT = opts.fmtTemp || ((c) => `${Math.round(c)}°`);
+  const fmtW = opts.fmtWind || ((kmh) => `${Math.round(kmh)} km/h`);
 
   // Lead: describe current state.
   const feels = Math.abs((feelsLike ?? temp) - temp) >= 3
-    ? ` — feels closer to ${Math.round(feelsLike)}°`
+    ? ` — feels closer to ${fmtT(feelsLike)}`
     : "";
-  bits.push(`${label} at ${Math.round(temp)}°${feels}.`);
+  bits.push(`${label} at ${fmtT(temp)}${feels}.`);
 
   // Precipitation arriving.
   const rain = findNextPrecip(weather.nowcast, weather.hourly);
@@ -83,16 +85,21 @@ export function narrate(weather) {
   if (bits.length < 2) {
     const swing = findTempSwing(weather.hourly);
     if (swing) {
+      // Swing is a magnitude delta, not an absolute temperature — scale to °F
+      // by 1.8x when the caller is in °F units so the number stays honest.
+      const scaled = opts.fmtTemp && (opts.unit === "F" || opts.tempScale)
+        ? Math.round(swing.by * 1.8)
+        : swing.by;
       bits.push(swing.kind === "drop"
-        ? `Temperature drops ${swing.by}° by ${fmtHour(swing.ts)}.`
-        : `Warming ${swing.by}° by ${fmtHour(swing.ts)}.`);
+        ? `Temperature drops ${scaled}° by ${fmtHour(swing.ts)}.`
+        : `Warming ${scaled}° by ${fmtHour(swing.ts)}.`);
     }
   }
 
   // Wind gusts.
   if (bits.length < 2) {
     const gust = findGusts(weather.hourly);
-    if (gust) bits.push(`Gusts up to ${gust.kmh} km/h around ${fmtHour(gust.ts)}.`);
+    if (gust) bits.push(`Gusts up to ${fmtW(gust.kmh)} around ${fmtHour(gust.ts)}.`);
   }
 
   // UV warning.
