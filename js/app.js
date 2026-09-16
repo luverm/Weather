@@ -363,6 +363,12 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
+// Refresh as soon as connectivity returns so we swap the offline mock for
+// real data without the user having to hit the refresh button.
+window.addEventListener("online", () => {
+  if (app.weather?.offline && app.place) refreshWeather();
+});
+
 // Re-render scenes at the top of each minute so "live" view ticks forward.
 setInterval(() => {
   if (!app.weather || !clock.isLive()) return;
