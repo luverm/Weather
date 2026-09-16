@@ -1362,9 +1362,14 @@ function renderNowcast(w) {
     headline = `${kind} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
   }
   el.nowcastHeadline.textContent = headline;
-  // 2h outlook summary.
+  // 2h outlook summary; layer today's daily total if it's meaningfully wet.
   const totalMm = nowcast.reduce((s, n) => s + (n.precip || 0), 0);
-  el.nowcastSub.textContent = `${totalMm.toFixed(1)} mm expected in the next 2 hours`;
+  const todayMm = w.daily?.[0]?.precip ?? 0;
+  let sub = `${totalMm.toFixed(1)} mm expected in the next 2 hours`;
+  if (todayMm >= 3 && todayMm > totalMm + 1) {
+    sub += ` · ${todayMm.toFixed(1)} mm today`;
+  }
+  el.nowcastSub.textContent = sub;
   // Bars (time-labeled, clickable to scrub).
   el.nowcastBars.innerHTML = "";
   const slice = nowcast.slice(0, 8);
