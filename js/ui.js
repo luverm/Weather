@@ -1541,10 +1541,18 @@ function bindSearch() {
 
 function bindUnitToggle() {
   el.unitBtn.addEventListener("click", () => {
+    // Hold on to the current sample so we can re-apply it after the
+    // base-weather re-render — otherwise a unit toggle silently drops
+    // the user out of a scrubbed view.
+    const wasScrubbed = state.sampledWeather && state.sampledWeather !== state.weather;
+    const sampled = wasScrubbed ? state.sampledWeather : null;
     state.unit = state.unit === "C" ? "F" : "C";
     localStorage.setItem("aether:unit", state.unit);
     el.unitBtn.textContent = `°${state.unit}`;
     if (state.weather) ui.setWeather(state.weather);
+    if (sampled) {
+      ui.setSampledWeather(sampled, { highlightHourIndex: sampled._sampledIndex });
+    }
     if (state.sampledWeather) updateDocumentTitle(state.sampledWeather);
   });
 }
@@ -1670,10 +1678,15 @@ function bindSettings() {
     const wantF = el.settingUnitF.checked;
     const desired = wantF ? "F" : "C";
     if (state.unit !== desired) {
+      const wasScrubbed = state.sampledWeather && state.sampledWeather !== state.weather;
+      const sampled = wasScrubbed ? state.sampledWeather : null;
       state.unit = desired;
       localStorage.setItem("aether:unit", state.unit);
       el.unitBtn.textContent = `°${state.unit}`;
       if (state.weather) ui.setWeather(state.weather);
+      if (sampled) {
+        ui.setSampledWeather(sampled, { highlightHourIndex: sampled._sampledIndex });
+      }
     }
   });
 
