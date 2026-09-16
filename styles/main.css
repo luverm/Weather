@@ -488,11 +488,14 @@ html[data-reduce-motion="true"] *::after {
   border-radius: 2px;
   min-height: 2px;
   opacity: 0.85;
-  transition: height 300ms var(--ease), opacity 150ms var(--ease), transform 150ms var(--ease);
+  transition: height 300ms var(--ease), opacity 150ms var(--ease), transform 150ms var(--ease), background 200ms var(--ease);
   border: 0;
   padding: 0;
   cursor: pointer;
 }
+.nowcast-bars .nowcast-bar[data-intensity="light"]    { background: #9ad1ff; }
+.nowcast-bars .nowcast-bar[data-intensity="moderate"] { background: #6aa2ff; }
+.nowcast-bars .nowcast-bar[data-intensity="heavy"]    { background: #b075ff; box-shadow: 0 0 6px rgba(176, 117, 255, 0.35); }
 .nowcast-bars .nowcast-bar:hover { opacity: 1; transform: scaleY(1.1); }
 .nowcast-bars .nowcast-bar:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @keyframes slideInUp {

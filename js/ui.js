@@ -1277,6 +1277,9 @@ function renderNowcast(w) {
     bar.type = "button";
     bar.className = "nowcast-bar";
     bar.style.height = `${Math.max(2, (n.precip / maxP) * 28)}px`;
+    // Intensity level lets CSS tint the bar so a squall stands out from drizzle.
+    const level = n.precip >= 2.5 ? "heavy" : n.precip >= 0.8 ? "moderate" : "light";
+    bar.dataset.intensity = level;
     const mins = Math.round((n.time - Date.now()) / 60_000);
     bar.title = `+${Math.max(0, mins)} min · ${n.precip.toFixed(1)} mm`;
     bar.setAttribute("aria-label", bar.title);
