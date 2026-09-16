@@ -126,6 +126,7 @@ const el = {
   heroInner: document.querySelector(".hero-inner"),
   toast: $("#toast"),
   placesStrip: $("#places-strip"),
+  offlinePill: $("#offline-pill"),
 };
 
 const state = {
@@ -224,6 +225,7 @@ export const ui = {
       }) || narrative || "";
     }
     if (weather.offline) ui.showToast("Offline — showing sample weather");
+    if (el.offlinePill) el.offlinePill.hidden = !weather.offline;
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
       places.updateSummary(state.place, {
