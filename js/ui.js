@@ -46,6 +46,7 @@ const el = {
   aqValue: $("#aq-value"),
   aqLabel: $("#aq-label"),
   aqDetail: $("#aq-detail"),
+  aqTip: $("#aq-tip"),
   aqCard: $("#aq-card"),
   aqTrendLine: $("#aq-trend-line"),
   aqTrendFill: $("#aq-trend-fill"),
@@ -609,7 +610,27 @@ function renderAirQuality(aq) {
   el.aqArc.setAttribute("stroke-dashoffset", String(126 * (1 - frac)));
   el.aqDetail.textContent =
     `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
+  renderAqTip(aq);
   renderAqTrend(aq);
+}
+
+function renderAqTip(aq) {
+  if (!el.aqTip) return;
+  const v = aq?.aqi;
+  if (v == null) {
+    el.aqTip.hidden = true;
+    el.aqTip.textContent = "";
+    return;
+  }
+  let tip;
+  if (v <= 50) tip = "Ideal for outdoor activity.";
+  else if (v <= 100) tip = "Sensitive groups may take it easy outside.";
+  else if (v <= 150) tip = "Sensitive groups: limit long exertion outdoors.";
+  else if (v <= 200) tip = "Everyone: reduce prolonged outdoor exertion.";
+  else if (v <= 300) tip = "Avoid outdoor exertion — mask up if going out.";
+  else tip = "Stay indoors and seal windows.";
+  el.aqTip.textContent = tip;
+  el.aqTip.hidden = false;
 }
 
 function renderAqTrend(aq) {
