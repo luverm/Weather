@@ -375,17 +375,25 @@ function mock(lat, lon) {
       uv: Math.max(0, Math.sin((i - 6) * Math.PI / 13) * 6),
       condition: CONDITIONS.CLOUDS, label: "Cloudy",
     })),
-    daily: Array.from({ length: 7 }, (_, i) => ({
-      time: now + i * 86400_000,
-      tempMax: 20 + Math.sin(i) * 4,
-      tempMin: 12 + Math.sin(i) * 3,
-      precip: i % 3 === 0 ? 2.1 : 0,
-      pop: i % 3 === 0 ? 65 : 15,
-      windMax: 12, gustsMax: 20, uvMax: 5,
-      sunrise: new Date().setHours(6, 30, 0, 0),
-      sunset: new Date().setHours(19, 0, 0, 0),
-      condition: CONDITIONS.CLOUDS, label: "Cloudy",
-    })),
+    daily: Array.from({ length: 7 }, (_, i) => {
+      // Small day-over-day drift so downstream deltas (daylight, precip)
+      // stay non-trivial in the offline demo.
+      const dayBase = new Date(now + i * 86400_000);
+      dayBase.setHours(0, 0, 0, 0);
+      return {
+        time: dayBase.getTime(),
+        tempMax: 20 + Math.sin(i) * 4,
+        tempMin: 12 + Math.sin(i) * 3,
+        precip: i % 3 === 0 ? 2.1 : i % 4 === 1 ? 0.4 : 0,
+        pop: i % 3 === 0 ? 65 : i % 4 === 1 ? 35 : 15,
+        windMax: 12, gustsMax: 20, uvMax: 5,
+        // Nudge sunrise/sunset by ~90 s per day so the daylight delta
+        // renders a plausible seasonal drift.
+        sunrise: dayBase.getTime() + (6 * 60 + 30) * 60_000 - i * 90_000,
+        sunset: dayBase.getTime() + (19 * 60) * 60_000 + i * 90_000,
+        condition: CONDITIONS.CLOUDS, label: "Cloudy",
+      };
+    }),
     nowcast: [],
     moon: computeMoonPhase(new Date()),
     airQuality: { aqi: 42, pm25: 8, pm10: 14, o3: 40, no2: 15, co: 0.2, label: "Good" },
