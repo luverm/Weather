@@ -484,8 +484,10 @@ function renderMetrics(w) {
     }
   }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
-  const visLabel = w.visibility != null
-    ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
+  const visKm = w.visibility != null ? Math.round((w.visibility / 1000) * 10) / 10 : null;
+  const visClarity = visibilityClarity(w.visibility);
+  const visLabel = visKm != null
+    ? `visibility ${visKm} km${visClarity ? " · " + visClarity : ""}`
     : "visibility —";
   const pressureCategory = categorizePressure(w.pressure);
   el.metricPressureSub.textContent = pressureCategory
@@ -545,6 +547,14 @@ function categorizePressure(p) {
   if (p < 1000) return "low";
   if (p > 1025) return "high";
   return null;
+}
+
+function visibilityClarity(m) {
+  if (m == null) return null;
+  if (m < 500) return "fog";
+  if (m < 2000) return "haze";
+  if (m < 8000) return "misty";
+  return null; // "clear" is the default — no chip needed.
 }
 
 function uvLevel(v) {
