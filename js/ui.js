@@ -1165,6 +1165,11 @@ function renderDaily(w) {
     const item = document.createElement("div");
     item.className = "daily-item";
     item.dataset.ts = d.time;
+    // Blue-tint rows with high precipitation probability so the wet stretch
+    // reads as a color band down the list.
+    const dPop = d.pop ?? 0;
+    if (dPop >= 60) item.dataset.wet = "high";
+    else if (dPop >= 30) item.dataset.wet = "med";
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(convertWind(d.gustsMax))} ${windUnitLabel()}`
       : "";
