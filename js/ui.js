@@ -72,6 +72,9 @@ const el = {
   pressureSparkFill: $("#pressure-spark-fill"),
   humiditySparkLine: $("#humidity-spark-line"),
   humiditySparkFill: $("#humidity-spark-fill"),
+  windSparkLine: $("#wind-spark-line"),
+  windSparkGustFill: $("#wind-spark-gust-fill"),
+  windSparkGustLine: $("#wind-spark-gust-line"),
   dailySpark: $("#daily-spark"),
   dailyHi: $("#daily-hi"),
   dailyLo: $("#daily-lo"),
@@ -485,13 +488,33 @@ function renderPressureSparkline(w) {
     (w.hourly || []).map((h) => h.humidity).filter((v) => v != null).slice(0, 12),
     { minSpan: 10, fixedMin: 0, fixedMax: 100 }
   );
+  renderWindSparkline(w);
+}
+
+function renderWindSparkline(w) {
+  if (!el.windSparkLine || !el.windSparkGustLine || !el.windSparkGustFill) return;
+  const hours = (w.hourly || []).slice(0, 12);
+  const wind = hours.map((h) => h.wind).filter((v) => v != null);
+  const gust = hours.map((h) => h.gusts).filter((v) => v != null);
+  if (wind.length < 2) {
+    el.windSparkLine.setAttribute("d", "");
+    el.windSparkGustLine.setAttribute("d", "");
+    el.windSparkGustFill.setAttribute("d", "");
+    return;
+  }
+  // Shared scale so wind and gusts read as one system.
+  const values = wind.concat(gust);
+  const min = 0;
+  const max = Math.max(...values, 10);
+  drawSparkline(el.windSparkLine, null, wind, { fixedMin: min, fixedMax: max });
+  drawSparkline(el.windSparkGustLine, el.windSparkGustFill, gust, { fixedMin: min, fixedMax: max });
 }
 
 function drawSparkline(lineEl, fillEl, series, { minSpan = 1, fixedMin, fixedMax } = {}) {
-  if (!lineEl || !fillEl) return;
+  if (!lineEl) return;
   if (series.length < 2) {
     lineEl.setAttribute("d", "");
-    fillEl.setAttribute("d", "");
+    if (fillEl) fillEl.setAttribute("d", "");
     return;
   }
   const min = fixedMin != null ? fixedMin : Math.min(...series);
@@ -504,9 +527,11 @@ function drawSparkline(lineEl, fillEl, series, { minSpan = 1, fixedMin, fixedMax
   const y = (v) => PAD + innerH - ((v - min) / span) * innerH;
   let line = "";
   series.forEach((v, i) => { line += (i === 0 ? "M" : "L") + x(i).toFixed(1) + "," + y(v).toFixed(1) + " "; });
-  const fill = `${line}L${x(series.length - 1).toFixed(1)},${(H - PAD).toFixed(1)} L${x(0).toFixed(1)},${(H - PAD).toFixed(1)} Z`;
   lineEl.setAttribute("d", line.trim());
-  fillEl.setAttribute("d", fill);
+  if (fillEl) {
+    const fill = `${line}L${x(series.length - 1).toFixed(1)},${(H - PAD).toFixed(1)} L${x(0).toFixed(1)},${(H - PAD).toFixed(1)} Z`;
+    fillEl.setAttribute("d", fill);
+  }
 }
 
 function aqColor(aqi) {
