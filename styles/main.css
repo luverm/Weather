@@ -1415,6 +1415,27 @@ kbd {
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+.daily-precip-total {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+  background: rgba(154, 209, 255, 0.10);
+  border: 1px solid rgba(154, 209, 255, 0.20);
+  color: #cfe6ff;
+}
+.daily-precip-total[data-level="wet"] {
+  background: rgba(154, 209, 255, 0.16);
+  border-color: rgba(154, 209, 255, 0.30);
+  color: #dff0ff;
+}
+.daily-precip-total[data-level="heavy"] {
+  background: rgba(120, 168, 255, 0.22);
+  border-color: rgba(120, 168, 255, 0.40);
+  color: #ecf3ff;
+}
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;
