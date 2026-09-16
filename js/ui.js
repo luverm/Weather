@@ -48,6 +48,7 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -521,8 +522,34 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderDaylightDelta(w) {
+  if (!el.sunDaylightDelta) return;
+  const today = w.daily?.[0];
+  const tmrw = w.daily?.[1];
+  if (!today?.sunrise || !today?.sunset || !tmrw?.sunrise || !tmrw?.sunset) {
+    el.sunDaylightDelta.hidden = true;
+    el.sunDaylightDelta.textContent = "";
+    return;
+  }
+  const todayMins = Math.round((today.sunset - today.sunrise) / 60_000);
+  const tmrwMins = Math.round((tmrw.sunset - tmrw.sunrise) / 60_000);
+  const delta = tmrwMins - todayMins;
+  if (delta === 0) {
+    el.sunDaylightDelta.textContent = "same tomorrow";
+    el.sunDaylightDelta.dataset.dir = "flat";
+  } else if (delta > 0) {
+    el.sunDaylightDelta.textContent = `+${delta}m tomorrow`;
+    el.sunDaylightDelta.dataset.dir = "up";
+  } else {
+    el.sunDaylightDelta.textContent = `${delta}m tomorrow`;
+    el.sunDaylightDelta.dataset.dir = "down";
+  }
+  el.sunDaylightDelta.hidden = false;
 }
 
 function scheduleSunArc(w) {
