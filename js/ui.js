@@ -20,6 +20,8 @@ const el = {
   placeSub: $("#place-sub"),
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
+  conditionLabelText: $("#condition-label-text"),
+  conditionNext: $("#condition-next"),
   feelsLike: $("#feels-like"),
   feelsLikeText: $("#feels-like-text"),
   feelsLikeDelta: $("#feels-like-delta"),
@@ -286,12 +288,53 @@ function renderLiveValues(w, { animate = true } = {}) {
   const feels = convertTemp(w.feelsLike ?? w.temp);
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
-  el.conditionLabel.textContent = capitalize(w.label);
+  // Only touch the text span so sibling chips (condition-next) survive.
+  if (el.conditionLabelText) el.conditionLabelText.textContent = capitalize(w.label);
+  else el.conditionLabel.textContent = capitalize(w.label);
+  renderConditionNext(w);
   // Only touch the text span so the sibling temp-trend / delta pills survive.
   if (el.feelsLikeText) el.feelsLikeText.textContent = `Feels like ${Math.round(feels)}°`;
   else el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderFeelsLikeDelta(w);
   renderDayRange(w);
+}
+
+const CONDITION_LABEL = {
+  clear: "clearing",
+  clouds: "clouding",
+  rain: "rain",
+  snow: "snow",
+  storm: "storms",
+  fog: "fog",
+};
+
+function renderConditionNext(w) {
+  if (!el.conditionNext) return;
+  const cur = w.condition;
+  const hours = (w.hourly || []).slice(0, 4);
+  if (!cur || hours.length < 2) {
+    el.conditionNext.hidden = true;
+    el.conditionNext.textContent = "";
+    return;
+  }
+  // Find the first upcoming hour whose condition materially differs.
+  const change = hours.find((h) => h.condition && h.condition !== cur);
+  if (!change) {
+    el.conditionNext.hidden = true;
+    el.conditionNext.textContent = "";
+    return;
+  }
+  const mins = Math.round((change.time - Date.now()) / 60_000);
+  if (mins < 15 || mins > 180) {
+    el.conditionNext.hidden = true;
+    el.conditionNext.textContent = "";
+    return;
+  }
+  const label = CONDITION_LABEL[change.condition] || change.condition;
+  const inLabel = mins >= 60 ? `${Math.round(mins / 30) / 2}h` : `${mins}m`;
+  el.conditionNext.textContent = `→ ${label} in ${inLabel}`;
+  el.conditionNext.dataset.to = change.condition;
+  el.conditionNext.hidden = false;
 }
 
 function renderFeelsLikeDelta(w) {
