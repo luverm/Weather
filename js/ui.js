@@ -34,6 +34,7 @@ const el = {
   dayRangeMarker: $("#day-range-marker"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
+  metricWindUnit: $("#m-wind-unit"),
   windBft: $("#m-wind-bft"),
   metricHumidity: $("#m-humidity"),
   metricHumiditySub: $("#m-humidity-sub"),
@@ -258,6 +259,11 @@ export const ui = {
 // ---------- Rendering ----------
 
 function convertTemp(c) { return state.unit === "F" ? c * 9 / 5 + 32 : c; }
+function convertWind(kmh) {
+  if (kmh == null) return null;
+  return state.unit === "F" ? kmh * 0.621371 : kmh;
+}
+function windUnitLabel() { return state.unit === "F" ? "mph" : "km/h"; }
 
 function animateNumber(node, target, format) {
   if (target == null || isNaN(target)) { node.textContent = "–"; return; }
@@ -423,12 +429,16 @@ function renderDayRangeTimes(w, lo, hi) {
 }
 
 function renderMetrics(w) {
-  el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
+  const windDisplay = convertWind(w.windSpeed);
+  el.metricWind.textContent = windDisplay != null ? Math.round(windDisplay) : "—";
+  if (el.metricWindUnit) el.metricWindUnit.textContent = windUnitLabel();
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
+  const gustDisplay = convertWind(w.windGusts);
+  const gustText = gustDisplay != null ? `${Math.round(gustDisplay)} ${windUnitLabel()}` : "—";
   el.metricWindSub.textContent = dirLabel
-    ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
-    : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+    ? `${dirLabel} · gust ${gustText}`
+    : `gust ${gustText}`;
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
@@ -1040,7 +1050,7 @@ function renderDaily(w) {
     item.className = "daily-item";
     item.dataset.ts = d.time;
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
-      ? ` · gusts ${Math.round(d.gustsMax)} km/h`
+      ? ` · gusts ${Math.round(convertWind(d.gustsMax))} ${windUnitLabel()}`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
@@ -1517,7 +1527,7 @@ function bindShare() {
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
       today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
-      `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
+      `Wind ${Math.round(convertWind(w.windSpeed))} ${windUnitLabel()}${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
     ].filter(Boolean);
