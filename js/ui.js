@@ -1155,8 +1155,10 @@ function renderDailyPrecipTotal(days) {
   const total = totals.reduce((s, v) => s + v, 0);
   const wetDays = totals.filter((v) => v >= 0.2).length;
   if (total < 0.1 && wetDays === 0) {
-    el.dailyPrecipTotal.hidden = true;
-    el.dailyPrecipTotal.textContent = "";
+    // Dry outlook — flip to a friendly reassurance chip instead of hiding.
+    el.dailyPrecipTotal.textContent = "Dry week";
+    el.dailyPrecipTotal.dataset.level = "dry";
+    el.dailyPrecipTotal.hidden = false;
     return;
   }
   const totalLabel = total >= 10 ? `${Math.round(total)} mm` : `${total.toFixed(1)} mm`;

@@ -1496,6 +1496,11 @@ kbd {
   border-color: rgba(120, 168, 255, 0.40);
   color: #ecf3ff;
 }
+.daily-precip-total[data-level="dry"] {
+  background: rgba(255, 210, 160, 0.10);
+  border-color: rgba(255, 210, 160, 0.24);
+  color: #ffd9a8;
+}
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;
