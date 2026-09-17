@@ -605,7 +605,11 @@ function renderAqTrend(aq) {
 
 function renderMoon(moon) {
   if (!moon) return;
-  el.moonName.textContent = moon.name;
+  // Small arrow before the phase name shows whether we're waxing (lit
+  // area growing toward full) or waning (shrinking toward new). Handy
+  // for anyone who thinks "so is the moon getting fuller or emptier?"
+  const trend = moon.phase < 0.5 ? "▲" : moon.phase > 0.5 ? "▼" : "";
+  el.moonName.textContent = trend ? `${trend} ${moon.name}` : moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
