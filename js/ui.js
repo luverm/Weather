@@ -933,9 +933,14 @@ function cardinal(deg) {
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
   for (const h of (w.hourly || []).slice(0, 24)) {
-    const item = document.createElement("div");
+    const item = document.createElement("button");
+    item.type = "button";
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    item.setAttribute(
+      "aria-label",
+      `${fmtTime(h.time)}, ${Math.round(convertTemp(h.temp))}°, ${h.label || h.condition || "conditions"}, ${h.pop}% precipitation`
+    );
     // A small "0.4 mm" secondary line under the % is only worth showing when
     // enough water is falling to actually matter — < 0.3 mm/h drizzle is
     // dominated by the % probability the user already sees.
