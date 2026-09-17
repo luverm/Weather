@@ -1432,16 +1432,21 @@ ui.isReduceMotion = () => localStorage.getItem("aether:reduceMotion") === "1";
 function startFetchedTicker() {
   const update = () => {
     if (!el.fetchedAgo || !state.weather?.fetchedAt) {
-      if (el.fetchedAgo) el.fetchedAgo.textContent = "";
+      if (el.fetchedAgo) {
+        el.fetchedAgo.textContent = "";
+        el.fetchedAgo.removeAttribute("title");
+      }
       return;
     }
-    const ms = Date.now() - state.weather.fetchedAt;
+    const at = state.weather.fetchedAt;
+    const ms = Date.now() - at;
     const minutes = Math.max(0, Math.floor(ms / 60_000));
     const label =
       minutes < 1 ? "Just now" :
       minutes < 60 ? `Updated ${minutes}m ago` :
       `Updated ${Math.floor(minutes / 60)}h ago`;
     el.fetchedAgo.textContent = "· " + label;
+    el.fetchedAgo.title = `Fetched at ${new Date(at).toLocaleTimeString()}`;
     el.fetchedAgo.classList.toggle("stale", minutes >= 20);
   };
   update();
