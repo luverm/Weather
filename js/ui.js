@@ -1075,6 +1075,12 @@ function renderDaily(w) {
     const item = document.createElement("div");
     item.className = "daily-item";
     item.dataset.ts = d.time;
+    item.setAttribute("role", "button");
+    item.setAttribute("tabindex", "0");
+    item.setAttribute(
+      "aria-label",
+      `${day}, ${d.label || d.condition || "conditions"}, high ${Math.round(convertTemp(d.tempMax))}°, low ${Math.round(convertTemp(d.tempMin))}°`
+    );
     if (extremesMeaningful && i === hotIdx) item.dataset.extreme = "hot";
     else if (extremesMeaningful && i === coldIdx) item.dataset.extreme = "cold";
     // Weekend rows get a subtle accent so they're findable at a glance.
@@ -1101,6 +1107,12 @@ function renderDaily(w) {
       ${extra}
     `;
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
+    item.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        toggleDailyExpand(item, d, w);
+      }
+    });
     el.dailyTrack.appendChild(item);
   });
 }
