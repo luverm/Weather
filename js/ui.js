@@ -140,6 +140,7 @@ export const ui = {
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
+    bindConnectivity();
     state.chart = new HourlyChart({
       svgEl: el.chartSvg,
       hoverEl: el.chartHover,
@@ -1421,6 +1422,21 @@ function bindShare() {
       if (err?.name !== "AbortError") ui.showToast("Share failed");
     }
   });
+}
+
+function bindConnectivity() {
+  const update = () => {
+    const off = !navigator.onLine;
+    document.documentElement.toggleAttribute("data-offline", off);
+    if (off) {
+      ui.showToast("Offline — showing last known values", 4000);
+    }
+  };
+  window.addEventListener("online", update);
+  window.addEventListener("offline", update);
+  // Initial check runs only when actually offline so a fresh boot online
+  // doesn't fire a spurious toast.
+  if (!navigator.onLine) update();
 }
 
 function bindTilt() {

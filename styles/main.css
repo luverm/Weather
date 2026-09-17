@@ -1583,3 +1583,24 @@ kbd {
   .temp { font-size: 78px; }
   .narrative { font-size: 13px; }
 }
+
+/* ---------- Offline hint ---------- */
+html[data-offline] .live-dot {
+  background: #ff6a6a;
+  box-shadow: 0 0 8px rgba(255, 106, 106, 0.7);
+  animation: none;
+}
+html[data-offline] .brand::after {
+  content: "offline";
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(255, 106, 106, 0.16);
+  color: #ff9d9d;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  vertical-align: middle;
+  font-weight: 500;
+}
