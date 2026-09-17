@@ -39,7 +39,13 @@ export function installShortcuts(handlers) {
   });
 
   window.addEventListener("keydown", (e) => {
-    // Let browsers handle modifier combos (copy, find, etc.)
+    // A few conventional combos should still work even from an input,
+    // because they're expected on virtually every web app.
+    if ((e.metaKey || e.ctrlKey) && (e.key === "k" || e.key === "K")) {
+      e.preventDefault();
+      handlers.focusSearch?.();
+      return;
+    }
     if (e.metaKey || e.ctrlKey || e.altKey) return;
 
     const typing = isTyping(e.target);
