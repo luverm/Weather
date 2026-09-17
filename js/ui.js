@@ -1458,6 +1458,15 @@ function bindSearch() {
   });
   // Keyboard navigation inside the search dropdown.
   el.searchInput.addEventListener("keydown", (e) => {
+    // Escape clears the field before it blurs (default browser behavior on
+    // search inputs is inconsistent across engines).
+    if (e.key === "Escape" && el.searchInput.value) {
+      e.preventDefault();
+      el.searchInput.value = "";
+      syncClear();
+      showRecentsIfAny();
+      return;
+    }
     if (el.searchResults.hidden) return;
     const items = el.searchResults.querySelectorAll('li[data-index]');
     if (!items.length) return;
