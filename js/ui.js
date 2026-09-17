@@ -1020,9 +1020,17 @@ function renderDaily(w) {
 
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
-  el.dailyIconStrip.innerHTML = days.map((d) =>
-    `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
-  ).join("");
+  const tz = state.weather?.timezone;
+  el.dailyIconStrip.innerHTML = days.map((d, i) => {
+    const letter = i === 0 ? "•" : new Date(d.time).toLocaleDateString(undefined, {
+      weekday: "narrow",
+      ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    });
+    return `<span class="strip-day${i === 0 ? " strip-day-today" : ""}" title="${escapeHtml(d.label || d.condition || "")}">
+      ${iconFor(d.condition)}
+      <span class="strip-day-letter">${escapeHtml(letter)}</span>
+    </span>`;
+  }).join("");
 }
 
 function renderDailySpark(days) {

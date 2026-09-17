@@ -1421,7 +1421,10 @@ kbd {
   color: var(--fg-muted);
 }
 .daily-icon-strip .strip-day {
-  display: grid; place-items: center;
+  display: grid;
+  grid-template-rows: auto auto;
+  place-items: center;
+  gap: 2px;
   padding: 4px;
   opacity: 0.85;
   transition: opacity 160ms var(--ease), transform 160ms var(--ease);
@@ -1430,6 +1433,20 @@ kbd {
 .daily-icon-strip .strip-day svg {
   width: 22px; height: 22px;
   display: block;
+}
+.daily-icon-strip .strip-day-letter {
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: var(--fg-dim);
+  text-transform: uppercase;
+}
+.daily-icon-strip .strip-day-today {
+  opacity: 1;
+}
+.daily-icon-strip .strip-day-today .strip-day-letter {
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 10px;
 }
 
 .daily-spark {
