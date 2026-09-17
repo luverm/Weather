@@ -234,6 +234,20 @@ html[data-reduce-motion="true"] *::after {
   font-size: 15px; color: var(--fg);
 }
 .search input::placeholder { color: var(--fg-dim); }
+.search-clear {
+  flex: 0 0 auto;
+  display: grid; place-items: center;
+  width: 22px; height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--fg-muted);
+  cursor: pointer;
+  transition: background 150ms var(--ease), color 150ms var(--ease);
+}
+.search-clear:hover { background: rgba(255, 255, 255, 0.16); color: var(--fg); }
+.search input::-webkit-search-cancel-button { display: none; }
 
 .search-results {
   position: absolute;

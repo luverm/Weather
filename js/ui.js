@@ -1344,7 +1344,13 @@ function showRecentsIfAny() {
 }
 
 function bindSearch() {
+  const clearBtn = document.getElementById("search-clear");
+  const syncClear = () => {
+    if (!clearBtn) return;
+    clearBtn.hidden = !el.searchInput.value;
+  };
   el.searchInput.addEventListener("input", (e) => {
+    syncClear();
     const v = e.target.value.trim();
     if (v.length < 2) {
       showRecentsIfAny();
@@ -1352,6 +1358,13 @@ function bindSearch() {
     }
     runSearch(v);
   });
+  clearBtn?.addEventListener("click", () => {
+    el.searchInput.value = "";
+    syncClear();
+    el.searchInput.focus();
+    showRecentsIfAny();
+  });
+  syncClear();
   el.searchInput.addEventListener("blur", () => {
     setTimeout(() => (el.searchResults.hidden = true), 150);
   });
