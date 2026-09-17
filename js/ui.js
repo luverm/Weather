@@ -319,7 +319,7 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label) + cloudCoverSuffix(w);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°${feelsLikeNote(w)}`;
   renderDayRange(w);
   // Only reflect the true "live" reading in the browser tab. Sampled
   // values from the scrubber shouldn't rewrite what the user sees when
@@ -337,6 +337,21 @@ function updateDocTitle(w) {
   document.title = place
     ? `${emoji} ${t} · ${place} — Aether`
     : `${emoji} ${t} — Aether`;
+}
+
+// Explain the "feels like" delta at a glance: wind chill on a cold-and-
+// windy day, humidity/heat index on a warm-and-muggy day. Silent when
+// the delta is small or the sign doesn't fit the usual mechanism.
+function feelsLikeNote(w) {
+  if (w?.temp == null || w?.feelsLike == null) return "";
+  const delta = w.feelsLike - w.temp;
+  if (Math.abs(delta) < 3) return "";
+  if (delta < 0) {
+    if ((w.windSpeed ?? 0) >= 12) return " · wind chill";
+    return "";
+  }
+  if ((w.humidity ?? 0) >= 60 && w.temp >= 22) return " · humidity";
+  return "";
 }
 
 // Add a subtle " · 62% clouds" suffix when the condition text is a cloud
