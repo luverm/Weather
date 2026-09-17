@@ -639,10 +639,14 @@ function renderMoon(moon) {
   const trend = moon.phase < 0.5 ? "▲" : moon.phase > 0.5 ? "▼" : "";
   el.moonName.textContent = trend ? `${trend} ${moon.name}` : moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
-  // Add moon age (days since new moon) as a tooltip so power users can
-  // see it without cluttering the card.
-  const age = (moon.phase * 29.5306).toFixed(1);
-  if (el.moonName) el.moonName.title = `Age ${age} days`;
+  // Tooltip carries moon age (days since new moon) and how long until
+  // the next full moon — nice for planning stargazing or moonlit walks.
+  const cycle = 29.5306;
+  const age = moon.phase * cycle;
+  const toFull = ((0.5 - moon.phase + 1) % 1) * cycle;
+  if (el.moonName) {
+    el.moonName.title = `Age ${age.toFixed(1)} days · full moon in ${toFull.toFixed(1)} days`;
+  }
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
