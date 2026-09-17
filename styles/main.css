@@ -1473,6 +1473,13 @@ kbd {
   opacity: 0.9;
 }
 .forecast-pop.dim { opacity: 0; }
+.forecast-mm {
+  font-size: 9.5px;
+  color: #9ad1ff;
+  opacity: 0.8;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
 
 .daily-track {
   display: grid;

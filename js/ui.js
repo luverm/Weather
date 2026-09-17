@@ -932,11 +932,18 @@ function renderHourly(w) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    // A small "0.4 mm" secondary line under the % is only worth showing when
+    // enough water is falling to actually matter — < 0.3 mm/h drizzle is
+    // dominated by the % probability the user already sees.
+    const mmChip = (h.precip != null && h.precip >= 0.3)
+      ? `<span class="forecast-mm">${h.precip < 1 ? h.precip.toFixed(1) : Math.round(h.precip)} mm</span>`
+      : "";
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
+      ${mmChip}
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
