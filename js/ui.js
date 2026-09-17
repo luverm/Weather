@@ -1360,7 +1360,13 @@ function flagEmoji(cc) {
 
 function showRecentsIfAny() {
   const recents = places.all().slice(0, 5);
-  if (!recents.length) { el.searchResults.hidden = true; return; }
+  if (!recents.length) {
+    // No history yet — quick hint so an empty dropdown isn't confusing.
+    el.searchResults.innerHTML = `<li class="recent-heading empty-hint">Type any city name to search</li>`;
+    el.searchResults._items = [];
+    el.searchResults.hidden = false;
+    return;
+  }
   const itemsHtml = recents.map((r, i) => {
     const flag = flagEmoji(r.countryCode);
     const localTime = localTimeIn(r.timezone);
