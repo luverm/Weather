@@ -1146,7 +1146,11 @@ function renderDailyDelta(days) {
   if (Math.abs(dPop) >= 20) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
   }
-  el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
+  // Total precipitation over the visible days — worth surfacing when it
+  // adds up to something a raincoat helps with.
+  const weekPrecip = days.reduce((s, d) => s + (d.precip || 0), 0);
+  const suffix = weekPrecip >= 3 ? ` · ${Math.round(weekPrecip)} mm this week` : "";
+  el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}${suffix}`;
 }
 
 function toggleDailyExpand(item, d, w) {
