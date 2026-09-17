@@ -110,6 +110,20 @@ export function narrate(weather) {
     }
   }
 
+  // Clear / cloudy handoff — worth mentioning when the sky flips between
+  // them in the next few hours and nothing bigger already fills the slot.
+  if (bits.length < 2 && (condition === "clear" || condition === "clouds")) {
+    const flip = (weather.hourly || []).find((h) =>
+      h.time > Date.now() + 60 * 60_000 &&
+      ((condition === "clear" && h.condition === "clouds") ||
+       (condition === "clouds" && h.condition === "clear"))
+    );
+    if (flip) {
+      const noun = flip.condition === "clear" ? "Clearing" : "Clouds arriving";
+      bits.push(`${noun} around ${fmtHour(flip.time)}.`);
+    }
+  }
+
   // Calm night fallback.
   if (bits.length < 2 && condition === "clear" && windSpeed < 10) {
     bits.push("Calm and settled for the next few hours.");
