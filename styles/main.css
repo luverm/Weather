@@ -977,6 +977,7 @@ kbd {
 .aq-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
 .aq-ring { position: relative; width: 48px; height: 48px; color: #78d06a; }
 .aq-ring svg { width: 48px; height: 48px; display: block; }
+#aq-arc { transition: stroke-dashoffset 520ms var(--ease); }
 .aq-value {
   position: absolute; inset: 0; display: grid; place-items: center;
   font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums;
