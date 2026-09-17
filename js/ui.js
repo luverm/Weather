@@ -875,13 +875,20 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
-  // Global min/max for the range bar.
+  // Global min/max for the range bar, plus the indices of the
+  // week's warmest and coolest days so we can badge them.
   let gMin = Infinity, gMax = -Infinity;
-  for (const d of days) {
-    if (d.tempMin < gMin) gMin = d.tempMin;
-    if (d.tempMax > gMax) gMax = d.tempMax;
-  }
-  const span = Math.max(1, gMax - gMin);
+  let hotIdx = -1, coldIdx = -1;
+  days.forEach((d, i) => {
+    if (d.tempMin != null && d.tempMin < gMin) gMin = d.tempMin;
+    if (d.tempMax != null && d.tempMax > gMax) { gMax = d.tempMax; hotIdx = i; }
+    if (d.tempMin != null && (coldIdx < 0 || d.tempMin < days[coldIdx].tempMin)) coldIdx = i;
+  });
+  // Only badge the extremes when they're clearly different from the rest —
+  // a flat week doesn't need two look-alike pills.
+  const rangeSpan = gMax - gMin;
+  const extremesMeaningful = rangeSpan >= 4;
+  const span = Math.max(1, rangeSpan);
   days.forEach((d, i) => {
     const dt = new Date(d.time);
     const tz = state.weather?.timezone;
@@ -894,13 +901,20 @@ function renderDaily(w) {
     const item = document.createElement("div");
     item.className = "daily-item";
     item.dataset.ts = d.time;
+    if (extremesMeaningful && i === hotIdx) item.dataset.extreme = "hot";
+    else if (extremesMeaningful && i === coldIdx) item.dataset.extreme = "cold";
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
+    const extremeLabel = extremesMeaningful && i === hotIdx
+      ? '<span class="daily-extreme daily-extreme-hot" title="Warmest of the week">warmest</span>'
+      : extremesMeaningful && i === coldIdx
+        ? '<span class="daily-extreme daily-extreme-cold" title="Coolest of the week">coolest</span>'
+        : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
     item.innerHTML = `
-      <span class="daily-day">${day}</span>
+      <span class="daily-day">${day}${extremeLabel}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
