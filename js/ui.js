@@ -603,8 +603,21 @@ function renderAirQuality(aq) {
   const frac = Math.max(0, Math.min(1, (aq.aqi ?? 0) / 200));
   el.aqArc.setAttribute("stroke-dashoffset", String(126 * (1 - frac)));
   el.aqDetail.textContent =
-    `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
+    `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}${aqTrendTag(aq)}`;
   renderAqTrend(aq);
+}
+
+// If the trend series moves >10 AQI over its span, add "improving"/"worsening"
+// so users can tell direction without decoding the mini chart.
+function aqTrendTag(aq) {
+  const trend = aq?.trend;
+  if (!trend || trend.length < 4) return "";
+  const first = trend[0].aqi, last = trend[trend.length - 1].aqi;
+  if (first == null || last == null) return "";
+  const delta = last - first;
+  if (delta <= -10) return " · improving";
+  if (delta >= 10) return " · worsening";
+  return "";
 }
 
 function renderAqTrend(aq) {
