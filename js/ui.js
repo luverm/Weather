@@ -1245,14 +1245,26 @@ function renderSearchResults(results) {
   if (!results.length) { el.searchResults.hidden = true; el.searchResults.innerHTML = ""; return; }
   el.searchResults.innerHTML = results.map((r, i) => {
     const flag = flagEmoji(r.countryCode);
+    const localTime = localTimeIn(r.timezone);
+    const subBits = [r.country, localTime].filter(Boolean).join(" · ");
     return `
     <li role="option" data-index="${i}">
       <span>${flag ? `<span class="flag" aria-hidden="true">${flag}</span> ` : ""}${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
-      <span class="sub">${escapeHtml(r.country || "")}</span>
+      <span class="sub">${escapeHtml(subBits)}</span>
     </li>`;
   }).join("");
   el.searchResults.hidden = false;
   el.searchResults._items = results;
+}
+
+// "14:32" in the given IANA zone, or "" when the zone is unusable.
+function localTimeIn(tz) {
+  if (!tz || tz === "auto") return "";
+  try {
+    return new Intl.DateTimeFormat([], {
+      timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
+    }).format(new Date());
+  } catch { return ""; }
 }
 
 // ISO-3166-1 alpha-2 -> regional indicator emoji. Empty for unknown/invalid.
