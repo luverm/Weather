@@ -383,8 +383,10 @@ function renderMetrics(w) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
     el.windNeedle.style.opacity = "1";
+    el.windNeedle.style.color = windNeedleColor(w.windSpeed, w.windGusts);
   } else if (el.windNeedle) {
     el.windNeedle.style.opacity = "0.3";
+    el.windNeedle.style.color = "";
   }
   if (el.windBft) {
     const bft = beaufort(w.windSpeed);
@@ -460,6 +462,17 @@ function peakGust(w) {
   if (best.value < 20) return null; // never bother below "gentle breeze"
   if (best.value - cur < 5) return null;
   return best;
+}
+
+// Pick a needle color that ramps from calm accent to danger red as
+// wind (or gusts) climb, so the compass reads at a glance.
+function windNeedleColor(speed, gusts) {
+  const v = Math.max(speed ?? 0, gusts ?? 0);
+  if (v >= 75) return "#ff6a6a"; // storm-force
+  if (v >= 50) return "#ff9c7a"; // gale
+  if (v >= 39) return "#ffd36a"; // strong
+  if (v >= 20) return "#c7d8ff"; // moderate
+  return "";                     // fall back to CSS accent
 }
 
 function beaufort(kmh) {
