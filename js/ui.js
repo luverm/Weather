@@ -320,7 +320,10 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
-  updateDocTitle(w);
+  // Only reflect the true "live" reading in the browser tab. Sampled
+  // values from the scrubber shouldn't rewrite what the user sees when
+  // glancing at another tab — that would misrepresent current conditions.
+  if (state.weather && w === state.weather) updateDocTitle(w);
 }
 
 // Keep the browser tab reflecting the current temperature + city so it's
