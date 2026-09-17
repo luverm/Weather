@@ -926,7 +926,7 @@ function renderTrends(w) {
       const arrow = direction === "rising" ? "▲" : direction === "falling" ? "▼" : "→";
       const cls = direction === "rising" ? "up" : direction === "falling" ? "down" : "flat";
       el.pressureTrend.className = `trend ${cls}`;
-      el.pressureTrend.textContent = `${arrow} ${delta >= 0 ? "+" : ""}${delta.toFixed(1)}`;
+      el.pressureTrend.textContent = `${arrow} ${delta >= 0 ? "+" : ""}${delta.toFixed(1)} hPa/3h`;
     } else {
       el.pressureTrend.textContent = "";
     }
