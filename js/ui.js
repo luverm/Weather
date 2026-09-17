@@ -1562,6 +1562,11 @@ function bindSettings() {
     el.settingsMenu.hidden = false;
     el.settingsBtn.setAttribute("aria-expanded", "true");
   };
+  document.getElementById("settings-shortcuts")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    close();
+    document.getElementById("shortcuts").hidden = false;
+  });
   el.settingsBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     if (el.settingsMenu.hidden) open(); else close();
