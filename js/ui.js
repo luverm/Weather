@@ -1401,12 +1401,19 @@ function bindShare() {
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
     ].filter(Boolean);
     const text = lines.join("\n");
+    // Only attach a URL when the hash carries a real city — a bare
+    // origin link would drop the recipient on someone else's device
+    // location instead of the sender's city.
+    const url = location.hash ? location.href : null;
     try {
       if (navigator.share) {
-        await navigator.share({ title: `Aether — ${placeName}`, text });
+        const payload = { title: `Aether — ${placeName}`, text };
+        if (url) payload.url = url;
+        await navigator.share(payload);
       } else {
-        await navigator.clipboard.writeText(text);
-        ui.showToast("Summary copied to clipboard");
+        const body = url ? `${text}\n${url}` : text;
+        await navigator.clipboard.writeText(body);
+        ui.showToast(url ? "Summary + link copied" : "Summary copied to clipboard");
       }
       el.shareBtn.classList.add("just-copied");
       setTimeout(() => el.shareBtn.classList.remove("just-copied"), 600);
