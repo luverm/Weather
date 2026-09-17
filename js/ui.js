@@ -142,6 +142,7 @@ export const ui = {
     startFetchedTicker();
     bindConnectivity();
     bindFirstVisitHint();
+    markPwaMode();
     state.chart = new HourlyChart({
       svgEl: el.chartSvg,
       hoverEl: el.chartHover,
@@ -1699,6 +1700,18 @@ function bindFirstVisitHint() {
   setTimeout(() => {
     ui.showToast("Tip: press ? for keyboard shortcuts", 4200);
   }, 2600);
+}
+
+// When the app is installed as a PWA, tag the html element so CSS can
+// tweak the layout — no reason to keep offering an install button, and
+// the safe-area padding wants to be more generous.
+function markPwaMode() {
+  const standalone = window.matchMedia?.("(display-mode: standalone)").matches
+    || window.navigator.standalone;
+  if (standalone) {
+    document.documentElement.setAttribute("data-pwa", "true");
+    if (el.installBtn) el.installBtn.hidden = true;
+  }
 }
 
 function bindConnectivity() {
