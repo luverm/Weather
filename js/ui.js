@@ -672,7 +672,19 @@ function renderSun(w) {
     const hh = Math.floor(mins / 60);
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
-  } else el.sunDaylight.textContent = "—";
+    // Tooltip shows how much is left today when the sun is currently up.
+    const now = Date.now();
+    if (now >= w.sunrise && now <= w.sunset) {
+      const remainMin = Math.max(0, Math.round((w.sunset - now) / 60_000));
+      const rh = Math.floor(remainMin / 60), rm = remainMin % 60;
+      el.sunDaylight.title = `${rh}h ${rm}m of daylight remaining`;
+    } else {
+      el.sunDaylight.title = "Total daylight for today";
+    }
+  } else {
+    el.sunDaylight.textContent = "—";
+    el.sunDaylight.removeAttribute("title");
+  }
   scheduleSunCountdown(w);
   scheduleSunArc(w);
 }
