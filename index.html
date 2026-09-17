@@ -130,7 +130,7 @@
         </div>
 
         <div class="temp-wrap">
-          <div class="temp">
+          <div class="temp" aria-live="polite" aria-atomic="true">
             <span id="temp-value" class="temp-value">–</span>
             <button id="unit-toggle" class="unit" title="Toggle units" aria-label="Toggle temperature units">°C</button>
           </div>
@@ -216,8 +216,8 @@
         <div id="comfort-strip" class="comfort-strip" aria-label="24-hour comfort strip" hidden></div>
       </div>
 
-      <div class="metrics">
-        <div class="metric glass metric-wind">
+      <div class="metrics" role="list">
+        <div class="metric glass metric-wind" role="listitem" aria-label="Wind">
           <span class="metric-label">Wind <span id="m-wind-bft" class="trend" aria-hidden="true"></span></span>
           <div class="wind-compass" aria-hidden="true">
             <svg viewBox="-24 -24 48 48">
@@ -235,7 +235,7 @@
           <span class="metric-unit">km/h</span>
           <span id="m-wind-sub" class="metric-sub">gust —</span>
         </div>
-        <div class="metric glass metric-humidity">
+        <div class="metric glass metric-humidity" role="listitem" aria-label="Humidity">
           <span class="metric-label">Humidity <span id="m-humidity-comfort" class="trend" aria-hidden="true"></span></span>
           <span id="m-humidity" class="metric-value">—</span>
           <span class="metric-unit">%</span>
@@ -245,7 +245,7 @@
           </svg>
           <span id="m-humidity-sub" class="metric-sub">dew —°</span>
         </div>
-        <div class="metric glass metric-pressure">
+        <div class="metric glass metric-pressure" role="listitem" aria-label="Pressure">
           <span class="metric-label">Pressure <span id="m-pressure-trend" class="trend" aria-hidden="true"></span></span>
           <span id="m-pressure" class="metric-value">—</span>
           <span class="metric-unit">hPa</span>
@@ -255,7 +255,7 @@
           </svg>
           <span id="m-pressure-sub" class="metric-sub">visibility —</span>
         </div>
-        <div class="metric glass">
+        <div class="metric glass" role="listitem" aria-label="UV index">
           <span class="metric-label">UV <span id="m-uv-level" class="trend" aria-hidden="true"></span></span>
           <span id="m-uv" class="metric-value">—</span>
           <span class="metric-unit">idx</span>
