@@ -278,6 +278,31 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  updateDocTitle(w);
+}
+
+// Keep the browser tab reflecting the current temperature + city so it's
+// glanceable next to other tabs. Only run when we have a real sample.
+function updateDocTitle(w) {
+  if (w?.temp == null) return;
+  const place = state.place?.name;
+  const t = `${Math.round(convertTemp(w.temp))}°${state.unit}`;
+  const emoji = titleEmoji(w.condition, w.isDay);
+  document.title = place
+    ? `${emoji} ${t} · ${place} — Aether`
+    : `${emoji} ${t} — Aether`;
+}
+
+function titleEmoji(condition, isDay) {
+  switch (condition) {
+    case "clear": return isDay === false ? "🌙" : "☀️";
+    case "clouds": return "⛅";
+    case "rain": return "🌧️";
+    case "snow": return "❄️";
+    case "storm": return "⛈️";
+    case "fog": return "🌫️";
+    default: return "🌤️";
+  }
 }
 
 function renderDayRange(w) {
