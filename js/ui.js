@@ -173,6 +173,7 @@ export const ui = {
     el.placeSub.textContent = sub || "—";
     // Reset alert dismissals so a fresh location can re-surface them.
     try { sessionStorage.removeItem("aether:dismissed-alerts"); } catch { /* ignore */ }
+    writePlaceHash(place);
     renderPlaces();
   },
   setWeather(weather, { narrative } = {}) {
@@ -240,7 +241,44 @@ export const ui = {
     el.toast._t = setTimeout(() => (el.toast.hidden = true), dur);
   },
   getUnit: () => state.unit,
+  /** Parse a place from the current URL hash, if any. */
+  placeFromHash: () => readPlaceHash(),
 };
+
+// URL hash keeps the current city in the link so shares/bookmarks
+// stay meaningful. Skip Current-location so we don't over-share coords
+// the user didn't type.
+function writePlaceHash(place) {
+  if (!place || !place.lat || !place.lon) return;
+  if (place.name === "Current location") { clearPlaceHash(); return; }
+  const params = new URLSearchParams();
+  params.set("name", place.name || "");
+  params.set("lat", Number(place.lat).toFixed(4));
+  params.set("lon", Number(place.lon).toFixed(4));
+  if (place.country) params.set("country", place.country);
+  if (place.admin1) params.set("admin1", place.admin1);
+  const next = "#" + params.toString();
+  if (location.hash !== next) history.replaceState(null, "", next);
+}
+
+function clearPlaceHash() {
+  if (location.hash) history.replaceState(null, "", location.pathname + location.search);
+}
+
+function readPlaceHash() {
+  const raw = location.hash?.replace(/^#/, "");
+  if (!raw) return null;
+  const params = new URLSearchParams(raw);
+  const lat = parseFloat(params.get("lat"));
+  const lon = parseFloat(params.get("lon"));
+  if (!isFinite(lat) || !isFinite(lon)) return null;
+  return {
+    name: params.get("name") || "Shared location",
+    country: params.get("country") || undefined,
+    admin1: params.get("admin1") || undefined,
+    lat, lon,
+  };
+}
 
 // ---------- Rendering ----------
 

@@ -306,7 +306,14 @@ installShortcuts({
 
 // ---------- Start ----------
 (async function init() {
-  // Prefer the most recent saved place if we have one — avoids the geolocation
+  // A shared link (#lat=…&lon=…&name=…) always wins so the URL is honored.
+  const hashed = ui.placeFromHash?.();
+  if (hashed) {
+    places.add(hashed);
+    await loadByCoords(hashed);
+    return;
+  }
+  // Otherwise prefer the most recent saved place — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();
   if (saved.length) {
@@ -320,6 +327,12 @@ installShortcuts({
     await loadByCoords({ name: "Reykjavík", country: "Iceland", lat: 64.1466, lon: -21.9426 });
   }
 })();
+
+// If someone pastes a new #lat=…&lon=… into the address bar, load it live.
+window.addEventListener("hashchange", () => {
+  const p = ui.placeFromHash?.();
+  if (p) loadByCoords(p);
+});
 
 // ---------- Lifecycle ----------
 document.addEventListener("visibilitychange", () => {
