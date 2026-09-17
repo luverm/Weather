@@ -604,6 +604,8 @@ function renderAirQuality(aq) {
   el.aqArc.setAttribute("stroke-dashoffset", String(126 * (1 - frac)));
   el.aqDetail.textContent =
     `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}${aqTrendTag(aq)}`;
+  el.aqDetail.title =
+    "PM2.5 in µg/m³ · WHO 24h guideline is 15 µg/m³. O₃ in µg/m³.";
   renderAqTrend(aq);
 }
 
