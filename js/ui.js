@@ -1238,14 +1238,24 @@ const runSearch = debounce(async (q) => {
 
 function renderSearchResults(results) {
   if (!results.length) { el.searchResults.hidden = true; el.searchResults.innerHTML = ""; return; }
-  el.searchResults.innerHTML = results.map((r, i) => `
+  el.searchResults.innerHTML = results.map((r, i) => {
+    const flag = flagEmoji(r.countryCode);
+    return `
     <li role="option" data-index="${i}">
-      <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
+      <span>${flag ? `<span class="flag" aria-hidden="true">${flag}</span> ` : ""}${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
       <span class="sub">${escapeHtml(r.country || "")}</span>
-    </li>
-  `).join("");
+    </li>`;
+  }).join("");
   el.searchResults.hidden = false;
   el.searchResults._items = results;
+}
+
+// ISO-3166-1 alpha-2 -> regional indicator emoji. Empty for unknown/invalid.
+function flagEmoji(cc) {
+  if (!cc || cc.length !== 2 || !/^[A-Za-z]{2}$/.test(cc)) return "";
+  const A = 0x1F1E6;
+  const c = cc.toUpperCase();
+  return String.fromCodePoint(A + (c.charCodeAt(0) - 65), A + (c.charCodeAt(1) - 65));
 }
 
 function showRecentsIfAny() {
