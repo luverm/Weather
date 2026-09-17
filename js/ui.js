@@ -318,7 +318,7 @@ function renderLiveValues(w, { animate = true } = {}) {
   const feels = convertTemp(w.feelsLike ?? w.temp);
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
-  el.conditionLabel.textContent = capitalize(w.label);
+  el.conditionLabel.textContent = capitalize(w.label) + cloudCoverSuffix(w);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
   // Only reflect the true "live" reading in the browser tab. Sampled
@@ -337,6 +337,18 @@ function updateDocTitle(w) {
   document.title = place
     ? `${emoji} ${t} · ${place} — Aether`
     : `${emoji} ${t} — Aether`;
+}
+
+// Add a subtle " · 62% clouds" suffix when the condition text is a cloud
+// mention, so the user can distinguish "partly cloudy" from "overcast"
+// without reading the WMO label carefully.
+function cloudCoverSuffix(w) {
+  if (w?.cloudCover == null) return "";
+  const c = w.condition;
+  if (c !== "clouds" && c !== "clear") return "";
+  const cover = Math.round(w.cloudCover);
+  if (cover < 15 || cover > 95) return ""; // implied by condition
+  return ` · ${cover}% clouds`;
 }
 
 function titleEmoji(condition, isDay) {
