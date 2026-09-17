@@ -379,6 +379,18 @@ html[data-reduce-motion="true"] *::after {
   line-height: 1.02;
 }
 .place-sub { margin: 8px 0 0; color: var(--fg-muted); font-size: 14px; }
+.place-sub.loading::after {
+  content: "";
+  display: inline-block;
+  vertical-align: middle;
+  width: 10px; height: 10px;
+  margin-left: 8px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  border-top-color: transparent;
+  animation: spin 900ms linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 .place-localtime {
   margin: 6px 0 0;
   display: inline-flex; align-items: center; gap: 6px;
