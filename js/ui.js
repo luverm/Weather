@@ -1576,7 +1576,13 @@ function startFetchedTicker() {
       minutes < 60 ? `Updated ${minutes}m ago` :
       `Updated ${Math.floor(minutes / 60)}h ago`;
     el.fetchedAgo.textContent = "· " + label;
-    el.fetchedAgo.title = `Fetched at ${new Date(at).toLocaleTimeString()}`;
+    const tz = state.weather?.timezone;
+    const localAt = tz && tz !== "auto"
+      ? new Intl.DateTimeFormat([], {
+          timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
+        }).format(new Date(at))
+      : new Date(at).toLocaleTimeString();
+    el.fetchedAgo.title = `Fetched at ${localAt} local`;
     el.fetchedAgo.classList.toggle("stale", minutes >= 20);
   };
   update();
