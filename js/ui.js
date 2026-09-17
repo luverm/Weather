@@ -408,6 +408,12 @@ function renderDayRange(w) {
 
 function renderMetrics(w) {
   el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
+  // Precise numbers hidden in the metric-value tooltip for anyone who
+  // wants the actual reading instead of the rounded card display.
+  if (w.windSpeed != null) el.metricWind.title = `${w.windSpeed.toFixed(1)} km/h`;
+  if (w.humidity != null) el.metricHumidity.title = `${w.humidity.toFixed(1)}%`;
+  if (w.pressure != null) el.metricPressure.title = `${w.pressure.toFixed(1)} hPa`;
+  if (w.uv != null) el.metricUV.title = `${w.uv.toFixed(1)} UV index`;
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
   const gustText = w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—";
