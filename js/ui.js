@@ -164,6 +164,8 @@ export const ui = {
   markRefreshSpin(on) {
     if (!el.refreshBtn) return;
     el.refreshBtn.classList.toggle("spinning", !!on);
+    // aria-busy on the hero lets assistive tech know values are refreshing.
+    el.heroInner?.setAttribute("aria-busy", on ? "true" : "false");
   },
   setLoading(text) { el.placeSub.textContent = text; },
   setPlace(place) {
