@@ -1398,6 +1398,20 @@ kbd {
   background: rgba(154, 209, 255, 0.16);
   color: #a9d5ff;
 }
+.daily-item[data-weekend="true"] .daily-day {
+  color: var(--fg);
+  position: relative;
+}
+.daily-item[data-weekend="true"] .daily-day::before {
+  content: "";
+  display: inline-block;
+  width: 4px; height: 4px;
+  border-radius: 999px;
+  background: var(--accent);
+  vertical-align: middle;
+  margin-right: 6px;
+  opacity: 0.85;
+}
 
 /* ---------- Forecast (hourly + daily) ---------- */
 .forecast, .daily {

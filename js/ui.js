@@ -1023,6 +1023,9 @@ function renderDaily(w) {
     item.dataset.ts = d.time;
     if (extremesMeaningful && i === hotIdx) item.dataset.extreme = "hot";
     else if (extremesMeaningful && i === coldIdx) item.dataset.extreme = "cold";
+    // Weekend rows get a subtle accent so they're findable at a glance.
+    const weekday = dt.getDay(); // 0=Sun, 6=Sat
+    if (weekday === 0 || weekday === 6) item.dataset.weekend = "true";
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
