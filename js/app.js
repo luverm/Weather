@@ -190,7 +190,7 @@ const scrubber = new Scrubber({
   onScrub: () => {
     if (!app.weather) return;
     applyScene(app.weather);
-    ui.setScrubbing(!clock.isLive());
+    ui.setScrubbing(!clock.isLive(), { offsetMs: clock.offset() });
   },
 });
 
@@ -272,7 +272,7 @@ ui.init({
     clock.setOffset(ts - Date.now());
     scrubber.sync();
     if (app.weather) applyScene(app.weather);
-    ui.setScrubbing(!clock.isLive());
+    ui.setScrubbing(!clock.isLive(), { offsetMs: clock.offset() });
   },
 });
 
@@ -300,7 +300,7 @@ installShortcuts({
     clock.setOffset(clock.offset() + hours * 3600_000);
     scrubber.sync();
     if (app.weather) applyScene(app.weather);
-    ui.setScrubbing(!clock.isLive());
+    ui.setScrubbing(!clock.isLive(), { offsetMs: clock.offset() });
   },
   share: () => document.getElementById("share-btn")?.click(),
   refresh: () => refreshWeather(),

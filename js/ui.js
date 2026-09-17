@@ -222,12 +222,15 @@ export const ui = {
       state.chart.setCursor(sampled.hourly?.[highlightHourIndex]?.time);
     }
   },
-  setScrubbing(on) {
+  setScrubbing(on, { offsetMs } = {}) {
     document.documentElement.setAttribute("data-scrubbing", on ? "true" : "false");
+    const label = document.getElementById("place-label-text");
     if (on) {
       el.hintText.textContent = "Drag to explore future weather.";
+      if (label) label.textContent = offsetMs != null && offsetMs < 0 ? "Earlier in" : "Later in";
     } else {
       el.hintText.innerHTML = 'Drag the slider, hover the chart, or press <kbd>?</kbd> for shortcuts.';
+      if (label) label.textContent = "Now in";
     }
   },
   setAudioState(on) {
