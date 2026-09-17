@@ -345,6 +345,14 @@ document.addEventListener("visibilitychange", () => {
   } else {
     engine.tickOnce();
   }
+  // When the tab wakes up after a while, the "Xm ago" badge and the on-
+  // screen weather are stale. If it's been >10 min since we fetched,
+  // pull fresh values silently — much less jarring than the user having
+  // to hit refresh.
+  if (!document.hidden && app.weather?.fetchedAt && clock.isLive()) {
+    const age = Date.now() - app.weather.fetchedAt;
+    if (age > 10 * 60_000) refreshWeather();
+  }
 });
 
 // Re-render scenes at the top of each minute so "live" view ticks forward.
