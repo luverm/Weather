@@ -431,7 +431,7 @@ function renderMetrics(w) {
   }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
   el.metricPressureSub.textContent = w.visibility != null
-    ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
+    ? `visibility ${visibilityQuality(w.visibility)}`
     : "visibility —";
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
@@ -492,6 +492,18 @@ function windNeedleColor(speed, gusts) {
   if (v >= 39) return "#ffd36a"; // strong
   if (v >= 20) return "#c7d8ff"; // moderate
   return "";                     // fall back to CSS accent
+}
+
+// Turn raw visibility (meters) into "12 km · clear" style — categories
+// borrowed from the National Weather Service.
+function visibilityQuality(v) {
+  const km = Math.round((v / 1000) * 10) / 10;
+  let tag = "clear";
+  if (v < 200) tag = "fog";
+  else if (v < 1000) tag = "poor";
+  else if (v < 4000) tag = "hazy";
+  else if (v < 10000) tag = "good";
+  return `${km} km · ${tag}`;
 }
 
 function beaufort(kmh) {
