@@ -141,6 +141,7 @@ export const ui = {
     renderPlaces();
     startFetchedTicker();
     bindConnectivity();
+    bindFirstVisitHint();
     state.chart = new HourlyChart({
       svgEl: el.chartSvg,
       hoverEl: el.chartHover,
@@ -1456,6 +1457,16 @@ function bindShare() {
       if (err?.name !== "AbortError") ui.showToast("Share failed");
     }
   });
+}
+
+function bindFirstVisitHint() {
+  try {
+    if (localStorage.getItem("aether:seen-hint")) return;
+    localStorage.setItem("aether:seen-hint", "1");
+  } catch { /* private mode → skip */ return; }
+  setTimeout(() => {
+    ui.showToast("Tip: press ? for keyboard shortcuts", 4200);
+  }, 2600);
 }
 
 function bindConnectivity() {
