@@ -1332,6 +1332,36 @@ function bindSearch() {
       el.searchResults.hidden = false;
     }
   });
+  // Keyboard navigation inside the search dropdown.
+  el.searchInput.addEventListener("keydown", (e) => {
+    if (el.searchResults.hidden) return;
+    const items = el.searchResults.querySelectorAll('li[data-index]');
+    if (!items.length) return;
+    const current = el.searchResults.querySelector('li[aria-selected="true"]');
+    let idx = current ? Array.from(items).indexOf(current) : -1;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      idx = (idx + 1) % items.length;
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      idx = (idx - 1 + items.length) % items.length;
+    } else if (e.key === "Enter") {
+      const sel = current || items[0];
+      const i = parseInt(sel.dataset.index, 10);
+      const item = el.searchResults._items?.[i];
+      if (item) {
+        e.preventDefault();
+        el.searchInput.value = item.name;
+        el.searchResults.hidden = true;
+        places.add(item);
+        state.handlers.onSearchSelect?.(item);
+      }
+      return;
+    } else return;
+    items.forEach((li) => li.removeAttribute("aria-selected"));
+    items[idx].setAttribute("aria-selected", "true");
+    items[idx].scrollIntoView({ block: "nearest" });
+  });
   el.searchResults.addEventListener("click", (e) => {
     const li = e.target.closest("li");
     if (!li) return;
