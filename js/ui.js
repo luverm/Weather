@@ -339,6 +339,21 @@ function updateDocTitle(w) {
   document.title = place
     ? `${emoji} ${t} · ${place} — Aether`
     : `${emoji} ${t} — Aether`;
+  updateFavicon(emoji);
+}
+
+// Redraw the favicon as an SVG that carries the current condition emoji.
+// Falls back silently when the emoji isn't renderable.
+function updateFavicon(emoji) {
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><text y='52' font-size='52'>${emoji}</text></svg>`;
+  const url = "data:image/svg+xml," + encodeURIComponent(svg);
+  let link = document.querySelector('link[rel="icon"]');
+  if (!link) {
+    link = document.createElement("link");
+    link.rel = "icon";
+    document.head.appendChild(link);
+  }
+  link.href = url;
 }
 
 // Explain the "feels like" delta at a glance: wind chill on a cold-and-
