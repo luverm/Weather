@@ -309,9 +309,12 @@ function renderMetrics(w) {
   el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
-  el.metricWindSub.textContent = dirLabel
-    ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
-    : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+  const gustText = w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—";
+  const peak = peakGust(w);
+  const peakText = peak ? ` · peak ${Math.round(peak.value)} @ ${fmtTime(peak.time)}` : "";
+  el.metricWindSub.textContent = (dirLabel
+    ? `${dirLabel} · gust ${gustText}`
+    : `gust ${gustText}`) + peakText;
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
@@ -375,6 +378,24 @@ function humidityComfort(rh, dew, temp) {
   if (rh <= 25) return { label: "Dry", cls: "up" };
   if (rh <= 35) return { label: "Crisp", cls: "flat" };
   return { label: "Comfy", cls: "down" };
+}
+
+// Find the largest expected gust in the next 12 hours, but only surface it
+// when it's meaningfully stronger than what's happening right now — otherwise
+// the pill is just noise.
+function peakGust(w) {
+  const cur = w.windGusts ?? w.windSpeed ?? 0;
+  const hrs = (w.hourly || []).slice(0, 12);
+  let best = null;
+  for (const h of hrs) {
+    const v = h.gusts ?? h.wind;
+    if (v == null) continue;
+    if (!best || v > best.value) best = { value: v, time: h.time };
+  }
+  if (!best) return null;
+  if (best.value < 20) return null; // never bother below "gentle breeze"
+  if (best.value - cur < 5) return null;
+  return best;
 }
 
 function beaufort(kmh) {
