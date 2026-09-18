@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { nextSunQuality } from "./sun-quality.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -90,6 +91,9 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunQuality: $("#sun-quality"),
+  sunQualityLabel: $("#sun-quality-label"),
+  sunQualityGolden: $("#sun-quality-golden"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -523,6 +527,19 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderSunQuality(w);
+}
+
+function renderSunQuality(w) {
+  if (!el.sunQuality || !el.sunQualityLabel) return;
+  const q = nextSunQuality(w);
+  if (!q) { el.sunQuality.hidden = true; return; }
+  el.sunQuality.hidden = false;
+  el.sunQuality.setAttribute("data-tone", q.tone);
+  el.sunQualityLabel.textContent = q.label;
+  const cloud = q.cloudPct != null ? ` · ${Math.round(q.cloudPct)}% cloud` : "";
+  const goldenRange = `${fmtTime(q.goldenStart)}–${fmtTime(q.goldenEnd)}`;
+  el.sunQualityGolden.textContent = `Golden hour ${goldenRange}${cloud}`;
 }
 
 function scheduleSunArc(w) {
