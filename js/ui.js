@@ -773,7 +773,12 @@ function renderInsights(w) {
     weekday: "short",
     ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
   });
-  const items = buildInsights(w, { fmtTime: fmt, weekday });
+  const items = buildInsights(w, {
+    fmtTime: fmt,
+    weekday,
+    convertTemp,
+    unit: `°${state.unit}`,
+  });
   if (!items.length) {
     el.insightsCard.hidden = true;
     return;
