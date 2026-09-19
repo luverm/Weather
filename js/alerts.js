@@ -178,7 +178,9 @@ export function buildAlerts(weather, { convertTemp, unit } = {}) {
   }
 
   // ---- Snow accumulation ----
-  const snowyWindow = wettestRunningWindow(hours.filter((h) => h.condition === "snow"), 3);
+  // Walk the raw hourly series so the window spans real clock hours; only
+  // count precip contributions from hours whose condition is snow.
+  const snowyWindow = wettestSnowWindow(hours, 3);
   if (snowyWindow && snowyWindow.sum >= 10) {
     out.push({
       id: "heavy-snow",
@@ -190,10 +192,12 @@ export function buildAlerts(weather, { convertTemp, unit } = {}) {
   }
 
   // De-dupe (if a daily heat triggers heat AND severe-heat, keep the worst).
+  // Note: we intentionally DO NOT cap the list here — the UI applies the
+  // per-place dismissed set before slicing, so dismissing a top-priority
+  // alert can promote a lower-priority one that would otherwise be clipped.
   const SEV = { danger: 3, warn: 2, info: 1 };
   return dedupe(out)
-    .sort((a, b) => (SEV[b.severity] ?? 0) - (SEV[a.severity] ?? 0))
-    .slice(0, 4);
+    .sort((a, b) => (SEV[b.severity] ?? 0) - (SEV[a.severity] ?? 0));
 }
 
 function hottestHour(hours) {
@@ -242,6 +246,24 @@ function wettestRunningWindow(hours, span) {
     }
   }
   return best;
+}
+
+// Like wettestRunningWindow, but the sliding span is real clock hours
+// while only snow-condition hours contribute to the accumulation.
+function wettestSnowWindow(hours, span) {
+  if (hours.length < span) return null;
+  let best = null;
+  for (let i = 0; i + span <= hours.length; i++) {
+    let sum = 0;
+    for (let k = 0; k < span; k++) {
+      const h = hours[i + k];
+      if (h.condition === "snow") sum += h.precip ?? 0;
+    }
+    if (!best || sum > best.sum) {
+      best = { sum, start: hours[i].time, end: hours[i + span - 1].time };
+    }
+  }
+  return best && best.sum > 0 ? best : null;
 }
 
 function shortClock(ts) {

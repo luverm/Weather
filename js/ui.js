@@ -433,7 +433,7 @@ function renderUvTimeline(w) {
   const H = 22;
   // Build bar rects, height proportional to UV value, colored by band.
   const nowTs = Date.now();
-  let nowIndex = 0;
+  let nowIndex = -1;
   for (let i = 0; i < hours.length; i++) {
     if (hours[i].time >= nowTs - 30 * 60_000) { nowIndex = i; break; }
   }
@@ -449,9 +449,16 @@ function renderUvTimeline(w) {
     return `<rect x="${x}" y="${y}" width="${width}" height="${height.toFixed(2)}" rx="0.6" fill="${fill}"><title>UV ${Math.round(uv)} @ ${hh}</title></rect>`;
   }).join("");
   // "Now" marker positioned at the middle of the nowIndex cell.
-  const nowX = (nowIndex * cellW + cellW / 2).toFixed(2);
-  now.setAttribute("x1", nowX);
-  now.setAttribute("x2", nowX);
+  // If we couldn't find a current-or-future hour (stale weather cache),
+  // park the marker off-canvas so it doesn't misleadingly point at 0h.
+  if (nowIndex < 0) {
+    now.setAttribute("x1", "-10");
+    now.setAttribute("x2", "-10");
+  } else {
+    const nowX = (nowIndex * cellW + cellW / 2).toFixed(2);
+    now.setAttribute("x1", nowX);
+    now.setAttribute("x2", nowX);
+  }
 }
 
 function humidityComfort(rh, dew, temp) {
@@ -834,9 +841,11 @@ function renderWeekend(w) {
 function renderAlerts(w) {
   if (!el.alertsStrip) return;
   const alerts = buildAlerts(w, { convertTemp, unit: `°${state.unit}` });
-  // Respect per-place dismissals so the user isn't nagged.
+  // Respect per-place dismissals so the user isn't nagged; buildAlerts()
+  // now returns the full sorted list so dismissing a top-priority alert
+  // can promote a lower-priority one that would otherwise be clipped.
   const dismissed = getDismissedAlerts();
-  const visible = alerts.filter((a) => !dismissed.has(a.id));
+  const visible = alerts.filter((a) => !dismissed.has(a.id)).slice(0, 4);
   if (!visible.length) {
     el.alertsStrip.hidden = true;
     el.alertsStrip.innerHTML = "";
@@ -953,13 +962,18 @@ function renderTrends(w) {
     const cur = w.temp;
     const future = hrs.find((h) => h.time > Date.now() + 2.5 * 3600_000);
     if (future && cur != null) {
-      const delta = future.temp - cur;
-      if (Math.abs(delta) < 1) {
+      const deltaC = future.temp - cur;
+      // Scale delta to the active unit — a °C span is 1.8× smaller than
+      // the equivalent °F span, so a "3° rise" in Celsius reads "5°" in F.
+      const deltaDisplay = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
+      // Steady threshold also scales: 1°C ≈ 1.8°F.
+      const steady = state.unit === "F" ? 1.8 : 1;
+      if (Math.abs(deltaDisplay) < steady) {
         el.tempTrend.className = "temp-trend flat";
         el.tempTrend.textContent = "→ steady";
       } else {
-        el.tempTrend.className = delta > 0 ? "temp-trend up" : "temp-trend down";
-        el.tempTrend.textContent = `${delta > 0 ? "▲" : "▼"} ${Math.round(Math.abs(delta))}°/3h`;
+        el.tempTrend.className = deltaDisplay > 0 ? "temp-trend up" : "temp-trend down";
+        el.tempTrend.textContent = `${deltaDisplay > 0 ? "▲" : "▼"} ${Math.round(Math.abs(deltaDisplay))}°/3h`;
       }
     } else {
       el.tempTrend.textContent = "";

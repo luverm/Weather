@@ -352,15 +352,19 @@ if ("serviceWorker" in navigator) {
   window.addEventListener("load", async () => {
     try {
       const reg = await navigator.serviceWorker.register("sw.js");
+      const notifyUpdate = () => ui.showToast("Update ready — reload for the newest Aether");
       const watchWorker = (worker) => {
         if (!worker) return;
         worker.addEventListener("statechange", () => {
           if (worker.state === "installed" && navigator.serviceWorker.controller) {
-            ui.showToast("Update ready — reload for the newest Aether");
+            notifyUpdate();
           }
         });
       };
-      watchWorker(reg.waiting);
+      // A worker already in the 'waiting' state won't emit another
+      // 'statechange' — surface the update immediately in that case.
+      if (reg.waiting && navigator.serviceWorker.controller) notifyUpdate();
+      else watchWorker(reg.waiting);
       reg.addEventListener("updatefound", () => watchWorker(reg.installing));
     } catch {
       /* SW registration is best-effort. */
