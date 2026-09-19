@@ -315,9 +315,10 @@ function renderMetrics(w) {
   el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
-  el.metricWindSub.textContent = dirLabel
-    ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
-    : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+  const gustText = w.windGusts != null ? `${Math.round(w.windGusts)} km/h` : "—";
+  const gustyHint = gustinessHint(w.windSpeed, w.windGusts);
+  const gustSegment = gustyHint ? `gust ${gustText} · ${gustyHint}` : `gust ${gustText}`;
+  el.metricWindSub.textContent = dirLabel ? `${dirLabel} · ${gustSegment}` : gustSegment;
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
@@ -426,6 +427,16 @@ function humidityComfort(rh, dew, temp) {
   if (rh <= 25) return { label: "Dry", cls: "up" };
   if (rh <= 35) return { label: "Crisp", cls: "flat" };
   return { label: "Comfy", cls: "down" };
+}
+
+function gustinessHint(wind, gusts) {
+  // Only surface gustiness once wind + gusts are meaningful.
+  if (wind == null || gusts == null || gusts < 15 || wind < 3) return null;
+  const ratio = gusts / wind;
+  if (ratio >= 2.2) return "very gusty";
+  if (ratio >= 1.7) return "gusty";
+  if (ratio <= 1.15) return "steady";
+  return null;
 }
 
 function beaufort(kmh) {
