@@ -1074,6 +1074,10 @@ function renderDaily(w) {
     const item = document.createElement("div");
     item.className = "daily-item";
     item.dataset.ts = d.time;
+    item.setAttribute("role", "button");
+    item.setAttribute("tabindex", "0");
+    item.setAttribute("aria-expanded", "false");
+    item.setAttribute("aria-label", `${day} — expand hourly detail`);
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
@@ -1095,7 +1099,14 @@ function renderDaily(w) {
       <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°</span>
       ${extra}
     `;
-    item.addEventListener("click", () => toggleDailyExpand(item, d, w));
+    const expand = () => toggleDailyExpand(item, d, w);
+    item.addEventListener("click", expand);
+    item.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        expand();
+      }
+    });
     el.dailyTrack.appendChild(item);
   });
 }
@@ -1226,8 +1237,10 @@ function toggleDailyExpand(item, d, w) {
   if (existing) {
     existing.remove();
     item.dataset.expanded = "false";
+    item.setAttribute("aria-expanded", "false");
     return;
   }
+  item.setAttribute("aria-expanded", "true");
   // Build mini hourly bars for the 12 daytime-ish hours of that day, if we
   // have them in the hourly series (only first 24h). Otherwise skip.
   const dayStart = new Date(d.time);
