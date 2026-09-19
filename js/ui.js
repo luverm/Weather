@@ -53,6 +53,8 @@ const el = {
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  goldenHourPill: $("#golden-hour-pill"),
+  goldenHourText: $("#golden-hour-text"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -572,6 +574,49 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleGoldenHour(w);
+}
+
+function scheduleGoldenHour(w) {
+  if (state.goldenHourTimer) { clearInterval(state.goldenHourTimer); state.goldenHourTimer = null; }
+  const pill = el.goldenHourPill;
+  const text = el.goldenHourText;
+  if (!pill || !text) return;
+  const update = () => {
+    const now = Date.now();
+    const sr = w?.sunrise, ss = w?.sunset;
+    if (!sr || !ss) { pill.hidden = true; return; }
+    // Rough golden hour: ~60 min after sunrise and ~60 min before sunset.
+    // Blue hour: ~30 min before sunrise and ~30 min after sunset.
+    const min = 60_000;
+    const gMorningStart = sr;
+    const gMorningEnd = sr + 60 * min;
+    const gEveningStart = ss - 60 * min;
+    const gEveningEnd = ss;
+    const blueEveningEnd = ss + 30 * min;
+    const blueMorningStart = sr - 30 * min;
+    if (now >= gMorningStart && now <= gMorningEnd) {
+      pill.hidden = false;
+      pill.dataset.kind = "golden";
+      text.textContent = `Golden hour · until ${fmtTime(gMorningEnd)}`;
+    } else if (now >= gEveningStart && now <= gEveningEnd) {
+      pill.hidden = false;
+      pill.dataset.kind = "golden";
+      text.textContent = `Golden hour · until ${fmtTime(gEveningEnd)}`;
+    } else if (now >= blueMorningStart && now < gMorningStart) {
+      pill.hidden = false;
+      pill.dataset.kind = "blue";
+      text.textContent = `Blue hour · sunrise ${fmtTime(sr)}`;
+    } else if (now > gEveningEnd && now <= blueEveningEnd) {
+      pill.hidden = false;
+      pill.dataset.kind = "blue";
+      text.textContent = `Blue hour · until ${fmtTime(blueEveningEnd)}`;
+    } else {
+      pill.hidden = true;
+    }
+  };
+  update();
+  state.goldenHourTimer = setInterval(update, 60_000);
 }
 
 function scheduleSunArc(w) {

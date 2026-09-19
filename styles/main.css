@@ -996,6 +996,44 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+.golden-hour-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  margin: 2px 0 2px;
+  padding: 3px 9px 3px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 210, 140, 0.35);
+  background: linear-gradient(90deg, rgba(255, 210, 140, 0.14), rgba(255, 170, 120, 0.1));
+  color: #ffd9a8;
+  animation: goldenPulse 3.6s ease-in-out infinite;
+}
+.golden-hour-pill[data-kind="blue"] {
+  border-color: rgba(120, 160, 220, 0.4);
+  background: linear-gradient(90deg, rgba(120, 160, 220, 0.16), rgba(140, 180, 230, 0.08));
+  color: #b8d0ff;
+  animation: none;
+}
+.golden-hour-pill .gh-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #fff2c4, #ffb371 60%, #b26f38 100%);
+  box-shadow: 0 0 8px rgba(255, 195, 130, 0.7);
+}
+.golden-hour-pill[data-kind="blue"] .gh-dot {
+  background: radial-gradient(circle at 30% 30%, #d8e6ff, #7fa8e0 60%, #35528c 100%);
+  box-shadow: 0 0 8px rgba(130, 170, 220, 0.55);
+}
+@keyframes goldenPulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(255, 195, 130, 0); }
+  50%      { box-shadow: 0 0 12px rgba(255, 195, 130, 0.25); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .golden-hour-pill { animation: none; }
+}
 
 /* ---------- Radar map ---------- */
 .radar {
