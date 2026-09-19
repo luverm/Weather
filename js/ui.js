@@ -889,7 +889,7 @@ function rememberDismissedAlert(id) {
 
 function renderActivity(w) {
   if (!el.activityCard || !el.activityList) return;
-  const items = findActivityWindows(w);
+  const items = findActivityWindows(w, { convertTemp, unit: `°${state.unit}` });
   if (!items.length) {
     el.activityCard.hidden = true;
     return;
