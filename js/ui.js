@@ -1109,6 +1109,21 @@ function toggleDailyExpand(item, d, w) {
   item.dataset.expanded = "true";
 }
 
+function precipIntensityLabel(peakMm15, kind) {
+  // Peak precip rate over a 15-minute bucket, in mm.
+  if (peakMm15 == null || peakMm15 <= 0) return null;
+  if (kind === "Snow") {
+    if (peakMm15 < 0.3) return "Flurries";
+    if (peakMm15 < 1.2) return "Light snow";
+    if (peakMm15 < 3) return "Steady snow";
+    return "Heavy snow";
+  }
+  if (peakMm15 < 0.3) return "Drizzle";
+  if (peakMm15 < 1.2) return "Light rain";
+  if (peakMm15 < 3) return "Steady rain";
+  return "Heavy rain";
+}
+
 function renderNowcast(w) {
   const nowcast = (w.nowcast || []).filter((n) => n.time > Date.now());
   // Find first >0.1 precip entry.
@@ -1122,9 +1137,17 @@ function renderNowcast(w) {
   el.nowcastHeadline.textContent = inMin === 0
     ? `${kind} now`
     : `${kind} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
-  // 2h outlook summary.
+  // 2h outlook summary — total plus an intensity descriptor from peak 15-min rate,
+  // and how many minutes within the 2h window will actually be wet.
   const totalMm = nowcast.reduce((s, n) => s + (n.precip || 0), 0);
-  el.nowcastSub.textContent = `${totalMm.toFixed(1)} mm expected in the next 2 hours`;
+  const peakMm15 = Math.max(0, ...nowcast.map((n) => n.precip || 0));
+  const wetBuckets = nowcast.filter((n) => (n.precip || 0) > 0.05).length;
+  const wetMin = wetBuckets * 15;
+  const intensity = precipIntensityLabel(peakMm15, kind);
+  const parts = [];
+  if (intensity) parts.push(intensity);
+  parts.push(`${totalMm.toFixed(1)} mm over ${wetMin} min`);
+  el.nowcastSub.textContent = parts.join(" · ");
   // Bars (time-labeled, clickable to scrub).
   el.nowcastBars.innerHTML = "";
   const slice = nowcast.slice(0, 8);
