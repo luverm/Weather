@@ -80,6 +80,7 @@ const el = {
   refreshBtn: $("#refresh-btn"),
   fetchedAgo: $("#fetched-ago"),
   dailyIconStrip: $("#daily-icon-strip"),
+  dailyPrecipStrip: $("#daily-precip-strip"),
   settingsBtn: $("#settings-btn"),
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
@@ -900,6 +901,7 @@ function renderDaily(w) {
   const days = (w.daily || []).slice(0, 7);
   if (!days.length) return;
   renderDailyIconStrip(days);
+  renderDailyPrecipStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
   // Global min/max for the range bar.
@@ -946,6 +948,31 @@ function renderDailyIconStrip(days) {
   el.dailyIconStrip.innerHTML = days.map((d) =>
     `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
   ).join("");
+}
+
+function renderDailyPrecipStrip(days) {
+  const host = el.dailyPrecipStrip;
+  if (!host) return;
+  const anyPrecip = days.some((d) => (d.precip ?? 0) > 0.05 || (d.pop ?? 0) >= 30);
+  if (!anyPrecip) {
+    host.hidden = true;
+    host.innerHTML = "";
+    return;
+  }
+  const maxPrecip = Math.max(0.6, ...days.map((d) => d.precip || 0));
+  host.hidden = false;
+  host.innerHTML = days.map((d) => {
+    const mm = d.precip ?? 0;
+    const pop = d.pop ?? 0;
+    const heightPct = mm > 0 ? Math.max(4, (mm / maxPrecip) * 100) : Math.max(2, pop * 0.02);
+    const opacity = mm > 0 ? 0.35 + 0.65 * (mm / maxPrecip) : Math.max(0.15, Math.min(0.7, pop / 140));
+    const label = mm > 0 ? `${mm.toFixed(mm < 1 ? 1 : 0)} mm` : (pop >= 30 ? `${pop}%` : "—");
+    return `
+      <div class="daily-precip-cell" title="${label}">
+        <div class="daily-precip-bar" style="height:${heightPct.toFixed(1)}%;opacity:${opacity.toFixed(2)}"></div>
+      </div>
+    `;
+  }).join("");
 }
 
 function renderDailySpark(days) {
