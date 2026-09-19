@@ -1505,9 +1505,15 @@ kbd {
   padding: 0 10px;
   display: block;
 }
-.daily-spark circle { transition: r 160ms var(--ease); }
+.daily-spark circle { transition: r 160ms var(--ease); cursor: help; }
 .daily-spark .dot-hi { fill: #ff9c7a; }
 .daily-spark .dot-lo { fill: #9ad1ff; }
+.daily-spark .dot-today {
+  stroke: rgba(255, 255, 255, 0.65);
+  stroke-width: 1.1;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.35));
+}
+.daily-spark circle:hover { r: 4.5; }
 
 .daily-precip-strip {
   display: grid;

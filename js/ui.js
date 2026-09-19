@@ -1112,21 +1112,34 @@ function renderDailySpark(days) {
   el.dailyLo.setAttribute("d", linePath(days.map((d) => d.tempMin)));
   // Dots at each day + per-day temp labels above/below
   el.dailySparkDots.innerHTML = "";
+  const tz = state.weather?.timezone;
+  const nsSvg = "http://www.w3.org/2000/svg";
   days.forEach((d, i) => {
+    const dt = new Date(d.time);
+    const dayLabel = i === 0 ? "Today" : dt.toLocaleDateString(undefined, {
+      weekday: "short",
+      ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    });
     if (d.tempMax != null) {
-      const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      const c = document.createElementNS(nsSvg, "circle");
       c.setAttribute("cx", x(i).toFixed(1));
       c.setAttribute("cy", y(d.tempMax).toFixed(1));
-      c.setAttribute("r", "2.5");
-      c.setAttribute("class", "dot-hi");
+      c.setAttribute("r", i === 0 ? "3.4" : "2.5");
+      c.setAttribute("class", i === 0 ? "dot-hi dot-today" : "dot-hi");
+      const title = document.createElementNS(nsSvg, "title");
+      title.textContent = `${dayLabel}: high ${Math.round(convertTemp(d.tempMax))}°`;
+      c.appendChild(title);
       el.dailySparkDots.appendChild(c);
     }
     if (d.tempMin != null) {
-      const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      const c = document.createElementNS(nsSvg, "circle");
       c.setAttribute("cx", x(i).toFixed(1));
       c.setAttribute("cy", y(d.tempMin).toFixed(1));
-      c.setAttribute("r", "2.5");
-      c.setAttribute("class", "dot-lo");
+      c.setAttribute("r", i === 0 ? "3.4" : "2.5");
+      c.setAttribute("class", i === 0 ? "dot-lo dot-today" : "dot-lo");
+      const title = document.createElementNS(nsSvg, "title");
+      title.textContent = `${dayLabel}: low ${Math.round(convertTemp(d.tempMin))}°`;
+      c.appendChild(title);
       el.dailySparkDots.appendChild(c);
     }
   });
