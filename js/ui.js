@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { narrate } from "./narrative.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -204,7 +205,13 @@ export const ui = {
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
-    if (el.narrative) el.narrative.textContent = narrative || "";
+    if (el.narrative) {
+      // Recompute the narrative here so it reflects the currently-active
+      // temperature unit; the string passed in from app.js is used as a
+      // fallback only when we cannot generate one ourselves.
+      const localNarr = narrate(weather, { convertTemp, unit: `°${state.unit}` });
+      el.narrative.textContent = localNarr || narrative || "";
+    }
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
@@ -826,7 +833,7 @@ function renderWeekend(w) {
 
 function renderAlerts(w) {
   if (!el.alertsStrip) return;
-  const alerts = buildAlerts(w);
+  const alerts = buildAlerts(w, { convertTemp, unit: `°${state.unit}` });
   // Respect per-place dismissals so the user isn't nagged.
   const dismissed = getDismissedAlerts();
   const visible = alerts.filter((a) => !dismissed.has(a.id));
