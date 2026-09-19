@@ -964,7 +964,34 @@ function cardinal(deg) {
 
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
-  for (const h of (w.hourly || []).slice(0, 24)) {
+  const hours = (w.hourly || []).slice(0, 24);
+  // Collect the next sunrise + sunset that fall inside the 24-hour horizon
+  // so we can drop them between the appropriate hour cards.
+  const horizon = hours.at(-1)?.time ?? Date.now() + 24 * 3600_000;
+  const solar = [];
+  for (const d of (w.daily || [])) {
+    if (d.sunrise && d.sunrise >= Date.now() - 30 * 60_000 && d.sunrise <= horizon) {
+      solar.push({ ts: d.sunrise, kind: "sunrise" });
+    }
+    if (d.sunset && d.sunset >= Date.now() - 30 * 60_000 && d.sunset <= horizon) {
+      solar.push({ ts: d.sunset, kind: "sunset" });
+    }
+  }
+  solar.sort((a, b) => a.ts - b.ts);
+  let sIdx = 0;
+  hours.forEach((h) => {
+    // Any solar events before this hour card get placed here.
+    while (sIdx < solar.length && solar[sIdx].ts <= h.time) {
+      const s = solar[sIdx++];
+      const marker = document.createElement("div");
+      marker.className = `forecast-solar ${s.kind}`;
+      marker.setAttribute("title", `${s.kind === "sunrise" ? "Sunrise" : "Sunset"} · ${fmtTime(s.ts)}`);
+      marker.innerHTML = `
+        <span class="forecast-solar-icon">${s.kind === "sunrise" ? sunriseIcon() : sunsetIcon()}</span>
+        <span class="forecast-solar-time">${fmtTime(s.ts)}</span>
+      `;
+      el.forecastTrack.appendChild(marker);
+    }
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
@@ -976,7 +1003,22 @@ function renderHourly(w) {
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
-  }
+  });
+}
+
+function sunriseIcon() {
+  return `<svg viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="15" r="4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+    <path d="M3 19h18M8 12l-1.5-1.5M17.5 10.5L16 12M12 6v3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M9 4l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
+}
+function sunsetIcon() {
+  return `<svg viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="15" r="4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+    <path d="M3 19h18M8 12l-1.5-1.5M17.5 10.5L16 12M12 6v3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M9 8l3-3 3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
 }
 
 function highlightHour(index) {
