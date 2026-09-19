@@ -1429,17 +1429,61 @@ function bindSearch() {
       el.searchResults.hidden = false;
     }
   });
+  // Keyboard navigation: arrow keys move a highlight, Enter picks it.
+  el.searchInput.addEventListener("keydown", (e) => {
+    const items = Array.from(el.searchResults.querySelectorAll("li[data-index]"));
+    if (!items.length || el.searchResults.hidden) return;
+    const current = items.findIndex((li) => li.classList.contains("active"));
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      moveSearchHighlight(items, current, +1);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      moveSearchHighlight(items, current, -1);
+    } else if (e.key === "Enter") {
+      const active = items[current] || items[0];
+      if (active) {
+        e.preventDefault();
+        selectSearchResult(active);
+      }
+    } else if (e.key === "Escape") {
+      el.searchResults.hidden = true;
+    }
+  });
   el.searchResults.addEventListener("click", (e) => {
     const li = e.target.closest("li");
-    if (!li) return;
-    const i = parseInt(li.dataset.index, 10);
-    const item = el.searchResults._items?.[i];
-    if (!item) return;
-    el.searchInput.value = item.name;
-    el.searchResults.hidden = true;
-    places.add(item);
-    state.handlers.onSearchSelect?.(item);
+    if (li) selectSearchResult(li);
   });
+  // Mouseover the results: keep the highlight in sync so Enter picks the
+  // last-hovered row even after the pointer moves back to the input.
+  el.searchResults.addEventListener("mousemove", (e) => {
+    const li = e.target.closest("li[data-index]");
+    if (!li) return;
+    for (const other of el.searchResults.querySelectorAll("li.active")) {
+      other.classList.remove("active");
+    }
+    li.classList.add("active");
+  });
+}
+
+function moveSearchHighlight(items, currentIndex, delta) {
+  if (!items.length) return;
+  let next = currentIndex + delta;
+  if (next < 0) next = items.length - 1;
+  if (next >= items.length) next = 0;
+  items.forEach((li, i) => li.classList.toggle("active", i === next));
+  items[next]?.scrollIntoView({ block: "nearest" });
+}
+
+function selectSearchResult(li) {
+  if (!li || li.dataset.index == null) return;
+  const i = parseInt(li.dataset.index, 10);
+  const item = el.searchResults._items?.[i];
+  if (!item) return;
+  el.searchInput.value = item.name;
+  el.searchResults.hidden = true;
+  places.add(item);
+  state.handlers.onSearchSelect?.(item);
 }
 
 function bindUnitToggle() {
