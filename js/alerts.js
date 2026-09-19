@@ -144,6 +144,46 @@ export function buildAlerts(weather) {
     });
   }
 
+  // ---- Air quality ----
+  const aq = weather.airQuality;
+  if (aq && aq.aqi != null) {
+    if (aq.aqi >= 200) {
+      out.push({
+        id: "aq-very-bad",
+        severity: "danger",
+        title: "Very unhealthy air",
+        detail: `AQI ${Math.round(aq.aqi)} — limit outdoor exposure.`,
+      });
+    } else if (aq.aqi >= 150) {
+      out.push({
+        id: "aq-bad",
+        severity: "warn",
+        title: "Unhealthy air",
+        detail: `AQI ${Math.round(aq.aqi)} — sensitive groups take care.`,
+      });
+    } else if (aq.aqi >= 100) {
+      // Only surface as info if no bigger alerts are pending.
+      out.push({
+        id: "aq-moderate",
+        severity: "info",
+        title: "Moderate air quality",
+        detail: `AQI ${Math.round(aq.aqi)} — okay for most, sensitive groups should ease up.`,
+      });
+    }
+  }
+
+  // ---- Snow accumulation ----
+  const snowyWindow = wettestRunningWindow(hours.filter((h) => h.condition === "snow"), 3);
+  if (snowyWindow && snowyWindow.sum >= 10) {
+    out.push({
+      id: "heavy-snow",
+      severity: "warn",
+      title: "Heavy snowfall",
+      detail: `${snowyWindow.sum.toFixed(0)} mm liquid-equiv over 3h — travel disruption likely.`,
+      ts: snowyWindow.start,
+    });
+  }
+
   // De-dupe (if a daily heat triggers heat AND severe-heat, keep the worst).
   const SEV = { danger: 3, warn: 2, info: 1 };
   return dedupe(out)
@@ -213,5 +253,7 @@ function dedupe(items) {
   if (ids.has("severe-heat")) drop.add("heat");
   if (ids.has("hard-freeze")) drop.add("frost");
   if (ids.has("heavy-rain") || ids.has("soaking-rain")) drop.add("wet-day");
+  if (ids.has("aq-very-bad")) { drop.add("aq-bad"); drop.add("aq-moderate"); }
+  if (ids.has("aq-bad")) drop.add("aq-moderate");
   return items.filter((x) => !drop.has(x.id));
 }
