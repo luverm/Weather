@@ -21,6 +21,8 @@ const el = {
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
+  feelsLikeText: $("#feels-like-text"),
+  feelsLikeBadge: $("#feels-like-badge"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -282,8 +284,38 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  // Set the label text on the dedicated span so the sibling temp-trend
+  // and comfort-badge spans stay attached to the DOM.
+  if (el.feelsLikeText) {
+    el.feelsLikeText.textContent = `Feels like ${Math.round(feels)}°`;
+  } else {
+    el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  }
+  renderFeelsLikeBadge(w);
   renderDayRange(w);
+}
+
+function renderFeelsLikeBadge(w) {
+  if (!el.feelsLikeBadge) return;
+  const badge = feelsLikeBadge(w.temp, w.feelsLike, w.humidity, w.windSpeed);
+  if (badge) {
+    el.feelsLikeBadge.textContent = badge.label;
+    el.feelsLikeBadge.className = `feels-like-badge ${badge.cls}`;
+    el.feelsLikeBadge.hidden = false;
+  } else {
+    el.feelsLikeBadge.hidden = true;
+    el.feelsLikeBadge.textContent = "";
+  }
+}
+
+function feelsLikeBadge(temp, feels, humidity, wind) {
+  if (temp == null || feels == null) return null;
+  const gap = feels - temp;
+  if (temp >= 22 && gap >= 3) return { label: "muggy", cls: "warm" };
+  if (temp >= 15 && humidity >= 80 && gap >= 1) return { label: "humid", cls: "warm" };
+  if (temp <= 10 && gap <= -3) return { label: "wind chill", cls: "cool" };
+  if (temp <= 15 && wind >= 25 && gap <= -1) return { label: "brisk", cls: "cool" };
+  return null;
 }
 
 function renderDayRange(w) {
