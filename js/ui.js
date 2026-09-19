@@ -911,6 +911,15 @@ function renderDaily(w) {
     if (d.tempMax > gMax) gMax = d.tempMax;
   }
   const span = Math.max(1, gMax - gMin);
+  // Find the warmest and coolest days for the week so we can badge them.
+  let warmestIdx = -1, coolestIdx = -1;
+  for (let i = 0; i < days.length; i++) {
+    if (days[i].tempMax != null && (warmestIdx < 0 || days[i].tempMax > days[warmestIdx].tempMax)) warmestIdx = i;
+    if (days[i].tempMin != null && (coolestIdx < 0 || days[i].tempMin < days[coolestIdx].tempMin)) coolestIdx = i;
+  }
+  // Only badge when the extreme is meaningful (≥2° apart from the runner-up).
+  const warmMeaningful = warmestIdx >= 0 && isMeaningfulExtreme(days, warmestIdx, "tempMax", 2);
+  const coolMeaningful = coolestIdx >= 0 && isMeaningfulExtreme(days, coolestIdx, "tempMin", 2, true);
   days.forEach((d, i) => {
     const dt = new Date(d.time);
     const tz = state.weather?.timezone;
@@ -928,8 +937,14 @@ function renderDaily(w) {
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    let badge = "";
+    if (warmMeaningful && i === warmestIdx) {
+      badge = `<span class="daily-badge warm" title="Warmest day this week">▲ warm</span>`;
+    } else if (coolMeaningful && i === coolestIdx) {
+      badge = `<span class="daily-badge cool" title="Coolest day this week">▼ cool</span>`;
+    }
     item.innerHTML = `
-      <span class="daily-day">${day}</span>
+      <span class="daily-day">${day}${badge}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
@@ -941,6 +956,22 @@ function renderDaily(w) {
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+}
+
+function isMeaningfulExtreme(days, extremeIdx, key, thresholdC, invert = false) {
+  const extreme = days[extremeIdx][key];
+  if (extreme == null) return false;
+  let runner = null;
+  for (let i = 0; i < days.length; i++) {
+    if (i === extremeIdx) continue;
+    const v = days[i][key];
+    if (v == null) continue;
+    if (runner == null) runner = v;
+    else if (invert ? v < runner : v > runner) runner = v;
+  }
+  if (runner == null) return false;
+  const gap = invert ? runner - extreme : extreme - runner;
+  return gap >= thresholdC;
 }
 
 function renderDailyIconStrip(days) {
