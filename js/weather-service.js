@@ -48,6 +48,24 @@ async function fetchJson(url, opts) {
   }
 }
 
+// Fetch with a single retry after a short backoff — only worth doing for
+// transient issues (timeouts, 5xx, network blips). 4xx errors from the API
+// won't get better on retry, so we bail immediately on them.
+async function fetchJsonRetry(url, opts) {
+  try {
+    return await fetchJson(url, opts);
+  } catch (err) {
+    const msg = String(err?.message || err || "");
+    const isTransient = err?.name === "AbortError"
+      || /HTTP 5\d\d/.test(msg)
+      || /HTTP 429/.test(msg)
+      || /NetworkError|Failed to fetch|network/i.test(msg);
+    if (!isTransient) throw err;
+    await new Promise((r) => setTimeout(r, 700));
+    return fetchJson(url, opts);
+  }
+}
+
 export async function searchCities(query) {
   if (!query || query.trim().length < 2) return [];
   const url = `${GEO}?name=${encodeURIComponent(query)}&count=6&language=en&format=json`;
@@ -113,7 +131,7 @@ export async function getWeather(lat, lon) {
   const aqUrl = `${AIR_QUALITY}?${aqParams.toString()}`;
 
   try {
-    const [forecast, air] = await Promise.allSettled([fetchJson(url), fetchJson(aqUrl)]);
+    const [forecast, air] = await Promise.allSettled([fetchJsonRetry(url), fetchJsonRetry(aqUrl)]);
     if (forecast.status !== "fulfilled") throw forecast.reason;
     return normalize(forecast.value, air.status === "fulfilled" ? air.value : null);
   } catch (err) {
