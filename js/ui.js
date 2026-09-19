@@ -35,6 +35,9 @@ const el = {
   metricPressureSub: $("#m-pressure-sub"),
   metricUV: $("#m-uv"),
   metricUVSub: $("#m-uv-sub"),
+  uvTimeline: $("#uv-timeline"),
+  uvTimelineBars: $("#uv-timeline-bars"),
+  uvTimelineNow: $("#uv-timeline-now"),
   aqArc: $("#aq-arc"),
   aqValue: $("#aq-value"),
   aqLabel: $("#aq-label"),
@@ -361,6 +364,51 @@ function renderMetrics(w) {
     el.metricUVSub.textContent = "peak —";
   }
   renderPressureSparkline(w);
+  renderUvTimeline(w);
+}
+
+function uvBandColor(uv) {
+  if (uv == null || uv < 0.5) return "rgba(120, 140, 160, 0.35)";
+  if (uv < 3)  return "rgba(80, 200, 130, 0.75)";
+  if (uv < 6)  return "rgba(240, 200, 90, 0.85)";
+  if (uv < 8)  return "rgba(255, 160, 90, 0.9)";
+  if (uv < 11) return "rgba(255, 100, 100, 0.95)";
+  return "rgba(200, 130, 220, 0.95)";
+}
+
+function renderUvTimeline(w) {
+  const bars = el.uvTimelineBars;
+  const now = el.uvTimelineNow;
+  if (!bars || !now) return;
+  const hours = (w.hourly || []).slice(0, 24).filter((h) => h.uv != null);
+  if (!hours.length) {
+    bars.innerHTML = "";
+    return;
+  }
+  const uvMax = Math.max(3, ...hours.map((h) => h.uv || 0), (w.uvPeak?.value ?? 0));
+  const cellW = 100 / hours.length;
+  const H = 22;
+  // Build bar rects, height proportional to UV value, colored by band.
+  const nowTs = Date.now();
+  let nowIndex = 0;
+  for (let i = 0; i < hours.length; i++) {
+    if (hours[i].time >= nowTs - 30 * 60_000) { nowIndex = i; break; }
+  }
+  bars.innerHTML = hours.map((h, i) => {
+    const uv = h.uv ?? 0;
+    const height = Math.max(1.2, (Math.min(uv, uvMax) / uvMax) * (H - 2));
+    const y = (H - height).toFixed(2);
+    const x = (i * cellW).toFixed(2);
+    const width = (cellW - 0.25).toFixed(2);
+    const fill = h.isDay === false ? "rgba(120, 140, 170, 0.22)" : uvBandColor(uv);
+    const t = new Date(h.time);
+    const hh = t.toLocaleTimeString([], { hour: "numeric", timeZone: (w.timezone && w.timezone !== "auto") ? w.timezone : undefined });
+    return `<rect x="${x}" y="${y}" width="${width}" height="${height.toFixed(2)}" rx="0.6" fill="${fill}"><title>UV ${Math.round(uv)} @ ${hh}</title></rect>`;
+  }).join("");
+  // "Now" marker positioned at the middle of the nowIndex cell.
+  const nowX = (nowIndex * cellW + cellW / 2).toFixed(2);
+  now.setAttribute("x1", nowX);
+  now.setAttribute("x2", nowX);
 }
 
 function humidityComfort(rh, dew, temp) {

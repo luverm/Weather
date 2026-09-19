@@ -255,10 +255,14 @@
           </svg>
           <span id="m-pressure-sub" class="metric-sub">visibility —</span>
         </div>
-        <div class="metric glass">
+        <div class="metric glass metric-uv">
           <span class="metric-label">UV <span id="m-uv-level" class="trend" aria-hidden="true"></span></span>
           <span id="m-uv" class="metric-value">—</span>
           <span class="metric-unit">idx</span>
+          <svg id="uv-timeline" class="uv-timeline" viewBox="0 0 100 22" preserveAspectRatio="none" aria-hidden="true">
+            <g id="uv-timeline-bars"></g>
+            <line id="uv-timeline-now" class="uv-timeline-now" x1="0.5" x2="0.5" y1="0" y2="22"></line>
+          </svg>
           <span id="m-uv-sub" class="metric-sub">peak —</span>
         </div>
       </div>
