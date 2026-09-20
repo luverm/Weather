@@ -1610,6 +1610,14 @@ function renderDaily(w) {
       if (ev.key === "Enter" || ev.key === " ") {
         ev.preventDefault();
         toggleDailyExpand(item, d, w);
+        return;
+      }
+      if (ev.key === "ArrowDown" || ev.key === "ArrowUp") {
+        ev.preventDefault();
+        const siblings = Array.from(el.dailyTrack.querySelectorAll(".daily-item"));
+        const idx = siblings.indexOf(item);
+        const next = siblings[idx + (ev.key === "ArrowDown" ? 1 : -1)];
+        next?.focus();
       }
     });
     el.dailyTrack.appendChild(item);
