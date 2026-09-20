@@ -2143,7 +2143,28 @@ kbd {
 }
 .forecast-item:hover { background: var(--glass); transform: translateY(-2px); }
 .forecast-item.active { background: var(--glass-strong); }
-.forecast-time { font-size: 11px; letter-spacing: 0.08em; color: var(--fg-dim); text-transform: uppercase; }
+.forecast-time { font-size: 11px; letter-spacing: 0.08em; color: var(--fg-dim); text-transform: uppercase; display: inline-flex; align-items: baseline; gap: 4px; }
+.forecast-day-tag {
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: rgba(255,224,138,0.18);
+  color: #ffe6a3;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.forecast-day-change {
+  position: relative;
+  padding-left: 10px;
+}
+.forecast-day-change::before {
+  content: "";
+  position: absolute;
+  top: 8px; bottom: 8px; left: 0;
+  width: 2px;
+  border-radius: 2px;
+  background: rgba(255,224,138,0.32);
+}
 .forecast-icon { width: 26px; height: 26px; display: grid; place-items: center; color: var(--fg-muted); }
 .forecast-temp { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .forecast-pop {

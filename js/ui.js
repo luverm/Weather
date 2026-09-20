@@ -1554,12 +1554,20 @@ function cardinal(deg) {
 
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
+  let prevDay = null;
   for (const h of (w.hourly || []).slice(0, 24)) {
+    const d = new Date(h.time);
+    const dayKey = d.toDateString();
+    const isDayChange = prevDay !== null && prevDay !== dayKey;
+    prevDay = dayKey;
     const item = document.createElement("div");
-    item.className = "forecast-item";
+    item.className = "forecast-item" + (isDayChange ? " forecast-day-change" : "");
     item.dataset.ts = h.time;
+    const dayLabel = isDayChange
+      ? `<span class="forecast-day-tag">${escapeHtml(d.toLocaleDateString(undefined, { weekday: "short" }))}</span>`
+      : "";
     item.innerHTML = `
-      <span class="forecast-time">${fmtTime(h.time)}</span>
+      <span class="forecast-time">${fmtTime(h.time)}${dayLabel}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
