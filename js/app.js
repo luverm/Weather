@@ -373,6 +373,13 @@ window.addEventListener("hashchange", () => {
   }
 });
 
+// When the browser reconnects, quietly refresh so the offline mock is
+// replaced with live data. Guard against double-fires from the auto-refresh.
+window.addEventListener("online", () => {
+  if (!app.place) return;
+  refreshWeather();
+});
+
 // ---------- Lifecycle ----------
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
