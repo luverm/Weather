@@ -353,6 +353,48 @@ html[data-reduce-motion="true"] *::after {
   .search-spinner { animation: none; }
 }
 
+/* First-mount fade + rise for the main sections. */
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.hero-inner,
+.nowcast,
+.chart-card,
+.metrics > *,
+.extras > *,
+.radar,
+.insights,
+.forecast,
+.daily,
+.alerts-strip {
+  animation: card-in 520ms var(--ease) both;
+  animation-delay: calc(var(--card-in, 0) * 40ms);
+}
+.metrics > *:nth-child(1) { --card-in: 1; }
+.metrics > *:nth-child(2) { --card-in: 2; }
+.metrics > *:nth-child(3) { --card-in: 3; }
+.metrics > *:nth-child(4) { --card-in: 4; }
+.extras > *:nth-child(1) { --card-in: 2; }
+.extras > *:nth-child(2) { --card-in: 3; }
+.extras > *:nth-child(3) { --card-in: 4; }
+.extras > *:nth-child(4) { --card-in: 5; }
+.extras > *:nth-child(5) { --card-in: 6; }
+html[data-reduce-motion="true"] .hero-inner,
+html[data-reduce-motion="true"] .nowcast,
+html[data-reduce-motion="true"] .chart-card,
+html[data-reduce-motion="true"] .metrics > *,
+html[data-reduce-motion="true"] .extras > *,
+html[data-reduce-motion="true"] .radar,
+html[data-reduce-motion="true"] .insights,
+html[data-reduce-motion="true"] .forecast,
+html[data-reduce-motion="true"] .daily,
+html[data-reduce-motion="true"] .alerts-strip { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .hero-inner, .nowcast, .chart-card, .metrics > *, .extras > *, .radar,
+  .insights, .forecast, .daily, .alerts-strip { animation: none; }
+}
+
 .search-results {
   position: absolute;
   top: calc(100% + 8px);
