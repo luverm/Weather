@@ -3,7 +3,7 @@
 // peak window per activity. Returns an array of { kind, label, icon, start,
 // end, score, why } items, ready for the UI to render.
 
-import { formatWind } from "./units.js";
+import { formatWind, convertTemp } from "./units.js";
 
 const ICONS = {
   walk: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4" r="2"/><path d="M9 21l3-7 4 3 2-4M7 13l3-3 3 4"/></svg>',
@@ -90,7 +90,7 @@ function reasonsFor(window, hours) {
   const maxPop = Math.max(...slice.map((h) => h.pop ?? 0));
   const maxUv = Math.max(...slice.map((h) => h.uv ?? 0));
   const reasons = [];
-  if (avgT != null) reasons.push(`${Math.round(avgT)}° feel`);
+  if (avgT != null) reasons.push(`${Math.round(convertTemp(avgT))}° feel`);
   if (avgW != null) reasons.push(`wind ${formatWind(avgW)}`);
   if (maxPop > 0) reasons.push(`${Math.round(maxPop)}% rain`);
   if (maxUv >= 6) reasons.push(`UV ${Math.round(maxUv)}`);
