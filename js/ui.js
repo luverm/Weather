@@ -212,7 +212,8 @@ export const ui = {
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     renderSkyStrip(weather);
     if (el.narrative) el.narrative.textContent = narrative || "";
-    if (weather.offline) ui.showToast("Offline — showing sample weather");
+    const banner = document.getElementById("offline-banner");
+    if (banner) banner.hidden = !weather.offline;
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
       places.updateSummary(state.place, {

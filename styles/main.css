@@ -510,6 +510,23 @@ html[data-reduce-motion="true"] *::after {
 .day-swing[data-tone="big"]    { color: #ffcda3; border-color: rgba(255,180,120,0.32); background: rgba(255,180,120,0.10); }
 .day-swing[hidden] { display: none; }
 
+/* Offline banner */
+.offline-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  margin: 0 0 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 175, 105, 0.32);
+  background: rgba(255, 175, 105, 0.10);
+  color: #ffcda3;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+.offline-banner[hidden] { display: none; }
+.offline-banner-icon { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.9; }
+
 /* ---------- Nowcast banner ---------- */
 .nowcast {
   padding: 14px 18px;
