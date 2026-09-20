@@ -1550,6 +1550,8 @@ function highlightHour(index) {
 
 function renderDaily(w) {
   el.dailyTrack.innerHTML = "";
+  const btn = document.getElementById("daily-expand-all");
+  if (btn) { btn.setAttribute("aria-pressed", "false"); btn.textContent = "Expand all"; }
   const days = (w.daily || []).slice(0, 7);
   if (!days.length) return;
   renderDailyIconStrip(days);
@@ -1626,6 +1628,26 @@ function renderDaily(w) {
     });
     el.dailyTrack.appendChild(item);
   });
+  wireDailyExpandAll(w, days);
+}
+
+function wireDailyExpandAll(w, days) {
+  const btn = document.getElementById("daily-expand-all");
+  if (!btn) return;
+  btn.onclick = () => {
+    const items = Array.from(el.dailyTrack.querySelectorAll(".daily-item"));
+    const anyOpen = items.some((i) => i.dataset.expanded === "true");
+    if (anyOpen) {
+      // Collapse all.
+      items.forEach((i) => { if (i.dataset.expanded === "true") toggleDailyExpand(i, days[items.indexOf(i)] || days[0], w); });
+      btn.setAttribute("aria-pressed", "false");
+      btn.textContent = "Expand all";
+    } else {
+      items.forEach((i, idx) => { if (i.dataset.expanded !== "true") toggleDailyExpand(i, days[idx], w); });
+      btn.setAttribute("aria-pressed", "true");
+      btn.textContent = "Collapse all";
+    }
+  };
 }
 
 function renderDailyIconStrip(days) {

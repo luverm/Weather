@@ -1950,6 +1950,21 @@ kbd {
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+.daily-expand-all {
+  margin-left: 8px;
+  padding: 3px 10px;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,0.05);
+  color: var(--fg-muted);
+  cursor: pointer;
+  text-transform: none;
+  transition: background 160ms var(--ease), color 160ms var(--ease);
+}
+.daily-expand-all:hover { color: var(--fg); background: rgba(255,255,255,0.10); }
+.daily-expand-all[aria-pressed="true"] { color: var(--accent); border-color: rgba(154,209,255,0.36); }
 .daily-precip-line {
   padding: 0 12px 8px;
   display: flex;
