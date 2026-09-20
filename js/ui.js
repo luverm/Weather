@@ -2210,6 +2210,12 @@ function bindUnitToggle() {
     if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
     if (state.weather) ui.setWeather(state.weather);
   });
+  // Double-click on the hero temperature also toggles units for the click-
+  // targeting-large-number crowd.
+  el.temp?.addEventListener("dblclick", (e) => {
+    e.preventDefault();
+    el.unitBtn?.click();
+  });
 }
 
 function bindLocate() {
