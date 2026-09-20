@@ -101,13 +101,17 @@ export function buildAlerts(weather) {
   }
 
   // ---- Snow ----
-  const snowHour = hours.find((h) => h.condition === "snow");
+  const snowHour = hours.find((h) => h.condition === "snow" || (h.snowfall != null && h.snowfall > 0.1));
   if (snowHour) {
+    const totalCm = hours.reduce((s, h) => s + (h.snowfall || 0), 0);
+    const level = totalCm >= 15 ? "danger" : totalCm >= 5 ? "warn" : "info";
+    const title = totalCm >= 15 ? "Heavy snow" : totalCm >= 5 ? "Notable snow" : "Snow in forecast";
+    const suffix = totalCm > 0.5 ? ` · ~${totalCm.toFixed(1)} cm total` : "";
     out.push({
       id: "snow",
-      severity: "info",
-      title: "Snow in forecast",
-      detail: `Starts around ${shortClock(snowHour.time)}.`,
+      severity: level,
+      title,
+      detail: `Starts around ${shortClock(snowHour.time)}${suffix}.`,
       ts: snowHour.time,
     });
   }

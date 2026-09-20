@@ -80,7 +80,7 @@ export async function getWeather(lat, lon) {
     minutely_15: ["precipitation", "weather_code"].join(","),
     hourly: [
       "temperature_2m", "apparent_temperature", "weather_code",
-      "precipitation_probability", "precipitation",
+      "precipitation_probability", "precipitation", "snowfall",
       "wind_speed_10m", "wind_gusts_10m", "wind_direction_10m",
       "is_day", "uv_index", "pressure_msl",
       "relative_humidity_2m", "cloud_cover",
@@ -149,6 +149,7 @@ function normalize(d, aq) {
         pressure: d.hourly.pressure_msl?.[i] ?? null,
         humidity: d.hourly.relative_humidity_2m?.[i] ?? null,
         cloudCover: d.hourly.cloud_cover?.[i] ?? null,
+        snowfall: d.hourly.snowfall?.[i] ?? null,
         ...mapWmo(d.hourly.weather_code[i]),
       });
     }
