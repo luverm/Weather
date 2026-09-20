@@ -2170,18 +2170,28 @@ ui.isReduceMotion = () => {
 };
 
 function startFetchedTicker() {
+  // Autofresh interval matches app.js (15 min). Keep in one place so a change
+  // in either file doesn't skew the countdown.
+  const REFRESH_MS = 15 * 60_000;
   const update = () => {
     if (!el.fetchedAgo || !state.weather?.fetchedAt) {
       if (el.fetchedAgo) el.fetchedAgo.textContent = "";
       return;
     }
-    const ms = Date.now() - state.weather.fetchedAt;
-    const minutes = Math.max(0, Math.floor(ms / 60_000));
-    const label =
+    const now = Date.now();
+    const age = now - state.weather.fetchedAt;
+    const minutes = Math.max(0, Math.floor(age / 60_000));
+    const ageLabel =
       minutes < 1 ? "Just now" :
       minutes < 60 ? `Updated ${minutes}m ago` :
       `Updated ${Math.floor(minutes / 60)}h ago`;
-    el.fetchedAgo.textContent = "· " + label;
+    const nextIn = Math.max(0, REFRESH_MS - age);
+    let nextLabel = "";
+    if (nextIn > 0 && age < REFRESH_MS + 30_000) {
+      const mm = Math.ceil(nextIn / 60_000);
+      nextLabel = mm <= 1 ? " · refresh imminent" : ` · refresh in ${mm}m`;
+    }
+    el.fetchedAgo.textContent = "· " + ageLabel + nextLabel;
     el.fetchedAgo.classList.toggle("stale", minutes >= 20);
   };
   update();
