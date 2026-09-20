@@ -788,6 +788,14 @@ html[data-reduce-motion="true"] *::after {
 /* ---------- Daily expand ---------- */
 .daily-item { cursor: pointer; }
 .daily-item[data-expanded="true"] { background: var(--glass-strong); }
+.daily-chevron {
+  width: 14px; height: 14px;
+  color: var(--fg-dim);
+  transition: transform 200ms var(--ease), color 200ms var(--ease);
+  justify-self: end;
+}
+.daily-item:hover .daily-chevron { color: var(--fg-muted); }
+.daily-item[data-expanded="true"] .daily-chevron { transform: rotate(180deg); color: var(--accent); }
 .daily-expand {
   grid-column: 1 / -1;
   padding: 10px 6px 4px;
@@ -1997,7 +2005,7 @@ kbd {
 }
 .daily-item {
   display: grid;
-  grid-template-columns: 72px 28px 1fr 60px 60px;
+  grid-template-columns: 72px 28px 1fr 60px 60px 14px;
   gap: 12px;
   align-items: center;
   padding: 10px 8px;
@@ -2101,7 +2109,7 @@ kbd {
   .metrics { grid-template-columns: repeat(2, 1fr); }
   .extras { grid-template-columns: 1fr; }
   .brand-name { display: none; }
-  .daily-item { grid-template-columns: 64px 24px 1fr 48px 48px; gap: 8px; }
+  .daily-item { grid-template-columns: 64px 24px 1fr 48px 48px 12px; gap: 8px; }
   .chart-svg { height: 120px; }
   .shortcuts-list { grid-template-columns: 1fr; }
 }
