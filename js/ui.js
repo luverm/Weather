@@ -649,7 +649,9 @@ function renderWindArrows(w) {
     let strength = "low";
     if (spd >= 40) strength = "high";
     else if (spd >= 20) strength = "mid";
-    return `<svg class="warrow" data-strength="${strength}" data-hour="${i}" viewBox="0 0 24 24" style="transform:rotate(${rot}deg)"><path d="M12 4l6 8h-4v8h-4v-8H6l6-8z" fill="currentColor"/></svg>`;
+    const dirLabel = h.windDir != null ? cardinal(h.windDir) : "—";
+    const tip = `${fmtTime(h.time)} · ${dirLabel} · ${formatWind(spd)}`;
+    return `<svg class="warrow" data-strength="${strength}" data-hour="${i}" viewBox="0 0 24 24" style="transform:rotate(${rot}deg)"><title>${escapeHtml(tip)}</title><path d="M12 4l6 8h-4v8h-4v-8H6l6-8z" fill="currentColor"/></svg>`;
   }).join("");
 }
 
