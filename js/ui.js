@@ -118,6 +118,7 @@ const el = {
   nowcastBars: $("#nowcast-bars"),
   searchInput: $("#search-input"),
   searchResults: $("#search-results"),
+  searchClear: $("#search-clear"),
   locateBtn: $("#locate-btn"),
   audioBtn: $("#audio-btn"),
   hintText: $("#hint-text"),
@@ -1921,14 +1922,26 @@ function showRecentsIfAny() {
   el.searchResults.hidden = false;
 }
 
+function updateSearchClear() {
+  if (!el.searchClear) return;
+  el.searchClear.hidden = !el.searchInput.value.length;
+}
+
 function bindSearch() {
   el.searchInput.addEventListener("input", (e) => {
     const v = e.target.value.trim();
+    updateSearchClear();
     if (v.length < 2) {
       showRecentsIfAny();
       return;
     }
     runSearch(v);
+  });
+  el.searchClear?.addEventListener("click", () => {
+    el.searchInput.value = "";
+    updateSearchClear();
+    showRecentsIfAny();
+    el.searchInput.focus();
   });
   el.searchInput.addEventListener("blur", () => {
     setTimeout(() => (el.searchResults.hidden = true), 150);
@@ -1981,6 +1994,7 @@ function bindSearch() {
 
 function selectSearchItem(item) {
   el.searchInput.value = item.name;
+  updateSearchClear();
   el.searchResults.hidden = true;
   places.add(item);
   state.handlers.onSearchSelect?.(item);

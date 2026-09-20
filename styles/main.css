@@ -278,6 +278,19 @@ html[data-reduce-motion="true"] *::after {
   font-size: 15px; color: var(--fg);
 }
 .search input::placeholder { color: var(--fg-dim); }
+.search-clear {
+  appearance: none;
+  padding: 4px;
+  border-radius: 999px;
+  color: var(--fg-dim);
+  background: transparent;
+  cursor: pointer;
+  display: inline-flex;
+  transition: color 120ms var(--ease), background 120ms var(--ease);
+}
+.search-clear:hover { color: var(--fg); background: rgba(255,255,255,0.08); }
+.search-clear[hidden] { display: none; }
+.search input::-webkit-search-cancel-button { display: none; }
 
 .search-results {
   position: absolute;
