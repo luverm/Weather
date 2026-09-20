@@ -774,6 +774,7 @@ function renderMoon(moon) {
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
   renderMoonNext(moon);
+  renderStargazing(state.weather, moon);
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
@@ -790,6 +791,52 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+}
+
+function renderStargazing(weather, moon) {
+  const chip = document.getElementById("stargaze-rating");
+  const stars = document.getElementById("stargaze-stars");
+  const caption = document.getElementById("stargaze-caption");
+  if (!chip || !stars || !caption || !weather) return;
+  // Sample the sky ~1h after sunset (typical stargazing start).
+  const sunsetTs = weather.daily?.[0]?.sunset || weather.sunset;
+  if (!sunsetTs) { chip.hidden = true; return; }
+  const observeAt = sunsetTs + 90 * 60_000;
+  if (Date.now() > observeAt + 6 * 3600_000) {
+    // Well past a reasonable observing window; hide until tomorrow.
+    chip.hidden = true;
+    return;
+  }
+  const hours = (weather.hourly || []);
+  const nightHours = hours.filter((h) =>
+    h.cloudCover != null &&
+    h.time >= observeAt - 60 * 60_000 &&
+    h.time <= observeAt + 3 * 3600_000
+  );
+  if (nightHours.length < 2) { chip.hidden = true; return; }
+  const avgCloud = nightHours.reduce((s, h) => s + h.cloudCover, 0) / nightHours.length;
+  const avgPop = nightHours.reduce((s, h) => s + (h.pop || 0), 0) / nightHours.length;
+  const cloudScore = Math.max(0, 100 - avgCloud);        // 0..100
+  const moonScore = 100 * (1 - moon.illum);              // dark moon = high
+  const aqi = weather.airQuality?.aqi;
+  const aqScore = aqi == null ? 70 : Math.max(0, 100 - Math.min(100, aqi / 1.5));
+  const rainPenalty = avgPop > 40 ? -30 : 0;
+  // Weighted average — clouds dominate because a cloudy sky is a hard no.
+  const overall = Math.max(0, Math.min(100,
+    cloudScore * 0.55 + moonScore * 0.25 + aqScore * 0.20 + rainPenalty
+  ));
+  const filled = Math.max(1, Math.min(5, Math.round(overall / 20)));
+  const empty = 5 - filled;
+  stars.textContent = "★".repeat(filled) + "☆".repeat(empty);
+  let phrase;
+  if (overall >= 78) phrase = "Prime stargazing tonight";
+  else if (overall >= 60) phrase = "Good clear sky window";
+  else if (overall >= 40) phrase = "Some breaks in the clouds";
+  else if (overall >= 22) phrase = "Mostly cloudy — few stars";
+  else phrase = "Overcast — save it for another night";
+  caption.textContent = phrase;
+  chip.setAttribute("data-rating", overall >= 60 ? "high" : overall >= 30 ? "" : "low");
+  chip.hidden = false;
 }
 
 function renderMoonNext(moon) {
