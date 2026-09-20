@@ -217,7 +217,9 @@ export const ui = {
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
       places.updateSummary(state.place, {
-        temp: weather.temp, condition: weather.condition,
+        temp: weather.temp,
+        condition: weather.condition,
+        isDay: weather.isDay,
       });
     }
     renderPlaces();
@@ -1775,8 +1777,10 @@ function renderPlaces() {
   const activeId = state.place ? places.idFor(state.place) : null;
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
+    const glyph = p.condition ? conditionGlyph(p.condition, p.isDay ?? true) : "";
     return `
       <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
+        ${glyph ? `<span class="chip-glyph" aria-hidden="true">${glyph}</span>` : ""}
         <span>${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
         <span class="close" data-action="remove" aria-label="Remove">
