@@ -1374,6 +1374,7 @@ kbd {
   row-gap: 3px;
   border-radius: var(--radius-sm);
   transition: transform 400ms var(--ease);
+  cursor: help;
 }
 .metric:hover { transform: translateY(-2px); }
 .metric-label {
