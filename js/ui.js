@@ -773,6 +773,7 @@ function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  renderMoonNext(moon);
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
@@ -789,6 +790,26 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+}
+
+function renderMoonNext(moon) {
+  const target = document.getElementById("moon-next");
+  if (!target) return;
+  const phase = moon.phase;
+  const CYCLE = 29.5305882;
+  // Distance around the cycle to the next full (0.5) and next new (0/1).
+  const daysToFull = ((0.5 - phase + 1) % 1) * CYCLE;
+  const daysToNew  = ((1.0 - phase + 1) % 1) * CYCLE;
+  const [d, kind] = daysToFull < daysToNew
+    ? [daysToFull, "full moon"]
+    : [daysToNew,  "new moon"];
+  if (d < 0.5) {
+    target.textContent = `${kind} tonight`;
+  } else if (d < 1.5) {
+    target.textContent = `${kind} tomorrow`;
+  } else {
+    target.textContent = `${kind} in ${Math.round(d)} days`;
+  }
 }
 
 function useTwelveHour() {
