@@ -94,6 +94,7 @@ const el = {
   settingWindUnit: $("#setting-wind-unit"),
   settingPressureUnit: $("#setting-pressure-unit"),
   settingDistanceUnit: $("#setting-distance-unit"),
+  settingClock12: $("#setting-clock-12"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
@@ -742,17 +743,28 @@ function renderMoon(moon) {
   el.moonLit.setAttribute("d", outer + " " + terminator);
 }
 
+function useTwelveHour() {
+  return localStorage.getItem("aether:clock12") === "1";
+}
+
 function fmtTime(ts) {
   if (!ts) return "—";
+  const twelve = useTwelveHour();
   const tz = state.weather?.timezone;
   if (tz && tz !== "auto") {
     try {
       return new Intl.DateTimeFormat(undefined, {
-        timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
+        timeZone: tz, hour: twelve ? "numeric" : "2-digit", minute: "2-digit", hour12: twelve,
       }).format(new Date(ts));
     } catch { /* fall through */ }
   }
   const d = new Date(ts);
+  if (twelve) {
+    const h = d.getHours();
+    const hh = ((h % 12) || 12);
+    const mm = d.getMinutes().toString().padStart(2, "0");
+    return `${hh}:${mm} ${h < 12 ? "am" : "pm"}`;
+  }
   const hh = d.getHours().toString().padStart(2, "0");
   const mm = d.getMinutes().toString().padStart(2, "0");
   return `${hh}:${mm}`;
@@ -805,7 +817,7 @@ function renderSunsetForecast(w) {
   else { rating = "fair"; phrase = "A soft glow tonight"; }
   chip.hidden = false;
   chip.setAttribute("data-rating", rating);
-  const local = new Date(sunsetTs).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+  const local = fmtTime(sunsetTs);
   headline.textContent = "Sunset colors";
   sub.textContent = `${phrase} · at ${local}`;
 }
@@ -995,18 +1007,23 @@ function startLocaltime(w) {
   }
   const update = () => {
     try {
+      const twelve = useTwelveHour();
       const parts = new Intl.DateTimeFormat([], {
-        timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
+        timeZone: tz, hour: twelve ? "numeric" : "2-digit", minute: "2-digit", hour12: twelve,
         weekday: "short", timeZoneName: "short",
       }).formatToParts(new Date());
       const day = parts.find((p) => p.type === "weekday")?.value ?? "";
       const hour = parts.find((p) => p.type === "hour")?.value ?? "";
       const minute = parts.find((p) => p.type === "minute")?.value ?? "";
+      const dayPeriod = parts.find((p) => p.type === "dayPeriod")?.value ?? "";
       const tzName = parts.find((p) => p.type === "timeZoneName")?.value ?? "";
+      const timeStr = twelve
+        ? `${hour}:${minute}${dayPeriod ? " " + dayPeriod : ""}`
+        : `${hour}:${minute}`;
       const offsetChip = tzOffsetChip(tz);
       el.placeLocaltime.innerHTML =
         `<span class="clock-dot" aria-hidden="true"></span>` +
-        `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>` +
+        `${escapeHtml(day)} ${escapeHtml(timeStr)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>` +
         offsetChip;
     } catch {
       el.placeLocaltime.textContent = "";
@@ -1903,6 +1920,11 @@ function bindSettings() {
     }
   });
 
+  el.settingClock12?.addEventListener("change", () => {
+    localStorage.setItem("aether:clock12", el.settingClock12.checked ? "1" : "0");
+    if (state.weather) ui.setWeather(state.weather);
+  });
+
   el.settingClearPlaces?.addEventListener("click", () => {
     if (!confirm("Clear all saved places?")) return;
     for (const p of places.all()) places.remove(p);
@@ -1924,6 +1946,7 @@ function applyStoredPreferences() {
   if (el.settingWindUnit) el.settingWindUnit.value = windUnit();
   if (el.settingPressureUnit) el.settingPressureUnit.value = pressureUnit();
   if (el.settingDistanceUnit) el.settingDistanceUnit.value = distanceUnit();
+  if (el.settingClock12) el.settingClock12.checked = useTwelveHour();
 }
 
 // Exposed so app.js can query the current preference on boot.

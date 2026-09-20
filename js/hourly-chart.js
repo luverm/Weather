@@ -1,7 +1,7 @@
 // Interactive hourly chart: temperature line + precipitation probability bars.
 // Fills the full 24-point domain, synced to the scrubber cursor.
 
-import { formatWind as formatWindLocal } from "./units.js";
+import { formatWind as formatWindLocal, formatClock as formatClockLocal, useTwelveHour } from "./units.js";
 
 const W = 600;
 const H = 140;
@@ -25,15 +25,7 @@ export class HourlyChart {
 
   _formatHour(ts) {
     const tz = this.getTimezone();
-    if (tz && tz !== "auto") {
-      try {
-        return new Intl.DateTimeFormat(undefined, {
-          timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
-        }).format(new Date(ts));
-      } catch { /* */ }
-    }
-    const d = new Date(ts);
-    return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+    return formatClockLocal(ts, tz && tz !== "auto" ? { withTz: tz } : undefined);
   }
 
   _hourOf(ts) {

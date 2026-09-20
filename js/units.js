@@ -2,6 +2,29 @@
 // stay consistent whether they originate in ui.js, alerts.js, narrative.js
 // or share/summary code.
 
+// ---------- Clock ----------
+export function useTwelveHour() {
+  return localStorage.getItem("aether:clock12") === "1";
+}
+
+/** Format a timestamp as a short HH:MM (or h:mm am/pm) label. */
+export function formatClock(ts, { withTz } = {}) {
+  if (!ts) return "—";
+  const twelve = useTwelveHour();
+  const opts = {
+    hour: twelve ? "numeric" : "2-digit",
+    minute: "2-digit",
+    hour12: twelve,
+    ...(withTz ? { timeZone: withTz } : {}),
+  };
+  try {
+    return new Intl.DateTimeFormat(undefined, opts).format(new Date(ts));
+  } catch {
+    const d = new Date(ts);
+    return d.toLocaleTimeString([], opts);
+  }
+}
+
 export function windUnit() {
   return localStorage.getItem("aether:windUnit") || "kmh";
 }

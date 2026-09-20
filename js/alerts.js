@@ -3,7 +3,7 @@
 // derive them locally. Each alert is { id, severity, title, detail, ts? }.
 // `ts` lets the UI scrub to the exact moment of the alert when clicked.
 
-import { formatWind } from "./units.js";
+import { formatWind, formatClock } from "./units.js";
 
 export function buildAlerts(weather) {
   if (!weather) return [];
@@ -203,8 +203,7 @@ function wettestRunningWindow(hours, span) {
 
 function shortClock(ts) {
   if (!ts) return "later";
-  const d = new Date(ts);
-  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+  return formatClock(ts);
 }
 
 function dedupe(items) {

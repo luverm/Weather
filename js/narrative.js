@@ -1,13 +1,18 @@
 // Build a short natural-language summary from the weather data.
 // Picks the most noteworthy signal: rain arrival, cold snap, heat, wind, etc.
 
-import { formatWind } from "./units.js";
+import { formatWind, useTwelveHour } from "./units.js";
 
 function fmtHour(ts) {
   const d = new Date(ts);
   const m = d.getMinutes();
-  return `${d.getHours()}${m ? ":" + String(m).padStart(2, "0") : ""}${d.getHours() < 12 ? "am" : "pm"}`
-    .replace(/^(\d{1,2})/, (s) => (parseInt(s, 10) % 12 || 12));
+  if (useTwelveHour()) {
+    return `${d.getHours()}${m ? ":" + String(m).padStart(2, "0") : ""}${d.getHours() < 12 ? "am" : "pm"}`
+      .replace(/^(\d{1,2})/, (s) => (parseInt(s, 10) % 12 || 12));
+  }
+  const hh = d.getHours().toString().padStart(2, "0");
+  const mm = m.toString().padStart(2, "0");
+  return `${hh}:${mm}`;
 }
 
 function findNextPrecip(nowcast, hourly) {

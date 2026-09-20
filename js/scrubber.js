@@ -133,8 +133,12 @@ export class Scrubber {
 
     const time = clock.now();
     const d = new Date(time);
+    const twelve = localStorage.getItem("aether:clock12") === "1";
     const label = d.toLocaleString(undefined, {
-      weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false,
+      weekday: "short",
+      hour: twelve ? "numeric" : "2-digit",
+      minute: "2-digit",
+      hour12: twelve,
     });
     if (this.timeEl) this.timeEl.textContent = label;
 
