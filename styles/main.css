@@ -260,6 +260,26 @@ html[data-compact="true"] .stars,
 html[data-compact="true"] .clouds { display: none !important; }
 html[data-compact="true"] .stage canvas#sky { opacity: 0.4; }
 
+/* Embed / widget mode — chromeless slim layout via ?widget=1. */
+html[data-widget="true"] .topbar,
+html[data-widget="true"] .scrubber,
+html[data-widget="true"] .radar,
+html[data-widget="true"] .insights,
+html[data-widget="true"] .forecast,
+html[data-widget="true"] .daily,
+html[data-widget="true"] .extras,
+html[data-widget="true"] .alerts-strip,
+html[data-widget="true"] .offline-banner,
+html[data-widget="true"] .comfort-strip,
+html[data-widget="true"] .places-strip,
+html[data-widget="true"] .hint,
+html[data-widget="true"] .season-chip,
+html[data-widget="true"] .daily-picks,
+html[data-widget="true"] .stars,
+html[data-widget="true"] .clouds { display: none !important; }
+html[data-widget="true"] .app { padding: 12px !important; gap: 12px !important; }
+html[data-widget="true"] .hero-inner { padding: 18px; }
+
 /* Skip link — hidden until focused. */
 .skip-link {
   position: absolute;

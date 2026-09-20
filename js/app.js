@@ -18,6 +18,12 @@ import { places } from "./places.js";
 import { RadarMap } from "./radar-map.js";
 import { installShortcuts } from "./shortcuts.js";
 
+// Widget mode: chromeless slim layout for embedding. Just needs the query
+// param to be set; users can visit ?widget=1 in an <iframe>.
+if (new URLSearchParams(location.search).get("widget") === "1") {
+  document.documentElement.setAttribute("data-widget", "true");
+}
+
 const engine = new AnimationEngine();
 
 const sky = engine.add("sky", new SkyScene(document.getElementById("sky")));
