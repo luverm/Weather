@@ -2018,12 +2018,33 @@ function debounce(fn, ms) {
 const runSearch = debounce(async (q) => {
   if (el.searchSpinner) el.searchSpinner.hidden = false;
   try {
+    const coord = parseCoordQuery(q);
+    if (coord) {
+      renderSearchResults([{
+        id: `${coord.lat},${coord.lon}`,
+        name: `${coord.lat.toFixed(3)}, ${coord.lon.toFixed(3)}`,
+        country: "Coordinates",
+        lat: coord.lat, lon: coord.lon,
+      }]);
+      return;
+    }
     const results = await searchCities(q);
     renderSearchResults(results);
   } finally {
     if (el.searchSpinner) el.searchSpinner.hidden = true;
   }
 }, 200);
+
+function parseCoordQuery(q) {
+  // Accept "lat, lon", "lat,lon", "lat lon", with optional signs / decimals.
+  const m = q && q.trim().match(/^(-?\d{1,2}(?:\.\d+)?)\s*[, ]\s*(-?\d{1,3}(?:\.\d+)?)$/);
+  if (!m) return null;
+  const lat = parseFloat(m[1]);
+  const lon = parseFloat(m[2]);
+  if (!isFinite(lat) || !isFinite(lon)) return null;
+  if (lat < -90 || lat > 90 || lon < -180 || lon > 180) return null;
+  return { lat, lon };
+}
 
 function renderSearchResults(results) {
   if (!results.length) {
