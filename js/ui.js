@@ -120,6 +120,7 @@ const el = {
   searchInput: $("#search-input"),
   searchResults: $("#search-results"),
   searchClear: $("#search-clear"),
+  searchSpinner: $("#search-spinner"),
   locateBtn: $("#locate-btn"),
   audioBtn: $("#audio-btn"),
   hintText: $("#hint-text"),
@@ -1970,8 +1971,13 @@ function debounce(fn, ms) {
 }
 
 const runSearch = debounce(async (q) => {
-  const results = await searchCities(q);
-  renderSearchResults(results);
+  if (el.searchSpinner) el.searchSpinner.hidden = false;
+  try {
+    const results = await searchCities(q);
+    renderSearchResults(results);
+  } finally {
+    if (el.searchSpinner) el.searchSpinner.hidden = true;
+  }
 }, 200);
 
 function renderSearchResults(results) {

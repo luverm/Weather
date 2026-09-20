@@ -307,6 +307,19 @@ html[data-reduce-motion="true"] *::after {
 .search-clear:hover { color: var(--fg); background: rgba(255,255,255,0.08); }
 .search-clear[hidden] { display: none; }
 .search input::-webkit-search-cancel-button { display: none; }
+.search-spinner {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.16);
+  border-top-color: var(--accent);
+  animation: spin 720ms linear infinite;
+  flex-shrink: 0;
+}
+.search-spinner[hidden] { display: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .search-spinner { animation: none; }
+}
 
 .search-results {
   position: absolute;
