@@ -938,12 +938,31 @@ html[data-reduce-motion="true"] *::after {
   display: grid;
   gap: 8px;
 }
+.sky-strip-wrap {
+  display: grid;
+  gap: 3px;
+}
 .sky-strip-row {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr auto auto;
   align-items: center;
   gap: 10px;
 }
+.sky-strip-ticks {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  font-size: 9px;
+  color: var(--fg-dim);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  padding: 0 1px;
+}
+.sky-strip-ticks span {
+  text-align: left;
+  opacity: 0;
+}
+.sky-strip-ticks span[data-tick="true"] { opacity: 0.8; }
+.sky-strip-ticks[data-empty="true"] { display: none; }
 .sky-strip {
   display: grid;
   grid-template-columns: repeat(24, 1fr);

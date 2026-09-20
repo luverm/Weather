@@ -376,6 +376,20 @@ function renderSkyStrip(w) {
   strip.innerHTML = cells;
   const first = strip.firstElementChild;
   if (first) first.classList.add("sky-cell-now");
+  renderSkyTicks(hours);
+}
+
+function renderSkyTicks(hours) {
+  const el2 = document.getElementById("sky-strip-ticks");
+  if (!el2) return;
+  if (!hours.length) { el2.setAttribute("data-empty", "true"); el2.innerHTML = ""; return; }
+  el2.removeAttribute("data-empty");
+  const marks = hours.map((h) => {
+    const hh = new Date(h.time).getHours();
+    if (hh % 6 !== 0) return `<span></span>`;
+    return `<span data-tick="true">${hh.toString().padStart(2, "0")}</span>`;
+  });
+  el2.innerHTML = marks.join("");
 }
 
 function renderRainWindow(w) {

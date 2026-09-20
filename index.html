@@ -245,10 +245,13 @@
 
       <!-- Interactive hourly chart -->
       <div class="chart-card glass" id="chart-card" aria-label="Hourly forecast chart">
-        <div class="sky-strip-row">
-          <div id="sky-strip" class="sky-strip" aria-hidden="true"></div>
-          <span id="sun-hours" class="sun-hours" hidden></span>
-          <span id="rain-window" class="rain-window" hidden></span>
+        <div class="sky-strip-wrap">
+          <div class="sky-strip-row">
+            <div id="sky-strip" class="sky-strip" aria-hidden="true"></div>
+            <span id="sun-hours" class="sun-hours" hidden></span>
+            <span id="rain-window" class="rain-window" hidden></span>
+          </div>
+          <div id="sky-strip-ticks" class="sky-strip-ticks" aria-hidden="true"></div>
         </div>
         <div class="chart-head">
           <span class="chart-title">Hourly trend</span>
