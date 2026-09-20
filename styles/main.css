@@ -808,6 +808,10 @@ html[data-reduce-motion="true"] *::after {
   transition: background 300ms var(--ease), opacity 300ms var(--ease);
   border-radius: 2px;
 }
+.sky-strip .sky-cell.sky-cell-now {
+  box-shadow: 0 0 0 1.5px rgba(255,255,255,0.65) inset, 0 0 6px rgba(255,255,255,0.35);
+  border-radius: 3px;
+}
 .chart-head {
   display: flex; align-items: center; gap: 12px;
   flex-wrap: wrap;
@@ -1695,6 +1699,22 @@ kbd {
   transition: opacity 160ms var(--ease), transform 160ms var(--ease);
 }
 .daily-icon-strip .strip-day:hover { opacity: 1; transform: translateY(-1px); }
+.daily-icon-strip .strip-day-now {
+  opacity: 1;
+  position: relative;
+}
+.daily-icon-strip .strip-day-now::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 5px var(--accent);
+}
 .daily-icon-strip .strip-day svg {
   width: 22px; height: 22px;
   display: block;

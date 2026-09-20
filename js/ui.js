@@ -332,6 +332,8 @@ function renderSkyStrip(w) {
     return `<span class="sky-cell" style="background:rgb(${r},${g},${b});opacity:${opacity}"></span>`;
   }).join("");
   strip.innerHTML = cells;
+  const first = strip.firstElementChild;
+  if (first) first.classList.add("sky-cell-now");
 }
 
 function renderSunHours(w, hours) {
@@ -1342,8 +1344,8 @@ function renderDaily(w) {
 
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
-  el.dailyIconStrip.innerHTML = days.map((d) =>
-    `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
+  el.dailyIconStrip.innerHTML = days.map((d, i) =>
+    `<span class="strip-day${i === 0 ? " strip-day-now" : ""}" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
   ).join("");
 }
 
