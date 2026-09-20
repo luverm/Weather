@@ -376,7 +376,8 @@ function renderSkyStrip(w) {
       b = Math.round(b * (1 - rainish * 0.4) + 200 * rainish * 0.4);
     }
     const opacity = day ? 1 : 0.75;
-    return `<span class="sky-cell" style="background:rgb(${r},${g},${b});opacity:${opacity}"></span>`;
+    const tip = `${fmtTime(h.time)} · ${Math.round(cc)}% cloud · ${Math.round(h.pop ?? 0)}% rain`;
+    return `<span class="sky-cell" style="background:rgb(${r},${g},${b});opacity:${opacity}" title="${escapeHtml(tip)}"></span>`;
   }).join("");
   strip.innerHTML = cells;
   const first = strip.firstElementChild;
