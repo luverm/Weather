@@ -2,7 +2,7 @@
 // (search, unit toggle, saved places, tilt, audio toggle).
 
 import { searchCities } from "./weather-service.js";
-import { formatWind, windUnit, windUnitLabel, convertWind, formatPressure, pressureUnit, pressureUnitLabel } from "./units.js";
+import { formatWind, windUnit, windUnitLabel, convertWind, formatPressure, pressureUnit, pressureUnitLabel, formatDistance, distanceUnit } from "./units.js";
 import { places } from "./places.js";
 import { HourlyChart } from "./hourly-chart.js";
 import { ComfortStrip } from "./comfort-strip.js";
@@ -93,6 +93,7 @@ const el = {
   settingClearPlaces: $("#setting-clear-places"),
   settingWindUnit: $("#setting-wind-unit"),
   settingPressureUnit: $("#setting-pressure-unit"),
+  settingDistanceUnit: $("#setting-distance-unit"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
@@ -486,7 +487,7 @@ function renderMetrics(w) {
   el.metricPressure.textContent = formatPressure(w.pressure ?? 0, { withUnit: false });
   if (el.metricPressureUnit) el.metricPressureUnit.textContent = pressureUnitLabel();
   el.metricPressureSub.textContent = w.visibility != null
-    ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
+    ? `visibility ${formatDistance(w.visibility)}`
     : "visibility —";
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
@@ -1894,6 +1895,14 @@ function bindSettings() {
     }
   });
 
+  el.settingDistanceUnit?.addEventListener("change", () => {
+    const v = el.settingDistanceUnit.value;
+    if (["km", "mi"].includes(v)) {
+      localStorage.setItem("aether:distanceUnit", v);
+      if (state.weather) ui.setWeather(state.weather);
+    }
+  });
+
   el.settingClearPlaces?.addEventListener("click", () => {
     if (!confirm("Clear all saved places?")) return;
     for (const p of places.all()) places.remove(p);
@@ -1914,6 +1923,7 @@ function applyStoredPreferences() {
   if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
   if (el.settingWindUnit) el.settingWindUnit.value = windUnit();
   if (el.settingPressureUnit) el.settingPressureUnit.value = pressureUnit();
+  if (el.settingDistanceUnit) el.settingDistanceUnit.value = distanceUnit();
 }
 
 // Exposed so app.js can query the current preference on boot.

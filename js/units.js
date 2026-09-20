@@ -66,3 +66,21 @@ export function formatPressure(hpa, { withUnit = true } = {}) {
   const rounded = u === "inhg" ? v.toFixed(2) : Math.round(v);
   return withUnit ? `${rounded} ${pressureUnitLabel(u)}` : String(rounded);
 }
+
+// ---------- Distance ----------
+export function distanceUnit() {
+  return localStorage.getItem("aether:distanceUnit") || "km";
+}
+
+export function distanceUnitLabel(unit = distanceUnit()) {
+  return unit === "mi" ? "mi" : "km";
+}
+
+/** Format a metre value as km/mi. */
+export function formatDistance(meters, { withUnit = true } = {}) {
+  if (meters == null) return "—";
+  const u = distanceUnit();
+  const v = u === "mi" ? meters / 1609.344 : meters / 1000;
+  const rounded = v >= 10 ? Math.round(v) : Math.round(v * 10) / 10;
+  return withUnit ? `${rounded} ${distanceUnitLabel(u)}` : String(rounded);
+}
