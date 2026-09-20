@@ -2,6 +2,7 @@
 // (search, unit toggle, saved places, tilt, audio toggle).
 
 import { searchCities } from "./weather-service.js";
+import { formatWind, windUnit, windUnitLabel, convertWind } from "./units.js";
 import { places } from "./places.js";
 import { HourlyChart } from "./hourly-chart.js";
 import { ComfortStrip } from "./comfort-strip.js";
@@ -69,6 +70,7 @@ const el = {
   pressureSparkFill: $("#pressure-spark-fill"),
   humiditySparkLine: $("#humidity-spark-line"),
   humiditySparkFill: $("#humidity-spark-fill"),
+  metricWindUnit: $("#m-wind-unit"),
   uvSparkLine: $("#uv-spark-line"),
   uvSparkFill: $("#uv-spark-fill"),
   uvSparkPeak: $("#uv-spark-peak"),
@@ -88,6 +90,7 @@ const el = {
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
   settingClearPlaces: $("#setting-clear-places"),
+  settingWindUnit: $("#setting-wind-unit"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
@@ -440,12 +443,14 @@ function renderDayRange(w) {
 }
 
 function renderMetrics(w) {
-  el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
+  el.metricWind.textContent = formatWind(w.windSpeed ?? 0, { withUnit: false });
+  el.metricWindUnit && (el.metricWindUnit.textContent = windUnitLabel());
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
+  const gustTxt = w.windGusts != null ? formatWind(w.windGusts) : "—";
   el.metricWindSub.textContent = dirLabel
-    ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
-    : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+    ? `${dirLabel} · gust ${gustTxt}`
+    : `gust ${gustTxt}`;
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
@@ -1290,7 +1295,7 @@ function renderDaily(w) {
     item.className = "daily-item";
     item.dataset.ts = d.time;
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
-      ? ` · gusts ${Math.round(d.gustsMax)} km/h`
+      ? ` · gusts ${formatWind(d.gustsMax)}`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
@@ -1399,7 +1404,7 @@ function renderDailyPicks(days, w) {
   bestDay.textContent = nameFor(best.i);
   roughDay.textContent = nameFor(rough.i);
   bestBtn.title = `${Math.round(convertTemp(best.d.tempMax))}° · ${best.d.precip || 0}mm rain`;
-  roughBtn.title = `${Math.round(convertTemp(rough.d.tempMax))}° · ${rough.d.precip || 0}mm rain · gusts ${Math.round(rough.d.gustsMax || rough.d.windMax || 0)} km/h`;
+  roughBtn.title = `${Math.round(convertTemp(rough.d.tempMax))}° · ${rough.d.precip || 0}mm rain · gusts ${formatWind(rough.d.gustsMax || rough.d.windMax || 0)}`;
 
   // Wire click-to-scroll behaviour: open that day's expanded panel.
   const focusDay = (idx) => {
@@ -1492,7 +1497,7 @@ function toggleDailyExpand(item, d, w) {
     const summary = document.createElement("div");
     summary.className = "daily-expand";
     summary.style.gridTemplateColumns = "1fr";
-    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${Math.round(d.gustsMax ?? 0)} km/h · UV ${Math.round(d.uvMax ?? 0)}</span>`;
+    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${formatWind(d.gustsMax ?? 0)} · UV ${Math.round(d.uvMax ?? 0)}</span>`;
     item.appendChild(summary);
     item.dataset.expanded = "true";
     return;
@@ -1865,6 +1870,14 @@ function bindSettings() {
     }
   });
 
+  el.settingWindUnit?.addEventListener("change", () => {
+    const v = el.settingWindUnit.value;
+    if (["kmh", "mph", "ms", "kt"].includes(v)) {
+      localStorage.setItem("aether:windUnit", v);
+      if (state.weather) ui.setWeather(state.weather);
+    }
+  });
+
   el.settingClearPlaces?.addEventListener("click", () => {
     if (!confirm("Clear all saved places?")) return;
     for (const p of places.all()) places.remove(p);
@@ -1883,6 +1896,7 @@ function applyStoredPreferences() {
     queueMicrotask(() => state.handlers.onReduceMotion?.(true));
   }
   if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
+  if (el.settingWindUnit) el.settingWindUnit.value = windUnit();
 }
 
 // Exposed so app.js can query the current preference on boot.
@@ -1920,7 +1934,7 @@ function bindShare() {
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
       today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
-      `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
+      `Wind ${formatWind(w.windSpeed)}${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
     ].filter(Boolean);

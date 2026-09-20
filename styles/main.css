@@ -192,6 +192,20 @@ ul { list-style: none; margin: 0; padding: 0; }
   color: var(--fg-muted);
   transition: background 120ms var(--ease), color 120ms var(--ease);
 }
+.settings-select {
+  appearance: none; -webkit-appearance: none;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--stroke);
+  color: var(--fg);
+  padding: 3px 22px 3px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 12px) 55%, calc(100% - 8px) 55%;
+  background-size: 4px 4px, 4px 4px;
+  background-repeat: no-repeat;
+}
 .settings-btn-inline:hover { background: rgba(255,255,255,0.05); color: var(--fg); }
 .settings-foot {
   padding: 6px 10px 0; margin-top: 4px;
