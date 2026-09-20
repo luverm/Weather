@@ -39,7 +39,8 @@ export function installShortcuts(handlers) {
   });
 
   window.addEventListener("keydown", (e) => {
-    // Let browsers handle modifier combos (copy, find, etc.)
+    // Let browsers handle modifier combos (copy, find, etc.) — except Shift,
+    // which we still want to see for shift-arrow nudges.
     if (e.metaKey || e.ctrlKey || e.altKey) return;
 
     const typing = isTyping(e.target);
@@ -65,8 +66,9 @@ export function installShortcuts(handlers) {
       handlers.toggleRadar?.();
       return;
     }
-    if (key === "ArrowLeft") { handlers.nudge?.(-1); e.preventDefault(); return; }
-    if (key === "ArrowRight") { handlers.nudge?.(1); e.preventDefault(); return; }
+    const step = e.shiftKey ? 6 : 1;
+    if (key === "ArrowLeft") { handlers.nudge?.(-step); e.preventDefault(); return; }
+    if (key === "ArrowRight") { handlers.nudge?.(step); e.preventDefault(); return; }
     if (key === "[") { handlers.cyclePlace?.(-1); e.preventDefault(); return; }
     if (key === "]") { handlers.cyclePlace?.(1); e.preventDefault(); return; }
     if (key === "s" || key === "S") { handlers.toggleSettings?.(); e.preventDefault(); return; }
