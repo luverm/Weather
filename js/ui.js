@@ -203,6 +203,7 @@ export const ui = {
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
+    renderSkyStrip(weather);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
@@ -287,6 +288,40 @@ function renderLiveValues(w, { animate = true } = {}) {
   renderFeelsDelta(w);
   renderDayRange(w);
   renderYesterdayChip(w);
+}
+
+function renderSkyStrip(w) {
+  const strip = document.getElementById("sky-strip");
+  if (!strip) return;
+  const hours = (w.hourly || []).slice(0, 24);
+  const usable = hours.filter((h) => h.cloudCover != null);
+  if (usable.length < 6) {
+    strip.setAttribute("data-empty", "true");
+    strip.innerHTML = "";
+    return;
+  }
+  strip.removeAttribute("data-empty");
+  const cells = hours.map((h) => {
+    const cc = Math.max(0, Math.min(100, h.cloudCover ?? 0));
+    const rainish = (h.pop ?? 0) / 100;
+    // Day vs night: light-blue -> pale grey for day; deep-blue -> slate for night.
+    const day = h.isDay;
+    const c1 = day ? [166, 214, 240] : [46, 62, 90];   // clear
+    const c2 = day ? [200, 210, 220] : [110, 118, 132]; // overcast
+    const t = cc / 100;
+    let r = Math.round(c1[0] + (c2[0] - c1[0]) * t);
+    let g = Math.round(c1[1] + (c2[1] - c1[1]) * t);
+    let b = Math.round(c1[2] + (c2[2] - c1[2]) * t);
+    // Tint toward blue when rain is likely (light blue overlay).
+    if (rainish > 0.3) {
+      r = Math.round(r * (1 - rainish * 0.4) + 88 * rainish * 0.4);
+      g = Math.round(g * (1 - rainish * 0.4) + 130 * rainish * 0.4);
+      b = Math.round(b * (1 - rainish * 0.4) + 200 * rainish * 0.4);
+    }
+    const opacity = day ? 1 : 0.75;
+    return `<span class="sky-cell" style="background:rgb(${r},${g},${b});opacity:${opacity}"></span>`;
+  }).join("");
+  strip.innerHTML = cells;
 }
 
 function renderYesterdayChip(w) {

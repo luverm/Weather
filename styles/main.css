@@ -725,6 +725,21 @@ html[data-reduce-motion="true"] *::after {
   display: grid;
   gap: 8px;
 }
+.sky-strip {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  gap: 2px;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  opacity: 0.85;
+}
+.sky-strip[data-empty="true"] { display: none; }
+.sky-strip .sky-cell {
+  height: 100%;
+  transition: background 300ms var(--ease), opacity 300ms var(--ease);
+  border-radius: 2px;
+}
 .chart-head {
   display: flex; align-items: center; gap: 12px;
   flex-wrap: wrap;
