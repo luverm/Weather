@@ -1,7 +1,7 @@
 // Build a short natural-language summary from the weather data.
 // Picks the most noteworthy signal: rain arrival, cold snap, heat, wind, etc.
 
-import { formatWind, useTwelveHour } from "./units.js";
+import { formatWind, useTwelveHour, formatTemp, convertTemp } from "./units.js";
 
 function fmtHour(ts) {
   const d = new Date(ts);
@@ -68,11 +68,11 @@ export function narrate(weather) {
   const bits = [];
   const { condition, label, temp, feelsLike, uvPeak, windSpeed } = weather;
 
-  // Lead: describe current state.
+  // Lead: describe current state. Use the user's temperature unit.
   const feels = Math.abs((feelsLike ?? temp) - temp) >= 3
-    ? ` — feels closer to ${Math.round(feelsLike)}°`
+    ? ` — feels closer to ${Math.round(convertTemp(feelsLike))}°`
     : "";
-  bits.push(`${label} at ${Math.round(temp)}°${feels}.`);
+  bits.push(`${label} at ${formatTemp(temp, { withUnit: false })}${feels}.`);
 
   // Precipitation arriving.
   const rain = findNextPrecip(weather.nowcast, weather.hourly);
@@ -90,9 +90,11 @@ export function narrate(weather) {
   if (bits.length < 2) {
     const swing = findTempSwing(weather.hourly);
     if (swing) {
+      const unit = localStorage.getItem("aether:unit") || "C";
+      const scaled = Math.round(unit === "F" ? swing.by * 9 / 5 : swing.by);
       bits.push(swing.kind === "drop"
-        ? `Temperature drops ${swing.by}° by ${fmtHour(swing.ts)}.`
-        : `Warming ${swing.by}° by ${fmtHour(swing.ts)}.`);
+        ? `Temperature drops ${scaled}° by ${fmtHour(swing.ts)}.`
+        : `Warming ${scaled}° by ${fmtHour(swing.ts)}.`);
     }
   }
 

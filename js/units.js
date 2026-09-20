@@ -91,6 +91,22 @@ export function defaultTempUnit() {
   return localeIsUS() ? "F" : "C";
 }
 
+export function tempUnit() {
+  return localStorage.getItem("aether:unit") || defaultTempUnit();
+}
+
+export function convertTemp(c, unit = tempUnit()) {
+  if (c == null) return null;
+  return unit === "F" ? c * 9 / 5 + 32 : c;
+}
+
+export function formatTemp(c, { withUnit = true } = {}) {
+  if (c == null) return "—";
+  const u = tempUnit();
+  const v = convertTemp(c, u);
+  return withUnit ? `${Math.round(v)}°${u}` : `${Math.round(v)}°`;
+}
+
 export function convertPressure(hpa, unit = pressureUnit()) {
   if (hpa == null) return null;
   switch (unit) {
