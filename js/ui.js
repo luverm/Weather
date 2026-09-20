@@ -1572,6 +1572,9 @@ function renderDaily(w) {
     const item = document.createElement("div");
     item.className = "daily-item";
     item.dataset.ts = d.time;
+    item.tabIndex = 0;
+    item.setAttribute("role", "button");
+    item.setAttribute("aria-expanded", "false");
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${formatWind(d.gustsMax)}`
       : "";
@@ -1601,6 +1604,12 @@ function renderDaily(w) {
       <svg class="daily-chevron" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 8l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
     `;
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
+    item.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter" || ev.key === " ") {
+        ev.preventDefault();
+        toggleDailyExpand(item, d, w);
+      }
+    });
     el.dailyTrack.appendChild(item);
   });
 }
@@ -1784,7 +1793,9 @@ function toggleDailyExpand(item, d, w) {
   const existing = item.querySelector(".daily-expand");
   if (existing) {
     existing.remove();
+    item.querySelector(".daily-expand-summary")?.remove();
     item.dataset.expanded = "false";
+    item.setAttribute("aria-expanded", "false");
     return;
   }
   // Build mini hourly bars for the 12 daytime-ish hours of that day, if we
@@ -1801,6 +1812,7 @@ function toggleDailyExpand(item, d, w) {
     summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${formatWind(d.gustsMax ?? 0)} · UV ${Math.round(d.uvMax ?? 0)}</span>`;
     item.appendChild(summary);
     item.dataset.expanded = "true";
+    item.setAttribute("aria-expanded", "true");
     return;
   }
   const tMin = Math.min(...hrs.map((h) => h.temp));
@@ -1844,6 +1856,7 @@ function toggleDailyExpand(item, d, w) {
   item.appendChild(summary);
   item.appendChild(box);
   item.dataset.expanded = "true";
+  item.setAttribute("aria-expanded", "true");
 }
 
 function renderNowcast(w) {
