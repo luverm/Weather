@@ -2108,6 +2108,7 @@ function bindUnitToggle() {
     state.unit = state.unit === "C" ? "F" : "C";
     localStorage.setItem("aether:unit", state.unit);
     el.unitBtn.textContent = `°${state.unit}`;
+    if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
     if (state.weather) ui.setWeather(state.weather);
   });
 }
@@ -2215,6 +2216,8 @@ function bindSettings() {
   el.settingClock12?.addEventListener("change", () => {
     localStorage.setItem("aether:clock12", el.settingClock12.checked ? "1" : "0");
     if (state.weather) ui.setWeather(state.weather);
+    // Localtime string is on its own timer — poke it so the change is instant.
+    if (state.weather) startLocaltime(state.weather);
   });
 
   document.querySelectorAll(".accent-swatch").forEach((btn) => {
