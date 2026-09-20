@@ -245,6 +245,22 @@ ul { list-style: none; margin: 0; padding: 0; }
   opacity: 0.85;
 }
 
+/* Global keyboard focus ring — visible only when tabbing, not on click. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+  transition: outline-color 120ms var(--ease);
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.icon-btn:focus-visible { outline-offset: 3px; }
+
 /* Reduced-motion opt-in (same as CSS media query, but persistent) */
 html[data-reduce-motion="true"] *,
 html[data-reduce-motion="true"] *::before,
