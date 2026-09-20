@@ -584,9 +584,69 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w);
+  renderSolarNoon(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   scheduleGoldenChip(w);
+}
+
+function renderDaylightDelta(w) {
+  const target = document.getElementById("sun-daylight-delta");
+  if (!target) return;
+  target.textContent = "";
+  target.removeAttribute("data-dir");
+  target.removeAttribute("title");
+  const days = (w.daily || []).filter((d) => d.sunrise && d.sunset);
+  if (days.length < 2) return;
+  const today = days[0].sunset - days[0].sunrise;
+  const tomorrow = days[1].sunset - days[1].sunrise;
+  const deltaMs = tomorrow - today;
+  const deltaMin = Math.round(deltaMs / 60_000);
+  if (deltaMin === 0) {
+    target.textContent = "same as tomorrow";
+    return;
+  }
+  const dir = deltaMin > 0 ? "up" : "down";
+  const sign = deltaMin > 0 ? "+" : "−";
+  target.setAttribute("data-dir", dir);
+  const absMin = Math.abs(deltaMin);
+  target.textContent = `${sign}${absMin}m tomorrow`;
+  const sunriseDiff = Math.round((days[1].sunrise - days[0].sunrise - 24 * 3600_000) / 60_000);
+  const sunsetDiff = Math.round((days[1].sunset - days[0].sunset - 24 * 3600_000) / 60_000);
+  const parts = [];
+  if (sunriseDiff !== 0) {
+    parts.push(`sunrise ${sunriseDiff < 0 ? Math.abs(sunriseDiff) + "m earlier" : sunriseDiff + "m later"}`);
+  }
+  if (sunsetDiff !== 0) {
+    parts.push(`sunset ${sunsetDiff > 0 ? sunsetDiff + "m later" : Math.abs(sunsetDiff) + "m earlier"}`);
+  }
+  if (parts.length) target.setAttribute("title", parts.join(" · "));
+}
+
+function renderSolarNoon(w) {
+  const line = document.getElementById("sun-arc-noon");
+  const dot = document.getElementById("sun-arc-noon-dot");
+  if (!line || !dot) return;
+  if (!w.sunrise || !w.sunset) {
+    line.setAttribute("opacity", "0");
+    dot.setAttribute("opacity", "0");
+    return;
+  }
+  // Solar noon = midpoint between sunrise and sunset; on our normalised
+  // sunrise->sunset arc that lands at t=0.5, so x is always 100.
+  // The dot rides the arc's apex (100, 24 for the quadratic Bezier).
+  const t = 0.5;
+  const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
+  const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
+  line.setAttribute("x1", x.toFixed(1));
+  line.setAttribute("x2", x.toFixed(1));
+  line.setAttribute("y1", y.toFixed(1));
+  line.setAttribute("y2", "74");
+  dot.setAttribute("cx", x.toFixed(1));
+  dot.setAttribute("cy", y.toFixed(1));
+  line.setAttribute("opacity", "0.85");
+  dot.setAttribute("opacity", "0.9");
 }
 
 function scheduleGoldenChip(w) {
