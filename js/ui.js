@@ -1778,9 +1778,12 @@ function renderPlaces() {
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
     const glyph = p.condition ? conditionGlyph(p.condition, p.isDay ?? true) : "";
+    const condKey = p.condition === "clear"
+      ? (p.isDay ?? true) ? "clear-day" : "clear-night"
+      : (p.condition || "");
     return `
       <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
-        ${glyph ? `<span class="chip-glyph" aria-hidden="true">${glyph}</span>` : ""}
+        ${glyph ? `<span class="chip-glyph" data-cond="${escapeHtml(condKey)}" aria-hidden="true">${glyph}</span>` : ""}
         <span>${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
         <span class="close" data-action="remove" aria-label="Remove">
