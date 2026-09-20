@@ -231,6 +231,7 @@ export const ui = {
     }
     renderPlaces();
     updateDocumentIdentity(weather);
+    updateShareTooltip();
   },
   /** Called by the scrubber whenever simulated time moves. */
   setSampledWeather(sampled, { highlightHourIndex } = {}) {
@@ -1870,6 +1871,15 @@ function renderNowcast(w) {
     el.nowcastBars.appendChild(bar);
   });
   el.nowcast.hidden = false;
+}
+
+function updateShareTooltip() {
+  if (!el.shareBtn) return;
+  const w = state.weather;
+  const placeName = state.place?.name || "";
+  if (!w || w.temp == null) { el.shareBtn.title = "Share weather"; return; }
+  const t = `${Math.round(convertTemp(w.temp))}°${state.unit}`;
+  el.shareBtn.title = `Share ${t} ${w.label || w.condition || ""} · ${placeName}`;
 }
 
 // ---------- Document identity ----------
