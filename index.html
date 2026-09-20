@@ -35,6 +35,8 @@
     <div class="vignette"></div>
   </div>
 
+  <a href="#hero-main" class="skip-link">Skip to weather</a>
+
   <main class="app" role="main">
     <header class="topbar">
       <div class="brand">
@@ -179,7 +181,7 @@
     <!-- Smart alerts strip (synthesized from forecast). -->
     <div id="alerts-strip" class="alerts-strip" role="region" aria-label="Weather alerts" hidden></div>
 
-    <section class="hero">
+    <section class="hero" id="hero-main" tabindex="-1">
       <div class="hero-inner glass" data-tilt role="group" aria-label="Current weather summary">
         <div class="place">
           <p class="place-label"><span id="place-live-dot" class="live-dot"></span><span id="place-label-text">Now in</span></p>
