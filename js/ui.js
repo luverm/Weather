@@ -1467,11 +1467,13 @@ function renderDaily(w) {
   renderDailyDelta(days);
   renderDailyPrecipTotals(days);
   renderDailyPicks(days, w);
-  // Global min/max for the range bar.
+  // Global min/max for the range bar + indexes for extreme-day badges.
   let gMin = Infinity, gMax = -Infinity;
-  for (const d of days) {
-    if (d.tempMin < gMin) gMin = d.tempMin;
-    if (d.tempMax > gMax) gMax = d.tempMax;
+  let coldestIdx = -1, hottestIdx = -1;
+  for (let i = 0; i < days.length; i++) {
+    const d = days[i];
+    if (d.tempMin != null && d.tempMin < gMin) { gMin = d.tempMin; coldestIdx = i; }
+    if (d.tempMax != null && d.tempMax > gMax) { gMax = d.tempMax; hottestIdx = i; }
   }
   const span = Math.max(1, gMax - gMin);
   days.forEach((d, i) => {
@@ -1491,8 +1493,13 @@ function renderDaily(w) {
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const extremeBadge = (days.length >= 3 && i === hottestIdx && (gMax - gMin) >= 3)
+      ? '<span class="daily-extreme daily-extreme-hot" title="Hottest of the week">↑</span>'
+      : (days.length >= 3 && i === coldestIdx && (gMax - gMin) >= 3)
+      ? '<span class="daily-extreme daily-extreme-cold" title="Coldest of the week">↓</span>'
+      : "";
     item.innerHTML = `
-      <span class="daily-day">${day}</span>
+      <span class="daily-day">${day}${extremeBadge}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>

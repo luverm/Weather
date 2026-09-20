@@ -1899,7 +1899,19 @@ kbd {
   transition: background 200ms var(--ease);
 }
 .daily-item:hover { background: var(--glass); }
-.daily-day { font-size: 13px; font-weight: 500; }
+.daily-day { font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
+.daily-extreme {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+.daily-extreme-hot  { color: #ff9c7a; background: rgba(255, 156, 122, 0.12); border: 1px solid rgba(255, 156, 122, 0.36); }
+.daily-extreme-cold { color: #9ad1ff; background: rgba(154, 209, 255, 0.12); border: 1px solid rgba(154, 209, 255, 0.36); }
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
 .daily-range {
   position: relative;
