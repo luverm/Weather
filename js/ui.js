@@ -1195,6 +1195,37 @@ function startLocaltime(w) {
   };
   update();
   state.localTimer = setInterval(update, 10_000);
+  renderSeasonChip();
+}
+
+// Rough perihelion-agnostic dates for northern hemisphere equinox/solstice.
+// Good enough for a one-line seasonal chip within a few days' window.
+function renderSeasonChip() {
+  const chip = document.getElementById("season-chip");
+  if (!chip) return;
+  const now = new Date();
+  const year = now.getFullYear();
+  const markers = [
+    { name: "Vernal equinox",   date: new Date(year, 2, 20), emoji: "🌱", tone: "warm" },  // Mar 20
+    { name: "Summer solstice",  date: new Date(year, 5, 21), emoji: "☀",  tone: "warm" },  // Jun 21
+    { name: "Autumn equinox",   date: new Date(year, 8, 22), emoji: "🍂", tone: "warm" },  // Sep 22
+    { name: "Winter solstice",  date: new Date(year, 11, 21), emoji: "❄", tone: "cool" }, // Dec 21
+  ];
+  let nearest = null, nearestDays = Infinity;
+  for (const m of markers) {
+    const diff = Math.round((m.date - now) / 86400_000);
+    if (Math.abs(diff) < Math.abs(nearestDays)) { nearest = m; nearestDays = diff; }
+  }
+  if (!nearest || Math.abs(nearestDays) > 3) { chip.hidden = true; return; }
+  chip.hidden = false;
+  if (nearest.tone) chip.setAttribute("data-tone", nearest.tone);
+  const when =
+    nearestDays === 0 ? "today" :
+    nearestDays === 1 ? "tomorrow" :
+    nearestDays === -1 ? "yesterday" :
+    nearestDays > 0 ? `in ${nearestDays} days` :
+    `${Math.abs(nearestDays)} days ago`;
+  chip.textContent = `${nearest.emoji}  ${nearest.name} ${when}`;
 }
 
 function tzOffsetMinutes(tz) {

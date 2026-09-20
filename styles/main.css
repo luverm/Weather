@@ -439,6 +439,22 @@ html[data-reduce-motion="true"] *::after {
 }
 .tz-chip[data-dir="ahead"]  { color: #ffd8a3; border-color: rgba(255,190,110,0.28); }
 .tz-chip[data-dir="behind"] { color: #a7d3ff; border-color: rgba(154,209,255,0.28); }
+
+.season-chip {
+  margin: 6px 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: #ffe1b0;
+  background: rgba(255,180,110,0.10);
+  border: 1px solid rgba(255,180,110,0.28);
+}
+.season-chip[data-tone="cool"] { color: #b6d4ff; background: rgba(154,209,255,0.10); border-color: rgba(154,209,255,0.28); }
+.season-chip[hidden] { display: none; }
 .narrative {
   margin: 14px 0 0;
   max-width: 52ch;
