@@ -133,7 +133,10 @@ export class Scrubber {
 
     const time = clock.now();
     const d = new Date(time);
-    const twelve = localStorage.getItem("aether:clock12") === "1";
+    const stored = localStorage.getItem("aether:clock12");
+    const twelve = stored != null
+      ? stored === "1"
+      : (() => { try { return !!new Intl.DateTimeFormat(undefined, { hour: "numeric" }).resolvedOptions().hour12; } catch { return false; } })();
     const label = d.toLocaleString(undefined, {
       weekday: "short",
       hour: twelve ? "numeric" : "2-digit",

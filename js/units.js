@@ -3,8 +3,19 @@
 // or share/summary code.
 
 // ---------- Clock ----------
+let _defaultTwelve = null;
+function localeDefaultsToTwelve() {
+  if (_defaultTwelve != null) return _defaultTwelve;
+  try {
+    _defaultTwelve = !!new Intl.DateTimeFormat(undefined, { hour: "numeric" })
+      .resolvedOptions().hour12;
+  } catch { _defaultTwelve = false; }
+  return _defaultTwelve;
+}
 export function useTwelveHour() {
-  return localStorage.getItem("aether:clock12") === "1";
+  const stored = localStorage.getItem("aether:clock12");
+  if (stored != null) return stored === "1";
+  return localeDefaultsToTwelve();
 }
 
 /** Format a timestamp as a short HH:MM (or h:mm am/pm) label. */

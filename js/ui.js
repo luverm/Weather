@@ -2,7 +2,7 @@
 // (search, unit toggle, saved places, tilt, audio toggle).
 
 import { searchCities } from "./weather-service.js";
-import { formatWind, windUnit, windUnitLabel, convertWind, formatPressure, pressureUnit, pressureUnitLabel, formatDistance, distanceUnit } from "./units.js";
+import { formatWind, windUnit, windUnitLabel, convertWind, formatPressure, pressureUnit, pressureUnitLabel, formatDistance, distanceUnit, useTwelveHour } from "./units.js";
 import { places } from "./places.js";
 import { HourlyChart } from "./hourly-chart.js";
 import { ComfortStrip } from "./comfort-strip.js";
@@ -909,10 +909,6 @@ function renderMoonNext(moon) {
   } else {
     target.textContent = `${kind} in ${Math.round(d)} days`;
   }
-}
-
-function useTwelveHour() {
-  return localStorage.getItem("aether:clock12") === "1";
 }
 
 function fmtTime(ts) {
