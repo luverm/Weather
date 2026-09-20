@@ -2273,8 +2273,23 @@ kbd {
   .narrative { font-size: 13px; }
 }
 
+/* Print header — hidden until print. */
+.print-header { display: none; }
+
 /* ---------- Print ---------- */
 @media print {
+  .print-header {
+    display: grid !important;
+    grid-template-columns: 1fr auto auto;
+    gap: 12px;
+    padding: 4px 0 12px;
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 12px;
+    color: #0f1428;
+    font-size: 14px;
+  }
+  .print-header strong { font-size: 18px; font-weight: 600; }
+  .print-header span { color: #555; }
   :root { --bg: #ffffff; --fg: #0f1428; --fg-muted: #333; --fg-dim: #555; --stroke: #ccc; --glass: #f6f7fb; --glass-strong: #ebeef4; --accent: #2b7dd1; }
   body { background: #fff !important; color: #0f1428 !important; }
   .stage,

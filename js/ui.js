@@ -1937,6 +1937,23 @@ function updateShareTooltip() {
   if (!w || w.temp == null) { el.shareBtn.title = "Share weather"; return; }
   const t = `${Math.round(convertTemp(w.temp))}°${state.unit}`;
   el.shareBtn.title = `Share ${t} ${w.label || w.condition || ""} · ${placeName}`;
+  updatePrintHeader(w, placeName);
+}
+
+function updatePrintHeader(w, placeName) {
+  const place = document.getElementById("print-place");
+  const date = document.getElementById("print-date");
+  const cond = document.getElementById("print-condition");
+  if (!place || !date || !cond) return;
+  place.textContent = placeName || "—";
+  const now = new Date();
+  const dstr = now.toLocaleDateString(undefined, {
+    weekday: "long", year: "numeric", month: "long", day: "numeric",
+  });
+  const tstr = fmtTime(now.getTime());
+  date.textContent = `${dstr} · ${tstr}`;
+  const tvalue = w.temp != null ? `${Math.round(convertTemp(w.temp))}°${state.unit}` : "—";
+  cond.textContent = `${tvalue} ${w.label || w.condition || ""}`;
 }
 
 // ---------- Document identity ----------
