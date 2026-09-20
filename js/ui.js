@@ -1021,6 +1021,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderDailyPrecipTotals(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1103,6 +1104,46 @@ function renderDailySpark(days) {
       el.dailySparkDots.appendChild(c);
     }
   });
+}
+
+function renderDailyPrecipTotals(days) {
+  const line = document.getElementById("daily-precip-line");
+  const text = document.getElementById("daily-precip-text");
+  const bars = document.getElementById("daily-precip-bars");
+  if (!line || !text || !bars) return;
+  const precip = days.map((d) => Math.max(0, d.precip || 0));
+  const total = precip.reduce((a, b) => a + b, 0);
+  if (total < 0.2) {
+    line.hidden = true;
+    return;
+  }
+  line.hidden = false;
+  // Peak day within the visible range.
+  let peakIdx = 0;
+  for (let i = 1; i < precip.length; i++) if (precip[i] > precip[peakIdx]) peakIdx = i;
+  const tz = state.weather?.timezone;
+  const peakDate = new Date(days[peakIdx].time);
+  const peakLabel = peakIdx === 0 ? "today" : peakDate.toLocaleDateString(undefined, {
+    weekday: "short",
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  const totalDisplay = total >= 10 ? total.toFixed(0) : total.toFixed(1);
+  const peakVal = precip[peakIdx];
+  const peakDisplay = peakVal >= 10 ? peakVal.toFixed(0) : peakVal.toFixed(1);
+  if (peakVal < 0.2) {
+    text.textContent = `${totalDisplay} mm this week`;
+  } else if (peakIdx === 0) {
+    text.textContent = `${totalDisplay} mm this week · ${peakDisplay} mm today`;
+  } else {
+    text.textContent = `${totalDisplay} mm this week · peak ${peakDisplay} mm ${peakLabel}`;
+  }
+  // Bars: normalize so tallest is full-height.
+  const maxP = Math.max(...precip);
+  bars.innerHTML = precip.map((p) => {
+    const h = maxP > 0 ? Math.max(6, (p / maxP) * 100) : 0;
+    const dry = p < 0.2;
+    return `<span class="pbar" data-dry="${dry}"><span style="height:${p > 0 ? h : 0}%"></span></span>`;
+  }).join("");
 }
 
 function renderDailyDelta(days) {
