@@ -2270,6 +2270,7 @@ function bindSettings() {
       "aether:unit", "aether:windUnit", "aether:pressureUnit",
       "aether:distanceUnit", "aether:clock12", "aether:accent",
       "aether:reduceMotion", "aether:dismissedAlerts",
+      "aether:compact", "aether:refreshInterval",
     ];
     for (const k of keys) localStorage.removeItem(k);
     // Reflect immediately: unit, checkboxes, selects, accent, motion.
@@ -2277,7 +2278,9 @@ function bindSettings() {
     if (el.unitBtn) el.unitBtn.textContent = `°${state.unit}`;
     applyStoredPreferences();
     document.documentElement.removeAttribute("data-reduce-motion");
+    document.documentElement.removeAttribute("data-compact");
     state.handlers.onReduceMotion?.(false);
+    state.handlers.onRefreshIntervalChange?.(15 * 60_000);
     if (state.weather) ui.setWeather(state.weather);
     ui.showToast("Preferences reset");
     close();
