@@ -356,6 +356,17 @@ html[data-reduce-motion="true"] *::after {
   width: 5px; height: 5px; border-radius: 50%;
   background: var(--accent); box-shadow: 0 0 6px var(--accent);
 }
+.tz-chip {
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  border: 1px solid var(--stroke);
+  color: var(--fg-muted);
+  background: rgba(255,255,255,0.05);
+}
+.tz-chip[data-dir="ahead"]  { color: #ffd8a3; border-color: rgba(255,190,110,0.28); }
+.tz-chip[data-dir="behind"] { color: #a7d3ff; border-color: rgba(154,209,255,0.28); }
 .narrative {
   margin: 14px 0 0;
   max-width: 52ch;

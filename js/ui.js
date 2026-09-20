@@ -905,15 +905,52 @@ function startLocaltime(w) {
       const hour = parts.find((p) => p.type === "hour")?.value ?? "";
       const minute = parts.find((p) => p.type === "minute")?.value ?? "";
       const tzName = parts.find((p) => p.type === "timeZoneName")?.value ?? "";
+      const offsetChip = tzOffsetChip(tz);
       el.placeLocaltime.innerHTML =
         `<span class="clock-dot" aria-hidden="true"></span>` +
-        `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>`;
+        `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>` +
+        offsetChip;
     } catch {
       el.placeLocaltime.textContent = "";
     }
   };
   update();
   state.localTimer = setInterval(update, 10_000);
+}
+
+function tzOffsetMinutes(tz) {
+  try {
+    const now = new Date();
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", second: "2-digit",
+      hour12: false,
+    }).formatToParts(now);
+    const m = {};
+    parts.forEach((p) => { m[p.type] = p.value; });
+    // Intl can return hour "24" for midnight — normalise.
+    const hh = m.hour === "24" ? 0 : parseInt(m.hour, 10);
+    const asUtc = Date.UTC(+m.year, +m.month - 1, +m.day, hh, +m.minute, +m.second);
+    return Math.round((asUtc - now.getTime()) / 60_000);
+  } catch {
+    return null;
+  }
+}
+
+function tzOffsetChip(tz) {
+  const target = tzOffsetMinutes(tz);
+  if (target == null) return "";
+  const localOffset = -new Date().getTimezoneOffset();
+  const delta = target - localOffset; // minutes
+  if (Math.abs(delta) < 15) return ""; // same time zone
+  const sign = delta > 0 ? "ahead" : "behind";
+  const abs = Math.abs(delta);
+  const h = Math.floor(abs / 60);
+  const m = abs % 60;
+  const label = m === 0 ? `${h}h ${sign}` : `${h}h ${m}m ${sign}`;
+  const dir = delta > 0 ? "ahead" : "behind";
+  return ` <span class="tz-chip" data-dir="${dir}">${escapeHtml(label)}</span>`;
 }
 
 function renderInsights(w) {
