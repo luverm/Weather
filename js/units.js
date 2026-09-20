@@ -36,3 +36,33 @@ export function formatWind(kmh, { withUnit = true, precision } = {}) {
   const rounded = p > 0 ? v.toFixed(p) : Math.round(v);
   return withUnit ? `${rounded} ${windUnitLabel(u)}` : String(rounded);
 }
+
+// ---------- Pressure ----------
+export function pressureUnit() {
+  return localStorage.getItem("aether:pressureUnit") || "hpa";
+}
+
+export function convertPressure(hpa, unit = pressureUnit()) {
+  if (hpa == null) return null;
+  switch (unit) {
+    case "inhg": return hpa * 0.02953;
+    case "mmhg": return hpa * 0.750062;
+    default:     return hpa; // hpa
+  }
+}
+
+export function pressureUnitLabel(unit = pressureUnit()) {
+  switch (unit) {
+    case "inhg": return "inHg";
+    case "mmhg": return "mmHg";
+    default:     return "hPa";
+  }
+}
+
+export function formatPressure(hpa, { withUnit = true } = {}) {
+  if (hpa == null) return "—";
+  const u = pressureUnit();
+  const v = convertPressure(hpa, u);
+  const rounded = u === "inhg" ? v.toFixed(2) : Math.round(v);
+  return withUnit ? `${rounded} ${pressureUnitLabel(u)}` : String(rounded);
+}

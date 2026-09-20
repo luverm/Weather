@@ -2,7 +2,7 @@
 // (search, unit toggle, saved places, tilt, audio toggle).
 
 import { searchCities } from "./weather-service.js";
-import { formatWind, windUnit, windUnitLabel, convertWind } from "./units.js";
+import { formatWind, windUnit, windUnitLabel, convertWind, formatPressure, pressureUnit, pressureUnitLabel } from "./units.js";
 import { places } from "./places.js";
 import { HourlyChart } from "./hourly-chart.js";
 import { ComfortStrip } from "./comfort-strip.js";
@@ -36,6 +36,7 @@ const el = {
   metricHumiditySub: $("#m-humidity-sub"),
   metricPressure: $("#m-pressure"),
   metricPressureSub: $("#m-pressure-sub"),
+  metricPressureUnit: $("#m-pressure-unit"),
   metricUV: $("#m-uv"),
   metricUVSub: $("#m-uv-sub"),
   aqArc: $("#aq-arc"),
@@ -91,6 +92,7 @@ const el = {
   settingUnitF: $("#setting-unit-f"),
   settingClearPlaces: $("#setting-clear-places"),
   settingWindUnit: $("#setting-wind-unit"),
+  settingPressureUnit: $("#setting-pressure-unit"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
@@ -481,7 +483,8 @@ function renderMetrics(w) {
       el.humidityComfort.textContent = "";
     }
   }
-  el.metricPressure.textContent = Math.round(w.pressure ?? 0);
+  el.metricPressure.textContent = formatPressure(w.pressure ?? 0, { withUnit: false });
+  if (el.metricPressureUnit) el.metricPressureUnit.textContent = pressureUnitLabel();
   el.metricPressureSub.textContent = w.visibility != null
     ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
     : "visibility —";
@@ -1212,7 +1215,12 @@ function renderTrends(w) {
       const arrow = direction === "rising" ? "▲" : direction === "falling" ? "▼" : "→";
       const cls = direction === "rising" ? "up" : direction === "falling" ? "down" : "flat";
       el.pressureTrend.className = `trend ${cls}`;
-      el.pressureTrend.textContent = `${arrow} ${delta >= 0 ? "+" : ""}${delta.toFixed(1)}`;
+      // Convert delta to the same unit as the value display.
+      const u = pressureUnit();
+      const scale = u === "inhg" ? 0.02953 : u === "mmhg" ? 0.750062 : 1;
+      const scaled = delta * scale;
+      const precision = u === "inhg" ? 2 : 1;
+      el.pressureTrend.textContent = `${arrow} ${scaled >= 0 ? "+" : ""}${scaled.toFixed(precision)}`;
     } else {
       el.pressureTrend.textContent = "";
     }
@@ -1878,6 +1886,14 @@ function bindSettings() {
     }
   });
 
+  el.settingPressureUnit?.addEventListener("change", () => {
+    const v = el.settingPressureUnit.value;
+    if (["hpa", "inhg", "mmhg"].includes(v)) {
+      localStorage.setItem("aether:pressureUnit", v);
+      if (state.weather) ui.setWeather(state.weather);
+    }
+  });
+
   el.settingClearPlaces?.addEventListener("click", () => {
     if (!confirm("Clear all saved places?")) return;
     for (const p of places.all()) places.remove(p);
@@ -1897,6 +1913,7 @@ function applyStoredPreferences() {
   }
   if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
   if (el.settingWindUnit) el.settingWindUnit.value = windUnit();
+  if (el.settingPressureUnit) el.settingPressureUnit.value = pressureUnit();
 }
 
 // Exposed so app.js can query the current preference on boot.
