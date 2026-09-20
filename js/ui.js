@@ -2,7 +2,7 @@
 // (search, unit toggle, saved places, tilt, audio toggle).
 
 import { searchCities } from "./weather-service.js";
-import { formatWind, windUnit, windUnitLabel, convertWind, formatPressure, pressureUnit, pressureUnitLabel, formatDistance, distanceUnit, useTwelveHour } from "./units.js";
+import { formatWind, windUnit, windUnitLabel, convertWind, formatPressure, pressureUnit, pressureUnitLabel, formatDistance, distanceUnit, useTwelveHour, defaultTempUnit } from "./units.js";
 import { places } from "./places.js";
 import { HourlyChart } from "./hourly-chart.js";
 import { ComfortStrip } from "./comfort-strip.js";
@@ -128,7 +128,7 @@ const el = {
 };
 
 const state = {
-  unit: localStorage.getItem("aether:unit") || "C",
+  unit: localStorage.getItem("aether:unit") || defaultTempUnit(),
   weather: null,
   place: null,
   sampledWeather: null, // the weather values at the current scrubber time
@@ -2162,8 +2162,8 @@ function bindSettings() {
     ];
     for (const k of keys) localStorage.removeItem(k);
     // Reflect immediately: unit, checkboxes, selects, accent, motion.
-    state.unit = "C";
-    if (el.unitBtn) el.unitBtn.textContent = "°C";
+    state.unit = defaultTempUnit();
+    if (el.unitBtn) el.unitBtn.textContent = `°${state.unit}`;
     applyStoredPreferences();
     document.documentElement.removeAttribute("data-reduce-motion");
     state.handlers.onReduceMotion?.(false);

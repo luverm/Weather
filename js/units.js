@@ -36,8 +36,17 @@ export function formatClock(ts, { withTz } = {}) {
   }
 }
 
+function localeIsUS() {
+  try {
+    const loc = new Intl.DateTimeFormat().resolvedOptions().locale || "";
+    return /^en-US\b/i.test(loc);
+  } catch { return false; }
+}
+
 export function windUnit() {
-  return localStorage.getItem("aether:windUnit") || "kmh";
+  const stored = localStorage.getItem("aether:windUnit");
+  if (stored) return stored;
+  return localeIsUS() ? "mph" : "kmh";
 }
 
 export function convertWind(kmh, unit = windUnit()) {
@@ -73,7 +82,13 @@ export function formatWind(kmh, { withUnit = true, precision } = {}) {
 
 // ---------- Pressure ----------
 export function pressureUnit() {
-  return localStorage.getItem("aether:pressureUnit") || "hpa";
+  const stored = localStorage.getItem("aether:pressureUnit");
+  if (stored) return stored;
+  return localeIsUS() ? "inhg" : "hpa";
+}
+
+export function defaultTempUnit() {
+  return localeIsUS() ? "F" : "C";
 }
 
 export function convertPressure(hpa, unit = pressureUnit()) {
@@ -103,7 +118,9 @@ export function formatPressure(hpa, { withUnit = true } = {}) {
 
 // ---------- Distance ----------
 export function distanceUnit() {
-  return localStorage.getItem("aether:distanceUnit") || "km";
+  const stored = localStorage.getItem("aether:distanceUnit");
+  if (stored) return stored;
+  return localeIsUS() ? "mi" : "km";
 }
 
 export function distanceUnitLabel(unit = distanceUnit()) {
