@@ -222,6 +222,15 @@ function samePlace(a, b) {
   return Math.abs(a.lat - b.lat) < 0.0005 && Math.abs(a.lon - b.lon) < 0.0005;
 }
 
+// "America/Los_Angeles" -> "Los Angeles"; "Europe/Paris" -> "Paris".
+function tzToLabel(tz) {
+  if (!tz || typeof tz !== "string") return null;
+  const parts = tz.split("/");
+  const city = parts[parts.length - 1];
+  if (!city) return null;
+  return city.replace(/_/g, " ");
+}
+
 // ---------- Local cache for instant boot ----------
 const LAST_KEY = "aether:lastWeather";
 const LAST_TTL_MS = 6 * 3600_000;
@@ -267,6 +276,16 @@ async function loadByCoords(place) {
 
   const w = await getWeather(place.lat, place.lon);
   app.weather = w;
+  // Upgrade a "Current location" fallback name using the timezone the API
+  // returned (e.g., "America/Los_Angeles" -> "Los Angeles"). Doesn't run
+  // for named cities from search / saved places.
+  if (place.name === "Current location" && w.timezone && w.timezone !== "auto") {
+    const nicer = tzToLabel(w.timezone);
+    if (nicer) {
+      place.name = `Near ${nicer}`;
+      ui.setPlace(place);
+    }
+  }
 
   // Render full UI (live + forecasts + narrative).
   ui.setWeather(w, { narrative: narrate(w) });
