@@ -1491,6 +1491,43 @@ kbd {
   transition: height 400ms var(--ease);
 }
 .daily-precip-bars .pbar[data-dry="true"] { opacity: 0.4; }
+.daily-picks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 0 10px 10px;
+}
+.daily-pick {
+  appearance: none;
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius-sm);
+  background: var(--glass-soft, rgba(255,255,255,0.05));
+  color: var(--fg);
+  padding: 8px 10px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+  align-items: center;
+  text-align: left;
+  cursor: pointer;
+  transition: background 220ms var(--ease), border-color 220ms var(--ease), transform 220ms var(--ease);
+}
+.daily-pick:hover { transform: translateY(-1px); border-color: rgba(255,255,255,0.18); }
+.daily-pick[data-kind="best"] .daily-pick-icon { color: #ffe08a; }
+.daily-pick[data-kind="rough"] .daily-pick-icon { color: #f6a97a; }
+.daily-pick-icon { font-size: 18px; line-height: 1; }
+.daily-pick-meta { display: grid; gap: 1px; line-height: 1.15; }
+.daily-pick-label {
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--fg-dim);
+}
+.daily-pick-meta strong {
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.daily-pick[data-focus="true"] { outline: 1px solid rgba(255,224,138,0.35); }
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;

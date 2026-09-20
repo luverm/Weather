@@ -1052,6 +1052,7 @@ function renderDaily(w) {
   renderDailySpark(days);
   renderDailyDelta(days);
   renderDailyPrecipTotals(days);
+  renderDailyPicks(days, w);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1134,6 +1135,64 @@ function renderDailySpark(days) {
       el.dailySparkDots.appendChild(c);
     }
   });
+}
+
+function scoreDay(d) {
+  if (d == null) return -Infinity;
+  const hi = d.tempMax;
+  const lo = d.tempMin;
+  const precip = Math.max(0, d.precip || 0);
+  const pop = Math.max(0, d.pop || 0);
+  const gusts = d.gustsMax ?? d.windMax ?? 0;
+  // Comfort peak around 22°C: a gentle bell curve.
+  const comfort = hi != null ? Math.max(-10, 12 - Math.abs(hi - 22)) : 0;
+  // Penalize precipitation (mm) heavily; light drizzle is ok.
+  const wet = precip * 2.2 + pop * 0.04;
+  // Penalize strong wind gusts (>25 km/h starts to matter).
+  const windy = Math.max(0, gusts - 25) * 0.4;
+  // Very cold nights also hurt.
+  const chilly = lo != null && lo < 4 ? (4 - lo) * 0.6 : 0;
+  return comfort - wet - windy - chilly;
+}
+
+function renderDailyPicks(days, w) {
+  const wrap = document.getElementById("daily-picks");
+  const bestDay = document.getElementById("daily-pick-best-day");
+  const roughDay = document.getElementById("daily-pick-rough-day");
+  const bestBtn = document.getElementById("daily-pick-best");
+  const roughBtn = document.getElementById("daily-pick-rough");
+  if (!wrap || !bestDay || !roughDay || !bestBtn || !roughBtn) return;
+  if (days.length < 3) { wrap.hidden = true; return; }
+  const scored = days.map((d, i) => ({ d, i, score: scoreDay(d) }));
+  const sorted = scored.slice().sort((a, b) => b.score - a.score);
+  const best = sorted[0];
+  const rough = sorted[sorted.length - 1];
+  // If everything is basically identical or too close, hide it.
+  if (best.score - rough.score < 3) { wrap.hidden = true; return; }
+  wrap.hidden = false;
+  const tz = w?.timezone;
+  const nameFor = (idx) => {
+    if (idx === 0) return "Today";
+    if (idx === 1) return "Tomorrow";
+    return new Date(days[idx].time).toLocaleDateString(undefined, {
+      weekday: "short",
+      ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    });
+  };
+  bestDay.textContent = nameFor(best.i);
+  roughDay.textContent = nameFor(rough.i);
+  bestBtn.title = `${Math.round(convertTemp(best.d.tempMax))}° · ${best.d.precip || 0}mm rain`;
+  roughBtn.title = `${Math.round(convertTemp(rough.d.tempMax))}° · ${rough.d.precip || 0}mm rain · gusts ${Math.round(rough.d.gustsMax || rough.d.windMax || 0)} km/h`;
+
+  // Wire click-to-scroll behaviour: open that day's expanded panel.
+  const focusDay = (idx) => {
+    const items = el.dailyTrack?.querySelectorAll(".daily-item");
+    if (!items || !items[idx]) return;
+    items[idx].scrollIntoView({ behavior: "smooth", block: "nearest" });
+    if (items[idx].dataset.expanded !== "true") items[idx].click();
+  };
+  bestBtn.onclick = () => focusDay(best.i);
+  roughBtn.onclick = () => focusDay(rough.i);
 }
 
 function renderDailyPrecipTotals(days) {
