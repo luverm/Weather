@@ -74,6 +74,12 @@ export function installShortcuts(handlers) {
     if (key === "s" || key === "S") { handlers.toggleSettings?.(); e.preventDefault(); return; }
     if (key === "r" || key === "R") { handlers.refresh?.(); e.preventDefault(); return; }
     if (key === "c" || key === "C") { handlers.toggleCompact?.(); e.preventDefault(); return; }
+    // Digit keys 1..9 jump to the Nth saved place, when there are that many.
+    if (/^[1-9]$/.test(key)) {
+      handlers.jumpToPlace?.(parseInt(key, 10) - 1);
+      e.preventDefault();
+      return;
+    }
   });
 }
 
