@@ -222,6 +222,31 @@ function samePlace(a, b) {
   return Math.abs(a.lat - b.lat) < 0.0005 && Math.abs(a.lon - b.lon) < 0.0005;
 }
 
+// ---------- Local cache for instant boot ----------
+const LAST_KEY = "aether:lastWeather";
+const LAST_TTL_MS = 6 * 3600_000;
+
+function cacheLastWeather(place, weather) {
+  try {
+    localStorage.setItem(LAST_KEY, JSON.stringify({
+      place: { name: place.name, country: place.country, admin1: place.admin1, lat: place.lat, lon: place.lon },
+      weather,
+      savedAt: Date.now(),
+    }));
+  } catch { /* quota, private mode, etc. — ignore */ }
+}
+
+function loadLastWeather() {
+  try {
+    const raw = localStorage.getItem(LAST_KEY);
+    if (!raw) return null;
+    const entry = JSON.parse(raw);
+    if (!entry?.weather || !entry.place) return null;
+    if (Date.now() - (entry.savedAt || 0) > LAST_TTL_MS) return null;
+    return entry;
+  } catch { return null; }
+}
+
 // ---------- Load flow ----------
 async function loadByCoords(place) {
   app.place = place;
@@ -254,6 +279,9 @@ async function loadByCoords(place) {
 
   // Move the radar to the new location (fire-and-forget; resolves later).
   ensureRadar([place.lat, place.lon]).then((r) => r?.setCenter(place.lat, place.lon, place.name));
+
+  // Persist for next boot (only real payloads — never save the offline mock).
+  if (!w.offline) cacheLastWeather(place, w);
 }
 
 async function useGeolocation() {
@@ -352,11 +380,22 @@ installShortcuts({
     await loadByCoords(linked);
     return;
   }
-  // Prefer the most recent saved place if we have one — avoids the geolocation
-  // prompt on every load and feels snappier.
+  // If we cached a recent weather payload for the most recent place, paint
+  // it immediately so the app is legible before the network fetch returns,
+  // then start the normal fetch on top.
+  const cached = loadLastWeather();
   const saved = places.all();
-  if (saved.length) {
-    await loadByCoords(saved[0]);
+  const nextPlace = saved[0] || cached?.place;
+  if (cached && nextPlace && cached.place.lat === nextPlace.lat && cached.place.lon === nextPlace.lon) {
+    app.place = nextPlace;
+    app.weather = cached.weather;
+    ui.setPlace(nextPlace);
+    ui.setWeather(cached.weather, { narrative: narrate(cached.weather) });
+    applyScene(cached.weather);
+    scrubber.setBounds({ start: Date.now(), sunrise: cached.weather.sunrise, sunset: cached.weather.sunset });
+  }
+  if (nextPlace) {
+    await loadByCoords(nextPlace);
     return;
   }
   try {
