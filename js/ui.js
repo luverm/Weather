@@ -1582,11 +1582,18 @@ function renderDaily(w) {
       : (days.length >= 3 && i === coldestIdx && (gMax - gMin) >= 3)
       ? '<span class="daily-extreme daily-extreme-cold" title="Coldest of the week">↓</span>'
       : "";
+    // For today: put a "now" marker on the range showing where current temp sits.
+    let nowDot = "";
+    if (i === 0 && w.temp != null && d.tempMin != null && d.tempMax != null && d.tempMax > d.tempMin) {
+      const frac = Math.max(0, Math.min(1, (w.temp - gMin) / span));
+      nowDot = `<div class="daily-range-now" style="left:${(frac * 100).toFixed(1)}%" title="Now"></div>`;
+    }
     item.innerHTML = `
       <span class="daily-day">${day}${extremeBadge}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
+        ${nowDot}
       </div>
       <span class="daily-temp-min">${Math.round(convertTemp(d.tempMin))}°</span>
       <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°</span>
