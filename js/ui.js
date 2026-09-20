@@ -299,6 +299,42 @@ function renderLiveValues(w, { animate = true } = {}) {
   renderFeelsDelta(w);
   renderDayRange(w);
   renderYesterdayChip(w);
+  renderDayRating(w);
+}
+
+function renderDayRating(w) {
+  const chip = document.getElementById("day-rating");
+  const badge = document.getElementById("day-rating-badge");
+  const text = document.getElementById("day-rating-text");
+  if (!chip || !badge || !text) return;
+  const temp = w.temp;
+  if (temp == null) { chip.hidden = true; return; }
+  // Comfort peaks at 22°C, penalise cold/heat quadratically.
+  const comfort = Math.max(0, 100 - Math.pow(Math.abs(temp - 22), 1.6) * 3);
+  const wind = w.windSpeed || 0;
+  const windPenalty = Math.max(0, wind - 20) * 1.5;
+  const gusts = w.windGusts || 0;
+  const gustPenalty = Math.max(0, gusts - 40) * 1.2;
+  const pop = w.hourly?.[0]?.pop ?? 0;
+  const rainPenalty = pop > 40 ? (pop - 40) * 0.6 : 0;
+  const aqi = w.airQuality?.aqi;
+  const aqPenalty = aqi != null ? Math.max(0, aqi - 60) * 0.4 : 0;
+  const cond = w.condition;
+  const condBonus = cond === "clear" ? 5 : cond === "storm" ? -15 : cond === "fog" ? -5 : 0;
+  const score = Math.max(0, Math.min(100,
+    Math.round(comfort - windPenalty - gustPenalty - rainPenalty - aqPenalty + condBonus)
+  ));
+  let tone, label, phrase;
+  if (score >= 82) { tone = "excellent"; label = "Excellent"; phrase = "postcard day"; }
+  else if (score >= 65) { tone = "good"; label = "Good"; phrase = "comfortable outdoors"; }
+  else if (score >= 45) { tone = "mixed"; label = "Mixed"; phrase = "pack a plan B"; }
+  else if (score >= 25) { tone = "tough"; label = "Tough"; phrase = "layer up or stay in"; }
+  else { tone = "harsh"; label = "Harsh"; phrase = "cozy indoors"; }
+  chip.hidden = false;
+  chip.setAttribute("data-tone", tone);
+  badge.textContent = label;
+  text.textContent = phrase;
+  chip.title = `Day rating: ${score}/100`;
 }
 
 function renderSkyStrip(w) {
