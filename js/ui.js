@@ -213,6 +213,7 @@ export const ui = {
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     renderSkyStrip(weather);
+    renderRainWindow(weather);
     if (el.narrative) el.narrative.textContent = narrative || "";
     const banner = document.getElementById("offline-banner");
     if (banner) banner.hidden = !weather.offline;
@@ -375,6 +376,30 @@ function renderSkyStrip(w) {
   strip.innerHTML = cells;
   const first = strip.firstElementChild;
   if (first) first.classList.add("sky-cell-now");
+}
+
+function renderRainWindow(w) {
+  const chip = document.getElementById("rain-window");
+  if (!chip) return;
+  const hours = (w.hourly || []).slice(0, 24);
+  if (hours.length < 4) { chip.hidden = true; return; }
+  // Longest run of consecutive hours with pop>=50 OR precip>=0.3mm.
+  let best = { len: 0, start: null }, cur = { len: 0, start: null };
+  for (const h of hours) {
+    const wet = (h.pop != null && h.pop >= 50) || (h.precip != null && h.precip >= 0.3);
+    if (wet) {
+      if (!cur.len) cur.start = h.time;
+      cur.len++;
+      if (cur.len > best.len) best = { ...cur };
+    } else {
+      cur = { len: 0, start: null };
+    }
+  }
+  if (best.len === 0) { chip.hidden = true; return; }
+  chip.hidden = false;
+  const label = best.len === 1 ? "1h of rain" : `${best.len}h of rain`;
+  const from = fmtTime(best.start);
+  chip.textContent = `${label} from ${from}`;
 }
 
 function renderSunHours(w, hours) {

@@ -972,6 +972,23 @@ html[data-reduce-motion="true"] *::after {
 .sun-hours[data-tone="cloudy"]::before { background: #b6c1cf; box-shadow: 0 0 4px rgba(182,193,207,0.4); }
 .sun-hours[data-tone="cloudy"] { color: rgba(220,225,235,0.72); }
 .sun-hours[hidden] { display: none; }
+.rain-window {
+  font-size: 10.5px;
+  color: #a9c9ea;
+  letter-spacing: 0.05em;
+  font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.rain-window::before {
+  content: "";
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #6fa8dc;
+  box-shadow: 0 0 5px rgba(111,168,220,0.6);
+}
+.rain-window[hidden] { display: none; }
 .sky-strip[data-empty="true"] { display: none; }
 .sky-strip .sky-cell {
   height: 100%;
