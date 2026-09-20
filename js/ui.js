@@ -1972,12 +1972,41 @@ function bindSettings() {
     if (state.weather) ui.setWeather(state.weather);
   });
 
+  document.querySelectorAll(".accent-swatch").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const value = btn.dataset.accent || "auto";
+      applyAccentPreset(value);
+      localStorage.setItem("aether:accent", value);
+    });
+  });
+
   el.settingClearPlaces?.addEventListener("click", () => {
     if (!confirm("Clear all saved places?")) return;
     for (const p of places.all()) places.remove(p);
     renderPlaces();
     ui.showToast("Saved places cleared");
     close();
+  });
+}
+
+const ACCENT_PRESETS = {
+  auto:   null, // fall back to scene-provided --accent
+  sky:    "#9ad1ff",
+  warm:   "#ff9c7a",
+  mint:   "#8be0a0",
+  purple: "#c9a2ff",
+  gold:   "#ffd36a",
+};
+
+function applyAccentPreset(name) {
+  const value = ACCENT_PRESETS[name];
+  if (value == null) {
+    document.documentElement.style.removeProperty("--accent");
+  } else {
+    document.documentElement.style.setProperty("--accent", value);
+  }
+  document.querySelectorAll(".accent-swatch").forEach((btn) => {
+    btn.setAttribute("aria-checked", btn.dataset.accent === name ? "true" : "false");
   });
 }
 
@@ -1994,6 +2023,8 @@ function applyStoredPreferences() {
   if (el.settingPressureUnit) el.settingPressureUnit.value = pressureUnit();
   if (el.settingDistanceUnit) el.settingDistanceUnit.value = distanceUnit();
   if (el.settingClock12) el.settingClock12.checked = useTwelveHour();
+  const accent = localStorage.getItem("aether:accent") || "auto";
+  applyAccentPreset(accent);
 }
 
 // Exposed so app.js can query the current preference on boot.

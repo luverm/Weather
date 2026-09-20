@@ -192,6 +192,25 @@ ul { list-style: none; margin: 0; padding: 0; }
   color: var(--fg-muted);
   transition: background 120ms var(--ease), color 120ms var(--ease);
 }
+.settings-swatches { align-items: center; }
+.accent-swatches {
+  display: inline-flex;
+  gap: 6px;
+  padding: 3px 4px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.04);
+}
+.accent-swatch {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 160ms var(--ease), border-color 160ms var(--ease);
+  background-clip: padding-box;
+}
+.accent-swatch:hover { transform: scale(1.12); }
+.accent-swatch[aria-checked="true"] { border-color: var(--fg); box-shadow: 0 0 0 1.5px rgba(255,255,255,0.15); }
 .settings-select {
   appearance: none; -webkit-appearance: none;
   background: rgba(255,255,255,0.06);
