@@ -2228,6 +2228,17 @@ kbd {
 }
 .fetched-ago:empty { display: none; }
 .fetched-ago.stale { color: #ffb86b; }
+.fetched-ago.fresh { color: rgba(160, 220, 170, 0.85); }
+.fetched-ago.fresh::before {
+  content: "";
+  display: inline-block;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: #78d06a;
+  box-shadow: 0 0 6px rgba(120, 208, 106, 0.7);
+  margin-right: 6px;
+  vertical-align: 1px;
+}
 
 #refresh-btn.spinning svg { animation: spin 700ms var(--ease) both; }
 @keyframes spin { from { transform: rotate(0) } to { transform: rotate(360deg) } }

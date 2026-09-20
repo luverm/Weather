@@ -2517,6 +2517,7 @@ function startFetchedTicker() {
     }
     el.fetchedAgo.textContent = "· " + ageLabel + nextLabel;
     el.fetchedAgo.classList.toggle("stale", minutes >= 20);
+    el.fetchedAgo.classList.toggle("fresh", minutes < 5);
     if (el.refreshBtn) {
       const stamp = fmtTime(state.weather.fetchedAt);
       el.refreshBtn.title = `Refresh weather · last fetched at ${stamp}`;
