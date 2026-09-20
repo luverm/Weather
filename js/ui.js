@@ -1680,17 +1680,77 @@ function bindSearch() {
       el.searchResults.hidden = false;
     }
   });
+  el.searchInput.addEventListener("keydown", (e) => {
+    const listOpen = !el.searchResults.hidden && el.searchResults._items?.length;
+    if (e.key === "ArrowDown") {
+      if (!listOpen) {
+        // Open the dropdown if we have anything to show.
+        showRecentsIfAny();
+      }
+      e.preventDefault();
+      moveSearchCursor(1);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      moveSearchCursor(-1);
+    } else if (e.key === "Enter") {
+      if (!listOpen) return;
+      e.preventDefault();
+      const idx = getSearchCursor();
+      const items = el.searchResults._items || [];
+      const item = items[idx >= 0 ? idx : 0];
+      if (item) selectSearchItem(item);
+    } else if (e.key === "Escape") {
+      el.searchResults.hidden = true;
+      el.searchInput.blur();
+    }
+  });
   el.searchResults.addEventListener("click", (e) => {
     const li = e.target.closest("li");
     if (!li) return;
     const i = parseInt(li.dataset.index, 10);
     const item = el.searchResults._items?.[i];
     if (!item) return;
-    el.searchInput.value = item.name;
-    el.searchResults.hidden = true;
-    places.add(item);
-    state.handlers.onSearchSelect?.(item);
+    selectSearchItem(item);
   });
+  el.searchResults.addEventListener("mousemove", (e) => {
+    const li = e.target.closest("li[data-index]");
+    if (!li) return;
+    setSearchCursor(parseInt(li.dataset.index, 10));
+  });
+}
+
+function selectSearchItem(item) {
+  el.searchInput.value = item.name;
+  el.searchResults.hidden = true;
+  places.add(item);
+  state.handlers.onSearchSelect?.(item);
+}
+
+function getSearchCursor() {
+  const active = el.searchResults.querySelector("li.active");
+  return active ? parseInt(active.dataset.index, 10) : -1;
+}
+
+function setSearchCursor(idx) {
+  el.searchResults.querySelectorAll("li.active").forEach((li) => li.classList.remove("active"));
+  const items = el.searchResults.querySelectorAll("li[data-index]");
+  if (!items.length) return;
+  const clamped = ((idx % items.length) + items.length) % items.length;
+  const target = el.searchResults.querySelector(`li[data-index="${clamped}"]`);
+  if (target) {
+    target.classList.add("active");
+    target.scrollIntoView({ block: "nearest" });
+  }
+}
+
+function moveSearchCursor(delta) {
+  const items = el.searchResults.querySelectorAll("li[data-index]");
+  if (!items.length) return;
+  const current = getSearchCursor();
+  const next = current < 0
+    ? (delta > 0 ? 0 : items.length - 1)
+    : current + delta;
+  setSearchCursor(next);
 }
 
 function bindUnitToggle() {
