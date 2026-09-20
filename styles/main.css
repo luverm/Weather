@@ -473,6 +473,23 @@ html[data-reduce-motion="true"] *::after {
   box-shadow: 0 2px 8px rgba(0,0,0,0.35);
   transition: left 380ms var(--ease);
 }
+.day-swing {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  color: var(--fg-muted);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--stroke);
+  letter-spacing: 0.05em;
+  font-variant-numeric: tabular-nums;
+  max-width: 240px;
+  margin-left: auto;
+}
+.day-swing[data-tone="steady"] { color: #a9c9ea; }
+.day-swing[data-tone="big"]    { color: #ffcda3; border-color: rgba(255,180,120,0.32); background: rgba(255,180,120,0.10); }
+.day-swing[hidden] { display: none; }
 
 /* ---------- Nowcast banner ---------- */
 .nowcast {

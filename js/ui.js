@@ -437,6 +437,7 @@ function renderDayRange(w) {
   }
   if (lo == null || hi == null || lo === hi) {
     el.dayRange.hidden = true;
+    renderDaySwing(null);
     return;
   }
   el.dayRange.hidden = false;
@@ -446,6 +447,25 @@ function renderDayRange(w) {
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+  renderDaySwing(hi - lo);
+}
+
+function renderDaySwing(rangeC) {
+  const chip = document.getElementById("day-swing");
+  if (!chip) return;
+  if (rangeC == null) { chip.hidden = true; return; }
+  const rangeDisplay = Math.round(state.unit === "F" ? rangeC * 9 / 5 : rangeC);
+  chip.hidden = false;
+  if (rangeC < 4) {
+    chip.setAttribute("data-tone", "steady");
+    chip.textContent = `Steady day · ${rangeDisplay}° swing`;
+  } else if (rangeC >= 12) {
+    chip.setAttribute("data-tone", "big");
+    chip.textContent = `Big swing today · ${rangeDisplay}° range`;
+  } else {
+    chip.removeAttribute("data-tone");
+    chip.textContent = `${rangeDisplay}° swing today`;
+  }
 }
 
 function renderMetrics(w) {
