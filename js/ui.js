@@ -733,9 +733,45 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   renderDaylightDelta(w);
   renderSolarNoon(w);
+  renderSunsetForecast(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   scheduleGoldenChip(w);
+}
+
+function renderSunsetForecast(w) {
+  const chip = document.getElementById("sunset-forecast");
+  const headline = document.getElementById("sunset-forecast-headline");
+  const sub = document.getElementById("sunset-forecast-sub");
+  if (!chip || !headline || !sub) return;
+  chip.hidden = true;
+  const sunsetTs = w?.daily?.[0]?.sunset || w.sunset;
+  if (!sunsetTs || Date.now() > sunsetTs) return;
+  const hours = w.hourly || [];
+  // Sample cloud cover in the ±1h window around sunset.
+  const window = hours.filter((h) =>
+    h.cloudCover != null &&
+    Math.abs(h.time - sunsetTs) <= 90 * 60_000
+  );
+  if (window.length < 2) return;
+  const avgCC = window.reduce((s, h) => s + h.cloudCover, 0) / window.length;
+  const totalPop = window.reduce((s, h) => s + (h.pop || 0), 0) / window.length;
+  // Rating heuristic:
+  //  - Fully overcast or fully clear: muted.
+  //  - Mid-cloudy (25-75%): the "vivid" band — mid clouds catch scattered light.
+  //  - Rain nearby (pop > 55%): kill it.
+  let rating, phrase;
+  if (totalPop > 55) { rating = "muted"; phrase = "Wet skies · probably grey"; }
+  else if (avgCC >= 85) { rating = "muted"; phrase = "Overcast · unlikely to catch color"; }
+  else if (avgCC <= 12) { rating = "fair"; phrase = "Clear · a clean, soft glow"; }
+  else if (avgCC >= 30 && avgCC <= 75) { rating = "vivid"; phrase = "Promising · mid-cloud light show possible"; }
+  else if (avgCC > 75) { rating = "muted"; phrase = "Mostly cloudy · light may struggle"; }
+  else { rating = "fair"; phrase = "A soft glow tonight"; }
+  chip.hidden = false;
+  chip.setAttribute("data-rating", rating);
+  const local = new Date(sunsetTs).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+  headline.textContent = "Sunset colors";
+  sub.textContent = `${phrase} · at ${local}`;
 }
 
 function renderDaylightDelta(w) {

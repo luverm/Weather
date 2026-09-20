@@ -376,6 +376,22 @@
               <span id="sun-daylight-delta" class="sun-daylight-delta"></span>
             </div>
           </div>
+          <div id="sunset-forecast" class="sunset-forecast" hidden>
+            <svg class="sunset-forecast-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <defs>
+                <linearGradient id="sunset-forecast-grad" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stop-color="#ffcf7c"/>
+                  <stop offset="100%" stop-color="#ff7f6b"/>
+                </linearGradient>
+              </defs>
+              <path d="M4 18h16" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+              <path d="M8 18a4 4 0 018 0" fill="url(#sunset-forecast-grad)"/>
+            </svg>
+            <span class="sunset-forecast-text">
+              <strong id="sunset-forecast-headline">Sunset colors</strong>
+              <span id="sunset-forecast-sub" class="sunset-forecast-sub">—</span>
+            </span>
+          </div>
           <div id="golden-chip" class="golden-chip" hidden>
             <svg class="golden-chip-icon" viewBox="0 0 24 24" aria-hidden="true">
               <circle cx="12" cy="14" r="4.5" fill="currentColor"/>

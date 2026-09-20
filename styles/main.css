@@ -1089,6 +1089,31 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+.sunset-forecast {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #ffd0b0;
+  background: linear-gradient(90deg, rgba(255,140,120,0.14), rgba(255,180,110,0.10) 65%, rgba(255,180,110,0));
+  border: 1px solid rgba(255,180,120,0.22);
+}
+.sunset-forecast[data-rating="vivid"] {
+  border-color: rgba(255,180,120,0.4);
+  box-shadow: 0 0 24px -8px rgba(255,140,90,0.6);
+}
+.sunset-forecast[data-rating="muted"] {
+  color: #b6b6b8;
+  background: linear-gradient(90deg, rgba(180,180,180,0.10), rgba(180,180,180,0.06));
+  border-color: rgba(180,180,180,0.20);
+}
+.sunset-forecast-icon { width: 22px; height: 14px; flex-shrink: 0; color: rgba(255,220,180,0.7); }
+.sunset-forecast-text { display: grid; gap: 1px; line-height: 1.15; }
+.sunset-forecast-text strong { font-size: 12px; letter-spacing: 0.06em; }
+.sunset-forecast-sub { font-size: 11px; color: rgba(255,220,190,0.72); font-variant-numeric: tabular-nums; }
+.sunset-forecast[hidden] { display: none; }
 .golden-chip {
   margin-top: 10px;
   padding: 8px 12px;
