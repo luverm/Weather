@@ -425,6 +425,12 @@ installShortcuts({
   resetScrubber: () => scrubber.reset(),
   toggleSettings: () => document.getElementById("settings-btn")?.click(),
   refresh: () => refreshWeather(),
+  toggleCompact: () => {
+    const cb = document.getElementById("setting-compact");
+    if (!cb) return;
+    cb.checked = !cb.checked;
+    cb.dispatchEvent(new Event("change"));
+  },
   cyclePlace: (dir) => {
     const list = places.all();
     if (list.length < 2) return;
