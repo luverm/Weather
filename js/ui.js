@@ -2080,7 +2080,11 @@ function applyAccentPreset(name) {
 }
 
 function applyStoredPreferences() {
-  const reduce = localStorage.getItem("aether:reduceMotion") === "1";
+  const stored = localStorage.getItem("aether:reduceMotion");
+  // If the user hasn't chosen yet, respect the OS setting; once they toggle
+  // manually the stored value takes over regardless of the OS.
+  const prefers = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+  const reduce = stored != null ? stored === "1" : !!prefers;
   if (reduce) {
     document.documentElement.setAttribute("data-reduce-motion", "true");
     if (el.settingReduceMotion) el.settingReduceMotion.checked = true;
@@ -2097,7 +2101,11 @@ function applyStoredPreferences() {
 }
 
 // Exposed so app.js can query the current preference on boot.
-ui.isReduceMotion = () => localStorage.getItem("aether:reduceMotion") === "1";
+ui.isReduceMotion = () => {
+  const stored = localStorage.getItem("aether:reduceMotion");
+  if (stored != null) return stored === "1";
+  return !!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+};
 
 function startFetchedTicker() {
   const update = () => {
