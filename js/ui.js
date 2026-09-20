@@ -1544,9 +1544,19 @@ function renderDaily(w) {
 
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
-  el.dailyIconStrip.innerHTML = days.map((d, i) =>
-    `<span class="strip-day${i === 0 ? " strip-day-now" : ""}" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
-  ).join("");
+  const tz = state.weather?.timezone;
+  el.dailyIconStrip.innerHTML = days.map((d, i) => {
+    const day = i === 0 ? "Today" : new Date(d.time).toLocaleDateString(undefined, {
+      weekday: "short",
+      ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    });
+    const hi = d.tempMax != null ? `${Math.round(convertTemp(d.tempMax))}°` : "—";
+    const lo = d.tempMin != null ? `${Math.round(convertTemp(d.tempMin))}°` : "—";
+    const rain = d.pop >= 20 ? ` · ${d.pop}% rain` : "";
+    const label = d.label || d.condition || "";
+    const title = `${day}: ${label} · ${hi} / ${lo}${rain}`;
+    return `<span class="strip-day${i === 0 ? " strip-day-now" : ""}" title="${escapeHtml(title)}">${iconFor(d.condition)}</span>`;
+  }).join("");
 }
 
 function renderDailySpark(days) {
