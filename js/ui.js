@@ -1133,7 +1133,11 @@ function scheduleGoldenChip(w) {
 function scheduleSunArc(w) {
   if (!el.sunArcMarker || !el.sunArcPath) return;
   if (state.sunArcTimer) { clearInterval(state.sunArcTimer); state.sunArcTimer = null; }
-  if (!w?.sunrise || !w?.sunset) return;
+  if (!w?.sunrise || !w?.sunset) {
+    const bar = document.getElementById("sun-progress");
+    if (bar) bar.hidden = true;
+    return;
+  }
 
   const update = () => {
     const now = Date.now();
@@ -1146,6 +1150,13 @@ function scheduleSunArc(w) {
       frac = 1;
     } else {
       frac = (now - sr) / (ss - sr);
+    }
+    // Sunrise-to-sunset progress bar mirrors the arc position.
+    const bar = document.getElementById("sun-progress");
+    const fill = document.getElementById("sun-progress-fill");
+    if (bar && fill) {
+      bar.hidden = false;
+      fill.style.width = `${clamp01(frac) * 100}%`;
     }
     // Quadratic Bezier from (10,74) to (190,74) via (100,-26). The midpoint
     // (50% t) reaches y = 0.5*(74) + 0.5*(74 + 2*(-26-74)/2*(...)) — easier

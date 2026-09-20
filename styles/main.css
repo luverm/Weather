@@ -1418,6 +1418,20 @@ kbd {
   display: block;
   margin: -2px 0 4px;
 }
+.sun-progress {
+  height: 4px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.08);
+  overflow: hidden;
+  margin: 0 4px 8px;
+}
+.sun-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, rgba(255,220,140,0.5), rgba(255,240,200,1) 50%, rgba(255,170,120,0.85));
+  transition: width 600ms var(--ease);
+}
+.sun-progress[hidden] { display: none; }
 #sun-arc-marker {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
