@@ -94,6 +94,7 @@ export async function getWeather(lat, lon) {
     timezone: "auto",
     forecast_days: 7,
     past_hours: 1,
+    past_days: 1,
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -151,12 +152,12 @@ function normalize(d, aq) {
     }
   }
 
-  // 7-day daily forecast.
-  const dailyForecast = [];
+  // Daily forecast entries — with past_days=1 the first row is yesterday.
+  const dailyAll = [];
   if (daily.time) {
     for (let i = 0; i < daily.time.length; i++) {
       const ts = new Date(daily.time[i]).getTime();
-      dailyForecast.push({
+      dailyAll.push({
         time: ts,
         tempMax: daily.temperature_2m_max?.[i],
         tempMin: daily.temperature_2m_min?.[i],
@@ -171,6 +172,14 @@ function normalize(d, aq) {
       });
     }
   }
+  // Split into yesterday + forecast. "Today" is the entry whose date matches
+  // the local now (or the first non-past entry).
+  const dayStart = new Date(now); dayStart.setHours(0, 0, 0, 0);
+  const todayStamp = dayStart.getTime();
+  let todayIdx = dailyAll.findIndex((d) => d.time >= todayStamp);
+  if (todayIdx < 0) todayIdx = 0;
+  const yesterday = todayIdx > 0 ? dailyAll[todayIdx - 1] : null;
+  const dailyForecast = dailyAll.slice(todayIdx);
 
   // 15-min nowcast for the next ~2h — used for "rain in 12 min" banner.
   const nowcast = [];
@@ -204,13 +213,14 @@ function normalize(d, aq) {
     isDay: !!c.is_day,
     condition,
     label,
-    sunrise: daily.sunrise?.[0] ? new Date(daily.sunrise[0]).getTime() : null,
-    sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null,
-    uv: daily.uv_index_max?.[0] ?? null,
+    sunrise: daily.sunrise?.[todayIdx] ? new Date(daily.sunrise[todayIdx]).getTime() : null,
+    sunset: daily.sunset?.[todayIdx] ? new Date(daily.sunset[todayIdx]).getTime() : null,
+    uv: daily.uv_index_max?.[todayIdx] ?? null,
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
     hourly,
     daily: dailyForecast,
+    yesterday,
     nowcast,
     moon,
     airQuality: normalizeAq(aq),
@@ -315,10 +325,17 @@ function aqiLabel(v) {
 
 function findUvPeak(hourly) {
   if (!hourly?.uv_index) return null;
+  // Only consider today + future — with past_days=1 the array can span
+  // yesterday too, and yesterday's peak isn't what we want to display.
+  const cutoff = (() => {
+    const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime();
+  })();
   let peak = { t: null, v: -Infinity };
   for (let i = 0; i < hourly.uv_index.length; i++) {
     const v = hourly.uv_index[i];
-    if (v > peak.v) peak = { t: new Date(hourly.time[i]).getTime(), v };
+    const ts = new Date(hourly.time[i]).getTime();
+    if (ts < cutoff) continue;
+    if (v > peak.v) peak = { t: ts, v };
   }
   if (peak.t == null) return null;
   return { time: peak.t, value: peak.v };

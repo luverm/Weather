@@ -286,6 +286,42 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (el.feelsText) el.feelsText.textContent = `Feels like ${Math.round(feels)}°`;
   renderFeelsDelta(w);
   renderDayRange(w);
+  renderYesterdayChip(w);
+}
+
+function renderYesterdayChip(w) {
+  const chip = document.getElementById("yesterday-chip");
+  const text = document.getElementById("yesterday-chip-text");
+  if (!chip || !text) return;
+  const y = w.yesterday;
+  const today = w.daily?.[0];
+  if (!y || !today || today.tempMax == null || y.tempMax == null) {
+    chip.hidden = true;
+    return;
+  }
+  const deltaC = today.tempMax - y.tempMax;
+  const deltaDisplay = Math.round(state.unit === "F" ? deltaC * 9 / 5 : deltaC);
+  let dir, phrase;
+  if (Math.abs(deltaC) < 0.5) {
+    dir = "flat";
+    phrase = "About the same high as yesterday";
+  } else if (deltaC > 0) {
+    dir = "up";
+    phrase = `${deltaDisplay}° warmer high than yesterday`;
+  } else {
+    dir = "down";
+    phrase = `${Math.abs(deltaDisplay)}° cooler high than yesterday`;
+  }
+  // Add a rainfall descriptor if it meaningfully changed.
+  const dPrecip = (today.precip || 0) - (y.precip || 0);
+  const extras = [];
+  if ((y.precip || 0) > 1 && (today.precip || 0) < 0.5) extras.push("drier");
+  else if ((today.precip || 0) > 1 && (y.precip || 0) < 0.5) extras.push("wetter");
+  else if (Math.abs(dPrecip) > 3) extras.push(dPrecip > 0 ? "wetter" : "drier");
+  const suffix = extras.length ? ` · ${extras.join(", ")}` : "";
+  chip.hidden = false;
+  chip.setAttribute("data-dir", dir);
+  text.textContent = phrase + suffix;
 }
 
 function renderFeelsDelta(w) {

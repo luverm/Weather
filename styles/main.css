@@ -391,6 +391,26 @@ html[data-reduce-motion="true"] *::after {
 .unit:hover { background: var(--glass); color: var(--fg); }
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
+.yesterday-chip {
+  margin: 6px 0 0;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  color: var(--fg-muted);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--stroke);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.yesterday-chip[data-dir="up"]   { color: #ffcda3; border-color: rgba(255,180,120,0.32); background: rgba(255,180,120,0.10); }
+.yesterday-chip[data-dir="down"] { color: #b3d6ff; border-color: rgba(154,209,255,0.32); background: rgba(154,209,255,0.10); }
+.yesterday-chip-arrow { width: 12px; height: 12px; }
+.yesterday-chip[data-dir="down"] .yesterday-chip-arrow { transform: rotate(180deg); }
+.yesterday-chip[data-dir="flat"] .yesterday-chip-arrow { opacity: 0.55; }
+.yesterday-chip:empty, .yesterday-chip[hidden] { display: none; }
 .day-range {
   margin-top: 10px;
   display: grid;
