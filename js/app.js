@@ -194,11 +194,47 @@ const scrubber = new Scrubber({
   },
 });
 
+// ---------- URL hash routing ----------
+function encodePlaceHash(place) {
+  if (!place || place.lat == null || place.lon == null) return "";
+  const lat = Number(place.lat).toFixed(4);
+  const lon = Number(place.lon).toFixed(4);
+  const name = place.name ? encodeURIComponent(place.name) : "";
+  const country = place.country ? encodeURIComponent(place.country) : "";
+  return `#p=${lat},${lon}` + (name ? `,${name}` : "") + (country ? `,${country}` : "");
+}
+function parsePlaceHash(hash) {
+  if (!hash || !hash.startsWith("#p=")) return null;
+  const raw = hash.slice(3);
+  const parts = raw.split(",");
+  const lat = parseFloat(parts[0]);
+  const lon = parseFloat(parts[1]);
+  if (!isFinite(lat) || !isFinite(lon)) return null;
+  return {
+    lat,
+    lon,
+    name: parts[2] ? decodeURIComponent(parts[2]) : `${lat.toFixed(2)}, ${lon.toFixed(2)}`,
+    country: parts[3] ? decodeURIComponent(parts[3]) : null,
+  };
+}
+function samePlace(a, b) {
+  if (!a || !b) return false;
+  return Math.abs(a.lat - b.lat) < 0.0005 && Math.abs(a.lon - b.lon) < 0.0005;
+}
+
 // ---------- Load flow ----------
 async function loadByCoords(place) {
   app.place = place;
   ui.setPlace(place);
   ui.setLoading(`Fetching weather for ${place.name}…`);
+  // Reflect the current city in the URL so it can be shared/bookmarked.
+  const newHash = encodePlaceHash(place);
+  if (newHash && location.hash !== newHash) {
+    app._suppressHash = true;
+    history.replaceState(null, "", newHash);
+    // The event may still fire in some engines; clear the flag next tick.
+    setTimeout(() => { app._suppressHash = false; }, 0);
+  }
 
   // Drop any scrubber offset so we start live on each new city.
   clock.reset();
@@ -306,6 +342,13 @@ installShortcuts({
 
 // ---------- Start ----------
 (async function init() {
+  // Highest priority: a deep-link in the URL hash.
+  const linked = parsePlaceHash(location.hash);
+  if (linked) {
+    places.add(linked);
+    await loadByCoords(linked);
+    return;
+  }
   // Prefer the most recent saved place if we have one — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();
@@ -320,6 +363,15 @@ installShortcuts({
     await loadByCoords({ name: "Reykjavík", country: "Iceland", lat: 64.1466, lon: -21.9426 });
   }
 })();
+
+window.addEventListener("hashchange", () => {
+  if (app._suppressHash) return;
+  const linked = parsePlaceHash(location.hash);
+  if (linked && !samePlace(linked, app.place)) {
+    places.add(linked);
+    loadByCoords(linked);
+  }
+});
 
 // ---------- Lifecycle ----------
 document.addEventListener("visibilitychange", () => {
