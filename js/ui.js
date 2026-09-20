@@ -590,6 +590,26 @@ function renderAirQuality(aq) {
   el.aqDetail.textContent =
     `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
   renderAqTrend(aq);
+  renderAqAdvice(aq);
+}
+
+function renderAqAdvice(aq) {
+  const chip = document.getElementById("aq-advice");
+  if (!chip) return;
+  if (aq?.aqi == null) { chip.hidden = true; return; }
+  const advice = aqAdvice(aq.aqi);
+  chip.hidden = false;
+  chip.setAttribute("data-severity", advice.severity);
+  chip.innerHTML = `<span class="aq-advice-dot" aria-hidden="true"></span>${escapeHtml(advice.text)}`;
+}
+
+function aqAdvice(aqi) {
+  if (aqi <= 50)  return { severity: "good",     text: "Great for outdoor activity" };
+  if (aqi <= 100) return { severity: "moderate", text: "Fine outdoors · sensitive groups take it easy" };
+  if (aqi <= 150) return { severity: "warn",     text: "Sensitive groups limit prolonged exertion" };
+  if (aqi <= 200) return { severity: "bad",      text: "Reduce prolonged outdoor exertion" };
+  if (aqi <= 300) return { severity: "bad",      text: "Avoid outdoor exertion" };
+  return               { severity: "hazard",   text: "Stay indoors if possible" };
 }
 
 function renderAqTrend(aq) {

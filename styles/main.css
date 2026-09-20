@@ -989,6 +989,28 @@ kbd {
 .aq-meta { display: grid; gap: 2px; min-width: 0; }
 .aq-meta strong { font-size: 14px; font-weight: 500; }
 .aq-detail { font-size: 11.5px; color: var(--fg-dim); }
+.aq-advice {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  margin-top: 2px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  color: var(--fg-muted);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--stroke);
+  letter-spacing: 0.03em;
+  width: fit-content;
+  transition: background 240ms var(--ease), border-color 240ms var(--ease), color 240ms var(--ease);
+}
+.aq-advice[data-severity="good"]     { color: #b6e2b6; border-color: rgba(139,206,133,0.36); background: rgba(139,206,133,0.10); }
+.aq-advice[data-severity="moderate"] { color: #ffe3a1; border-color: rgba(255,211,106,0.32); background: rgba(255,211,106,0.10); }
+.aq-advice[data-severity="warn"]     { color: #ffc8a2; border-color: rgba(255,159,92,0.36); background: rgba(255,159,92,0.12); }
+.aq-advice[data-severity="bad"]      { color: #ff9d9d; border-color: rgba(255,106,106,0.40); background: rgba(255,106,106,0.14); }
+.aq-advice[data-severity="hazard"]   { color: #d9a4ff; border-color: rgba(183,92,255,0.40); background: rgba(183,92,255,0.14); }
+.aq-advice[hidden] { display: none; }
+.aq-advice-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px currentColor; }
 .aq-trend {
   width: 100%; height: 22px; display: block;
   margin-top: 4px;
