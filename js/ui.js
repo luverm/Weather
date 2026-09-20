@@ -1563,6 +1563,8 @@ function renderHourly(w) {
     const item = document.createElement("div");
     item.className = "forecast-item" + (isDayChange ? " forecast-day-change" : "");
     item.dataset.ts = h.time;
+    const dateHint = d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+    item.title = `${dateHint} · ${fmtTime(h.time)} · ${Math.round(convertTemp(h.temp))}° · ${h.pop}% precip · ${h.label || h.condition || ""}`;
     const dayLabel = isDayChange
       ? `<span class="forecast-day-tag">${escapeHtml(d.toLocaleDateString(undefined, { weekday: "short" }))}</span>`
       : "";
