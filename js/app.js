@@ -239,15 +239,38 @@ function tzToLabel(tz) {
 
 // ---------- Local cache for instant boot ----------
 const LAST_KEY = "aether:lastWeather";
+const PER_CITY_KEY = "aether:cityWeather";
 const LAST_TTL_MS = 6 * 3600_000;
 
-function cacheLastWeather(place, weather) {
+function placeCacheKey(place) {
+  if (!place || place.lat == null || place.lon == null) return null;
+  return `${place.lat.toFixed(3)},${place.lon.toFixed(3)}`;
+}
+
+function readPerCityCache() {
   try {
-    localStorage.setItem(LAST_KEY, JSON.stringify({
-      place: { name: place.name, country: place.country, admin1: place.admin1, lat: place.lat, lon: place.lon },
-      weather,
-      savedAt: Date.now(),
-    }));
+    return JSON.parse(localStorage.getItem(PER_CITY_KEY)) || {};
+  } catch { return {}; }
+}
+
+function cacheLastWeather(place, weather) {
+  const entry = {
+    place: { name: place.name, country: place.country, admin1: place.admin1, lat: place.lat, lon: place.lon },
+    weather,
+    savedAt: Date.now(),
+  };
+  try {
+    localStorage.setItem(LAST_KEY, JSON.stringify(entry));
+    // Per-city cache — keep at most 8 entries to bound storage.
+    const bag = readPerCityCache();
+    const key = placeCacheKey(place);
+    if (key) bag[key] = entry;
+    const keys = Object.keys(bag);
+    if (keys.length > 8) {
+      keys.sort((a, b) => (bag[a].savedAt || 0) - (bag[b].savedAt || 0));
+      for (const k of keys.slice(0, keys.length - 8)) delete bag[k];
+    }
+    localStorage.setItem(PER_CITY_KEY, JSON.stringify(bag));
   } catch { /* quota, private mode, etc. — ignore */ }
 }
 
@@ -262,8 +285,19 @@ function loadLastWeather() {
   } catch { return null; }
 }
 
+function loadCityWeather(place) {
+  const key = placeCacheKey(place);
+  if (!key) return null;
+  const bag = readPerCityCache();
+  const entry = bag[key];
+  if (!entry) return null;
+  if (Date.now() - (entry.savedAt || 0) > LAST_TTL_MS) return null;
+  return entry;
+}
+
 // ---------- Load flow ----------
 async function loadByCoords(place) {
+  const previousPlace = app.place;
   app.place = place;
   ui.setPlace(place);
   ui.setLoading(`Fetching weather for ${place.name}…`);
@@ -279,6 +313,17 @@ async function loadByCoords(place) {
   // Drop any scrubber offset so we start live on each new city.
   clock.reset();
   ui.setScrubbing(false);
+
+  // Optimistic paint from per-city cache while the network fetch resolves,
+  // but only when switching to a different city (else we'd stomp on live).
+  const cached = loadCityWeather(place);
+  const switching = !previousPlace || !samePlace(previousPlace, place);
+  if (cached && switching) {
+    app.weather = cached.weather;
+    ui.setWeather(cached.weather, { narrative: narrate(cached.weather) });
+    applyScene(cached.weather);
+    scrubber.setBounds({ start: Date.now(), sunrise: cached.weather.sunrise, sunset: cached.weather.sunset });
+  }
 
   const w = await getWeather(place.lat, place.lon);
   app.weather = w;
