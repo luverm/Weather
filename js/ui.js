@@ -100,6 +100,7 @@ const el = {
   settingClock12: $("#setting-clock-12"),
   settingCompact: $("#setting-compact"),
   settingTextSize: $("#setting-text-size"),
+  settingNotify: $("#setting-notify"),
   settingRefreshInterval: $("#setting-refresh-interval"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
@@ -1389,6 +1390,7 @@ function renderAlerts(w) {
   // Respect per-place dismissals so the user isn't nagged.
   const dismissed = getDismissedAlerts();
   const visible = alerts.filter((a) => !dismissed.has(a.id));
+  maybeNotifySevere(visible);
   if (!visible.length) {
     el.alertsStrip.hidden = true;
     el.alertsStrip.innerHTML = "";
@@ -1420,6 +1422,24 @@ function renderAlerts(w) {
       if (ts) state.handlers.onHourClick?.(ts);
     });
   });
+}
+
+const _notifiedAlerts = new Set();
+function maybeNotifySevere(alerts) {
+  if (localStorage.getItem("aether:notify") !== "1") return;
+  if (!("Notification" in window) || Notification.permission !== "granted") return;
+  const danger = alerts.filter((a) => a.severity === "danger");
+  for (const a of danger) {
+    const key = `${state.place?.name || ""}:${a.id}`;
+    if (_notifiedAlerts.has(key)) continue;
+    _notifiedAlerts.add(key);
+    try {
+      new Notification(`Aether · ${state.place?.name || "Alert"}`, {
+        body: `${a.title} — ${a.detail}`,
+        tag: `aether-${key}`,
+      });
+    } catch { /* ignore */ }
+  }
 }
 
 function getDismissedAlerts() {
@@ -2383,6 +2403,26 @@ function bindSettings() {
     }
   });
 
+  el.settingNotify?.addEventListener("change", async () => {
+    if (!("Notification" in window)) {
+      ui.showToast("Notifications aren't supported in this browser");
+      el.settingNotify.checked = false;
+      return;
+    }
+    if (el.settingNotify.checked) {
+      const result = await Notification.requestPermission().catch(() => "denied");
+      if (result !== "granted") {
+        ui.showToast("Notification permission denied");
+        el.settingNotify.checked = false;
+        localStorage.setItem("aether:notify", "0");
+        return;
+      }
+      localStorage.setItem("aether:notify", "1");
+    } else {
+      localStorage.setItem("aether:notify", "0");
+    }
+  });
+
   el.settingRefreshInterval?.addEventListener("change", () => {
     const v = parseInt(el.settingRefreshInterval.value, 10);
     if (v === 0 || (v >= 60_000 && v <= 3600_000)) {
@@ -2414,6 +2454,7 @@ function bindSettings() {
       "aether:distanceUnit", "aether:clock12", "aether:accent",
       "aether:reduceMotion", "aether:dismissedAlerts",
       "aether:compact", "aether:refreshInterval", "aether:textSize",
+      "aether:notify",
     ];
     for (const k of keys) localStorage.removeItem(k);
     // Reflect immediately: unit, checkboxes, selects, accent, motion.
@@ -2475,6 +2516,11 @@ function applyStoredPreferences() {
   const textSize = localStorage.getItem("aether:textSize") || "md";
   document.documentElement.setAttribute("data-text-size", textSize);
   if (el.settingTextSize) el.settingTextSize.value = textSize;
+  if (el.settingNotify) {
+    const wants = localStorage.getItem("aether:notify") === "1";
+    // Also require the browser to still consider the permission granted.
+    el.settingNotify.checked = wants && "Notification" in window && Notification.permission === "granted";
+  }
   if (el.settingRefreshInterval) {
     const stored = localStorage.getItem("aether:refreshInterval");
     el.settingRefreshInterval.value = stored != null ? stored : "900000";
