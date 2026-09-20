@@ -126,6 +126,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  goldenTimer: null,
   localTimer: null,
 };
 
@@ -585,6 +586,50 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleGoldenChip(w);
+}
+
+function scheduleGoldenChip(w) {
+  const chip = document.getElementById("golden-chip");
+  const sub = document.getElementById("golden-chip-sub");
+  const headline = document.getElementById("golden-chip-headline");
+  if (!chip || !sub || !headline) return;
+  if (state.goldenTimer) { clearInterval(state.goldenTimer); state.goldenTimer = null; }
+  const GOLDEN_MS = 45 * 60_000;
+
+  const update = () => {
+    const now = Date.now();
+    const windows = [];
+    for (const d of (w.daily || [])) {
+      if (d.sunrise) windows.push({ kind: "sunrise", start: d.sunrise, end: d.sunrise + GOLDEN_MS });
+      if (d.sunset)  windows.push({ kind: "sunset",  start: d.sunset - GOLDEN_MS, end: d.sunset });
+    }
+    windows.sort((a, b) => a.start - b.start);
+    // Active window?
+    const active = windows.find((w2) => now >= w2.start && now < w2.end);
+    if (active) {
+      const mins = Math.max(1, Math.round((active.end - now) / 60_000));
+      chip.hidden = false;
+      chip.setAttribute("data-active", "true");
+      headline.textContent = active.kind === "sunrise" ? "Golden hour · morning" : "Golden hour · evening";
+      sub.textContent = `ends in ${mins}m · warm, long light`;
+      return;
+    }
+    // Otherwise show soonest upcoming within the next 10 hours.
+    const upcoming = windows.find((w2) => w2.start > now && w2.start - now < 10 * 3600_000);
+    if (upcoming) {
+      const mins = Math.max(1, Math.round((upcoming.start - now) / 60_000));
+      const label = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
+      chip.hidden = false;
+      chip.removeAttribute("data-active");
+      headline.textContent = upcoming.kind === "sunrise" ? "Golden hour · morning" : "Golden hour · evening";
+      sub.textContent = `starts in ${label} · at ${fmtTime(upcoming.start)}`;
+      return;
+    }
+    chip.hidden = true;
+  };
+  update();
+  state.goldenTimer = setInterval(update, 30_000);
 }
 
 function scheduleSunArc(w) {

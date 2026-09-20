@@ -981,6 +981,39 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+.golden-chip {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #ffe1b0;
+  background: linear-gradient(90deg, rgba(255,190,110,0.22), rgba(255,140,90,0.14) 65%, rgba(255,140,90,0));
+  border: 1px solid rgba(255,190,110,0.28);
+  animation: golden-chip-in 420ms var(--ease);
+}
+.golden-chip[data-active="true"] {
+  box-shadow: 0 0 24px -6px rgba(255,180,110,0.55);
+}
+.golden-chip[data-active="true"] .golden-chip-icon {
+  animation: golden-chip-pulse 2600ms ease-in-out infinite;
+}
+.golden-chip-icon { width: 22px; height: 22px; flex-shrink: 0; }
+.golden-chip-text { display: grid; gap: 1px; line-height: 1.15; }
+.golden-chip-text strong { font-size: 12px; letter-spacing: 0.06em; }
+.golden-chip-sub { font-size: 11px; color: rgba(255,225,190,0.72); font-variant-numeric: tabular-nums; }
+@keyframes golden-chip-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes golden-chip-pulse {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(255,200,140,0.6)); }
+  50%      { filter: drop-shadow(0 0 10px rgba(255,220,150,0.95)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .golden-chip, .golden-chip[data-active="true"] .golden-chip-icon { animation: none; }
+}
 
 /* ---------- Radar map ---------- */
 .radar {
