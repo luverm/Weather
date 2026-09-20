@@ -775,6 +775,20 @@ html[data-reduce-motion="true"] *::after {
   transition: opacity 160ms var(--ease);
 }
 .daily-expand-bar:hover span { opacity: 1; }
+.daily-expand-summary {
+  grid-column: 1 / -1;
+  padding: 8px 6px 0;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  font-size: 11px;
+  color: var(--fg-dim);
+  border-top: 1px solid var(--stroke);
+  margin-top: 4px;
+}
+.daily-expand-summary strong { color: var(--fg); font-weight: 500; font-variant-numeric: tabular-nums; margin-left: 3px; }
+.daily-item[data-expanded="true"] .daily-expand { border-top: 0; margin-top: 0; }
 
 /* ---------- Share button flash ---------- */
 #share-btn.just-copied { color: var(--accent); animation: pulseOnce 560ms var(--ease); }

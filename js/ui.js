@@ -1705,6 +1705,28 @@ function toggleDailyExpand(item, d, w) {
   const tMin = Math.min(...hrs.map((h) => h.temp));
   const tMax = Math.max(...hrs.map((h) => h.temp));
   const tSpan = Math.max(1, tMax - tMin);
+
+  // Time-of-day summary chips: average temp during 6-12, 12-18, 18-22.
+  const avg = (from, to) => {
+    const arr = hrs.filter((h) => {
+      const hh = new Date(h.time).getHours();
+      return hh >= from && hh < to && h.temp != null;
+    });
+    if (!arr.length) return null;
+    return arr.reduce((s, h) => s + h.temp, 0) / arr.length;
+  };
+  const morn = avg(6, 12);
+  const aft  = avg(12, 18);
+  const eve  = avg(18, 22);
+  const summary = document.createElement("div");
+  summary.className = "daily-expand-summary";
+  const t = (v) => v == null ? "—" : `${Math.round(convertTemp(v))}°`;
+  summary.innerHTML =
+    `<span>Morn <strong>${t(morn)}</strong></span>` +
+    `<span>Aft <strong>${t(aft)}</strong></span>` +
+    `<span>Eve <strong>${t(eve)}</strong></span>` +
+    `<span>· Pop ${d.pop ?? 0}% · UV ${Math.round(d.uvMax ?? 0)}</span>`;
+
   const box = document.createElement("div");
   box.className = "daily-expand";
   // Fit up to 12 sampled hours evenly across the day.
@@ -1718,6 +1740,7 @@ function toggleDailyExpand(item, d, w) {
     const hh = new Date(h.time).getHours().toString().padStart(2, "0");
     return `<div class="daily-expand-bar" data-precip="${precipLevel}" style="height:${height.toFixed(1)}px" title="${hh}:00 · ${Math.round(convertTemp(h.temp))}° · ${h.pop}%"><span>${Math.round(convertTemp(h.temp))}°</span></div>`;
   }).join("");
+  item.appendChild(summary);
   item.appendChild(box);
   item.dataset.expanded = "true";
 }
