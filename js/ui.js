@@ -2030,16 +2030,18 @@ function renderSearchResults(results) {
     el.searchResults.innerHTML = `<li class="search-empty">No matching cities — try a different spelling.</li>`;
     el.searchResults._items = [];
     el.searchResults.hidden = false;
+    el.searchInput?.setAttribute("aria-expanded", "true");
     return;
   }
   el.searchResults.innerHTML = results.map((r, i) => `
-    <li role="option" data-index="${i}">
+    <li role="option" id="search-opt-${i}" data-index="${i}">
       <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
       <span class="sub">${escapeHtml(r.country || "")}</span>
     </li>
   `).join("");
   el.searchResults.hidden = false;
   el.searchResults._items = results;
+  el.searchInput?.setAttribute("aria-expanded", "true");
 }
 
 function showRecentsIfAny() {
@@ -2078,7 +2080,11 @@ function bindSearch() {
     el.searchInput.focus();
   });
   el.searchInput.addEventListener("blur", () => {
-    setTimeout(() => (el.searchResults.hidden = true), 150);
+    setTimeout(() => {
+      el.searchResults.hidden = true;
+      el.searchInput.setAttribute("aria-expanded", "false");
+      el.searchInput.removeAttribute("aria-activedescendant");
+    }, 150);
   });
   el.searchInput.addEventListener("focus", () => {
     if (el.searchInput.value.trim().length < 2) {
@@ -2147,6 +2153,8 @@ function setSearchCursor(idx) {
   const target = el.searchResults.querySelector(`li[data-index="${clamped}"]`);
   if (target) {
     target.classList.add("active");
+    target.setAttribute("aria-selected", "true");
+    if (target.id) el.searchInput?.setAttribute("aria-activedescendant", target.id);
     target.scrollIntoView({ block: "nearest" });
   }
 }
