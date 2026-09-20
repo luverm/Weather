@@ -513,9 +513,11 @@ function renderMetrics(w) {
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
   const gustTxt = w.windGusts != null ? formatWind(w.windGusts) : "—";
-  el.metricWindSub.textContent = dirLabel
-    ? `${dirLabel} · gust ${gustTxt}`
-    : `gust ${gustTxt}`;
+  const burst = gustBurst(w.windSpeed, w.windGusts);
+  const burstTag = burst ? ` <span class="gust-burst" data-severity="${burst.severity}">${burst.label}</span>` : "";
+  el.metricWindSub.innerHTML = dirLabel
+    ? `${escapeHtml(dirLabel)} · gust ${escapeHtml(gustTxt)}${burstTag}`
+    : `gust ${escapeHtml(gustTxt)}${burstTag}`;
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
@@ -663,6 +665,16 @@ function humidityComfort(rh, dew, temp) {
   if (rh <= 25) return { label: "Dry", cls: "up" };
   if (rh <= 35) return { label: "Crisp", cls: "flat" };
   return { label: "Comfy", cls: "down" };
+}
+
+function gustBurst(wind, gusts) {
+  if (wind == null || gusts == null || gusts <= wind) return null;
+  const ratio = gusts / Math.max(1, wind);
+  const diff = gusts - wind;
+  if (gusts < 25) return null;              // ignore gentle winds entirely
+  if (ratio >= 2.2 && diff >= 20) return { severity: "high", label: "gusty burst" };
+  if (ratio >= 1.5 && diff >= 15) return { severity: "mid",  label: "gusty" };
+  return null;
 }
 
 function beaufort(kmh) {
