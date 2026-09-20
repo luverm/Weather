@@ -21,6 +21,8 @@ const el = {
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
+  feelsText: $("#feels-text"),
+  feelsDelta: $("#feels-delta"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -281,8 +283,36 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  if (el.feelsText) el.feelsText.textContent = `Feels like ${Math.round(feels)}°`;
+  renderFeelsDelta(w);
   renderDayRange(w);
+}
+
+function renderFeelsDelta(w) {
+  const chip = el.feelsDelta;
+  if (!chip) return;
+  if (w.temp == null || w.feelsLike == null) {
+    chip.hidden = true;
+    return;
+  }
+  const deltaC = w.feelsLike - w.temp;
+  const deltaDisplay = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
+  const rounded = Math.round(deltaDisplay);
+  // Only show the pill when the gap is meaningful.
+  if (Math.abs(deltaC) < 1.5) {
+    chip.hidden = true;
+    return;
+  }
+  chip.hidden = false;
+  let word;
+  if (deltaC <= -6) word = "biting cold";
+  else if (deltaC <= -2) word = "wind chill";
+  else if (deltaC >= 6) word = "sweltering";
+  else if (deltaC >= 2) word = "humid heat";
+  else word = deltaC < 0 ? "cools" : "warms";
+  const dir = deltaC < 0 ? "down" : "up";
+  chip.setAttribute("data-dir", dir);
+  chip.textContent = `${word} ${rounded > 0 ? "+" : ""}${rounded}°`;
 }
 
 function renderDayRange(w) {

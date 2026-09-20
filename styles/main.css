@@ -639,6 +639,20 @@ html[data-reduce-motion="true"] *::after {
 .temp-trend.up { background: rgba(255, 156, 122, 0.18); color: #ffb196; }
 .temp-trend.down { background: rgba(154, 209, 255, 0.18); color: #9ad1ff; }
 .temp-trend.flat { background: rgba(255,255,255,0.08); color: var(--fg-dim); }
+.feels-delta {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  vertical-align: 1px;
+  transition: background 300ms var(--ease), color 300ms var(--ease);
+}
+.feels-delta[hidden] { display: none; }
+.feels-delta[data-dir="down"] { background: rgba(154, 209, 255, 0.16); color: #a7d3ff; }
+.feels-delta[data-dir="up"]   { background: rgba(255, 156, 122, 0.18); color: #ffb99b; }
 
 /* ---------- Pollen card ---------- */
 #pollen-card[hidden] { display: none; }
