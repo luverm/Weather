@@ -213,6 +213,7 @@ export const ui = {
       });
     }
     renderPlaces();
+    updateDocumentIdentity(weather);
   },
   /** Called by the scrubber whenever simulated time moves. */
   setSampledWeather(sampled, { highlightHourIndex } = {}) {
@@ -1485,6 +1486,54 @@ function renderNowcast(w) {
     el.nowcastBars.appendChild(bar);
   });
   el.nowcast.hidden = false;
+}
+
+// ---------- Document identity ----------
+function conditionGlyph(condition, isDay) {
+  switch (condition) {
+    case "clear":  return isDay ? "☀" : "☾";
+    case "clouds": return "☁";
+    case "rain":   return "☂";
+    case "snow":   return "❄";
+    case "storm":  return "⛈";
+    case "fog":    return "🌫";
+    default:       return "•";
+  }
+}
+
+function updateDocumentIdentity(w) {
+  const placeName = state.place?.name || "Weather";
+  const t = w.temp;
+  const tempTxt = t != null ? `${Math.round(convertTemp(t))}°` : "—";
+  const glyph = conditionGlyph(w.condition, w.isDay);
+  document.title = `${tempTxt} ${glyph} ${placeName} — Aether`;
+  updateFavicon(w);
+}
+
+function updateFavicon(w) {
+  const link = document.querySelector('link[rel="icon"]');
+  if (!link) return;
+  // Simple SVG favicon that reflects current condition.
+  const cond = w.condition;
+  const isDay = w.isDay;
+  let svg;
+  const w2 = "64", h = "64";
+  if (cond === "clear" && isDay) {
+    svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${w2} ${h}'><circle cx='32' cy='32' r='18' fill='%23ffd36a'/></svg>`;
+  } else if (cond === "clear") {
+    svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${w2} ${h}'><path d='M42 34a16 16 0 11-16-24 12 12 0 0016 24z' fill='%23e8ecf5'/></svg>`;
+  } else if (cond === "rain") {
+    svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${w2} ${h}'><path d='M18 36a10 10 0 010-20 12 12 0 0124-2 10 10 0 018 22H18z' fill='%23c8d3e0'/><path d='M22 44l-2 6M32 44l-2 6M42 44l-2 6' stroke='%237ec0ff' stroke-width='3' stroke-linecap='round'/></svg>`;
+  } else if (cond === "snow") {
+    svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${w2} ${h}'><path d='M18 36a10 10 0 010-20 12 12 0 0124-2 10 10 0 018 22H18z' fill='%23e8ecf5'/><circle cx='24' cy='50' r='2' fill='%23fff'/><circle cx='32' cy='54' r='2' fill='%23fff'/><circle cx='40' cy='50' r='2' fill='%23fff'/></svg>`;
+  } else if (cond === "storm") {
+    svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${w2} ${h}'><path d='M18 36a10 10 0 010-20 12 12 0 0124-2 10 10 0 018 22H18z' fill='%23a8b5c8'/><path d='M30 40l-4 10h6l-4 10' fill='none' stroke='%23ffdc7a' stroke-width='3' stroke-linejoin='round'/></svg>`;
+  } else if (cond === "fog") {
+    svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${w2} ${h}'><path d='M14 24h36M14 34h30M14 44h34M14 54h28' stroke='%23c8d3e0' stroke-width='4' stroke-linecap='round'/></svg>`;
+  } else {
+    svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${w2} ${h}'><path d='M18 36a10 10 0 010-20 12 12 0 0124-2 10 10 0 018 22H18z' fill='%23c8d3e0'/></svg>`;
+  }
+  link.setAttribute("href", "data:image/svg+xml," + svg);
 }
 
 // ---------- Icons ----------
