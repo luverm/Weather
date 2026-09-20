@@ -302,6 +302,7 @@ ui.init({
   onLocate: () => useGeolocation(),
   onAudioToggle: () => toggleAudio(),
   onRefresh: () => refreshWeather(),
+  onRefreshIntervalChange: (ms) => scheduleAutoRefresh(ms),
   onReduceMotion: (on) => setReducedMotion(on),
   onPlaceClick: (place) => loadByCoords(place),
   onHourClick: (ts) => {
@@ -399,12 +400,23 @@ setInterval(() => {
   applyScene(app.weather);
 }, 60_000);
 
-// Auto-refresh every 15 minutes (but only when live and visible).
-setInterval(() => {
-  if (document.hidden) return;
-  if (!app.weather || !clock.isLive()) return;
-  refreshWeather();
-}, 15 * 60_000);
+// Auto-refresh on a user-adjustable schedule (5m/15m/30m/1h/off).
+// Rebuilds the timer whenever the setting changes.
+let autoRefreshTimer = null;
+function scheduleAutoRefresh(intervalMs) {
+  if (autoRefreshTimer != null) { clearInterval(autoRefreshTimer); autoRefreshTimer = null; }
+  const ms = Number.isFinite(intervalMs) ? intervalMs : 15 * 60_000;
+  if (ms <= 0) return;
+  autoRefreshTimer = setInterval(() => {
+    if (document.hidden) return;
+    if (!app.weather || !clock.isLive()) return;
+    refreshWeather();
+  }, ms);
+}
+{
+  const stored = parseInt(localStorage.getItem("aether:refreshInterval"), 10);
+  scheduleAutoRefresh(Number.isFinite(stored) ? stored : 15 * 60_000);
+}
 
 // PWA service worker — optional, best-effort.
 if ("serviceWorker" in navigator) {

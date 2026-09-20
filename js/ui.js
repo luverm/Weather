@@ -96,6 +96,7 @@ const el = {
   settingPressureUnit: $("#setting-pressure-unit"),
   settingDistanceUnit: $("#setting-distance-unit"),
   settingClock12: $("#setting-clock-12"),
+  settingRefreshInterval: $("#setting-refresh-interval"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
@@ -2221,6 +2222,14 @@ function bindSettings() {
     if (state.weather) startLocaltime(state.weather);
   });
 
+  el.settingRefreshInterval?.addEventListener("change", () => {
+    const v = parseInt(el.settingRefreshInterval.value, 10);
+    if (v === 0 || (v >= 60_000 && v <= 3600_000)) {
+      localStorage.setItem("aether:refreshInterval", String(v));
+      state.handlers.onRefreshIntervalChange?.(v);
+    }
+  });
+
   document.querySelectorAll(".accent-swatch").forEach((btn) => {
     btn.addEventListener("click", () => {
       const value = btn.dataset.accent || "auto";
@@ -2295,6 +2304,10 @@ function applyStoredPreferences() {
   if (el.settingPressureUnit) el.settingPressureUnit.value = pressureUnit();
   if (el.settingDistanceUnit) el.settingDistanceUnit.value = distanceUnit();
   if (el.settingClock12) el.settingClock12.checked = useTwelveHour();
+  if (el.settingRefreshInterval) {
+    const stored = localStorage.getItem("aether:refreshInterval");
+    el.settingRefreshInterval.value = stored != null ? stored : "900000";
+  }
   const accent = localStorage.getItem("aether:accent") || "auto";
   applyAccentPreset(accent);
 }
@@ -2307,10 +2320,12 @@ ui.isReduceMotion = () => {
 };
 
 function startFetchedTicker() {
-  // Autofresh interval matches app.js (15 min). Keep in one place so a change
-  // in either file doesn't skew the countdown.
-  const REFRESH_MS = 15 * 60_000;
+  const currentRefreshMs = () => {
+    const stored = parseInt(localStorage.getItem("aether:refreshInterval"), 10);
+    return Number.isFinite(stored) ? stored : 15 * 60_000;
+  };
   const update = () => {
+    const REFRESH_MS = currentRefreshMs();
     if (!el.fetchedAgo || !state.weather?.fetchedAt) {
       if (el.fetchedAgo) el.fetchedAgo.textContent = "";
       if (el.refreshBtn) el.refreshBtn.title = "Refresh weather";

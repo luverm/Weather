@@ -99,6 +99,16 @@
             <span>12-hour clock</span>
             <input type="checkbox" id="setting-clock-12" />
           </label>
+          <label class="settings-row">
+            <span>Auto refresh</span>
+            <select id="setting-refresh-interval" class="settings-select">
+              <option value="300000">Every 5 min</option>
+              <option value="900000">Every 15 min</option>
+              <option value="1800000">Every 30 min</option>
+              <option value="3600000">Every hour</option>
+              <option value="0">Off</option>
+            </select>
+          </label>
           <div class="settings-row settings-swatches">
             <span>Accent</span>
             <div class="accent-swatches" role="radiogroup" aria-label="Accent color">
