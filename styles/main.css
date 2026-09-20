@@ -915,7 +915,8 @@ html[data-reduce-motion="true"] .place-chip.active { animation: none; }
   height: 18px;
 }
 .wind-arrows[data-empty="true"] { display: none; }
-.wind-arrows svg { width: 12px; height: 12px; transition: transform 400ms var(--ease), opacity 400ms var(--ease); }
+.wind-arrows svg { width: 12px; height: 12px; transition: transform 400ms var(--ease), opacity 400ms var(--ease); cursor: help; }
+.wind-arrows svg:hover { filter: drop-shadow(0 0 4px currentColor); }
 .wind-arrows .warrow { color: #b2c5da; opacity: 0.85; }
 .wind-arrows .warrow[data-strength="mid"]  { color: #ffd08a; opacity: 0.95; }
 .wind-arrows .warrow[data-strength="high"] { color: #ff9b6a; opacity: 1; }
