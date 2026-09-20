@@ -580,7 +580,8 @@ html[data-reduce-motion="true"] *::after {
 /* ---------- Pressure sparkline ---------- */
 .metric-pressure,
 .metric-humidity,
-.metric-uv {
+.metric-uv,
+.metric-wind {
   grid-template-rows: auto auto auto auto;
 }
 .pressure-spark {
@@ -593,6 +594,21 @@ html[data-reduce-motion="true"] *::after {
 }
 .metric-humidity .pressure-spark { color: #9ad1ff; }
 .metric-uv .uv-spark { color: #ffd36a; opacity: 0.95; }
+.wind-arrows {
+  grid-column: 1 / span 2;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 2px;
+  align-items: center;
+  justify-items: center;
+  margin-top: 4px;
+  height: 18px;
+}
+.wind-arrows[data-empty="true"] { display: none; }
+.wind-arrows svg { width: 12px; height: 12px; transition: transform 400ms var(--ease), opacity 400ms var(--ease); }
+.wind-arrows .warrow { color: #b2c5da; opacity: 0.85; }
+.wind-arrows .warrow[data-strength="mid"]  { color: #ffd08a; opacity: 0.95; }
+.wind-arrows .warrow[data-strength="high"] { color: #ff9b6a; opacity: 1; }
 .uv-spark-peak,
 .uv-spark-now { transition: cx 320ms var(--ease), cy 320ms var(--ease), opacity 320ms var(--ease); }
 .uv-spark-now { stroke: rgba(0,0,0,0.55); stroke-width: 0.5; }

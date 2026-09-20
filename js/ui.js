@@ -434,6 +434,7 @@ function renderMetrics(w) {
       el.windBft.textContent = "";
     }
   }
+  renderWindArrows(w);
   el.metricHumidity.textContent = Math.round(w.humidity ?? 0);
   el.metricHumiditySub.textContent = w.dewPoint != null
     ? `dew ${Math.round(convertTemp(w.dewPoint))}°`
@@ -479,6 +480,30 @@ function renderUvSub(w) {
   } else {
     el.metricUVSub.textContent = "peak —";
   }
+}
+
+function renderWindArrows(w) {
+  const wrap = document.getElementById("wind-arrows");
+  if (!wrap) return;
+  const hours = (w.hourly || []).slice(0, 12);
+  const usable = hours.filter((h) => h.windDir != null);
+  if (usable.length < 4) {
+    wrap.setAttribute("data-empty", "true");
+    wrap.innerHTML = "";
+    return;
+  }
+  wrap.removeAttribute("data-empty");
+  wrap.innerHTML = hours.map((h, i) => {
+    const deg = h.windDir ?? 0;
+    const spd = h.wind ?? 0;
+    // Wind direction is the direction it BLOWS FROM; the arrow head points
+    // TO where the wind is going (rotate 180°).
+    const rot = (deg + 180) % 360;
+    let strength = "low";
+    if (spd >= 40) strength = "high";
+    else if (spd >= 20) strength = "mid";
+    return `<svg class="warrow" data-strength="${strength}" data-hour="${i}" viewBox="0 0 24 24" style="transform:rotate(${rot}deg)"><path d="M12 4l6 8h-4v8h-4v-8H6l6-8z" fill="currentColor"/></svg>`;
+  }).join("");
 }
 
 function renderUvSparkline(w) {
