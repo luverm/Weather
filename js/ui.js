@@ -91,6 +91,7 @@ const el = {
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
   settingClearPlaces: $("#setting-clear-places"),
+  settingClearPrefs: $("#setting-clear-prefs"),
   settingWindUnit: $("#setting-wind-unit"),
   settingPressureUnit: $("#setting-pressure-unit"),
   settingDistanceUnit: $("#setting-distance-unit"),
@@ -2116,6 +2117,25 @@ function bindSettings() {
     for (const p of places.all()) places.remove(p);
     renderPlaces();
     ui.showToast("Saved places cleared");
+    close();
+  });
+
+  el.settingClearPrefs?.addEventListener("click", () => {
+    if (!confirm("Reset all preferences back to defaults?")) return;
+    const keys = [
+      "aether:unit", "aether:windUnit", "aether:pressureUnit",
+      "aether:distanceUnit", "aether:clock12", "aether:accent",
+      "aether:reduceMotion", "aether:dismissedAlerts",
+    ];
+    for (const k of keys) localStorage.removeItem(k);
+    // Reflect immediately: unit, checkboxes, selects, accent, motion.
+    state.unit = "C";
+    if (el.unitBtn) el.unitBtn.textContent = "°C";
+    applyStoredPreferences();
+    document.documentElement.removeAttribute("data-reduce-motion");
+    state.handlers.onReduceMotion?.(false);
+    if (state.weather) ui.setWeather(state.weather);
+    ui.showToast("Preferences reset");
     close();
   });
 }

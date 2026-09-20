@@ -227,11 +227,22 @@ ul { list-style: none; margin: 0; padding: 0; }
 }
 .settings-btn-inline:hover { background: rgba(255,255,255,0.05); color: var(--fg); }
 .settings-foot {
-  padding: 6px 10px 0; margin-top: 4px;
+  padding: 8px 10px 4px; margin-top: 4px;
   border-top: 1px solid var(--stroke);
   font-size: 10.5px;
   letter-spacing: 0.08em;
   color: var(--fg-dim);
+  display: grid;
+  gap: 3px;
+}
+.settings-foot a { color: var(--fg-muted); text-decoration: none; border-bottom: 1px dotted var(--fg-dim); }
+.settings-foot a:hover { color: var(--fg); border-color: var(--fg-muted); }
+.settings-foot-hint {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--fg-dim);
+  text-transform: none;
+  opacity: 0.85;
 }
 
 /* Reduced-motion opt-in (same as CSS media query, but persistent) */
