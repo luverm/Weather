@@ -99,6 +99,11 @@ export class Scrubber {
     });
 
     this.resetEl?.addEventListener("click", () => this.reset());
+    // Double-click / double-tap anywhere on the track: snap back to now.
+    this.track.addEventListener("dblclick", (e) => {
+      e.preventDefault();
+      this.reset();
+    });
   }
 
   reset() {
