@@ -97,6 +97,7 @@ const el = {
   settingDistanceUnit: $("#setting-distance-unit"),
   settingClock12: $("#setting-clock-12"),
   settingCompact: $("#setting-compact"),
+  settingTextSize: $("#setting-text-size"),
   settingRefreshInterval: $("#setting-refresh-interval"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
@@ -2240,6 +2241,14 @@ function bindSettings() {
     localStorage.setItem("aether:compact", on ? "1" : "0");
   });
 
+  el.settingTextSize?.addEventListener("change", () => {
+    const v = el.settingTextSize.value;
+    if (["sm", "md", "lg"].includes(v)) {
+      document.documentElement.setAttribute("data-text-size", v);
+      localStorage.setItem("aether:textSize", v);
+    }
+  });
+
   el.settingRefreshInterval?.addEventListener("change", () => {
     const v = parseInt(el.settingRefreshInterval.value, 10);
     if (v === 0 || (v >= 60_000 && v <= 3600_000)) {
@@ -2270,7 +2279,7 @@ function bindSettings() {
       "aether:unit", "aether:windUnit", "aether:pressureUnit",
       "aether:distanceUnit", "aether:clock12", "aether:accent",
       "aether:reduceMotion", "aether:dismissedAlerts",
-      "aether:compact", "aether:refreshInterval",
+      "aether:compact", "aether:refreshInterval", "aether:textSize",
     ];
     for (const k of keys) localStorage.removeItem(k);
     // Reflect immediately: unit, checkboxes, selects, accent, motion.
@@ -2279,6 +2288,7 @@ function bindSettings() {
     applyStoredPreferences();
     document.documentElement.removeAttribute("data-reduce-motion");
     document.documentElement.removeAttribute("data-compact");
+    document.documentElement.setAttribute("data-text-size", "md");
     state.handlers.onReduceMotion?.(false);
     state.handlers.onRefreshIntervalChange?.(15 * 60_000);
     if (state.weather) ui.setWeather(state.weather);
@@ -2328,6 +2338,9 @@ function applyStoredPreferences() {
   const compact = localStorage.getItem("aether:compact") === "1";
   if (compact) document.documentElement.setAttribute("data-compact", "true");
   if (el.settingCompact) el.settingCompact.checked = compact;
+  const textSize = localStorage.getItem("aether:textSize") || "md";
+  document.documentElement.setAttribute("data-text-size", textSize);
+  if (el.settingTextSize) el.settingTextSize.value = textSize;
   if (el.settingRefreshInterval) {
     const stored = localStorage.getItem("aether:refreshInterval");
     el.settingRefreshInterval.value = stored != null ? stored : "900000";

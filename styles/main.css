@@ -245,6 +245,10 @@ ul { list-style: none; margin: 0; padding: 0; }
   opacity: 0.85;
 }
 
+/* Text-size preference — scales the whole app via CSS zoom. */
+html[data-text-size="sm"] .app { zoom: 0.92; }
+html[data-text-size="lg"] .app { zoom: 1.12; }
+
 /* Compact mode — hides secondary sections for a leaner view. */
 html[data-compact="true"] .radar,
 html[data-compact="true"] .extras,
