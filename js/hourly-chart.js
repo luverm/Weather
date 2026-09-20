@@ -112,7 +112,7 @@ export class HourlyChart {
     if (!this.hoverEl) return;
     const unit = this.getUnit();
     const t = unit === "F" ? h.temp * 9 / 5 + 32 : h.temp;
-    this.hoverEl.textContent = `${this._formatHour(h.time)} · ${Math.round(t)}° · ${h.pop}% chance`;
+    this.hoverEl.textContent = `${this._formatHour(h.time)} · ${Math.round(t)}°${unit} · ${h.pop}% chance`;
     this.hoverEl.hidden = false;
   }
 
@@ -134,7 +134,7 @@ export class HourlyChart {
     const wind = h.wind != null ? ` · ${formatWindLocal(h.wind)}` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
     this.popover.innerHTML =
-      `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
+      `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}°${unit} ${feelsStr}<br>` +
       `<em>${h.pop}% precip${wind}${hum}</em>`;
     this.popover.style.left = `${pxX.toFixed(1)}px`;
     this.popover.style.top = `${pxY.toFixed(1)}px`;
