@@ -718,9 +718,34 @@ function renderAqTrend(aq) {
   if (pts.length < 2) {
     el.aqTrendLine.setAttribute("d", "");
     el.aqTrendFill.setAttribute("d", "");
+    renderAqDirection(null);
     return;
   }
   drawSparkline(el.aqTrendLine, el.aqTrendFill, pts, { minSpan: 20 });
+  // Trend arrow: compare the first sample (now-ish) to ~3h ahead.
+  const now = pts[0];
+  const later = pts[Math.min(pts.length - 1, 3)];
+  renderAqDirection(later - now);
+}
+
+function renderAqDirection(delta) {
+  const chip = document.getElementById("aq-direction");
+  if (!chip) return;
+  if (delta == null) { chip.textContent = ""; chip.className = "trend"; return; }
+  if (Math.abs(delta) < 3) {
+    chip.className = "trend flat";
+    chip.textContent = "→ steady";
+    return;
+  }
+  // Rising AQI = air quality WORSENING. Colour it as bad (up-arrow, red-ish).
+  // Falling AQI = air improving. Down-arrow, cool-blue.
+  if (delta > 0) {
+    chip.className = "trend up";
+    chip.textContent = `▲ +${Math.round(delta)}`;
+  } else {
+    chip.className = "trend down";
+    chip.textContent = `▼ ${Math.round(delta)}`;
+  }
 }
 
 function renderMoon(moon) {
