@@ -299,9 +299,11 @@ function renderSkyStrip(w) {
   if (usable.length < 6) {
     strip.setAttribute("data-empty", "true");
     strip.innerHTML = "";
+    renderSunHours(w, hours);
     return;
   }
   strip.removeAttribute("data-empty");
+  renderSunHours(w, hours);
   const cells = hours.map((h) => {
     const cc = Math.max(0, Math.min(100, h.cloudCover ?? 0));
     const rainish = (h.pop ?? 0) / 100;
@@ -323,6 +325,31 @@ function renderSkyStrip(w) {
     return `<span class="sky-cell" style="background:rgb(${r},${g},${b});opacity:${opacity}"></span>`;
   }).join("");
   strip.innerHTML = cells;
+}
+
+function renderSunHours(w, hours) {
+  const chip = document.getElementById("sun-hours");
+  if (!chip) return;
+  chip.hidden = true;
+  // Only look at hours that are today, during daylight.
+  const dayStart = (() => { const d = new Date(); d.setHours(0,0,0,0); return d.getTime(); })();
+  const dayEnd = dayStart + 24 * 3600_000;
+  const daylight = hours.filter((h) => h.isDay && h.time >= dayStart && h.time < dayEnd);
+  if (daylight.length < 3) return;
+  const sunny = daylight.filter((h) => h.cloudCover != null && h.cloudCover < 30).length;
+  const mostlySunny = daylight.filter((h) => h.cloudCover != null && h.cloudCover < 60).length;
+  chip.hidden = false;
+  if (sunny === 0 && mostlySunny <= 1) {
+    chip.setAttribute("data-tone", "cloudy");
+    chip.textContent = "Overcast most of the day";
+    return;
+  }
+  chip.removeAttribute("data-tone");
+  if (sunny >= 4) {
+    chip.textContent = `${sunny}h of sun today`;
+  } else {
+    chip.textContent = `${mostlySunny}h of mostly sunny sky`;
+  }
 }
 
 function renderYesterdayChip(w) {

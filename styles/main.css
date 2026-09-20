@@ -754,6 +754,12 @@ html[data-reduce-motion="true"] *::after {
   display: grid;
   gap: 8px;
 }
+.sky-strip-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
 .sky-strip {
   display: grid;
   grid-template-columns: repeat(24, 1fr);
@@ -763,6 +769,25 @@ html[data-reduce-motion="true"] *::after {
   overflow: hidden;
   opacity: 0.85;
 }
+.sun-hours {
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.05em;
+  font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.sun-hours::before {
+  content: "";
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #ffd36a;
+  box-shadow: 0 0 6px rgba(255,211,106,0.8);
+}
+.sun-hours[data-tone="cloudy"]::before { background: #b6c1cf; box-shadow: 0 0 4px rgba(182,193,207,0.4); }
+.sun-hours[data-tone="cloudy"] { color: rgba(220,225,235,0.72); }
+.sun-hours[hidden] { display: none; }
 .sky-strip[data-empty="true"] { display: none; }
 .sky-strip .sky-cell {
   height: 100%;

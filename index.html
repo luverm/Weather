@@ -184,7 +184,10 @@
 
       <!-- Interactive hourly chart -->
       <div class="chart-card glass" id="chart-card" aria-label="Hourly forecast chart">
-        <div id="sky-strip" class="sky-strip" aria-hidden="true"></div>
+        <div class="sky-strip-row">
+          <div id="sky-strip" class="sky-strip" aria-hidden="true"></div>
+          <span id="sun-hours" class="sun-hours" hidden></span>
+        </div>
         <div class="chart-head">
           <span class="chart-title">Hourly trend</span>
           <div class="chart-legend">
