@@ -96,6 +96,7 @@ const el = {
   settingPressureUnit: $("#setting-pressure-unit"),
   settingDistanceUnit: $("#setting-distance-unit"),
   settingClock12: $("#setting-clock-12"),
+  settingCompact: $("#setting-compact"),
   settingRefreshInterval: $("#setting-refresh-interval"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
@@ -2233,6 +2234,12 @@ function bindSettings() {
     if (state.weather) startLocaltime(state.weather);
   });
 
+  el.settingCompact?.addEventListener("change", () => {
+    const on = el.settingCompact.checked;
+    document.documentElement.setAttribute("data-compact", on ? "true" : "false");
+    localStorage.setItem("aether:compact", on ? "1" : "0");
+  });
+
   el.settingRefreshInterval?.addEventListener("change", () => {
     const v = parseInt(el.settingRefreshInterval.value, 10);
     if (v === 0 || (v >= 60_000 && v <= 3600_000)) {
@@ -2315,6 +2322,9 @@ function applyStoredPreferences() {
   if (el.settingPressureUnit) el.settingPressureUnit.value = pressureUnit();
   if (el.settingDistanceUnit) el.settingDistanceUnit.value = distanceUnit();
   if (el.settingClock12) el.settingClock12.checked = useTwelveHour();
+  const compact = localStorage.getItem("aether:compact") === "1";
+  if (compact) document.documentElement.setAttribute("data-compact", "true");
+  if (el.settingCompact) el.settingCompact.checked = compact;
   if (el.settingRefreshInterval) {
     const stored = localStorage.getItem("aether:refreshInterval");
     el.settingRefreshInterval.value = stored != null ? stored : "900000";

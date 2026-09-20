@@ -245,6 +245,17 @@ ul { list-style: none; margin: 0; padding: 0; }
   opacity: 0.85;
 }
 
+/* Compact mode — hides secondary sections for a leaner view. */
+html[data-compact="true"] .radar,
+html[data-compact="true"] .extras,
+html[data-compact="true"] .insights,
+html[data-compact="true"] .comfort-strip,
+html[data-compact="true"] .daily-icon-strip,
+html[data-compact="true"] .daily-picks,
+html[data-compact="true"] .stars,
+html[data-compact="true"] .clouds { display: none !important; }
+html[data-compact="true"] .stage canvas#sky { opacity: 0.4; }
+
 /* Skip link — hidden until focused. */
 .skip-link {
   position: absolute;
