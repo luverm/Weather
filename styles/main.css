@@ -548,7 +548,8 @@ html[data-reduce-motion="true"] *::after {
 
 /* ---------- Pressure sparkline ---------- */
 .metric-pressure,
-.metric-humidity {
+.metric-humidity,
+.metric-uv {
   grid-template-rows: auto auto auto auto;
 }
 .pressure-spark {
@@ -560,6 +561,10 @@ html[data-reduce-motion="true"] *::after {
   margin-top: 2px;
 }
 .metric-humidity .pressure-spark { color: #9ad1ff; }
+.metric-uv .uv-spark { color: #ffd36a; opacity: 0.95; }
+.uv-spark-peak,
+.uv-spark-now { transition: cx 320ms var(--ease), cy 320ms var(--ease), opacity 320ms var(--ease); }
+.uv-spark-now { stroke: rgba(0,0,0,0.55); stroke-width: 0.5; }
 
 /* ---------- Daily expand ---------- */
 .daily-item { cursor: pointer; }

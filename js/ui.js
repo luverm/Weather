@@ -67,6 +67,10 @@ const el = {
   pressureSparkFill: $("#pressure-spark-fill"),
   humiditySparkLine: $("#humidity-spark-line"),
   humiditySparkFill: $("#humidity-spark-fill"),
+  uvSparkLine: $("#uv-spark-line"),
+  uvSparkFill: $("#uv-spark-fill"),
+  uvSparkPeak: $("#uv-spark-peak"),
+  uvSparkNow: $("#uv-spark-now"),
   dailySpark: $("#daily-spark"),
   dailyHi: $("#daily-hi"),
   dailyLo: $("#daily-lo"),
@@ -355,12 +359,70 @@ function renderMetrics(w) {
       el.uvLevel.textContent = "";
     }
   }
-  if (w.uvPeak?.time) {
+  renderUvSub(w);
+  renderPressureSparkline(w);
+  renderUvSparkline(w);
+}
+
+function renderUvSub(w) {
+  const uvNow = w.uv;
+  if (w.isDay && uvNow != null && uvNow >= 3) {
+    const minsToBurn = Math.max(5, Math.round(200 / uvNow));
+    const burnLabel = minsToBurn >= 60
+      ? `${Math.floor(minsToBurn / 60)}h ${minsToBurn % 60}m`
+      : `${minsToBurn} min`;
+    el.metricUVSub.textContent = `burns in ~${burnLabel}`;
+  } else if (w.uvPeak?.time) {
     el.metricUVSub.textContent = `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`;
   } else {
     el.metricUVSub.textContent = "peak —";
   }
-  renderPressureSparkline(w);
+}
+
+function renderUvSparkline(w) {
+  if (!el.uvSparkLine || !el.uvSparkFill) return;
+  const hourly = w.hourly || [];
+  const series = hourly.map((h) => h.uv).slice(0, 14);
+  // If every value is null/undefined, hide markers and clear.
+  const clean = series.map((v) => (v == null ? 0 : Math.max(0, v)));
+  if (clean.length < 2 || clean.every((v) => v === 0)) {
+    el.uvSparkLine.setAttribute("d", "");
+    el.uvSparkFill.setAttribute("d", "");
+    if (el.uvSparkPeak) el.uvSparkPeak.setAttribute("opacity", "0");
+    if (el.uvSparkNow) el.uvSparkNow.setAttribute("opacity", "0");
+    return;
+  }
+  drawSparkline(el.uvSparkLine, el.uvSparkFill, clean, { minSpan: 4, fixedMin: 0 });
+
+  // Compute peak + now marker positions within the same padded viewport.
+  const W = 100, H = 24, PAD = 1.5;
+  const innerW = W - PAD * 2;
+  const innerH = H - PAD * 2;
+  const max = Math.max(4, ...clean);
+  const xAt = (i) => PAD + (i / (clean.length - 1)) * innerW;
+  const yAt = (v) => PAD + innerH - (v / max) * innerH;
+
+  let peakIdx = 0;
+  for (let i = 1; i < clean.length; i++) if (clean[i] > clean[peakIdx]) peakIdx = i;
+  if (el.uvSparkPeak) {
+    if (clean[peakIdx] > 0.5) {
+      el.uvSparkPeak.setAttribute("cx", xAt(peakIdx).toFixed(2));
+      el.uvSparkPeak.setAttribute("cy", yAt(clean[peakIdx]).toFixed(2));
+      el.uvSparkPeak.setAttribute("opacity", "0.95");
+    } else {
+      el.uvSparkPeak.setAttribute("opacity", "0");
+    }
+  }
+  // "now" marker sits at the first point (hourly[0] is the current hour).
+  if (el.uvSparkNow) {
+    if (clean[0] > 0.2) {
+      el.uvSparkNow.setAttribute("cx", xAt(0).toFixed(2));
+      el.uvSparkNow.setAttribute("cy", yAt(clean[0]).toFixed(2));
+      el.uvSparkNow.setAttribute("opacity", "0.95");
+    } else {
+      el.uvSparkNow.setAttribute("opacity", "0");
+    }
+  }
 }
 
 function humidityComfort(rh, dew, temp) {
