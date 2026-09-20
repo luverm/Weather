@@ -2,7 +2,7 @@
 // Each returns { label, value, icon, ts? } — ts optional so the UI can let the
 // user click to scrub to that moment.
 
-import { formatWind } from "./units.js";
+import { formatWind, convertTemp } from "./units.js";
 
 const ICONS = {
   rain: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 14a4 4 0 010-8 5 5 0 019.9-1A4 4 0 0117 14H7z"/><path d="M8 18l-1 2M12 18l-1 2M16 18l-1 2"/></svg>',
@@ -65,12 +65,12 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
   if (coldest && warmest && warmest.t - coldest.t >= 4) {
     out.push({
       icon: ICONS.cold, label: "Coldest",
-      value: `${Math.round(coldest.t)}° at ${fmt(coldest.ts)}`,
+      value: `${Math.round(convertTemp(coldest.t))}° at ${fmt(coldest.ts)}`,
       ts: coldest.ts,
     });
     out.push({
       icon: ICONS.warm, label: "Warmest",
-      value: `${Math.round(warmest.t)}° at ${fmt(warmest.ts)}`,
+      value: `${Math.round(convertTemp(warmest.t))}° at ${fmt(warmest.ts)}`,
       ts: warmest.ts,
     });
   }
@@ -86,7 +86,7 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     if (hotDay && coolDay && hotDay !== coolDay) {
       out.push({
         icon: ICONS.warm, label: "Week high",
-        value: `${Math.round(hotDay.tempMax)}° on ${dow(hotDay.time)}`,
+        value: `${Math.round(convertTemp(hotDay.tempMax))}° on ${dow(hotDay.time)}`,
         ts: hotDay.sunrise || hotDay.time,
       });
     }
