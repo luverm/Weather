@@ -163,6 +163,7 @@ export const ui = {
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
+    showFirstVisitHint();
     state.chart = new HourlyChart({
       svgEl: el.chartSvg,
       hoverEl: el.chartHover,
@@ -2491,6 +2492,15 @@ function applyAccentPreset(name) {
   document.querySelectorAll(".accent-swatch").forEach((btn) => {
     btn.setAttribute("aria-checked", btn.dataset.accent === name ? "true" : "false");
   });
+}
+
+function showFirstVisitHint() {
+  if (localStorage.getItem("aether:seenWelcome") === "1") return;
+  localStorage.setItem("aether:seenWelcome", "1");
+  // Give the app a moment to settle before the toast fires.
+  setTimeout(() => {
+    ui.showToast("Press ? for shortcuts · S for settings · [ ] to cycle cities");
+  }, 1200);
 }
 
 function applyStoredPreferences() {
