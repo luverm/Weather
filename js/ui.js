@@ -2313,6 +2313,7 @@ function startFetchedTicker() {
   const update = () => {
     if (!el.fetchedAgo || !state.weather?.fetchedAt) {
       if (el.fetchedAgo) el.fetchedAgo.textContent = "";
+      if (el.refreshBtn) el.refreshBtn.title = "Refresh weather";
       return;
     }
     const now = Date.now();
@@ -2330,6 +2331,10 @@ function startFetchedTicker() {
     }
     el.fetchedAgo.textContent = "· " + ageLabel + nextLabel;
     el.fetchedAgo.classList.toggle("stale", minutes >= 20);
+    if (el.refreshBtn) {
+      const stamp = fmtTime(state.weather.fetchedAt);
+      el.refreshBtn.title = `Refresh weather · last fetched at ${stamp}`;
+    }
   };
   update();
   setInterval(update, 30_000);
