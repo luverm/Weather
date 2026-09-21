@@ -1720,9 +1720,10 @@ kbd {
 .daily-precip[hidden] { display: none; }
 .daily-precip-bar {
   fill: #9ad1ff;
-  transition: opacity 260ms var(--ease);
+  transition: opacity 260ms var(--ease), fill 260ms var(--ease);
 }
 .daily-precip-bar:hover { opacity: 1 !important; }
+.daily-precip-bar.clickable:hover { fill: var(--accent); }
 .daily-precip-label {
   fill: var(--fg-dim);
   font-size: 8.5px;

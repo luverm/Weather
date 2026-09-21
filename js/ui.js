@@ -1155,8 +1155,18 @@ function renderDailyPrecip(days) {
       // Higher probability = brighter blue.
       const opacity = 0.35 + (Math.min(100, pop) / 100) * 0.55;
       r.setAttribute("style", `opacity:${opacity.toFixed(2)}`);
+      // Where we still have hourly resolution, jumping to the peak-rain
+      // hour is genuinely useful; for far-out days we just have the daily
+      // total, so leave the bar as a static readout.
+      const peak = peakRainHourForDay(d);
+      if (peak) {
+        r.setAttribute("class", "daily-precip-bar clickable");
+        r.style.cursor = "pointer";
+        r.addEventListener("click", () => state.handlers.onHourClick?.(peak.time));
+      }
       const title = document.createElementNS(svgNs, "title");
-      title.textContent = `${labelForDay(d, i)} · ${mm.toFixed(mm < 1 ? 1 : 0)} mm · ${pop}% chance`;
+      const peakSuffix = peak ? ` · peak ${fmtTime(peak.time)}` : "";
+      title.textContent = `${labelForDay(d, i)} · ${mm.toFixed(mm < 1 ? 1 : 0)} mm · ${pop}% chance${peakSuffix}`;
       r.appendChild(title);
       bars.appendChild(r);
 
@@ -1178,6 +1188,23 @@ function labelForDay(d, i) {
   if (i === 0) return "Today";
   const dt = new Date(d.time);
   return dt.toLocaleDateString(undefined, { weekday: "short" });
+}
+
+function peakRainHourForDay(d) {
+  const hourly = state.weather?.hourly;
+  if (!hourly?.length || !d?.time) return null;
+  const dayStart = new Date(d.time);
+  dayStart.setHours(0, 0, 0, 0);
+  const start = dayStart.getTime();
+  const end = start + 24 * 3600_000;
+  let peak = null;
+  for (const h of hourly) {
+    if (h.time < start || h.time >= end) continue;
+    const score = (h.precip ?? 0) + (h.pop ?? 0) / 400;
+    if (score <= 0) continue;
+    if (!peak || score > peak.score) peak = { time: h.time, score };
+  }
+  return peak;
 }
 
 function renderDailyDelta(days) {
