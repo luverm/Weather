@@ -11,6 +11,7 @@ import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { feelsLikeBreakdown, daylightChange } from "./feels-like.js";
+import { goldenHourWindows, formatCountdown } from "./golden-hour.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -51,6 +52,8 @@ const el = {
   sunDaylight: $("#sun-daylight"),
   daylightDelta: $("#daylight-delta"),
   feelsChip: $("#feels-chip"),
+  photoChip: $("#photo-chip"),
+  sunArcPhotoMarks: $("#sun-arc-photo-marks"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -565,8 +568,9 @@ function renderDaylightDelta(w) {
 function scheduleSunArc(w) {
   if (!el.sunArcMarker || !el.sunArcPath) return;
   if (state.sunArcTimer) { clearInterval(state.sunArcTimer); state.sunArcTimer = null; }
-  if (!w?.sunrise || !w?.sunset) return;
+  if (!w?.sunrise || !w?.sunset) { renderPhotoChip(null); paintPhotoMarks(null); return; }
 
+  paintPhotoMarks(w);
   const update = () => {
     const now = Date.now();
     const sr = w.sunrise, ss = w.sunset;
@@ -590,9 +594,72 @@ function scheduleSunArc(w) {
     // After sunset, dim the marker so it visually settles.
     const isUp = now >= sr && now <= ss;
     el.sunArcMarker.style.opacity = isUp ? "1" : "0.45";
+    renderPhotoChip(w);
   };
   update();
   state.sunArcTimer = setInterval(update, 60_000);
+}
+
+// Paint 4 marks on the sun arc for golden-am, golden-pm, and blue-hour
+// bookends. Golden marks live on the arc itself; blue marks sit slightly
+// below the horizon line so they read as pre-dawn / post-sunset.
+function paintPhotoMarks(w) {
+  const g = el.sunArcPhotoMarks;
+  if (!g) return;
+  g.innerHTML = "";
+  if (!w?.sunrise || !w?.sunset) return;
+  const { windows } = goldenHourWindows(w.sunrise, w.sunset);
+  const svgNs = "http://www.w3.org/2000/svg";
+  for (const win of windows) {
+    // Compute a representative point: midpoint of the window along the arc.
+    const mid = (win.start + win.end) / 2;
+    if (win.kind === "golden") {
+      const frac = clamp01((mid - w.sunrise) / (w.sunset - w.sunrise));
+      const t = frac;
+      const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
+      const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
+      const c = document.createElementNS(svgNs, "circle");
+      c.setAttribute("cx", x.toFixed(1));
+      c.setAttribute("cy", y.toFixed(1));
+      c.setAttribute("r", "2.4");
+      c.setAttribute("class", "sun-arc-photo-mark golden");
+      const title = document.createElementNS(svgNs, "title");
+      title.textContent = `Golden hour · ${fmtTime(win.start)} – ${fmtTime(win.end)}`;
+      c.appendChild(title);
+      g.appendChild(c);
+    } else {
+      // Blue hour: sit on/below horizon (y=74).
+      const beforeDawn = win.side === "am";
+      const x = beforeDawn ? 6 : 194;
+      const c = document.createElementNS(svgNs, "circle");
+      c.setAttribute("cx", x.toFixed(1));
+      c.setAttribute("cy", "76");
+      c.setAttribute("r", "2.2");
+      c.setAttribute("class", "sun-arc-photo-mark blue");
+      const title = document.createElementNS(svgNs, "title");
+      title.textContent = `Blue hour · ${fmtTime(win.start)} – ${fmtTime(win.end)}`;
+      c.appendChild(title);
+      g.appendChild(c);
+    }
+  }
+}
+
+function renderPhotoChip(w) {
+  const chip = el.photoChip;
+  if (!chip) return;
+  if (!w?.sunrise || !w?.sunset) { chip.hidden = true; return; }
+  const { next } = goldenHourWindows(w.sunrise, w.sunset);
+  if (!next) { chip.hidden = true; return; }
+  chip.hidden = false;
+  chip.dataset.kind = next.kind;
+  const label = chip.querySelector(".photo-chip-label");
+  const when = chip.querySelector(".photo-chip-when");
+  const now = Date.now();
+  const inside = now >= next.start && now <= next.end;
+  if (label) label.textContent = next.kind === "golden" ? "Golden hour" : "Blue hour";
+  if (when) when.textContent = inside
+    ? `now · ends ${fmtTime(next.end)}`
+    : `${formatCountdown(next.inMs)} · ${fmtTime(next.start)}`;
 }
 
 function clamp01(v) { return Math.max(0, Math.min(1, v)); }

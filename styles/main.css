@@ -1648,3 +1648,54 @@ kbd {
   background: linear-gradient(135deg, rgba(150,130,220,0.16), rgba(150,130,220,0.03));
 }
 
+
+/* ---------- Round 23: golden-hour + blue-hour ---------- */
+.sun-arc-photo-marks .sun-arc-photo-mark {
+  transition: opacity 240ms var(--ease);
+}
+.sun-arc-photo-mark.golden {
+  fill: #ffcf7a;
+  filter: drop-shadow(0 0 3px rgba(255, 200, 120, 0.55));
+}
+.sun-arc-photo-mark.blue {
+  fill: #7ec3ff;
+  filter: drop-shadow(0 0 3px rgba(120, 190, 255, 0.5));
+}
+.photo-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 3px 10px 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,0.04);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+  justify-self: start;
+  width: fit-content;
+  line-height: 1.5;
+  backdrop-filter: blur(6px) saturate(120%);
+  -webkit-backdrop-filter: blur(6px) saturate(120%);
+}
+.photo-chip[hidden] { display: none; }
+.photo-chip .photo-chip-icon { flex: 0 0 auto; opacity: 0.75; }
+.photo-chip .photo-chip-label { font-weight: 600; letter-spacing: 0.02em; }
+.photo-chip .photo-chip-when {
+  padding-left: 5px;
+  border-left: 1px solid var(--stroke);
+  color: var(--fg-dim);
+  font-size: 10.5px;
+}
+.photo-chip[data-kind="golden"] {
+  color: #ffdaa0;
+  border-color: rgba(255, 200, 120, 0.42);
+  background: linear-gradient(135deg, rgba(255, 200, 120, 0.16), rgba(255, 200, 120, 0.03));
+}
+.photo-chip[data-kind="blue"] {
+  color: #cfe4ff;
+  border-color: rgba(140, 195, 255, 0.42);
+  background: linear-gradient(135deg, rgba(140, 195, 255, 0.16), rgba(140, 195, 255, 0.03));
+}
