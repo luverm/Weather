@@ -1757,3 +1757,40 @@ kbd {
   border-color: rgba(150, 190, 240, 0.42);
   background: linear-gradient(135deg, rgba(120, 170, 240, 0.14), rgba(120, 170, 240, 0.02));
 }
+
+/* ---------- Round 27: sky-viewing chip in the moon card ---------- */
+.sky-chip {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,0.04);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+  justify-self: start;
+  width: fit-content;
+}
+.sky-chip[hidden] { display: none; }
+.sky-chip[data-tone="clear"] {
+  color: #cfe4ff;
+  border-color: rgba(140, 195, 255, 0.42);
+  background: linear-gradient(135deg, rgba(140, 195, 255, 0.14), rgba(140, 195, 255, 0.03));
+}
+.sky-chip[data-tone="partly"] {
+  color: #e1e8f0;
+  border-color: rgba(210, 220, 235, 0.28);
+}
+.sky-chip[data-tone="cloudy"] {
+  color: #cccfd6;
+  border-color: rgba(200, 200, 210, 0.28);
+  background: linear-gradient(135deg, rgba(200,200,210,0.10), rgba(200,200,210,0.02));
+}
+.sky-chip[data-tone="overcast"] {
+  color: #a8adb8;
+  border-color: rgba(150, 150, 160, 0.28);
+  background: linear-gradient(135deg, rgba(150,150,160,0.12), rgba(150,150,160,0.02));
+}

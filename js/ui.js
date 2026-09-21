@@ -54,6 +54,7 @@ const el = {
   feelsChip: $("#feels-chip"),
   photoChip: $("#photo-chip"),
   sunArcPhotoMarks: $("#sun-arc-photo-marks"),
+  skyChip: $("#sky-chip"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -190,7 +191,7 @@ export const ui = {
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
-    renderMoon(weather.moon);
+    renderMoon(weather.moon, weather);
     renderSun(weather);
     renderHourly(weather);
     renderDaily(weather);
@@ -502,10 +503,11 @@ function renderAqTrend(aq) {
   drawSparkline(el.aqTrendLine, el.aqTrendFill, pts, { minSpan: 20 });
 }
 
-function renderMoon(moon) {
+function renderMoon(moon, weather) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  renderSkyChip(weather, moon);
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
@@ -522,6 +524,37 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+}
+
+function renderSkyChip(weather, moon) {
+  const chip = el.skyChip;
+  if (!chip) return;
+  const cc = weather?.cloudCover;
+  if (cc == null) { chip.hidden = true; return; }
+  let label, tone;
+  if (cc < 20) { label = "Clear sky"; tone = "clear"; }
+  else if (cc < 50) { label = "Partly clear"; tone = "partly"; }
+  else if (cc < 80) { label = "Mostly cloudy"; tone = "cloudy"; }
+  else { label = "Overcast"; tone = "overcast"; }
+
+  // Enrich label with what's most viewable right now. During the day cloud
+  // matters for the sun; at night we lean on moon illumination too.
+  let hint = "";
+  const now = Date.now();
+  const isNight = weather.sunset && weather.sunrise && (now > weather.sunset || now < weather.sunrise);
+  if (isNight && moon) {
+    const illum = Math.round(moon.illum * 100);
+    if (cc < 30 && illum >= 60) hint = ` · moon at ${illum}%`;
+    else if (cc < 30 && illum < 30) hint = ` · dark skies`;
+    else if (cc >= 80) hint = ` · moon dimmed`;
+  } else if (!isNight) {
+    if (cc < 20) hint = ` · bright sun`;
+    else if (cc >= 80) hint = ` · muted sun`;
+  }
+
+  chip.hidden = false;
+  chip.dataset.tone = tone;
+  chip.textContent = `${label} · ${Math.round(cc)}%${hint}`;
 }
 
 function fmtTime(ts) {
