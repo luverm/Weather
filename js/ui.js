@@ -938,11 +938,30 @@ function renderHourly(w) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    const dir = h.windDir;
+    const wind = h.wind;
+    // Arrow strength scales by wind speed so a stiff breeze reads bolder.
+    const arrowOpacity = wind == null
+      ? 0
+      : Math.max(0.25, Math.min(1, (wind - 3) / 25));
+    const arrowSvg = dir == null ? "" : `
+      <svg class="forecast-wind" viewBox="-8 -8 16 16" aria-hidden="true"
+           style="opacity:${arrowOpacity.toFixed(2)}">
+        <g transform="rotate(${Math.round(dir)})">
+          <path d="M 0 -6 L 2 3 L 0 1.5 L -2 3 Z" fill="currentColor"/>
+        </g>
+      </svg>
+    `;
+    const windTitle = (dir != null && wind != null)
+      ? `${cardinal(dir)} wind ${Math.round(wind)} km/h`
+      : "";
+    item.title = windTitle;
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
+      ${arrowSvg}
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
