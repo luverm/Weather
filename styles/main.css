@@ -1563,3 +1563,88 @@ kbd {
   .temp { font-size: 78px; }
   .narrative { font-size: 13px; }
 }
+
+/* ---------- Round 22: feels-like breakdown chip ---------- */
+.feels-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 3px 9px 3px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,0.05);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: var(--fg-muted);
+  line-height: 1.5;
+  backdrop-filter: blur(6px) saturate(120%);
+  -webkit-backdrop-filter: blur(6px) saturate(120%);
+  transition: background 240ms var(--ease), color 240ms var(--ease), border-color 240ms var(--ease);
+}
+.feels-chip[hidden] { display: none; }
+.feels-chip-label { font-weight: 600; letter-spacing: 0.02em; }
+.feels-chip-delta {
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-dim);
+  font-size: 10.5px;
+  padding-left: 4px;
+  border-left: 1px solid var(--stroke);
+  margin-left: 2px;
+}
+.feels-chip-icon {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 0 1px var(--stroke) inset;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.5), rgba(255,255,255,0));
+}
+.feels-chip[data-tone="cold"] {
+  color: #cfe6ff;
+  border-color: rgba(154, 209, 255, 0.42);
+  background: linear-gradient(135deg, rgba(90,150,220,0.16), rgba(90,150,220,0.04));
+}
+.feels-chip[data-tone="cold"] .feels-chip-icon { background: radial-gradient(circle at 30% 30%, #d5ecff, #6aa2ff); }
+.feels-chip[data-tone="cool"] {
+  color: #d6e8f0;
+  border-color: rgba(158, 200, 224, 0.34);
+  background: linear-gradient(135deg, rgba(120,170,200,0.14), rgba(120,170,200,0.03));
+}
+.feels-chip[data-tone="cool"] .feels-chip-icon { background: radial-gradient(circle at 30% 30%, #e5f2fa, #97c8e0); }
+.feels-chip[data-tone="warm"] {
+  color: #ffe0c9;
+  border-color: rgba(255, 172, 120, 0.42);
+  background: linear-gradient(135deg, rgba(255,140,90,0.16), rgba(255,140,90,0.04));
+}
+.feels-chip[data-tone="warm"] .feels-chip-icon { background: radial-gradient(circle at 30% 30%, #ffe6c7, #ff9c7a); }
+
+/* ---------- Round 22: daylight-change chip in sun card ---------- */
+.daylight-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,0.04);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+  justify-self: start;
+  width: fit-content;
+}
+.daylight-delta[hidden] { display: none; }
+.daylight-delta[data-dir="longer"] {
+  color: #ffe1b0;
+  border-color: rgba(255, 210, 140, 0.42);
+  background: linear-gradient(135deg, rgba(255,210,140,0.16), rgba(255,210,140,0.03));
+}
+.daylight-delta[data-dir="shorter"] {
+  color: #c7b4ff;
+  border-color: rgba(150, 130, 220, 0.42);
+  background: linear-gradient(135deg, rgba(150,130,220,0.16), rgba(150,130,220,0.03));
+}
+

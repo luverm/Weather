@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { feelsLikeBreakdown, daylightChange } from "./feels-like.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -48,6 +49,8 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  daylightDelta: $("#daylight-delta"),
+  feelsChip: $("#feels-chip"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -277,7 +280,26 @@ function renderLiveValues(w, { animate = true } = {}) {
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  renderFeelsChip(w);
   renderDayRange(w);
+}
+
+function renderFeelsChip(w) {
+  const chip = el.feelsChip;
+  if (!chip) return;
+  const info = feelsLikeBreakdown(w);
+  if (!info) {
+    chip.hidden = true;
+    chip.removeAttribute("data-tone");
+    return;
+  }
+  chip.hidden = false;
+  chip.dataset.tone = info.tone;
+  chip.dataset.icon = info.icon;
+  const label = chip.querySelector(".feels-chip-label");
+  const delta = chip.querySelector(".feels-chip-delta");
+  if (label) label.textContent = info.label;
+  if (delta) delta.textContent = info.deltaText;
 }
 
 function renderDayRange(w) {
@@ -521,8 +543,23 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderDaylightDelta(w) {
+  const node = el.daylightDelta;
+  if (!node) return;
+  const change = daylightChange(w.daily);
+  if (!change) {
+    node.hidden = true;
+    node.removeAttribute("data-dir");
+    return;
+  }
+  node.hidden = false;
+  node.dataset.dir = change.longer ? "longer" : "shorter";
+  node.textContent = change.label;
 }
 
 function scheduleSunArc(w) {
