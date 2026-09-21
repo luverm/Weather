@@ -985,8 +985,10 @@ function renderHourly(w) {
         </g>
       </svg>
     `;
+    // Meteorological convention (matches the wind compass): the arrow points
+    // toward the direction the wind is coming FROM, so the title mirrors it.
     const windTitle = (dir != null && wind != null)
-      ? `${cardinal(dir)} wind ${Math.round(wind)} km/h`
+      ? `Wind from ${cardinal(dir)} · ${Math.round(wind)} km/h`
       : "";
     item.title = windTitle;
     item.innerHTML = `
@@ -1038,9 +1040,9 @@ function renderDaily(w) {
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
-    // Day-to-day trend arrow next to the max temp: reveals warming / cooling
-    // patterns at a glance. Skip on day 0 (nothing to compare to).
-    let trendHtml = "";
+    // Day-to-day trend arrow in its own grid column: reveals warming /
+    // cooling patterns at a glance. Skip on day 0 (nothing to compare to).
+    let trendHtml = '<span class="daily-trend placeholder" aria-hidden="true"></span>';
     if (i > 0 && days[i - 1]?.tempMax != null && d.tempMax != null) {
       const dC = d.tempMax - days[i - 1].tempMax;
       const dDisplay = state.unit === "F" ? dC * 9 / 5 : dC;
@@ -1058,7 +1060,8 @@ function renderDaily(w) {
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
       </div>
       <span class="daily-temp-min">${Math.round(convertTemp(d.tempMin))}°</span>
-      <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°${trendHtml}</span>
+      <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°</span>
+      ${trendHtml}
       ${extra}
     `;
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));

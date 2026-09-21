@@ -384,8 +384,10 @@ function mock(lat, lon) {
       precip: i % 3 === 0 ? 2.1 : 0,
       pop: i % 3 === 0 ? 65 : 15,
       windMax: 12, gustsMax: 20, uvMax: 5,
-      sunrise: new Date().setHours(6, 30, 0, 0),
-      sunset: new Date().setHours(19, 0, 0, 0),
+      // Nudge sunrise slightly later and sunset slightly earlier each day so
+      // the daylight-change chip actually renders in the offline fallback.
+      sunrise: new Date(now + i * 86400_000).setHours(6, 30 + i, 0, 0),
+      sunset: new Date(now + i * 86400_000).setHours(19, -i, 0, 0),
       condition: CONDITIONS.CLOUDS, label: "Cloudy",
     })),
     nowcast: [],

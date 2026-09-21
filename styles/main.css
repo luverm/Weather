@@ -1471,7 +1471,7 @@ kbd {
 }
 .daily-item {
   display: grid;
-  grid-template-columns: 72px 28px 1fr 60px 60px;
+  grid-template-columns: 72px 28px 1fr 60px 60px 52px;
   gap: 12px;
   align-items: center;
   padding: 10px 8px;
@@ -1563,7 +1563,7 @@ kbd {
   .metrics { grid-template-columns: repeat(2, 1fr); }
   .extras { grid-template-columns: 1fr; }
   .brand-name { display: none; }
-  .daily-item { grid-template-columns: 64px 24px 1fr 48px 48px; gap: 8px; }
+  .daily-item { grid-template-columns: 64px 24px 1fr 48px 48px 44px; gap: 8px; }
   .chart-svg { height: 120px; }
   .shortcuts-list { grid-template-columns: 1fr; }
 }
@@ -1734,8 +1734,9 @@ kbd {
 
 /* ---------- Round 26: day-to-day temp trend arrows ---------- */
 .daily-trend {
-  display: inline-block;
-  margin-left: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 1px 6px;
   border-radius: 999px;
   font-size: 10px;
@@ -1744,8 +1745,15 @@ kbd {
   letter-spacing: 0.02em;
   border: 1px solid var(--stroke);
   background: rgba(255,255,255,0.04);
-  vertical-align: middle;
-  transform: translateY(-1px);
+  justify-self: end;
+  min-width: 0;
+  white-space: nowrap;
+}
+.daily-trend.placeholder {
+  background: transparent;
+  border-color: transparent;
+  padding: 0;
+  min-height: 1px;
 }
 .daily-trend[data-dir="up"] {
   color: #ffcda3;

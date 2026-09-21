@@ -16,8 +16,13 @@ export function feelsLikeBreakdown(w) {
 
   const humidity = w.humidity ?? null;
   const wind = w.windSpeed ?? 0;
-  const uv = w.uv ?? 0;
+  // `w.uv` on the live weather object is the DAILY peak (from
+  // daily.uv_index_max[0]) — use the current hourly UV when available so
+  // we don't wrongly call an evening warm-up "sun-boosted".
+  const currentUv = w.hourly?.[0]?.uv;
+  const uv = currentUv != null ? currentUv : (w.uv ?? 0);
   const cloud = w.cloudCover ?? null;
+  const isDay = w.isDay !== false;
 
   // Ranked classifiers — first match wins.
   if (delta <= -1.6 && wind >= 12) {
@@ -29,7 +34,7 @@ export function feelsLikeBreakdown(w) {
   if (delta >= 1.6 && humidity != null && humidity >= 62 && temp >= 22) {
     return chip("Muggy heat", "drop", "warm", delta);
   }
-  if (delta >= 1.6 && uv >= 5 && (cloud == null || cloud < 45)) {
+  if (delta >= 1.6 && uv >= 5 && (cloud == null || cloud < 45) && isDay) {
     return chip("Sun-boosted", "sun", "warm", delta);
   }
   if (delta <= -1.6 && temp <= 8) {
