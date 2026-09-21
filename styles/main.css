@@ -1699,3 +1699,26 @@ kbd {
   border-color: rgba(140, 195, 255, 0.42);
   background: linear-gradient(135deg, rgba(140, 195, 255, 0.16), rgba(140, 195, 255, 0.03));
 }
+
+/* ---------- Round 24: weekly precipitation bar chart ---------- */
+.daily-precip {
+  display: block;
+  width: 100%;
+  height: 32px;
+  margin-top: 2px;
+  overflow: visible;
+}
+.daily-precip[hidden] { display: none; }
+.daily-precip-bar {
+  fill: #9ad1ff;
+  transition: opacity 260ms var(--ease);
+}
+.daily-precip-bar:hover { opacity: 1 !important; }
+.daily-precip-label {
+  fill: var(--fg-dim);
+  font-size: 8.5px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+}

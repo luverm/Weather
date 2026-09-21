@@ -77,6 +77,9 @@ const el = {
   dailyHi: $("#daily-hi"),
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
+  dailyPrecip: $("#daily-precip"),
+  dailyPrecipBars: $("#daily-precip-bars"),
+  dailyPrecipLabels: $("#daily-precip-labels"),
   dailyDelta: $("#daily-delta"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
@@ -957,6 +960,7 @@ function renderDaily(w) {
   if (!days.length) return;
   renderDailyIconStrip(days);
   renderDailySpark(days);
+  renderDailyPrecip(days);
   renderDailyDelta(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
@@ -1040,6 +1044,72 @@ function renderDailySpark(days) {
       el.dailySparkDots.appendChild(c);
     }
   });
+}
+
+function renderDailyPrecip(days) {
+  const bars = el.dailyPrecipBars;
+  const labels = el.dailyPrecipLabels;
+  const host = el.dailyPrecip;
+  if (!bars || !labels || !host) return;
+  const amounts = days.map((d) => d.precip ?? 0);
+  const totalRain = amounts.reduce((s, v) => s + v, 0);
+  // Hide entirely if the whole week is bone-dry so we don't waste space.
+  if (totalRain < 0.05) {
+    host.hidden = true;
+    bars.innerHTML = "";
+    labels.innerHTML = "";
+    return;
+  }
+  host.hidden = false;
+  const W = 600, H = 32;
+  const gap = 6;
+  const barW = (W - gap * (days.length + 1)) / days.length;
+  const maxRain = Math.max(1, ...amounts);
+  bars.innerHTML = "";
+  labels.innerHTML = "";
+  const svgNs = "http://www.w3.org/2000/svg";
+  days.forEach((d, i) => {
+    const mm = d.precip ?? 0;
+    const pop = d.pop ?? 0;
+    // Log-ish scaling so a light 0.4 mm still reads visually next to a
+    // dumpy 12 mm day, without either overwhelming the other.
+    const scaled = mm > 0 ? Math.max(3, (Math.log10(1 + mm * 4) / Math.log10(1 + maxRain * 4)) * (H - 10)) : 0;
+    const x = gap + i * (barW + gap);
+    const y = H - scaled;
+    if (scaled > 0) {
+      const r = document.createElementNS(svgNs, "rect");
+      r.setAttribute("x", x.toFixed(1));
+      r.setAttribute("y", y.toFixed(1));
+      r.setAttribute("width", barW.toFixed(1));
+      r.setAttribute("height", scaled.toFixed(1));
+      r.setAttribute("rx", "2");
+      r.setAttribute("class", "daily-precip-bar");
+      // Higher probability = brighter blue.
+      const opacity = 0.35 + (Math.min(100, pop) / 100) * 0.55;
+      r.setAttribute("style", `opacity:${opacity.toFixed(2)}`);
+      const title = document.createElementNS(svgNs, "title");
+      title.textContent = `${labelForDay(d, i)} · ${mm.toFixed(mm < 1 ? 1 : 0)} mm · ${pop}% chance`;
+      r.appendChild(title);
+      bars.appendChild(r);
+
+      // Label above the tallest bar(s) only, to avoid noise.
+      if (mm >= maxRain * 0.55) {
+        const t = document.createElementNS(svgNs, "text");
+        t.setAttribute("x", (x + barW / 2).toFixed(1));
+        t.setAttribute("y", Math.max(8, y - 2).toFixed(1));
+        t.setAttribute("text-anchor", "middle");
+        t.setAttribute("class", "daily-precip-label");
+        t.textContent = mm >= 10 ? `${Math.round(mm)}mm` : `${mm.toFixed(1)}mm`;
+        labels.appendChild(t);
+      }
+    }
+  });
+}
+
+function labelForDay(d, i) {
+  if (i === 0) return "Today";
+  const dt = new Date(d.time);
+  return dt.toLocaleDateString(undefined, { weekday: "short" });
 }
 
 function renderDailyDelta(days) {
