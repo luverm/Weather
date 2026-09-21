@@ -1731,3 +1731,29 @@ kbd {
   letter-spacing: 0.04em;
   pointer-events: none;
 }
+
+/* ---------- Round 26: day-to-day temp trend arrows ---------- */
+.daily-trend {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,0.04);
+  vertical-align: middle;
+  transform: translateY(-1px);
+}
+.daily-trend[data-dir="up"] {
+  color: #ffcda3;
+  border-color: rgba(255, 172, 120, 0.42);
+  background: linear-gradient(135deg, rgba(255, 140, 90, 0.14), rgba(255, 140, 90, 0.02));
+}
+.daily-trend[data-dir="down"] {
+  color: #b7d5ff;
+  border-color: rgba(150, 190, 240, 0.42);
+  background: linear-gradient(135deg, rgba(120, 170, 240, 0.14), rgba(120, 170, 240, 0.02));
+}

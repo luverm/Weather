@@ -1005,6 +1005,19 @@ function renderDaily(w) {
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    // Day-to-day trend arrow next to the max temp: reveals warming / cooling
+    // patterns at a glance. Skip on day 0 (nothing to compare to).
+    let trendHtml = "";
+    if (i > 0 && days[i - 1]?.tempMax != null && d.tempMax != null) {
+      const dC = d.tempMax - days[i - 1].tempMax;
+      const dDisplay = state.unit === "F" ? dC * 9 / 5 : dC;
+      const rounded = Math.round(dDisplay);
+      if (Math.abs(rounded) >= 1) {
+        const dir = rounded > 0 ? "up" : "down";
+        const glyph = rounded > 0 ? "▲" : "▼";
+        trendHtml = `<span class="daily-trend" data-dir="${dir}" title="${rounded > 0 ? "+" : ""}${rounded}° vs. ${labelForDay(days[i - 1], i - 1)}">${glyph}${Math.abs(rounded)}°</span>`;
+      }
+    }
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
@@ -1012,7 +1025,7 @@ function renderDaily(w) {
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
       </div>
       <span class="daily-temp-min">${Math.round(convertTemp(d.tempMin))}°</span>
-      <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°</span>
+      <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°${trendHtml}</span>
       ${extra}
     `;
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
