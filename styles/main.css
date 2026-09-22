@@ -977,6 +977,94 @@ kbd {
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
 
+/* Golden / blue-hour badge inside the sun card. */
+.golden-hour {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  background: rgba(255, 216, 160, 0.06);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--fg-muted);
+  margin-top: 2px;
+  min-width: 0;
+  grid-column: 1 / span 2;   /* match .metric-label's span so the pill fills the card */
+  transition: background 320ms var(--ease), border-color 320ms var(--ease), color 320ms var(--ease);
+}
+.golden-hour[hidden] { display: none; }
+.golden-hour-dot {
+  width: 8px; height: 8px; flex: 0 0 auto;
+  border-radius: 50%;
+  background: rgba(255, 216, 160, 0.65);
+  box-shadow: 0 0 0 0 rgba(255, 216, 160, 0.35);
+}
+.golden-hour-label {
+  font-weight: 600;
+  color: var(--fg);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+.golden-hour-detail {
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-dim);
+  margin-left: auto;
+  font-size: 10.5px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Active golden-hour: warm amber glow + gentle pulse. */
+.golden-hour[data-state="golden-morning"],
+.golden-hour[data-state="golden-evening"] {
+  background: linear-gradient(90deg,
+    rgba(255, 176, 96, 0.22),
+    rgba(255, 216, 160, 0.12));
+  border-color: rgba(255, 200, 140, 0.35);
+  color: #ffe1b6;
+}
+.golden-hour[data-state="golden-morning"] .golden-hour-dot,
+.golden-hour[data-state="golden-evening"] .golden-hour-dot {
+  background: #ffcd80;
+  animation: goldenPulse 2.4s var(--ease) infinite;
+}
+.golden-hour[data-state="golden-morning"] .golden-hour-label,
+.golden-hour[data-state="golden-evening"] .golden-hour-label { color: #ffe6c2; }
+
+/* Active blue-hour: cool indigo tint. */
+.golden-hour[data-state="blue-morning"],
+.golden-hour[data-state="blue-evening"] {
+  background: linear-gradient(90deg,
+    rgba(120, 150, 240, 0.22),
+    rgba(160, 190, 255, 0.10));
+  border-color: rgba(160, 190, 255, 0.32);
+  color: #d3dcff;
+}
+.golden-hour[data-state="blue-morning"] .golden-hour-dot,
+.golden-hour[data-state="blue-evening"] .golden-hour-dot {
+  background: #a7bcff;
+  animation: bluePulse 2.4s var(--ease) infinite;
+}
+.golden-hour[data-state="blue-morning"] .golden-hour-label,
+.golden-hour[data-state="blue-evening"] .golden-hour-label { color: #e5ebff; }
+
+@keyframes goldenPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 205, 128, 0.55); }
+  50%      { box-shadow: 0 0 0 6px rgba(255, 205, 128, 0);    }
+}
+@keyframes bluePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(167, 188, 255, 0.55); }
+  50%      { box-shadow: 0 0 0 6px rgba(167, 188, 255, 0);    }
+}
+
+/* Respect reduced-motion setting: freeze the pulse. */
+html[data-reduce-motion="true"] .golden-hour-dot { animation: none !important; }
+
 /* ---------- Radar map ---------- */
 .radar {
   padding: 12px;

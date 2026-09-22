@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { computeGoldenHour } from "./golden-hour.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -90,6 +91,9 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  goldenHour: $("#golden-hour"),
+  goldenHourLabel: $("#golden-hour-label"),
+  goldenHourDetail: $("#golden-hour-detail"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -122,6 +126,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  goldenTimer: null,
   localTimer: null,
 };
 
@@ -523,6 +528,44 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleGoldenHour(w);
+}
+
+function scheduleGoldenHour(w) {
+  if (!el.goldenHour) return;
+  if (state.goldenTimer) { clearInterval(state.goldenTimer); state.goldenTimer = null; }
+  if (!w?.sunrise || !w?.sunset) {
+    el.goldenHour.hidden = true;
+    return;
+  }
+  // Prefer *tomorrow's* sunrise for the "next window" lookahead when the
+  // sun has already set today. Fall back to today + 24h so the badge still
+  // has something to count down to (the mock's daily array reuses today's
+  // sunrise for every entry).
+  const tomorrow = (w.daily || [])
+    .map((d) => d.sunrise)
+    .filter((ts) => ts && ts > w.sunrise + 12 * 3600_000)[0]
+    || w.sunrise + 24 * 3600_000;
+
+  const update = () => {
+    const g = computeGoldenHour({
+      sunrise: w.sunrise,
+      sunset: w.sunset,
+      tomorrowSunrise: tomorrow,
+    });
+    if (g.state === "idle" && !g.label) {
+      el.goldenHour.hidden = true;
+      return;
+    }
+    el.goldenHour.hidden = false;
+    el.goldenHour.dataset.state = g.state;
+    el.goldenHourLabel.textContent = g.label;
+    el.goldenHourDetail.textContent = g.detail;
+    // Tooltip pairs the two into one line for a11y readers that pause a lot.
+    el.goldenHour.setAttribute("title", `${g.label} · ${g.detail}`);
+  };
+  update();
+  state.goldenTimer = setInterval(update, 30_000);
 }
 
 function scheduleSunArc(w) {
