@@ -69,6 +69,8 @@ const el = {
   pressureSparkFill: $("#pressure-spark-fill"),
   humiditySparkLine: $("#humidity-spark-line"),
   humiditySparkFill: $("#humidity-spark-fill"),
+  windSparkLine: $("#wind-spark-line"),
+  windSparkGusts: $("#wind-spark-gusts"),
   dailySpark: $("#daily-spark"),
   dailyHi: $("#daily-hi"),
   dailyLo: $("#daily-lo"),
@@ -423,6 +425,34 @@ function renderPressureSparkline(w) {
     (w.hourly || []).map((h) => h.humidity).filter((v) => v != null).slice(0, 12),
     { minSpan: 10, fixedMin: 0, fixedMax: 100 }
   );
+  renderWindSparkline(w);
+}
+
+function renderWindSparkline(w) {
+  if (!el.windSparkLine || !el.windSparkGusts) return;
+  const hours = (w.hourly || []).slice(0, 12);
+  const winds = hours.map((h) => h.wind).filter((v) => v != null);
+  const gusts = hours.map((h) => h.gusts ?? h.wind ?? 0);
+  if (winds.length < 2) {
+    el.windSparkLine.setAttribute("d", "");
+    el.windSparkGusts.setAttribute("d", "");
+    return;
+  }
+  // Share a y-scale between wind and gusts so gusts sit above the wind line.
+  const max = Math.max(...winds, ...gusts, 1);
+  const min = 0;
+  const W = 100, H = 24, PAD = 1.5;
+  const innerW = W - PAD * 2;
+  const innerH = H - PAD * 2;
+  const scaleX = (i, n) => PAD + (i / Math.max(1, n - 1)) * innerW;
+  const scaleY = (v) => PAD + innerH - ((v - min) / (max - min)) * innerH;
+  const linePath = (arr) => arr.map((v, i) => (i === 0 ? "M" : "L") +
+    scaleX(i, arr.length).toFixed(1) + "," + scaleY(v).toFixed(1)).join(" ");
+  const gustFill = linePath(gusts) +
+    ` L ${scaleX(gusts.length - 1, gusts.length).toFixed(1)} ${(H - PAD).toFixed(1)}` +
+    ` L ${PAD.toFixed(1)} ${(H - PAD).toFixed(1)} Z`;
+  el.windSparkLine.setAttribute("d", linePath(winds));
+  el.windSparkGusts.setAttribute("d", gustFill);
 }
 
 function drawSparkline(lineEl, fillEl, series, { minSpan = 1, fixedMin, fixedMax } = {}) {
