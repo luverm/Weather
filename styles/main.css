@@ -1509,14 +1509,55 @@ kbd {
 }
 .daily-icon-strip .strip-day {
   display: grid; place-items: center;
-  padding: 4px;
+  gap: 2px;
+  padding: 6px 4px 4px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
   opacity: 0.85;
-  transition: opacity 160ms var(--ease), transform 160ms var(--ease);
+  transition: opacity 160ms var(--ease), transform 160ms var(--ease),
+              background 200ms var(--ease), border-color 200ms var(--ease);
 }
-.daily-icon-strip .strip-day:hover { opacity: 1; transform: translateY(-1px); }
-.daily-icon-strip .strip-day svg {
+.daily-icon-strip .strip-day:hover,
+.daily-icon-strip .strip-day:focus-visible {
+  opacity: 1;
+  transform: translateY(-1px);
+  background: var(--glass);
+  outline: none;
+}
+.daily-icon-strip .strip-day.is-today {
+  background: var(--glass-strong);
+  border-color: var(--stroke);
+  opacity: 1;
+  box-shadow: 0 0 0 1px rgba(255, 220, 190, 0.14) inset;
+}
+.daily-icon-strip .strip-day-icon { display: grid; place-items: center; }
+.daily-icon-strip .strip-day-icon svg {
   width: 22px; height: 22px;
   display: block;
+}
+.daily-icon-strip .strip-day-name {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+.daily-icon-strip .strip-day.is-today .strip-day-name {
+  color: var(--accent);
+  font-weight: 600;
+}
+.daily-item.flash-focus {
+  animation: flashFocus 900ms var(--ease);
+}
+@keyframes flashFocus {
+  0%   { background: rgba(255, 220, 190, 0.22); }
+  100% { background: transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .daily-item.flash-focus { animation: none; }
 }
 
 .daily-spark {

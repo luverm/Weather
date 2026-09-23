@@ -980,9 +980,45 @@ function renderDaily(w) {
 
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
-  el.dailyIconStrip.innerHTML = days.map((d) =>
-    `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
-  ).join("");
+  el.dailyIconStrip.setAttribute("aria-hidden", "false");
+  const tz = state.weather?.timezone;
+  const todayKey = dayKey(Date.now(), tz);
+  el.dailyIconStrip.innerHTML = days.map((d, i) => {
+    const isToday = dayKey(d.time, tz) === todayKey;
+    const shortDay = i === 0
+      ? "Now"
+      : new Date(d.time).toLocaleDateString(undefined, {
+          weekday: "short",
+          ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+        }).slice(0, 3);
+    return (
+      `<button type="button" class="strip-day${isToday ? " is-today" : ""}"` +
+      ` data-ts="${d.time}"` +
+      ` title="${escapeHtml(d.label || d.condition || "")}">` +
+      `<span class="strip-day-icon">${iconFor(d.condition)}</span>` +
+      `<span class="strip-day-name">${escapeHtml(shortDay)}</span>` +
+      `</button>`
+    );
+  }).join("");
+  el.dailyIconStrip.querySelectorAll(".strip-day").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const ts = Number(btn.dataset.ts);
+      const target = el.dailyTrack?.querySelector(`.daily-item[data-ts="${ts}"]`);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        target.classList.remove("flash-focus"); void target.offsetWidth;
+        target.classList.add("flash-focus");
+      }
+    });
+  });
+}
+
+function dayKey(ts, tz) {
+  try {
+    return new Date(ts).toLocaleDateString("en-CA", tz && tz !== "auto" ? { timeZone: tz } : undefined);
+  } catch {
+    return new Date(ts).toDateString();
+  }
 }
 
 function renderDailySpark(days) {
