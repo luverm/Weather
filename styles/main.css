@@ -984,6 +984,12 @@ kbd {
 .sun-arc-band.golden { stroke: rgba(255, 190, 110, 0.95); }
 .sun-arc-band.blue   { stroke: rgba(140, 170, 255, 0.9); }
 
+.light-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  margin-bottom: 4px;
+}
 .light-pill {
   display: inline-flex;
   align-items: center;
@@ -995,7 +1001,6 @@ kbd {
   font-size: 11.5px;
   color: var(--fg-muted);
   width: fit-content;
-  margin-bottom: 4px;
   letter-spacing: 0.01em;
   transition: background 320ms var(--ease), color 320ms var(--ease), border-color 320ms var(--ease);
 }
@@ -1037,8 +1042,46 @@ kbd {
   background: #6c7ac2;
   box-shadow: 0 0 8px rgba(108, 122, 194, 0.55);
 }
+.sunset-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 8px;
+  border-radius: 999px;
+  background: var(--glass);
+  border: 1px solid var(--stroke);
+  font-size: 11.5px;
+  color: var(--fg-muted);
+  width: fit-content;
+  transition: background 320ms var(--ease), color 320ms var(--ease), border-color 320ms var(--ease);
+}
+.sunset-pill-icon { width: 14px; height: 14px; flex: none; opacity: 0.9; }
+.sunset-pill-label { font-weight: 500; color: var(--fg); }
+.sunset-pill[data-tone="vivid"] {
+  background: linear-gradient(90deg, rgba(255,120,90,0.22), rgba(255,180,90,0.22));
+  border-color: rgba(255,150,90,0.4);
+  color: #ffe5c9;
+}
+.sunset-pill[data-tone="vivid"] .sunset-pill-label { color: #fff2d8; }
+.sunset-pill[data-tone="warm"] {
+  background: rgba(255, 180, 130, 0.16);
+  border-color: rgba(255, 180, 130, 0.35);
+  color: #ffe3ce;
+}
+.sunset-pill[data-tone="warm"] .sunset-pill-label { color: #fff0dd; }
+.sunset-pill[data-tone="moody"] {
+  background: rgba(180, 140, 200, 0.16);
+  border-color: rgba(180, 140, 200, 0.32);
+  color: #eadcef;
+}
+.sunset-pill[data-tone="moody"] .sunset-pill-label { color: #f4eaf7; }
+.sunset-pill[data-tone="muted"],
+.sunset-pill[data-tone="flat"] {
+  color: var(--fg-muted);
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .light-pill { transition: none; }
+  .light-pill, .sunset-pill { transition: none; }
 }
 
 /* ---------- Radar map ---------- */

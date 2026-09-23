@@ -11,6 +11,7 @@ import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { lightWindows, currentPhase, nextGoldenHour, tOnArc, pointOnArc } from "./golden-hour.js";
+import { forecastSunsetColor } from "./sunset-color.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -95,6 +96,8 @@ const el = {
   lightPill: $("#light-pill"),
   lightPillLabel: $("#light-pill-label"),
   lightPillEta: $("#light-pill-eta"),
+  sunsetPill: $("#sunset-pill"),
+  sunsetPillLabel: $("#sunset-pill-label"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -531,6 +534,18 @@ function renderSun(w) {
   scheduleSunArc(w);
   renderLightBands(w);
   scheduleLightPill(w);
+  renderSunsetColor(w);
+}
+
+function renderSunsetColor(w) {
+  if (!el.sunsetPill) return;
+  const rating = forecastSunsetColor(w);
+  if (!rating) { el.sunsetPill.hidden = true; return; }
+  el.sunsetPill.hidden = false;
+  el.sunsetPill.setAttribute("data-tone", rating.tone);
+  const when = fmtTime(rating.when);
+  el.sunsetPillLabel.textContent = `${rating.label} sunset · ${when}`;
+  el.sunsetPill.title = rating.hint;
 }
 
 function renderLightBands(w) {

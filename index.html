@@ -320,10 +320,18 @@
 
         <div class="extra-card glass" id="sun-card">
           <span class="metric-label"><span id="sun-next-label">Sun</span> <span id="sun-countdown" class="sun-countdown"></span></span>
-          <div class="light-pill" id="light-pill" data-phase="unknown" hidden>
-            <span class="light-pill-dot" aria-hidden="true"></span>
-            <span class="light-pill-label" id="light-pill-label">—</span>
-            <span class="light-pill-eta" id="light-pill-eta"></span>
+          <div class="light-pills">
+            <div class="light-pill" id="light-pill" data-phase="unknown" hidden>
+              <span class="light-pill-dot" aria-hidden="true"></span>
+              <span class="light-pill-label" id="light-pill-label">—</span>
+              <span class="light-pill-eta" id="light-pill-eta"></span>
+            </div>
+            <div class="sunset-pill" id="sunset-pill" data-tone="muted" hidden title="">
+              <svg class="sunset-pill-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 18h16M6.5 18a5.5 5.5 0 1111 0M2 22h20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+              <span class="sunset-pill-label" id="sunset-pill-label">—</span>
+            </div>
           </div>
           <svg id="sun-arc" class="sun-arc" viewBox="0 0 200 84" aria-hidden="true">
             <defs>
