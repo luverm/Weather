@@ -1006,8 +1006,11 @@ kbd {
   color: var(--fg-muted);
   width: fit-content;
   letter-spacing: 0.01em;
-  transition: background 320ms var(--ease), color 320ms var(--ease), border-color 320ms var(--ease);
+  cursor: pointer;
+  transition: background 320ms var(--ease), color 320ms var(--ease),
+              border-color 320ms var(--ease), transform 200ms var(--ease);
 }
+.light-pill:hover, .light-pill:focus-visible { transform: translateY(-1px); outline: none; border-color: rgba(255, 220, 190, 0.35); }
 .light-pill-dot {
   width: 8px;
   height: 8px;
@@ -1057,8 +1060,11 @@ kbd {
   font-size: 11.5px;
   color: var(--fg-muted);
   width: fit-content;
-  transition: background 320ms var(--ease), color 320ms var(--ease), border-color 320ms var(--ease);
+  cursor: pointer;
+  transition: background 320ms var(--ease), color 320ms var(--ease),
+              border-color 320ms var(--ease), transform 200ms var(--ease);
 }
+.sunset-pill:hover, .sunset-pill:focus-visible { transform: translateY(-1px); outline: none; }
 .sunset-pill-icon { width: 14px; height: 14px; flex: none; opacity: 0.9; }
 .sunset-pill-label { font-weight: 500; color: var(--fg); }
 .sunset-pill[data-tone="vivid"] {

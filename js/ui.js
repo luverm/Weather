@@ -576,6 +576,42 @@ function renderSunsetColor(w) {
   const when = fmtTime(rating.when);
   el.sunsetPillLabel.textContent = `${rating.label} sunset · ${when}`;
   el.sunsetPill.title = rating.hint;
+  if (!el.sunsetPill._bound) {
+    el.sunsetPill.addEventListener("click", () => {
+      const r = forecastSunsetColor(state.weather);
+      if (r?.when) state.handlers.onHourClick?.(r.when);
+    });
+    el.sunsetPill.setAttribute("role", "button");
+    el.sunsetPill.setAttribute("tabindex", "0");
+    el.sunsetPill.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        const r = forecastSunsetColor(state.weather);
+        if (r?.when) state.handlers.onHourClick?.(r.when);
+      }
+    });
+    el.sunsetPill._bound = true;
+  }
+}
+
+function jumpToGoldenHour(w) {
+  if (!w) return;
+  const now = Date.now();
+  // If we're currently inside a golden band today, jump to its midpoint;
+  // otherwise the next scheduled golden window from any day.
+  const bands = lightWindows(w.sunrise, w.sunset);
+  const candidates = [];
+  if (bands) {
+    for (const key of ["goldenMorning", "goldenEvening"]) {
+      if (bands[key].end > now) candidates.push(bands[key]);
+    }
+  }
+  const next = nextGoldenHour(now, w);
+  if (next) candidates.push(next);
+  if (!candidates.length) return;
+  const target = candidates.sort((a, b) => a.start - b.start)[0];
+  const mid = (target.start + target.end) / 2;
+  state.handlers.onHourClick?.(mid);
 }
 
 function renderLightBands(w) {
@@ -611,6 +647,16 @@ function scheduleLightPill(w) {
   if (!el.lightPill) return;
   if (state.lightTimer) { clearInterval(state.lightTimer); state.lightTimer = null; }
   if (!w?.sunrise || !w?.sunset) { el.lightPill.hidden = true; return; }
+  // Click-to-scrub: jumps to the middle of the next (or current) golden band.
+  if (!el.lightPill._bound) {
+    el.lightPill.addEventListener("click", () => jumpToGoldenHour(state.weather));
+    el.lightPill.setAttribute("role", "button");
+    el.lightPill.setAttribute("tabindex", "0");
+    el.lightPill.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); jumpToGoldenHour(state.weather); }
+    });
+    el.lightPill._bound = true;
+  }
   const update = () => {
     const now = Date.now();
     const phase = currentPhase(now, w.sunrise, w.sunset);
