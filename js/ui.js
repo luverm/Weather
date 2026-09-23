@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { lightWindows, currentPhase, nextGoldenHour, tOnArc, pointOnArc } from "./golden-hour.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -90,6 +91,10 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcBands: $("#sun-arc-bands"),
+  lightPill: $("#light-pill"),
+  lightPillLabel: $("#light-pill-label"),
+  lightPillEta: $("#light-pill-eta"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -122,6 +127,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  lightTimer: null,
   localTimer: null,
 };
 
@@ -523,6 +529,70 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderLightBands(w);
+  scheduleLightPill(w);
+}
+
+function renderLightBands(w) {
+  if (!el.sunArcBands) return;
+  el.sunArcBands.innerHTML = "";
+  const bands = lightWindows(w.sunrise, w.sunset);
+  if (!bands) return;
+  const svgNS = "http://www.w3.org/2000/svg";
+  const paint = (band, cls) => {
+    const t0 = tOnArc(band.start, w.sunrise, w.sunset);
+    const t1 = tOnArc(band.end,   w.sunrise, w.sunset);
+    if (t1 <= t0) return;
+    // Sample the curve to draw a small polyline segment along the arc.
+    const steps = 6;
+    let pts = "";
+    for (let i = 0; i <= steps; i++) {
+      const t = t0 + (t1 - t0) * (i / steps);
+      const { x, y } = pointOnArc(t);
+      pts += `${x.toFixed(1)},${y.toFixed(1)} `;
+    }
+    const line = document.createElementNS(svgNS, "polyline");
+    line.setAttribute("points", pts.trim());
+    line.setAttribute("class", `sun-arc-band ${cls}`);
+    line.setAttribute("fill", "none");
+    line.setAttribute("stroke-linecap", "round");
+    el.sunArcBands.appendChild(line);
+  };
+  paint(bands.goldenMorning, "golden");
+  paint(bands.goldenEvening, "golden");
+}
+
+function scheduleLightPill(w) {
+  if (!el.lightPill) return;
+  if (state.lightTimer) { clearInterval(state.lightTimer); state.lightTimer = null; }
+  if (!w?.sunrise || !w?.sunset) { el.lightPill.hidden = true; return; }
+  const update = () => {
+    const now = Date.now();
+    const phase = currentPhase(now, w.sunrise, w.sunset);
+    let etaText = "";
+    if (phase.ends && phase.ends > now && (phase.key === "golden" || phase.key === "blue")) {
+      const mins = Math.max(1, Math.round((phase.ends - now) / 60_000));
+      etaText = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m left` : `${mins}m left`;
+    } else if (phase.key === "day") {
+      const nextG = nextGoldenHour(now, w);
+      if (nextG) {
+        const mins = Math.max(1, Math.round((nextG.start - now) / 60_000));
+        etaText = mins >= 60 ? `golden in ${Math.floor(mins / 60)}h ${mins % 60}m` : `golden in ${mins}m`;
+      }
+    } else if (phase.key === "night") {
+      const nextG = nextGoldenHour(now, w);
+      if (nextG) {
+        const mins = Math.max(1, Math.round((nextG.start - now) / 60_000));
+        etaText = mins >= 60 ? `golden in ${Math.floor(mins / 60)}h ${mins % 60}m` : `golden in ${mins}m`;
+      }
+    }
+    el.lightPill.hidden = false;
+    el.lightPill.setAttribute("data-phase", phase.key);
+    el.lightPillLabel.textContent = phase.label;
+    el.lightPillEta.textContent = etaText;
+  };
+  update();
+  state.lightTimer = setInterval(update, 60_000);
 }
 
 function scheduleSunArc(w) {

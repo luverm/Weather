@@ -976,6 +976,70 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+.sun-arc-band {
+  stroke-width: 3;
+  opacity: 0.85;
+  mix-blend-mode: screen;
+}
+.sun-arc-band.golden { stroke: rgba(255, 190, 110, 0.95); }
+.sun-arc-band.blue   { stroke: rgba(140, 170, 255, 0.9); }
+
+.light-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 4px 8px;
+  border-radius: 999px;
+  background: var(--glass);
+  border: 1px solid var(--stroke);
+  font-size: 11.5px;
+  color: var(--fg-muted);
+  width: fit-content;
+  margin-bottom: 4px;
+  letter-spacing: 0.01em;
+  transition: background 320ms var(--ease), color 320ms var(--ease), border-color 320ms var(--ease);
+}
+.light-pill-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--fg-dim);
+  box-shadow: 0 0 6px rgba(255,255,255,0.15);
+  flex: none;
+}
+.light-pill-label { font-weight: 500; color: var(--fg); }
+.light-pill-eta { color: var(--fg-dim); font-variant-numeric: tabular-nums; }
+.light-pill[data-phase="golden"] {
+  background: rgba(255, 190, 110, 0.16);
+  border-color: rgba(255, 190, 110, 0.35);
+  color: #ffe6c7;
+}
+.light-pill[data-phase="golden"] .light-pill-label { color: #fff2d8; }
+.light-pill[data-phase="golden"] .light-pill-dot {
+  background: #ffbe6e;
+  box-shadow: 0 0 10px rgba(255, 190, 110, 0.7);
+}
+.light-pill[data-phase="blue"] {
+  background: rgba(140, 170, 255, 0.14);
+  border-color: rgba(140, 170, 255, 0.32);
+  color: #d8e2ff;
+}
+.light-pill[data-phase="blue"] .light-pill-label { color: #eaf0ff; }
+.light-pill[data-phase="blue"] .light-pill-dot {
+  background: #8caaff;
+  box-shadow: 0 0 10px rgba(140, 170, 255, 0.7);
+}
+.light-pill[data-phase="day"] .light-pill-dot {
+  background: #ffe6c7;
+  box-shadow: 0 0 8px rgba(255, 240, 200, 0.6);
+}
+.light-pill[data-phase="night"] .light-pill-dot {
+  background: #6c7ac2;
+  box-shadow: 0 0 8px rgba(108, 122, 194, 0.55);
+}
+@media (prefers-reduced-motion: reduce) {
+  .light-pill { transition: none; }
+}
 
 /* ---------- Radar map ---------- */
 .radar {
