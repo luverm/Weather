@@ -391,6 +391,16 @@ html[data-reduce-motion="true"] *::after {
 .unit:hover { background: var(--glass); color: var(--fg); }
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
+.feels-attrib {
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 11px;
+  color: var(--fg-dim);
+  letter-spacing: 0.02em;
+}
+.feels-attrib[data-kind="chill"] { color: #a8c8ff; }
+.feels-attrib[data-kind="muggy"] { color: #ffcaa4; }
+.feels-attrib[data-kind="breeze"] { color: #b8e0d4; }
 .day-range {
   margin-top: 10px;
   display: grid;

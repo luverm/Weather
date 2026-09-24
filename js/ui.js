@@ -287,8 +287,48 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  const attrib = feelsLikeAttribution(w);
+  // Re-flow feels-like line without destroying the tempTrend/attribution spans.
+  el.feelsLike.innerHTML = "";
+  if (el.tempTrend) el.feelsLike.appendChild(el.tempTrend);
+  el.feelsLike.appendChild(document.createTextNode(`Feels like ${Math.round(feels)}°`));
+  if (attrib) {
+    const span = document.createElement("span");
+    span.className = "feels-attrib";
+    span.dataset.kind = attrib.kind;
+    span.textContent = attrib.text;
+    el.feelsLike.appendChild(document.createTextNode(" "));
+    el.feelsLike.appendChild(span);
+  }
   renderDayRange(w);
+}
+
+// Explain *why* apparent temp differs from actual. Falls back to null when
+// the gap is < 1.5°C — not worth cluttering the hero.
+function feelsLikeAttribution(w) {
+  const actual = w.temp, apparent = w.feelsLike;
+  if (actual == null || apparent == null) return null;
+  const delta = apparent - actual;
+  if (Math.abs(delta) < 1.5) return null;
+  const wind = w.windSpeed ?? 0;
+  const humidity = w.humidity ?? 50;
+  // Cold + colder-feel = wind chill.
+  if (delta < 0 && actual <= 10) {
+    if (wind >= 8) return { kind: "chill", text: `· wind chill · ${Math.round(wind)} km/h wind` };
+    return { kind: "chill", text: "· wind chill" };
+  }
+  // Hot + hotter-feel = humidity heat index.
+  if (delta > 0 && actual >= 22) {
+    if (humidity >= 60) return { kind: "muggy", text: `· humidity · ${Math.round(humidity)}% RH` };
+    return { kind: "muggy", text: "· heat index" };
+  }
+  // Hot + cooler-feel = breeze relief.
+  if (delta < 0 && actual >= 22 && wind >= 12) {
+    return { kind: "breeze", text: `· breeze relief · ${Math.round(wind)} km/h wind` };
+  }
+  // Cool + warmer-feel = calm & humid.
+  if (delta > 0) return { kind: "muggy", text: "· humidity" };
+  return { kind: "chill", text: "· wind" };
 }
 
 function renderDayRange(w) {
