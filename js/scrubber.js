@@ -39,7 +39,27 @@ export class Scrubber {
     this.sunset = sunset;
     this._placeMarker(this.sunriseEl, sunrise, "Sunrise");
     this._placeMarker(this.sunsetEl, sunset, "Sunset");
+    // Midnight tick — mark the day boundary if it falls inside the range.
+    const midnight = new Date(this.start);
+    midnight.setDate(midnight.getDate() + 1);
+    midnight.setHours(0, 0, 0, 0);
+    this._paintMidnight(midnight.getTime());
     this._render(this._currentT());
+  }
+
+  _paintMidnight(ts) {
+    if (!this.ticksEl) return;
+    const existing = this.ticksEl.querySelector(".scrubber-midnight");
+    if (existing) existing.remove();
+    const totalMs = RANGE_HOURS * 3600_000;
+    const originMs = this.start - 3600_000;
+    const rel = (ts - originMs) / totalMs;
+    if (rel < 0 || rel > 1) return;
+    const bar = document.createElement("span");
+    bar.className = "scrubber-midnight";
+    bar.style.left = `${(rel * 100).toFixed(2)}%`;
+    bar.setAttribute("data-label", "12 AM");
+    this.ticksEl.appendChild(bar);
   }
 
   /** Paint precip tick marks: one per hourly bucket with pop >= 30% or precip >= 0.2mm. */
