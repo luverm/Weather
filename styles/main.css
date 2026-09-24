@@ -1734,6 +1734,11 @@ kbd {
   opacity: 0.9;
   flex: none;
 }
+.rain-window-chip .rain-icon-snow { display: none; }
+.rain-window-chip[data-kind="snow"] .rain-icon-rain { display: none; }
+.rain-window-chip[data-kind="snow"] .rain-icon-snow {
+  display: block; color: #dce6ff;
+}
 .rain-window-chip[data-state="wet"] {
   border-color: rgba(140,180,255,0.32);
   background: linear-gradient(180deg, rgba(140,180,255,0.08), rgba(90,140,220,0.02));

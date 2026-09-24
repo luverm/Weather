@@ -1493,6 +1493,7 @@ function renderRainWindow(w) {
   chip.dataset.state = "wet";
   chip.dataset.ts = String(startTs);
   const kind = hours[wetIdx].condition === "snow" ? "Snow" : "Rain";
+  chip.dataset.kind = kind.toLowerCase();
   const startLabel = startMin < 45 ? `${kind} soon` :
     startMin < 60 ? `${kind} in ~1h` :
     `${kind} ${fmtTime(startTs)}`;
