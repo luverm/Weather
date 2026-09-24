@@ -77,6 +77,10 @@ const el = {
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
+  yesterdayChip: $("#yesterday-chip"),
+  yesterdayArrow: $("#yesterday-arrow"),
+  yesterdayHeadline: $("#yesterday-headline"),
+  yesterdayDetail: $("#yesterday-detail"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -975,6 +979,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderYesterdayChip(w);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1057,6 +1062,47 @@ function renderDailySpark(days) {
       el.dailySparkDots.appendChild(c);
     }
   });
+}
+
+function renderYesterdayChip(w) {
+  if (!el.yesterdayChip) return;
+  const vy = w?.vsYesterday;
+  if (!vy || vy.highDelta == null) { el.yesterdayChip.hidden = true; return; }
+  const scale = state.unit === "F" ? (v) => v * 9 / 5 : (v) => v;
+  const highDelta = Math.round(scale(vy.highDelta));
+  const lowDelta = Math.round(scale(vy.lowDelta ?? 0));
+  const nowDelta = vy.nowDelta != null ? Math.round(scale(vy.nowDelta)) : null;
+
+  // Prefer "at this hour" delta as the headline when we have it; it's the
+  // most viscerally correct answer to "is it warmer than yesterday?".
+  let headline;
+  if (nowDelta != null) {
+    headline = nowDelta === 0 ? "Same as this hour yesterday"
+      : `${Math.abs(nowDelta)}° ${nowDelta > 0 ? "warmer" : "cooler"} than yesterday`;
+  } else {
+    headline = highDelta === 0 ? "Same high as yesterday"
+      : `${Math.abs(highDelta)}° ${highDelta > 0 ? "warmer" : "cooler"} high`;
+  }
+
+  const dominant = nowDelta ?? highDelta;
+  el.yesterdayChip.hidden = false;
+  el.yesterdayChip.dataset.direction =
+    dominant > 0 ? "up" : dominant < 0 ? "down" : "flat";
+  if (el.yesterdayArrow) {
+    el.yesterdayArrow.textContent =
+      dominant > 0 ? "↑" : dominant < 0 ? "↓" : "→";
+  }
+  el.yesterdayHeadline.textContent = headline;
+  const detailParts = [];
+  if (nowDelta != null) {
+    detailParts.push(highDelta === 0
+      ? "same daytime high"
+      : `${Math.abs(highDelta)}° ${highDelta > 0 ? "warmer" : "cooler"} high`);
+  }
+  detailParts.push(lowDelta === 0
+    ? "same overnight low"
+    : `${Math.abs(lowDelta)}° ${lowDelta > 0 ? "milder" : "chillier"} low`);
+  el.yesterdayDetail.textContent = detailParts.join(" · ");
 }
 
 function renderDailyDelta(days) {

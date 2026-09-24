@@ -93,7 +93,8 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
-    past_hours: 1,
+    past_days: 1,
+    past_hours: 24, // yesterday's hourly for "at this hour yesterday" comparisons
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -151,12 +152,13 @@ function normalize(d, aq) {
     }
   }
 
-  // 7-day daily forecast.
-  const dailyForecast = [];
+  // Daily forecast. With past_days=1 the response starts with yesterday, so
+  // we split it into `yesterday` + `dailyForecast` (today + next 6 days).
+  const allDays = [];
   if (daily.time) {
     for (let i = 0; i < daily.time.length; i++) {
       const ts = new Date(daily.time[i]).getTime();
-      dailyForecast.push({
+      allDays.push({
         time: ts,
         tempMax: daily.temperature_2m_max?.[i],
         tempMin: daily.temperature_2m_min?.[i],
@@ -171,6 +173,16 @@ function normalize(d, aq) {
       });
     }
   }
+  // Identify "today" by comparing the local calendar date of each entry to
+  // today's date in the response's timezone (Open-Meteo already anchors
+  // per-day timestamps to local midnight, so a plain comparison works).
+  const todayIdx = allDays.findIndex((d) => {
+    const dt = new Date(d.time);
+    return dt.toDateString() === new Date(now).toDateString();
+  });
+  const anchor = todayIdx >= 0 ? todayIdx : (allDays.length > 1 ? 1 : 0);
+  const yesterday = anchor > 0 ? allDays[anchor - 1] : null;
+  const dailyForecast = allDays.slice(anchor);
 
   // 15-min nowcast for the next ~2h — used for "rain in 12 min" banner.
   const nowcast = [];
@@ -189,8 +201,9 @@ function normalize(d, aq) {
   // Moon phase is not in Open-Meteo's free tier — compute it locally.
   const moon = computeMoonPhase(new Date());
 
-  const sunrise = daily.sunrise?.[0] ? new Date(daily.sunrise[0]).getTime() : null;
-  const sunset = daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null;
+  const today = dailyForecast[0] || {};
+  const sunrise = today.sunrise ?? null;
+  const sunset = today.sunset ?? null;
 
   // Attach golden + blue hour windows to each day so the UI can highlight
   // photographers' favourite light. These are simple time-offset windows —
@@ -199,6 +212,7 @@ function normalize(d, aq) {
   for (const d of dailyForecast) {
     Object.assign(d, computePhotoHours(d.sunrise, d.sunset));
   }
+  if (yesterday) Object.assign(yesterday, computePhotoHours(yesterday.sunrise, yesterday.sunset));
 
   return {
     temp: c.temperature_2m,
@@ -218,17 +232,58 @@ function normalize(d, aq) {
     sunrise,
     sunset,
     photoHours: computePhotoHours(sunrise, sunset),
-    uv: daily.uv_index_max?.[0] ?? null,
-    uvPeak: findUvPeak(d.hourly),
+    uv: today.uvMax ?? null,
+    uvPeak: findUvPeak(d.hourly, now),
     timezone: d.timezone,
     hourly,
     daily: dailyForecast,
+    yesterday,
+    vsYesterday: buildYesterdaySummary(today, yesterday, d.hourly, c.temperature_2m, now),
     nowcast,
     moon,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
     fetchedAt: now,
   };
+}
+
+// Concise "vs. yesterday" summary the UI can drop into a chip:
+// { highDelta, lowDelta, nowDelta, headline, detail }
+function buildYesterdaySummary(today, yesterday, hourlyRaw, tempNow, now) {
+  if (!today || !yesterday) return null;
+  const highDelta = round1(today.tempMax - yesterday.tempMax);
+  const lowDelta = round1(today.tempMin - yesterday.tempMin);
+  // Temperature at "this hour yesterday" — find the hourly entry ~24h ago.
+  let nowDelta = null;
+  if (hourlyRaw?.time && hourlyRaw?.temperature_2m && tempNow != null) {
+    const target = now - 24 * 3600_000;
+    let best = null;
+    for (let i = 0; i < hourlyRaw.time.length; i++) {
+      const ts = new Date(hourlyRaw.time[i]).getTime();
+      const diff = Math.abs(ts - target);
+      if (best == null || diff < best.diff) best = { diff, i };
+    }
+    if (best && best.diff < 90 * 60_000) {
+      const tempThen = hourlyRaw.temperature_2m[best.i];
+      if (tempThen != null) nowDelta = round1(tempNow - tempThen);
+    }
+  }
+  const headline = describeDelta(highDelta, "warmer", "cooler", "similar", "high");
+  const detail = describeDelta(lowDelta, "milder", "chillier", "same", "night");
+  return { highDelta, lowDelta, nowDelta, headline, detail };
+}
+
+function describeDelta(delta, up, down, same, subject) {
+  if (delta == null || isNaN(delta)) return null;
+  const mag = Math.round(Math.abs(delta));
+  if (mag < 1) return `Similar ${subject} to yesterday`;
+  const dir = delta > 0 ? up : down;
+  return `${mag}° ${dir} ${subject}`;
+}
+
+function round1(v) {
+  if (v == null || isNaN(v)) return null;
+  return Math.round(v * 10) / 10;
 }
 
 // Photo windows around sunrise/sunset. Kept intentionally simple; the deep
@@ -343,12 +398,14 @@ function aqiLabel(v) {
   return "Hazardous";
 }
 
-function findUvPeak(hourly) {
+function findUvPeak(hourly, now = Date.now()) {
   if (!hourly?.uv_index) return null;
   let peak = { t: null, v: -Infinity };
   for (let i = 0; i < hourly.uv_index.length; i++) {
+    const ts = new Date(hourly.time[i]).getTime();
+    if (ts < now - 30 * 60_000) continue; // ignore already-past hours
     const v = hourly.uv_index[i];
-    if (v > peak.v) peak = { t: new Date(hourly.time[i]).getTime(), v };
+    if (v > peak.v) peak = { t: ts, v };
   }
   if (peak.t == null) return null;
   return { time: peak.t, value: peak.v };
@@ -439,6 +496,11 @@ function mock(lat, lon) {
       level: "Moderate",
     },
     pressureTrend: { delta: -0.4, direction: "steady" },
+    yesterday: { tempMax: 17, tempMin: 11, precip: 0, pop: 20 },
+    vsYesterday: {
+      highDelta: 1, lowDelta: 1, nowDelta: 1,
+      headline: "1° warmer high", detail: "1° milder night",
+    },
     fetchedAt: now,
     offline: true,
   };

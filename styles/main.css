@@ -1462,6 +1462,54 @@ kbd {
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+
+/* ---------- "vs. yesterday" chip ---------- */
+.yesterday-row {
+  padding: 0 10px 4px;
+}
+.yesterday-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,0.02);
+  font-size: 12px;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+.yesterday-chip[hidden] { display: none; }
+.yesterday-arrow {
+  display: inline-grid; place-items: center;
+  width: 20px; height: 20px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.04);
+  color: var(--fg);
+  font-size: 12px;
+  font-weight: 500;
+  transition: background 260ms var(--ease), color 260ms var(--ease);
+}
+.yesterday-chip[data-direction="up"] {
+  border-color: rgba(255,180,140,0.28);
+  background: linear-gradient(180deg, rgba(255,180,140,0.07), rgba(255,150,110,0.02));
+}
+.yesterday-chip[data-direction="up"] .yesterday-arrow {
+  background: rgba(255,180,140,0.18);
+  color: #ffcaa4;
+}
+.yesterday-chip[data-direction="down"] {
+  border-color: rgba(140,180,255,0.28);
+  background: linear-gradient(180deg, rgba(140,180,255,0.07), rgba(120,160,240,0.02));
+}
+.yesterday-chip[data-direction="down"] .yesterday-arrow {
+  background: rgba(140,180,255,0.18);
+  color: #a8c8ff;
+}
+.yesterday-text { display: grid; gap: 1px; }
+.yesterday-text strong { font-weight: 500; color: var(--fg); font-size: 12px; }
+.yesterday-detail { font-size: 10.5px; color: var(--fg-dim); }
+
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;
