@@ -230,6 +230,19 @@ async function loadByCoords(place) {
   scrubber.setBounds({ start: Date.now(), sunrise: w.sunrise, sunset: w.sunset });
   scrubber.setHours(w.hourly);
 
+  // Apply a deep-linked ?t=N offset once weather is in — only on the very
+  // first load so subsequent city switches reset cleanly to now.
+  if (!app._appliedUrlOffset) {
+    app._appliedUrlOffset = true;
+    const offset = scrubOffsetFromUrl();
+    if (offset != null) {
+      clock.setOffset(offset);
+      scrubber.sync();
+      applyScene(w);
+      ui.setScrubbing(!clock.isLive());
+    }
+  }
+
   // Move the radar to the new location (fire-and-forget; resolves later).
   ensureRadar([place.lat, place.lon]).then((r) => r?.setCenter(place.lat, place.lon, place.name));
 }
@@ -359,6 +372,18 @@ function placeFromUrl() {
       admin1: p.get("admin1") || undefined,
       lat, lon,
     };
+  } catch { return null; }
+}
+
+// Optional ?t=+3 or ?t=-1 pre-sets the scrubber offset in hours. Ignored
+// if the value is nonsense or out of the [-1, 23] scrubber range.
+function scrubOffsetFromUrl() {
+  try {
+    const raw = new URLSearchParams(window.location.search).get("t");
+    if (raw == null) return null;
+    const hrs = parseFloat(raw);
+    if (!isFinite(hrs) || hrs < -1 || hrs > 23) return null;
+    return hrs * 3600_000;
   } catch { return null; }
 }
 
