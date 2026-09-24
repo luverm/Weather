@@ -108,6 +108,8 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  skyPaletteTrack: $("#sky-palette-track"),
+  skyPaletteNow: $("#sky-palette-now"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -141,6 +143,7 @@ const state = {
   sunTimer: null,
   sunArcTimer: null,
   photoHourTimer: null,
+  skyPaletteTimer: null,
   localTimer: null,
 };
 
@@ -616,6 +619,51 @@ function renderSun(w) {
   scheduleSunArc(w);
   renderSunArcPhotoBands(w);
   schedulePhotoHourChip(w);
+  scheduleSkyPalette(w);
+}
+
+// Sky palette strip: a horizontal gradient showing the sky's likely tones
+// through the day (night → blue → dawn → day → dusk → night) with a "now"
+// marker sliding across as the clock ticks.
+function scheduleSkyPalette(w) {
+  if (!el.skyPaletteTrack) return;
+  if (state.skyPaletteTimer) { clearInterval(state.skyPaletteTimer); state.skyPaletteTimer = null; }
+  if (!w?.sunrise || !w?.sunset) return;
+  // Build gradient once per fetch — anchors are wall-clock fractions of the
+  // 24h from local midnight, so it doesn't need to update as time passes.
+  const dayStart = new Date(w.sunrise);
+  dayStart.setHours(0, 0, 0, 0);
+  const dayStartMs = dayStart.getTime();
+  const dayEndMs = dayStartMs + 24 * 3600_000;
+  const pct = (ts) => Math.max(0, Math.min(100, ((ts - dayStartMs) / 24 / 3600_000) * 100));
+  const sr = w.sunrise, ss = w.sunset;
+  const M = 60_000;
+  const stops = [
+    { p: 0,                             c: "#08111f" },
+    { p: pct(sr - 60 * M),              c: "#0e1c3a" },
+    { p: pct(sr - 25 * M),              c: "#3a3167" },
+    { p: pct(sr - 10 * M),              c: "#e07a5f" },
+    { p: pct(sr + 20 * M),              c: "#ffcc88" },
+    { p: pct(sr + 60 * M),              c: "#9ad1ff" },
+    { p: pct((sr + ss) / 2),            c: "#5aa8ff" },
+    { p: pct(ss - 60 * M),              c: "#8fbcff" },
+    { p: pct(ss - 20 * M),              c: "#ffcc88" },
+    { p: pct(ss + 10 * M),              c: "#e07a5f" },
+    { p: pct(ss + 25 * M),              c: "#3a3167" },
+    { p: pct(ss + 60 * M),              c: "#0e1c3a" },
+    { p: 100,                           c: "#08111f" },
+  ].sort((a, b) => a.p - b.p);
+  const gradient = `linear-gradient(90deg, ${stops.map((s) => `${s.c} ${s.p.toFixed(1)}%`).join(", ")})`;
+  el.skyPaletteTrack.style.background = gradient;
+
+  const update = () => {
+    const now = Date.now();
+    if (now < dayStartMs || now > dayEndMs) { el.skyPaletteNow.style.left = "0%"; return; }
+    const p = ((now - dayStartMs) / (dayEndMs - dayStartMs)) * 100;
+    el.skyPaletteNow.style.left = `${p.toFixed(2)}%`;
+  };
+  update();
+  state.skyPaletteTimer = setInterval(update, 60_000);
 }
 
 // Paint dashed golden/blue segments onto the sun arc so the photo windows
