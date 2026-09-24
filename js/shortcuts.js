@@ -71,6 +71,12 @@ export function installShortcuts(handlers) {
     if (key === "]") { handlers.cyclePlace?.(1); e.preventDefault(); return; }
     if (key === "s" || key === "S") { handlers.savePlace?.(); e.preventDefault(); return; }
     if (key === "r" || key === "R") { handlers.refresh?.(); e.preventDefault(); return; }
+    // Number keys 1–9 jump to that saved place directly.
+    if (/^[1-9]$/.test(key)) {
+      handlers.jumpPlace?.(parseInt(key, 10) - 1);
+      e.preventDefault();
+      return;
+    }
   });
 }
 

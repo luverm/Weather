@@ -312,6 +312,11 @@ installShortcuts({
   },
   savePlace: () => document.getElementById("save-place-btn")?.click(),
   refresh: () => refreshWeather(),
+  jumpPlace: (idx) => {
+    const list = places.all();
+    const p = list[idx];
+    if (p) loadByCoords(p);
+  },
   nudge: (hours) => {
     clock.setOffset(clock.offset() + hours * 3600_000);
     scrubber.sync();
