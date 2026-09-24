@@ -1,7 +1,7 @@
 // UI layer. Renders every data module and handles non-scene interactions
 // (search, unit toggle, saved places, tilt, audio toggle).
 
-import { searchCities } from "./weather-service.js";
+import { searchCities, clearCached } from "./weather-service.js";
 import { places } from "./places.js";
 import { HourlyChart } from "./hourly-chart.js";
 import { ComfortStrip } from "./comfort-strip.js";
@@ -104,6 +104,7 @@ const el = {
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
   settingClearPlaces: $("#setting-clear-places"),
+  settingClearCache: $("#setting-clear-cache"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
@@ -1864,6 +1865,12 @@ function bindSettings() {
     for (const p of places.all()) places.remove(p);
     renderPlaces();
     ui.showToast("Saved places cleared");
+    close();
+  });
+
+  el.settingClearCache?.addEventListener("click", () => {
+    const n = clearCached();
+    ui.showToast(n ? `Cleared ${n} cached place${n === 1 ? "" : "s"}` : "No cache to clear");
     close();
   });
 }

@@ -74,6 +74,16 @@ function keyFor(lat, lon) {
   return `${lat.toFixed(2)},${lon.toFixed(2)}`;
 }
 
+/** Drop every cached place. Returns the number removed. */
+export function clearCached() {
+  try {
+    const store = JSON.parse(localStorage.getItem(CACHE_KEY) || "{}");
+    const count = Object.keys(store).length;
+    localStorage.removeItem(CACHE_KEY);
+    return count;
+  } catch { return 0; }
+}
+
 /** Read the last cached weather for a place, or null if none/expired. */
 export function readCached(lat, lon) {
   try {
