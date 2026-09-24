@@ -77,6 +77,14 @@ export function narrate(weather) {
     // If it's raining now, look ahead for when it stops.
     const dry = weather.hourly?.find((h) => h.pop < 30 && h.time > Date.now() + 30 * 60_000);
     if (dry) bits.push(`Easing off by ${fmtHour(dry.time)}.`);
+  } else if (condition === "clouds") {
+    // Overcast now — look ahead for a clear hour.
+    const clear = weather.hourly?.find((h) => h.condition === "clear" && h.time > Date.now() + 60 * 60_000);
+    if (clear) bits.push(`Clearing around ${fmtHour(clear.time)}.`);
+  } else if (condition === "clear") {
+    // Clear now — look ahead for clouds moving in.
+    const clouds = weather.hourly?.find((h) => (h.condition === "clouds" || h.condition === "rain") && h.time > Date.now() + 60 * 60_000);
+    if (clouds) bits.push(`Clouding up around ${fmtHour(clouds.time)}.`);
   }
 
   // Temperature swing.
