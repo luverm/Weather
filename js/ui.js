@@ -148,6 +148,7 @@ const state = {
   sunArcTimer: null,
   photoHourTimer: null,
   skyPaletteTimer: null,
+  daylightTimer: null,
   localTimer: null,
 };
 
@@ -649,24 +650,7 @@ function fmtTime(ts) {
 function renderSun(w) {
   el.sunRise.textContent = fmtTime(w.sunrise);
   el.sunSet.textContent = fmtTime(w.sunset);
-  if (w.sunrise && w.sunset) {
-    const mins = Math.round((w.sunset - w.sunrise) / 60_000);
-    const hh = Math.floor(mins / 60);
-    const mm = mins % 60;
-    // Enrich with a "so far / left" split for a running clock feel.
-    const now = Date.now();
-    let annot = "";
-    if (now >= w.sunrise && now <= w.sunset) {
-      const passedMin = Math.round((now - w.sunrise) / 60_000);
-      const leftMin = mins - passedMin;
-      annot = ` · ${formatHM(leftMin)} left`;
-    } else if (now < w.sunrise) {
-      annot = " · not risen yet";
-    } else {
-      annot = " · set";
-    }
-    el.sunDaylight.textContent = `${hh}h ${mm}m${annot}`;
-  } else el.sunDaylight.textContent = "—";
+  scheduleDaylightRemaining(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   renderSunArcPhotoBands(w);
@@ -837,6 +821,30 @@ function humanCountdown(ms) {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
   return m ? `${h}h ${m}m` : `${h}h`;
+}
+
+function scheduleDaylightRemaining(w) {
+  if (state.daylightTimer) { clearInterval(state.daylightTimer); state.daylightTimer = null; }
+  if (!el.sunDaylight) return;
+  if (!w?.sunrise || !w?.sunset) { el.sunDaylight.textContent = "—"; return; }
+  const update = () => {
+    const mins = Math.round((w.sunset - w.sunrise) / 60_000);
+    const hh = Math.floor(mins / 60);
+    const mm = mins % 60;
+    const now = Date.now();
+    let annot = "";
+    if (now >= w.sunrise && now <= w.sunset) {
+      const leftMin = Math.max(0, Math.round((w.sunset - now) / 60_000));
+      annot = ` · ${formatHM(leftMin)} left`;
+    } else if (now < w.sunrise) {
+      annot = " · not risen yet";
+    } else {
+      annot = " · set";
+    }
+    el.sunDaylight.textContent = `${hh}h ${mm}m${annot}`;
+  };
+  update();
+  state.daylightTimer = setInterval(update, 60_000);
 }
 
 function scheduleSunArc(w) {
