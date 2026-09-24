@@ -1492,9 +1492,10 @@ function renderRainWindow(w) {
   chip.hidden = false;
   chip.dataset.state = "wet";
   chip.dataset.ts = String(startTs);
-  const startLabel = startMin < 45 ? "Rain soon" :
-    startMin < 60 ? "Rain in ~1h" :
-    `Rain ${fmtTime(startTs)}`;
+  const kind = hours[wetIdx].condition === "snow" ? "Snow" : "Rain";
+  const startLabel = startMin < 45 ? `${kind} soon` :
+    startMin < 60 ? `${kind} in ~1h` :
+    `${kind} ${fmtTime(startTs)}`;
   const spanHours = Math.max(1, Math.round((endTs - startTs) / 3600_000));
   const headline = `${startLabel}${startMin >= 60 ? `–${fmtTime(endTs)}` : ""}`;
   const detailParts = [];
