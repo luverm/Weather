@@ -456,7 +456,12 @@ function renderMetrics(w) {
     }
   }
   if (w.uvPeak?.time) {
-    el.metricUVSub.textContent = `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`;
+    // At high UV, add the burn-time window (the stretch of consecutive
+    // hours where UV stays >= 6) so the "peak at 12:00" line answers
+    // "when is it safe to be outside?" too.
+    const burnWindow = uvBurnWindow(w.hourly);
+    const suffix = burnWindow ? ` · ≥6 ${fmtTime(burnWindow.start)}–${fmtTime(burnWindow.end)}` : "";
+    el.metricUVSub.textContent = `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}${suffix}`;
   } else {
     el.metricUVSub.textContent = "peak —";
   }
@@ -528,6 +533,25 @@ function beaufort(kmh) {
   if (kmh < 103) return { label: "Storm", cls: "up" };
   if (kmh < 118) return { label: "Violent storm", cls: "up" };
   return { label: "Hurricane", cls: "up" };
+}
+
+// Find the contiguous window of hours in the next 24h where UV stays
+// >= 6 ("high"). Null if nothing crosses that line — so the label only
+// appears when it's actionable.
+function uvBurnWindow(hours) {
+  const upcoming = (hours || []).filter((h) => h.time >= Date.now() - 30 * 60_000 && h.uv != null).slice(0, 24);
+  if (!upcoming.length) return null;
+  let start = null, end = null;
+  for (const h of upcoming) {
+    if (h.uv >= 6) {
+      if (start == null) start = h.time;
+      end = h.time + 3600_000;
+    } else if (start != null) {
+      break; // stop at the first drop so a morning peak doesn't merge with a late one
+    }
+  }
+  if (start == null || end == null) return null;
+  return { start, end };
 }
 
 function uvLevel(v) {
