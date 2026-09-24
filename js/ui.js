@@ -653,7 +653,19 @@ function renderSun(w) {
     const mins = Math.round((w.sunset - w.sunrise) / 60_000);
     const hh = Math.floor(mins / 60);
     const mm = mins % 60;
-    el.sunDaylight.textContent = `${hh}h ${mm}m`;
+    // Enrich with a "so far / left" split for a running clock feel.
+    const now = Date.now();
+    let annot = "";
+    if (now >= w.sunrise && now <= w.sunset) {
+      const passedMin = Math.round((now - w.sunrise) / 60_000);
+      const leftMin = mins - passedMin;
+      annot = ` · ${formatHM(leftMin)} left`;
+    } else if (now < w.sunrise) {
+      annot = " · not risen yet";
+    } else {
+      annot = " · set";
+    }
+    el.sunDaylight.textContent = `${hh}h ${mm}m${annot}`;
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
@@ -808,6 +820,15 @@ function nextPhotoWindow(w, now) {
     startsIn: upcoming.win.start - now,
     endsIn: upcoming.win.end - now,
   };
+}
+
+function formatHM(mins) {
+  if (mins == null || mins <= 0) return "0m";
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (h && m) return `${h}h ${m}m`;
+  if (h) return `${h}h`;
+  return `${m}m`;
 }
 
 function humanCountdown(ms) {
