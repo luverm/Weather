@@ -50,6 +50,11 @@ const el = {
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  sunArcPhoto: $("#sun-arc-photo"),
+  photoHourChip: $("#photo-hour-chip"),
+  photoHourDot: $("#photo-hour-dot"),
+  photoHourHeadline: $("#photo-hour-headline"),
+  photoHourDetail: $("#photo-hour-detail"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -122,6 +127,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  photoHourTimer: null,
   localTimer: null,
 };
 
@@ -137,6 +143,7 @@ export const ui = {
     bindRefresh();
     bindSettings();
     bindTilt();
+    bindPhotoHourChip();
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
@@ -523,6 +530,120 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderSunArcPhotoBands(w);
+  schedulePhotoHourChip(w);
+}
+
+// Paint dashed golden/blue segments onto the sun arc so the photo windows
+// are visible at a glance. Each segment is a small stroke-dasharray-limited
+// slice of the same quadratic-bezier path used by the marker.
+function renderSunArcPhotoBands(w) {
+  if (!el.sunArcPhoto) return;
+  const ph = w?.photoHours;
+  if (!ph || !w.sunrise || !w.sunset) { el.sunArcPhoto.innerHTML = ""; return; }
+  const arcLen = 220;  // approx path length of the quadratic bezier
+  const sr = w.sunrise, ss = w.sunset;
+  // Fraction along the arc for a timestamp:
+  // sunrise = 0, sunset = 1; before/after clamp to 0/1.
+  const frac = (ts) => Math.max(0, Math.min(1, (ts - sr) / (ss - sr)));
+  const segments = [
+    { win: ph.blueAM, color: "rgba(120,170,255,0.75)" },
+    { win: ph.goldenAM, color: "rgba(255,195,120,0.9)" },
+    { win: ph.goldenPM, color: "rgba(255,175,110,0.9)" },
+    { win: ph.bluePM, color: "rgba(140,150,230,0.75)" },
+  ].filter((s) => s.win && s.win.end > sr - 60 * 60_000 && s.win.start < ss + 60 * 60_000);
+
+  const svgns = "http://www.w3.org/2000/svg";
+  el.sunArcPhoto.innerHTML = "";
+  for (const seg of segments) {
+    const a = frac(seg.win.start);
+    const b = frac(seg.win.end);
+    if (b <= a) continue;
+    const p = document.createElementNS(svgns, "path");
+    p.setAttribute("d", "M10 74 Q100 -26 190 74");
+    p.setAttribute("fill", "none");
+    p.setAttribute("stroke", seg.color);
+    p.setAttribute("stroke-width", "2.4");
+    p.setAttribute("stroke-linecap", "round");
+    // Only reveal the slice [a,b] of the arc with a big dashoffset.
+    const start = a * arcLen;
+    const len = (b - a) * arcLen;
+    p.setAttribute("stroke-dasharray", `${len} ${arcLen}`);
+    p.setAttribute("stroke-dashoffset", `-${start}`);
+    el.sunArcPhoto.appendChild(p);
+  }
+}
+
+// The pill under the sun-row: shows the next photo window as a countdown,
+// or "Right now" while inside a window. Ticks every 30 s.
+function schedulePhotoHourChip(w) {
+  if (state.photoHourTimer) { clearInterval(state.photoHourTimer); state.photoHourTimer = null; }
+  const chip = el.photoHourChip;
+  if (!chip) return;
+  const update = () => {
+    const info = nextPhotoWindow(w, Date.now());
+    if (!info) { chip.hidden = true; return; }
+    chip.hidden = false;
+    chip.dataset.kind = info.kind;
+    if (el.photoHourDot) el.photoHourDot.dataset.kind = info.kind;
+    if (el.photoHourHeadline) {
+      el.photoHourHeadline.textContent = info.active
+        ? `${info.label} — right now`
+        : `${info.label} in ${humanCountdown(info.startsIn)}`;
+    }
+    if (el.photoHourDetail) {
+      el.photoHourDetail.textContent = info.active
+        ? `Ends ${fmtTime(info.win.end)} · ${humanCountdown(info.endsIn)} left`
+        : `${fmtTime(info.win.start)} → ${fmtTime(info.win.end)}`;
+    }
+  };
+  update();
+  state.photoHourTimer = setInterval(update, 30_000);
+}
+
+function nextPhotoWindow(w, now) {
+  if (!w?.daily?.length) return null;
+  const kinds = [
+    { key: "blueAM", label: "Blue hour" },
+    { key: "goldenAM", label: "Golden hour" },
+    { key: "goldenPM", label: "Golden hour" },
+    { key: "bluePM", label: "Blue hour" },
+  ];
+  const pool = [];
+  for (const d of w.daily) {
+    for (const k of kinds) {
+      const win = d[k.key];
+      if (!win) continue;
+      pool.push({ kind: k.key, label: k.label, win });
+    }
+  }
+  pool.sort((a, b) => a.win.start - b.win.start);
+  // Current window if any, else next upcoming.
+  const current = pool.find((p) => now >= p.win.start && now <= p.win.end);
+  if (current) {
+    return {
+      ...current,
+      active: true,
+      startsIn: 0,
+      endsIn: current.win.end - now,
+    };
+  }
+  const upcoming = pool.find((p) => p.win.start > now);
+  if (!upcoming) return null;
+  return {
+    ...upcoming,
+    active: false,
+    startsIn: upcoming.win.start - now,
+    endsIn: upcoming.win.end - now,
+  };
+}
+
+function humanCountdown(ms) {
+  const mins = Math.max(0, Math.round(ms / 60_000));
+  if (mins < 60) return `${mins}m`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return m ? `${h}h ${m}m` : `${h}h`;
 }
 
 function scheduleSunArc(w) {
@@ -1169,6 +1290,19 @@ function bindUnitToggle() {
 
 function bindLocate() {
   el.locateBtn.addEventListener("click", () => state.handlers.onLocate?.());
+}
+
+function bindPhotoHourChip() {
+  if (!el.photoHourChip) return;
+  el.photoHourChip.addEventListener("click", () => {
+    const info = nextPhotoWindow(state.weather, Date.now());
+    if (!info) return;
+    // Scrub to the middle of the window so the sky reflects that light.
+    const mid = info.active
+      ? Date.now()
+      : Math.round((info.win.start + info.win.end) / 2);
+    state.handlers.onHourClick?.(mid);
+  });
 }
 
 function bindAudio() {

@@ -976,6 +976,78 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+#sun-arc-photo path {
+  filter: drop-shadow(0 0 4px currentColor);
+  mix-blend-mode: screen;
+  opacity: 0.9;
+}
+
+/* ---------- Photo-hour chip (golden / blue) ---------- */
+.photo-hour-chip {
+  display: inline-grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px; align-items: center;
+  padding: 6px 10px 6px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.005));
+  color: var(--fg-muted);
+  text-align: left;
+  cursor: pointer;
+  transition: background 240ms var(--ease), transform 240ms var(--ease), border-color 240ms var(--ease);
+  font: inherit;
+}
+.photo-hour-chip:hover {
+  transform: translateY(-1px);
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(255,220,170,0.35);
+}
+.photo-hour-chip:focus-visible {
+  outline: 2px solid rgba(255,220,170,0.6);
+  outline-offset: 2px;
+}
+.photo-hour-chip[hidden] { display: none; }
+.photo-hour-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: rgba(255,205,140,0.9);
+  box-shadow: 0 0 8px 1px currentColor;
+  color: rgba(255,205,140,0.8);
+}
+.photo-hour-dot[data-kind="blueAM"],
+.photo-hour-dot[data-kind="bluePM"] {
+  background: rgba(140,170,240,0.95);
+  color: rgba(140,170,240,0.75);
+}
+.photo-hour-dot[data-kind="goldenAM"],
+.photo-hour-dot[data-kind="goldenPM"] {
+  background: rgba(255,200,130,0.95);
+  color: rgba(255,200,130,0.75);
+}
+.photo-hour-body {
+  display: grid; gap: 1px;
+  min-width: 0;
+  font-variant-numeric: tabular-nums;
+}
+.photo-hour-headline {
+  font-size: 12px;
+  color: var(--fg);
+  letter-spacing: 0.02em;
+}
+.photo-hour-detail {
+  font-size: 10.5px;
+  color: var(--fg-dim);
+}
+.photo-hour-chip[data-kind="goldenAM"],
+.photo-hour-chip[data-kind="goldenPM"] {
+  border-color: rgba(255,200,130,0.28);
+  background: linear-gradient(180deg, rgba(255,200,130,0.06), rgba(255,140,90,0.02));
+}
+.photo-hour-chip[data-kind="blueAM"],
+.photo-hour-chip[data-kind="bluePM"] {
+  border-color: rgba(140,170,240,0.28);
+  background: linear-gradient(180deg, rgba(140,170,240,0.06), rgba(90,120,220,0.02));
+}
 
 /* ---------- Radar map ---------- */
 .radar {

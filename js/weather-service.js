@@ -189,6 +189,17 @@ function normalize(d, aq) {
   // Moon phase is not in Open-Meteo's free tier — compute it locally.
   const moon = computeMoonPhase(new Date());
 
+  const sunrise = daily.sunrise?.[0] ? new Date(daily.sunrise[0]).getTime() : null;
+  const sunset = daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null;
+
+  // Attach golden + blue hour windows to each day so the UI can highlight
+  // photographers' favourite light. These are simple time-offset windows —
+  // accurate to a few minutes near mid-latitudes, which is good enough for
+  // "shoot in the next 20 min" guidance.
+  for (const d of dailyForecast) {
+    Object.assign(d, computePhotoHours(d.sunrise, d.sunset));
+  }
+
   return {
     temp: c.temperature_2m,
     feelsLike: c.apparent_temperature,
@@ -204,8 +215,9 @@ function normalize(d, aq) {
     isDay: !!c.is_day,
     condition,
     label,
-    sunrise: daily.sunrise?.[0] ? new Date(daily.sunrise[0]).getTime() : null,
-    sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null,
+    sunrise,
+    sunset,
+    photoHours: computePhotoHours(sunrise, sunset),
     uv: daily.uv_index_max?.[0] ?? null,
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
@@ -216,6 +228,24 @@ function normalize(d, aq) {
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
     fetchedAt: now,
+  };
+}
+
+// Photo windows around sunrise/sunset. Kept intentionally simple; the deep
+// astronomical maths (solar altitude by lat/lon/day-of-year) would be many
+// more lines for maybe 3–5 minutes of extra precision at typical latitudes.
+export function computePhotoHours(sunrise, sunset) {
+  if (!sunrise || !sunset) return { goldenAM: null, goldenPM: null, blueAM: null, bluePM: null };
+  const M = 60_000;
+  return {
+    // Golden hour AM: 15 min before sunrise through 45 min after.
+    goldenAM: { start: sunrise - 15 * M, end: sunrise + 45 * M },
+    // Golden hour PM: 45 min before sunset through 15 min after.
+    goldenPM: { start: sunset - 45 * M, end: sunset + 15 * M },
+    // Blue hour AM: 45 min before sunrise through 15 min before.
+    blueAM: { start: sunrise - 45 * M, end: sunrise - 15 * M },
+    // Blue hour PM: 15 min after sunset through 45 min after.
+    bluePM: { start: sunset + 15 * M, end: sunset + 45 * M },
   };
 }
 
@@ -362,6 +392,10 @@ function mock(lat, lon) {
     isDay, condition: CONDITIONS.CLOUDS, label: "Partly cloudy (offline)",
     sunrise: new Date().setHours(6, 30, 0, 0),
     sunset: new Date().setHours(19, 0, 0, 0),
+    photoHours: computePhotoHours(
+      new Date().setHours(6, 30, 0, 0),
+      new Date().setHours(19, 0, 0, 0)
+    ),
     uv: 3,
     uvPeak: { time: new Date().setHours(13, 0, 0, 0), value: 5 },
     timezone: "UTC",
@@ -375,17 +409,22 @@ function mock(lat, lon) {
       uv: Math.max(0, Math.sin((i - 6) * Math.PI / 13) * 6),
       condition: CONDITIONS.CLOUDS, label: "Cloudy",
     })),
-    daily: Array.from({ length: 7 }, (_, i) => ({
-      time: now + i * 86400_000,
-      tempMax: 20 + Math.sin(i) * 4,
-      tempMin: 12 + Math.sin(i) * 3,
-      precip: i % 3 === 0 ? 2.1 : 0,
-      pop: i % 3 === 0 ? 65 : 15,
-      windMax: 12, gustsMax: 20, uvMax: 5,
-      sunrise: new Date().setHours(6, 30, 0, 0),
-      sunset: new Date().setHours(19, 0, 0, 0),
-      condition: CONDITIONS.CLOUDS, label: "Cloudy",
-    })),
+    daily: Array.from({ length: 7 }, (_, i) => {
+      const sr = new Date().setHours(6, 30, 0, 0) + i * 86400_000;
+      const ss = new Date().setHours(19, 0, 0, 0) + i * 86400_000;
+      return {
+        time: now + i * 86400_000,
+        tempMax: 20 + Math.sin(i) * 4,
+        tempMin: 12 + Math.sin(i) * 3,
+        precip: i % 3 === 0 ? 2.1 : 0,
+        pop: i % 3 === 0 ? 65 : 15,
+        windMax: 12, gustsMax: 20, uvMax: 5,
+        sunrise: sr,
+        sunset: ss,
+        ...computePhotoHours(sr, ss),
+        condition: CONDITIONS.CLOUDS, label: "Cloudy",
+      };
+    }),
     nowcast: [],
     moon: computeMoonPhase(new Date()),
     airQuality: { aqi: 42, pm25: 8, pm10: 14, o3: 40, no2: 15, co: 0.2, label: "Good" },
