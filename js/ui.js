@@ -1655,11 +1655,19 @@ function debounce(fn, ms) {
 
 const runSearch = debounce(async (q) => {
   const results = await searchCities(q);
-  renderSearchResults(results);
+  renderSearchResults(results, q);
 }, 200);
 
-function renderSearchResults(results) {
-  if (!results.length) { el.searchResults.hidden = true; el.searchResults.innerHTML = ""; return; }
+function renderSearchResults(results, query = "") {
+  if (!results.length) {
+    // Empty-state row so people know the search ran and turned up nothing.
+    el.searchResults.innerHTML = `<li class="empty" role="option" aria-disabled="true">
+      No matches${query ? ` for "${escapeHtml(query)}"` : ""}
+    </li>`;
+    el.searchResults.hidden = false;
+    el.searchResults._items = [];
+    return;
+  }
   el.searchResults.innerHTML = results.map((r, i) => `
     <li role="option" data-index="${i}">
       <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
