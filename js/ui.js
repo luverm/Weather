@@ -1886,8 +1886,9 @@ function startFetchedTicker() {
       minutes < 1 ? "Just now" :
       minutes < 60 ? `Updated ${minutes}m ago` :
       `Updated ${Math.floor(minutes / 60)}h ago`;
-    el.fetchedAgo.textContent = "· " + label;
-    el.fetchedAgo.classList.toggle("stale", minutes >= 20);
+    const suffix = state.weather.stale ? " · cached" : state.weather.offline ? " · offline" : "";
+    el.fetchedAgo.textContent = "· " + label + suffix;
+    el.fetchedAgo.classList.toggle("stale", minutes >= 20 || !!state.weather.stale);
   };
   update();
   setInterval(update, 30_000);
