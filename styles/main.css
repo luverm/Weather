@@ -387,6 +387,16 @@ html[data-reduce-motion="true"] *::after {
 }
 .save-place-btn[hidden] { display: none; }
 .save-place-btn svg { display: block; opacity: 0.8; }
+.save-place-key {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9.5px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--stroke);
+  color: var(--fg-dim);
+  letter-spacing: 0.08em;
+}
 .place-localtime {
   margin: 6px 0 0;
   display: inline-flex; align-items: center; gap: 6px;
