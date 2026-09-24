@@ -200,6 +200,7 @@ async function loadByCoords(place) {
   app.place = place;
   ui.setPlace(place);
   ui.setLoading(`Fetching weather for ${place.name}…`);
+  updateAddressBar(place);
 
   // Drop any scrubber offset so we start live on each new city.
   clock.reset();
@@ -310,6 +311,24 @@ installShortcuts({
 // Deep-link: ?lat=…&lon=…&name=…&country=…&admin1=… pre-loads that place
 // and takes precedence over saved places / geolocation. `name` and the
 // admin fields are decoded from the URL when present.
+// Sync the address bar to reflect the currently loaded place. Uses
+// replaceState so the browser back/forward stack stays clean.
+function updateAddressBar(place) {
+  if (!place || place.lat == null || place.lon == null) return;
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set("lat", place.lat.toFixed(4));
+    url.searchParams.set("lon", place.lon.toFixed(4));
+    if (place.name && place.name !== "Current location") url.searchParams.set("name", place.name);
+    else url.searchParams.delete("name");
+    if (place.country) url.searchParams.set("country", place.country);
+    else url.searchParams.delete("country");
+    if (place.admin1) url.searchParams.set("admin1", place.admin1);
+    else url.searchParams.delete("admin1");
+    window.history.replaceState({}, "", url);
+  } catch { /* older browsers just skip */ }
+}
+
 function placeFromUrl() {
   try {
     const p = new URLSearchParams(window.location.search);
