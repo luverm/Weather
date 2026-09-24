@@ -8,7 +8,7 @@ import { RainScene } from "./scenes/rain.js";
 import { SnowScene } from "./scenes/snow.js";
 import { LightningScene } from "./scenes/lightning.js";
 import { WindScene } from "./scenes/wind.js";
-import { getWeather, getLocation } from "./weather-service.js";
+import { getWeather, getLocation, readCached } from "./weather-service.js";
 import { ui } from "./ui.js";
 import { clock } from "./clock.js";
 import { Scrubber } from "./scrubber.js";
@@ -205,6 +205,17 @@ async function loadByCoords(place) {
   // Drop any scrubber offset so we start live on each new city.
   clock.reset();
   ui.setScrubbing(false);
+
+  // Instant paint from cache while the network fetch is in flight — makes
+  // repeat visits feel snappy even on slow links.
+  const cached = readCached(place.lat, place.lon);
+  if (cached) {
+    app.weather = cached;
+    ui.setWeather(cached, { narrative: narrate(cached) });
+    applyScene(cached);
+    scrubber.setBounds({ start: Date.now(), sunrise: cached.sunrise, sunset: cached.sunset });
+    scrubber.setHours(cached.hourly);
+  }
 
   const w = await getWeather(place.lat, place.lon);
   app.weather = w;

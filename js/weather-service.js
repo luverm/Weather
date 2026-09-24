@@ -67,6 +67,41 @@ export async function searchCities(query) {
   }
 }
 
+const CACHE_KEY = "aether:weather-cache";
+const CACHE_TTL = 60 * 60 * 1000; // 1h — stale-but-shown fallback window
+
+function keyFor(lat, lon) {
+  return `${lat.toFixed(2)},${lon.toFixed(2)}`;
+}
+
+/** Read the last cached weather for a place, or null if none/expired. */
+export function readCached(lat, lon) {
+  try {
+    const store = JSON.parse(localStorage.getItem(CACHE_KEY) || "{}");
+    const entry = store[keyFor(lat, lon)];
+    if (!entry) return null;
+    const age = Date.now() - (entry.savedAt || 0);
+    if (age > CACHE_TTL) return null;
+    entry.data.stale = true;
+    return entry.data;
+  } catch { return null; }
+}
+
+function writeCached(lat, lon, data) {
+  try {
+    const store = JSON.parse(localStorage.getItem(CACHE_KEY) || "{}");
+    // Prune to at most 6 places so the entry stays tiny.
+    const entries = Object.entries(store);
+    while (entries.length >= 6) {
+      entries.sort((a, b) => (a[1].savedAt || 0) - (b[1].savedAt || 0));
+      const [oldestKey] = entries.shift();
+      delete store[oldestKey];
+    }
+    store[keyFor(lat, lon)] = { savedAt: Date.now(), data };
+    localStorage.setItem(CACHE_KEY, JSON.stringify(store));
+  } catch { /* quota exceeded / private mode — silently skip */ }
+}
+
 export async function getWeather(lat, lon) {
   const params = new URLSearchParams({
     latitude: lat,
@@ -116,9 +151,15 @@ export async function getWeather(lat, lon) {
   try {
     const [forecast, air] = await Promise.allSettled([fetchJson(url), fetchJson(aqUrl)]);
     if (forecast.status !== "fulfilled") throw forecast.reason;
-    return normalize(forecast.value, air.status === "fulfilled" ? air.value : null);
+    const normalized = normalize(forecast.value, air.status === "fulfilled" ? air.value : null);
+    writeCached(lat, lon, normalized);
+    return normalized;
   } catch (err) {
     console.warn("Weather fetch failed, using mock", err);
+    // Prefer a recent cache over the mock when one exists — the user gets
+    // real numbers, just flagged as stale.
+    const cached = readCached(lat, lon);
+    if (cached) return cached;
     return mock(lat, lon);
   }
 }
