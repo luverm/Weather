@@ -856,6 +856,53 @@ html[data-reduce-motion="true"] *::after {
   transition: transform 900ms var(--ease);
 }
 
+/* Gust bar: sustained (solid) + gust extent (dashed) */
+.gust-bar {
+  grid-column: 1 / span 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.gust-bar[hidden] { display: none; }
+.gust-bar-track {
+  position: relative;
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.06);
+  display: flex;
+  overflow: hidden;
+}
+.gust-bar-sustained {
+  height: 100%;
+  background: linear-gradient(90deg, #78d0ff, #b8e0d4);
+  border-radius: 2px 0 0 2px;
+  transition: width 480ms var(--ease);
+}
+.gust-bar-gust {
+  height: 100%;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255,180,140,0.9) 0 3px,
+    rgba(255,180,140,0.35) 3px 6px
+  );
+  border-radius: 0 2px 2px 0;
+  transition: width 480ms var(--ease);
+}
+.gust-bar-label {
+  font-size: 10px;
+  color: var(--fg-dim);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  min-width: 46px;
+  text-align: right;
+}
+.gust-bar-label[data-kind="gusty"] { color: #ffcaa4; }
+.gust-bar-label[data-kind="turbulent"] { color: #ff9c7a; }
+.gust-bar-label:empty { display: none; }
+
 /* ---------- Sun countdown ---------- */
 .sun-countdown {
   display: inline-block;

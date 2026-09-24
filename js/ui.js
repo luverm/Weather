@@ -30,6 +30,10 @@ const el = {
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
+  windGustBar: $("#m-wind-gust-bar"),
+  windSustainedBar: $("#m-wind-sustained"),
+  windGustBarSeg: $("#m-wind-gust"),
+  windGustiness: $("#m-wind-gustiness"),
   metricHumidity: $("#m-humidity"),
   metricHumiditySub: $("#m-humidity-sub"),
   metricPressure: $("#m-pressure"),
@@ -385,6 +389,7 @@ function renderMetrics(w) {
       el.windBft.textContent = "";
     }
   }
+  renderWindGustBar(w);
   el.metricHumidity.textContent = Math.round(w.humidity ?? 0);
   el.metricHumiditySub.textContent = w.dewPoint != null
     ? `dew ${Math.round(convertTemp(w.dewPoint))}°`
@@ -418,6 +423,35 @@ function renderMetrics(w) {
     el.metricUVSub.textContent = "peak —";
   }
   renderPressureSparkline(w);
+}
+
+// Compact bar showing sustained vs. gust wind. Emits a "gusty" pill when
+// the gust-to-sustained ratio is elevated — a common piloting/photography
+// signal that things are turbulent rather than steady.
+function renderWindGustBar(w) {
+  if (!el.windGustBar) return;
+  const sustained = w.windSpeed;
+  const gusts = w.windGusts;
+  if (sustained == null || gusts == null || gusts <= 0) {
+    el.windGustBar.hidden = true;
+    return;
+  }
+  el.windGustBar.hidden = false;
+  // Scale bar against a soft cap of 80 km/h (hurricanes overflow — that's fine).
+  const CAP = 80;
+  const sPct = Math.min(100, (sustained / CAP) * 100);
+  const gPct = Math.min(100, (gusts / CAP) * 100);
+  if (el.windSustainedBar) el.windSustainedBar.style.width = `${sPct.toFixed(1)}%`;
+  if (el.windGustBarSeg) el.windGustBarSeg.style.width = `${Math.max(0, gPct - sPct).toFixed(1)}%`;
+  const ratio = sustained > 1 ? gusts / sustained : 1;
+  const gustinessText =
+    ratio >= 1.7 ? "turbulent" :
+    ratio >= 1.4 ? "gusty" :
+    ratio >= 1.15 ? "steady" : "";
+  if (el.windGustiness) {
+    el.windGustiness.textContent = gustinessText;
+    el.windGustiness.dataset.kind = gustinessText;
+  }
 }
 
 function humidityComfort(rh, dew, temp) {

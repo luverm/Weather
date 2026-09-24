@@ -235,6 +235,13 @@
           <span id="m-wind" class="metric-value">—</span>
           <span class="metric-unit">km/h</span>
           <span id="m-wind-sub" class="metric-sub">gust —</span>
+          <div id="m-wind-gust-bar" class="gust-bar" aria-hidden="true" hidden>
+            <div class="gust-bar-track">
+              <div class="gust-bar-sustained" id="m-wind-sustained"></div>
+              <div class="gust-bar-gust" id="m-wind-gust"></div>
+            </div>
+            <span class="gust-bar-label" id="m-wind-gustiness"></span>
+          </div>
         </div>
         <div class="metric glass metric-humidity">
           <span class="metric-label">Humidity <span id="m-humidity-comfort" class="trend" aria-hidden="true"></span></span>
