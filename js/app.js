@@ -186,6 +186,7 @@ const scrubber = new Scrubber({
   resetEl: document.getElementById("scrubber-reset"),
   sunriseEl: document.getElementById("scrubber-sunrise"),
   sunsetEl: document.getElementById("scrubber-sunset"),
+  ticksEl: document.getElementById("scrubber-ticks"),
   appEl: document.querySelector(".app"),
   onScrub: () => {
     if (!app.weather) return;
@@ -215,6 +216,7 @@ async function loadByCoords(place) {
 
   // Update scrubber bounds to this location's sunrise/sunset.
   scrubber.setBounds({ start: Date.now(), sunrise: w.sunrise, sunset: w.sunset });
+  scrubber.setHours(w.hourly);
 
   // Move the radar to the new location (fire-and-forget; resolves later).
   ensureRadar([place.lat, place.lon]).then((r) => r?.setCenter(place.lat, place.lon, place.name));

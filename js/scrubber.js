@@ -10,7 +10,7 @@ const RANGE_HOURS = 24;
 
 export class Scrubber {
   constructor({ trackEl, thumbEl, fillEl, timeEl, deltaEl, resetEl,
-                sunriseEl, sunsetEl, appEl, onScrub }) {
+                sunriseEl, sunsetEl, ticksEl, appEl, onScrub }) {
     this.track = trackEl;
     this.thumb = thumbEl;
     this.fill = fillEl;
@@ -19,6 +19,7 @@ export class Scrubber {
     this.resetEl = resetEl;
     this.sunriseEl = sunriseEl;
     this.sunsetEl = sunsetEl;
+    this.ticksEl = ticksEl;
     this.appEl = appEl; // receives data-scrubbing attribute
     this.onScrub = onScrub;
     this.dragging = false;
@@ -39,6 +40,32 @@ export class Scrubber {
     this._placeMarker(this.sunriseEl, sunrise, "Sunrise");
     this._placeMarker(this.sunsetEl, sunset, "Sunset");
     this._render(this._currentT());
+  }
+
+  /** Paint precip tick marks: one per hourly bucket with pop >= 30% or precip >= 0.2mm. */
+  setHours(hours) {
+    if (!this.ticksEl) return;
+    this.ticksEl.innerHTML = "";
+    if (!hours?.length) return;
+    const totalMs = RANGE_HOURS * 3600_000;
+    const originMs = this.start - 3600_000;
+    for (const h of hours) {
+      const wet = (h.pop ?? 0) >= 30 || (h.precip ?? 0) >= 0.2;
+      if (!wet) continue;
+      const rel = (h.time - originMs) / totalMs;
+      if (rel < 0 || rel > 1) continue;
+      const intensity = Math.max(
+        (h.pop ?? 0) / 100,
+        Math.min(1, (h.precip ?? 0) / 4)
+      );
+      const tick = document.createElement("span");
+      tick.className = "scrubber-tick";
+      tick.dataset.kind = h.condition === "snow" ? "snow" : "rain";
+      tick.style.left = `${(rel * 100).toFixed(2)}%`;
+      tick.style.setProperty("--intensity", intensity.toFixed(2));
+      tick.title = `${h.pop ?? 0}% · ${(h.precip ?? 0).toFixed(1)} mm`;
+      this.ticksEl.appendChild(tick);
+    }
   }
 
   /** Called when we externally reset to "now" (e.g. search selected). */
