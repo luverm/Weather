@@ -929,6 +929,11 @@ html[data-reduce-motion="true"] *::after {
 }
 .wind-compass .compass-card {
   font-size: 8px; fill: var(--fg-dim); letter-spacing: 0.04em;
+  transition: fill 300ms var(--ease);
+}
+.wind-compass [data-card].active {
+  fill: var(--accent);
+  font-weight: 700;
 }
 .wind-needle {
   transform-origin: 0 0;

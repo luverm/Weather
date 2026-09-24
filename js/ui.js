@@ -420,6 +420,13 @@ function renderMetrics(w) {
   } else if (el.windNeedle) {
     el.windNeedle.style.opacity = "0.3";
   }
+  // Highlight the cardinal letter closest to the wind's origin direction.
+  if (dir != null) {
+    const nearest = ["N", "E", "S", "W"][Math.round(((dir % 360) + 360) % 360 / 90) % 4];
+    document.querySelectorAll(".wind-compass [data-card]").forEach((t) => {
+      t.classList.toggle("active", t.dataset.card === nearest);
+    });
+  }
   if (el.windBft) {
     const bft = beaufort(w.windSpeed);
     if (bft) {
