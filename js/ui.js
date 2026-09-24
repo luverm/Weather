@@ -1643,8 +1643,10 @@ function iconFor(condition) {
 function renderPlaces() {
   const all = places.all();
   if (!all.length) { el.placesStrip.hidden = true; el.placesStrip.innerHTML = ""; return; }
+  const prevActiveId = state.prevActivePlaceId;
   el.placesStrip.hidden = false;
   const activeId = state.place ? places.idFor(state.place) : null;
+  state.prevActivePlaceId = activeId;
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
     const emoji = p.condition ? conditionEmoji(p.condition) : "";
@@ -1669,6 +1671,13 @@ function renderPlaces() {
       }
       state.handlers.onPlaceClick?.(item);
     });
+    // Pulse the freshly-activated chip so keyboard cycling (or a fresh
+    // click) has a subtle visual echo.
+    if (id === activeId && activeId && prevActiveId && activeId !== prevActiveId) {
+      chip.classList.add("pulse");
+      chip.addEventListener("animationend", () => chip.classList.remove("pulse"), { once: true });
+      chip.scrollIntoView({ behavior: "smooth", inline: "nearest", block: "nearest" });
+    }
   });
 }
 
