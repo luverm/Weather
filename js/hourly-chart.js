@@ -247,14 +247,22 @@ export class HourlyChart {
     // Freezing (0°C) reference line — only visible if 0°C sits inside
     // the plotted temperature range for this window.
     const freeze = this.svg.querySelector("#chart-freeze");
+    const freezeLabel = this.svg.querySelector("#chart-freeze-label");
     if (freeze) {
       if (tMin <= 0 && tMax >= 0) {
         const fy = tToY(0);
         freeze.setAttribute("y1", fy.toFixed(1));
         freeze.setAttribute("y2", fy.toFixed(1));
         freeze.style.opacity = "1";
+        if (freezeLabel) {
+          // Label reads "0°" in °C mode, "32°" in °F.
+          freezeLabel.textContent = this.getUnit() === "F" ? "32°" : "0°";
+          freezeLabel.setAttribute("y", (fy - 3).toFixed(1));
+          freezeLabel.style.opacity = "1";
+        }
       } else {
         freeze.style.opacity = "0";
+        if (freezeLabel) freezeLabel.style.opacity = "0";
       }
     }
 

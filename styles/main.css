@@ -889,6 +889,12 @@ html[data-reduce-motion="true"] *::after {
   fill: none;
   transition: opacity 320ms var(--ease);
 }
+.chart-freeze-label {
+  font-size: 8px;
+  fill: rgba(154, 209, 255, 0.8);
+  font-variant-numeric: tabular-nums;
+  transition: opacity 320ms var(--ease);
+}
 .chart-labels text {
   font-size: 9px;
   fill: var(--fg-dim);
