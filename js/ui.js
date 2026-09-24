@@ -27,6 +27,9 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  dayRangeTimes: $("#day-range-times"),
+  dayRangeMinAt: $("#day-range-min-at"),
+  dayRangeMaxAt: $("#day-range-max-at"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -371,6 +374,25 @@ function renderDayRange(w) {
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+  renderDayRangeTimes(w, lo, hi);
+}
+
+// Show the times at which today's high and low arrive, scanning the
+// hourly forecast for the closest match in the next 24h.
+function renderDayRangeTimes(w, lo, hi) {
+  if (!el.dayRangeTimes || !el.dayRangeMinAt || !el.dayRangeMaxAt) return;
+  const hours = (w.hourly || []).slice(0, 24);
+  if (hours.length < 2) { el.dayRangeTimes.hidden = true; return; }
+  let hiHr = null, loHr = null;
+  for (const h of hours) {
+    if (h.temp == null) continue;
+    if (!hiHr || h.temp > hiHr.temp) hiHr = h;
+    if (!loHr || h.temp < loHr.temp) loHr = h;
+  }
+  if (!hiHr || !loHr) { el.dayRangeTimes.hidden = true; return; }
+  el.dayRangeTimes.hidden = false;
+  el.dayRangeMinAt.textContent = `low ${fmtTime(loHr.time)}`;
+  el.dayRangeMaxAt.textContent = `high ${fmtTime(hiHr.time)}`;
 }
 
 function renderMetrics(w) {

@@ -464,6 +464,21 @@ html[data-reduce-motion="true"] *::after {
   box-shadow: 0 2px 8px rgba(0,0,0,0.35);
   transition: left 380ms var(--ease);
 }
+.day-range-times {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  max-width: 240px;
+  margin: 4px 0 0 auto;
+  font-size: 10px;
+  color: var(--fg-dim);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+.day-range-times[hidden] { display: none; }
+.day-range-time-lo { color: #a8c8ff; }
+.day-range-time-hi { color: #ffcaa4; }
 
 /* ---------- Nowcast banner ---------- */
 .nowcast {
