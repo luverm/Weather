@@ -81,6 +81,9 @@ const el = {
   yesterdayArrow: $("#yesterday-arrow"),
   yesterdayHeadline: $("#yesterday-headline"),
   yesterdayDetail: $("#yesterday-detail"),
+  rainWindowChip: $("#rain-window-chip"),
+  rainWindowHeadline: $("#rain-window-headline"),
+  rainWindowDetail: $("#rain-window-detail"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -148,6 +151,7 @@ export const ui = {
     bindSettings();
     bindTilt();
     bindPhotoHourChip();
+    bindRainWindowChip();
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
@@ -1020,6 +1024,7 @@ function renderDaily(w) {
   renderDailySpark(days);
   renderDailyDelta(days);
   renderYesterdayChip(w);
+  renderRainWindow(w);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1102,6 +1107,78 @@ function renderDailySpark(days) {
       el.dailySparkDots.appendChild(c);
     }
   });
+}
+
+// Scans the next 24 hourly buckets to describe the next meaningful rain
+// window — "Rain 4–7 PM · 6 mm" or "Dry through Wed evening".
+function renderRainWindow(w) {
+  const chip = el.rainWindowChip;
+  if (!chip) return;
+  const hours = (w.hourly || []).filter((h) => h.time > Date.now() - 15 * 60_000).slice(0, 24);
+  if (!hours.length) { chip.hidden = true; return; }
+  const wetIdx = hours.findIndex((h) => (h.pop ?? 0) >= 40 || (h.precip ?? 0) >= 0.3);
+  if (wetIdx < 0) {
+    // Dry — look further out via the 7-day forecast to find the next rain day.
+    const dryChip = describeDryStretch(w);
+    if (!dryChip) { chip.hidden = true; return; }
+    chip.hidden = false;
+    chip.dataset.state = "dry";
+    el.rainWindowHeadline.textContent = dryChip.headline;
+    el.rainWindowDetail.textContent = dryChip.detail;
+    chip.dataset.ts = dryChip.ts ?? "";
+    return;
+  }
+  // Grow the wet window until it dries out.
+  let endIdx = wetIdx;
+  let totalPrecip = hours[wetIdx].precip ?? 0;
+  let peak = { pop: hours[wetIdx].pop ?? 0, precip: hours[wetIdx].precip ?? 0, ts: hours[wetIdx].time };
+  for (let i = wetIdx + 1; i < hours.length; i++) {
+    const h = hours[i];
+    const wet = (h.pop ?? 0) >= 30 || (h.precip ?? 0) >= 0.2;
+    if (!wet) break;
+    endIdx = i;
+    totalPrecip += h.precip ?? 0;
+    if ((h.precip ?? 0) > peak.precip || ((h.precip ?? 0) === peak.precip && (h.pop ?? 0) > peak.pop)) {
+      peak = { pop: h.pop ?? 0, precip: h.precip ?? 0, ts: h.time };
+    }
+  }
+  const startTs = hours[wetIdx].time;
+  const endTs = hours[endIdx].time + 3600_000; // rain window rounded up to hour end
+  const startMin = Math.max(0, Math.round((startTs - Date.now()) / 60_000));
+  chip.hidden = false;
+  chip.dataset.state = "wet";
+  chip.dataset.ts = String(startTs);
+  const startLabel = startMin < 45 ? "Rain soon" :
+    startMin < 60 ? "Rain in ~1h" :
+    `Rain ${fmtTime(startTs)}`;
+  const spanHours = Math.max(1, Math.round((endTs - startTs) / 3600_000));
+  const headline = `${startLabel}${startMin >= 60 ? `–${fmtTime(endTs)}` : ""}`;
+  const detailParts = [];
+  if (spanHours >= 2) detailParts.push(`~${spanHours}h`);
+  if (totalPrecip >= 0.5) detailParts.push(`${totalPrecip.toFixed(totalPrecip < 5 ? 1 : 0)} mm`);
+  if (peak.precip >= 2) detailParts.push(`peak ${fmtTime(peak.ts)}`);
+  el.rainWindowHeadline.textContent = headline;
+  el.rainWindowDetail.textContent = detailParts.length ? detailParts.join(" · ") : `${peak.pop}% chance`;
+}
+
+function describeDryStretch(w) {
+  const days = w.daily || [];
+  if (!days.length) return null;
+  const nextWet = days.find((d, i) => i > 0 && ((d.pop ?? 0) >= 40 || (d.precip ?? 0) >= 1));
+  if (!nextWet) return { headline: "Dry through the week", detail: "No rain in the 7-day outlook" };
+  const dt = new Date(nextWet.time);
+  const tz = w.timezone;
+  const dayName = dt.toLocaleDateString(undefined, {
+    weekday: "long",
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  const mm = nextWet.precip >= 0.5 ? `${nextWet.precip.toFixed(nextWet.precip < 5 ? 1 : 0)} mm` : "";
+  const parts = [`${nextWet.pop}% chance`, mm].filter(Boolean);
+  return {
+    headline: `Dry until ${dayName}`,
+    detail: parts.join(" · "),
+    ts: nextWet.time,
+  };
 }
 
 function renderYesterdayChip(w) {
@@ -1376,6 +1453,15 @@ function bindUnitToggle() {
 
 function bindLocate() {
   el.locateBtn.addEventListener("click", () => state.handlers.onLocate?.());
+}
+
+function bindRainWindowChip() {
+  if (!el.rainWindowChip) return;
+  el.rainWindowChip.addEventListener("click", () => {
+    const ts = Number(el.rainWindowChip.dataset.ts);
+    if (!ts) return;
+    state.handlers.onHourClick?.(ts);
+  });
 }
 
 function bindPhotoHourChip() {

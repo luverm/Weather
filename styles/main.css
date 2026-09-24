@@ -1476,7 +1476,48 @@ kbd {
 /* ---------- "vs. yesterday" chip ---------- */
 .yesterday-row {
   padding: 0 10px 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
 }
+.rain-window-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,0.02);
+  color: var(--fg-muted);
+  font: inherit;
+  cursor: pointer;
+  transition: transform 240ms var(--ease), background 240ms var(--ease), border-color 240ms var(--ease);
+}
+.rain-window-chip:hover { transform: translateY(-1px); background: rgba(255,255,255,0.04); }
+.rain-window-chip:focus-visible { outline: 2px solid rgba(120,170,255,0.5); outline-offset: 2px; }
+.rain-window-chip[hidden] { display: none; }
+.rain-window-icon {
+  width: 18px; height: 18px;
+  color: #9ad1ff;
+  opacity: 0.9;
+  flex: none;
+}
+.rain-window-chip[data-state="wet"] {
+  border-color: rgba(140,180,255,0.32);
+  background: linear-gradient(180deg, rgba(140,180,255,0.08), rgba(90,140,220,0.02));
+}
+.rain-window-chip[data-state="dry"] {
+  border-color: rgba(190,230,190,0.24);
+  background: linear-gradient(180deg, rgba(190,230,190,0.06), rgba(150,220,190,0.01));
+}
+.rain-window-chip[data-state="dry"] .rain-window-icon {
+  color: #b0e0b8;
+  opacity: 0.55;
+}
+.rain-window-text { display: grid; gap: 1px; text-align: left; }
+.rain-window-text strong { font-weight: 500; color: var(--fg); font-size: 12px; }
+.rain-window-detail { font-size: 10.5px; color: var(--fg-dim); font-variant-numeric: tabular-nums; }
 .yesterday-chip {
   display: inline-flex;
   align-items: center;
