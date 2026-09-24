@@ -423,7 +423,7 @@ function renderDayRangeTimes(w, lo, hi) {
 }
 
 function renderMetrics(w) {
-  el.metricWind.textContent = Math.round(convertWind(w.windSpeed ?? 0));
+  animateNumber(el.metricWind, convertWind(w.windSpeed ?? 0), (v) => `${Math.round(v)}`);
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
   const u = windUnitLabel();
@@ -458,7 +458,7 @@ function renderMetrics(w) {
     }
   }
   renderWindGustBar(w);
-  el.metricHumidity.textContent = Math.round(w.humidity ?? 0);
+  animateNumber(el.metricHumidity, w.humidity ?? 0, (v) => `${Math.round(v)}`);
   el.metricHumiditySub.textContent = w.dewPoint != null
     ? `dew ${Math.round(convertTemp(w.dewPoint))}°`
     : "dew —";
@@ -471,7 +471,7 @@ function renderMetrics(w) {
       el.humidityComfort.textContent = "";
     }
   }
-  el.metricPressure.textContent = Math.round(w.pressure ?? 0);
+  animateNumber(el.metricPressure, w.pressure ?? 0, (v) => `${Math.round(v)}`);
   if (w.visibility != null) {
     const km = Math.round((w.visibility / 1000) * 10) / 10;
     const qualifier =
