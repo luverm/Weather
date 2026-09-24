@@ -408,9 +408,16 @@ function renderMetrics(w) {
     }
   }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
-  el.metricPressureSub.textContent = w.visibility != null
-    ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
-    : "visibility —";
+  if (w.visibility != null) {
+    const km = Math.round((w.visibility / 1000) * 10) / 10;
+    const qualifier =
+      w.visibility < 1000 ? " · fog" :
+      w.visibility < 5000 ? " · mist" :
+      w.visibility < 10000 ? " · haze" : "";
+    el.metricPressureSub.textContent = `visibility ${km} km${qualifier}`;
+  } else {
+    el.metricPressureSub.textContent = "visibility —";
+  }
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
@@ -460,6 +467,13 @@ function renderWindGustBar(w) {
 
 function humidityComfort(rh, dew, temp) {
   if (rh == null) return null;
+  // Highest-priority weather-hazard signals first — they matter more than
+  // whether the air feels "comfy" in the abstract.
+  if (temp != null && dew != null) {
+    const spread = temp - dew;
+    if (spread < 2 && rh >= 90) return { label: "Fog risk", cls: "down" };
+    if (temp <= 2 && rh >= 80) return { label: "Frost risk", cls: "down" };
+  }
   // Prioritize dew-point-based mugginess at warm temps.
   if (temp != null && temp >= 18 && dew != null) {
     if (dew >= 21) return { label: "Muggy", cls: "up" };
