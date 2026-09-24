@@ -244,6 +244,20 @@ export class HourlyChart {
       precipG.appendChild(r);
     });
 
+    // Freezing (0°C) reference line — only visible if 0°C sits inside
+    // the plotted temperature range for this window.
+    const freeze = this.svg.querySelector("#chart-freeze");
+    if (freeze) {
+      if (tMin <= 0 && tMax >= 0) {
+        const fy = tToY(0);
+        freeze.setAttribute("y1", fy.toFixed(1));
+        freeze.setAttribute("y2", fy.toFixed(1));
+        freeze.style.opacity = "1";
+      } else {
+        freeze.style.opacity = "0";
+      }
+    }
+
     // Night shading: dim rectangles where !isDay
     const nightG = this.svg.querySelector("#chart-night");
     nightG.innerHTML = "";
