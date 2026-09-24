@@ -92,6 +92,7 @@ const el = {
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
+  savePlaceBtn: $("#save-place-btn"),
   fetchedAgo: $("#fetched-ago"),
   dailyIconStrip: $("#daily-icon-strip"),
   dayArrivals: $("#day-arrivals"),
@@ -161,6 +162,7 @@ export const ui = {
     bindTilt();
     bindPhotoHourChip();
     bindRainWindowChip();
+    bindSavePlace();
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
@@ -198,6 +200,7 @@ export const ui = {
     // Reset alert dismissals so a fresh location can re-surface them.
     try { sessionStorage.removeItem("aether:dismissed-alerts"); } catch { /* ignore */ }
     renderPlaces();
+    refreshSavePlaceBtn();
   },
   setWeather(weather, { narrative } = {}) {
     state.weather = weather;
@@ -1656,6 +1659,34 @@ function bindUnitToggle() {
 
 function bindLocate() {
   el.locateBtn.addEventListener("click", () => state.handlers.onLocate?.());
+}
+
+function refreshSavePlaceBtn() {
+  if (!el.savePlaceBtn) return;
+  const p = state.place;
+  // Hide for "Current location" (there's already the geolocate button) and
+  // whenever we don't have a real place, or when it's already saved.
+  const canSave = p && p.lat != null && p.lon != null
+    && p.name !== "Current location"
+    && !places.isSaved(p);
+  el.savePlaceBtn.hidden = !canSave;
+}
+
+function bindSavePlace() {
+  if (!el.savePlaceBtn) return;
+  el.savePlaceBtn.addEventListener("click", () => {
+    const p = state.place;
+    if (!p) return;
+    places.add(p);
+    if (state.weather) {
+      places.updateSummary(p, {
+        temp: state.weather.temp, condition: state.weather.condition,
+      });
+    }
+    renderPlaces();
+    refreshSavePlaceBtn();
+    ui.showToast(`Saved ${p.name}`);
+  });
 }
 
 function bindRainWindowChip() {
