@@ -168,6 +168,7 @@ export const ui = {
     bindPhotoHourChip();
     bindRainWindowChip();
     bindSavePlace();
+    bindDayRangeJumps();
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
@@ -395,6 +396,9 @@ function renderDayRangeTimes(w, lo, hi) {
   el.dayRangeTimes.hidden = false;
   el.dayRangeMinAt.textContent = `low ${fmtTime(loHr.time)}`;
   el.dayRangeMaxAt.textContent = `high ${fmtTime(hiHr.time)}`;
+  // Cache timestamps so the click handler (bound once) can scrub.
+  el.dayRangeMinAt.dataset.ts = String(loHr.time);
+  el.dayRangeMaxAt.dataset.ts = String(hiHr.time);
 }
 
 function renderMetrics(w) {
@@ -1780,6 +1784,16 @@ function refreshSavePlaceBtn() {
     && p.name !== "Current location"
     && !places.isSaved(p);
   el.savePlaceBtn.hidden = !canSave;
+}
+
+function bindDayRangeJumps() {
+  const jump = (node) => {
+    const ts = Number(node?.dataset?.ts);
+    if (!ts) return;
+    state.handlers.onHourClick?.(ts);
+  };
+  el.dayRangeMinAt?.addEventListener("click", () => jump(el.dayRangeMinAt));
+  el.dayRangeMaxAt?.addEventListener("click", () => jump(el.dayRangeMaxAt));
 }
 
 function bindSavePlace() {

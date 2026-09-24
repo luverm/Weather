@@ -492,8 +492,14 @@ html[data-reduce-motion="true"] *::after {
   font-variant-numeric: tabular-nums;
 }
 .day-range-times[hidden] { display: none; }
+.day-range-time-lo, .day-range-time-hi {
+  cursor: pointer;
+  transition: color 240ms var(--ease);
+}
 .day-range-time-lo { color: #a8c8ff; }
 .day-range-time-hi { color: #ffcaa4; }
+.day-range-time-lo:hover { color: #d0e0ff; }
+.day-range-time-hi:hover { color: #ffe4c8; }
 
 /* ---------- Nowcast banner ---------- */
 .nowcast {
