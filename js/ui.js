@@ -684,6 +684,8 @@ function fmtTime(ts) {
 function renderSun(w) {
   el.sunRise.textContent = fmtTime(w.sunrise);
   el.sunSet.textContent = fmtTime(w.sunset);
+  annotateSunDelta(el.sunRise, w.sunrise, w.yesterday?.sunrise);
+  annotateSunDelta(el.sunSet, w.sunset, w.yesterday?.sunset);
   scheduleDaylightRemaining(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
@@ -855,6 +857,29 @@ function humanCountdown(ms) {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
   return m ? `${h}h ${m}m` : `${h}h`;
+}
+
+// Compare a today ts to a yesterday ts (both anchored to local midnight
+// by Open-Meteo) — if they differ by a meaningful number of minutes,
+// append "N min earlier/later" as a subtle secondary line. Skipped when
+// yesterday isn't available or the delta is < 1 min.
+function annotateSunDelta(node, today, yesterday) {
+  if (!node) return;
+  // Strip any previous annotation so a refresh doesn't stack.
+  node.querySelector(".sun-delta")?.remove();
+  if (!today || !yesterday) return;
+  // Compare only the wall-clock minute-of-day so a date offset doesn't
+  // introduce a full-day skew.
+  const todayMin = new Date(today).getHours() * 60 + new Date(today).getMinutes();
+  const yestMin = new Date(yesterday).getHours() * 60 + new Date(yesterday).getMinutes();
+  const delta = todayMin - yestMin;
+  if (Math.abs(delta) < 1) return;
+  const label = delta > 0 ? "later" : "earlier";
+  const span = document.createElement("span");
+  span.className = "sun-delta";
+  span.textContent = `${Math.abs(delta)} min ${label}`;
+  node.appendChild(document.createElement("br"));
+  node.appendChild(span);
 }
 
 function scheduleDaylightRemaining(w) {
