@@ -218,6 +218,7 @@ export const ui = {
     renderAlerts(weather);
     renderWeekend(weather);
     startLocaltime(weather);
+    updateTabTitle(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
@@ -1483,6 +1484,31 @@ function renderNowcast(w) {
 }
 
 // ---------- Icons ----------
+// Update the browser tab title with the current temp + a condition emoji.
+// A tiny "at-a-glance" affordance for people who juggle many tabs.
+function updateTabTitle(w) {
+  if (!w || w.temp == null) return;
+  const emoji = conditionEmoji(w.condition, w.isDay);
+  const t = Math.round(convertTemp(w.temp));
+  const place = state.place?.name;
+  const parts = [`${t}°${state.unit} ${emoji}`];
+  if (place) parts.push(place);
+  parts.push("Aether");
+  document.title = parts.join(" · ");
+}
+
+function conditionEmoji(condition, isDay = true) {
+  switch (condition) {
+    case "clear": return isDay ? "☀️" : "🌙";
+    case "clouds": return isDay ? "⛅" : "☁️";
+    case "rain": return "🌧";
+    case "snow": return "❄️";
+    case "storm": return "⛈";
+    case "fog": return "🌫";
+    default: return "🌤";
+  }
+}
+
 function iconFor(condition) {
   const common = 'fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"';
   switch (condition) {
