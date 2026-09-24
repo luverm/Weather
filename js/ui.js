@@ -283,6 +283,16 @@ export const ui = {
     el.toast._t = setTimeout(() => (el.toast.hidden = true), dur);
   },
   getUnit: () => state.unit,
+  async copyDeepLink() {
+    const url = deepLinkFor(state.place);
+    if (!url) { ui.showToast("No location to copy yet"); return; }
+    try {
+      await navigator.clipboard.writeText(url);
+      ui.showToast("Link copied", { tone: "good" });
+    } catch {
+      ui.showToast("Copy failed", { tone: "warn" });
+    }
+  },
 };
 
 // ---------- Rendering ----------

@@ -325,6 +325,7 @@ installShortcuts({
   },
   savePlace: () => document.getElementById("save-place-btn")?.click(),
   refresh: () => refreshWeather(),
+  copyLink: () => ui.copyDeepLink?.(),
   jumpPlace: (idx) => {
     const list = places.all();
     const p = list[idx];
