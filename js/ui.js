@@ -169,6 +169,7 @@ export const ui = {
     bindRainWindowChip();
     bindSavePlace();
     bindDayRangeJumps();
+    startHintRotation();
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
@@ -257,9 +258,10 @@ export const ui = {
   setScrubbing(on) {
     document.documentElement.setAttribute("data-scrubbing", on ? "true" : "false");
     if (on) {
+      stopHintRotation();
       el.hintText.textContent = "Drag to explore future weather.";
     } else {
-      el.hintText.innerHTML = 'Drag the slider, hover the chart, or press <kbd>?</kbd> for shortcuts.';
+      startHintRotation();
     }
   },
   setAudioState(on) {
@@ -1833,6 +1835,33 @@ function refreshSavePlaceBtn() {
     && p.name !== "Current location"
     && !places.isSaved(p);
   el.savePlaceBtn.hidden = !canSave;
+}
+
+// Rotating footer hints — cycles a curated list every ~10s so people
+// discover keyboard shortcuts and hidden interactions over time. Paused
+// while the user is scrubbing (the hint area shows scrub state instead).
+const HINTS = [
+  'Drag the slider, hover the chart, or press <kbd>?</kbd> for shortcuts.',
+  'Press <kbd>[</kbd> / <kbd>]</kbd> to cycle saved cities, or <kbd>1</kbd>–<kbd>9</kbd> to jump.',
+  'Tap the sun-card golden-hour chip to preview that light.',
+  'Click the day-range high/low times to scrub to them.',
+  'Press <kbd>S</kbd> to save the current place, <kbd>R</kbd> to refresh.',
+  'The tab title always carries the current temperature and condition.',
+  'Deep-link a location by adding <kbd>?lat=X&lon=Y</kbd> to the URL.',
+];
+function startHintRotation() {
+  if (!el.hintText) return;
+  const setHint = (i) => { el.hintText.innerHTML = HINTS[i % HINTS.length]; };
+  if (state.hintTimer) clearInterval(state.hintTimer);
+  state.hintIndex = state.hintIndex || 0;
+  setHint(state.hintIndex);
+  state.hintTimer = setInterval(() => {
+    state.hintIndex = (state.hintIndex + 1) % HINTS.length;
+    setHint(state.hintIndex);
+  }, 10_000);
+}
+function stopHintRotation() {
+  if (state.hintTimer) { clearInterval(state.hintTimer); state.hintTimer = null; }
 }
 
 function bindDayRangeJumps() {
