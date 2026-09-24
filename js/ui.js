@@ -231,7 +231,7 @@ export const ui = {
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
-    if (weather.offline) ui.showToast("Offline — showing sample weather");
+    if (weather.offline) ui.showToast("Offline — showing sample weather", { tone: "warn" });
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
       places.updateSummary(state.place, {
@@ -267,8 +267,13 @@ export const ui = {
     el.audioBtn.setAttribute("aria-label", on ? "Disable ambient sound" : "Enable ambient sound");
     el.audioBtn.setAttribute("title", on ? "Disable ambient sound" : "Enable ambient sound");
   },
-  showToast(msg, dur = 2600) {
+  showToast(msg, opts = {}) {
+    // Backwards compatible: a number in the second arg was the previous
+    // "duration" contract before this became an options bag.
+    const options = typeof opts === "number" ? { dur: opts } : opts;
+    const { dur = 2600, tone = "" } = options;
     el.toast.textContent = msg;
+    el.toast.dataset.tone = tone;
     el.toast.hidden = false;
     clearTimeout(el.toast._t);
     el.toast._t = setTimeout(() => (el.toast.hidden = true), dur);
@@ -1809,7 +1814,7 @@ function bindSavePlace() {
     }
     renderPlaces();
     refreshSavePlaceBtn();
-    ui.showToast(`Saved ${p.name}`);
+    ui.showToast(`Saved ${p.name}`, { tone: "good" });
   });
 }
 
@@ -1850,7 +1855,7 @@ function bindInstallPrompt() {
   window.addEventListener("appinstalled", () => {
     deferredInstallPrompt = null;
     el.installBtn.hidden = true;
-    ui.showToast("Aether installed");
+    ui.showToast("Aether installed", { tone: "good" });
   });
   el.installBtn.addEventListener("click", async () => {
     if (!deferredInstallPrompt) return;

@@ -1974,6 +1974,18 @@ kbd {
   transition: transform 320ms var(--ease), opacity 320ms var(--ease);
 }
 .toast:not([hidden]) { opacity: 1; transform: translate(-50%, 0); }
+.toast[data-tone="good"] {
+  border-color: rgba(140,220,170,0.4);
+  box-shadow: 0 0 20px rgba(140,220,170,0.18);
+}
+.toast[data-tone="warn"] {
+  border-color: rgba(255,200,130,0.42);
+  box-shadow: 0 0 20px rgba(255,200,130,0.18);
+}
+.toast[data-tone="bad"] {
+  border-color: rgba(255,140,120,0.45);
+  box-shadow: 0 0 20px rgba(255,140,120,0.2);
+}
 
 /* ---------- Reveal animations ---------- */
 .flip-in { animation: flipIn 620ms var(--ease) both; }
