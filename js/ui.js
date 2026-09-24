@@ -645,8 +645,20 @@ function renderAqTrend(aq) {
 
 function renderMoon(moon) {
   if (!moon) return;
+  const age = Math.round(moon.phase * 29.53);
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  // Append the moon age (in days into the ~29.5 day cycle) as a subtle
+  // extra so the phase name has a numeric anchor.
+  const detail = el.moonIllum.parentElement;
+  if (detail) {
+    // Wipe any prior age chip so subsequent renders don't stack them.
+    detail.querySelector(".moon-age")?.remove();
+    const ageEl = document.createElement("span");
+    ageEl.className = "moon-age";
+    ageEl.textContent = ` · day ${age}/29`;
+    detail.appendChild(ageEl);
+  }
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
