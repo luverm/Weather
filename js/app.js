@@ -306,6 +306,23 @@ ui.init({
 // Apply saved reduce-motion preference on boot.
 if (ui.isReduceMotion?.()) setReducedMotion(true);
 
+// Battery-aware nudge: if the device reports low battery and not charging,
+// auto-enable reduced motion so the canvas scenes stop drawing. Only ever
+// nudges once — the user can still flip the setting back if they want.
+if (navigator.getBattery && !ui.isReduceMotion?.()) {
+  navigator.getBattery().then((batt) => {
+    const check = () => {
+      if (!batt.charging && batt.level < 0.15 && !ui.isReduceMotion?.()) {
+        setReducedMotion(true);
+        ui.showToast?.("Low battery — animations paused", { tone: "warn" });
+      }
+    };
+    check();
+    batt.addEventListener?.("levelchange", check);
+    batt.addEventListener?.("chargingchange", check);
+  }).catch(() => { /* API not supported — no-op */ });
+}
+
 // Keyboard shortcuts.
 installShortcuts({
   focusSearch: () => ui.focusSearch(),
