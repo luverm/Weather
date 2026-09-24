@@ -307,7 +307,30 @@ installShortcuts({
 });
 
 // ---------- Start ----------
+// Deep-link: ?lat=…&lon=…&name=…&country=…&admin1=… pre-loads that place
+// and takes precedence over saved places / geolocation. `name` and the
+// admin fields are decoded from the URL when present.
+function placeFromUrl() {
+  try {
+    const p = new URLSearchParams(window.location.search);
+    const lat = parseFloat(p.get("lat"));
+    const lon = parseFloat(p.get("lon"));
+    if (!isFinite(lat) || !isFinite(lon)) return null;
+    return {
+      name: p.get("name") || `${lat.toFixed(2)}, ${lon.toFixed(2)}`,
+      country: p.get("country") || undefined,
+      admin1: p.get("admin1") || undefined,
+      lat, lon,
+    };
+  } catch { return null; }
+}
+
 (async function init() {
+  const linked = placeFromUrl();
+  if (linked) {
+    await loadByCoords(linked);
+    return;
+  }
   // Prefer the most recent saved place if we have one — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();

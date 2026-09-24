@@ -1789,6 +1789,7 @@ function bindShare() {
     const unit = state.unit;
     const t = (v) => `${Math.round(unit === "F" ? v * 9 / 5 + 32 : v)}°${unit}`;
     const today = w.daily?.[0];
+    const link = deepLinkFor(state.place);
     const lines = [
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
@@ -1796,11 +1797,14 @@ function bindShare() {
       `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
+      link,
     ].filter(Boolean);
     const text = lines.join("\n");
     try {
       if (navigator.share) {
-        await navigator.share({ title: `Aether — ${placeName}`, text });
+        const shareData = { title: `Aether — ${placeName}`, text };
+        if (link) shareData.url = link;
+        await navigator.share(shareData);
       } else {
         await navigator.clipboard.writeText(text);
         ui.showToast("Summary copied to clipboard");
@@ -1811,6 +1815,20 @@ function bindShare() {
       if (err?.name !== "AbortError") ui.showToast("Share failed");
     }
   });
+}
+
+// Build a deep link that re-opens the app at this location.
+function deepLinkFor(place) {
+  if (!place || place.lat == null || place.lon == null) return null;
+  const url = new URL(window.location.href);
+  url.search = "";
+  url.hash = "";
+  url.searchParams.set("lat", place.lat.toFixed(4));
+  url.searchParams.set("lon", place.lon.toFixed(4));
+  if (place.name && place.name !== "Current location") url.searchParams.set("name", place.name);
+  if (place.country) url.searchParams.set("country", place.country);
+  if (place.admin1) url.searchParams.set("admin1", place.admin1);
+  return url.toString();
 }
 
 function bindTilt() {
