@@ -39,7 +39,14 @@ export function installShortcuts(handlers) {
   });
 
   window.addEventListener("keydown", (e) => {
-    // Let browsers handle modifier combos (copy, find, etc.)
+    // Ctrl/Cmd+K is a widely-recognised "focus search" convention across
+    // web apps — recognise it before the generic modifier bail-out.
+    if ((e.metaKey || e.ctrlKey) && (e.key === "k" || e.key === "K")) {
+      e.preventDefault();
+      handlers.focusSearch?.();
+      return;
+    }
+    // Let browsers handle other modifier combos (copy, find, etc.)
     if (e.metaKey || e.ctrlKey || e.altKey) return;
 
     const typing = isTyping(e.target);
