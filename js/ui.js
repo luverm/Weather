@@ -103,6 +103,7 @@ const el = {
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
+  settingUnitMph: $("#setting-unit-mph"),
   settingClearPlaces: $("#setting-clear-places"),
   settingClearCache: $("#setting-clear-cache"),
   chartPopover: $("#chart-popover"),
@@ -139,6 +140,7 @@ const el = {
 
 const state = {
   unit: localStorage.getItem("aether:unit") || "C",
+  windUnit: localStorage.getItem("aether:windUnit") || "kmh",
   weather: null,
   place: null,
   sampledWeather: null, // the weather values at the current scrubber time
@@ -286,6 +288,8 @@ export const ui = {
 // ---------- Rendering ----------
 
 function convertTemp(c) { return state.unit === "F" ? c * 9 / 5 + 32 : c; }
+function convertWind(kmh) { return state.windUnit === "mph" ? kmh * 0.621371 : kmh; }
+function windUnitLabel() { return state.windUnit === "mph" ? "mph" : "km/h"; }
 
 function animateNumber(node, target, format) {
   if (target == null || isNaN(target)) { node.textContent = "–"; return; }
@@ -344,7 +348,7 @@ function feelsLikeAttribution(w) {
   const humidity = w.humidity ?? 50;
   // Cold + colder-feel = wind chill.
   if (delta < 0 && actual <= 10) {
-    if (wind >= 8) return { kind: "chill", text: `· wind chill · ${Math.round(wind)} km/h wind` };
+    if (wind >= 8) return { kind: "chill", text: `· wind chill · ${Math.round(convertWind(wind))} ${windUnitLabel()} wind` };
     return { kind: "chill", text: "· wind chill" };
   }
   // Hot + hotter-feel = humidity heat index.
@@ -354,7 +358,7 @@ function feelsLikeAttribution(w) {
   }
   // Hot + cooler-feel = breeze relief.
   if (delta < 0 && actual >= 22 && wind >= 12) {
-    return { kind: "breeze", text: `· breeze relief · ${Math.round(wind)} km/h wind` };
+    return { kind: "breeze", text: `· breeze relief · ${Math.round(convertWind(wind))} ${windUnitLabel()} wind` };
   }
   // Cool + warmer-feel = calm & humid.
   if (delta > 0) return { kind: "muggy", text: "· humidity" };
@@ -409,12 +413,17 @@ function renderDayRangeTimes(w, lo, hi) {
 }
 
 function renderMetrics(w) {
-  el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
+  el.metricWind.textContent = Math.round(convertWind(w.windSpeed ?? 0));
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
+  const u = windUnitLabel();
+  const gustText = w.windGusts != null ? `${Math.round(convertWind(w.windGusts))} ${u}` : "—";
   el.metricWindSub.textContent = dirLabel
-    ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
-    : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+    ? `${dirLabel} · gust ${gustText}`
+    : `gust ${gustText}`;
+  // Update the unit label under the wind number too.
+  const unitLabel = el.metricWind?.parentElement?.querySelector(".metric-unit");
+  if (unitLabel) unitLabel.textContent = u;
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
@@ -499,6 +508,7 @@ function renderWindGustBar(w) {
   }
   el.windGustBar.hidden = false;
   // Scale bar against a soft cap of 80 km/h (hurricanes overflow — that's fine).
+  // Cap stays in km/h internally; display doesn't matter for the ratio.
   const CAP = 80;
   const sPct = Math.min(100, (sustained / CAP) * 100);
   const gPct = Math.min(100, (gusts / CAP) * 100);
@@ -1280,7 +1290,7 @@ function renderDaily(w) {
     item.className = "daily-item";
     item.dataset.ts = d.time;
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
-      ? ` · gusts ${Math.round(d.gustsMax)} km/h`
+      ? ` · gusts ${Math.round(convertWind(d.gustsMax))} ${windUnitLabel()}`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
@@ -1589,7 +1599,7 @@ function toggleDailyExpand(item, d, w) {
     const summary = document.createElement("div");
     summary.className = "daily-expand";
     summary.style.gridTemplateColumns = "1fr";
-    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${Math.round(d.gustsMax ?? 0)} km/h · UV ${Math.round(d.uvMax ?? 0)}</span>`;
+    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${Math.round(convertWind(d.gustsMax ?? 0))} ${windUnitLabel()} · UV ${Math.round(d.uvMax ?? 0)}</span>`;
     item.appendChild(summary);
     item.dataset.expanded = "true";
     return;
@@ -1985,6 +1995,15 @@ function bindSettings() {
     }
   });
 
+  el.settingUnitMph?.addEventListener("change", () => {
+    const desired = el.settingUnitMph.checked ? "mph" : "kmh";
+    if (state.windUnit !== desired) {
+      state.windUnit = desired;
+      localStorage.setItem("aether:windUnit", state.windUnit);
+      if (state.weather) ui.setWeather(state.weather);
+    }
+  });
+
   el.settingClearPlaces?.addEventListener("click", () => {
     if (!confirm("Clear all saved places?")) return;
     for (const p of places.all()) places.remove(p);
@@ -2009,6 +2028,7 @@ function applyStoredPreferences() {
     queueMicrotask(() => state.handlers.onReduceMotion?.(true));
   }
   if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
+  if (el.settingUnitMph) el.settingUnitMph.checked = state.windUnit === "mph";
 }
 
 // Exposed so app.js can query the current preference on boot.
@@ -2048,7 +2068,7 @@ function bindShare() {
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
       today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
-      `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
+      `Wind ${Math.round(convertWind(w.windSpeed))} ${windUnitLabel()}${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
       link,
