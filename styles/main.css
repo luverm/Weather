@@ -1166,6 +1166,40 @@ kbd {
   transform: translateX(-50%);
   transition: left 800ms var(--ease);
 }
+
+/* Cloud-cover meter row on the sun card */
+.sun-clouds {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  align-items: center;
+  margin-top: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.sun-clouds[hidden] { display: none; }
+.sun-clouds-label {
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.sun-clouds-track {
+  position: relative;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+}
+.sun-clouds-fill {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(154,209,255,0.5), rgba(230,230,240,0.8));
+  border-radius: 2px;
+  transition: width 480ms var(--ease);
+}
+.sun-clouds-value {
+  font-size: 11.5px;
+  color: var(--fg-muted);
+}
 #sun-arc-marker {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);

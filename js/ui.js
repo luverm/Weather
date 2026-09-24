@@ -116,6 +116,9 @@ const el = {
   sunArcPath: $("#sun-arc-path"),
   skyPaletteTrack: $("#sky-palette-track"),
   skyPaletteNow: $("#sky-palette-now"),
+  sunClouds: $("#sun-clouds"),
+  sunCloudsFill: $("#sun-clouds-fill"),
+  sunCloudsValue: $("#sun-clouds-value"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -733,6 +736,17 @@ function renderSun(w) {
   renderSunArcPhotoBands(w);
   schedulePhotoHourChip(w);
   scheduleSkyPalette(w);
+  renderSunClouds(w);
+}
+
+function renderSunClouds(w) {
+  if (!el.sunClouds) return;
+  const cover = w?.cloudCover;
+  if (cover == null) { el.sunClouds.hidden = true; return; }
+  el.sunClouds.hidden = false;
+  const pct = Math.max(0, Math.min(100, Math.round(cover)));
+  if (el.sunCloudsFill) el.sunCloudsFill.style.width = `${pct}%`;
+  if (el.sunCloudsValue) el.sunCloudsValue.textContent = `${pct}%`;
 }
 
 // Sky palette strip: a horizontal gradient showing the sky's likely tones
