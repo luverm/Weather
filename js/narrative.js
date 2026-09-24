@@ -100,6 +100,18 @@ export function narrate(weather) {
     bits.push(`UV peaks at ${Math.round(uvPeak.value)} near ${fmtHour(uvPeak.time)}.`);
   }
 
+  // "Warmer / cooler than yesterday" — a natural conversational anchor,
+  // rendered only if the day-hour comparison is >= 2° and nothing else has
+  // filled the second slot yet.
+  if (bits.length < 2 && weather.vsYesterday?.nowDelta != null) {
+    const nd = Math.round(weather.vsYesterday.nowDelta);
+    if (Math.abs(nd) >= 2) {
+      bits.push(nd > 0
+        ? `${Math.abs(nd)}° warmer than yesterday at this hour.`
+        : `${Math.abs(nd)}° cooler than yesterday at this hour.`);
+    }
+  }
+
   // Pressure trend narrative.
   if (bits.length < 2 && weather.pressureTrend) {
     const { direction, delta } = weather.pressureTrend;
