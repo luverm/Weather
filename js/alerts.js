@@ -144,6 +144,24 @@ export function buildAlerts(weather) {
     });
   }
 
+  // ---- Air quality (US AQI thresholds — >150 unhealthy) ----
+  const aqi = weather.airQuality?.aqi;
+  if (aqi != null && aqi >= 200) {
+    out.push({
+      id: "aq-hazard",
+      severity: "danger",
+      title: "Very unhealthy air",
+      detail: `AQI ${Math.round(aqi)} — limit outdoor exertion.`,
+    });
+  } else if (aqi != null && aqi >= 150) {
+    out.push({
+      id: "aq-poor",
+      severity: "warn",
+      title: "Unhealthy air",
+      detail: `AQI ${Math.round(aqi)} — sensitive groups take breaks indoors.`,
+    });
+  }
+
   // De-dupe (if a daily heat triggers heat AND severe-heat, keep the worst).
   const SEV = { danger: 3, warn: 2, info: 1 };
   return dedupe(out)
@@ -213,5 +231,6 @@ function dedupe(items) {
   if (ids.has("severe-heat")) drop.add("heat");
   if (ids.has("hard-freeze")) drop.add("frost");
   if (ids.has("heavy-rain") || ids.has("soaking-rain")) drop.add("wet-day");
+  if (ids.has("aq-hazard")) drop.add("aq-poor");
   return items.filter((x) => !drop.has(x.id));
 }
