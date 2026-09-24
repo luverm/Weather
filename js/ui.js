@@ -1432,7 +1432,6 @@ function renderDailyDelta(days) {
     return;
   }
   const deltaC = tmrw.tempMax - today.tempMax;
-  // Scale delta to the active unit: °F spans 1.8x a °C span.
   const deltaDisplay = Math.round(state.unit === "F" ? deltaC * 9 / 5 : deltaC);
   const dPop = (tmrw.pop ?? 0) - (today.pop ?? 0);
   const parts = [];
@@ -1442,7 +1441,25 @@ function renderDailyDelta(days) {
   if (Math.abs(dPop) >= 20) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
   }
-  el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
+  // Append a compact week-outlook when the 7-day view is populated.
+  const week = summariseWeek(days);
+  const weekLabel = week ? ` · Week: ${week}` : "";
+  el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}${weekLabel}`;
+}
+
+function summariseWeek(days) {
+  if (!days.length) return null;
+  let totalPrecip = 0;
+  let wet = 0;
+  for (const d of days) {
+    const p = d.precip ?? 0;
+    totalPrecip += p;
+    if (p >= 1 || (d.pop ?? 0) >= 50) wet++;
+  }
+  const dry = days.length - wet;
+  if (totalPrecip < 0.5) return `${days.length} dry days`;
+  const mmLabel = totalPrecip >= 20 ? `${Math.round(totalPrecip)} mm` : `${totalPrecip.toFixed(1)} mm`;
+  return `${dry}/${wet} dry/wet · ${mmLabel}`;
 }
 
 function toggleDailyExpand(item, d, w) {
