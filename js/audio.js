@@ -92,6 +92,10 @@ export class AmbientAudio {
     for (const fn of this.listeners) fn(false);
   }
 
+  /** Cheap suspend/resume for tab visibility — doesn't unregister listeners. */
+  suspend() { this.ctx?.suspend?.().catch(() => {}); }
+  resume() { if (this.enabled) this.ctx?.resume?.().catch(() => {}); }
+
   /**
    * Update ambient levels from weather state.
    * @param {object} w - weather object

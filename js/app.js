@@ -371,10 +371,11 @@ function placeFromUrl() {
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
     engine.stop();
-  } else if (!app.reducedMotion) {
-    engine.start();
+    audio.suspend();
   } else {
-    engine.tickOnce();
+    audio.resume();
+    if (!app.reducedMotion) engine.start();
+    else engine.tickOnce();
   }
 });
 
