@@ -1110,6 +1110,7 @@ function renderDaily(w) {
   renderYesterdayChip(w);
   renderRainWindow(w);
   renderDayArrivals(w);
+  const highlights = dailyHighlights(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1134,8 +1135,13 @@ function renderDaily(w) {
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const badges = [];
+    if (highlights.hottestIdx === i) badges.push(`<span class="daily-badge hot" title="Warmest day">★ hottest</span>`);
+    if (highlights.coldestIdx === i && i !== highlights.hottestIdx) badges.push(`<span class="daily-badge cold" title="Coolest day">❄ coolest</span>`);
+    if (highlights.wettestIdx === i) badges.push(`<span class="daily-badge wet" title="Wettest day">☔ wettest</span>`);
+    const badgeHtml = badges.length ? `<span class="daily-badges">${badges.join("")}</span>` : "";
     item.innerHTML = `
-      <span class="daily-day">${day}</span>
+      <span class="daily-day">${day}${badgeHtml}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
@@ -1147,6 +1153,27 @@ function renderDaily(w) {
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+}
+
+// Pick the hottest / coldest / wettest days across the 7-day forecast.
+// Only crown days when the extreme is actually notable — otherwise return
+// -1 so the badges stay off (e.g. no "wettest" ribbon on a bone-dry week).
+function dailyHighlights(days) {
+  let hottestIdx = -1, coldestIdx = -1, wettestIdx = -1;
+  let hi = -Infinity, lo = Infinity, wet = 0;
+  days.forEach((d, i) => {
+    if (d.tempMax != null && d.tempMax > hi) { hi = d.tempMax; hottestIdx = i; }
+    if (d.tempMin != null && d.tempMin < lo) { lo = d.tempMin; coldestIdx = i; }
+    if ((d.precip ?? 0) > wet) { wet = d.precip; wettestIdx = i; }
+  });
+  // Suppress the wettest badge if the leader is < 1 mm — barely rain.
+  if (wet < 1) wettestIdx = -1;
+  // Suppress hot/cold if the spread across the week is tiny.
+  const maxes = days.map((d) => d.tempMax).filter((v) => v != null);
+  const mins = days.map((d) => d.tempMin).filter((v) => v != null);
+  if (maxes.length >= 2 && Math.max(...maxes) - Math.min(...maxes) < 2) hottestIdx = -1;
+  if (mins.length >= 2 && Math.max(...mins) - Math.min(...mins) < 2) coldestIdx = -1;
+  return { hottestIdx, coldestIdx, wettestIdx };
 }
 
 function renderDailyIconStrip(days) {
