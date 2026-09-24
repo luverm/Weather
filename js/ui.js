@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { extractArrivals } from "./arrivals.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -89,6 +90,7 @@ const el = {
   refreshBtn: $("#refresh-btn"),
   fetchedAgo: $("#fetched-ago"),
   dailyIconStrip: $("#daily-icon-strip"),
+  dayArrivals: $("#day-arrivals"),
   settingsBtn: $("#settings-btn"),
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
@@ -1025,6 +1027,7 @@ function renderDaily(w) {
   renderDailyDelta(days);
   renderYesterdayChip(w);
   renderRainWindow(w);
+  renderDayArrivals(w);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1106,6 +1109,55 @@ function renderDailySpark(days) {
       c.setAttribute("class", "dot-lo");
       el.dailySparkDots.appendChild(c);
     }
+  });
+}
+
+// Compact horizontal timeline of the day's key inflection points.
+function renderDayArrivals(w) {
+  if (!el.dayArrivals) return;
+  const arrivals = extractArrivals(w);
+  if (!arrivals.length) { el.dayArrivals.hidden = true; return; }
+  el.dayArrivals.hidden = false;
+  const now = Date.now();
+  const spanMs = 24 * 3600_000;
+  el.dayArrivals.innerHTML = "";
+  // Timeline rail + labels.
+  const rail = document.createElement("div");
+  rail.className = "arrivals-rail";
+  el.dayArrivals.appendChild(rail);
+  const rowTop = document.createElement("div");
+  rowTop.className = "arrivals-row arrivals-top";
+  el.dayArrivals.appendChild(rowTop);
+  const rowBot = document.createElement("div");
+  rowBot.className = "arrivals-row arrivals-bot";
+  el.dayArrivals.appendChild(rowBot);
+  const ICONS = {
+    warm: "🌡", cold: "❄", uv: "☀", rain: "☔", gust: "🌬",
+    sunrise: "◐", sunset: "◑",
+  };
+  const nowMarker = document.createElement("span");
+  nowMarker.className = "arrivals-now";
+  nowMarker.style.left = "0%";
+  nowMarker.title = "Now";
+  rail.appendChild(nowMarker);
+  arrivals.forEach((ev, i) => {
+    const rel = Math.max(0, Math.min(1, (ev.time - now) / spanMs));
+    const pct = rel * 100;
+    const dot = document.createElement("button");
+    dot.type = "button";
+    dot.className = "arrivals-dot";
+    dot.dataset.kind = ev.key;
+    dot.style.left = `${pct.toFixed(1)}%`;
+    dot.title = `${ev.label} · ${fmtTime(ev.time)} · ${ev.sub}`;
+    dot.textContent = ICONS[ev.key] || "•";
+    dot.addEventListener("click", () => state.handlers.onHourClick?.(ev.time));
+    rail.appendChild(dot);
+    // Alternating label rows: top / bottom so they don't collide.
+    const label = document.createElement("span");
+    label.className = "arrivals-label";
+    label.style.left = `${pct.toFixed(1)}%`;
+    label.innerHTML = `<strong>${escapeHtml(ev.label)}</strong><span>${escapeHtml(fmtTime(ev.time))} · ${escapeHtml(ev.sub)}</span>`;
+    (i % 2 === 0 ? rowTop : rowBot).appendChild(label);
   });
 }
 
