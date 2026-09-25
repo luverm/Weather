@@ -631,6 +631,15 @@ html[data-reduce-motion="true"] *::after {
   transition: opacity 160ms var(--ease);
 }
 .daily-expand-bar:hover span { opacity: 1; }
+.daily-expand-sun {
+  grid-column: 1 / -1;
+  padding: 4px 6px 2px;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
 
 /* ---------- Share button flash ---------- */
 #share-btn.just-copied { color: var(--accent); animation: pulseOnce 560ms var(--ease); }
