@@ -1359,6 +1359,9 @@ function renderDailyDelta(days) {
   if (Math.abs(dPop) >= 20) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
   }
+  // Weekly precip total once the outlook actually carries rain worth naming.
+  const weekMm = days.reduce((s, d) => s + (d.precip || 0), 0);
+  if (weekMm >= 5) parts.push(`${Math.round(weekMm)} mm this week`);
   el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
 }
 
