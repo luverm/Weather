@@ -43,6 +43,7 @@ const el = {
   aqCard: $("#aq-card"),
   aqTrendLine: $("#aq-trend-line"),
   aqTrendFill: $("#aq-trend-fill"),
+  aqTrendBadge: $("#aq-trend-badge"),
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
@@ -524,10 +525,39 @@ function renderAqTrend(aq) {
   if (pts.length < 2) {
     el.aqTrendLine.setAttribute("d", "");
     el.aqTrendFill.setAttribute("d", "");
+    renderAqTrendBadge(null);
     return;
   }
   drawSparkline(el.aqTrendLine, el.aqTrendFill, pts, { minSpan: 20 });
+  renderAqTrendBadge(pts);
 }
+
+function renderAqTrendBadge(pts) {
+  if (!el.aqTrendBadge) return;
+  if (!pts || pts.length < 3) { el.aqTrendBadge.hidden = true; return; }
+  // Average first third vs last third to smooth out spikes.
+  const third = Math.max(1, Math.floor(pts.length / 3));
+  const start = mean(pts.slice(0, third));
+  const end = mean(pts.slice(-third));
+  const delta = end - start;
+  // A change smaller than 5 AQI is noise for the pill.
+  if (Math.abs(delta) < 5) {
+    el.aqTrendBadge.hidden = false;
+    el.aqTrendBadge.dataset.dir = "steady";
+    el.aqTrendBadge.textContent = "◦ steady";
+    return;
+  }
+  el.aqTrendBadge.hidden = false;
+  if (delta > 0) {
+    el.aqTrendBadge.dataset.dir = "up";
+    el.aqTrendBadge.textContent = `↗ worsening ${Math.round(delta)}`;
+  } else {
+    el.aqTrendBadge.dataset.dir = "down";
+    el.aqTrendBadge.textContent = `↘ improving ${Math.round(-delta)}`;
+  }
+}
+
+function mean(xs) { return xs.reduce((a, b) => a + b, 0) / xs.length; }
 
 function renderMoon(moon) {
   if (!moon) return;
