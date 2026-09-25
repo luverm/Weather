@@ -70,6 +70,11 @@ const el = {
   pressureSparkFill: $("#pressure-spark-fill"),
   humiditySparkLine: $("#humidity-spark-line"),
   humiditySparkFill: $("#humidity-spark-fill"),
+  windSparkLine: $("#wind-spark-line"),
+  windSparkFill: $("#wind-spark-fill"),
+  windSparkGustLine: $("#wind-spark-gust-line"),
+  windSparkGustFill: $("#wind-spark-gust-fill"),
+  windSparkPeak: $("#wind-spark-peak"),
   dailySpark: $("#daily-spark"),
   dailyHi: $("#daily-hi"),
   dailyLo: $("#daily-lo"),
@@ -470,6 +475,37 @@ function renderPressureSparkline(w) {
     (w.hourly || []).map((h) => h.humidity).filter((v) => v != null).slice(0, 12),
     { minSpan: 10, fixedMin: 0, fixedMax: 100 }
   );
+  renderWindSparkline(w);
+}
+
+function renderWindSparkline(w) {
+  if (!el.windSparkLine || !el.windSparkFill) return;
+  const hours = (w.hourly || []).slice(0, 12);
+  const wind = hours.map((h) => h.wind).filter((v) => v != null);
+  const gust = hours.map((h) => h.gusts ?? h.wind).filter((v) => v != null);
+  if (wind.length < 2) {
+    el.windSparkLine.setAttribute("d", "");
+    el.windSparkFill.setAttribute("d", "");
+    el.windSparkGustLine?.setAttribute("d", "");
+    el.windSparkGustFill?.setAttribute("d", "");
+    if (el.windSparkPeak) { el.windSparkPeak.setAttribute("cx", -4); el.windSparkPeak.setAttribute("cy", -4); }
+    return;
+  }
+  // Share a common scale between wind + gust so the relative heights read.
+  const max = Math.max(...gust, ...wind);
+  const min = 0;
+  drawSparkline(el.windSparkGustLine, el.windSparkGustFill, gust, { minSpan: 4, fixedMin: min, fixedMax: max });
+  drawSparkline(el.windSparkLine, el.windSparkFill, wind, { minSpan: 4, fixedMin: min, fixedMax: max });
+  // Highlight the peak-gust hour with a small marker.
+  if (el.windSparkPeak) {
+    let peakIdx = 0;
+    for (let i = 1; i < gust.length; i++) if (gust[i] > gust[peakIdx]) peakIdx = i;
+    const W = 100, H = 24, PAD = 1.5;
+    const cx = PAD + (peakIdx / (gust.length - 1)) * (W - PAD * 2);
+    const cy = PAD + (H - PAD * 2) - ((gust[peakIdx] - min) / Math.max(4, max - min)) * (H - PAD * 2);
+    el.windSparkPeak.setAttribute("cx", cx.toFixed(1));
+    el.windSparkPeak.setAttribute("cy", cy.toFixed(1));
+  }
 }
 
 function drawSparkline(lineEl, fillEl, series, { minSpan = 1, fixedMin, fixedMax } = {}) {
