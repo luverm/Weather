@@ -385,7 +385,7 @@ function renderDayPeak(w, currentTemp) {
 function renderMetrics(w) {
   el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
   const dir = w.windDir;
-  const dirLabel = dir != null ? cardinal(dir) : null;
+  const dirLabel = dir != null ? `${cardinal(dir)} ${Math.round(dir)}°` : null;
   el.metricWindSub.textContent = dirLabel
     ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
     : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
