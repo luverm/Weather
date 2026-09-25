@@ -900,6 +900,28 @@ function scheduleGoldenHour(w) {
   const windows = goldenWindows(day);
   if (!windows) { el.sunGolden.hidden = true; return; }
   el.sunGolden.hidden = false;
+  // Wire the pills so clicking either one scrubs the timeline to the start
+  // of that window — great for previewing "what will the sky look like at
+  // golden hour" without hunting on the scrubber.
+  if (!el.goldenPillAm._bound) {
+    el.goldenPillAm.style.cursor = "pointer";
+    el.goldenPillPm.style.cursor = "pointer";
+    el.goldenPillAm.setAttribute("role", "button");
+    el.goldenPillPm.setAttribute("role", "button");
+    el.goldenPillAm.setAttribute("tabindex", "0");
+    el.goldenPillPm.setAttribute("tabindex", "0");
+    const scrubTo = (winStart) => state.handlers.onHourClick?.(winStart);
+    const wireClick = (elm, keyFn) => {
+      elm.addEventListener("click", () => scrubTo(keyFn()));
+      elm.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); scrubTo(keyFn()); }
+      });
+    };
+    wireClick(el.goldenPillAm, () => (goldenWindows(pickGoldenDay(w, Date.now()))?.am.start));
+    wireClick(el.goldenPillPm, () => (goldenWindows(pickGoldenDay(w, Date.now()))?.pm.start));
+    el.goldenPillAm._bound = true;
+    el.goldenPillPm._bound = true;
+  }
 
   const update = () => {
     const now = Date.now();
