@@ -46,6 +46,7 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonNext: $("#moon-next"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -532,6 +533,7 @@ function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  renderMoonNext(moon);
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
@@ -548,6 +550,38 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+}
+
+// Next quarter-phase countdown: pick whichever of new / first-quarter /
+// full / last-quarter lies soonest ahead in the 29.53-day cycle.
+function renderMoonNext(moon) {
+  if (!el.moonNext) return;
+  const SYN = 29.5305882;
+  const phase = moon.phase; // 0..1
+  const marks = [
+    { p: 0.00, name: "New" },
+    { p: 0.25, name: "First quarter" },
+    { p: 0.50, name: "Full" },
+    { p: 0.75, name: "Last quarter" },
+    { p: 1.00, name: "New" },
+  ];
+  let best = null;
+  for (const m of marks) {
+    const delta = m.p - phase;
+    if (delta > 0 && (!best || delta < best.delta)) best = { ...m, delta };
+  }
+  if (!best) { el.moonNext.hidden = true; return; }
+  const days = best.delta * SYN;
+  let label;
+  if (days < 0.5) {
+    const hrs = Math.max(1, Math.round(days * 24));
+    label = hrs <= 1 ? `${best.name} in <1h` : `${best.name} in ${hrs}h`;
+  } else {
+    label = `${best.name} in ${Math.round(days)}d`;
+  }
+  el.moonNext.hidden = false;
+  el.moonNext.textContent = label;
+  el.moonNext.dataset.imminent = days < 1 ? "true" : "false";
 }
 
 function fmtTime(ts) {
