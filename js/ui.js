@@ -90,6 +90,12 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunGolden: $("#sun-golden"),
+  goldenPillAm: $("#golden-pill-am"),
+  goldenPillPm: $("#golden-pill-pm"),
+  goldenWindowAm: $("#golden-window-am"),
+  goldenWindowPm: $("#golden-window-pm"),
+  goldenStatus: $("#golden-status"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -122,6 +128,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  goldenTimer: null,
   localTimer: null,
 };
 
@@ -523,6 +530,7 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleGoldenHour(w);
 }
 
 function scheduleSunArc(w) {
@@ -585,6 +593,116 @@ function scheduleSunCountdown(w) {
   };
   update();
   state.sunTimer = setInterval(update, 30_000);
+}
+
+// ---------- Golden hour + blue hour ----------
+// Approximate windows: golden hour is ~1 h after sunrise / before sunset;
+// blue hour is ~30 min before sunrise / after sunset. Exact duration depends
+// on latitude and season; this is a good UI estimate.
+const GOLDEN_MS = 60 * 60 * 1000;
+const BLUE_MS = 30 * 60 * 1000;
+
+function pickGoldenDay(w, now) {
+  if (!w?.daily?.length) return null;
+  // Prefer the daily entry whose sunrise->sunset window contains "now",
+  // else the earliest upcoming one, else the last past one.
+  let today = null, upcoming = null, past = null;
+  for (const d of w.daily) {
+    if (!d.sunrise || !d.sunset) continue;
+    if (now >= d.sunrise - BLUE_MS && now <= d.sunset + BLUE_MS) today = d;
+    else if (d.sunrise > now && (!upcoming || d.sunrise < upcoming.sunrise)) upcoming = d;
+    else if (d.sunset < now && (!past || d.sunset > past.sunset)) past = d;
+  }
+  return today || upcoming || past;
+}
+
+function goldenWindows(day) {
+  if (!day?.sunrise || !day?.sunset) return null;
+  return {
+    amBlue: { start: day.sunrise - BLUE_MS, end: day.sunrise },
+    am:     { start: day.sunrise, end: day.sunrise + GOLDEN_MS },
+    pm:     { start: day.sunset - GOLDEN_MS, end: day.sunset },
+    pmBlue: { start: day.sunset, end: day.sunset + BLUE_MS },
+  };
+}
+
+function fmtRange(a, b) { return `${fmtTime(a)}–${fmtTime(b)}`; }
+function fmtCountdown(ms) {
+  const mins = Math.max(0, Math.round(ms / 60_000));
+  if (mins >= 60) return `${Math.floor(mins / 60)}h ${mins % 60}m`;
+  return `${mins}m`;
+}
+
+function scheduleGoldenHour(w) {
+  if (state.goldenTimer) { clearInterval(state.goldenTimer); state.goldenTimer = null; }
+  if (!el.sunGolden) return;
+  const day = pickGoldenDay(w, Date.now());
+  const windows = goldenWindows(day);
+  if (!windows) { el.sunGolden.hidden = true; return; }
+  el.sunGolden.hidden = false;
+
+  const update = () => {
+    const now = Date.now();
+    // Windows may be for a past or upcoming day — refresh if we've drifted.
+    const d = pickGoldenDay(w, now);
+    const wins = goldenWindows(d);
+    if (!wins) return;
+    el.goldenWindowAm.textContent = fmtRange(wins.am.start, wins.am.end);
+    el.goldenWindowPm.textContent = fmtRange(wins.pm.start, wins.pm.end);
+
+    const state1 = pillState(wins.am, wins.amBlue, now);
+    const state2 = pillState(wins.pm, wins.pmBlue, now);
+    applyPill(el.goldenPillAm, state1);
+    applyPill(el.goldenPillPm, state2);
+
+    // Status message
+    let statusText = "—", active = false, hue = "gold";
+    if (state1.state === "active" || state2.state === "active") {
+      active = true;
+      const win = state1.state === "active" ? state1.window : state2.window;
+      hue = state1.state === "active" ? state1.hue : state2.hue;
+      const remaining = win.end - now;
+      statusText = hue === "blue" ? `Blue hour · ${fmtCountdown(remaining)} left`
+                                  : `Golden hour · ${fmtCountdown(remaining)} left`;
+    } else {
+      // Pick next upcoming window across both pills.
+      const candidates = [
+        { name: "AM blue",  hue: "blue", start: wins.amBlue.start },
+        { name: "AM golden", hue: "gold", start: wins.am.start },
+        { name: "PM golden", hue: "gold", start: wins.pm.start },
+        { name: "PM blue",  hue: "blue", start: wins.pmBlue.start },
+      ].filter((x) => x.start > now).sort((a, b) => a.start - b.start);
+      if (candidates.length) {
+        const next = candidates[0];
+        statusText = `${next.name} in ${fmtCountdown(next.start - now)}`;
+        hue = next.hue;
+      } else {
+        statusText = "Tomorrow's light";
+      }
+    }
+    el.goldenStatus.textContent = statusText;
+    el.goldenStatus.dataset.active = active ? "true" : "false";
+    el.goldenStatus.dataset.hue = hue;
+  };
+  update();
+  state.goldenTimer = setInterval(update, 30_000);
+}
+
+function pillState(goldenWin, blueWin, now) {
+  if (now >= goldenWin.start && now <= goldenWin.end) {
+    return { state: "active", hue: "gold", window: goldenWin };
+  }
+  if (now >= blueWin.start && now <= blueWin.end) {
+    return { state: "active", hue: "blue", window: blueWin };
+  }
+  if (now > goldenWin.end && now > blueWin.end) return { state: "past" };
+  return { state: "upcoming" };
+}
+
+function applyPill(el, s) {
+  if (!el) return;
+  el.dataset.state = s.state;
+  el.dataset.hue = s.hue || "gold";
 }
 
 function renderAdvice(w) {
