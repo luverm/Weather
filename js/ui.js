@@ -199,6 +199,7 @@ export const ui = {
   setWeather(weather, { narrative } = {}) {
     state.weather = weather;
     state.sampledWeather = weather; // initially same as live
+    updateFavicon(weather.condition, weather.isDay);
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
@@ -1707,3 +1708,30 @@ function escapeHtml(s) {
 
 // Export renderPlaces so the app can refresh the strip after a load.
 ui.refreshPlaces = renderPlaces;
+
+// ---------- Dynamic favicon ----------
+// Swap the browser-tab icon whenever the live condition changes so a quick
+// glance at a pinned tab tells you if it's raining, storming, or clear.
+const FAVICON_GLYPHS = {
+  clear: (day) => day
+    ? `<circle cx='32' cy='32' r='16' fill='%23ffe08a'/><g stroke='%23ffe08a' stroke-width='4' stroke-linecap='round'><path d='M32 6v6M32 52v6M6 32h6M52 32h6M13 13l4 4M47 47l4 4M13 51l4-4M47 17l4-4'/></g>`
+    : `<path d='M40 12a20 20 0 1012 40 16 16 0 01-12-40z' fill='%23f0e6cb'/>`,
+  clouds: () => `<path d='M20 42a10 10 0 010-20 12 12 0 0124 0 10 10 0 010 20H20z' fill='%23cfd8e8'/>`,
+  rain: () => `<path d='M20 34a10 10 0 010-20 12 12 0 0124 0 10 10 0 010 20H20z' fill='%23cfd8e8'/><g stroke='%2378b8ff' stroke-width='4' stroke-linecap='round'><path d='M22 44l-3 8M32 44l-3 8M42 44l-3 8'/></g>`,
+  snow: () => `<path d='M20 34a10 10 0 010-20 12 12 0 0124 0 10 10 0 010 20H20z' fill='%23cfd8e8'/><g fill='%23e8f4ff'><circle cx='22' cy='48' r='3'/><circle cx='32' cy='52' r='3'/><circle cx='42' cy='48' r='3'/></g>`,
+  storm: () => `<path d='M20 32a10 10 0 010-20 12 12 0 0124 0 10 10 0 010 20H20z' fill='%23aab4c4'/><path d='M32 32l-6 12h6l-4 12 12-16h-8l4-8z' fill='%23ffd85a'/>`,
+  fog: () => `<g stroke='%23cfd8e8' stroke-width='6' stroke-linecap='round'><path d='M14 26h36M10 38h44M18 50h36'/></g>`,
+};
+
+let lastFavKey = "";
+function updateFavicon(condition, isDay) {
+  const link = document.getElementById("favicon");
+  if (!link) return;
+  const key = `${condition || "clear"}:${isDay ? "d" : "n"}`;
+  if (key === lastFavKey) return;
+  lastFavKey = key;
+  const glyph = FAVICON_GLYPHS[condition] || FAVICON_GLYPHS.clear;
+  const bg = isDay ? "%234b7bd8" : "%230b1020";
+  const svg = `%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='${bg}'/%3E${glyph(!!isDay)}%3C/svg%3E`;
+  link.href = `data:image/svg+xml,${svg}`;
+}
