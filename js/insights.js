@@ -10,7 +10,18 @@ const ICONS = {
   uv: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M4 12H2M6 6l-2-2M12 18a6 6 0 006-6H6a6 6 0 006 6z"/></svg>',
   humid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c4 5 6 8 6 11a6 6 0 01-12 0c0-3 2-6 6-11z"/></svg>',
   sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg>',
+  clear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15h16M6 12h12M8 18h8M12 5c2 2 2 5 0 7"/></svg>',
 };
+
+function firstTransition(hours, isBefore, isAfter) {
+  // Find the first index i where hours[i] is "before" and hours[i+1] is "after".
+  for (let i = 0; i < hours.length - 1; i++) {
+    if (isBefore(hours[i]) && isAfter(hours[i + 1])) {
+      return hours[i + 1];
+    }
+  }
+  return null;
+}
 
 export function buildInsights(weather, { fmtTime, weekday } = {}) {
   const out = [];
@@ -97,6 +108,30 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
       value: `${Math.round(weather.uvPeak.value)} at ${fmt(weather.uvPeak.time)}`,
       ts: weather.uvPeak.time,
     });
+  }
+
+  // 6. Weather-condition transitions in the next 12h.
+  // Prefer whichever transition happens soonest so the pill stays useful.
+  const window = hours.slice(0, 12);
+  const isWet = (h) => ["rain", "storm"].includes(h.condition);
+  const isFog = (h) => h.condition === "fog";
+  const isDryish = (h) => ["clear", "clouds"].includes(h.condition);
+  const rainEnd = firstTransition(window, isWet, isDryish);
+  const fogLift = firstTransition(window, isFog, isDryish);
+  const skyClear = firstTransition(window, (h) => h.condition === "clouds", (h) => h.condition === "clear");
+  const rainStart = firstTransition(window, isDryish, isWet);
+  const candidates = [
+    rainEnd ? { icon: ICONS.clear, label: "Rain ends", value: fmt(rainEnd.time), ts: rainEnd.time } : null,
+    fogLift ? { icon: ICONS.clear, label: "Fog lifts", value: fmt(fogLift.time), ts: fogLift.time } : null,
+    rainStart ? { icon: ICONS.rain, label: "Rain starts", value: fmt(rainStart.time), ts: rainStart.time } : null,
+    skyClear ? { icon: ICONS.sun, label: "Sky clears", value: fmt(skyClear.time), ts: skyClear.time } : null,
+  ].filter(Boolean).sort((a, b) => a.ts - b.ts);
+  // If we already surface "Next rain" earlier, drop the transition duplicate.
+  const alreadyRainy = out.some((o) => o.label === "Next rain");
+  for (const c of candidates) {
+    if (c.label === "Rain starts" && alreadyRainy) continue;
+    out.push(c);
+    break; // only the soonest transition
   }
 
   return out.slice(0, 6);
