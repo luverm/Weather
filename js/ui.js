@@ -97,6 +97,9 @@ const el = {
   goldenWindowAm: $("#golden-window-am"),
   goldenWindowPm: $("#golden-window-pm"),
   goldenStatus: $("#golden-status"),
+  sunRiseBearing: $("#sun-rise-bearing"),
+  sunSetBearing: $("#sun-set-bearing"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -572,9 +575,76 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderSunBearings(w);
+  renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   scheduleGoldenHour(w);
+}
+
+function renderSunBearings(w) {
+  if (!el.sunRiseBearing || !el.sunSetBearing) return;
+  const lat = state.place?.lat;
+  if (lat == null || !w.sunrise) {
+    el.sunRiseBearing.hidden = true;
+    el.sunSetBearing.hidden = true;
+    return;
+  }
+  const bearing = sunriseAzimuth(lat, new Date(w.sunrise));
+  if (bearing == null) {
+    el.sunRiseBearing.hidden = true;
+    el.sunSetBearing.hidden = true;
+    return;
+  }
+  const setBearing = (360 - bearing) % 360;
+  el.sunRiseBearing.hidden = false;
+  el.sunSetBearing.hidden = false;
+  el.sunRiseBearing.textContent = `↑ ${Math.round(bearing)}° ${cardinal(bearing)}`;
+  el.sunSetBearing.textContent = `↓ ${Math.round(setBearing)}° ${cardinal(setBearing)}`;
+  el.sunRiseBearing.dataset.tone = "warm";
+  el.sunSetBearing.dataset.tone = "warm";
+}
+
+function renderDaylightDelta(w) {
+  if (!el.sunDaylightDelta) return;
+  if (!w?.daily?.length || !w.daily[0]?.sunrise || !w.daily[0]?.sunset) {
+    el.sunDaylightDelta.hidden = true;
+    return;
+  }
+  // Compare today's daylight to yesterday's via last week's same-weekday, if
+  // present, or the second-oldest daily entry. Since the API gives us today
+  // forward, fall back to comparing today vs tomorrow so a delta always shows.
+  const today = w.daily[0];
+  const other = w.daily[1];
+  if (!other?.sunrise || !other?.sunset) { el.sunDaylightDelta.hidden = true; return; }
+  const todaySecs = (today.sunset - today.sunrise) / 1000;
+  const otherSecs = (other.sunset - other.sunrise) / 1000;
+  const deltaSec = otherSecs - todaySecs;
+  const absMin = Math.abs(Math.round(deltaSec / 60));
+  if (absMin < 1) { el.sunDaylightDelta.hidden = true; return; }
+  const sign = deltaSec >= 0 ? "+" : "−";
+  el.sunDaylightDelta.hidden = false;
+  el.sunDaylightDelta.textContent = `${sign}${absMin}m tomorrow`;
+  el.sunDaylightDelta.dataset.tone = deltaSec >= 0 ? "warm" : "cool";
+}
+
+// ---------- Solar geometry (approximate) ----------
+function solarDeclination(date) {
+  const start = new Date(Date.UTC(date.getUTCFullYear(), 0, 0));
+  const dayOfYear = Math.floor((date - start) / 86400_000);
+  // Cooper's formula
+  return 23.45 * Math.sin(2 * Math.PI * (dayOfYear + 284) / 365) * Math.PI / 180;
+}
+
+function sunriseAzimuth(lat, date) {
+  const dec = solarDeclination(date);
+  const latRad = lat * Math.PI / 180;
+  const cosA = -Math.sin(dec) / Math.cos(latRad);
+  if (!isFinite(cosA)) return null;
+  if (cosA > 1) return 0;     // polar night; nominal north
+  if (cosA < -1) return 180;  // polar day; nominal south
+  const a = Math.acos(cosA) * 180 / Math.PI;
+  return a; // measured clockwise from north
 }
 
 function scheduleSunArc(w) {
