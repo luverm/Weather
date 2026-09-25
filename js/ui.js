@@ -200,6 +200,7 @@ export const ui = {
     state.weather = weather;
     state.sampledWeather = weather; // initially same as live
     updateFavicon(weather.condition, weather.isDay);
+    updateTabTitle(weather);
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
@@ -1774,6 +1775,13 @@ const FAVICON_GLYPHS = {
   storm: () => `<path d='M20 32a10 10 0 010-20 12 12 0 0124 0 10 10 0 010 20H20z' fill='%23aab4c4'/><path d='M32 32l-6 12h6l-4 12 12-16h-8l4-8z' fill='%23ffd85a'/>`,
   fog: () => `<g stroke='%23cfd8e8' stroke-width='6' stroke-linecap='round'><path d='M14 26h36M10 38h44M18 50h36'/></g>`,
 };
+
+function updateTabTitle(w) {
+  if (!w || w.temp == null) return;
+  const temp = Math.round(state.unit === "F" ? w.temp * 9 / 5 + 32 : w.temp);
+  const place = state.place?.name || "Aether";
+  document.title = `${temp}°${state.unit} · ${capitalize(w.label || "")} — ${place}`;
+}
 
 let lastFavKey = "";
 function updateFavicon(condition, isDay) {
