@@ -1807,9 +1807,14 @@ const FAVICON_GLYPHS = {
 
 function updateTabTitle(w) {
   if (!w || w.temp == null) return;
-  const temp = Math.round(state.unit === "F" ? w.temp * 9 / 5 + 32 : w.temp);
+  const conv = (c) => Math.round(state.unit === "F" ? c * 9 / 5 + 32 : c);
+  const temp = conv(w.temp);
+  const today = w.daily?.[0];
+  const range = today && today.tempMin != null && today.tempMax != null
+    ? ` (${conv(today.tempMin)}/${conv(today.tempMax)})`
+    : "";
   const place = state.place?.name || "Aether";
-  document.title = `${temp}°${state.unit} · ${capitalize(w.label || "")} — ${place}`;
+  document.title = `${temp}°${state.unit}${range} · ${capitalize(w.label || "")} — ${place}`;
 }
 
 let lastFavKey = "";
