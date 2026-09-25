@@ -1461,9 +1461,11 @@ function renderPlaces() {
   const activeId = state.place ? places.idFor(state.place) : null;
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
+    const flag = flagFromCode(p.countryCode);
+    const flagHtml = flag ? `<span class="place-chip-flag" aria-hidden="true">${flag}</span>` : "";
     return `
       <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
-        <span>${escapeHtml(p.name)}</span>
+        ${flagHtml}<span>${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
         <span class="close" data-action="remove" aria-label="Remove">
           <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
@@ -1495,14 +1497,28 @@ const runSearch = debounce(async (q) => {
   renderSearchResults(results);
 }, 200);
 
-function renderSearchResults(results) {
-  if (!results.length) { el.searchResults.hidden = true; el.searchResults.innerHTML = ""; return; }
-  el.searchResults.innerHTML = results.map((r, i) => `
+function flagFromCode(code) {
+  if (!code || code.length !== 2) return "";
+  try {
+    const cps = code.toUpperCase().split("").map((c) => 127397 + c.charCodeAt(0));
+    return String.fromCodePoint(...cps);
+  } catch { return ""; }
+}
+
+function searchRow(r, i) {
+  const flag = flagFromCode(r.countryCode);
+  const flagHtml = flag ? `<span class="search-flag" aria-hidden="true">${flag}</span>` : "";
+  return `
     <li role="option" data-index="${i}">
-      <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
+      <span>${flagHtml}${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
       <span class="sub">${escapeHtml(r.country || "")}</span>
     </li>
-  `).join("");
+  `;
+}
+
+function renderSearchResults(results) {
+  if (!results.length) { el.searchResults.hidden = true; el.searchResults.innerHTML = ""; return; }
+  el.searchResults.innerHTML = results.map(searchRow).join("");
   el.searchResults.hidden = false;
   el.searchResults._items = results;
 }
@@ -1510,12 +1526,7 @@ function renderSearchResults(results) {
 function showRecentsIfAny() {
   const recents = places.all().slice(0, 5);
   if (!recents.length) { el.searchResults.hidden = true; return; }
-  const itemsHtml = recents.map((r, i) => `
-    <li role="option" data-index="${i}">
-      <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
-      <span class="sub">${escapeHtml(r.country || "")}</span>
-    </li>
-  `).join("");
+  const itemsHtml = recents.map(searchRow).join("");
   el.searchResults.innerHTML = `<li class="recent-heading">Recent places</li>${itemsHtml}`;
   el.searchResults._items = recents;
   el.searchResults.hidden = false;

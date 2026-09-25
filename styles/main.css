@@ -258,6 +258,18 @@ html[data-reduce-motion="true"] *::after {
 }
 .search-results li:hover,
 .search-results li[aria-selected="true"] { background: rgba(255, 255, 255, 0.08); }
+.search-flag {
+  display: inline-block;
+  margin-right: 6px;
+  font-size: 13px;
+  transform: translateY(1px);
+  filter: saturate(1.15);
+}
+.place-chip-flag {
+  font-size: 13px;
+  margin-right: 2px;
+  filter: saturate(1.15);
+}
 .search-results .sub { color: rgba(246, 247, 251, 0.55); font-size: 13px; }
 .search-results .recent-heading {
   padding: 8px 12px 4px;
