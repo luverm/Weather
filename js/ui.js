@@ -298,7 +298,19 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.innerHTML = `<span class="condition-label-icon" aria-hidden="true">${iconFor(w.condition)}</span>${capitalize(w.label)}`;
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  // "Feels like" gets a reason clause when it differs meaningfully from actual:
+  // wind chill, heat index, dry-air lift, or muggy humidity.
+  const rawDelta = (w.feelsLike ?? w.temp) - w.temp;
+  const displayedDelta = Math.round(convertTemp(w.feelsLike ?? w.temp) - convertTemp(w.temp));
+  let reason = "";
+  if (Math.abs(displayedDelta) >= 2) {
+    if (rawDelta < -1 && (w.windSpeed ?? 0) >= 12) reason = " · wind chill";
+    else if (rawDelta > 1 && (w.humidity ?? 0) >= 65) reason = " · humid";
+    else if (rawDelta < -1 && (w.humidity ?? 100) <= 35) reason = " · dry air";
+    else if (rawDelta > 1) reason = " · heat index";
+    else reason = " · wind chill";
+  }
+  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°${reason}`;
   renderDayRange(w);
 }
 
