@@ -75,6 +75,9 @@ const el = {
   windSparkGustLine: $("#wind-spark-gust-line"),
   windSparkGustFill: $("#wind-spark-gust-fill"),
   windSparkPeak: $("#wind-spark-peak"),
+  uvSparkLine: $("#uv-spark-line"),
+  uvSparkFill: $("#uv-spark-fill"),
+  uvSparkPeak: $("#uv-spark-peak"),
   dailySpark: $("#daily-spark"),
   dailyHi: $("#daily-hi"),
   dailyLo: $("#daily-lo"),
@@ -476,6 +479,31 @@ function renderPressureSparkline(w) {
     { minSpan: 10, fixedMin: 0, fixedMax: 100 }
   );
   renderWindSparkline(w);
+  renderUvSparkline(w);
+}
+
+function renderUvSparkline(w) {
+  if (!el.uvSparkLine || !el.uvSparkFill) return;
+  const hours = (w.hourly || []).slice(0, 12);
+  const uv = hours.map((h) => h.uv).filter((v) => v != null);
+  if (uv.length < 2) {
+    el.uvSparkLine.setAttribute("d", "");
+    el.uvSparkFill.setAttribute("d", "");
+    if (el.uvSparkPeak) { el.uvSparkPeak.setAttribute("cx", -4); el.uvSparkPeak.setAttribute("cy", -4); }
+    return;
+  }
+  // UV scale runs 0..11+. Anchor to 0 so a low-UV day still shows a flat line.
+  const max = Math.max(...uv, 3);
+  drawSparkline(el.uvSparkLine, el.uvSparkFill, uv, { minSpan: 3, fixedMin: 0, fixedMax: max });
+  if (el.uvSparkPeak) {
+    let idx = 0;
+    for (let i = 1; i < uv.length; i++) if (uv[i] > uv[idx]) idx = i;
+    const W = 100, H = 24, PAD = 1.5;
+    const cx = PAD + (idx / (uv.length - 1)) * (W - PAD * 2);
+    const cy = PAD + (H - PAD * 2) - ((uv[idx] - 0) / Math.max(3, max)) * (H - PAD * 2);
+    el.uvSparkPeak.setAttribute("cx", cx.toFixed(1));
+    el.uvSparkPeak.setAttribute("cy", cy.toFixed(1));
+  }
 }
 
 function renderWindSparkline(w) {
