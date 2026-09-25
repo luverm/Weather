@@ -1691,7 +1691,12 @@ function bindSettings() {
 }
 
 function applyStoredPreferences() {
-  const reduce = localStorage.getItem("aether:reduceMotion") === "1";
+  // Honor a stored preference; otherwise fall back to the OS-level
+  // prefers-reduced-motion signal so accessibility settings win by default.
+  const stored = localStorage.getItem("aether:reduceMotion");
+  const osReduce = typeof matchMedia === "function"
+    && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const reduce = stored === "1" || (stored == null && osReduce);
   if (reduce) {
     document.documentElement.setAttribute("data-reduce-motion", "true");
     if (el.settingReduceMotion) el.settingReduceMotion.checked = true;
@@ -1702,7 +1707,13 @@ function applyStoredPreferences() {
 }
 
 // Exposed so app.js can query the current preference on boot.
-ui.isReduceMotion = () => localStorage.getItem("aether:reduceMotion") === "1";
+ui.isReduceMotion = () => {
+  const stored = localStorage.getItem("aether:reduceMotion");
+  if (stored === "1") return true;
+  if (stored === "0") return false;
+  return typeof matchMedia === "function"
+    && matchMedia("(prefers-reduced-motion: reduce)").matches;
+};
 
 function startFetchedTicker() {
   const update = () => {
