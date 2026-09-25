@@ -1268,9 +1268,11 @@ function renderDaily(w) {
 
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
-  el.dailyIconStrip.innerHTML = days.map((d) =>
-    `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
-  ).join("");
+  // Mark day-0 as "today" so the strip shows anchoring at a glance.
+  el.dailyIconStrip.innerHTML = days.map((d, i) => {
+    const cls = i === 0 ? "strip-day is-today" : "strip-day";
+    return `<span class="${cls}" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`;
+  }).join("");
 }
 
 function renderDailySpark(days) {
