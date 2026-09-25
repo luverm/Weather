@@ -50,7 +50,12 @@ async function fetchJson(url, opts) {
 
 export async function searchCities(query) {
   if (!query || query.trim().length < 2) return [];
-  const url = `${GEO}?name=${encodeURIComponent(query)}&count=6&language=en&format=json`;
+  // Pick the browser's UI language so a user in France searching "Nürnberg"
+  // sees "Nuremberg" or "Nuremberg" as their locale prefers.
+  const lang = (typeof navigator !== "undefined" && navigator.language
+    ? navigator.language.slice(0, 2).toLowerCase()
+    : "en");
+  const url = `${GEO}?name=${encodeURIComponent(query)}&count=6&language=${lang}&format=json`;
   try {
     const data = await fetchJson(url);
     return (data.results || []).map((r) => ({
