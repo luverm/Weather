@@ -48,7 +48,15 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
       ts: rainyDay.sunrise || rainyDay.time,
     });
   } else {
-    out.push({ icon: ICONS.sun, label: "This week", value: "No rain in the outlook" });
+    // Dry-week phrasing: name the count of dry days ahead so a "3-day dry
+    // spell" reads different from "a full 7-day dry stretch".
+    const dryCount = days.filter((d) => (d.pop ?? 0) < 30 && (d.precip ?? 0) < 0.5).length;
+    const value = dryCount >= days.length && days.length >= 5
+      ? "Dry through the outlook"
+      : dryCount > 1
+      ? `${dryCount} dry days ahead`
+      : "No rain in the outlook";
+    out.push({ icon: ICONS.sun, label: "This week", value });
   }
 
   // 2. Peak wind in next 24h.
