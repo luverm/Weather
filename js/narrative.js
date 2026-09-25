@@ -110,10 +110,31 @@ export function narrate(weather) {
     }
   }
 
+  // Cloud shift (thickening / clearing) over the next 6 h.
+  if (bits.length < 2) {
+    const cloud = findCloudShift(weather.hourly);
+    if (cloud) bits.push(cloud);
+  }
+
   // Calm night fallback.
   if (bits.length < 2 && condition === "clear" && windSpeed < 10) {
     bits.push("Calm and settled for the next few hours.");
   }
 
   return bits.slice(0, 2).join(" ");
+}
+
+function findCloudShift(hourly) {
+  if (!hourly?.length) return null;
+  const window = hourly.slice(0, 6).filter((h) => h.cloudCover != null);
+  if (window.length < 3) return null;
+  const first = window[0].cloudCover;
+  let extrema = window[0];
+  for (const h of window) {
+    if (Math.abs(h.cloudCover - first) > Math.abs(extrema.cloudCover - first)) extrema = h;
+  }
+  const delta = extrema.cloudCover - first;
+  if (delta <= -35) return `Skies clearing by ${fmtHour(extrema.time)}.`;
+  if (delta >= 35) return `Cloud thickening by ${fmtHour(extrema.time)}.`;
+  return null;
 }
