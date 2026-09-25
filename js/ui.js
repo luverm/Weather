@@ -387,6 +387,10 @@ function renderMetrics(w) {
   el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
   const dir = w.windDir;
   const dirLabel = dir != null ? `${cardinal(dir)} ${Math.round(dir)}°` : null;
+  // Wind severity attribute for CSS: strong (≥ 40 km/h gust) or violent (≥ 60).
+  const gust = w.windGusts ?? w.windSpeed ?? 0;
+  const severity = gust >= 60 ? "violent" : gust >= 40 ? "strong" : "";
+  document.querySelector(".metric-wind")?.setAttribute("data-severity", severity);
   el.metricWindSub.textContent = dirLabel
     ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
     : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
