@@ -26,6 +26,7 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  dayPeak: $("#day-peak"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -310,6 +311,49 @@ function renderDayRange(w) {
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+  renderDayPeak(w, t);
+}
+
+function renderDayPeak(w, currentTemp) {
+  if (!el.dayPeak) return;
+  const hours = w.hourly || [];
+  if (hours.length < 2) { el.dayPeak.hidden = true; return; }
+  // Restrict to today's remaining hours (up to end of day-0 of daily).
+  const dayEnd = w.daily?.[0]?.sunset
+    ? new Date(w.daily[0].sunset).setHours(23, 59, 59, 999)
+    : Date.now() + 24 * 3600_000;
+  const remaining = hours.filter((h) => h.time > Date.now() && h.time <= dayEnd);
+  if (remaining.length < 1) { el.dayPeak.hidden = true; return; }
+  // Find peak temp in remaining hours.
+  let peak = remaining[0];
+  for (const h of remaining) {
+    if ((h.temp ?? -Infinity) > (peak.temp ?? -Infinity)) peak = h;
+  }
+  if (peak.temp == null) { el.dayPeak.hidden = true; return; }
+  const peakConv = Math.round(convertTemp(peak.temp));
+  const deltaConv = Math.round(convertTemp(peak.temp) - convertTemp(currentTemp ?? peak.temp));
+  const timeLabel = fmtTime(peak.time);
+  // Warmest-ahead pill: only when at least 2° warmer, still >45 min away.
+  if (deltaConv >= 2 && peak.time - Date.now() >= 45 * 60_000) {
+    el.dayPeak.hidden = false;
+    el.dayPeak.innerHTML = `Warmest <strong>${peakConv}°</strong> at ${timeLabel} · +${deltaConv}° from now`;
+    return;
+  }
+  // Otherwise, if the day still has meaningful cooling ahead, surface that instead.
+  let low = remaining[0];
+  for (const h of remaining) {
+    if ((h.temp ?? Infinity) < (low.temp ?? Infinity)) low = h;
+  }
+  if (low.temp != null) {
+    const lowConv = Math.round(convertTemp(low.temp));
+    const dropConv = Math.round(convertTemp(currentTemp ?? low.temp) - convertTemp(low.temp));
+    if (dropConv >= 3 && low.time - Date.now() >= 45 * 60_000) {
+      el.dayPeak.hidden = false;
+      el.dayPeak.innerHTML = `Cooling to <strong>${lowConv}°</strong> by ${fmtTime(low.time)} · -${dropConv}° from now`;
+      return;
+    }
+  }
+  el.dayPeak.hidden = true;
 }
 
 function renderMetrics(w) {
