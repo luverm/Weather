@@ -204,6 +204,8 @@ async function loadByCoords(place) {
   clock.reset();
   ui.setScrubbing(false);
 
+  updateUrlForPlace(place);
+
   const w = await getWeather(place.lat, place.lon);
   app.weather = w;
 
@@ -218,6 +220,36 @@ async function loadByCoords(place) {
 
   // Move the radar to the new location (fire-and-forget; resolves later).
   ensureRadar([place.lat, place.lon]).then((r) => r?.setCenter(place.lat, place.lon, place.name));
+}
+
+// Keep the URL in sync with the loaded place so ?lat=…&lon=…&name=… can
+// be shared and re-opened. The "Current location" pseudo-place omits the
+// bookmark so we don't accidentally leak coarse coordinates into history.
+function updateUrlForPlace(place) {
+  if (!place || place.lat == null || place.lon == null) return;
+  if (place.name === "Current location") {
+    try { history.replaceState(null, "", window.location.pathname); } catch {}
+    return;
+  }
+  const params = new URLSearchParams();
+  params.set("lat", place.lat.toFixed(4));
+  params.set("lon", place.lon.toFixed(4));
+  if (place.name) params.set("name", place.name);
+  if (place.country) params.set("country", place.country);
+  const next = `${window.location.pathname}?${params.toString()}`;
+  try { history.replaceState(null, "", next); } catch {}
+}
+
+function readPlaceFromUrl() {
+  const p = new URLSearchParams(window.location.search);
+  const lat = parseFloat(p.get("lat"));
+  const lon = parseFloat(p.get("lon"));
+  if (Number.isNaN(lat) || Number.isNaN(lon)) return null;
+  return {
+    name: p.get("name") || "Shared location",
+    country: p.get("country") || undefined,
+    lat, lon,
+  };
 }
 
 async function useGeolocation() {
@@ -306,7 +338,14 @@ installShortcuts({
 
 // ---------- Start ----------
 (async function init() {
-  // Prefer the most recent saved place if we have one — avoids the geolocation
+  // 1. Deep-link URL takes priority so shared links open the intended place.
+  const fromUrl = readPlaceFromUrl();
+  if (fromUrl) {
+    places.add(fromUrl);
+    await loadByCoords(fromUrl);
+    return;
+  }
+  // 2. Otherwise prefer the most recent saved place — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();
   if (saved.length) {

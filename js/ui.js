@@ -1432,6 +1432,23 @@ function startFetchedTicker() {
   setInterval(update, 30_000);
 }
 
+function buildShareUrl(place) {
+  if (!place || place.lat == null || place.lon == null) return "";
+  if (place.name === "Current location") return "";
+  try {
+    const u = new URL(window.location.href);
+    u.hash = "";
+    u.search = "";
+    u.searchParams.set("lat", Number(place.lat).toFixed(4));
+    u.searchParams.set("lon", Number(place.lon).toFixed(4));
+    if (place.name) u.searchParams.set("name", place.name);
+    if (place.country) u.searchParams.set("country", place.country);
+    return u.toString();
+  } catch {
+    return "";
+  }
+}
+
 function bindShare() {
   if (!el.shareBtn) return;
   el.shareBtn.addEventListener("click", async () => {
@@ -1449,10 +1466,13 @@ function bindShare() {
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
     ].filter(Boolean);
-    const text = lines.join("\n");
+    // Build a deep-link URL to the current place so recipients can open the
+    // same view. Sits on its own line so the summary reads cleanly.
+    const url = buildShareUrl(state.place);
+    const text = lines.join("\n") + (url ? `\n${url}` : "");
     try {
       if (navigator.share) {
-        await navigator.share({ title: `Aether — ${placeName}`, text });
+        await navigator.share({ title: `Aether — ${placeName}`, text, url: url || undefined });
       } else {
         await navigator.clipboard.writeText(text);
         ui.showToast("Summary copied to clipboard");
