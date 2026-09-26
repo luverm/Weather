@@ -275,8 +275,15 @@ async function toggleAudio() {
 async function refreshWeather() {
   if (!app.place) return;
   ui.markRefreshSpin(true);
+  // Preserve scroll: users often refresh from mid-page (a daily card, the
+  // radar). loadByCoords repaints everything, which the browser handles
+  // fine, but any layout hiccup during the fetch could kick the scroll
+  // back to the top. Save+restore keeps them exactly where they were.
+  const scrollY = window.scrollY;
   try {
     await loadByCoords(app.place);
+    // Restore on next frame after the new content is laid out.
+    requestAnimationFrame(() => window.scrollTo({ top: scrollY, behavior: "auto" }));
   } finally {
     setTimeout(() => ui.markRefreshSpin(false), 700);
   }
