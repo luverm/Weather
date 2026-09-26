@@ -52,11 +52,46 @@ export class HourlyChart {
     this.hours = (hours || []).slice(0, 24);
     this._draw();
     this.setCursor(null);
+    this._drawNowMarker();
   }
 
-  refresh() { this._draw(); }
+  refresh() { this._draw(); this._drawNowMarker(); }
+
+  _drawNowMarker() {
+    const now = this.svg.querySelector("#chart-now");
+    const dot = this.svg.querySelector("#chart-now-dot");
+    if (!now || !dot || !this.points.length) return;
+    const ts = Date.now();
+    // Find the two flanking hourly samples and interpolate x/y so the
+    // "now" marker slides smoothly between hours rather than jumping.
+    let leftIdx = -1;
+    for (let i = 0; i < this.hours.length; i++) {
+      if (this.hours[i].time <= ts) leftIdx = i;
+      else break;
+    }
+    if (leftIdx < 0 || leftIdx >= this.hours.length - 1) {
+      // Now is outside the plotted range — hide marker.
+      now.setAttribute("x1", "-10"); now.setAttribute("x2", "-10");
+      dot.setAttribute("cx", "-10"); dot.setAttribute("cy", "-10");
+      return;
+    }
+    const rightIdx = leftIdx + 1;
+    const l = this.hours[leftIdx], r = this.hours[rightIdx];
+    const span = r.time - l.time || 1;
+    const frac = Math.max(0, Math.min(1, (ts - l.time) / span));
+    const lp = this.points[leftIdx], rp = this.points[rightIdx];
+    const x = lp.x + (rp.x - lp.x) * frac;
+    const y = lp.y + (rp.y - lp.y) * frac;
+    now.setAttribute("x1", x.toFixed(1));
+    now.setAttribute("x2", x.toFixed(1));
+    dot.setAttribute("cx", x.toFixed(1));
+    dot.setAttribute("cy", y.toFixed(1));
+  }
 
   setCursor(ts) {
+    // Also refresh the persistent "now" marker so it slides forward on
+    // every minute tick / scrubber move without extra plumbing.
+    this._drawNowMarker();
     const cursor = this.svg.querySelector("#chart-cursor");
     const dot = this.svg.querySelector("#chart-dot");
     if (!ts || !this.points.length) {
