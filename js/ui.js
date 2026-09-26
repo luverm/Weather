@@ -24,6 +24,7 @@ const el = {
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
+  feelsContext: $("#feels-context"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -315,7 +316,35 @@ function renderLiveValues(w, { animate = true } = {}) {
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  renderFeelsContext(w);
   renderDayRange(w);
+}
+
+// When the apparent temperature diverges from the actual by ≥ 2° we surface
+// a short "why" — dominated by wind chill on a cold, gusty day, and by
+// humidity on a warm, sticky one.
+function renderFeelsContext(w) {
+  if (!el.feelsContext) return;
+  const actual = w.temp;
+  const feels = w.feelsLike;
+  if (actual == null || feels == null) { el.feelsContext.hidden = true; return; }
+  const diff = feels - actual;
+  if (Math.abs(diff) < 2) { el.feelsContext.hidden = true; return; }
+  const unit = state.unit;
+  const deltaTxt = Math.round(Math.abs(unit === "F" ? diff * 9 / 5 : diff));
+  const direction = diff < 0 ? "cooler" : "warmer";
+  let reason;
+  if (diff < 0) {
+    if ((w.windSpeed ?? 0) >= 15 || (w.windGusts ?? 0) >= 25) reason = "wind chill";
+    else reason = "cool air on skin";
+  } else {
+    if ((w.humidity ?? 0) >= 65 && actual >= 22) reason = "high humidity";
+    else if (actual >= 25) reason = "strong sun";
+    else reason = "muggy air";
+  }
+  el.feelsContext.textContent = `Feels ${deltaTxt}° ${direction} — ${reason}`;
+  el.feelsContext.dataset.dir = diff < 0 ? "cool" : "warm";
+  el.feelsContext.hidden = false;
 }
 
 function renderDayRange(w) {

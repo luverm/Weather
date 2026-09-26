@@ -391,6 +391,29 @@ html[data-reduce-motion="true"] *::after {
 .unit:hover { background: var(--glass); color: var(--fg); }
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
+.feels-context {
+  display: inline-block;
+  margin: 6px 0 0;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--fg-muted);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  animation: slideInUp 500ms var(--ease) both;
+}
+.feels-context[hidden] { display: none; }
+.feels-context[data-dir="cool"] {
+  color: #c8def0;
+  background: rgba(120, 170, 220, 0.14);
+  border-color: rgba(120, 170, 220, 0.28);
+}
+.feels-context[data-dir="warm"] {
+  color: #ffd2ac;
+  background: rgba(255, 160, 100, 0.14);
+  border-color: rgba(255, 160, 100, 0.28);
+}
 .day-range {
   margin-top: 10px;
   display: grid;
