@@ -1197,6 +1197,70 @@ kbd {
   font-variant-numeric: tabular-nums;
 }
 
+/* ---------- Wind timeline (24 arrows below comfort strip) ---------- */
+.wind-timeline {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  gap: 0;
+  margin-top: 4px;
+  padding: 4px 4px 18px;
+  height: 34px;
+  position: relative;
+}
+.wind-timeline[hidden] { display: none; }
+.wtl-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  height: 22px;
+  cursor: pointer;
+  color: var(--c, rgba(255,255,255,0.6));
+  opacity: var(--w, 0.6);
+  transition: transform 160ms var(--ease), opacity 160ms var(--ease), filter 160ms var(--ease);
+}
+.wtl-cell:hover {
+  opacity: 1;
+  filter: brightness(1.15) drop-shadow(0 0 4px currentColor);
+  transform: translateY(-1px) scale(1.15);
+}
+.wtl-cell.active {
+  opacity: 1;
+  filter: drop-shadow(0 0 4px currentColor);
+  transform: scale(1.25);
+}
+.wtl-empty {
+  cursor: default;
+  opacity: 0.15;
+}
+.wtl-arrow {
+  width: 14px;
+  height: 20px;
+  transform: rotate(var(--dir, 0deg));
+  transform-origin: center center;
+  transition: transform 320ms var(--ease);
+}
+.wtl-arrow.gusty {
+  animation: wtl-wobble 2.4s ease-in-out infinite;
+}
+@keyframes wtl-wobble {
+  0%, 100% { transform: rotate(var(--dir, 0deg)) translateY(0); }
+  50%      { transform: rotate(calc(var(--dir, 0deg) + 6deg)) translateY(-1px); }
+}
+.wtl-tick {
+  position: absolute;
+  bottom: -14px;
+  font-size: 9.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.04em;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+html[data-reduce-motion="true"] .wtl-arrow.gusty { animation: none; }
+
 /* ---------- Alerts strip ---------- */
 .alerts-strip {
   display: flex;
