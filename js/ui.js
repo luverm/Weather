@@ -58,6 +58,12 @@ const el = {
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
   pollenCard: $("#pollen-card"),
+  rainCard: $("#rain-card"),
+  rainTotalValue: $("#rain-total-value"),
+  rainTotalUnit: $("#rain-total-unit"),
+  rainMeterFill: $("#rain-meter-fill"),
+  rainHeadline: $("#rain-headline"),
+  rainPeakBadge: $("#rain-peak-badge"),
   pollenLevel: $("#pollen-level"),
   pollenDominant: $("#pollen-dominant"),
   pollenItems: $("#pollen-items"),
@@ -203,6 +209,7 @@ export const ui = {
     renderNowcast(weather);
     renderAdvice(weather);
     renderPollen(weather.pollen);
+    renderRain(weather);
     renderTrends(weather);
     renderInsights(weather);
     renderActivity(weather);
@@ -802,6 +809,64 @@ function renderPollen(pollen) {
   el.pollenItems.innerHTML = pollen.items.map((p) =>
     `<span>${escapeHtml(p.label)} ${p.value.toFixed(1)}</span>`
   ).join("");
+}
+
+function renderRain(w) {
+  if (!el.rainCard) return;
+  const hours = (w.hourly || []).slice(0, 24);
+  if (!hours.length) { el.rainCard.hidden = true; return; }
+
+  let total = 0;
+  let peak = { precip: -1, time: null };
+  let firstRainHour = null;
+  for (const h of hours) {
+    const p = h.precip ?? 0;
+    total += p;
+    if (p > peak.precip) peak = { precip: p, time: h.time };
+    if (firstRainHour == null && p >= 0.2) firstRainHour = h.time;
+  }
+  const inches = total / 25.4;
+  const useInches = state.unit === "F";
+  const shownTotal = useInches ? inches : total;
+  const unit = useInches ? "in" : "mm";
+  const digits = shownTotal < 1 ? 2 : shownTotal < 10 ? 1 : 0;
+
+  el.rainCard.hidden = false;
+  el.rainTotalValue.textContent = total < 0.05 ? "0" : shownTotal.toFixed(digits);
+  el.rainTotalUnit.textContent = unit;
+
+  // Meter: 0..25mm scales the fill from 0..100%.
+  const pct = Math.max(0, Math.min(100, (total / 25) * 100));
+  el.rainMeterFill.style.width = `${pct}%`;
+  el.rainMeterFill.style.background = colorForRain(total);
+
+  const headline = describeRain(total, peak, firstRainHour);
+  el.rainHeadline.textContent = headline;
+
+  if (peak.precip >= 1 && peak.time) {
+    el.rainPeakBadge.hidden = false;
+    el.rainPeakBadge.textContent = `peak ${fmtTime(peak.time)}`;
+  } else {
+    el.rainPeakBadge.hidden = true;
+    el.rainPeakBadge.textContent = "";
+  }
+}
+
+function colorForRain(mm) {
+  if (mm < 0.5) return "linear-gradient(90deg, #7dc0d4, #7dc0d4)";
+  if (mm < 3)   return "linear-gradient(90deg, #7ab8f5, #57a2e0)";
+  if (mm < 10)  return "linear-gradient(90deg, #57a2e0, #4779c9)";
+  if (mm < 25)  return "linear-gradient(90deg, #4779c9, #6a3ac4)";
+  return "linear-gradient(90deg, #6a3ac4, #e05a4a)";
+}
+
+function describeRain(total, peak, firstRainHour) {
+  if (total < 0.1) return "No rain expected — enjoy it";
+  if (total < 1)   return "A trace of drizzle possible";
+  if (peak.precip >= 5) return `Heavy showers likely near ${fmtTime(peak.time)}`;
+  if (peak.precip >= 2) return `Steady rain, peaking near ${fmtTime(peak.time)}`;
+  if (firstRainHour)     return `Light rain from about ${fmtTime(firstRainHour)}`;
+  return "Passing showers possible";
 }
 
 function renderTrends(w) {
