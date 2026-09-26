@@ -264,6 +264,43 @@ export class HourlyChart {
       }
     }
 
+    // Peak / trough annotations for today's warmest and coolest hour.
+    const peaksG = this.svg.querySelector("#chart-peaks");
+    if (peaksG) {
+      peaksG.innerHTML = "";
+      let maxIdx = 0, minIdx = 0;
+      for (let i = 1; i < this.hours.length; i++) {
+        if (this.hours[i].temp > this.hours[maxIdx].temp) maxIdx = i;
+        if (this.hours[i].temp < this.hours[minIdx].temp) minIdx = i;
+      }
+      if (this.hours.length >= 4 && maxIdx !== minIdx) {
+        const u = this.getUnit();
+        const conv = (v) => u === "F" ? v * 9 / 5 + 32 : v;
+        const annotate = (idx, kind) => {
+          const p = this.points[idx];
+          if (!p) return;
+          const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          c.setAttribute("cx", p.x.toFixed(1));
+          c.setAttribute("cy", p.y.toFixed(1));
+          c.setAttribute("r", "3");
+          c.setAttribute("class", `chart-peak-dot ${kind}`);
+          peaksG.appendChild(c);
+          const hh = this._hourOf(this.hours[idx].time);
+          const lift = kind === "hi" ? -14 : 20;
+          const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          t.setAttribute("x", p.x.toFixed(1));
+          t.setAttribute("y", (p.y + lift).toFixed(1));
+          t.setAttribute("text-anchor", "middle");
+          t.setAttribute("class", `chart-peak-label ${kind}`);
+          const arrow = kind === "hi" ? "▲" : "▼";
+          t.textContent = `${arrow} ${Math.round(conv(this.hours[idx].temp))}° · ${hh}`;
+          peaksG.appendChild(t);
+        };
+        annotate(maxIdx, "hi");
+        annotate(minIdx, "lo");
+      }
+    }
+
     // Labels: every ~3 hours
     const unit = this.getUnit();
     const labG = this.svg.querySelector("#chart-labels");
