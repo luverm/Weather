@@ -7,6 +7,7 @@ import { HourlyChart } from "./hourly-chart.js";
 import { ComfortStrip } from "./comfort-strip.js";
 import { WindTimeline } from "./wind-timeline.js";
 import { UvStrip } from "./uv-strip.js";
+import { CloudStrip } from "./cloud-strip.js";
 import { advise } from "./advice.js";
 import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
@@ -104,6 +105,7 @@ const el = {
   comfortStrip: $("#comfort-strip"),
   windTimeline: $("#wind-timeline"),
   uvStrip: $("#uv-strip"),
+  cloudStrip: $("#cloud-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
   weekendDetail: $("#weekend-detail"),
@@ -135,6 +137,7 @@ const state = {
   comfortStrip: null,
   windTimeline: null,
   uvStrip: null,
+  cloudStrip: null,
   sunTimer: null,
   sunArcTimer: null,
   localTimer: null,
@@ -175,6 +178,10 @@ export const ui = {
     });
     state.uvStrip = new UvStrip({
       rootEl: el.uvStrip,
+      onCellClick: (ts) => state.handlers.onHourClick?.(ts),
+    });
+    state.cloudStrip = new CloudStrip({
+      rootEl: el.cloudStrip,
       onCellClick: (ts) => state.handlers.onHourClick?.(ts),
     });
     bindInstallPrompt();
@@ -223,6 +230,7 @@ export const ui = {
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (state.windTimeline) state.windTimeline.setHours(weather.hourly);
     if (state.uvStrip) state.uvStrip.setHours(weather.hourly);
+    if (state.cloudStrip) state.cloudStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
@@ -243,6 +251,7 @@ export const ui = {
     if (state.comfortStrip) state.comfortStrip.highlight(highlightHourIndex);
     if (state.windTimeline) state.windTimeline.highlight(highlightHourIndex);
     if (state.uvStrip) state.uvStrip.highlight(highlightHourIndex);
+    if (state.cloudStrip) state.cloudStrip.highlight(highlightHourIndex);
     if (state.chart && sampled._sampledTs != null) {
       state.chart.setCursor(sampled._sampledTs);
     } else if (state.chart) {
