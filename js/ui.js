@@ -318,6 +318,27 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderFeelsContext(w);
   renderDayRange(w);
+  updateTabTitle(w);
+}
+
+// Push the current condition into the browser tab so a stack of tabs
+// stays readable. Only reflects the true live weather, not the scrubber.
+function updateTabTitle(w) {
+  const isLive = state.sampledWeather === state.weather || !state.sampledWeather;
+  if (!isLive) return;
+  const t = convertTemp(w.temp);
+  const label = capitalize(w.label || "");
+  const placeName = state.place?.name || "Weather";
+  const tempStr = t != null ? `${Math.round(t)}°${state.unit}` : "—";
+  document.title = `${tempStr} · ${label} · ${placeName} — Aether`;
+  // Update PWA theme-color from the dominant condition tone for the OS tab
+  // and taskbar; keeps parity with the site's sky tone.
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) {
+    const tone = document.documentElement.getAttribute("data-tone");
+    const colors = { dark: "#0b1020", warm: "#2a1c2d", bright: "#7cc0ff" };
+    meta.setAttribute("content", colors[tone] || "#0b1020");
+  }
 }
 
 // When the apparent temperature diverges from the actual by ≥ 2° we surface
