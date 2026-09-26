@@ -6,6 +6,7 @@ import { places } from "./places.js";
 import { HourlyChart } from "./hourly-chart.js";
 import { ComfortStrip } from "./comfort-strip.js";
 import { WindTimeline } from "./wind-timeline.js";
+import { UvStrip } from "./uv-strip.js";
 import { advise } from "./advice.js";
 import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
@@ -93,6 +94,7 @@ const el = {
   sunArcPath: $("#sun-arc-path"),
   comfortStrip: $("#comfort-strip"),
   windTimeline: $("#wind-timeline"),
+  uvStrip: $("#uv-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
   weekendDetail: $("#weekend-detail"),
@@ -123,6 +125,7 @@ const state = {
   chart: null,
   comfortStrip: null,
   windTimeline: null,
+  uvStrip: null,
   sunTimer: null,
   sunArcTimer: null,
   localTimer: null,
@@ -160,6 +163,10 @@ export const ui = {
       rootEl: el.windTimeline,
       onCellClick: (ts) => state.handlers.onHourClick?.(ts),
       getUnit: () => (state.unit === "F" ? "mph" : "kmh"),
+    });
+    state.uvStrip = new UvStrip({
+      rootEl: el.uvStrip,
+      onCellClick: (ts) => state.handlers.onHourClick?.(ts),
     });
     bindInstallPrompt();
   },
@@ -205,6 +212,7 @@ export const ui = {
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (state.windTimeline) state.windTimeline.setHours(weather.hourly);
+    if (state.uvStrip) state.uvStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
@@ -224,6 +232,7 @@ export const ui = {
     highlightHour(highlightHourIndex);
     if (state.comfortStrip) state.comfortStrip.highlight(highlightHourIndex);
     if (state.windTimeline) state.windTimeline.highlight(highlightHourIndex);
+    if (state.uvStrip) state.uvStrip.highlight(highlightHourIndex);
     if (state.chart && sampled._sampledTs != null) {
       state.chart.setCursor(sampled._sampledTs);
     } else if (state.chart) {
