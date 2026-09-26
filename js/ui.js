@@ -58,6 +58,9 @@ const el = {
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
   pollenCard: $("#pollen-card"),
+  goldenHour: $("#golden-hour"),
+  goldenHourLabel: $("#golden-hour-label"),
+  goldenHourDetail: $("#golden-hour-detail"),
   rainCard: $("#rain-card"),
   rainTotalValue: $("#rain-total-value"),
   rainTotalUnit: $("#rain-total-unit"),
@@ -547,8 +550,59 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderGoldenHour(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+// The "golden hour" for photography is the ~1 hour after sunrise and the
+// ~1 hour before sunset, when light is warm and shadows long. We compute
+// the next upcoming window (relative to the scrubber-adjusted "now") and
+// surface it as a compact tag inside the sun card, along with a short
+// live-updating countdown when it's near or in progress.
+function renderGoldenHour(w) {
+  if (!el.goldenHour) return;
+  if (!w.sunrise || !w.sunset) { el.goldenHour.hidden = true; return; }
+  const now = Date.now();
+  const HOUR = 60 * 60 * 1000;
+  // Build windows for today AND tomorrow so late-night viewers get the
+  // morning window rather than an empty card.
+  const dailies = (w.daily || []).slice(0, 3);
+  const candidates = [];
+  const pushPair = (rise, set) => {
+    if (!rise || !set) return;
+    candidates.push({ kind: "morning", start: rise, end: rise + HOUR });
+    candidates.push({ kind: "evening", start: set - HOUR, end: set });
+  };
+  if (dailies.length) {
+    for (const d of dailies) pushPair(d.sunrise, d.sunset);
+  } else {
+    pushPair(w.sunrise, w.sunset);
+  }
+  candidates.sort((a, b) => a.start - b.start);
+  const active = candidates.find((c) => now >= c.start && now <= c.end);
+  const next = candidates.find((c) => c.start > now);
+  const target = active || next;
+  if (!target) { el.goldenHour.hidden = true; return; }
+
+  const kindLabel = target.kind === "morning" ? "Morning golden hour" : "Evening golden hour";
+  if (active) {
+    const mins = Math.max(1, Math.round((active.end - now) / 60_000));
+    el.goldenHourLabel.textContent = `${kindLabel} — in progress`;
+    el.goldenHourDetail.textContent = `Ends in ${mins} min · until ${fmtTime(active.end)}`;
+  } else {
+    const startsInMin = Math.round((target.start - now) / 60_000);
+    el.goldenHourLabel.textContent = kindLabel;
+    if (startsInMin < 60) {
+      el.goldenHourDetail.textContent = `Begins in ${startsInMin} min · ${fmtTime(target.start)}–${fmtTime(target.end)}`;
+    } else {
+      const h = Math.floor(startsInMin / 60);
+      const m = startsInMin % 60;
+      el.goldenHourDetail.textContent = `${fmtTime(target.start)}–${fmtTime(target.end)} · in ${h}h ${m}m`;
+    }
+  }
+  el.goldenHour.hidden = false;
+  el.goldenHour.classList.toggle("active", !!active);
 }
 
 function scheduleSunArc(w) {
