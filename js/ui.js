@@ -586,7 +586,21 @@ function renderSun(w) {
     const mins = Math.round((w.sunset - w.sunrise) / 60_000);
     const hh = Math.floor(mins / 60);
     const mm = mins % 60;
-    el.sunDaylight.textContent = `${hh}h ${mm}m`;
+    // Compare tomorrow's daylight length to today's so viewers can see the
+    // solar-year trend at a glance (winter shrinks, summer grows).
+    const tomorrow = (w.daily || [])[1];
+    let delta = "";
+    if (tomorrow?.sunrise && tomorrow?.sunset) {
+      const tMins = Math.round((tomorrow.sunset - tomorrow.sunrise) / 60_000);
+      const diff = tMins - mins;
+      if (Math.abs(diff) >= 1) {
+        const sign = diff > 0 ? "+" : "−";
+        delta = `<span class="sun-delta">${sign}${Math.abs(diff)} min tomorrow</span>`;
+      } else {
+        delta = `<span class="sun-delta">same tomorrow</span>`;
+      }
+    }
+    el.sunDaylight.innerHTML = `${hh}h ${mm}m${delta}`;
   } else el.sunDaylight.textContent = "—";
   renderGoldenHour(w);
   scheduleSunCountdown(w);
@@ -1047,7 +1061,7 @@ function renderDaily(w) {
     const left = ((d.tempMin - gMin) / span) * 100;
     const width = ((d.tempMax - d.tempMin) / span) * 100;
     const item = document.createElement("div");
-    item.className = "daily-item";
+    item.className = `daily-item${i === 0 ? " today" : ""}`;
     item.dataset.ts = d.time;
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
