@@ -224,7 +224,9 @@ export class HourlyChart {
       }
     }
 
-    // Precipitation probability bars (0-100% -> 0..12px height)
+    // Precipitation probability bars (0-100% -> 0..26px height). Round 24:
+    // tint each bar by the forecast precip amount so heavy rain reads at a
+    // glance — matches the week-rain palette so the app feels consistent.
     const precipG = this.svg.querySelector("#chart-precip");
     precipG.innerHTML = "";
     const barW = Math.max(4, innerW / this.hours.length - 3);
@@ -240,7 +242,9 @@ export class HourlyChart {
       r.setAttribute("width", barW.toFixed(1));
       r.setAttribute("height", barH.toFixed(1));
       r.setAttribute("rx", "1.5");
-      r.setAttribute("opacity", (0.35 + (pop / 100) * 0.55).toFixed(2));
+      // Set fill via inline style so it overrides the CSS default.
+      r.setAttribute("style", `fill:${precipColor(h.precip, h.condition)}`);
+      r.setAttribute("opacity", (0.4 + (pop / 100) * 0.55).toFixed(2));
       precipG.appendChild(r);
     });
 
@@ -289,4 +293,16 @@ export class HourlyChart {
       labG.appendChild(tTxt);
     });
   }
+}
+
+// Palette matches the weekly-rain columns so intensity reads consistently
+// across the app. Snow tips toward a colder blue-white.
+function precipColor(mm, condition) {
+  if (condition === "snow") return "#dbe7ff";
+  const v = Math.max(0, Number(mm) || 0);
+  if (v < 0.2) return "#9ad1ff";
+  if (v < 1)   return "#7fb0ea";
+  if (v < 4)   return "#6d8fd8";
+  if (v < 10)  return "#7c6de0";
+  return "#b45cff";
 }
