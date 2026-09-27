@@ -1103,9 +1103,24 @@ function renderNowcast(w) {
   el.nowcastHeadline.textContent = inMin === 0
     ? `${kind} now`
     : `${kind} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
-  // 2h outlook summary.
+  // 2h outlook summary. Round 26: if the rain is currently falling (either
+  // the imminent bucket is < ~5 min away, or the live condition is wet) and
+  // the forecast shows a dry patch inside the window, tell the user when it
+  // clears.
   const totalMm = nowcast.reduce((s, n) => s + (n.precip || 0), 0);
-  el.nowcastSub.textContent = `${totalMm.toFixed(1)} mm expected in the next 2 hours`;
+  let sub = `${totalMm.toFixed(1)} mm expected in the next 2 hours`;
+  const isWetNow = inMin <= 5
+    || w.condition === "rain" || w.condition === "snow" || w.condition === "storm";
+  if (isWetNow) {
+    const firstIdx = nowcast.indexOf(first);
+    const dryIdx = nowcast.findIndex((n, i) => i > firstIdx && n.precip <= 0.1);
+    if (dryIdx > firstIdx) {
+      const clearsAt = nowcast[dryIdx].time;
+      const inClearMin = Math.max(1, Math.round((clearsAt - Date.now()) / 60_000));
+      sub = `Clears in ${inClearMin} min · ${totalMm.toFixed(1)} mm total`;
+    }
+  }
+  el.nowcastSub.textContent = sub;
   // Bars (time-labeled, clickable to scrub).
   el.nowcastBars.innerHTML = "";
   const slice = nowcast.slice(0, 8);
