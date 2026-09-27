@@ -72,6 +72,9 @@ const el = {
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
+  weekRain: $("#week-rain"),
+  weekRainTotal: $("#week-rain-total"),
+  weekRainBars: $("#week-rain-bars"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -854,6 +857,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderWeekRain(days, w);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -958,6 +962,89 @@ function renderDailyDelta(days) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
   }
   el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
+}
+
+// Round 22 — weekly precipitation snapshot: seven mini bars sized by daily
+// precipitation totals, tinted by intensity, with the total mm as a pill.
+function renderWeekRain(days, w) {
+  if (!el.weekRain || !el.weekRainTotal || !el.weekRainBars) return;
+  if (!days?.length) { el.weekRain.hidden = true; return; }
+
+  const tz = w?.timezone;
+  const dayLabel = (ts, isToday) => {
+    if (isToday) return "Today";
+    return new Date(ts).toLocaleDateString(undefined, {
+      weekday: "short",
+      ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    }).slice(0, 3);
+  };
+
+  // Precipitation, always in mm, with defensive coercion.
+  const precips = days.map((d) => Math.max(0, Number(d.precip) || 0));
+  const totalMm = precips.reduce((s, v) => s + v, 0);
+  // Robust upper bound: the larger of 3 mm or the max, so light-rain weeks
+  // still get visible bars but a downpour day dwarfs a drizzle day.
+  const maxMm = Math.max(3, ...precips);
+
+  const now = Date.now();
+  const oneDay = 24 * 3600_000;
+
+  // Level 0–4 based on absolute mm — bar color deepens with intensity.
+  const levelFor = (mm, pop) => {
+    if (mm < 0.1 && (pop ?? 0) < 15) return 0;
+    if (mm < 1) return 1;
+    if (mm < 4) return 2;
+    if (mm < 10) return 3;
+    return 4;
+  };
+
+  // Build bars.
+  const MAX_PX = 34; // matches CSS visual budget (row minus label + gap)
+  el.weekRainBars.innerHTML = days.map((d, i) => {
+    const mm = precips[i];
+    const pop = d.pop ?? 0;
+    const level = levelFor(mm, pop);
+    // Bar height in px so it renders reliably inside a flex column.
+    const heightPx = mm > 0
+      ? Math.max(4, Math.min(MAX_PX, (mm / maxMm) * MAX_PX))
+      : 2;
+    const isToday = Math.abs(d.time - now) < oneDay / 2 || i === 0;
+    // Midday timestamp to feed the scrubber.
+    const midday = (d.sunrise && d.sunset)
+      ? Math.round((d.sunrise + d.sunset) / 2)
+      : d.time + 12 * 3600_000;
+    const label = dayLabel(d.time, isToday);
+    const title = mm > 0
+      ? `${label}: ${mm.toFixed(1)} mm · ${pop}% chance`
+      : `${label}: dry${pop > 0 ? ` · ${pop}% chance` : ""}`;
+    return `
+      <button type="button" role="listitem" class="week-rain-bar ${isToday ? "today" : ""}"
+              data-ts="${midday}" data-level="${level}" title="${escapeHtml(title)}"
+              aria-label="${escapeHtml(title)}">
+        <span class="week-rain-col" style="height:${heightPx.toFixed(1)}px"></span>
+        <span class="week-rain-day">${escapeHtml(label)}</span>
+      </button>
+    `;
+  }).join("");
+
+  // Total pill.
+  if (totalMm < 0.1) {
+    el.weekRainTotal.textContent = "dry week";
+    el.weekRainTotal.classList.add("dry");
+  } else {
+    el.weekRainTotal.textContent = `${totalMm.toFixed(totalMm < 10 ? 1 : 0)} mm · 7 days`;
+    el.weekRainTotal.classList.remove("dry");
+  }
+
+  el.weekRain.hidden = false;
+
+  // Clickable: jump to that day's midday via the shared scrub handler.
+  el.weekRainBars.querySelectorAll(".week-rain-bar").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const ts = parseInt(btn.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
 }
 
 function toggleDailyExpand(item, d, w) {

@@ -1421,6 +1421,116 @@ kbd {
 .daily-spark circle { transition: r 160ms var(--ease); }
 .daily-spark .dot-hi { fill: #ff9c7a; }
 .daily-spark .dot-lo { fill: #9ad1ff; }
+
+/* ---------- Week rain snapshot (Round 22) ---------- */
+.week-rain {
+  display: grid;
+  gap: 6px;
+  padding: 6px 12px 4px;
+  margin: 2px 0 4px;
+}
+.week-rain[hidden] { display: none; }
+.week-rain-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--fg-muted);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.week-rain-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--fg-muted);
+}
+.week-rain-label svg { color: #9ad1ff; opacity: 0.85; }
+.week-rain-total {
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: none;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(154, 209, 255, 0.10);
+  border: 1px solid rgba(154, 209, 255, 0.22);
+}
+.week-rain-total.dry {
+  color: var(--fg-dim);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--stroke);
+}
+.week-rain-bars {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 6px;
+  align-items: end;
+}
+.week-rain-bar {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 0 0 2px;
+  border-radius: 8px;
+  transition: background 160ms var(--ease), transform 160ms var(--ease);
+  cursor: pointer;
+}
+.week-rain-bar:hover,
+.week-rain-bar:focus-visible {
+  background: var(--glass);
+  transform: translateY(-1px);
+  outline: none;
+}
+.week-rain-col {
+  width: 68%;
+  max-width: 22px;
+  min-height: 2px;
+  border-radius: 4px 4px 2px 2px;
+  background: linear-gradient(180deg, #c7b4ff 0%, #9ad1ff 55%, #7fb0ea 100%);
+  box-shadow: 0 0 12px rgba(154, 209, 255, 0.24);
+  transition: height 320ms var(--ease), background 200ms var(--ease);
+}
+.week-rain-bar[data-level="0"] .week-rain-col {
+  background: rgba(255, 255, 255, 0.10);
+  box-shadow: none;
+  min-height: 2px;
+}
+.week-rain-bar[data-level="1"] .week-rain-col {
+  background: linear-gradient(180deg, #b9dbff 0%, #7fb0ea 100%);
+}
+.week-rain-bar[data-level="2"] .week-rain-col {
+  background: linear-gradient(180deg, #9ad1ff 0%, #5e8fd0 100%);
+}
+.week-rain-bar[data-level="3"] .week-rain-col {
+  background: linear-gradient(180deg, #a4b7ff 0%, #6d5ed6 100%);
+  box-shadow: 0 0 14px rgba(140, 130, 255, 0.35);
+}
+.week-rain-bar[data-level="4"] .week-rain-col {
+  background: linear-gradient(180deg, #ffb1ec 0%, #b45cff 100%);
+  box-shadow: 0 0 16px rgba(180, 100, 255, 0.45);
+}
+.week-rain-day {
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+}
+.week-rain-bar.today .week-rain-day { color: var(--fg); font-weight: 600; }
+.week-rain-bar.today::before {
+  content: "";
+  position: absolute;
+  top: -2px; left: 30%; right: 30%;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+  opacity: 0.7;
+}
 .forecast-track {
   display: grid;
   grid-auto-flow: column;
