@@ -498,6 +498,47 @@ html[data-reduce-motion="true"] *::after {
   font-size: 13px;
 }
 .scrubber-delta { font-size: 11px; color: var(--fg-dim); font-variant-numeric: tabular-nums; }
+
+/* Round 23 — day-tour play button */
+.scrubber-tour {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: var(--fg-muted);
+  background: var(--glass);
+  border: 1px solid var(--stroke);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transition: color 200ms var(--ease), background 200ms var(--ease),
+              border-color 200ms var(--ease), box-shadow 200ms var(--ease);
+}
+.scrubber-tour:hover { color: var(--fg); background: var(--glass-strong); }
+.scrubber-tour svg { width: 10px; height: 10px; display: block; }
+.scrubber-tour .tour-icon-stop { display: none; }
+.scrubber-tour[data-playing="true"] .tour-icon-play { display: none; }
+.scrubber-tour[data-playing="true"] .tour-icon-stop { display: block; }
+.scrubber-tour[data-playing="true"] {
+  color: var(--fg);
+  background: rgba(255, 204, 128, 0.14);
+  border-color: rgba(255, 204, 128, 0.42);
+  box-shadow: 0 0 14px rgba(255, 204, 128, 0.28);
+}
+.scrubber-tour[data-playing="true"] .tour-label::after {
+  content: "…";
+  margin-left: 2px;
+  animation: tourPulse 900ms ease-in-out infinite;
+}
+@keyframes tourPulse {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 1;   }
+}
+@media (max-width: 480px) {
+  .scrubber-tour .tour-label { display: none; }
+  .scrubber-tour { padding: 5px 8px; }
+}
 .scrubber-track {
   position: relative;
   height: 36px;

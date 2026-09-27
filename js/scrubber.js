@@ -10,7 +10,7 @@ const RANGE_HOURS = 24;
 
 export class Scrubber {
   constructor({ trackEl, thumbEl, fillEl, timeEl, deltaEl, resetEl,
-                sunriseEl, sunsetEl, appEl, onScrub }) {
+                sunriseEl, sunsetEl, tourEl, appEl, onScrub }) {
     this.track = trackEl;
     this.thumb = thumbEl;
     this.fill = fillEl;
@@ -19,9 +19,12 @@ export class Scrubber {
     this.resetEl = resetEl;
     this.sunriseEl = sunriseEl;
     this.sunsetEl = sunsetEl;
+    this.tourEl = tourEl;
     this.appEl = appEl; // receives data-scrubbing attribute
     this.onScrub = onScrub;
     this.dragging = false;
+    this.tourRunning = false;
+    this._tourRaf = 0;
     this.start = Date.now();
     this.sunrise = null;
     this.sunset = null;
@@ -99,13 +102,71 @@ export class Scrubber {
     });
 
     this.resetEl?.addEventListener("click", () => this.reset());
+    this.tourEl?.addEventListener("click", () => this.toggleTour());
   }
 
   reset() {
+    this.stopTour();
     clock.setOffset(0);
     this.appEl?.setAttribute("data-scrubbing", "false");
     this._render(this._currentT());
     this.onScrub?.(0);
+  }
+
+  toggleTour() {
+    if (this.tourRunning) this.stopTour();
+    else this.startTour();
+  }
+
+  // Animate the clock offset from -1h to +23h over ~12 seconds so the
+  // scenes and every derived UI cycle through the full 24-hour window.
+  // Updates snap to ~10-minute simulated steps to keep sky palette
+  // crossfades from thrashing.
+  startTour({ durationMs = 12000 } = {}) {
+    if (this.tourRunning) return;
+    this.tourRunning = true;
+    if (this.tourEl) {
+      this.tourEl.setAttribute("data-playing", "true");
+      this.tourEl.setAttribute("aria-label", "Stop day tour");
+    }
+    const start = performance.now();
+    const from = -3600_000;              // 1h before now
+    const to = (RANGE_HOURS - 1) * 3600_000; // 23h after now
+    const stepMs = 10 * 60_000;          // 10 minutes of sim time per snap
+    let lastSnap = null;
+    const frame = (t) => {
+      if (!this.tourRunning) return;
+      const p = Math.min(1, (t - start) / durationMs);
+      const target = from + (to - from) * easeInOut(p);
+      const snapped = Math.round(target / stepMs) * stepMs;
+      if (snapped !== lastSnap) {
+        lastSnap = snapped;
+        this._setOffset(snapped);
+      }
+      if (p < 1) {
+        this._tourRaf = requestAnimationFrame(frame);
+      } else {
+        // Return to live so users don't get stranded at t+23h.
+        this.tourRunning = false;
+        if (this.tourEl) {
+          this.tourEl.setAttribute("data-playing", "false");
+          this.tourEl.setAttribute("aria-label", "Play day tour");
+        }
+        this.reset();
+      }
+    };
+    this._tourRaf = requestAnimationFrame(frame);
+  }
+
+  stopTour() {
+    if (!this.tourRunning) return;
+    this.tourRunning = false;
+    cancelAnimationFrame(this._tourRaf);
+    this._tourRaf = 0;
+    if (this.tourEl) {
+      this.tourEl.setAttribute("data-playing", "false");
+      this.tourEl.setAttribute("aria-label", "Play day tour");
+    }
   }
 
   _updateFromEvent(e) {
@@ -148,4 +209,8 @@ export class Scrubber {
       }
     }
   }
+}
+
+function easeInOut(p) {
+  return p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
 }

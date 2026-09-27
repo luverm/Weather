@@ -166,6 +166,11 @@
           <button id="scrubber-reset" class="scrubber-reset" aria-label="Return to now">Now</button>
           <span id="scrubber-time" class="scrubber-time">—</span>
           <span id="scrubber-delta" class="scrubber-delta"></span>
+          <button id="scrubber-tour" class="scrubber-tour" data-playing="false" aria-label="Play day tour" title="Play a 12-second day tour">
+            <svg class="tour-icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5l12 7-12 7V5z" fill="currentColor"/></svg>
+            <svg class="tour-icon-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5" fill="currentColor"/></svg>
+            <span class="tour-label">Tour</span>
+          </button>
         </div>
         <div id="scrubber-track" class="scrubber-track" role="slider"
              aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0">
