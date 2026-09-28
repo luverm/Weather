@@ -1237,7 +1237,25 @@ function renderHourly(w) {
   }
   const swing = (slice[hotIdx].temp ?? 0) - (slice[coldIdx].temp ?? 0);
   const showExtremes = swing >= 2 && hotIdx !== coldIdx;
+  const tz = state.weather?.timezone;
+  const dayOf = (ts) => new Date(ts).toLocaleDateString(undefined, {
+    day: "2-digit",
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  let lastDay = null;
   slice.forEach((h, i) => {
+    const dayKey = dayOf(h.time);
+    if (i > 0 && dayKey !== lastDay) {
+      const label = new Date(h.time).toLocaleDateString(undefined, {
+        weekday: "short",
+        ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+      });
+      const sep = document.createElement("div");
+      sep.className = "forecast-day-divider";
+      sep.innerHTML = `<span>${escapeHtml(label)}</span>`;
+      el.forecastTrack.appendChild(sep);
+    }
+    lastDay = dayKey;
     const item = document.createElement("div");
     item.className = "forecast-item";
     if (showExtremes && i === hotIdx)  item.classList.add("is-peak-hot");

@@ -1814,6 +1814,22 @@ kbd {
 .forecast-item.is-peak-cold .forecast-temp { color: #a9c8ff; text-shadow: 0 0 8px rgba(140,180,255,0.35); }
 .forecast-item.active.is-peak-hot,
 .forecast-item.active.is-peak-cold { background: var(--glass-strong); }
+.forecast-day-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  color: var(--fg-dim);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  writing-mode: vertical-rl;
+  padding: 4px 0;
+  opacity: 0.7;
+  border-left: 1px dashed var(--stroke);
+  border-right: 1px dashed var(--stroke);
+  margin: 0 4px;
+}
 .forecast-time { font-size: 11px; letter-spacing: 0.08em; color: var(--fg-dim); text-transform: uppercase; }
 .forecast-icon { width: 26px; height: 26px; display: grid; place-items: center; color: var(--fg-muted); }
 .forecast-temp { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
