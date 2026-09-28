@@ -84,6 +84,9 @@ const el = {
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
+  bestDayChip: $("#best-day-chip"),
+  bestDayName: $("#best-day-name"),
+  bestDaySummary: $("#best-day-summary"),
   precipTotals: $("#precip-totals"),
   pt24: $("#pt-24"),
   pt24Val: document.querySelector("#pt-24 .pt-val"),
@@ -1178,6 +1181,7 @@ function renderDaily(w) {
   renderDailySpark(days);
   renderDailyDelta(days);
   renderDailyExtremes(days);
+  renderBestDay(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1322,6 +1326,40 @@ function renderPrecipTotals(w) {
   el.pt24.classList.toggle("pt-dry", next24 < 0.1);
   el.pt7d.classList.toggle("pt-dry", next7 < 0.1);
   el.precipTotals.hidden = false;
+}
+
+// Award today or later a "best day" ribbon: mild temperature, little rain,
+// tolerable wind, comfortable UV. Score is intentionally simple so the
+// ranking follows intuition; we only show it when the winner is materially
+// better than the runners-up.
+function renderBestDay(days) {
+  if (!el.bestDayChip) return;
+  const upcoming = days.filter((d, i) => i > 0 && d.tempMax != null && d.tempMin != null);
+  if (upcoming.length < 2) { el.bestDayChip.hidden = true; return; }
+  const score = (d) => {
+    const mid = (d.tempMax + d.tempMin) / 2;
+    const tempFit = 100 - Math.min(80, Math.abs(mid - 19) * 4);
+    const rain = -(Math.min(60, (d.pop ?? 0)) + Math.min(30, (d.precip ?? 0) * 4));
+    const wind = -Math.max(0, ((d.gustsMax ?? 0) - 20)) * 1.5;
+    const uv   = -Math.max(0, ((d.uvMax ?? 0) - 6)) * 4;
+    return tempFit + rain + wind + uv;
+  };
+  const scored = upcoming.map((d) => ({ d, s: score(d) })).sort((a, b) => b.s - a.s);
+  const winner = scored[0].d;
+  const margin = scored[0].s - (scored[1]?.s ?? 0);
+  if (margin < 8) { el.bestDayChip.hidden = true; return; }
+  const tz = state.weather?.timezone;
+  el.bestDayName.textContent = new Date(winner.time).toLocaleDateString(undefined, {
+    weekday: "long",
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  const bits = [
+    `${Math.round(convertTemp(winner.tempMin))}° / ${Math.round(convertTemp(winner.tempMax))}°`,
+    winner.pop != null ? `${winner.pop}% rain` : null,
+    winner.condition ? capitalize(winner.condition) : null,
+  ].filter(Boolean);
+  el.bestDaySummary.textContent = bits.join(" · ");
+  el.bestDayChip.hidden = false;
 }
 
 // Find the week's warmest & coldest day. Highs pick the warmest; lows pick
@@ -1692,12 +1730,13 @@ function bindShare() {
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
     ].filter(Boolean);
     const text = lines.join("\n");
+    const url = location.href;
     try {
       if (navigator.share) {
-        await navigator.share({ title: `Aether — ${placeName}`, text });
+        await navigator.share({ title: `Aether — ${placeName}`, text, url });
       } else {
-        await navigator.clipboard.writeText(text);
-        ui.showToast("Summary copied to clipboard");
+        await navigator.clipboard.writeText(`${text}\n${url}`);
+        ui.showToast("Summary + link copied");
       }
       el.shareBtn.classList.add("just-copied");
       setTimeout(() => el.shareBtn.classList.remove("just-copied"), 600);
