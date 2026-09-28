@@ -1070,9 +1070,22 @@ function cardinal(deg) {
 
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
-  for (const h of (w.hourly || []).slice(0, 24)) {
+  const slice = (w.hourly || []).slice(0, 24);
+  if (!slice.length) return;
+  // Locate the hot and cold peaks so the track can flag them; skip when the
+  // day is essentially flat (<= 2° swing) so we don't shout about noise.
+  let hotIdx = 0, coldIdx = 0;
+  for (let i = 1; i < slice.length; i++) {
+    if ((slice[i].temp ?? -Infinity) > (slice[hotIdx].temp ?? -Infinity)) hotIdx = i;
+    if ((slice[i].temp ?? Infinity)  < (slice[coldIdx].temp ?? Infinity)) coldIdx = i;
+  }
+  const swing = (slice[hotIdx].temp ?? 0) - (slice[coldIdx].temp ?? 0);
+  const showExtremes = swing >= 2 && hotIdx !== coldIdx;
+  slice.forEach((h, i) => {
     const item = document.createElement("div");
     item.className = "forecast-item";
+    if (showExtremes && i === hotIdx)  item.classList.add("is-peak-hot");
+    if (showExtremes && i === coldIdx) item.classList.add("is-peak-cold");
     item.dataset.ts = h.time;
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
@@ -1082,7 +1095,7 @@ function renderHourly(w) {
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
-  }
+  });
 }
 
 function highlightHour(index) {

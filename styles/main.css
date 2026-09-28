@@ -1678,6 +1678,18 @@ kbd {
 }
 .forecast-item:hover { background: var(--glass); transform: translateY(-2px); }
 .forecast-item.active { background: var(--glass-strong); }
+.forecast-item.is-peak-hot {
+  background: linear-gradient(180deg, rgba(255,158,110,0.12), transparent 70%);
+  box-shadow: inset 0 0 0 1px rgba(255,158,110,0.35);
+}
+.forecast-item.is-peak-hot .forecast-temp { color: #ffb590; text-shadow: 0 0 8px rgba(255,158,110,0.35); }
+.forecast-item.is-peak-cold {
+  background: linear-gradient(180deg, rgba(140,180,255,0.12), transparent 70%);
+  box-shadow: inset 0 0 0 1px rgba(140,180,255,0.35);
+}
+.forecast-item.is-peak-cold .forecast-temp { color: #a9c8ff; text-shadow: 0 0 8px rgba(140,180,255,0.35); }
+.forecast-item.active.is-peak-hot,
+.forecast-item.active.is-peak-cold { background: var(--glass-strong); }
 .forecast-time { font-size: 11px; letter-spacing: 0.08em; color: var(--fg-dim); text-transform: uppercase; }
 .forecast-icon { width: 26px; height: 26px; display: grid; place-items: center; color: var(--fg-muted); }
 .forecast-temp { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
