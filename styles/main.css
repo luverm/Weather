@@ -636,6 +636,35 @@ html[data-reduce-motion="true"] *::after {
 }
 .metric-humidity .pressure-spark { color: #9ad1ff; }
 
+.wind-strength {
+  position: relative;
+  height: 4px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.08);
+  margin-top: 6px;
+}
+.wind-strength[hidden] { display: none; }
+.wind-strength-fill {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 0;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #7ce09a 0%, #ffd36a 30%, #ff9f5c 60%, #ff6a6a 100%);
+  transition: width 300ms var(--ease);
+}
+.wind-strength-gust {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 10px;
+  background: var(--fg);
+  border-radius: 1px;
+  transform: translateX(-50%);
+  box-shadow: 0 0 4px rgba(255,255,255,0.3);
+  transition: left 300ms var(--ease);
+}
+.wind-strength-gust[hidden] { display: none; }
+
 .uv-strip {
   display: grid;
   grid-template-columns: repeat(12, 1fr);

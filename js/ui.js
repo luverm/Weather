@@ -32,6 +32,9 @@ const el = {
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
+  windStrength: $("#wind-strength"),
+  windStrengthFill: $("#wind-strength-fill"),
+  windStrengthGust: $("#wind-strength-gust"),
   metricHumidity: $("#m-humidity"),
   metricHumiditySub: $("#m-humidity-sub"),
   metricPressure: $("#m-pressure"),
@@ -510,6 +513,7 @@ function renderMetrics(w) {
       el.windBft.textContent = "";
     }
   }
+  renderWindStrength(w);
   el.metricHumidity.textContent = Math.round(w.humidity ?? 0);
   el.metricHumiditySub.textContent = w.dewPoint != null
     ? `dew ${Math.round(convertTemp(w.dewPoint))}°`
@@ -545,6 +549,27 @@ function renderMetrics(w) {
   renderUvBurnTip(w);
   renderUvStrip(w);
   renderPressureSparkline(w);
+}
+
+// Short horizontal bar under the wind number that fills as a fraction of
+// Beaufort 12 (~118 km/h). A second tick shows the gust reach so the fill
+// and gust reads as one glance.
+function renderWindStrength(w) {
+  if (!el.windStrength) return;
+  const speed = w.windSpeed;
+  if (speed == null) { el.windStrength.hidden = true; return; }
+  const cap = 118; // Beaufort 12 lower bound km/h
+  const frac = Math.min(1, speed / cap);
+  el.windStrength.hidden = false;
+  el.windStrengthFill.style.width = `${(frac * 100).toFixed(1)}%`;
+  const gust = w.windGusts;
+  if (gust != null && gust > speed) {
+    const gustFrac = Math.min(1, gust / cap);
+    el.windStrengthGust.hidden = false;
+    el.windStrengthGust.style.left = `${(gustFrac * 100).toFixed(1)}%`;
+  } else {
+    el.windStrengthGust.hidden = true;
+  }
 }
 
 // Rough sunburn-onset estimate for average (type II) skin, unshaded, at
