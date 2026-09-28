@@ -90,6 +90,12 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  magicHours: $("#magic-hours"),
+  mhBlueAm: $("#mh-blue-am"),
+  mhBluePm: $("#mh-blue-pm"),
+  mhGoldAm: $("#mh-gold-am"),
+  mhGoldPm: $("#mh-gold-pm"),
+  mhNow: $("#mh-now"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -123,6 +129,7 @@ const state = {
   sunTimer: null,
   sunArcTimer: null,
   localTimer: null,
+  magicTimer: null,
 };
 
 export const ui = {
@@ -523,6 +530,78 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderMagicHours(w);
+}
+
+// Golden hour ≈ 60 min after sunrise and before sunset (warm, low sun).
+// Blue hour ≈ 30 min around each civil twilight edge.
+// We pick the day whose sunrise is closest to "now", then format both edges.
+function renderMagicHours(w) {
+  if (!el.magicHours) return;
+  if (state.magicTimer) { clearInterval(state.magicTimer); state.magicTimer = null; }
+  if (!w?.daily?.length) { el.magicHours.hidden = true; return; }
+
+  const now = Date.now();
+  const day = pickMagicDay(w.daily, now);
+  if (!day?.sunrise || !day?.sunset) { el.magicHours.hidden = true; return; }
+  const GOLD = 60 * 60_000;
+  const BLUE = 30 * 60_000;
+
+  const windows = [
+    { kind: "blue",  label: "Blue hour",   start: day.sunrise - BLUE, end: day.sunrise },
+    { kind: "gold",  label: "Golden hour", start: day.sunrise,        end: day.sunrise + GOLD },
+    { kind: "gold",  label: "Golden hour", start: day.sunset  - GOLD, end: day.sunset },
+    { kind: "blue",  label: "Blue hour",   start: day.sunset,          end: day.sunset  + BLUE },
+  ];
+
+  el.magicHours.hidden = false;
+  el.mhBlueAm.textContent = `${fmtTime(windows[0].start)}–${fmtTime(windows[0].end)}`;
+  el.mhGoldAm.textContent = `${fmtTime(windows[1].start)}–${fmtTime(windows[1].end)}`;
+  el.mhGoldPm.textContent = `${fmtTime(windows[2].start)}–${fmtTime(windows[2].end)}`;
+  el.mhBluePm.textContent = `${fmtTime(windows[3].start)}–${fmtTime(windows[3].end)}`;
+
+  const paint = () => {
+    const t = Date.now();
+    const current = windows.find((win) => t >= win.start && t <= win.end);
+    if (current) {
+      const mins = Math.max(0, Math.round((current.end - t) / 60_000));
+      el.mhNow.hidden = false;
+      el.mhNow.textContent = `${current.label} · ${mins}m left`;
+      el.mhNow.dataset.kind = current.kind;
+    } else {
+      const next = windows.find((win) => win.start > t)
+        || pickTomorrowsFirstMagic(w.daily, t, GOLD, BLUE);
+      if (next) {
+        const mins = Math.max(0, Math.round((next.start - t) / 60_000));
+        const label = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
+        el.mhNow.hidden = false;
+        el.mhNow.textContent = `Next ${next.label.toLowerCase()} in ${label}`;
+        el.mhNow.dataset.kind = next.kind;
+      } else {
+        el.mhNow.hidden = true;
+        el.mhNow.dataset.kind = "";
+      }
+    }
+  };
+  paint();
+  state.magicTimer = setInterval(paint, 60_000);
+}
+
+function pickMagicDay(daily, now) {
+  // Choose today if its sunset hasn't passed, otherwise tomorrow.
+  for (const d of daily) {
+    if (d.sunset && d.sunset + 30 * 60_000 > now) return d;
+  }
+  return daily[0];
+}
+
+function pickTomorrowsFirstMagic(daily, now, GOLD, BLUE) {
+  for (const d of daily) {
+    if (d.sunrise && d.sunrise - BLUE > now) {
+      return { kind: "blue", label: "Blue hour", start: d.sunrise - BLUE, end: d.sunrise };
+    }
+  }
+  return null;
 }
 
 function scheduleSunArc(w) {
