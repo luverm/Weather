@@ -393,10 +393,16 @@ function updateTabTitle(w, tempDisplay) {
 
 // Render a tiny SVG favicon: colored disc keyed to warmth + condition,
 // with the current integer temperature drawn on top. Data-URI keeps it
-// dependency-free and avoids extra network hits.
+// dependency-free and avoids extra network hits. We skip work when the
+// signature (temp, isDay, condition) hasn't changed since the last paint,
+// so scrubber drags don't rebuild the icon 60 times a second.
+let _faviconKey = "";
 function updateFavicon(w, tempDisplay) {
   if (typeof document === "undefined" || tempDisplay == null) return;
   const rounded = Math.round(tempDisplay);
+  const key = `${rounded}|${w.condition}|${w.isDay ? 1 : 0}|${state.unit}`;
+  if (key === _faviconKey) return;
+  _faviconKey = key;
   const tempC = w.temp ?? tempDisplay;
   // Warmth ramp: -10°C → cold blue, 0 → cool cyan, 15 → mint, 25 → gold, 35+ → red.
   const stops = [
