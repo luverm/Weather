@@ -359,6 +359,12 @@ html[data-reduce-motion="true"] *::after {
   line-height: 1.02;
 }
 .place-sub { margin: 8px 0 0; color: var(--fg-muted); font-size: 14px; }
+.place-flag {
+  margin-right: 6px;
+  font-size: 15px;
+  vertical-align: -1px;
+  filter: drop-shadow(0 0 4px rgba(0,0,0,0.35));
+}
 .place-localtime {
   margin: 6px 0 0;
   display: inline-flex; align-items: center; gap: 6px;

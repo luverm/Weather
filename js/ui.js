@@ -201,8 +201,11 @@ export const ui = {
     el.placeName.classList.remove("flip-in"); void el.placeName.offsetWidth;
     el.placeName.classList.add("flip-in");
     el.placeName.textContent = place.name || "Unknown";
+    const flag = flagFor(place.country_code);
     const sub = [place.admin1, place.country].filter(Boolean).join(", ");
-    el.placeSub.textContent = sub || "—";
+    el.placeSub.innerHTML = flag
+      ? `<span class="place-flag" aria-hidden="true">${flag}</span>${escapeHtml(sub || "—")}`
+      : escapeHtml(sub || "—");
     // Reset alert dismissals so a fresh location can re-surface them.
     try { sessionStorage.removeItem("aether:dismissed-alerts"); } catch { /* ignore */ }
     renderPlaces();
