@@ -135,6 +135,10 @@
             <button id="unit-toggle" class="unit" title="Toggle units" aria-label="Toggle temperature units">°C</button>
           </div>
           <p id="condition-label" class="condition-label">—</p>
+          <span id="cloud-cover-chip" class="cloud-cover-chip" hidden aria-label="Cloud cover">
+            <svg viewBox="0 0 24 24" class="cc-icon" aria-hidden="true" width="12" height="12"><path d="M7 17a4 4 0 010-8 5 5 0 019.9-1A4 4 0 0117 17H7z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+            <span id="cloud-cover-value">—</span>% cloud
+          </span>
           <p id="feels-like" class="feels-like"><span id="temp-trend" class="temp-trend" aria-hidden="true"></span>Feels like <span id="feels-value">—</span><span id="feels-delta" class="feels-delta" hidden></span></p>
           <div id="day-range" class="day-range" hidden aria-label="Today's temperature range">
             <span class="day-range-end" id="day-range-min">—</span>

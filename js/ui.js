@@ -23,6 +23,8 @@ const el = {
   feelsLike: $("#feels-like"),
   feelsValue: $("#feels-value"),
   feelsDelta: $("#feels-delta"),
+  cloudCoverChip: $("#cloud-cover-chip"),
+  cloudCoverValue: $("#cloud-cover-value"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -331,6 +333,14 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.innerHTML =
     `<span class="condition-icon" aria-hidden="true">${iconFor(w.condition)}</span>` +
     `<span>${escapeHtml(capitalize(w.label))}</span>`;
+  if (el.cloudCoverChip && el.cloudCoverValue) {
+    if (w.cloudCover == null) {
+      el.cloudCoverChip.hidden = true;
+    } else {
+      el.cloudCoverValue.textContent = Math.round(w.cloudCover);
+      el.cloudCoverChip.hidden = false;
+    }
+  }
   applyTempBand(w.temp);
   updateTabTitle(w, temp);
   if (el.feelsValue) {

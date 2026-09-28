@@ -431,6 +431,22 @@ html[data-reduce-motion="true"] *::after {
   color: var(--fg-muted);
 }
 .condition-icon svg { width: 100%; height: 100%; }
+.cloud-cover-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 4px 0 0 30px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  color: var(--fg-muted);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--stroke);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+.cloud-cover-chip[hidden] { display: none; }
+.cloud-cover-chip .cc-icon { color: var(--fg-dim); flex-shrink: 0; }
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
 .feels-delta {
   display: inline-block;
