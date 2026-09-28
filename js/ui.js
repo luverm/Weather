@@ -322,6 +322,12 @@ function renderLiveValues(w, { animate = true } = {}) {
   const feels = convertTemp(w.feelsLike ?? w.temp);
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
+  // Show the OTHER unit as a tooltip so a quick hover confirms the reading.
+  if (el.temp && w.temp != null) {
+    const other = state.unit === "F" ? w.temp : w.temp * 9 / 5 + 32;
+    const otherUnit = state.unit === "F" ? "C" : "F";
+    el.temp.title = `${Math.round(other)}°${otherUnit}`;
+  }
   el.conditionLabel.innerHTML =
     `<span class="condition-icon" aria-hidden="true">${iconFor(w.condition)}</span>` +
     `<span>${escapeHtml(capitalize(w.label))}</span>`;
