@@ -48,6 +48,9 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunRiseAz: $("#sun-rise-az"),
+  sunSetAz: $("#sun-set-az"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -539,9 +542,69 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderSunAzimuths(w);
+  renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   renderMagicHours(w);
+}
+
+// Approximate sunrise / sunset azimuth from observer latitude and solar
+// declination. Ignores atmospheric refraction (~0.5°) — plenty accurate for
+// a compass hint. Falls back to a dash at polar circles where the sun sits
+// on the horizon.
+function renderSunAzimuths(w) {
+  if (!el.sunRiseAz || !el.sunSetAz) return;
+  const lat = state.place?.lat;
+  if (lat == null || !w.sunrise) {
+    el.sunRiseAz.textContent = "";
+    el.sunSetAz.textContent = "";
+    return;
+  }
+  const rad = Math.PI / 180;
+  const doy = dayOfYear(new Date(w.sunrise));
+  const decl = 23.44 * Math.sin(rad * (360 * (doy - 81) / 365));
+  const cosA = Math.sin(decl * rad) / Math.cos(lat * rad);
+  if (Math.abs(cosA) > 1) {
+    el.sunRiseAz.textContent = "polar";
+    el.sunSetAz.textContent = "polar";
+    return;
+  }
+  const azRise = Math.acos(cosA) / rad;
+  const azSet = 360 - azRise;
+  el.sunRiseAz.textContent = `${compass16(azRise)} · ${Math.round(azRise)}°`;
+  el.sunSetAz.textContent = `${compass16(azSet)} · ${Math.round(azSet)}°`;
+}
+
+function renderDaylightDelta(w) {
+  if (!el.sunDaylightDelta) return;
+  const today = w.daily?.[0];
+  const tmrw = w.daily?.[1];
+  if (!today?.sunrise || !today?.sunset || !tmrw?.sunrise || !tmrw?.sunset) {
+    el.sunDaylightDelta.textContent = "";
+    return;
+  }
+  const todayLen = today.sunset - today.sunrise;
+  const tmrwLen = tmrw.sunset - tmrw.sunrise;
+  const deltaMin = Math.round((tmrwLen - todayLen) / 60_000);
+  if (deltaMin === 0) {
+    el.sunDaylightDelta.textContent = "same tomorrow";
+  } else if (deltaMin > 0) {
+    el.sunDaylightDelta.textContent = `+${deltaMin}m tomorrow`;
+  } else {
+    el.sunDaylightDelta.textContent = `${deltaMin}m tomorrow`;
+  }
+}
+
+function dayOfYear(d) {
+  const start = new Date(d.getFullYear(), 0, 0);
+  return Math.floor((d - start) / 86_400_000);
+}
+
+function compass16(deg) {
+  const dirs = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+  const idx = Math.round(((deg % 360) + 360) % 360 / 22.5) % 16;
+  return dirs[idx];
 }
 
 // Golden hour ≈ 60 min after sunrise and before sunset (warm, low sun).
