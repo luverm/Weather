@@ -311,6 +311,7 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
+  updateTabTitle(w, temp);
   if (el.feelsValue) {
     el.feelsValue.textContent = `${Math.round(feels)}°`;
   } else {
@@ -319,6 +320,25 @@ function renderLiveValues(w, { animate = true } = {}) {
   }
   renderFeelsDelta(w);
   renderDayRange(w);
+}
+
+const CONDITION_EMOJI = {
+  clear:   { day: "☀", night: "🌙" },
+  clouds:  { day: "⛅", night: "☁" },
+  rain:    { day: "🌧", night: "🌧" },
+  storm:   { day: "⛈", night: "⛈" },
+  snow:    { day: "❄", night: "❄" },
+  fog:     { day: "🌫", night: "🌫" },
+};
+function updateTabTitle(w, tempDisplay) {
+  if (typeof document === "undefined") return;
+  const emoji = CONDITION_EMOJI[w.condition]
+    ? (w.isDay ? CONDITION_EMOJI[w.condition].day : CONDITION_EMOJI[w.condition].night)
+    : "";
+  const t = tempDisplay != null ? `${Math.round(tempDisplay)}°${state.unit}` : "";
+  const place = state.place?.name;
+  const parts = [emoji, t, place].filter(Boolean).join(" ");
+  document.title = parts ? `${parts} · Aether` : "Aether — Interactive Weather";
 }
 
 // Small pill next to "Feels like" that names why it feels different than
