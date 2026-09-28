@@ -21,6 +21,8 @@ const el = {
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
+  feelsValue: $("#feels-value"),
+  feelsDelta: $("#feels-delta"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -303,8 +305,39 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  if (el.feelsValue) {
+    el.feelsValue.textContent = `${Math.round(feels)}°`;
+  } else {
+    // Fallback if HTML hasn't been upgraded.
+    el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  }
+  renderFeelsDelta(w);
   renderDayRange(w);
+}
+
+// Small pill next to "Feels like" that names why it feels different than
+// the reading — wind chill if colder, humid heat if warmer. Shown only for
+// deltas of 2° or more (unit-aware) so we don't shout for rounding noise.
+function renderFeelsDelta(w) {
+  if (!el.feelsDelta) return;
+  if (w.feelsLike == null || w.temp == null) {
+    el.feelsDelta.hidden = true;
+    return;
+  }
+  const deltaC = w.feelsLike - w.temp;
+  const deltaDisplay = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
+  const abs = Math.abs(Math.round(deltaDisplay));
+  if (abs < 2) { el.feelsDelta.hidden = true; return; }
+  const cold = deltaC < 0;
+  let cause;
+  if (cold) {
+    cause = (w.windSpeed ?? 0) >= 15 ? "wind chill" : "cool air";
+  } else {
+    cause = (w.humidity ?? 0) >= 65 ? "humid heat" : (w.uv ?? 0) >= 6 ? "sun load" : "warmer";
+  }
+  el.feelsDelta.hidden = false;
+  el.feelsDelta.dataset.tone = cold ? "cool" : "warm";
+  el.feelsDelta.textContent = `${abs}° ${cold ? "cooler" : "warmer"} · ${cause}`;
 }
 
 function renderDayRange(w) {

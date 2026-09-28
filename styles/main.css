@@ -391,6 +391,28 @@ html[data-reduce-motion="true"] *::after {
 .unit:hover { background: var(--glass); color: var(--fg); }
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
+.feels-delta {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,0.04);
+  vertical-align: middle;
+}
+.feels-delta[hidden] { display: none; }
+.feels-delta[data-tone="cool"] {
+  color: #a9c8ff;
+  background: rgba(120,160,255,0.10);
+  border-color: rgba(140,180,255,0.32);
+}
+.feels-delta[data-tone="warm"] {
+  color: #ffd0a8;
+  background: rgba(255,158,110,0.10);
+  border-color: rgba(255,158,110,0.32);
+}
 .day-range {
   margin-top: 10px;
   display: grid;
