@@ -199,6 +199,7 @@ async function loadByCoords(place) {
   app.place = place;
   ui.setPlace(place);
   ui.setLoading(`Fetching weather for ${place.name}…`);
+  writeHash(place);
 
   // Drop any scrubber offset so we start live on each new city.
   clock.reset();
@@ -218,6 +219,26 @@ async function loadByCoords(place) {
 
   // Move the radar to the new location (fire-and-forget; resolves later).
   ensureRadar([place.lat, place.lon]).then((r) => r?.setCenter(place.lat, place.lon, place.name));
+}
+
+// URL hash serialization: #lat,lon(,name) — deep-linkable, no reload needed.
+function writeHash(place) {
+  if (!place || place.lat == null || place.lon == null) return;
+  const name = encodeURIComponent(place.name || "");
+  const hash = `#${place.lat.toFixed(3)},${place.lon.toFixed(3)}` + (name ? `,${name}` : "");
+  if (location.hash !== hash) {
+    history.replaceState(null, "", location.pathname + location.search + hash);
+  }
+}
+function readHash() {
+  const raw = location.hash.replace(/^#/, "").trim();
+  if (!raw) return null;
+  const parts = raw.split(",");
+  const lat = parseFloat(parts[0]);
+  const lon = parseFloat(parts[1]);
+  if (!isFinite(lat) || !isFinite(lon)) return null;
+  const name = parts[2] ? decodeURIComponent(parts.slice(2).join(",")) : `${lat.toFixed(2)}°, ${lon.toFixed(2)}°`;
+  return { name, lat, lon };
 }
 
 async function useGeolocation() {
@@ -306,8 +327,14 @@ installShortcuts({
 
 // ---------- Start ----------
 (async function init() {
-  // Prefer the most recent saved place if we have one — avoids the geolocation
-  // prompt on every load and feels snappier.
+  // 1) Deep link via URL hash beats every other source (shareable links).
+  const linked = readHash();
+  if (linked) {
+    await loadByCoords(linked);
+    return;
+  }
+  // 2) Prefer the most recent saved place if we have one — avoids the geolocation
+  //    prompt on every load and feels snappier.
   const saved = places.all();
   if (saved.length) {
     await loadByCoords(saved[0]);
@@ -320,6 +347,15 @@ installShortcuts({
     await loadByCoords({ name: "Reykjavík", country: "Iceland", lat: 64.1466, lon: -21.9426 });
   }
 })();
+
+// React to manual hash edits or back/forward navigation.
+window.addEventListener("hashchange", () => {
+  const p = readHash();
+  if (!p) return;
+  const currentId = app.place ? `${app.place.lat?.toFixed?.(3)},${app.place.lon?.toFixed?.(3)}` : null;
+  const newId = `${p.lat.toFixed(3)},${p.lon.toFixed(3)}`;
+  if (newId !== currentId) loadByCoords(p);
+});
 
 // ---------- Lifecycle ----------
 document.addEventListener("visibilitychange", () => {
