@@ -1619,6 +1619,31 @@ kbd {
 }
 .daily-gust.show { display: block; }
 .daily-item { grid-auto-rows: auto; }
+.daily-item {
+  transition: background 200ms var(--ease);
+  position: relative;
+}
+.daily-item[data-condition="storm"]  { background: rgba(200,110,255,0.06); }
+.daily-item[data-condition="storm"]::before,
+.daily-item[data-condition="wet"]::before,
+.daily-item[data-condition="snow"]::before,
+.daily-item[data-condition="cold"]::before,
+.daily-item[data-condition="hot"]::before,
+.daily-item[data-condition="sunny"]::before,
+.daily-item[data-condition="cloudy"]::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 6px; bottom: 6px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+}
+.daily-item[data-condition="storm"]::before  { background: rgba(200,110,255,0.55); }
+.daily-item[data-condition="wet"]::before    { background: rgba(120,160,255,0.65); }
+.daily-item[data-condition="snow"]::before   { background: rgba(220,235,255,0.75); }
+.daily-item[data-condition="cold"]::before   { background: rgba(120,170,255,0.55); }
+.daily-item[data-condition="hot"]::before    { background: rgba(255,138,90,0.7); }
+.daily-item[data-condition="sunny"]::before  { background: rgba(255,205,110,0.65); }
+.daily-item[data-condition="cloudy"]::before { background: rgba(180,180,190,0.35); }
 
 /* ---------- Forecast (hourly + daily) ---------- */
 .forecast, .daily {

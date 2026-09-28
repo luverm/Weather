@@ -1163,6 +1163,7 @@ function renderDaily(w) {
     const item = document.createElement("div");
     item.className = "daily-item";
     item.dataset.ts = d.time;
+    item.dataset.condition = dailyMood(d);
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
@@ -1181,6 +1182,20 @@ function renderDaily(w) {
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+}
+
+// Coarse per-day "mood" used to tint the daily-item background. Order
+// matters: severe signals (storm, wet, cold, hot) win over clear tone.
+function dailyMood(d) {
+  if (!d) return "";
+  if (d.condition === "storm") return "storm";
+  if (d.condition === "snow") return "snow";
+  if ((d.precip ?? 0) >= 8 || (d.pop ?? 0) >= 70) return "wet";
+  if ((d.tempMin ?? 99) <= 0) return "cold";
+  if ((d.tempMax ?? -99) >= 30) return "hot";
+  if (d.condition === "clear" && (d.uvMax ?? 0) >= 5) return "sunny";
+  if (d.condition === "clouds" || d.condition === "fog") return "cloudy";
+  return "";
 }
 
 function renderDailyIconStrip(days) {
