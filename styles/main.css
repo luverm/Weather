@@ -2167,3 +2167,22 @@ kbd {
   }
   .hero, .forecast, .daily { page-break-inside: avoid; }
 }
+
+/* ---------- Accessibility ---------- */
+.skip-link {
+  position: fixed;
+  top: -100px;
+  left: 12px;
+  z-index: 9999;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--fg);
+  color: var(--bg);
+  text-decoration: none;
+  font-weight: 600;
+  transition: top 200ms var(--ease);
+}
+.skip-link:focus-visible { top: 12px; outline: none; box-shadow: 0 0 0 3px var(--accent); }
+@media print {
+  .skip-link { display: none; }
+}
