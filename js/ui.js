@@ -26,6 +26,7 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  dayRangeTimes: $("#day-range-times"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -324,6 +325,31 @@ function renderDayRange(w) {
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+  renderDayRangeTimes(w);
+}
+
+// Pick out the hour with today's peak and lowest temperature so the range
+// bar can name the times you'll feel them. "Today" here is bounded by the
+// local calendar day of the first daily forecast; falls back to the next
+// 24 hours when the hourly slice doesn't cover today.
+function renderDayRangeTimes(w) {
+  if (!el.dayRangeTimes) return;
+  const today = w.daily?.[0];
+  if (!today || !w.hourly?.length) { el.dayRangeTimes.hidden = true; return; }
+  const dayStart = new Date(today.time); dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = dayStart.getTime() + 24 * 3600_000;
+  let inDay = w.hourly.filter((h) => h.time >= dayStart.getTime() && h.time < dayEnd && h.temp != null);
+  if (inDay.length < 3) inDay = w.hourly.slice(0, 24).filter((h) => h.temp != null);
+  if (inDay.length < 3) { el.dayRangeTimes.hidden = true; return; }
+  let peak = inDay[0], low = inDay[0];
+  for (const h of inDay) {
+    if (h.temp > peak.temp) peak = h;
+    if (h.temp < low.temp) low = h;
+  }
+  el.dayRangeTimes.hidden = false;
+  el.dayRangeTimes.innerHTML =
+    `<span>Low <strong>${fmtTime(low.time)}</strong></span>` +
+    `<span>Peak <strong>${fmtTime(peak.time)}</strong></span>`;
 }
 
 function renderMetrics(w) {
