@@ -1290,11 +1290,21 @@ function renderDaily(w) {
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    // Today's row gets a small "now" dot showing where the current temp sits
+    // within the day's range. Skip on flat rows to avoid a jittery marker.
+    let nowMarker = "";
+    if (i === 0 && w.temp != null && d.tempMin != null && d.tempMax != null && d.tempMax > d.tempMin) {
+      const t = Math.max(d.tempMin, Math.min(d.tempMax, w.temp));
+      const frac = (t - d.tempMin) / (d.tempMax - d.tempMin);
+      const markerLeft = left + frac * width;
+      nowMarker = `<div class="daily-range-now" style="left:${markerLeft}%" title="Now"></div>`;
+    }
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
+        ${nowMarker}
       </div>
       <span class="daily-temp-min">${Math.round(convertTemp(d.tempMin))}°</span>
       <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°</span>
