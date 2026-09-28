@@ -2125,3 +2125,45 @@ kbd {
   .temp { font-size: 78px; }
   .narrative { font-size: 13px; }
 }
+
+/* ---------- Print ---------- */
+@media print {
+  .stage, .radar, .topbar .toolbar, .scrubber, .shortcuts,
+  .places-strip, .toast, .settings-menu, .install-btn {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+    color: #000;
+    overflow: visible !important;
+  }
+  .glass {
+    background: #fff !important;
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+  .place-name, .temp, .metric-value, .metric-label,
+  .condition-label, .place-sub, .forecast-heading,
+  .daily-day, .daily-temp-max, .daily-temp-min, .sun-item strong,
+  .aq-label, .moon-name, #feels-value {
+    color: #000 !important;
+  }
+  .feels-like, .fg-dim, .fetched-ago, .sun-label, .metric-unit,
+  .metric-sub, .daily-gust, .aq-detail, .place-localtime {
+    color: #444 !important;
+  }
+  .temp-value {
+    -webkit-text-fill-color: #000 !important;
+    background: none !important;
+    color: #000 !important;
+  }
+  .radar, .comfort-strip, #precip-totals, #daily-extremes,
+  #best-day-chip, #magic-hours, .uv-strip, #stargaze-pill,
+  #overnight-rain, #cloud-cover-chip, #wind-strength,
+  .cloud-cover-chip, .feels-delta, #daily-icon-strip,
+  .daily-spark, .aq-trend, .pressure-spark {
+    display: none !important;
+  }
+  .hero, .forecast, .daily { page-break-inside: avoid; }
+}
