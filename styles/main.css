@@ -1093,6 +1093,32 @@ kbd {
 .stargaze-pill[data-tier="poor"] .stargaze-stars {
   opacity: 0.65;
 }
+.overnight-rain {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  color: #cfe0ff;
+  background: rgba(120,160,255,0.10);
+  border: 1px solid rgba(140,180,255,0.28);
+  font-variant-numeric: tabular-nums;
+}
+.overnight-rain[hidden] { display: none; }
+.overnight-rain[data-tier="wet"] {
+  color: #a9c8ff;
+  background: rgba(120,160,255,0.16);
+  border-color: rgba(140,180,255,0.4);
+}
+.overnight-rain[data-tier="heavy"] {
+  color: #cfe0ff;
+  background: rgba(80,110,220,0.22);
+  border-color: rgba(140,180,255,0.55);
+  box-shadow: 0 0 8px rgba(140,180,255,0.25);
+}
+.or-icon { flex-shrink: 0; opacity: 0.85; }
 
 .sun-row { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .sun-item { display: grid; gap: 2px; }

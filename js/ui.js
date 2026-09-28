@@ -52,6 +52,8 @@ const el = {
   stargazePill: $("#stargaze-pill"),
   stargazeStars: $("#stargaze-stars"),
   stargazeLabel: $("#stargaze-label"),
+  overnightRain: $("#overnight-rain"),
+  overnightRainText: $("#overnight-rain-text"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -210,6 +212,7 @@ export const ui = {
     renderAirQuality(weather.airQuality);
     renderMoon(weather.moon);
     renderStargaze(weather);
+    renderOvernightRain(weather);
     renderSun(weather);
     renderHourly(weather);
     renderDaily(weather);
@@ -582,6 +585,37 @@ function renderAqTrend(aq) {
     return;
   }
   drawSparkline(el.aqTrendLine, el.aqTrendFill, pts, { minSpan: 20 });
+}
+
+// Compact "will it rain overnight" chip. Overnight is defined as the
+// hourly slice with isDay=false between now (or the coming evening) and
+// tomorrow morning. We hide the pill on quiet nights so it only shows
+// when there is something to plan around.
+function renderOvernightRain(w) {
+  if (!el.overnightRain) return;
+  const hours = w.hourly || [];
+  if (!hours.length) { el.overnightRain.hidden = true; return; }
+  const now = Date.now();
+  const cutoff = now + 18 * 3600_000;
+  const night = hours.filter((h) =>
+    h.time >= now && h.time <= cutoff && h.isDay === false
+  );
+  if (!night.length) { el.overnightRain.hidden = true; return; }
+  const totalMm = night.reduce((s, h) => s + (h.precip || 0), 0);
+  const peakPop = night.reduce((m, h) => Math.max(m, h.pop ?? 0), 0);
+  const first = night.find((h) => (h.pop ?? 0) >= 50 || (h.precip ?? 0) >= 0.2);
+  if (totalMm < 0.2 && peakPop < 40) {
+    el.overnightRain.hidden = true;
+    return;
+  }
+  const label = totalMm >= 1
+    ? `~${totalMm.toFixed(totalMm >= 10 ? 0 : 1)}mm overnight`
+    : `${peakPop}% chance overnight`;
+  el.overnightRainText.textContent = first
+    ? `${label} · from ${fmtTime(first.time)}`
+    : label;
+  el.overnightRain.hidden = false;
+  el.overnightRain.dataset.tier = totalMm >= 5 ? "heavy" : totalMm >= 1 ? "wet" : "chance";
 }
 
 // Simple stargazing score: bright moons, thick cloud and muggy air all hurt
