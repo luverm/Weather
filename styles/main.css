@@ -1194,6 +1194,22 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+#sun-card[data-magic="gold"] #sun-arc-marker {
+  filter: drop-shadow(0 0 14px rgba(255,190,110,0.9));
+  animation: sun-pulse 3s ease-in-out infinite;
+}
+#sun-card[data-magic="blue"] #sun-arc-marker {
+  fill: #cfe0ff;
+  filter: drop-shadow(0 0 14px rgba(140,180,255,0.75));
+  animation: sun-pulse 3s ease-in-out infinite;
+}
+@keyframes sun-pulse {
+  0%, 100% { r: 4.5; }
+  50%      { r: 6.2; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #sun-card[data-magic] #sun-arc-marker { animation: none; }
+}
 
 .magic-hours {
   margin-top: 10px;

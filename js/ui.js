@@ -900,6 +900,7 @@ function renderMagicHours(w) {
   el.mhGoldPm.textContent = `${fmtTime(windows[2].start)}–${fmtTime(windows[2].end)}`;
   el.mhBluePm.textContent = `${fmtTime(windows[3].start)}–${fmtTime(windows[3].end)}`;
 
+  const sunCard = document.getElementById("sun-card");
   const paint = () => {
     const t = Date.now();
     const current = windows.find((win) => t >= win.start && t <= win.end);
@@ -908,7 +909,9 @@ function renderMagicHours(w) {
       el.mhNow.hidden = false;
       el.mhNow.textContent = `${current.label} · ${mins}m left`;
       el.mhNow.dataset.kind = current.kind;
+      if (sunCard) sunCard.dataset.magic = current.kind;
     } else {
+      if (sunCard) sunCard.removeAttribute("data-magic");
       const next = windows.find((win) => win.start > t)
         || pickTomorrowsFirstMagic(w.daily, t, GOLD, BLUE);
       if (next) {
