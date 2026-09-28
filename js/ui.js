@@ -1430,8 +1430,8 @@ function dailyMood(d) {
 
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
-  el.dailyIconStrip.innerHTML = days.map((d) =>
-    `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
+  el.dailyIconStrip.innerHTML = days.map((d, i) =>
+    `<span class="strip-day${i === 0 ? " is-today" : ""}" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
   ).join("");
 }
 
