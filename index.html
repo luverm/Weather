@@ -420,6 +420,20 @@
           <span>7-day outlook</span>
           <span id="daily-delta" class="daily-delta"></span>
         </div>
+        <div id="daily-extremes" class="daily-extremes" hidden>
+          <span class="dx-chip dx-warm">
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="dx-icon"><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1L7 17M17 7l2.1-2.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>
+            <span class="dx-label">Warmest</span>
+            <strong id="dx-warm-day">—</strong>
+            <span id="dx-warm-temp" class="dx-temp">—</span>
+          </span>
+          <span class="dx-chip dx-cold">
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="dx-icon"><path d="M12 2v20M4 6l16 12M4 18L20 6M6 12H2M22 12h-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <span class="dx-label">Coldest</span>
+            <strong id="dx-cold-day">—</strong>
+            <span id="dx-cold-temp" class="dx-temp">—</span>
+          </span>
+        </div>
         <button id="weekend-chip" class="weekend-chip" type="button" hidden>
           <span class="weekend-icons">
             <span id="weekend-icon-sat"></span><span id="weekend-icon-sun"></span>

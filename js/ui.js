@@ -72,6 +72,11 @@ const el = {
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
+  dailyExtremes: $("#daily-extremes"),
+  dxWarmDay: $("#dx-warm-day"),
+  dxWarmTemp: $("#dx-warm-temp"),
+  dxColdDay: $("#dx-cold-day"),
+  dxColdTemp: $("#dx-cold-temp"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -933,6 +938,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderDailyExtremes(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1037,6 +1043,31 @@ function renderDailyDelta(days) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
   }
   el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
+}
+
+// Find the week's warmest & coldest day. Highs pick the warmest; lows pick
+// the coldest — so a hot afternoon and a frosty morning both surface, even
+// on days whose peak is unremarkable.
+function renderDailyExtremes(days) {
+  if (!el.dailyExtremes) return;
+  const withHi = days.filter((d) => d.tempMax != null);
+  const withLo = days.filter((d) => d.tempMin != null);
+  if (withHi.length < 2 || withLo.length < 2) {
+    el.dailyExtremes.hidden = true;
+    return;
+  }
+  const warmest = withHi.reduce((a, b) => (b.tempMax > a.tempMax ? b : a));
+  const coldest = withLo.reduce((a, b) => (b.tempMin < a.tempMin ? b : a));
+  const tz = state.weather?.timezone;
+  const fmt = (ts) => new Date(ts).toLocaleDateString(undefined, {
+    weekday: "short",
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  el.dxWarmDay.textContent = fmt(warmest.time);
+  el.dxColdDay.textContent = fmt(coldest.time);
+  el.dxWarmTemp.textContent = `${Math.round(convertTemp(warmest.tempMax))}°`;
+  el.dxColdTemp.textContent = `${Math.round(convertTemp(coldest.tempMin))}°`;
+  el.dailyExtremes.hidden = false;
 }
 
 function toggleDailyExpand(item, d, w) {
