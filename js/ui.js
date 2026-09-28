@@ -46,6 +46,9 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  stargazePill: $("#stargaze-pill"),
+  stargazeStars: $("#stargaze-stars"),
+  stargazeLabel: $("#stargaze-label"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -203,6 +206,7 @@ export const ui = {
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
     renderMoon(weather.moon);
+    renderStargaze(weather);
     renderSun(weather);
     renderHourly(weather);
     renderDaily(weather);
@@ -519,6 +523,40 @@ function renderAqTrend(aq) {
     return;
   }
   drawSparkline(el.aqTrendLine, el.aqTrendFill, pts, { minSpan: 20 });
+}
+
+// Simple stargazing score: bright moons, thick cloud and muggy air all hurt
+// contrast; the numbers are rough but the ordering is what people want. We
+// intentionally show it any hour of day — the moon card is already a
+// nighttime hint, and the score is what you'd expect tonight.
+function renderStargaze(w) {
+  if (!el.stargazePill) return;
+  const moon = w.moon;
+  const cloud = w.cloudCover;
+  const humidity = w.humidity;
+  if (!moon || cloud == null || humidity == null) {
+    el.stargazePill.hidden = true;
+    return;
+  }
+  const cloudPenalty = cloud / 100;
+  const moonPenalty = moon.illum;
+  const humidityPenalty = Math.max(0, (humidity - 50) / 50);
+  const score = Math.max(0, Math.min(100,
+    Math.round(100 * (1 - 0.5 * cloudPenalty - 0.3 * moonPenalty - 0.2 * humidityPenalty))
+  ));
+  const buckets = [
+    [80, "Excellent", "★★★★★"],
+    [60, "Good",      "★★★★☆"],
+    [40, "Fair",      "★★★☆☆"],
+    [20, "Poor",      "★★☆☆☆"],
+    [0,  "Very poor", "★☆☆☆☆"],
+  ];
+  const [, label, stars] = buckets.find(([t]) => score >= t);
+  el.stargazeStars.textContent = stars;
+  el.stargazeLabel.textContent = label;
+  el.stargazePill.hidden = false;
+  el.stargazePill.dataset.tier = label.toLowerCase().replace(/\s+/g, "-");
+  el.stargazePill.title = `Stargazing tonight: ${score}/100 · clouds ${Math.round(cloud)}% · moon ${Math.round(moon.illum * 100)}% · humidity ${Math.round(humidity)}%`;
 }
 
 function renderMoon(moon) {

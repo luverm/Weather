@@ -1004,6 +1004,42 @@ kbd {
 .moon-svg { width: 48px; height: 48px; }
 .moon-meta strong { display: block; font-size: 14px; font-weight: 500; }
 .moon-detail { font-size: 11.5px; color: var(--fg-dim); }
+.stargaze-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--stroke);
+}
+.stargaze-pill[hidden] { display: none; }
+.stargaze-stars {
+  letter-spacing: 1px;
+  color: #fff1c9;
+}
+.stargaze-pill[data-tier="excellent"] {
+  color: #cfe0ff;
+  background: linear-gradient(90deg, rgba(140,180,255,0.15), rgba(90,110,200,0.1));
+  border-color: rgba(140,180,255,0.35);
+}
+.stargaze-pill[data-tier="good"] {
+  color: #cfe6d5;
+  background: rgba(140,200,150,0.12);
+  border-color: rgba(140,200,150,0.28);
+}
+.stargaze-pill[data-tier="poor"], .stargaze-pill[data-tier="very-poor"] {
+  color: #f0c4c4;
+  background: rgba(255,138,138,0.08);
+  border-color: rgba(255,138,138,0.22);
+}
+.stargaze-pill[data-tier="very-poor"] .stargaze-stars,
+.stargaze-pill[data-tier="poor"] .stargaze-stars {
+  opacity: 0.65;
+}
 
 .sun-row { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .sun-item { display: grid; gap: 2px; }
