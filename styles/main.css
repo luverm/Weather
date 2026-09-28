@@ -379,6 +379,13 @@ html[data-reduce-motion="true"] *::after {
   line-height: 0.95;
   letter-spacing: -0.05em;
 }
+.temp {
+  transition: filter 400ms var(--ease);
+}
+.temp[data-temp-band="hot"]  { filter: drop-shadow(0 0 22px rgba(255,140,90,0.35)); }
+.temp[data-temp-band="warm"] { filter: drop-shadow(0 0 18px rgba(255,200,150,0.25)); }
+.temp[data-temp-band="cool"] { filter: drop-shadow(0 0 14px rgba(140,190,255,0.22)); }
+.temp[data-temp-band="cold"] { filter: drop-shadow(0 0 20px rgba(120,170,255,0.35)); }
 .temp-value {
   display: inline-block;
   background: linear-gradient(180deg, var(--fg) 0%, color-mix(in oklab, var(--fg) 70%, transparent) 100%);
@@ -1680,7 +1687,7 @@ kbd {
   transition: background 200ms var(--ease);
   position: relative;
 }
-.daily-item[data-condition="storm"]  { background: rgba(200,110,255,0.06); }
+.daily-item[data-condition="storm"]:not([data-expanded="true"]) { background: rgba(200,110,255,0.06); }
 .daily-item[data-condition="storm"]::before,
 .daily-item[data-condition="wet"]::before,
 .daily-item[data-condition="snow"]::before,

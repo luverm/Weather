@@ -311,6 +311,7 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
+  applyTempBand(w.temp);
   updateTabTitle(w, temp);
   if (el.feelsValue) {
     el.feelsValue.textContent = `${Math.round(feels)}°`;
@@ -320,6 +321,22 @@ function renderLiveValues(w, { animate = true } = {}) {
   }
   renderFeelsDelta(w);
   renderDayRange(w);
+}
+
+// Bucket the current tempC into a coarse band so CSS can accent the hero
+// with a subtle warm or cool glow.
+function applyTempBand(tempC) {
+  if (!el.temp) return;
+  let band = "neutral";
+  if (tempC != null) {
+    if      (tempC <= -5) band = "cold";
+    else if (tempC <= 5)  band = "cool";
+    else if (tempC <= 20) band = "neutral";
+    else if (tempC <= 30) band = "warm";
+    else                   band = "hot";
+  }
+  const parent = el.temp.parentElement;
+  if (parent) parent.dataset.tempBand = band;
 }
 
 const CONDITION_EMOJI = {
