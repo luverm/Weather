@@ -834,6 +834,27 @@ function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  // Piggyback next-phase countdown onto the moon-detail line via title.
+  if (moon.phase != null) {
+    const CYCLE = 29.53;
+    const p = ((moon.phase % 1) + 1) % 1;
+    // Distances to phase 0 (new), 0.25 (first quarter), 0.5 (full), 0.75 (last quarter).
+    const targets = [
+      { phase: 0.5, name: "full moon" },
+      { phase: 0,   name: "new moon"  },
+      { phase: 0.25, name: "first quarter" },
+      { phase: 0.75, name: "last quarter" },
+    ].map((t) => {
+      let d = ((t.phase - p) + 1) % 1;
+      if (d < 0.005) d = 1; // Skip "0 days" — round it up so the label reads useful.
+      return { ...t, days: Math.round(d * CYCLE) };
+    });
+    const next = targets.reduce((a, b) => (b.days < a.days ? b : a));
+    if (el.moonName?.parentElement) {
+      const detail = el.moonName.parentElement.querySelector(".moon-detail");
+      if (detail) detail.title = `${next.days}d to ${next.name}`;
+    }
+  }
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
