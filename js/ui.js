@@ -39,6 +39,7 @@ const el = {
   metricUV: $("#m-uv"),
   metricUVSub: $("#m-uv-sub"),
   uvStrip: $("#uv-strip"),
+  uvBurnTip: $("#uv-burn-tip"),
   aqArc: $("#aq-arc"),
   aqValue: $("#aq-value"),
   aqLabel: $("#aq-label"),
@@ -541,8 +542,23 @@ function renderMetrics(w) {
   } else {
     el.metricUVSub.textContent = "peak —";
   }
+  renderUvBurnTip(w);
   renderUvStrip(w);
   renderPressureSparkline(w);
+}
+
+// Rough sunburn-onset estimate for average (type II) skin, unshaded, at
+// the current UV. Hidden below UV 3 (very low risk) and paired with a
+// reapply-sunscreen nudge above UV 6.
+function renderUvBurnTip(w) {
+  if (!el.uvBurnTip) return;
+  const uv = w.uv;
+  if (uv == null || uv < 3) { el.uvBurnTip.hidden = true; return; }
+  const mins = Math.max(5, Math.round(200 / uv));
+  const label = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
+  const nudge = uv >= 6 ? " · reapply sunscreen every 2h" : "";
+  el.uvBurnTip.textContent = `Burn in ~${label}${nudge}`;
+  el.uvBurnTip.hidden = false;
 }
 
 // 12-cell UV strip covering the next ~12 daylight hours. Each cell is one

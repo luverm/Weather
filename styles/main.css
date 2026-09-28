@@ -666,6 +666,14 @@ html[data-reduce-motion="true"] *::after {
   box-shadow: 0 0 0 1.5px var(--fg), 0 0 6px rgba(255,255,255,0.35);
   transform: translateY(-1px);
 }
+.uv-burn-tip {
+  display: block;
+  font-size: 10.5px;
+  color: #ffd0a8;
+  margin-top: 4px;
+  letter-spacing: 0.02em;
+}
+.uv-burn-tip[hidden] { display: none; }
 
 /* ---------- Daily expand ---------- */
 .daily-item { cursor: pointer; }
