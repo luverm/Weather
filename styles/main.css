@@ -1190,6 +1190,16 @@ kbd {
   display: block;
   margin: -2px 0 4px;
 }
+.sun-arc-progress {
+  display: block;
+  text-align: center;
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.04em;
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.sun-arc-progress[hidden] { display: none; }
 #sun-arc-marker {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);

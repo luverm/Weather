@@ -116,6 +116,7 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcProgress: $("#sun-arc-progress"),
   magicHours: $("#magic-hours"),
   mhBlueAm: $("#mh-blue-am"),
   mhBluePm: $("#mh-blue-pm"),
@@ -975,6 +976,19 @@ function scheduleSunArc(w) {
     // After sunset, dim the marker so it visually settles.
     const isUp = now >= sr && now <= ss;
     el.sunArcMarker.style.opacity = isUp ? "1" : "0.45";
+    if (el.sunArcProgress) {
+      if (!isUp) {
+        el.sunArcProgress.hidden = true;
+      } else {
+        const remaining = ss - now;
+        const totalMs = ss - sr;
+        const pct = Math.round((remaining / totalMs) * 100);
+        const mins = Math.max(0, Math.round(remaining / 60_000));
+        const label = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
+        el.sunArcProgress.hidden = false;
+        el.sunArcProgress.textContent = `${pct}% · ${label} of daylight left`;
+      }
+    }
   };
   update();
   state.sunArcTimer = setInterval(update, 60_000);
