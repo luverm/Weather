@@ -36,6 +36,7 @@ const el = {
   metricPressureSub: $("#m-pressure-sub"),
   metricUV: $("#m-uv"),
   metricUVSub: $("#m-uv-sub"),
+  uvStrip: $("#uv-strip"),
   aqArc: $("#aq-arc"),
   aqValue: $("#aq-value"),
   aqLabel: $("#aq-label"),
@@ -411,7 +412,32 @@ function renderMetrics(w) {
   } else {
     el.metricUVSub.textContent = "peak —";
   }
+  renderUvStrip(w);
   renderPressureSparkline(w);
+}
+
+// 12-cell UV strip covering the next ~12 daylight hours. Each cell is one
+// hour, colored by UV band (0–2 low → 11+ extreme). A subtle wedge marks
+// the current hour so you know where "now" sits in the day's curve.
+function renderUvStrip(w) {
+  if (!el.uvStrip) return;
+  if (!w.hourly?.length) { el.uvStrip.hidden = true; return; }
+  const now = Date.now();
+  const startIdx = Math.max(0, w.hourly.findIndex((h) => h.time + 3600_000 > now));
+  const slice = w.hourly.slice(startIdx, startIdx + 12);
+  const values = slice.map((h) => h.uv ?? 0);
+  if (!values.some((v) => v > 0.5)) {
+    el.uvStrip.hidden = true;
+    return;
+  }
+  el.uvStrip.hidden = false;
+  el.uvStrip.innerHTML = slice.map((h, i) => {
+    const uv = Math.max(0, values[i] ?? 0);
+    const band = uv < 3 ? "low" : uv < 6 ? "mod" : uv < 8 ? "high" : uv < 11 ? "vhigh" : "extreme";
+    const isNow = h.time <= now && (h.time + 3600_000) > now;
+    const label = new Date(h.time).getHours().toString().padStart(2, "0");
+    return `<span class="uv-cell uv-${band}${isNow ? " uv-now" : ""}" title="${label}:00 · UV ${uv.toFixed(1)}"><span class="uv-cell-val">${uv >= 1 ? Math.round(uv) : ""}</span></span>`;
+  }).join("");
 }
 
 function humidityComfort(rh, dew, temp) {

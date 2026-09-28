@@ -573,6 +573,37 @@ html[data-reduce-motion="true"] *::after {
 }
 .metric-humidity .pressure-spark { color: #9ad1ff; }
 
+.uv-strip {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 2px;
+  margin-top: 6px;
+  align-items: stretch;
+}
+.uv-strip[hidden] { display: none; }
+.uv-cell {
+  height: 14px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  color: rgba(0,0,0,0.55);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transition: transform 200ms var(--ease);
+}
+.uv-cell-val { line-height: 1; }
+.uv-low     { background: rgba(120,200,120,0.55); }
+.uv-mod     { background: rgba(255,205,80,0.75); }
+.uv-high    { background: rgba(255,148,60,0.8); }
+.uv-vhigh   { background: rgba(255,90,90,0.85); }
+.uv-extreme { background: rgba(200,110,255,0.85); color: rgba(255,255,255,0.9); }
+.uv-now {
+  box-shadow: 0 0 0 1.5px var(--fg), 0 0 6px rgba(255,255,255,0.35);
+  transform: translateY(-1px);
+}
+
 /* ---------- Daily expand ---------- */
 .daily-item { cursor: pointer; }
 .daily-item[data-expanded="true"] { background: var(--glass-strong); }
