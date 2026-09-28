@@ -253,8 +253,15 @@ html[data-reduce-motion="true"] *::after {
 .search-results[hidden] { display: none; }
 .search-results li {
   padding: 10px 12px; border-radius: 10px; cursor: pointer;
-  display: flex; justify-content: space-between; gap: 12px;
+  display: flex; align-items: center; gap: 10px;
   color: #f6f7fb; transition: background 150ms var(--ease);
+}
+.search-results li > span:not(.flag):not(.sub) { flex: 1; }
+.search-results .flag {
+  font-size: 15px;
+  line-height: 1;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 4px rgba(0,0,0,0.35));
 }
 .search-results li:hover,
 .search-results li[aria-selected="true"] { background: rgba(255, 255, 255, 0.08); }

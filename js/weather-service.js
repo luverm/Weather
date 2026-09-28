@@ -57,6 +57,7 @@ export async function searchCities(query) {
       id: `${r.latitude},${r.longitude}`,
       name: r.name,
       country: r.country,
+      country_code: r.country_code,
       admin1: r.admin1,
       lat: r.latitude,
       lon: r.longitude,

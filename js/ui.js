@@ -1622,14 +1622,29 @@ const runSearch = debounce(async (q) => {
   renderSearchResults(results);
 }, 200);
 
+// Convert an ISO 3166-1 alpha-2 code (e.g. "IS") to its Unicode flag emoji.
+// Returns "" for empty / invalid codes so the caller can concat safely.
+function flagFor(code) {
+  if (!code || typeof code !== "string" || code.length !== 2) return "";
+  const A = 0x41, base = 0x1F1E6;
+  const up = code.toUpperCase();
+  if (up.charCodeAt(0) < A || up.charCodeAt(0) > A + 25) return "";
+  if (up.charCodeAt(1) < A || up.charCodeAt(1) > A + 25) return "";
+  return String.fromCodePoint(base + (up.charCodeAt(0) - A))
+       + String.fromCodePoint(base + (up.charCodeAt(1) - A));
+}
+
 function renderSearchResults(results) {
   if (!results.length) { el.searchResults.hidden = true; el.searchResults.innerHTML = ""; return; }
-  el.searchResults.innerHTML = results.map((r, i) => `
+  el.searchResults.innerHTML = results.map((r, i) => {
+    const flag = flagFor(r.country_code);
+    return `
     <li role="option" data-index="${i}">
+      ${flag ? `<span class="flag" aria-hidden="true">${flag}</span>` : ""}
       <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
       <span class="sub">${escapeHtml(r.country || "")}</span>
-    </li>
-  `).join("");
+    </li>`;
+  }).join("");
   el.searchResults.hidden = false;
   el.searchResults._items = results;
 }
@@ -1637,12 +1652,15 @@ function renderSearchResults(results) {
 function showRecentsIfAny() {
   const recents = places.all().slice(0, 5);
   if (!recents.length) { el.searchResults.hidden = true; return; }
-  const itemsHtml = recents.map((r, i) => `
+  const itemsHtml = recents.map((r, i) => {
+    const flag = flagFor(r.country_code);
+    return `
     <li role="option" data-index="${i}">
+      ${flag ? `<span class="flag" aria-hidden="true">${flag}</span>` : ""}
       <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
       <span class="sub">${escapeHtml(r.country || "")}</span>
-    </li>
-  `).join("");
+    </li>`;
+  }).join("");
   el.searchResults.innerHTML = `<li class="recent-heading">Recent places</li>${itemsHtml}`;
   el.searchResults._items = recents;
   el.searchResults.hidden = false;

@@ -28,6 +28,7 @@ export const places = {
       id,
       name: place.name,
       country: place.country,
+      country_code: place.country_code,
       admin1: place.admin1,
       lat: place.lat,
       lon: place.lon,
