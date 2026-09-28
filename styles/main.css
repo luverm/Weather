@@ -2186,3 +2186,11 @@ kbd {
 @media print {
   .skip-link { display: none; }
 }
+
+/* Global keyboard-nav focus ring — supplements ad-hoc :focus-visible rules
+   on individual widgets so nothing is orphaned. */
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
