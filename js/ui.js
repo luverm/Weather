@@ -121,6 +121,9 @@ const el = {
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
   sunArcProgress: $("#sun-arc-progress"),
+  tomorrowSun: $("#tomorrow-sun"),
+  tsRise: $("#ts-rise"),
+  tsSet: $("#ts-set"),
   magicHours: $("#magic-hours"),
   mhBlueAm: $("#mh-blue-am"),
   mhBluePm: $("#mh-blue-pm"),
@@ -852,9 +855,19 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   renderSunAzimuths(w);
   renderDaylightDelta(w);
+  renderTomorrowSun(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   renderMagicHours(w);
+}
+
+function renderTomorrowSun(w) {
+  if (!el.tomorrowSun || !el.tsRise || !el.tsSet) return;
+  const tmrw = w?.daily?.[1];
+  if (!tmrw?.sunrise || !tmrw?.sunset) { el.tomorrowSun.hidden = true; return; }
+  el.tsRise.textContent = fmtTime(tmrw.sunrise);
+  el.tsSet.textContent = fmtTime(tmrw.sunset);
+  el.tomorrowSun.hidden = false;
 }
 
 // Approximate sunrise / sunset azimuth from observer latitude and solar

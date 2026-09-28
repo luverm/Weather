@@ -1258,6 +1258,35 @@ kbd {
   #sun-card[data-magic] #sun-arc-marker { animation: none; }
 }
 
+.tomorrow-sun {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--stroke);
+  font-size: 11px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+}
+.tomorrow-sun[hidden] { display: none; }
+.tomorrow-sun .ts-label {
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.55);
+}
+.tomorrow-sun .ts-time { display: inline-flex; align-items: center; gap: 3px; }
+.tomorrow-sun strong { color: var(--fg); font-weight: 500; }
+.tomorrow-sun .ts-arrow {
+  color: rgba(255,210,140,0.8);
+  font-size: 11px;
+  line-height: 1;
+}
+.tomorrow-sun .ts-time:last-child .ts-arrow { color: rgba(255,170,120,0.8); }
+
 .magic-hours {
   margin-top: 10px;
   padding-top: 8px;
