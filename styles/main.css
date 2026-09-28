@@ -2194,3 +2194,22 @@ kbd {
   outline-offset: 2px;
   border-radius: 6px;
 }
+
+/* High-contrast mode: tighten strokes and remove muted grays for users who
+   ask their OS for more contrast. */
+@media (prefers-contrast: more) {
+  :root {
+    --fg-muted: #f6f7fb;
+    --fg-dim: rgba(246, 247, 251, 0.75);
+    --stroke: rgba(255, 255, 255, 0.55);
+  }
+  .glass {
+    background: rgba(255, 255, 255, 0.14) !important;
+    border-color: rgba(255, 255, 255, 0.55) !important;
+  }
+  [data-tone="bright"] {
+    --fg-muted: #0f1428;
+    --fg-dim: rgba(15, 20, 40, 0.8);
+    --stroke: rgba(15, 20, 40, 0.5);
+  }
+}
