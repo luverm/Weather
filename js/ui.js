@@ -46,6 +46,7 @@ const el = {
   aqCard: $("#aq-card"),
   aqTrendLine: $("#aq-trend-line"),
   aqTrendFill: $("#aq-trend-fill"),
+  aqTip: $("#aq-tip"),
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
@@ -664,7 +665,24 @@ function renderAirQuality(aq) {
   el.aqArc.setAttribute("stroke-dashoffset", String(126 * (1 - frac)));
   el.aqDetail.textContent =
     `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
+  if (el.aqTip) {
+    const tip = aqTip(aq.aqi);
+    if (tip) { el.aqTip.hidden = false; el.aqTip.textContent = tip; }
+    else el.aqTip.hidden = true;
+  }
   renderAqTrend(aq);
+}
+
+// Compact health hint keyed to US-AQI-ish bands. Kept short so it lives
+// beside the ring without wrapping to a third line on narrow cards.
+function aqTip(aqi) {
+  if (aqi == null) return "";
+  if (aqi <= 50)  return "";
+  if (aqi <= 100) return "Sensitive groups: consider light activity.";
+  if (aqi <= 150) return "Sensitive groups: limit heavy outdoor exertion.";
+  if (aqi <= 200) return "Everyone: reduce prolonged outdoor exertion.";
+  if (aqi <= 300) return "Everyone: avoid outdoor exertion; wear a mask.";
+  return "Hazardous: stay indoors, close windows.";
 }
 
 function renderAqTrend(aq) {
