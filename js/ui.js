@@ -72,6 +72,11 @@ const el = {
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
+  precipTotals: $("#precip-totals"),
+  pt24: $("#pt-24"),
+  pt24Val: document.querySelector("#pt-24 .pt-val"),
+  pt7d: $("#pt-7d"),
+  pt7dVal: document.querySelector("#pt-7d .pt-val"),
   dailyExtremes: $("#daily-extremes"),
   dxWarmDay: $("#dx-warm-day"),
   dxWarmTemp: $("#dx-warm-temp"),
@@ -197,6 +202,7 @@ export const ui = {
     renderSun(weather);
     renderHourly(weather);
     renderDaily(weather);
+    renderPrecipTotals(weather);
     renderNowcast(weather);
     renderAdvice(weather);
     renderPollen(weather.pollen);
@@ -1043,6 +1049,31 @@ function renderDailyDelta(days) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
   }
   el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
+}
+
+// Sum the next 24 h of hourly precip and the next 7 days of daily precip;
+// hide the badge on a dry forecast so the strip stays quiet when nothing
+// is falling.
+function renderPrecipTotals(w) {
+  if (!el.precipTotals) return;
+  const nowMs = Date.now();
+  const cutoff = nowMs + 24 * 3600_000;
+  const next24 = (w.hourly || [])
+    .filter((h) => h.time >= nowMs && h.time < cutoff)
+    .reduce((s, h) => s + (h.precip || 0), 0);
+  const next7 = (w.daily || [])
+    .slice(0, 7)
+    .reduce((s, d) => s + (d.precip || 0), 0);
+  if (next24 < 0.1 && next7 < 0.1) {
+    el.precipTotals.hidden = true;
+    return;
+  }
+  const fmt = (mm) => mm >= 10 ? `${Math.round(mm)}mm` : `${mm.toFixed(1)}mm`;
+  el.pt24Val.textContent = fmt(next24);
+  el.pt7dVal.textContent = fmt(next7);
+  el.pt24.classList.toggle("pt-dry", next24 < 0.1);
+  el.pt7d.classList.toggle("pt-dry", next7 < 0.1);
+  el.precipTotals.hidden = false;
 }
 
 // Find the week's warmest & coldest day. Highs pick the warmest; lows pick

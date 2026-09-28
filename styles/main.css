@@ -702,6 +702,37 @@ html[data-reduce-motion="true"] *::after {
   font-size: 11px; color: var(--fg-dim);
   margin-left: auto;
 }
+.precip-totals {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 11px;
+  color: var(--fg-dim);
+}
+.precip-totals[hidden] { display: none; }
+.pt-item {
+  display: inline-flex;
+  gap: 5px;
+  align-items: baseline;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(120,160,255,0.08);
+  border: 1px solid rgba(120,160,255,0.25);
+  color: #cddffd;
+  font-variant-numeric: tabular-nums;
+}
+.pt-tag {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(205,223,253,0.7);
+}
+.pt-val { font-weight: 500; }
+.pt-item.pt-dry {
+  background: rgba(255,255,255,0.04);
+  border-color: var(--stroke);
+  color: var(--fg-dim);
+}
 .legend-swatch {
   display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle;
   margin-right: 4px;
