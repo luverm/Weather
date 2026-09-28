@@ -123,6 +123,8 @@ const el = {
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
   sunArcProgress: $("#sun-arc-progress"),
+  sunRiseBtn: $("#sun-rise-btn"),
+  sunSetBtn: $("#sun-set-btn"),
   tomorrowSun: $("#tomorrow-sun"),
   tsRise: $("#ts-rise"),
   tsSet: $("#ts-set"),
@@ -863,6 +865,7 @@ function fmtTime(ts) {
 function renderSun(w) {
   el.sunRise.textContent = fmtTime(w.sunrise);
   el.sunSet.textContent = fmtTime(w.sunset);
+  bindSunScrub(w);
   if (w.sunrise && w.sunset) {
     const mins = Math.round((w.sunset - w.sunrise) / 60_000);
     const hh = Math.floor(mins / 60);
@@ -875,6 +878,27 @@ function renderSun(w) {
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   renderMagicHours(w);
+}
+
+// Bind once at boot; each click reads the current sunrise/sunset from
+// state.weather so we don't have to rewire on every setWeather.
+function bindSunScrubOnce() {
+  if (state._sunScrubBound) return;
+  state._sunScrubBound = true;
+  el.sunRiseBtn?.addEventListener("click", () => {
+    const ts = state.weather?.sunrise;
+    if (ts) state.handlers.onHourClick?.(ts);
+  });
+  el.sunSetBtn?.addEventListener("click", () => {
+    const ts = state.weather?.sunset;
+    if (ts) state.handlers.onHourClick?.(ts);
+  });
+}
+
+function bindSunScrub(w) {
+  bindSunScrubOnce();
+  if (el.sunRiseBtn) el.sunRiseBtn.disabled = !w?.sunrise;
+  if (el.sunSetBtn)  el.sunSetBtn.disabled  = !w?.sunset;
 }
 
 function renderTomorrowSun(w) {
