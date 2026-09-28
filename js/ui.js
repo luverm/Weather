@@ -339,6 +339,52 @@ function updateTabTitle(w, tempDisplay) {
   const place = state.place?.name;
   const parts = [emoji, t, place].filter(Boolean).join(" ");
   document.title = parts ? `${parts} · Aether` : "Aether — Interactive Weather";
+  updateFavicon(w, tempDisplay);
+}
+
+// Render a tiny SVG favicon: colored disc keyed to warmth + condition,
+// with the current integer temperature drawn on top. Data-URI keeps it
+// dependency-free and avoids extra network hits.
+function updateFavicon(w, tempDisplay) {
+  if (typeof document === "undefined" || tempDisplay == null) return;
+  const rounded = Math.round(tempDisplay);
+  const tempC = w.temp ?? tempDisplay;
+  // Warmth ramp: -10°C → cold blue, 0 → cool cyan, 15 → mint, 25 → gold, 35+ → red.
+  const stops = [
+    [-15, "#4a70e0"], [0, "#6ac0e0"], [15, "#7ce09a"],
+    [25, "#f0c060"], [35, "#e0603a"],
+  ];
+  const bg = interpStops(tempC, stops);
+  const stroke = w.isDay === false ? "#0b1020" : "#0b1020";
+  const text = "#0b1020";
+  const label = String(rounded);
+  const fontSize = label.length > 3 ? 26 : label.length === 3 ? 30 : 36;
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><circle cx='32' cy='32' r='30' fill='${bg}' stroke='${stroke}' stroke-width='2'/><text x='32' y='42' font-family='-apple-system, system-ui, sans-serif' font-weight='700' font-size='${fontSize}' text-anchor='middle' fill='${text}'>${label}°</text></svg>`;
+  const url = "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+  let link = document.querySelector("link[rel='icon']");
+  if (!link) {
+    link = document.createElement("link");
+    link.rel = "icon";
+    document.head.appendChild(link);
+  }
+  link.href = url;
+}
+
+function interpStops(v, stops) {
+  if (v == null || isNaN(v)) return stops[Math.floor(stops.length / 2)][1];
+  if (v <= stops[0][0]) return stops[0][1];
+  if (v >= stops[stops.length - 1][0]) return stops[stops.length - 1][1];
+  for (let i = 0; i < stops.length - 1; i++) {
+    const [x0, c0] = stops[i], [x1, c1] = stops[i + 1];
+    if (v >= x0 && v <= x1) return lerpHex(c0, c1, (v - x0) / (x1 - x0));
+  }
+  return stops[0][1];
+}
+function lerpHex(a, b, t) {
+  const pa = a.replace("#", "").match(/.{2}/g).map((x) => parseInt(x, 16));
+  const pb = b.replace("#", "").match(/.{2}/g).map((x) => parseInt(x, 16));
+  const m = pa.map((v, i) => Math.round(v + (pb[i] - v) * t).toString(16).padStart(2, "0"));
+  return "#" + m.join("");
 }
 
 // Small pill next to "Feels like" that names why it feels different than
