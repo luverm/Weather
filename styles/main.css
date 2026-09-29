@@ -976,6 +976,52 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+.daylight-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-self: start;
+  margin-top: -2px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--stroke);
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+  transition: color 300ms var(--ease), background 300ms var(--ease), border-color 300ms var(--ease);
+}
+.daylight-delta::before {
+  content: "";
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+}
+.daylight-delta[data-tone="up"] {
+  color: #ffe1a8;
+  background: rgba(255,205,120,0.10);
+  border-color: rgba(255,205,120,0.35);
+}
+.daylight-delta[data-tone="up"]::before {
+  border-bottom: 6px solid currentColor;
+}
+.daylight-delta[data-tone="down"] {
+  color: #b8c8ff;
+  background: rgba(155,175,235,0.10);
+  border-color: rgba(155,175,235,0.35);
+}
+.daylight-delta[data-tone="down"]::before {
+  border-top: 6px solid currentColor;
+}
+.daylight-delta[data-tone="steady"]::before {
+  width: 8px; height: 2px;
+  border: none;
+  background: currentColor;
+  opacity: 0.6;
+}
 
 /* ---------- Radar map ---------- */
 .radar {

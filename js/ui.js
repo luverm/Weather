@@ -50,6 +50,7 @@ const el = {
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  daylightDelta: $("#daylight-delta"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -521,8 +522,30 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderDaylightDelta(w) {
+  if (!el.daylightDelta) return;
+  const d = w?.daylightDelta;
+  if (d == null) { el.daylightDelta.hidden = true; return; }
+  const abs = Math.abs(d);
+  let text, tone;
+  if (abs < 1) { text = "Same length tomorrow"; tone = "steady"; }
+  else if (d > 0) { text = `${fmtMinutes(abs)} longer tomorrow`; tone = "up"; }
+  else { text = `${fmtMinutes(abs)} shorter tomorrow`; tone = "down"; }
+  el.daylightDelta.textContent = text;
+  el.daylightDelta.dataset.tone = tone;
+  el.daylightDelta.hidden = false;
+}
+
+function fmtMinutes(m) {
+  if (m < 60) return `${m} min`;
+  const h = Math.floor(m / 60);
+  const r = m % 60;
+  return r ? `${h}h ${r}m` : `${h}h`;
 }
 
 function scheduleSunArc(w) {

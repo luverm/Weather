@@ -208,6 +208,7 @@ function normalize(d, aq) {
     sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null,
     uv: daily.uv_index_max?.[0] ?? null,
     uvPeak: findUvPeak(d.hourly),
+    daylightDelta: computeDaylightDelta(dailyForecast),
     timezone: d.timezone,
     hourly,
     daily: dailyForecast,
@@ -217,6 +218,16 @@ function normalize(d, aq) {
     pollen: normalizePollen(aq),
     fetchedAt: now,
   };
+}
+
+// Delta between today's and tomorrow's daylight length, in minutes.
+// Positive = tomorrow is longer. Returns null when either day is missing.
+function computeDaylightDelta(dailyForecast) {
+  const a = dailyForecast?.[0], b = dailyForecast?.[1];
+  if (!a?.sunrise || !a?.sunset || !b?.sunrise || !b?.sunset) return null;
+  const todayMs = a.sunset - a.sunrise;
+  const tomorrowMs = b.sunset - b.sunrise;
+  return Math.round((tomorrowMs - todayMs) / 60_000);
 }
 
 function computePressureTrend(hourly, now) {
@@ -400,6 +411,7 @@ function mock(lat, lon) {
       level: "Moderate",
     },
     pressureTrend: { delta: -0.4, direction: "steady" },
+    daylightDelta: -2,
     fetchedAt: now,
     offline: true,
   };
