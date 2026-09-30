@@ -264,6 +264,64 @@ export class HourlyChart {
       }
     }
 
+    // Peak markers: hottest and highest-UV hour in the visible window.
+    const peakG = this.svg.querySelector("#chart-peaks");
+    if (peakG) {
+      peakG.innerHTML = "";
+      let hotIdx = -1, hotT = -Infinity;
+      let uvIdx = -1, uvV = -Infinity;
+      this.hours.forEach((h, i) => {
+        if (h.temp != null && h.temp > hotT) { hotT = h.temp; hotIdx = i; }
+        if (h.uv != null && h.uv > uvV) { uvV = h.uv; uvIdx = i; }
+      });
+      // Only mark a peak if it's meaningfully above the mean.
+      const meanT = temps.reduce((a, b) => a + b, 0) / temps.length;
+      const showHot = hotIdx >= 0 && hotT - meanT >= 1;
+      const showUv = uvIdx >= 0 && uvV >= 5;
+      if (showHot) {
+        const x = iToX(hotIdx).toFixed(1);
+        const y = (tToY(hotT) - 14).toFixed(1);
+        const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        g.setAttribute("class", "peak peak-hot");
+        g.setAttribute("transform", `translate(${x}, ${y})`);
+        // A small star glyph.
+        const star = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        star.setAttribute("d", "M0,-4 L1.2,-1.2 L4,-0.6 L1.8,1.3 L2.5,4 L0,2.4 L-2.5,4 L-1.8,1.3 L-4,-0.6 L-1.2,-1.2 Z");
+        star.setAttribute("class", "peak-glyph");
+        g.appendChild(star);
+        const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+        title.textContent = `Warmest: ${Math.round(hotT)}° at ${this._formatHour(this.hours[hotIdx].time)}`;
+        g.appendChild(title);
+        peakG.appendChild(g);
+      }
+      if (showUv && uvIdx !== hotIdx) {
+        const x = iToX(uvIdx).toFixed(1);
+        const y = (tToY(this.hours[uvIdx].temp) - 14).toFixed(1);
+        const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        g.setAttribute("class", "peak peak-uv");
+        g.setAttribute("transform", `translate(${x}, ${y})`);
+        // Small sun glyph.
+        const sun = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        sun.innerHTML =
+          `<circle r="2.4" class="peak-glyph"/>` +
+          `<g class="peak-rays">` +
+          `<line x1="0" y1="-4.4" x2="0" y2="-3.2"/>` +
+          `<line x1="0" y1="3.2" x2="0" y2="4.4"/>` +
+          `<line x1="-4.4" y1="0" x2="-3.2" y2="0"/>` +
+          `<line x1="3.2" y1="0" x2="4.4" y2="0"/>` +
+          `<line x1="-3.1" y1="-3.1" x2="-2.3" y2="-2.3"/>` +
+          `<line x1="2.3" y1="2.3" x2="3.1" y2="3.1"/>` +
+          `<line x1="-3.1" y1="3.1" x2="-2.3" y2="2.3"/>` +
+          `<line x1="2.3" y1="-2.3" x2="3.1" y2="-3.1"/>` +
+          `</g>`;
+        g.appendChild(sun);
+        const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+        title.textContent = `Peak UV ${uvV.toFixed(1)} at ${this._formatHour(this.hours[uvIdx].time)}`;
+        g.appendChild(title);
+        peakG.appendChild(g);
+      }
+    }
+
     // Labels: every ~3 hours
     const unit = this.getUnit();
     const labG = this.svg.querySelector("#chart-labels");
