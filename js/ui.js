@@ -1438,20 +1438,21 @@ const runSearch = debounce(async (q) => {
 function renderSearchResults(results) {
   if (!results.length) { el.searchResults.hidden = true; el.searchResults.innerHTML = ""; return; }
   el.searchResults.innerHTML = results.map((r, i) => `
-    <li role="option" data-index="${i}">
+    <li role="option" id="search-opt-${i}" data-index="${i}">
       <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
       <span class="sub">${escapeHtml(r.country || "")}</span>
     </li>
   `).join("");
   el.searchResults.hidden = false;
   el.searchResults._items = results;
+  el.searchInput.removeAttribute("aria-activedescendant");
 }
 
 function showRecentsIfAny() {
   const recents = places.all().slice(0, 5);
   if (!recents.length) { el.searchResults.hidden = true; return; }
   const itemsHtml = recents.map((r, i) => `
-    <li role="option" data-index="${i}">
+    <li role="option" id="search-opt-${i}" data-index="${i}">
       <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
       <span class="sub">${escapeHtml(r.country || "")}</span>
     </li>
@@ -1459,9 +1460,40 @@ function showRecentsIfAny() {
   el.searchResults.innerHTML = `<li class="recent-heading">Recent places</li>${itemsHtml}`;
   el.searchResults._items = recents;
   el.searchResults.hidden = false;
+  el.searchInput.removeAttribute("aria-activedescendant");
 }
 
 function bindSearch() {
+  const clearActive = () => {
+    el.searchResults.querySelectorAll("li[data-index].active")
+      .forEach((n) => n.classList.remove("active"));
+  };
+  const setActive = (idx) => {
+    clearActive();
+    const items = el.searchResults.querySelectorAll("li[data-index]");
+    if (!items.length) return;
+    const norm = ((idx % items.length) + items.length) % items.length;
+    const target = items[norm];
+    if (!target) return;
+    target.classList.add("active");
+    target.scrollIntoView({ block: "nearest" });
+    el.searchInput.setAttribute("aria-activedescendant", `search-opt-${norm}`);
+  };
+  const activeIndex = () => {
+    const items = [...el.searchResults.querySelectorAll("li[data-index]")];
+    return items.findIndex((n) => n.classList.contains("active"));
+  };
+  const selectAtIndex = (idx) => {
+    const item = el.searchResults._items?.[idx];
+    if (!item) return false;
+    el.searchInput.value = item.name;
+    el.searchResults.hidden = true;
+    clearActive();
+    places.add(item);
+    state.handlers.onSearchSelect?.(item);
+    return true;
+  };
+
   el.searchInput.addEventListener("input", (e) => {
     const v = e.target.value.trim();
     if (v.length < 2) {
@@ -1480,16 +1512,35 @@ function bindSearch() {
       el.searchResults.hidden = false;
     }
   });
+  el.searchInput.addEventListener("keydown", (e) => {
+    if (el.searchResults.hidden || !el.searchResults._items?.length) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const cur = activeIndex();
+      setActive(cur < 0 ? 0 : cur + 1);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const cur = activeIndex();
+      setActive(cur < 0 ? el.searchResults._items.length - 1 : cur - 1);
+    } else if (e.key === "Enter") {
+      const cur = activeIndex();
+      const chosen = cur >= 0 ? cur : 0;
+      if (selectAtIndex(chosen)) e.preventDefault();
+    } else if (e.key === "Escape") {
+      el.searchResults.hidden = true;
+      clearActive();
+    }
+  });
   el.searchResults.addEventListener("click", (e) => {
-    const li = e.target.closest("li");
+    const li = e.target.closest("li[data-index]");
     if (!li) return;
     const i = parseInt(li.dataset.index, 10);
-    const item = el.searchResults._items?.[i];
-    if (!item) return;
-    el.searchInput.value = item.name;
-    el.searchResults.hidden = true;
-    places.add(item);
-    state.handlers.onSearchSelect?.(item);
+    selectAtIndex(i);
+  });
+  el.searchResults.addEventListener("pointermove", (e) => {
+    const li = e.target.closest("li[data-index]");
+    if (!li) return;
+    setActive(parseInt(li.dataset.index, 10));
   });
 }
 
