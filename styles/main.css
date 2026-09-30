@@ -977,6 +977,95 @@ kbd {
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
 
+.light-band {
+  margin-top: 10px;
+  display: grid;
+  gap: 6px;
+}
+.light-band-track {
+  position: relative;
+}
+.light-band-svg {
+  width: 100%;
+  height: 18px;
+  display: block;
+  border-radius: 4px;
+  overflow: visible;
+}
+#light-band-bg {
+  filter: saturate(1.05) brightness(0.98);
+}
+#light-band-now {
+  filter: drop-shadow(0 0 3px rgba(255,255,255,0.75));
+  transition: x1 500ms var(--ease), x2 500ms var(--ease), opacity 400ms var(--ease);
+}
+#light-band-now-dot {
+  filter: drop-shadow(0 0 4px rgba(255,255,255,0.9));
+  transition: cx 500ms var(--ease), opacity 400ms var(--ease);
+}
+#light-band-marks line {
+  stroke: rgba(255,255,255,0.55);
+  stroke-width: 0.6;
+}
+.light-band-labels {
+  position: relative;
+  height: 12px;
+  margin-top: 2px;
+  font-size: 9.5px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+.light-band-labels span {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.light-band-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.02em;
+}
+.light-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--stroke);
+  white-space: nowrap;
+}
+.light-chip-next {
+  color: #fce2b0;
+  background: rgba(252,226,176,0.10);
+  border-color: rgba(252,226,176,0.22);
+}
+.light-chip-hint {
+  color: var(--fg-muted);
+}
+.light-chip-time {
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+.light-chip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 6px currentColor;
+}
+[data-tone="bright"] .light-band-marks text { fill: rgba(20,30,52,0.7); }
+[data-tone="bright"] .light-chip { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.12); }
+[data-tone="bright"] .light-chip-next { color: #a15b18; background: rgba(224,140,60,0.14); border-color: rgba(224,140,60,0.28); }
+
 /* ---------- Radar map ---------- */
 .radar {
   padding: 12px;

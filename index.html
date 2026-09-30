@@ -349,6 +349,43 @@
               <strong id="sun-daylight">—</strong>
             </div>
           </div>
+          <div class="light-band" id="light-band" aria-label="Golden and blue hour timeline" hidden>
+            <div class="light-band-track">
+              <svg class="light-band-svg" viewBox="0 0 200 18" preserveAspectRatio="none" aria-hidden="true">
+                <defs>
+                  <linearGradient id="light-band-grad" x1="0" x2="1" y1="0" y2="0">
+                    <stop offset="0%"  stop-color="#0a1030"/>
+                    <stop offset="15%" stop-color="#0a1030"/>
+                    <stop offset="22%" stop-color="#2a3a80"/>
+                    <stop offset="28%" stop-color="#e39a55"/>
+                    <stop offset="34%" stop-color="#fce2b0"/>
+                    <stop offset="50%" stop-color="#a5d8ff"/>
+                    <stop offset="66%" stop-color="#fce2b0"/>
+                    <stop offset="72%" stop-color="#e39a55"/>
+                    <stop offset="78%" stop-color="#2a3a80"/>
+                    <stop offset="85%" stop-color="#0a1030"/>
+                    <stop offset="100%" stop-color="#0a1030"/>
+                  </linearGradient>
+                </defs>
+                <rect id="light-band-bg" x="0" y="2" width="200" height="14" rx="3" fill="url(#light-band-grad)"/>
+                <g id="light-band-marks"></g>
+                <line id="light-band-now" x1="-10" x2="-10" y1="0" y2="18" stroke="#fff" stroke-width="1.2"/>
+                <circle id="light-band-now-dot" cx="-10" cy="9" r="2" fill="#fff"/>
+              </svg>
+              <div class="light-band-labels" id="light-band-labels" aria-hidden="true"></div>
+            </div>
+            <div class="light-band-legend">
+              <span class="light-chip light-chip-next" id="light-next-chip" hidden>
+                <span class="light-chip-dot" id="light-next-dot"></span>
+                <span id="light-next-label">Golden hour</span>
+                <span id="light-next-time" class="light-chip-time">—</span>
+              </span>
+              <span class="light-chip light-chip-hint" id="light-hint-chip" hidden>
+                <span id="light-hint-label">Golden</span>
+                <span id="light-hint-time" class="light-chip-time">—</span>
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 

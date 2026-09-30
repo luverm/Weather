@@ -90,6 +90,18 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  lightBand: $("#light-band"),
+  lightBandMarks: $("#light-band-marks"),
+  lightBandLabels: $("#light-band-labels"),
+  lightBandNow: $("#light-band-now"),
+  lightBandNowDot: $("#light-band-now-dot"),
+  lightNextChip: $("#light-next-chip"),
+  lightNextDot: $("#light-next-dot"),
+  lightNextLabel: $("#light-next-label"),
+  lightNextTime: $("#light-next-time"),
+  lightHintChip: $("#light-hint-chip"),
+  lightHintLabel: $("#light-hint-label"),
+  lightHintTime: $("#light-hint-time"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -122,6 +134,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  lightBandTimer: null,
   localTimer: null,
 };
 
@@ -523,6 +536,134 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleLightBand(w);
+}
+
+// Golden-hour and blue-hour approximations. In minutes relative to
+// sunrise/sunset; we don't have solar elevation from the API, so we use
+// the widely-accepted photographer's fixed offsets (roughly matching the
+// sun crossing 6° below to 6° above the horizon at mid-latitudes).
+const LIGHT_OFFSETS = Object.freeze({
+  blueMorningStart: -40,
+  blueMorningEnd: -8,
+  goldenMorningStart: -8,
+  goldenMorningEnd: 55,
+  goldenEveningStart: -55,
+  goldenEveningEnd: 8,
+  blueEveningStart: 8,
+  blueEveningEnd: 40,
+});
+
+function computeLightWindows(w) {
+  if (!w?.sunrise || !w?.sunset) return null;
+  const min = 60_000;
+  return {
+    blueDawn: [w.sunrise + LIGHT_OFFSETS.blueMorningStart * min, w.sunrise + LIGHT_OFFSETS.blueMorningEnd * min],
+    goldenDawn: [w.sunrise + LIGHT_OFFSETS.goldenMorningStart * min, w.sunrise + LIGHT_OFFSETS.goldenMorningEnd * min],
+    goldenDusk: [w.sunset + LIGHT_OFFSETS.goldenEveningStart * min, w.sunset + LIGHT_OFFSETS.goldenEveningEnd * min],
+    blueDusk: [w.sunset + LIGHT_OFFSETS.blueEveningStart * min, w.sunset + LIGHT_OFFSETS.blueEveningEnd * min],
+  };
+}
+
+function scheduleLightBand(w) {
+  if (!el.lightBand) return;
+  if (state.lightBandTimer) { clearInterval(state.lightBandTimer); state.lightBandTimer = null; }
+  const windows = computeLightWindows(w);
+  if (!windows) { el.lightBand.hidden = true; return; }
+  el.lightBand.hidden = false;
+
+  // Anchor a 24-hour window on local midnight of the sunrise day.
+  const anchor = new Date(w.sunrise);
+  anchor.setHours(0, 0, 0, 0);
+  const dayStart = anchor.getTime();
+  const dayEnd = dayStart + 24 * 3600_000;
+  const width = 200; // matches SVG viewBox
+  const posFor = (t) => {
+    const clamped = Math.max(dayStart, Math.min(dayEnd, t));
+    return ((clamped - dayStart) / (dayEnd - dayStart)) * width;
+  };
+
+  // Sunrise / sunset tick marks on the SVG, with labels in HTML so that
+  // preserveAspectRatio="none" doesn't stretch the text.
+  if (el.lightBandMarks) {
+    el.lightBandMarks.innerHTML =
+      [w.sunrise, w.sunset]
+        .map((t) => `<line x1="${posFor(t).toFixed(1)}" x2="${posFor(t).toFixed(1)}" y1="0" y2="18" />`)
+        .join("");
+  }
+  if (el.lightBandLabels) {
+    const srPct = ((w.sunrise - dayStart) / (dayEnd - dayStart)) * 100;
+    const ssPct = ((w.sunset - dayStart) / (dayEnd - dayStart)) * 100;
+    el.lightBandLabels.innerHTML =
+      `<span style="left:${srPct.toFixed(2)}%">${fmtTime(w.sunrise)}</span>` +
+      `<span style="left:${ssPct.toFixed(2)}%">${fmtTime(w.sunset)}</span>`;
+  }
+
+  const render = () => {
+    const now = Date.now();
+    const inRange = now >= dayStart && now <= dayEnd;
+    if (el.lightBandNow) {
+      const x = posFor(now).toFixed(1);
+      el.lightBandNow.setAttribute("x1", x);
+      el.lightBandNow.setAttribute("x2", x);
+      el.lightBandNow.style.opacity = inRange ? "1" : "0";
+    }
+    if (el.lightBandNowDot) {
+      el.lightBandNowDot.setAttribute("cx", posFor(now).toFixed(1));
+      el.lightBandNowDot.style.opacity = inRange ? "1" : "0";
+    }
+
+    // Choose the next magic-hour window to feature; fall back to the last one
+    // still ongoing.
+    const events = [
+      { label: "Blue hour",  range: windows.blueDawn,   kind: "blue" },
+      { label: "Golden hour", range: windows.goldenDawn, kind: "golden" },
+      { label: "Golden hour", range: windows.goldenDusk, kind: "golden" },
+      { label: "Blue hour",   range: windows.blueDusk,   kind: "blue" },
+    ];
+    const active = events.find((e) => now >= e.range[0] && now <= e.range[1]);
+    const upcoming = events.find((e) => e.range[0] > now);
+    const feature = active || upcoming || null;
+    if (el.lightNextChip && el.lightNextLabel && el.lightNextTime && el.lightNextDot) {
+      if (feature) {
+        el.lightNextChip.hidden = false;
+        el.lightNextDot.style.color = feature.kind === "golden" ? "#fbc37b" : "#8aa8ff";
+        if (active) {
+          const mins = Math.max(1, Math.round((active.range[1] - now) / 60_000));
+          el.lightNextLabel.textContent = `${active.label} now`;
+          el.lightNextTime.textContent = mins >= 60
+            ? `until ${fmtTime(active.range[1])}`
+            : `${mins}m left`;
+        } else {
+          const mins = Math.max(0, Math.round((upcoming.range[0] - now) / 60_000));
+          const inLabel = mins >= 60
+            ? `in ${Math.floor(mins / 60)}h ${mins % 60}m`
+            : `in ${mins}m`;
+          el.lightNextLabel.textContent = `${upcoming.label} ${inLabel}`;
+          el.lightNextTime.textContent = `${fmtTime(upcoming.range[0])}–${fmtTime(upcoming.range[1])}`;
+        }
+      } else {
+        el.lightNextChip.hidden = true;
+      }
+    }
+
+    // A quieter secondary chip showing the *other* golden hour of the day.
+    if (el.lightHintChip && el.lightHintLabel && el.lightHintTime) {
+      const morningGolden = windows.goldenDawn;
+      const eveningGolden = windows.goldenDusk;
+      const other = (feature?.range === eveningGolden) ? morningGolden : eveningGolden;
+      const isMorning = other === morningGolden;
+      if (other[1] < now) {
+        el.lightHintChip.hidden = true;
+      } else {
+        el.lightHintChip.hidden = false;
+        el.lightHintLabel.textContent = isMorning ? "Morning golden" : "Evening golden";
+        el.lightHintTime.textContent = `${fmtTime(other[0])}–${fmtTime(other[1])}`;
+      }
+    }
+  };
+  render();
+  state.lightBandTimer = setInterval(render, 60_000);
 }
 
 function scheduleSunArc(w) {
