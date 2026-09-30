@@ -45,6 +45,9 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonAge: $("#moon-age"),
+  moonNext: $("#moon-next"),
+  moonNextLabel: $("#moon-next-label"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -487,10 +490,26 @@ function renderAqTrend(aq) {
   drawSparkline(el.aqTrendLine, el.aqTrendFill, pts, { minSpan: 20 });
 }
 
+const SYNODIC_DAYS = 29.5305882;
 function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+
+  // Age = days since new moon. Next full = 0.5 phase, next new = 1.0.
+  const ageDays = moon.phase * SYNODIC_DAYS;
+  const toFull = ((0.5 - moon.phase + 1) % 1) * SYNODIC_DAYS;
+  const toNew  = ((1.0 - moon.phase) % 1) * SYNODIC_DAYS;
+  const nextIsFull = toFull <= toNew;
+  const nextDays = nextIsFull ? toFull : toNew;
+  const fmtDays = (d) => {
+    if (d < 0.5) return "today";
+    if (d < 1.5) return "tomorrow";
+    return `in ${Math.round(d)}d`;
+  };
+  if (el.moonAge) el.moonAge.textContent = `${Math.round(ageDays)}d`;
+  if (el.moonNextLabel) el.moonNextLabel.textContent = nextIsFull ? "Full" : "New";
+  if (el.moonNext) el.moonNext.textContent = fmtDays(nextDays);
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;

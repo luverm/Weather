@@ -960,7 +960,30 @@ kbd {
 .moon-row, .sun-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
 .moon-svg { width: 48px; height: 48px; }
 .moon-meta strong { display: block; font-size: 14px; font-weight: 500; }
-.moon-detail { font-size: 11.5px; color: var(--fg-dim); }
+.moon-detail { font-size: 11.5px; color: var(--fg-dim); display: block; }
+.moon-cycle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.02em;
+}
+.moon-cycle-item { display: inline-flex; align-items: baseline; gap: 4px; }
+.moon-cycle-label {
+  text-transform: uppercase;
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  color: var(--fg-muted);
+}
+.moon-cycle span[id^="moon-age"], .moon-cycle span[id^="moon-next"] {
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+.moon-cycle-sep { color: var(--fg-muted); opacity: 0.6; }
 
 .sun-row { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .sun-item { display: grid; gap: 2px; }
