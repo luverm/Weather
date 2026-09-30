@@ -51,6 +51,7 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunSunnyCount: $("#sun-sunny-count"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -554,6 +555,23 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  // "Sunny" tally: daytime hours in the visible window whose condition is
+  // clear or partly cloudy. Silent when we can't distinguish (mock/offline).
+  if (el.sunSunnyCount) {
+    const hrs = w.hourly || [];
+    const day = hrs.filter((h) => h.isDay);
+    const sunny = day.filter((h) => h.condition === "clear").length;
+    const partly = day.filter((h) => h.condition === "clouds" && /partly/i.test(h.label || "")).length;
+    const total = sunny + Math.round(partly * 0.5);
+    if (day.length >= 4 && total > 0) {
+      el.sunSunnyCount.hidden = false;
+      el.sunSunnyCount.textContent = partly > 0
+        ? `☀ ${sunny}h clear + ${partly}h partly`
+        : `☀ ${sunny}h clear`;
+    } else {
+      el.sunSunnyCount.hidden = true;
+    }
+  }
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   scheduleLightBand(w);
