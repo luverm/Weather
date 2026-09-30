@@ -1524,6 +1524,64 @@ kbd {
   display: block;
 }
 
+.week-extremes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 2px 10px 4px;
+}
+.week-extremes[hidden] { display: none; }
+.week-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,0.05);
+  color: var(--fg-dim);
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 160ms var(--ease), transform 160ms var(--ease), border-color 160ms var(--ease);
+}
+.week-chip:hover { background: rgba(255,255,255,0.09); transform: translateY(-1px); }
+.week-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.week-chip .week-chip-label {
+  text-transform: uppercase;
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  color: var(--fg-muted);
+}
+.week-chip .week-chip-value {
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+.week-chip-warm { background: rgba(255,156,122,0.10); border-color: rgba(255,156,122,0.24); }
+.week-chip-warm .week-chip-label, .week-chip-warm .week-chip-value { color: #ffb593; }
+.week-chip-cool { background: rgba(154,209,255,0.10); border-color: rgba(154,209,255,0.24); }
+.week-chip-cool .week-chip-label, .week-chip-cool .week-chip-value { color: #a6d3ff; }
+.week-chip-rain { background: rgba(120,180,255,0.10); border-color: rgba(120,180,255,0.24); }
+.week-chip-rain .week-chip-label, .week-chip-rain .week-chip-value { color: #9fc4ff; }
+[data-tone="bright"] .week-chip { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.12); }
+[data-tone="bright"] .week-chip-warm { background: rgba(220,110,60,0.12); border-color: rgba(220,110,60,0.24); }
+[data-tone="bright"] .week-chip-warm .week-chip-label, [data-tone="bright"] .week-chip-warm .week-chip-value { color: #a3441c; }
+[data-tone="bright"] .week-chip-cool { background: rgba(40,90,150,0.10); border-color: rgba(40,90,150,0.22); }
+[data-tone="bright"] .week-chip-cool .week-chip-label, [data-tone="bright"] .week-chip-cool .week-chip-value { color: #2d5c9a; }
+[data-tone="bright"] .week-chip-rain { background: rgba(30,80,160,0.10); border-color: rgba(30,80,160,0.22); }
+[data-tone="bright"] .week-chip-rain .week-chip-label, [data-tone="bright"] .week-chip-rain .week-chip-value { color: #1c4a92; }
+
+@keyframes daily-item-flash {
+  0%   { background: rgba(255,255,255,0.02); }
+  25%  { background: rgba(255,255,255,0.18); }
+  100% { background: rgba(255,255,255,0.02); }
+}
+.daily-item-flash {
+  animation: daily-item-flash 900ms var(--ease);
+  border-radius: 10px;
+}
+
 .daily-spark {
   width: 100%;
   height: 52px;

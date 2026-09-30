@@ -1014,6 +1014,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderWeekExtremes(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1095,6 +1096,80 @@ function renderDailySpark(days) {
       c.setAttribute("class", "dot-lo");
       el.dailySparkDots.appendChild(c);
     }
+  });
+}
+
+function renderWeekExtremes(days) {
+  const host = document.getElementById("week-extremes");
+  if (!host) return;
+  const rest = days.slice(1);
+  if (!rest.length) { host.hidden = true; host.innerHTML = ""; return; }
+
+  const tz = state.weather?.timezone;
+  const dayName = (ts, i) => {
+    const opts = { weekday: "short", ...(tz && tz !== "auto" ? { timeZone: tz } : {}) };
+    return new Date(ts).toLocaleDateString(undefined, opts);
+  };
+
+  // Warmest and coolest by tempMax (ignoring today) — plus rainiest by precip sum.
+  let warm = null, cool = null, rain = null;
+  rest.forEach((d, i) => {
+    const realIdx = i + 1;
+    if (d.tempMax != null && (!warm || d.tempMax > warm.d.tempMax)) warm = { d, idx: realIdx };
+    if (d.tempMin != null && (!cool || d.tempMin < cool.d.tempMin)) cool = { d, idx: realIdx };
+    const p = d.precip ?? 0;
+    if (p > 0 && (!rain || p > (rain.d.precip ?? 0))) rain = { d, idx: realIdx };
+  });
+
+  const chips = [];
+  const today = days[0];
+  if (warm && today?.tempMax != null && warm.d.tempMax - today.tempMax >= 2) {
+    const delta = Math.round(convertTemp(warm.d.tempMax) - convertTemp(today.tempMax));
+    chips.push({
+      cls: "week-chip-warm",
+      label: `Warmest`,
+      value: `${dayName(warm.d.time, warm.idx)} ${Math.round(convertTemp(warm.d.tempMax))}° · +${delta}°`,
+      idx: warm.idx,
+      aria: `Warmest day this week: ${dayName(warm.d.time, warm.idx)}`,
+    });
+  }
+  if (cool && today?.tempMin != null && today.tempMin - cool.d.tempMin >= 2 && (!warm || cool.idx !== warm.idx)) {
+    const delta = Math.round(convertTemp(today.tempMin) - convertTemp(cool.d.tempMin));
+    chips.push({
+      cls: "week-chip-cool",
+      label: `Coolest`,
+      value: `${dayName(cool.d.time, cool.idx)} ${Math.round(convertTemp(cool.d.tempMin))}° · −${delta}°`,
+      idx: cool.idx,
+      aria: `Coolest night this week: ${dayName(cool.d.time, cool.idx)}`,
+    });
+  }
+  if (rain && (rain.d.precip ?? 0) >= 1.5) {
+    chips.push({
+      cls: "week-chip-rain",
+      label: `Wettest`,
+      value: `${dayName(rain.d.time, rain.idx)} ${rain.d.precip.toFixed(1)} mm`,
+      idx: rain.idx,
+      aria: `Wettest day this week: ${dayName(rain.d.time, rain.idx)}`,
+    });
+  }
+
+  if (!chips.length) { host.hidden = true; host.innerHTML = ""; return; }
+  host.hidden = false;
+  host.innerHTML = chips.map((c) =>
+    `<button type="button" class="week-chip ${c.cls}" data-idx="${c.idx}" aria-label="${escapeHtml(c.aria)}">` +
+      `<span class="week-chip-label">${c.label}</span> ` +
+      `<span class="week-chip-value">${escapeHtml(c.value)}</span>` +
+    `</button>`
+  ).join("");
+  host.querySelectorAll(".week-chip").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const idx = Number(btn.dataset.idx);
+      const target = el.dailyTrack?.children?.[idx];
+      if (!target) return;
+      target.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+      target.classList.add("daily-item-flash");
+      setTimeout(() => target.classList.remove("daily-item-flash"), 900);
+    });
   });
 }
 
