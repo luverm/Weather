@@ -352,4 +352,4 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-window.__aether = { engine, app, clock, audio };
+window.__aether = { engine, app, clock, audio, ui };

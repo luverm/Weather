@@ -202,6 +202,7 @@ export const ui = {
     renderHourly(weather);
     renderDaily(weather);
     renderNowcast(weather);
+    renderNextHour(weather);
     renderAdvice(weather);
     renderPollen(weather.pollen);
     renderTrends(weather);
@@ -745,6 +746,105 @@ function scheduleSunCountdown(w) {
   };
   update();
   state.sunTimer = setInterval(update, 30_000);
+}
+
+const NEXT_HOUR_ICONS = {
+  rain:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 13a4 4 0 010-8 5 5 0 019.9-1A4 4 0 0117 13H7z"/><path d="M9 17l-1 3M13 17l-1 3M17 17l-1 3" stroke-linecap="round"/></svg>`,
+  warm:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2" stroke-linecap="round"/></svg>`,
+  cool:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v18M4.5 7l15 10M4.5 17l15-10M8 5l4 2 4-2M8 19l4-2 4 2" stroke-linecap="round"/></svg>`,
+  wind:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 9h11a3 3 0 100-6"/><path d="M3 14h15a3 3 0 110 6"/><path d="M4 19h5"/></svg>`,
+  clearing: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4"/><path d="M12 3v3M18 12h3M5 5l2 2M17 5l-2 2M12 18v3M5 19l2-2" stroke-linecap="round"/></svg>`,
+};
+
+function renderNextHour(w) {
+  const host = document.getElementById("next-hour");
+  const iconEl = document.getElementById("next-hour-icon");
+  const whenEl = document.getElementById("next-hour-when");
+  const detailEl = document.getElementById("next-hour-detail");
+  if (!host) return;
+  const hide = () => { host.hidden = true; host.removeAttribute("data-kind"); };
+  const hours = w?.hourly || [];
+  if (!hours.length) { hide(); return; }
+  const now = Date.now();
+  // Find the next two hourly buckets forward of now.
+  let iNext = -1;
+  for (let i = 0; i < hours.length; i++) {
+    if (hours[i].time >= now + 15 * 60_000) { iNext = i; break; }
+  }
+  if (iNext < 0) { hide(); return; }
+  const nextH = hours[iNext];
+  const laterH = hours[iNext + 1] ?? nextH;
+  const minsUntil = Math.max(1, Math.round((nextH.time - now) / 60_000));
+  const whenLabel = minsUntil < 90
+    ? `In ${minsUntil}m`
+    : `In ${Math.round(minsUntil / 60)}h`;
+  const cur = state.weather;
+  const curTemp = cur?.temp;
+  const curCond = cur?.condition;
+
+  // Candidates, most-actionable-first.
+  const candidates = [];
+  // Rain onset in the next 2 hours if not raining now.
+  if (curCond !== "rain" && curCond !== "storm" && curCond !== "snow") {
+    const wetIdx = [nextH, laterH].findIndex((h) => (h?.pop ?? 0) >= 50 || (h?.precip ?? 0) >= 0.3);
+    if (wetIdx >= 0) {
+      const h = wetIdx === 0 ? nextH : laterH;
+      const mins = Math.max(1, Math.round((h.time - now) / 60_000));
+      const rainLbl = mins < 90 ? `${mins}m` : `${Math.round(mins / 60)}h`;
+      candidates.push({
+        kind: "rain",
+        when: `In ${rainLbl}`,
+        detail: `${h.label || "Rain"} likely${h.pop != null ? ` (${h.pop}%)` : ""}`,
+        priority: 5,
+      });
+    }
+  }
+  // Clearing / condition break.
+  const rainyNow = curCond === "rain" || curCond === "storm";
+  const nextClear = nextH.condition === "clear" || nextH.condition === "clouds";
+  if (rainyNow && nextClear && (nextH.pop ?? 0) < 30) {
+    candidates.push({
+      kind: "clearing",
+      when: whenLabel,
+      detail: `Clearing to ${nextH.label?.toLowerCase() || "drier"}`,
+      priority: 4,
+    });
+  }
+  // Temperature swing ≥ 3°.
+  if (curTemp != null && nextH.temp != null) {
+    const dC = nextH.temp - curTemp;
+    const dDisp = state.unit === "F" ? dC * 9 / 5 : dC;
+    if (Math.abs(dDisp) >= 3) {
+      const abs = Math.round(Math.abs(dDisp));
+      candidates.push({
+        kind: dDisp > 0 ? "warm" : "cool",
+        when: whenLabel,
+        detail: `${abs}° ${dDisp > 0 ? "warmer" : "cooler"}`,
+        priority: 3,
+      });
+    }
+  }
+  // Wind ramp of 15+ km/h.
+  if (cur?.windSpeed != null && nextH.wind != null) {
+    const dW = nextH.wind - cur.windSpeed;
+    if (dW >= 15) {
+      candidates.push({
+        kind: "wind",
+        when: whenLabel,
+        detail: `Wind builds to ${Math.round(nextH.wind)} km/h`,
+        priority: 2,
+      });
+    }
+  }
+
+  if (!candidates.length) { hide(); return; }
+  candidates.sort((a, b) => b.priority - a.priority);
+  const chosen = candidates[0];
+  host.hidden = false;
+  host.setAttribute("data-kind", chosen.kind);
+  if (iconEl) iconEl.innerHTML = NEXT_HOUR_ICONS[chosen.kind] || "";
+  if (whenEl) whenEl.textContent = chosen.when;
+  if (detailEl) detailEl.textContent = chosen.detail;
 }
 
 function renderAdvice(w) {
