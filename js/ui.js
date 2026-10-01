@@ -669,14 +669,31 @@ function renderPack(w) {
     el.packStrip.innerHTML = "";
     return;
   }
-  const html = items.map((it) => (
-    `<li class="pack-pill pack-${it.key}" title="${escapeHtml(it.title)}">`
-    + `<span class="pack-icon" aria-hidden="true">${it.icon}</span>`
-    + `<span class="pack-label">${escapeHtml(it.label)}</span>`
-    + `</li>`
-  )).join("");
+  const html = items.map((it) => {
+    const clickable = it.ts != null && it.ts > Date.now();
+    const tag = clickable ? "button" : "span";
+    const extra = clickable
+      ? ` type="button" data-ts="${it.ts}"`
+      : "";
+    return `<li class="pack-pill pack-${it.key}${clickable ? " pack-pill-clickable" : ""}" title="${escapeHtml(it.title)}">`
+      + `<${tag} class="pack-pill-inner"${extra}>`
+      + `<span class="pack-icon" aria-hidden="true">${it.icon}</span>`
+      + `<span class="pack-label">${escapeHtml(it.label)}</span>`
+      + `</${tag}>`
+      + `</li>`;
+  }).join("");
   el.packStrip.innerHTML = html;
   el.packStrip.hidden = false;
+  if (!el.packStrip._bound) {
+    el.packStrip.addEventListener("click", (ev) => {
+      const btn = ev.target.closest("button[data-ts]");
+      if (!btn) return;
+      const ts = Number(btn.dataset.ts);
+      if (!Number.isFinite(ts)) return;
+      state.handlers.onHourClick?.(ts);
+    });
+    el.packStrip._bound = true;
+  }
 }
 
 function startLocaltime(w) {

@@ -36,7 +36,12 @@ export function buildPack(weather, { max = 5 } = {}) {
   const soonRain = nowcast.find((n) => n.precip > 0.3 && n.time - Date.now() <= 3 * 3600_000)
     || hourly.slice(0, 3).find((h) => (h.pop ?? 0) >= 55 || (h.precip ?? 0) > 0.4);
   const anySnow = cond === "snow" || hourly.slice(0, 6).some((h) => h.condition === "snow");
+  const snowHour = hourly.find((h) => h.condition === "snow");
   const uvPeak = weather.uvPeak?.value ?? uv;
+  const uvPeakTs = weather.uvPeak?.time ?? null;
+  const hottestHour = hourly.reduce((best, h) => (
+    best == null || (h.temp ?? -Infinity) > (best.temp ?? -Infinity) ? h : best
+  ), null);
 
   // ---- Umbrella / rain shell ----
   if (cond === "rain" || cond === "storm") {
@@ -44,12 +49,12 @@ export function buildPack(weather, { max = 5 } = {}) {
   } else if (soonRain) {
     const mins = Math.round((soonRain.time - Date.now()) / 60_000);
     const when = mins >= 60 ? `~${Math.round(mins / 60)}h` : `${Math.max(0, mins)}m`;
-    items.push(pill("umbrella", "Umbrella", `Rain likely in ${when} — bring a shell.`));
+    items.push(pill("umbrella", "Umbrella", `Rain likely in ${when} — bring a shell.`, soonRain.time));
   }
 
   // ---- Boots (snow) ----
   if (anySnow) {
-    items.push(pill("boots", "Boots", "Snow underfoot — grip and warmth."));
+    items.push(pill("boots", "Boots", "Snow underfoot — grip and warmth.", snowHour?.time));
   }
 
   // ---- Layer by felt temperature ----
@@ -73,17 +78,17 @@ export function buildPack(weather, { max = 5 } = {}) {
 
   // ---- Sunscreen ----
   if (uvPeak >= 6 && (cond === "clear" || cond === "clouds")) {
-    items.push(pill("sunscreen", "Sunscreen", `UV peaks at ${Math.round(uvPeak)} — SPF 30+.`));
+    items.push(pill("sunscreen", "Sunscreen", `UV peaks at ${Math.round(uvPeak)} — SPF 30+.`, uvPeakTs));
   }
 
   // ---- Sunglasses: bright day without stormy sky. ----
   if (isDay && uv >= 3 && (cond === "clear" || cond === "clouds" || anySnow)) {
-    items.push(pill("sunglasses", "Sunglasses", anySnow ? "Snow glare — eye protection." : "Bright sun — eye protection."));
+    items.push(pill("sunglasses", "Sunglasses", anySnow ? "Snow glare — eye protection." : "Bright sun — eye protection.", uvPeakTs));
   }
 
   // ---- Hydrate when it's hot. ----
   if ((temp >= 28 || feels >= 28)) {
-    items.push(pill("water", "Water", `Feels ${Math.round(feels)}° — carry water.`));
+    items.push(pill("water", "Water", `Feels ${Math.round(feels)}° — carry water.`, hottestHour?.time));
   }
 
   // ---- Mask: poor AQ or high pollen. ----
@@ -109,8 +114,8 @@ export function buildPack(weather, { max = 5 } = {}) {
   return unique;
 }
 
-function pill(key, label, title) {
-  return { key, label, title, icon: ICONS[key] };
+function pill(key, label, title, ts) {
+  return { key, label, title, icon: ICONS[key], ts: ts ?? null };
 }
 
 export const PACK_ICONS = ICONS;
