@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { buildPack } from "./pack.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -53,6 +54,7 @@ const el = {
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
+  packStrip: $("#pack-strip"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
   pollenCard: $("#pollen-card"),
@@ -596,6 +598,25 @@ function renderAdvice(w) {
   } else {
     el.advice.hidden = true;
   }
+  renderPack(w);
+}
+
+function renderPack(w) {
+  if (!el.packStrip) return;
+  const items = buildPack(w);
+  if (!items.length) {
+    el.packStrip.hidden = true;
+    el.packStrip.innerHTML = "";
+    return;
+  }
+  const html = items.map((it) => (
+    `<li class="pack-pill pack-${it.key}" title="${escapeHtml(it.title)}">`
+    + `<span class="pack-icon" aria-hidden="true">${it.icon}</span>`
+    + `<span class="pack-label">${escapeHtml(it.label)}</span>`
+    + `</li>`
+  )).join("");
+  el.packStrip.innerHTML = html;
+  el.packStrip.hidden = false;
 }
 
 function startLocaltime(w) {
