@@ -92,6 +92,7 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunWeek: $("#sun-week"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -525,6 +526,65 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderSunWeek(w);
+}
+
+function renderSunWeek(w) {
+  if (!el.sunWeek) return;
+  const days = (w?.daily || []).filter((d) => d.sunrise && d.sunset).slice(0, 7);
+  if (days.length < 2) { el.sunWeek.hidden = true; el.sunWeek.innerHTML = ""; return; }
+  const tz = w?.timezone;
+  const fmtMM = (ts) => {
+    const d = new Date(ts);
+    return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+  };
+  const dayLabel = (ts) => new Date(ts).toLocaleDateString(undefined, {
+    weekday: "short", ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+
+  // Pick the longest day in the window as our reference (dayFrac=1).
+  let longest = 0;
+  for (const d of days) longest = Math.max(longest, d.sunset - d.sunrise);
+  if (longest <= 0) { el.sunWeek.hidden = true; return; }
+
+  // X-axis is the full 24h starting at local midnight for each day.
+  // We derive midnight by snapping sunrise down to its calendar day.
+  const nowTs = Date.now();
+  const rows = days.map((d) => {
+    const sr = d.sunrise, ss = d.sunset;
+    const midnight = new Date(sr); midnight.setHours(0, 0, 0, 0);
+    const dayStart = midnight.getTime();
+    const left = clamp01((sr - dayStart) / (24 * 3600_000)) * 100;
+    const width = clamp01((ss - sr) / (24 * 3600_000)) * 100;
+    const dayLen = ss - sr;
+    const hh = Math.floor(dayLen / 3600_000);
+    const mm = Math.round((dayLen - hh * 3600_000) / 60_000);
+    // Position "now" marker only on the row whose window contains it.
+    const dayEnd = dayStart + 24 * 3600_000;
+    const showNow = nowTs >= dayStart && nowTs < dayEnd;
+    const nowLeft = showNow ? clamp01((nowTs - dayStart) / (24 * 3600_000)) * 100 : null;
+    // Fade bars for days noticeably shorter than the week's longest.
+    const strength = Math.max(0.55, dayLen / longest);
+    return {
+      label: dayLabel(sr),
+      sr: fmtMM(sr), ss: fmtMM(ss),
+      duration: `${hh}h${mm ? ` ${mm}m` : ""}`,
+      left, width, nowLeft, strength,
+      title: `${dayLabel(sr)} · ${fmtMM(sr)}–${fmtMM(ss)} · ${hh}h${mm ? ` ${mm}m` : ""}`,
+    };
+  });
+
+  el.sunWeek.innerHTML = rows.map((r) => (
+    `<div class="sun-week-row" title="${escapeHtml(r.title)}">`
+    + `<span class="sun-week-day">${escapeHtml(r.label)}</span>`
+    + `<div class="sun-week-track">`
+    + `<div class="sun-week-fill" style="left:${r.left.toFixed(2)}%;width:${r.width.toFixed(2)}%;opacity:${r.strength.toFixed(2)}"></div>`
+    + (r.nowLeft != null ? `<div class="sun-week-now" style="left:${r.nowLeft.toFixed(2)}%"></div>` : "")
+    + `</div>`
+    + `<span class="sun-week-dur">${escapeHtml(r.duration)}</span>`
+    + `</div>`
+  )).join("");
+  el.sunWeek.hidden = false;
 }
 
 function scheduleSunArc(w) {
