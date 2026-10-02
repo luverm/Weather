@@ -1373,6 +1373,10 @@ function iconFor(condition) {
 }
 
 // ---------- Saved places strip ----------
+const PLACE_EMOJI = {
+  clear: "☀", clouds: "☁", rain: "🌧", snow: "❄", storm: "⛈", fog: "🌫",
+};
+
 function renderPlaces() {
   const all = places.all();
   if (!all.length) { el.placesStrip.hidden = true; el.placesStrip.innerHTML = ""; return; }
@@ -1380,10 +1384,14 @@ function renderPlaces() {
   const activeId = state.place ? places.idFor(state.place) : null;
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
+    const emoji = p.condition ? (PLACE_EMOJI[p.condition] || "·") : "";
+    const emojiSpan = emoji ? `<span class="place-chip-emoji" aria-hidden="true">${emoji}</span>` : "";
+    const tempSpan = p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : "";
     return `
-      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
-        <span>${escapeHtml(p.name)}</span>
-        ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
+      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}" title="${escapeHtml(p.name)}">
+        ${emojiSpan}
+        <span class="place-chip-name">${escapeHtml(p.name)}</span>
+        ${tempSpan}
         <span class="close" data-action="remove" aria-label="Remove">
           <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
         </span>
