@@ -1304,12 +1304,21 @@ function renderDailySpark(days) {
   const linePath = (arr) => arr.map((v, i) => (i === 0 ? "M" : "L") + x(i).toFixed(1) + "," + y(v).toFixed(1)).join(" ");
   el.dailyHi.setAttribute("d", linePath(days.map((d) => d.tempMax)));
   el.dailyLo.setAttribute("d", linePath(days.map((d) => d.tempMin)));
-  // Dots at each day + per-day temp labels above/below
+  // Dots at each day + per-day temp labels above/below.
+  // Each day gets a wider invisible hit-circle so pointer/touch targets are
+  // bigger than the visual 2.5px dot — click/tap jumps the scrubber to that
+  // day at local noon.
   el.dailySparkDots.innerHTML = "";
   days.forEach((d, i) => {
+    const dayNoonTs = (() => {
+      const n = new Date(d.time);
+      n.setHours(12, 0, 0, 0);
+      return n.getTime();
+    })();
+    const cx = x(i).toFixed(1);
     if (d.tempMax != null) {
       const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-      c.setAttribute("cx", x(i).toFixed(1));
+      c.setAttribute("cx", cx);
       c.setAttribute("cy", y(d.tempMax).toFixed(1));
       c.setAttribute("r", "2.5");
       c.setAttribute("class", "dot-hi");
@@ -1317,12 +1326,30 @@ function renderDailySpark(days) {
     }
     if (d.tempMin != null) {
       const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-      c.setAttribute("cx", x(i).toFixed(1));
+      c.setAttribute("cx", cx);
       c.setAttribute("cy", y(d.tempMin).toFixed(1));
       c.setAttribute("r", "2.5");
       c.setAttribute("class", "dot-lo");
       el.dailySparkDots.appendChild(c);
     }
+    // Transparent hit target spanning the column (click/hover → jump scrubber).
+    const hit = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    hit.setAttribute("x", (parseFloat(cx) - 14).toFixed(1));
+    hit.setAttribute("y", "0");
+    hit.setAttribute("width", "28");
+    hit.setAttribute("height", String(H));
+    hit.setAttribute("class", "daily-spark-hit");
+    hit.setAttribute("data-ts", String(dayNoonTs));
+    hit.setAttribute("fill", "transparent");
+    hit.setAttribute("style", "cursor: pointer");
+    const dLabel = new Date(d.time).toLocaleDateString(undefined, { weekday: "short" });
+    const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+    title.textContent = `${dLabel} · ${Math.round(convertTemp(d.tempMin ?? d.tempMax))}° / ${Math.round(convertTemp(d.tempMax ?? d.tempMin))}° — click to jump`;
+    hit.appendChild(title);
+    hit.addEventListener("click", () => {
+      state.handlers.onHourClick?.(dayNoonTs);
+    });
+    el.dailySparkDots.appendChild(hit);
   });
 }
 
