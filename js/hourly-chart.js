@@ -51,7 +51,24 @@ export class HourlyChart {
   setHours(hours) {
     this.hours = (hours || []).slice(0, 24);
     this._draw();
+    this._updateAria();
     this.setCursor(null);
+  }
+
+  _updateAria() {
+    if (!this.svg || !this.hours.length) return;
+    const unit = this.getUnit();
+    const toDisplay = (c) => Math.round(unit === "F" ? c * 9 / 5 + 32 : c) + "°";
+    const temps = this.hours.map((h) => h.temp).filter((v) => v != null);
+    if (!temps.length) return;
+    const lo = Math.min(...temps);
+    const hi = Math.max(...temps);
+    const span = `${this.hours.length} hours`;
+    // Hour of the warmest point for a focal reference point.
+    const peakHour = this.hours.find((h) => h.temp === hi);
+    const peakAt = peakHour ? ` peaking ${toDisplay(hi)} around ${this._formatHour(peakHour.time)}` : "";
+    this.svg.setAttribute("aria-label",
+      `Hourly forecast — next ${span}: low ${toDisplay(lo)}, high ${toDisplay(hi)}${peakAt}.`);
   }
 
   refresh() { this._draw(); }

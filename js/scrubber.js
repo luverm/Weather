@@ -85,12 +85,14 @@ export class Scrubber {
     this.track.addEventListener("pointerup", onUp);
     this.track.addEventListener("pointercancel", onUp);
 
-    // Keyboard: arrow keys nudge by 1h, shift+arrow by 6h.
+    // Keyboard: arrow keys nudge by 1h (6h with shift); J/K jump by a day.
     this.track.addEventListener("keydown", (e) => {
       const step = e.shiftKey ? 6 : 1;
       let newOffset = clock.offset();
       if (e.key === "ArrowLeft") newOffset -= step * 3600_000;
       else if (e.key === "ArrowRight") newOffset += step * 3600_000;
+      else if (e.key === "j" || e.key === "J") newOffset -= 24 * 3600_000;
+      else if (e.key === "k" || e.key === "K") newOffset += 24 * 3600_000;
       else if (e.key === "Home") newOffset = -3600_000;
       else if (e.key === "End") newOffset = (RANGE_HOURS - 1) * 3600_000;
       else return;
