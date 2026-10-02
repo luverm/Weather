@@ -491,16 +491,30 @@ function uvLevel(v) {
 }
 
 function renderPressureSparkline(w) {
-  drawSparkline(
-    el.pressureSparkLine, el.pressureSparkFill,
-    (w.hourly || []).map((h) => h.pressure).filter((v) => v != null).slice(0, 12),
-    { minSpan: 1.5 }
-  );
-  drawSparkline(
-    el.humiditySparkLine, el.humiditySparkFill,
-    (w.hourly || []).map((h) => h.humidity).filter((v) => v != null).slice(0, 12),
-    { minSpan: 10, fixedMin: 0, fixedMax: 100 }
-  );
+  const pressure = (w.hourly || []).map((h) => h.pressure).filter((v) => v != null).slice(0, 12);
+  const humidity = (w.hourly || []).map((h) => h.humidity).filter((v) => v != null).slice(0, 12);
+  drawSparkline(el.pressureSparkLine, el.pressureSparkFill, pressure, { minSpan: 1.5 });
+  drawSparkline(el.humiditySparkLine, el.humiditySparkFill, humidity, { minSpan: 10, fixedMin: 0, fixedMax: 100 });
+  // Native SVG tooltips — show the 12-hour range on hover without a popover.
+  setSparklineTitle("#pressure-spark", pressure, (v) => `${v.toFixed(1)} hPa`, "Pressure next 12 h");
+  setSparklineTitle("#humidity-spark", humidity, (v) => `${Math.round(v)}%`, "Humidity next 12 h");
+}
+
+function setSparklineTitle(svgSelector, series, fmt, prefix) {
+  const svg = document.querySelector(svgSelector);
+  if (!svg) return;
+  svg.querySelectorAll(":scope > title").forEach((n) => n.remove());
+  if (!series.length) return;
+  const min = Math.min(...series);
+  const max = Math.max(...series);
+  const now = series[0];
+  const end = series[series.length - 1];
+  const titleText = series.length < 2
+    ? `${prefix}: ${fmt(now)}`
+    : `${prefix}: ${fmt(now)} → ${fmt(end)} (range ${fmt(min)}–${fmt(max)})`;
+  const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+  title.textContent = titleText;
+  svg.insertBefore(title, svg.firstChild);
 }
 
 function drawSparkline(lineEl, fillEl, series, { minSpan = 1, fixedMin, fixedMax } = {}) {
