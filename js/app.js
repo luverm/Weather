@@ -17,6 +17,7 @@ import { narrate } from "./narrative.js";
 import { places } from "./places.js";
 import { RadarMap } from "./radar-map.js";
 import { installShortcuts } from "./shortcuts.js";
+import { updateTabTitle } from "./tab-title.js";
 
 const engine = new AnimationEngine();
 
@@ -172,6 +173,14 @@ function applyScene(weather) {
   // Update audio to match whatever the scene now shows.
   audio.setWeather(sampled, bucket);
 
+  // Keep the browser tab (title + favicon) in sync with the sampled snapshot.
+  updateTabTitle({
+    weather: sampled,
+    place: app.place,
+    unit: ui.getUnit?.() || "c",
+    scrubbing: !clock.isLive(),
+  });
+
   // In reduced-motion mode, repaint exactly one frame now that weather changed.
   if (app.reducedMotion) engine.tickOnce();
 }
@@ -268,6 +277,10 @@ ui.init({
   onRefresh: () => refreshWeather(),
   onReduceMotion: (on) => setReducedMotion(on),
   onPlaceClick: (place) => loadByCoords(place),
+  onUnitChange: () => {
+    // Re-apply so the tab title and any scene-coupled bits reflect the new unit.
+    if (app.weather) applyScene(app.weather);
+  },
   onHourClick: (ts) => {
     clock.setOffset(ts - Date.now());
     scrubber.sync();
