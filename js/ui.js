@@ -203,6 +203,13 @@ export const ui = {
   setWeather(weather, { narrative } = {}) {
     state.weather = weather;
     state.sampledWeather = weather; // initially same as live
+    // Restore the place subtitle — setLoading() stomps it with "Fetching...",
+    // so once we have a weather snapshot swap it back to the proper location
+    // line. Keeps the hero from showing "Fetching atmosphere…" indefinitely.
+    if (state.place && el.placeSub) {
+      const sub = [state.place.admin1, state.place.country].filter(Boolean).join(", ");
+      el.placeSub.textContent = sub || "—";
+    }
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
