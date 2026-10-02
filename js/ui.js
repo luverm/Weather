@@ -90,6 +90,8 @@ const el = {
   dailyPrecip: $("#daily-precip"),
   dailyPrecipSvg: $("#daily-precip-svg"),
   dailyPrecipTotal: $("#daily-precip-total"),
+  snowChip: $("#snow-chip"),
+  snowChipText: $("#snow-chip-text"),
   settingsBtn: $("#settings-btn"),
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
@@ -1074,6 +1076,7 @@ function renderDaily(w) {
   renderDailyPrecip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderSnowChip(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1111,6 +1114,30 @@ function renderDaily(w) {
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+}
+
+// Snow chip in the daily heading — appears when at least 1 cm is expected in
+// the next three days (any further out is too uncertain to be useful).
+function renderSnowChip(days) {
+  if (!el.snowChip || !el.snowChipText) return;
+  const window = days.slice(0, 3);
+  const amounts = window.map((d) => d.snowfall || 0);
+  const total = amounts.reduce((a, b) => a + b, 0);
+  if (total < 1) {
+    el.snowChip.hidden = true;
+    return;
+  }
+  // Day label for the heaviest hit.
+  let heaviest = 0, heavyIdx = 0;
+  amounts.forEach((v, i) => { if (v > heaviest) { heaviest = v; heavyIdx = i; } });
+  const whenLabel = heavyIdx === 0 ? "today"
+    : heavyIdx === 1 ? "tomorrow"
+    : new Date(window[heavyIdx].time).toLocaleDateString(undefined, { weekday: "long" });
+  const amtTxt = state.unit === "F"
+    ? `${(heaviest / 2.54).toFixed(heaviest < 5 ? 1 : 0)} in`
+    : `${heaviest < 10 ? heaviest.toFixed(1) : Math.round(heaviest)} cm`;
+  el.snowChipText.textContent = `${amtTxt} snow ${whenLabel}`;
+  el.snowChip.hidden = false;
 }
 
 function renderDailyIconStrip(days) {

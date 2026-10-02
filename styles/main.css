@@ -1515,6 +1515,22 @@ kbd {
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+
+.snow-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px 2px 6px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  color: #dbe6f3;
+  background: rgba(154, 209, 255, 0.14);
+  border: 1px solid rgba(154, 209, 255, 0.3);
+  letter-spacing: 0.04em;
+  text-transform: none;
+  animation: slideInUp 500ms var(--ease) both;
+}
+.snow-chip svg { opacity: 0.9; }
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;
