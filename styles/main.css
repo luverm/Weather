@@ -630,6 +630,17 @@ html[data-reduce-motion="true"] *::after {
   border-radius: 3px;
   background: rgba(154, 209, 255, 0.25);
   transition: background 160ms var(--ease), transform 160ms var(--ease);
+  /* Normalise button defaults so the clickable version matches the old div. */
+  border: 0;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  appearance: none;
+}
+.daily-expand-bar:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 .daily-expand-bar[data-precip="1"] { background: rgba(154, 209, 255, 0.55); }
 .daily-expand-bar[data-precip="2"] { background: rgba(154, 209, 255, 0.85); }
