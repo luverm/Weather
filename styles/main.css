@@ -977,6 +977,44 @@ kbd {
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
 
+/* ---------- Visibility + cloud cover card ---------- */
+.vis-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
+.vis-sky {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+.vis-sky svg { width: 48px; height: 48px; display: block; }
+#vis-sun {
+  transition: opacity 500ms var(--ease);
+  filter: drop-shadow(0 0 4px rgba(255,225,170,0.7));
+}
+#vis-clouds path { transition: opacity 500ms var(--ease), transform 500ms var(--ease); }
+.vis-meta { display: grid; gap: 2px; min-width: 0; }
+.vis-meta strong { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.vis-detail { font-size: 11.5px; color: var(--fg-dim); }
+.vis-bar {
+  margin-top: 6px;
+  height: 4px;
+  width: 100%;
+  background: rgba(255,255,255,0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.vis-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, rgba(154,209,255,0.9), rgba(154,209,255,0.3));
+  border-radius: 999px;
+  transition: width 600ms var(--ease);
+}
+#visibility-card[data-level="poor"] .vis-bar-fill {
+  background: linear-gradient(90deg, rgba(255,180,120,0.95), rgba(255,120,120,0.6));
+}
+#visibility-card[data-level="low"] .vis-bar-fill {
+  background: linear-gradient(90deg, rgba(255,210,140,0.95), rgba(255,180,120,0.5));
+}
+
 /* ---------- Radar map ---------- */
 .radar {
   padding: 12px;

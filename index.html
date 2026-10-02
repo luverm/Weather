@@ -318,6 +318,32 @@
           <ul id="activity-list" class="activity-list"></ul>
         </div>
 
+        <div class="extra-card glass" id="visibility-card" hidden>
+          <span class="metric-label">Visibility · Clouds</span>
+          <div class="vis-row">
+            <div class="vis-sky" aria-hidden="true">
+              <svg viewBox="0 0 60 60">
+                <defs>
+                  <linearGradient id="vis-sky-grad" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stop-color="rgba(154,209,255,0.9)"/>
+                    <stop offset="100%" stop-color="rgba(154,209,255,0.3)"/>
+                  </linearGradient>
+                </defs>
+                <circle cx="30" cy="30" r="26" fill="url(#vis-sky-grad)"/>
+                <g id="vis-clouds" fill="rgba(255,255,255,0.9)"></g>
+                <circle id="vis-sun" cx="30" cy="30" r="7" fill="#fff1c9"/>
+              </svg>
+            </div>
+            <div class="vis-meta">
+              <strong id="vis-distance">—</strong>
+              <span class="vis-detail" id="vis-detail">Cloud cover —%</span>
+              <div class="vis-bar" aria-hidden="true">
+                <div class="vis-bar-fill" id="vis-bar-fill"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="extra-card glass" id="sun-card">
           <span class="metric-label"><span id="sun-next-label">Sun</span> <span id="sun-countdown" class="sun-countdown"></span></span>
           <svg id="sun-arc" class="sun-arc" viewBox="0 0 200 84" aria-hidden="true">

@@ -59,6 +59,12 @@ const el = {
   pollenLevel: $("#pollen-level"),
   pollenDominant: $("#pollen-dominant"),
   pollenItems: $("#pollen-items"),
+  visibilityCard: $("#visibility-card"),
+  visDistance: $("#vis-distance"),
+  visDetail: $("#vis-detail"),
+  visBarFill: $("#vis-bar-fill"),
+  visClouds: $("#vis-clouds"),
+  visSun: $("#vis-sun"),
   pressureTrend: $("#m-pressure-trend"),
   tempTrend: $("#temp-trend"),
   uvLevel: $("#m-uv-level"),
@@ -188,6 +194,7 @@ export const ui = {
     renderNowcast(weather);
     renderAdvice(weather);
     renderPollen(weather.pollen);
+    renderVisibility(weather);
     renderTrends(weather);
     renderInsights(weather);
     renderActivity(weather);
@@ -783,6 +790,74 @@ function renderPollen(pollen) {
   el.pollenItems.innerHTML = pollen.items.map((p) =>
     `<span>${escapeHtml(p.label)} ${p.value.toFixed(1)}</span>`
   ).join("");
+}
+
+// Visibility + cloud cover.
+// Visibility is Open-Meteo's raw horizontal visibility in meters; cloud cover
+// is a 0–100% figure. Together they tell you whether the sky is thick or thin
+// and whether distant things disappear into haze.
+function renderVisibility(w) {
+  if (!el.visibilityCard) return;
+  const vis = w?.visibility; // meters
+  const cover = w?.cloudCover; // %
+  if (vis == null && cover == null) {
+    el.visibilityCard.hidden = true;
+    return;
+  }
+  el.visibilityCard.hidden = false;
+
+  // Distance in km (or mi when °F is on — rough regional heuristic).
+  let distText = "—";
+  let level = "clear";
+  if (vis != null) {
+    const km = vis / 1000;
+    if (state.unit === "F") {
+      const mi = km * 0.621371;
+      distText = mi >= 10 ? `${Math.round(mi)} mi` : `${mi.toFixed(1)} mi`;
+    } else {
+      distText = km >= 10 ? `${Math.round(km)} km` : `${km.toFixed(1)} km`;
+    }
+    if (km < 1) level = "poor";
+    else if (km < 5) level = "low";
+    else if (km < 10) level = "fair";
+    else level = "clear";
+  }
+  el.visDistance.textContent = distText;
+  el.visibilityCard.setAttribute("data-level", level);
+
+  const label = {
+    poor: "Poor — fog likely",
+    low: "Hazy horizon",
+    fair: "Fair horizon",
+    clear: "Clear horizon",
+  }[level];
+
+  const coverTxt = cover == null ? "—" : `${Math.round(cover)}%`;
+  el.visDetail.textContent = `${label} · ${coverTxt} cloud cover`;
+
+  // Bar: 0 km → 0%, 20 km → 100%.
+  if (vis != null && el.visBarFill) {
+    const frac = Math.max(0, Math.min(1, (vis / 1000) / 20));
+    el.visBarFill.style.width = `${(frac * 100).toFixed(0)}%`;
+  }
+
+  // Little cloud silhouettes over the sun disc, scaled by cloud cover.
+  if (el.visClouds) {
+    const c = Math.max(0, Math.min(100, cover ?? 0));
+    const n = c < 15 ? 0 : c < 40 ? 1 : c < 70 ? 2 : 3;
+    const sunOpacity = Math.max(0.1, 1 - c / 110);
+    if (el.visSun) el.visSun.style.opacity = sunOpacity.toFixed(2);
+    const cloudShapes = [
+      // y positions tuned to the 60x60 viewBox centred at (30,30), sized to overlap the sun.
+      { d: "M8 36c0-5 4-9 9-9 2-5 7-8 12-8 7 0 12 5 12 11 5 0 9 3 9 8s-4 8-9 8H17c-5 0-9-4-9-10z", y: 2 },
+      { d: "M12 48c0-4 3-7 7-7 1-3 5-6 9-6 5 0 9 4 9 9 4 0 7 2 7 5s-3 5-7 5H19c-4 0-7-2-7-6z", y: 8 },
+      { d: "M4 24c0-4 3-7 7-7 1-3 4-5 7-5 4 0 7 3 7 7 3 0 5 2 5 4s-2 4-5 4H11c-4 0-7-1-7-3z", y: -4 },
+    ];
+    const used = cloudShapes.slice(0, n).map((s, i) =>
+      `<path d="${s.d}" transform="translate(0 ${s.y})" opacity="${(0.55 + i * 0.15).toFixed(2)}"/>`
+    ).join("");
+    el.visClouds.innerHTML = used;
+  }
 }
 
 function renderTrends(w) {
