@@ -444,7 +444,16 @@ function renderMetrics(w) {
     }
   }
   if (w.uvPeak?.time) {
-    el.metricUVSub.textContent = `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`;
+    const now = Date.now();
+    const delta = w.uvPeak.time - now;
+    let whenLabel = `at ${fmtTime(w.uvPeak.time)}`;
+    if (delta > 0 && delta < 12 * 3600_000) {
+      const mins = Math.round(delta / 60_000);
+      whenLabel = mins < 60 ? `in ${mins}m` : `in ${Math.round(mins / 60)}h`;
+    } else if (delta < 0 && delta > -4 * 3600_000) {
+      whenLabel = `peaked ${Math.round(-delta / 60_000)}m ago`;
+    }
+    el.metricUVSub.textContent = `peak ${Math.round(w.uvPeak.value)} ${whenLabel}`;
   } else {
     el.metricUVSub.textContent = "peak —";
   }
