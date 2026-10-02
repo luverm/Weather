@@ -408,6 +408,32 @@ setInterval(() => {
   refreshWeather();
 }, 15 * 60_000);
 
+// Battery-aware mode: if the device drops below 20% and is unplugged, hint
+// to reduce animations and switch into the lighter render path. We never
+// *force* the user's preference back — once they opt out, they opt out.
+// Also skipped when reduce-motion is already on.
+(function battery() {
+  if (!navigator.getBattery) return;
+  navigator.getBattery().then((batt) => {
+    let suggested = false;
+    const check = () => {
+      if (ui.isReduceMotion?.()) return;
+      const low = batt.level < 0.2 && !batt.charging;
+      if (low && !suggested) {
+        suggested = true;
+        setReducedMotion(true);
+        ui.showToast?.("Low battery — reducing animations");
+      } else if (!low && suggested) {
+        suggested = false;
+        setReducedMotion(false);
+      }
+    };
+    batt.addEventListener?.("levelchange", check);
+    batt.addEventListener?.("chargingchange", check);
+    check();
+  }).catch(() => { /* API gated */ });
+})();
+
 // PWA service worker — optional, best-effort.
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
