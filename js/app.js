@@ -203,6 +203,45 @@ const scrubber = new Scrubber({
   },
 });
 
+// ---------- URL helpers ----------
+// Deep-link format:
+//   ?lat=48.86&lon=2.34&name=Paris   — exact coords (preferred when we have them)
+// Older `?q=City` strings are also recognised as a search hint on boot.
+function updateLocationUrl(place) {
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set("lat", place.lat.toFixed(3));
+    url.searchParams.set("lon", place.lon.toFixed(3));
+    if (place.name) url.searchParams.set("name", place.name);
+    else url.searchParams.delete("name");
+    url.searchParams.delete("q"); // mutually exclusive
+    history.replaceState(null, "", url.toString());
+  } catch { /* history API may be gated in some embeds */ }
+}
+
+async function placeFromUrl() {
+  try {
+    const url = new URL(window.location.href);
+    const latStr = url.searchParams.get("lat");
+    const lonStr = url.searchParams.get("lon");
+    if (latStr && lonStr) {
+      const lat = parseFloat(latStr);
+      const lon = parseFloat(lonStr);
+      if (isFinite(lat) && isFinite(lon)) {
+        return { name: url.searchParams.get("name") || "Pinned location", lat, lon };
+      }
+    }
+    const q = url.searchParams.get("q");
+    if (q && q.trim().length >= 2) {
+      // Lazy-import to keep the fast path light.
+      const { searchCities } = await import("./weather-service.js");
+      const results = await searchCities(q);
+      if (results?.length) return results[0];
+    }
+  } catch { /* malformed URL — ignore */ }
+  return null;
+}
+
 // ---------- Load flow ----------
 async function loadByCoords(place) {
   app.place = place;
@@ -212,6 +251,9 @@ async function loadByCoords(place) {
   // Drop any scrubber offset so we start live on each new city.
   clock.reset();
   ui.setScrubbing(false);
+
+  // Reflect the location in the URL so the page is shareable + reloadable.
+  updateLocationUrl(place);
 
   const w = await getWeather(place.lat, place.lon);
   app.weather = w;
@@ -319,6 +361,14 @@ installShortcuts({
 
 // ---------- Start ----------
 (async function init() {
+  // URL deep-link wins over everything so a shared link always lands on the
+  // intended city.
+  const fromUrl = await placeFromUrl();
+  if (fromUrl) {
+    places.add(fromUrl);
+    await loadByCoords(fromUrl);
+    return;
+  }
   // Prefer the most recent saved place if we have one — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();
