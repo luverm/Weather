@@ -1530,8 +1530,20 @@ function showRecentsIfAny() {
 }
 
 function bindSearch() {
+  let activeIdx = -1;
+  const setActive = (idx) => {
+    const items = el.searchResults.querySelectorAll("li[data-index]");
+    if (!items.length) { activeIdx = -1; return; }
+    activeIdx = ((idx % items.length) + items.length) % items.length;
+    items.forEach((it, i) => it.classList.toggle("active", i === activeIdx));
+    const active = items[activeIdx];
+    active?.scrollIntoView?.({ block: "nearest" });
+  };
+  const resetActive = () => { activeIdx = -1; };
+
   el.searchInput.addEventListener("input", (e) => {
     const v = e.target.value.trim();
+    resetActive();
     if (v.length < 2) {
       showRecentsIfAny();
       return;
@@ -1542,23 +1554,48 @@ function bindSearch() {
     setTimeout(() => (el.searchResults.hidden = true), 150);
   });
   el.searchInput.addEventListener("focus", () => {
+    resetActive();
     if (el.searchInput.value.trim().length < 2) {
       showRecentsIfAny();
     } else if (el.searchResults._items?.length) {
       el.searchResults.hidden = false;
     }
   });
+  el.searchInput.addEventListener("keydown", (e) => {
+    if (el.searchResults.hidden || !el.searchResults._items?.length) return;
+    if (e.key === "ArrowDown") { e.preventDefault(); setActive(activeIdx < 0 ? 0 : activeIdx + 1); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); setActive(activeIdx < 0 ? -1 : activeIdx - 1); }
+    else if (e.key === "Enter") {
+      const items = el.searchResults._items;
+      const pick = activeIdx >= 0 ? items[activeIdx] : items[0];
+      if (!pick) return;
+      e.preventDefault();
+      commitSearchPick(pick);
+    }
+  });
   el.searchResults.addEventListener("click", (e) => {
-    const li = e.target.closest("li");
+    const li = e.target.closest("li[data-index]");
     if (!li) return;
     const i = parseInt(li.dataset.index, 10);
     const item = el.searchResults._items?.[i];
     if (!item) return;
+    commitSearchPick(item);
+  });
+  el.searchResults.addEventListener("mouseover", (e) => {
+    const li = e.target.closest("li[data-index]");
+    if (!li) return;
+    const items = el.searchResults.querySelectorAll("li[data-index]");
+    const idx = Array.from(items).indexOf(li);
+    if (idx >= 0) setActive(idx);
+  });
+
+  function commitSearchPick(item) {
     el.searchInput.value = item.name;
     el.searchResults.hidden = true;
+    resetActive();
     places.add(item);
     state.handlers.onSearchSelect?.(item);
-  });
+  }
 }
 
 function bindUnitToggle() {
