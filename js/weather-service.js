@@ -90,9 +90,11 @@ export async function getWeather(lat, lon) {
       "temperature_2m_max", "temperature_2m_min",
       "weather_code", "precipitation_sum", "precipitation_probability_max",
       "wind_speed_10m_max", "wind_gusts_10m_max", "uv_index_max",
+      "snowfall_sum",
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
+    past_days: 1, // one day of history so we can compare to yesterday
     past_hours: 1,
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
@@ -151,12 +153,17 @@ function normalize(d, aq) {
     }
   }
 
-  // 7-day daily forecast.
+  // Daily forecast. With `past_days=1` the API prepends yesterday to the array,
+  // so filter past days out and extract yesterday separately.
   const dailyForecast = [];
+  let yesterday = null;
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayStartMs = todayStart.getTime();
   if (daily.time) {
     for (let i = 0; i < daily.time.length; i++) {
       const ts = new Date(daily.time[i]).getTime();
-      dailyForecast.push({
+      const entry = {
         time: ts,
         tempMax: daily.temperature_2m_max?.[i],
         tempMin: daily.temperature_2m_min?.[i],
@@ -165,10 +172,17 @@ function normalize(d, aq) {
         windMax: daily.wind_speed_10m_max?.[i],
         gustsMax: daily.wind_gusts_10m_max?.[i],
         uvMax: daily.uv_index_max?.[i] ?? null,
+        snowfall: daily.snowfall_sum?.[i] ?? 0,
         sunrise: daily.sunrise?.[i] ? new Date(daily.sunrise[i]).getTime() : null,
         sunset: daily.sunset?.[i] ? new Date(daily.sunset[i]).getTime() : null,
         ...mapWmo(daily.weather_code[i]),
-      });
+      };
+      if (ts < todayStartMs) {
+        // Keep yesterday as the most recent past day.
+        yesterday = entry;
+      } else {
+        dailyForecast.push(entry);
+      }
     }
   }
 
@@ -204,13 +218,14 @@ function normalize(d, aq) {
     isDay: !!c.is_day,
     condition,
     label,
-    sunrise: daily.sunrise?.[0] ? new Date(daily.sunrise[0]).getTime() : null,
-    sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null,
-    uv: daily.uv_index_max?.[0] ?? null,
+    sunrise: dailyForecast[0]?.sunrise ?? null,
+    sunset: dailyForecast[0]?.sunset ?? null,
+    uv: dailyForecast[0]?.uvMax ?? null,
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
     hourly,
     daily: dailyForecast,
+    yesterday,
     nowcast,
     moon,
     airQuality: normalizeAq(aq),
@@ -387,6 +402,15 @@ function mock(lat, lon) {
       condition: CONDITIONS.CLOUDS, label: "Cloudy",
     })),
     nowcast: [],
+    yesterday: {
+      time: now - 86400_000,
+      tempMax: 17, tempMin: 10,
+      precip: 0, pop: 10,
+      windMax: 10, gustsMax: 16, uvMax: 4, snowfall: 0,
+      sunrise: new Date(now - 86400_000).setHours(6, 32, 0, 0),
+      sunset: new Date(now - 86400_000).setHours(19, 2, 0, 0),
+      condition: CONDITIONS.CLOUDS, label: "Cloudy",
+    },
     moon: computeMoonPhase(new Date()),
     airQuality: { aqi: 42, pm25: 8, pm10: 14, o3: 40, no2: 15, co: 0.2, label: "Good" },
     pollen: {

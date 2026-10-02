@@ -27,6 +27,7 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  yesterdayChip: $("#yesterday-chip"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   metricWindUnit: $("#m-wind-unit"),
@@ -308,6 +309,42 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  renderYesterdayChip(w);
+}
+
+function renderYesterdayChip(w) {
+  if (!el.yesterdayChip) return;
+  const y = w?.yesterday;
+  const todayMax = w?.daily?.[0]?.tempMax;
+  const todayMin = w?.daily?.[0]?.tempMin;
+  if (!y || todayMax == null || todayMin == null || y.tempMax == null || y.tempMin == null) {
+    el.yesterdayChip.hidden = true;
+    return;
+  }
+  // Compare the midpoints — more stable than hi vs hi which jitters between
+  // identical cloud patterns with slight sun differences.
+  const todayMid = (todayMax + todayMin) / 2;
+  const yMid = (y.tempMax + y.tempMin) / 2;
+  const deltaC = todayMid - yMid;
+  if (!isFinite(deltaC)) {
+    el.yesterdayChip.hidden = true;
+    return;
+  }
+  const deltaDisplay = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
+  const absD = Math.abs(deltaDisplay);
+  let dir, label;
+  if (absD < 1) {
+    dir = "same";
+    label = `about the same as yesterday`;
+  } else {
+    dir = deltaC > 0 ? "warmer" : "colder";
+    const magnitude = `${Math.round(absD)}°`;
+    const word = absD >= 7 ? "much " : absD >= 3 ? "" : "slightly ";
+    label = `${magnitude} ${word}${dir} than yesterday`.replace(/\s+/g, " ");
+  }
+  el.yesterdayChip.textContent = label;
+  el.yesterdayChip.setAttribute("data-dir", dir);
+  el.yesterdayChip.hidden = false;
 }
 
 function renderDayRange(w) {
