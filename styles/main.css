@@ -343,6 +343,21 @@ html[data-reduce-motion="true"] *::after {
   animation: pulse 2.4s ease-in-out infinite;
 }
 [data-scrubbing="true"] .live-dot { background: #ffb86b; box-shadow: 0 0 8px #ffb86b; animation: none; }
+.offline-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  margin-left: 2px;
+  border-radius: 999px;
+  background: rgba(255, 180, 120, 0.18);
+  border: 1px solid rgba(255, 180, 120, 0.35);
+  color: #ffcf87;
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.offline-badge svg { opacity: 0.85; }
 .place-name {
   margin: 0;
   font-size: clamp(30px, 4.8vw, 52px);

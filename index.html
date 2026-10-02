@@ -116,7 +116,14 @@
     <section class="hero">
       <div class="hero-inner glass" data-tilt>
         <div class="place">
-          <p class="place-label"><span id="place-live-dot" class="live-dot"></span><span id="place-label-text">Now in</span></p>
+          <p class="place-label">
+            <span id="place-live-dot" class="live-dot"></span>
+            <span id="place-label-text">Now in</span>
+            <span id="offline-badge" class="offline-badge" hidden title="Sample data — network request failed">
+              <svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><path d="M3 3l18 18M8 16a5 5 0 017 0M4 12a9 9 0 0113-1M4 8a13 13 0 0117 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              Offline
+            </span>
+          </p>
           <h1 id="place-name" class="place-name">—</h1>
           <p id="place-sub" class="place-sub">Fetching atmosphere…</p>
           <p id="place-localtime" class="place-localtime"></p>

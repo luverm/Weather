@@ -60,6 +60,7 @@ const el = {
   advice: $("#advice"),
   adviceText: $("#advice-text"),
   wearChips: $("#wear-chips"),
+  offlineBadge: $("#offline-badge"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
   pollenCard: $("#pollen-card"),
@@ -221,7 +222,11 @@ export const ui = {
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
-    if (weather.offline) ui.showToast("Offline — showing sample weather");
+    if (el.offlineBadge) el.offlineBadge.hidden = !weather.offline;
+    if (weather.offline && !state._offlineToastShown) {
+      ui.showToast("Offline — showing sample weather");
+      state._offlineToastShown = true;
+    }
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
       places.updateSummary(state.place, {
