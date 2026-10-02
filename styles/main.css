@@ -829,6 +829,10 @@ html[data-reduce-motion="true"] *::after {
   pointer-events: none;
   filter: drop-shadow(0 0 6px var(--accent));
 }
+.chart-uv-peak g { color: #ffd27a; filter: drop-shadow(0 0 4px rgba(255,200,120,0.6)); }
+.chart-uv-peak g[data-level="high"]    { color: #ffb060; filter: drop-shadow(0 0 4px rgba(255,170,80,0.65)); }
+.chart-uv-peak g[data-level="extreme"] { color: #ff7a7a; filter: drop-shadow(0 0 4px rgba(255,120,120,0.7)); }
+.chart-uv-peak text { font-family: inherit; }
 
 /* ---------- Wind compass (inside wind metric) ---------- */
 .metric-wind {

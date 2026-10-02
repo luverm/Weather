@@ -267,6 +267,36 @@ export class HourlyChart {
       }
     }
 
+    // UV peak marker — a tiny sun pinned above the temp line at the highest
+    // hourly UV, provided the peak is at least 3 (otherwise it's irrelevant).
+    const uvG = this.svg.querySelector("#chart-uv-peak");
+    if (uvG) {
+      uvG.innerHTML = "";
+      let peak = null;
+      this.hours.forEach((h, i) => {
+        if (h.uv != null && h.isDay !== false && (peak == null || h.uv > peak.v)) {
+          peak = { v: h.uv, i, h };
+        }
+      });
+      if (peak && peak.v >= 3) {
+        const x = iToX(peak.i);
+        const y = Math.max(10, tToY(peak.h.temp) - 14);
+        const level = peak.v >= 8 ? "extreme" : peak.v >= 6 ? "high" : "moderate";
+        const label = `UV ${Math.round(peak.v)}`;
+        const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        g.setAttribute("data-level", level);
+        g.setAttribute("transform", `translate(${x.toFixed(1)} ${y.toFixed(1)})`);
+        g.innerHTML =
+          `<title>UV peak ${label} at ${this._formatHour(peak.h.time)}</title>` +
+          `<circle r="4.5" fill="currentColor" opacity="0.95"/>` +
+          `<g stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity="0.85">` +
+          `<path d="M0 -7v2M0 5v2M-7 0h2M5 0h2M-5 -5l1.4 1.4M3.6 3.6L5 5M-5 5l1.4 -1.4M3.6 -3.6L5 -5"/>` +
+          `</g>` +
+          `<text y="-9" text-anchor="middle" font-size="8" font-weight="600" fill="currentColor" opacity="0.9">${label}</text>`;
+        uvG.appendChild(g);
+      }
+    }
+
     // Labels: every ~3 hours
     const unit = this.getUnit();
     const labG = this.svg.querySelector("#chart-labels");
