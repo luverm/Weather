@@ -279,21 +279,28 @@ function fmtWind(kmh) {
   return v == null ? "—" : `${Math.round(v)} ${windUnitLabel()}`;
 }
 
-function animateNumber(node, target, format) {
+function animateNumber(node, target, format, opts = {}) {
   if (target == null || isNaN(target)) { node.textContent = "–"; return; }
   const prev = parseFloat(node.dataset.v ?? NaN);
-  if (isNaN(prev)) {
+  // First render: ramp from a lower value so a fresh load *feels* alive
+  // rather than snapping into place. Unit toggles pass skipRamp:true so we
+  // don't fake-animate when just converting the same temperature.
+  const startVal = isNaN(prev)
+    ? (opts.skipRamp ? target : target - (target > 0 ? Math.min(8, target) : 2))
+    : prev;
+  if (startVal === target) {
     node.textContent = format(target);
     node.dataset.v = String(target);
     return;
   }
-  const duration = 480;
+  const duration = isNaN(prev) ? 700 : 420;
   const start = performance.now();
   cancelAnimationFrame(node._raf ?? 0);
   const tick = (now) => {
     const t = Math.min(1, (now - start) / duration);
-    const eased = 1 - Math.pow(1 - t, 3);
-    const v = prev + (target - prev) * eased;
+    // ease-out-quint — nice settle.
+    const eased = 1 - Math.pow(1 - t, 5);
+    const v = startVal + (target - startVal) * eased;
     node.textContent = format(v);
     if (t < 1) node._raf = requestAnimationFrame(tick);
     else node.dataset.v = String(target);
@@ -1470,9 +1477,18 @@ function bindUnitToggle() {
     state.unit = state.unit === "C" ? "F" : "C";
     localStorage.setItem("aether:unit", state.unit);
     el.unitBtn.textContent = `°${state.unit}`;
+    // Reseat dataset.v to the new unit so animateNumber doesn't fake a jump
+    // from 23 (°C) → 73 (°F) when the user is just converting.
+    seatTempForUnit();
     if (state.weather) ui.setWeather(state.weather);
     state.handlers.onUnitChange?.(state.unit);
   });
+}
+
+function seatTempForUnit() {
+  if (!el.temp || !state.sampledWeather) return;
+  const t = convertTemp(state.sampledWeather.temp);
+  if (t != null && !isNaN(t)) el.temp.dataset.v = String(t);
 }
 
 function bindLocate() {
@@ -1547,6 +1563,7 @@ function bindSettings() {
       state.unit = desired;
       localStorage.setItem("aether:unit", state.unit);
       el.unitBtn.textContent = `°${state.unit}`;
+      seatTempForUnit();
       if (state.weather) ui.setWeather(state.weather);
       state.handlers.onUnitChange?.(state.unit);
     }
