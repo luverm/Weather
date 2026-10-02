@@ -450,6 +450,20 @@
           </span>
         </button>
         <div id="daily-icon-strip" class="daily-icon-strip" aria-hidden="true"></div>
+        <div id="daily-precip" class="daily-precip" aria-label="Expected precipitation per day" hidden>
+          <svg id="daily-precip-svg" class="daily-precip-svg" viewBox="0 0 600 44" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="daily-precip-grad" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="#9ad1ff" stop-opacity="0.95"/>
+                <stop offset="100%" stop-color="#9ad1ff" stop-opacity="0.3"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div class="daily-precip-meta">
+            <span class="daily-precip-label">Rain next 7d</span>
+            <strong id="daily-precip-total">—</strong>
+          </div>
+        </div>
         <svg id="daily-spark" class="daily-spark" viewBox="0 0 600 60" preserveAspectRatio="none" aria-hidden="true">
           <defs>
             <linearGradient id="daily-hi-stroke" x1="0" x2="1" y1="0" y2="0">

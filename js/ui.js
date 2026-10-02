@@ -83,6 +83,9 @@ const el = {
   refreshBtn: $("#refresh-btn"),
   fetchedAgo: $("#fetched-ago"),
   dailyIconStrip: $("#daily-icon-strip"),
+  dailyPrecip: $("#daily-precip"),
+  dailyPrecipSvg: $("#daily-precip-svg"),
+  dailyPrecipTotal: $("#daily-precip-total"),
   settingsBtn: $("#settings-btn"),
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
@@ -996,6 +999,7 @@ function renderDaily(w) {
   const days = (w.daily || []).slice(0, 7);
   if (!days.length) return;
   renderDailyIconStrip(days);
+  renderDailyPrecip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
   // Global min/max for the range bar.
@@ -1042,6 +1046,66 @@ function renderDailyIconStrip(days) {
   el.dailyIconStrip.innerHTML = days.map((d) =>
     `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
   ).join("");
+}
+
+// 7-day precipitation accumulation bars. One tall bar per day scaled to the
+// wettest in the window. Faint bars for dry days keep the column structure.
+// Hidden entirely if the whole week shows no measurable rain.
+function renderDailyPrecip(days) {
+  if (!el.dailyPrecip || !el.dailyPrecipSvg) return;
+  const precip = days.map((d) => d.precip || 0);
+  const total = precip.reduce((a, b) => a + b, 0);
+  el.dailyPrecip.hidden = false;
+  if (total < 0.1) {
+    // Dry week — keep the row but show just the label so the layout stays stable.
+    const defs = el.dailyPrecipSvg.querySelector("defs")?.outerHTML || "";
+    el.dailyPrecipSvg.innerHTML = defs +
+      `<line x1="4" x2="596" y1="40" y2="40" stroke="currentColor" stroke-opacity="0.18"/>`;
+    if (el.dailyPrecipTotal) el.dailyPrecipTotal.textContent = "dry week";
+    return;
+  }
+
+  const W = 600, H = 44, PAD = 4;
+  const maxP = Math.max(...precip, 1);
+  const colW = (W - PAD * 2) / days.length;
+  const barW = Math.max(6, Math.min(28, colW * 0.5));
+  // Preserve <defs> and clear the rest so animation CSS kicks in on each
+  // render.
+  const defs = el.dailyPrecipSvg.querySelector("defs")?.outerHTML || "";
+  const parts = [defs];
+  days.forEach((d, i) => {
+    const cx = PAD + colW * (i + 0.5);
+    const p = d.precip || 0;
+    const h = p > 0 ? Math.max(2, (p / maxP) * (H - 10)) : 2;
+    const y = (H - 6) - h;
+    const op = p < 0.1 ? 0.18 : 0.55 + (d.pop ? d.pop / 200 : 0);
+    const title = p < 0.1
+      ? "dry"
+      : `${p.toFixed(p < 1 ? 1 : 0)} mm${d.pop ? ` · ${d.pop}%` : ""}`;
+    parts.push(
+      `<g><title>${title}</title>` +
+      `<rect x="${(cx - barW / 2).toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="2" ry="2" fill="url(#daily-precip-grad)" opacity="${op.toFixed(2)}"/>` +
+      // Value label on the two wettest days to anchor the eye.
+      (p >= 1 && p >= maxP * 0.5
+        ? `<text x="${cx.toFixed(1)}" y="${Math.max(10, y - 2).toFixed(1)}" text-anchor="middle">${p < 10 ? p.toFixed(1) : Math.round(p)}</text>`
+        : "") +
+      `</g>`
+    );
+  });
+  // Horizontal baseline.
+  parts.push(`<line x1="${PAD}" x2="${W - PAD}" y1="${H - 4}" y2="${H - 4}" stroke="currentColor" stroke-opacity="0.18"/>`);
+  el.dailyPrecipSvg.innerHTML = parts.join("");
+
+  // Totals: use mm for metric users, inches when °F is on (rough regional
+  // heuristic consistent with other visuals in the app).
+  if (el.dailyPrecipTotal) {
+    if (state.unit === "F") {
+      const inches = total / 25.4;
+      el.dailyPrecipTotal.textContent = inches < 0.1 ? "<0.1 in" : `${inches.toFixed(1)} in`;
+    } else {
+      el.dailyPrecipTotal.textContent = total < 1 ? `${total.toFixed(1)} mm` : `${Math.round(total)} mm`;
+    }
+  }
 }
 
 function renderDailySpark(days) {
