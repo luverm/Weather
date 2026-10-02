@@ -45,6 +45,7 @@ const el = {
   aqCard: $("#aq-card"),
   aqTrendLine: $("#aq-trend-line"),
   aqTrendFill: $("#aq-trend-fill"),
+  aqTrendArrow: $("#aq-trend-arrow"),
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
@@ -570,9 +571,30 @@ function renderAqTrend(aq) {
   if (pts.length < 2) {
     el.aqTrendLine.setAttribute("d", "");
     el.aqTrendFill.setAttribute("d", "");
+    if (el.aqTrendArrow) el.aqTrendArrow.textContent = "";
     return;
   }
   drawSparkline(el.aqTrendLine, el.aqTrendFill, pts, { minSpan: 20 });
+  // Trend arrow — compare first point vs. the mean of the back half.
+  // Rising AQI = worsening air (lower is better).
+  if (el.aqTrendArrow) {
+    const back = pts.slice(Math.floor(pts.length / 2));
+    const avgLater = back.reduce((a, b) => a + b, 0) / back.length;
+    const delta = avgLater - pts[0];
+    if (Math.abs(delta) < 5) {
+      el.aqTrendArrow.className = "trend flat";
+      el.aqTrendArrow.textContent = "→ steady";
+    } else if (delta > 0) {
+      // Worsening — amber. For "trend down" (fg colour mapping), rising AQI
+      // is bad so render as the "up" visual (▲), with wording that reads
+      // correctly either way.
+      el.aqTrendArrow.className = "trend down";
+      el.aqTrendArrow.textContent = `▲ worsening`;
+    } else {
+      el.aqTrendArrow.className = "trend up";
+      el.aqTrendArrow.textContent = `▼ clearing`;
+    }
+  }
 }
 
 function renderMoon(moon) {
