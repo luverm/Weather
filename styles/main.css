@@ -679,6 +679,39 @@ html[data-reduce-motion="true"] *::after {
 }
 .advice-icon { color: var(--accent); flex: 0 0 auto; }
 
+/* ---------- What to wear chips ---------- */
+.wear-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 0;
+  animation: slideInUp 500ms var(--ease) both;
+}
+.wear-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 6px;
+  border-radius: 999px;
+  background: var(--glass);
+  border: 1px solid var(--stroke);
+  color: var(--fg-muted);
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  transition: background 200ms var(--ease), transform 200ms var(--ease), color 200ms var(--ease);
+}
+.wear-chip:hover {
+  background: var(--glass-strong);
+  color: var(--fg);
+  transform: translateY(-1px);
+}
+.wear-chip svg {
+  width: 16px; height: 16px;
+  color: var(--accent);
+  flex: 0 0 auto;
+}
+.wear-chip[data-strong="true"] svg { color: #ffcf87; }
+
 /* ---------- Hourly chart ---------- */
 .chart-card {
   padding: 12px 14px 10px;

@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { suggestWear } from "./wear.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -53,6 +54,7 @@ const el = {
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
+  wearChips: $("#wear-chips"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
   pollenCard: $("#pollen-card"),
@@ -668,13 +670,30 @@ function scheduleSunCountdown(w) {
 
 function renderAdvice(w) {
   const text = advise(w);
-  if (!el.advice || !el.adviceText) return;
-  if (text) {
-    el.adviceText.textContent = text;
-    el.advice.hidden = false;
-  } else {
-    el.advice.hidden = true;
+  if (el.advice && el.adviceText) {
+    if (text) {
+      el.adviceText.textContent = text;
+      el.advice.hidden = false;
+    } else {
+      el.advice.hidden = true;
+    }
   }
+  renderWearChips(w);
+}
+
+function renderWearChips(w) {
+  if (!el.wearChips) return;
+  const picks = suggestWear(w);
+  if (!picks.length) {
+    el.wearChips.hidden = true;
+    el.wearChips.innerHTML = "";
+    return;
+  }
+  // Treat the first chip as the "primary" layering — mild highlight.
+  el.wearChips.innerHTML = picks.map((p, i) =>
+    `<span class="wear-chip" data-strong="${i === 0}" title="${escapeHtml(p.label)}">${p.icon}<span>${escapeHtml(p.label)}</span></span>`
+  ).join("");
+  el.wearChips.hidden = false;
 }
 
 function startLocaltime(w) {
