@@ -1038,6 +1038,16 @@ kbd {
 .sun-item { display: grid; gap: 2px; }
 .sun-label { font-size: 10.5px; color: var(--fg-dim); letter-spacing: 0.14em; text-transform: uppercase; }
 .sun-item strong { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.sun-sub {
+  font-size: 10px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  margin-top: 1px;
+}
+.sun-sub[data-trend="longer"] { color: #ffcf87; }
+.sun-sub[data-trend="shorter"] { color: #c8d6ff; }
+.sun-sub:empty { display: none; }
 .sun-arc {
   width: 100%;
   height: 76px;

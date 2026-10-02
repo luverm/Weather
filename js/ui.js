@@ -51,6 +51,9 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDawn: $("#sun-dawn"),
+  sunDusk: $("#sun-dusk"),
+  sunDelta: $("#sun-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -594,12 +597,42 @@ function fmtTime(ts) {
 function renderSun(w) {
   el.sunRise.textContent = fmtTime(w.sunrise);
   el.sunSet.textContent = fmtTime(w.sunset);
+  // Civil dawn/dusk approximation — sun ~6° below horizon ≈ 30 min window.
+  const BLUE_MS = 30 * 60_000;
+  if (el.sunDawn) {
+    el.sunDawn.textContent = w.sunrise ? `dawn ${fmtTime(w.sunrise - BLUE_MS)}` : "";
+  }
+  if (el.sunDusk) {
+    el.sunDusk.textContent = w.sunset ? `dusk ${fmtTime(w.sunset + BLUE_MS)}` : "";
+  }
   if (w.sunrise && w.sunset) {
     const mins = Math.round((w.sunset - w.sunrise) / 60_000);
     const hh = Math.floor(mins / 60);
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
-  } else el.sunDaylight.textContent = "—";
+    // Day-length trend vs yesterday if we have it; otherwise vs tomorrow.
+    if (el.sunDelta) {
+      let deltaMin = null;
+      const y = w.yesterday;
+      if (y?.sunrise && y?.sunset) {
+        deltaMin = Math.round(((w.sunset - w.sunrise) - (y.sunset - y.sunrise)) / 60_000);
+      } else if (w.daily?.[1]?.sunrise && w.daily?.[1]?.sunset) {
+        // Fall back to "tomorrow – today" and invert so the chip reads today's gain.
+        deltaMin = -Math.round(((w.daily[1].sunset - w.daily[1].sunrise) - (w.sunset - w.sunrise)) / 60_000);
+      }
+      if (deltaMin == null || Math.abs(deltaMin) < 1) {
+        el.sunDelta.textContent = "";
+      } else {
+        const sign = deltaMin > 0 ? "+" : "−";
+        const abs = Math.abs(deltaMin);
+        el.sunDelta.textContent = `${sign}${abs}m vs yesterday`;
+        el.sunDelta.setAttribute("data-trend", deltaMin > 0 ? "longer" : "shorter");
+      }
+    }
+  } else {
+    el.sunDaylight.textContent = "—";
+    if (el.sunDelta) el.sunDelta.textContent = "";
+  }
   scheduleSunCountdown(w);
   scheduleSunArc(w);
 }
