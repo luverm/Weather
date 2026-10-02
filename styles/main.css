@@ -377,7 +377,14 @@ html[data-reduce-motion="true"] *::after {
 .place-localtime .clock-dot {
   width: 5px; height: 5px; border-radius: 50%;
   background: var(--accent); box-shadow: 0 0 6px var(--accent);
+  animation: clock-tick 1s steps(2, end) infinite;
 }
+@keyframes clock-tick {
+  0%   { opacity: 1; }
+  50%  { opacity: 0.35; }
+  100% { opacity: 1; }
+}
+[data-reduce-motion="true"] .place-localtime .clock-dot { animation: none; }
 .narrative {
   margin: 14px 0 0;
   max-width: 52ch;

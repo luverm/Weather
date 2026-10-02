@@ -102,10 +102,12 @@ export class Scrubber {
   }
 
   reset() {
+    const wasOff = Math.abs(clock.offset()) >= 60_000;
     clock.setOffset(0);
     this.appEl?.setAttribute("data-scrubbing", "false");
     this._render(this._currentT());
     this.onScrub?.(0);
+    if (wasOff) this._buzz(12);
   }
 
   _updateFromEvent(e) {
@@ -117,13 +119,25 @@ export class Scrubber {
   }
 
   _setOffset(offset) {
+    const prev = clock.offset();
     clock.setOffset(offset);
     // Snap "close enough" to live — prevents 0.2 min drift when releasing.
-    if (Math.abs(offset) < 5 * 60_000) clock.setOffset(0);
+    if (Math.abs(offset) < 5 * 60_000) {
+      clock.setOffset(0);
+      // Buzz once when we snap-dock to live from a non-trivial offset.
+      if (Math.abs(prev) >= 60_000) this._buzz(8);
+    }
     const scrubbing = !clock.isLive();
     this.appEl?.setAttribute("data-scrubbing", scrubbing ? "true" : "false");
     this._render(this._currentT());
     this.onScrub?.(clock.offset());
+  }
+
+  // Short vibration where supported. Skipped when the user asked for reduced
+  // motion — the vibration API treats that preference as implicit.
+  _buzz(ms) {
+    if (document.documentElement.getAttribute("data-reduce-motion") === "true") return;
+    try { navigator.vibrate?.(ms); } catch { /* no-op */ }
   }
 
   _render(t) {
