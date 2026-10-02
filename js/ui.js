@@ -96,6 +96,11 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcGoldenMorning: $("#sun-arc-golden-morning"),
+  sunArcGoldenEvening: $("#sun-arc-golden-evening"),
+  sunArcBlueMorning: $("#sun-arc-blue-morning"),
+  sunArcBlueEvening: $("#sun-arc-blue-evening"),
+  sunPhaseChip: $("#sun-phase-chip"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -532,34 +537,98 @@ function renderSun(w) {
   scheduleSunArc(w);
 }
 
+// The sun arc is a quadratic Bezier M10,74 Q100,-26 190,74. Day t runs 0 at
+// sunrise to 1 at sunset. We expose two helpers so other sun-arc visuals
+// (bands, chip) all speak the same geometry.
+const SUN_ARC = Object.freeze({ p0: [10, 74], p1: [100, -26], p2: [190, 74] });
+
+function sunArcPointAt(t) {
+  const u = 1 - t;
+  const x = u * u * SUN_ARC.p0[0] + 2 * u * t * SUN_ARC.p1[0] + t * t * SUN_ARC.p2[0];
+  const y = u * u * SUN_ARC.p0[1] + 2 * u * t * SUN_ARC.p1[1] + t * t * SUN_ARC.p2[1];
+  return [x, y];
+}
+
+// Polyline-sampled sub-curve so the shading is simple to draw. Sampled every
+// 1% of the full arc — more than enough at this size.
+function sunArcSegmentPath(tStart, tEnd) {
+  if (tEnd <= tStart) return "";
+  const steps = Math.max(2, Math.round((tEnd - tStart) * 100));
+  const pts = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = tStart + (tEnd - tStart) * (i / steps);
+    pts.push(sunArcPointAt(t));
+  }
+  return pts.map((p, i) => `${i === 0 ? "M" : "L"}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" ");
+}
+
+// Returns a chip description for the current sun phase (and the UI color
+// bucket), based on roughly civil definitions:
+// - blue hour  = sun 0..6° below horizon  ≈ 30 min window around rise/set
+// - golden hour = sun 0..6° above horizon ≈ 1 h after sunrise / before sunset
+function currentSunPhase(now, sr, ss) {
+  if (!sr || !ss) return null;
+  const BLUE_MS = 30 * 60_000;
+  const GOLDEN_MS = 60 * 60_000;
+  if (now >= sr - BLUE_MS && now < sr)       return { kind: "blue",   label: "Blue hour · dawn" };
+  if (now >= sr && now < sr + GOLDEN_MS)     return { kind: "golden", label: "Golden hour · morning" };
+  if (now >= ss - GOLDEN_MS && now < ss)     return { kind: "golden", label: "Golden hour · evening" };
+  if (now >= ss && now <= ss + BLUE_MS)      return { kind: "blue",   label: "Blue hour · dusk" };
+  if (now >= sr && now <= ss)                return { kind: "day",    label: "Daylight" };
+  return                                            { kind: "night",  label: "Night" };
+}
+
 function scheduleSunArc(w) {
   if (!el.sunArcMarker || !el.sunArcPath) return;
   if (state.sunArcTimer) { clearInterval(state.sunArcTimer); state.sunArcTimer = null; }
-  if (!w?.sunrise || !w?.sunset) return;
+  if (!w?.sunrise || !w?.sunset) {
+    if (el.sunPhaseChip) el.sunPhaseChip.hidden = true;
+    return;
+  }
+
+  // Draw golden/blue bands once per weather load — they only depend on today's
+  // daylight length, not on the current moment.
+  const dayLenMs = w.sunset - w.sunrise;
+  const goldenFrac = Math.min(0.5, (60 * 60_000) / dayLenMs);
+  // Blue bands sit "beyond" the arc (sun is below horizon). Since our arc
+  // only draws between sunrise and sunset, we just tuck short strokes at the
+  // horizon ends to visualize them. Keep it to the first/last ~2% of t.
+  const blueFrac = Math.min(0.08, (30 * 60_000) / dayLenMs);
+
+  if (el.sunArcGoldenMorning) el.sunArcGoldenMorning.setAttribute("d", sunArcSegmentPath(0, goldenFrac));
+  if (el.sunArcGoldenEvening) el.sunArcGoldenEvening.setAttribute("d", sunArcSegmentPath(1 - goldenFrac, 1));
+  if (el.sunArcBlueMorning)   el.sunArcBlueMorning.setAttribute("d",   sunArcSegmentPath(0, blueFrac));
+  if (el.sunArcBlueEvening)   el.sunArcBlueEvening.setAttribute("d",   sunArcSegmentPath(1 - blueFrac, 1));
 
   const update = () => {
     const now = Date.now();
     const sr = w.sunrise, ss = w.sunset;
     let frac;
     if (now < sr) {
-      // Before sunrise: ride the night arc fraction toward 0 (left horizon).
       frac = 0;
     } else if (now > ss) {
       frac = 1;
     } else {
       frac = (now - sr) / (ss - sr);
     }
-    // Quadratic Bezier from (10,74) to (190,74) via (100,-26). The midpoint
-    // (50% t) reaches y = 0.5*(74) + 0.5*(74 + 2*(-26-74)/2*(...)) — easier
-    // to evaluate the curve directly.
     const t = clamp01(frac);
-    const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
-    const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
+    const [x, y] = sunArcPointAt(t);
     el.sunArcMarker.setAttribute("cx", x.toFixed(1));
     el.sunArcMarker.setAttribute("cy", y.toFixed(1));
-    // After sunset, dim the marker so it visually settles.
     const isUp = now >= sr && now <= ss;
     el.sunArcMarker.style.opacity = isUp ? "1" : "0.45";
+
+    // Phase chip (hidden when neither golden/blue nor near horizon).
+    if (el.sunPhaseChip) {
+      const phase = currentSunPhase(now, sr, ss);
+      if (phase && (phase.kind === "golden" || phase.kind === "blue")) {
+        el.sunPhaseChip.hidden = false;
+        el.sunPhaseChip.textContent = phase.label;
+        el.sunPhaseChip.setAttribute("data-phase", phase.kind);
+      } else {
+        el.sunPhaseChip.hidden = true;
+      }
+    }
   };
   update();
   state.sunArcTimer = setInterval(update, 60_000);

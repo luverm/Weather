@@ -976,6 +976,28 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+.sun-arc-golden { filter: drop-shadow(0 0 4px rgba(255,180,120,0.5)); opacity: 0.9; }
+.sun-arc-blue   { filter: drop-shadow(0 0 4px rgba(120,160,220,0.5)); opacity: 0.75; }
+.sun-phase-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 10px;
+  margin: -2px auto 6px;
+  border-radius: 999px;
+  font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--fg);
+  background: rgba(255,255,255,0.08);
+  width: fit-content;
+  justify-self: center;
+}
+.sun-phase-chip[data-phase="golden"]  { background: rgba(255,180,120,0.22); color: #ffd59a; }
+.sun-phase-chip[data-phase="blue"]    { background: rgba(130,160,220,0.22); color: #c8d6ff; }
+.sun-phase-chip[data-phase="day"]     { background: rgba(255,240,200,0.15); color: #fff2c8; }
+.sun-phase-chip[data-phase="night"]   { background: rgba(70,80,120,0.3);    color: #9fb4d8; }
+.sun-phase-chip::before {
+  content: ""; width: 6px; height: 6px; border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 0 6px currentColor;
+}
 
 /* ---------- Visibility + cloud cover card ---------- */
 .vis-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
