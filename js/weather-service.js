@@ -93,7 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
-    past_hours: 1,
+    past_hours: 25,
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -195,6 +195,7 @@ function normalize(d, aq) {
     humidity: c.relative_humidity_2m,
     pressure: c.pressure_msl,
     pressureTrend: computePressureTrend(d.hourly, now),
+    yesterdayAtNow: computeYesterdayTemp(d.hourly, now),
     windSpeed: c.wind_speed_10m,
     windGusts: c.wind_gusts_10m,
     windDir: c.wind_direction_10m,
@@ -217,6 +218,22 @@ function normalize(d, aq) {
     pollen: normalizePollen(aq),
     fetchedAt: now,
   };
+}
+
+// Average temperature of the two hourly slots ~24h ago. Returns null when
+// the series doesn't span back that far (which is the mock-data case).
+function computeYesterdayTemp(hourly, now) {
+  if (!hourly?.time || !hourly?.temperature_2m) return null;
+  const target = now - 24 * 3600_000;
+  let best = -1, bestDiff = Infinity;
+  for (let i = 0; i < hourly.time.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    const diff = Math.abs(t - target);
+    if (diff < bestDiff) { bestDiff = diff; best = i; }
+  }
+  if (best < 0 || bestDiff > 90 * 60_000) return null;
+  const v = hourly.temperature_2m[best];
+  return typeof v === "number" ? v : null;
 }
 
 function computePressureTrend(hourly, now) {
@@ -400,6 +417,8 @@ function mock(lat, lon) {
       level: "Moderate",
     },
     pressureTrend: { delta: -0.4, direction: "steady" },
+    yesterdayAtNow: 16, // mock: slightly cooler than today for a visible chip
+
     fetchedAt: now,
     offline: true,
   };
