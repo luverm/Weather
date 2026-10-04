@@ -208,6 +208,7 @@ export const ui = {
     });
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly, { sunEvents: sunEventsFor(weather) });
+    updateDocumentTitle();
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
@@ -434,6 +435,17 @@ function renderUvStrip(w) {
 }
 
 // Collect sunrise/sunset events across the chart's 24h window.
+function updateDocumentTitle() {
+  const place = state.place?.name;
+  const temp = state.weather?.temp;
+  if (temp == null || !place) {
+    document.title = "Aether — Interactive Weather";
+    return;
+  }
+  const t = Math.round(state.unit === "F" ? temp * 9 / 5 + 32 : temp);
+  document.title = `${t}°${state.unit} · ${place} — Aether`;
+}
+
 function sunEventsFor(w) {
   if (!w?.daily?.length) return [];
   const events = [];
