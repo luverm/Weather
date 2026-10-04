@@ -811,8 +811,14 @@ function startLocaltime(w) {
       const hour = parts.find((p) => p.type === "hour")?.value ?? "";
       const minute = parts.find((p) => p.type === "minute")?.value ?? "";
       const tzName = parts.find((p) => p.type === "timeZoneName")?.value ?? "";
+      // Tiny condition icon beside the time keeps the line visually anchored
+      // to the current sky.
+      const condIcon = state.weather?.condition
+        ? `<span class="place-localtime-icon" aria-hidden="true">${iconFor(state.weather.condition)}</span>`
+        : "";
       el.placeLocaltime.innerHTML =
         `<span class="clock-dot" aria-hidden="true"></span>` +
+        condIcon +
         `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>`;
     } catch {
       el.placeLocaltime.textContent = "";
