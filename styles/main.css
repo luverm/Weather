@@ -1486,6 +1486,25 @@ kbd {
 .rain-cell.now {
   box-shadow: inset 0 0 0 1px rgba(255,255,255,0.7);
 }
+.rain-cell.is-snow::after {
+  background: linear-gradient(
+    to top,
+    rgba(230, 240, 255, calc(var(--op, 0.5) + 0.2)) 0%,
+    rgba(255, 255, 255, var(--op, 0.5)) 100%
+  );
+  box-shadow: 0 0 6px rgba(230, 240, 255, calc(var(--op, 0.5) * 0.5));
+}
+.rain-week-bar.is-snow::after {
+  background: linear-gradient(
+    to top,
+    rgba(230, 240, 255, var(--op, 0.5)),
+    rgba(255, 255, 255, calc(var(--op, 0.5) * 0.7))
+  );
+}
+.rain-week-bar.peak.is-snow::after {
+  background: linear-gradient(to top, rgba(255,255,255,1), rgba(230,240,255,0.75));
+  box-shadow: 0 0 8px rgba(255,255,255,0.5);
+}
 button.rain-cell {
   padding: 0;
   margin: 0;

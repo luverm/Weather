@@ -53,22 +53,38 @@ export function renderRainOutlook(root, weather, { onHourClick } = {}) {
     }
   }
 
+  // Precipitation type (rain / snow / mix) within the rain window.
+  const windowStart = firstRainIdx < 0 ? 0 : firstRainIdx;
+  const windowEnd = firstRainIdx < 0 ? hourly.length - 1 : rainWindowEnd;
+  const kinds = new Set();
+  for (let i = windowStart; i <= windowEnd && i < hourly.length; i++) {
+    if ((hourly[i].precip ?? 0) >= 0.1 || (hourly[i].pop ?? 0) >= 40) {
+      if (hourly[i].condition === "snow") kinds.add("snow");
+      else kinds.add("rain");
+    }
+  }
+  const kind = kinds.has("snow") && kinds.has("rain")
+    ? "wintry mix"
+    : kinds.has("snow") ? "snow" : "rain";
+  const kindCap = kind === "wintry mix" ? "Wintry mix" : kind[0].toUpperCase() + kind.slice(1);
+  root.dataset.kind = kind.replace(" ", "-");
+
   let headlineText, subText;
   if (rainingNow) {
-    headlineText = "Raining now";
+    headlineText = `${kindCap === "Rain" ? "Raining" : (kind === "snow" ? "Snowing" : "Wintry mix")} now`;
     const stopIdx = findStopIdx(hourly);
     subText = stopIdx > 0
       ? `Eases around ${fmtHour(hourly[stopIdx].time, tz)}`
       : "Expected to continue";
   } else if (firstRainIdx === 0) {
-    headlineText = "Rain starting";
+    headlineText = `${kindCap} starting`;
     subText = rainWindowEnd > 0
       ? `Through ~${fmtHour(hourly[rainWindowEnd].time + 3600_000, tz)}`
-      : "Light shower likely";
+      : (kind === "snow" ? "Light flurries likely" : "Light shower likely");
   } else if (firstRainIdx > 0) {
     const h = hourly[firstRainIdx];
     const hrs = Math.max(1, Math.round((h.time - now) / 3600_000));
-    headlineText = `Rain in ${hrs}h`;
+    headlineText = `${kindCap} in ${hrs}h`;
     const until = rainWindowEnd > firstRainIdx
       ? ` – ${fmtHour(hourly[rainWindowEnd].time + 3600_000, tz)}`
       : "";
@@ -79,7 +95,8 @@ export function renderRainOutlook(root, weather, { onHourClick } = {}) {
     const nextWetDay = daily.findIndex((d, i) => i > 0 && (d.precip ?? 0) >= 0.5);
     if (nextWetDay > 0) {
       const d = daily[nextWetDay];
-      subText = `Next rain: ${fmtWeekday(d.time, tz)}`;
+      const kindNext = d.condition === "snow" ? "snow" : "rain";
+      subText = `Next ${kindNext}: ${fmtWeekday(d.time, tz)}`;
     } else if (daily.length) {
       subText = "Dry week ahead";
     } else {
@@ -102,6 +119,7 @@ export function renderRainOutlook(root, weather, { onHourClick } = {}) {
     cell.className = "rain-cell";
     if (Math.abs(h.time - nowTs) <= 30 * 60_000) cell.classList.add("now");
     if (onHourClick) cell.addEventListener("click", () => onHourClick(h.time));
+    if (h.condition === "snow") cell.classList.add("is-snow");
     const precip = h.precip ?? 0;
     const pop = h.pop ?? 0;
     const heightPct = precip > 0 ? Math.min(100, 15 + (precip / maxPrecip) * 85) : 0;
@@ -139,9 +157,11 @@ export function renderRainOutlook(root, weather, { onHourClick } = {}) {
       // Keep day labels to 2 letters so narrow bars don't clip.
       const dayLabel = fmtWeekday(d.time, tz).slice(0, 2).toUpperCase();
       if (i === 0) bar.classList.add("today");
+      if (d.condition === "snow") bar.classList.add("is-snow");
       const amountText = precip > 0 ? precip.toFixed(precip < 10 ? 1 : 0) : "";
       bar.innerHTML = `<span class="rain-week-amount">${amountText}</span><span class="rain-week-day">${dayLabel}</span>`;
-      bar.title = `${fmtWeekday(d.time, tz)} · ${precip.toFixed(1)} mm · ${d.pop ?? 0}% chance`;
+      const typeLabel = d.condition === "snow" ? "snow" : "rain";
+      bar.title = `${fmtWeekday(d.time, tz)} · ${precip.toFixed(1)} mm ${typeLabel} · ${d.pop ?? 0}% chance`;
       if (precip >= maxDaily * 0.75 && precip > 0.5) bar.classList.add("peak");
       week.appendChild(bar);
     });
