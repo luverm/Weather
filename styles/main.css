@@ -1309,6 +1309,174 @@ kbd {
   border: 1px solid rgba(154,209,255,0.25);
 }
 
+/* ---------- Rain outlook card ---------- */
+.extra-rain { display: grid; gap: 10px; align-content: start; }
+.extra-rain[hidden] { display: none; }
+.rain-outlook-head {
+  display: grid; gap: 2px; min-width: 0;
+}
+.rain-outlook-head strong {
+  font-size: 15px; font-weight: 600; letter-spacing: 0.01em;
+}
+.rain-outlook-sub {
+  font-size: 11.5px;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+.rain-outlook-24h {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  gap: 2px;
+  height: 42px;
+  padding: 2px 0;
+  align-items: end;
+}
+.rain-outlook-24h.is-dry::before {
+  content: "No rain in the next 24 hours";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--fg-dim);
+  pointer-events: none;
+}
+.rain-outlook-24h.is-dry .rain-cell { opacity: 0.5; }
+.rain-cell {
+  position: relative;
+  width: 100%; height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(
+    to top,
+    rgba(154,209,255, calc(var(--op, 0.3) * 0.85)) 0%,
+    rgba(154,209,255, calc(var(--op, 0.3) * 0.35)) 100%
+  );
+  border: 1px solid rgba(255,255,255,0.05);
+  display: flex; align-items: flex-end; justify-content: center;
+  overflow: hidden;
+  transition: filter 160ms var(--ease);
+}
+.rain-cell::after {
+  content: "";
+  position: absolute;
+  left: 1px; right: 1px; bottom: 0;
+  height: var(--h, 0%);
+  background: linear-gradient(
+    to top,
+    rgba(96,180,255, calc(var(--op, 0.5) + 0.15)) 0%,
+    rgba(180,220,255, var(--op, 0.5)) 100%
+  );
+  border-radius: 2px 2px 1px 1px;
+  box-shadow: 0 0 6px rgba(96,180,255, calc(var(--op, 0.5) * 0.5));
+  transition: height 320ms var(--ease);
+}
+.rain-cell:hover { filter: brightness(1.3); }
+.rain-cell.first-rain::before {
+  content: "";
+  position: absolute;
+  top: -2px; left: 50%;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  transform: translateX(-50%);
+  box-shadow: 0 0 6px var(--accent);
+}
+.rain-outlook-foot {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--fg-dim);
+}
+.rain-outlook-total {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+.rain-outlook-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+  height: 60px;
+  align-items: end;
+  margin-top: 2px;
+}
+.rain-week-bar {
+  position: relative;
+  width: 100%; height: 100%;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--stroke);
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  overflow: hidden;
+  padding-bottom: 1px;
+  transition: transform 160ms var(--ease);
+}
+.rain-week-bar:hover { transform: translateY(-1px); }
+.rain-week-bar::after {
+  content: "";
+  position: absolute;
+  left: 2px; right: 2px; bottom: 11px;
+  height: calc(var(--h, 0%) * 0.78);
+  min-height: 2px;
+  max-height: calc(100% - 13px);
+  background: linear-gradient(
+    to top,
+    rgba(96,180,255, var(--op, 0.5)),
+    rgba(180,220,255, calc(var(--op, 0.5) * 0.6))
+  );
+  border-radius: 3px;
+  transition: height 320ms var(--ease);
+}
+.rain-week-bar.today {
+  border-color: rgba(255, 230, 199, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(255,230,199,0.18);
+}
+.rain-week-bar.today .rain-week-day {
+  color: var(--fg);
+  font-weight: 600;
+}
+.rain-week-bar.peak::after {
+  background: linear-gradient(
+    to top,
+    rgba(154,209,255, 1),
+    rgba(200,230,255, 0.7)
+  );
+  box-shadow: 0 0 8px rgba(154,209,255, 0.5);
+}
+.rain-week-amount {
+  position: absolute;
+  top: 2px; left: 0; right: 0;
+  z-index: 1;
+  font-size: 9.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+  text-align: center;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+  line-height: 1;
+  pointer-events: none;
+}
+.rain-week-day {
+  position: absolute;
+  bottom: 2px; left: 0; right: 0;
+  z-index: 1;
+  font-size: 9px;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  text-align: center;
+  line-height: 1;
+  pointer-events: none;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
 /* ---------- Weekend snapshot chip ---------- */
 .weekend-chip {
   display: grid;
