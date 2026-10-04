@@ -6,6 +6,31 @@
 
 import { clock } from "./clock.js";
 
+// Mirror the comfort-strip palette so both views agree on what colour each
+// temperature should carry.
+function colorForTemp(t) {
+  if (t == null) return "rgba(255,255,255,0.1)";
+  const stops = [
+    [-15, "#3a4d8f"], [-5, "#4a78c2"], [5, "#3da9a1"], [12, "#5cc77a"],
+    [18, "#cdd86a"], [24, "#f0a557"], [30, "#e96a4d"], [36, "#a73838"],
+  ];
+  if (t <= stops[0][0]) return stops[0][1];
+  if (t >= stops[stops.length - 1][0]) return stops[stops.length - 1][1];
+  for (let i = 0; i < stops.length - 1; i++) {
+    const [lo, loC] = stops[i];
+    const [hi, hiC] = stops[i + 1];
+    if (t >= lo && t <= hi) return mixHex(loC, hiC, (t - lo) / (hi - lo));
+  }
+  return stops[stops.length - 1][1];
+}
+function mixHex(a, b, t) {
+  const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
+  const r = Math.round(((pa >> 16) & 0xff) + (((pb >> 16) & 0xff) - ((pa >> 16) & 0xff)) * t);
+  const g = Math.round(((pa >> 8) & 0xff) + (((pb >> 8) & 0xff) - ((pa >> 8) & 0xff)) * t);
+  const bl = Math.round((pa & 0xff) + ((pb & 0xff) - (pa & 0xff)) * t);
+  return `rgb(${r},${g},${bl})`;
+}
+
 const RANGE_HOURS = 24;
 
 export class Scrubber {
@@ -32,13 +57,35 @@ export class Scrubber {
     setInterval(() => { if (clock.isLive()) this._render(0); }, 30_000);
   }
 
-  setBounds({ start, sunrise, sunset }) {
+  setBounds({ start, sunrise, sunset, hours }) {
     this.start = start || Date.now();
     this.sunrise = sunrise;
     this.sunset = sunset;
     this._placeMarker(this.sunriseEl, sunrise, "Sunrise");
     this._placeMarker(this.sunsetEl, sunset, "Sunset");
+    this._applyTempGradient(hours);
     this._render(this._currentT());
+  }
+
+  // Paint the track background as a horizontal gradient coloured by hourly
+  // feels-like temperature across the 24h window, so the whole day's thermal
+  // story is readable at a glance.
+  _applyTempGradient(hours) {
+    if (!this.track || !hours?.length) return;
+    const totalMs = RANGE_HOURS * 3600_000;
+    const left = this.start - 3600_000;
+    const stops = [];
+    for (const h of hours) {
+      const rel = (h.time - left) / totalMs;
+      if (rel < 0 || rel > 1) continue;
+      const t = h.feelsLike ?? h.temp;
+      stops.push(`${colorForTemp(t)} ${(rel * 100).toFixed(1)}%`);
+    }
+    if (stops.length < 2) return;
+    this.track.style.setProperty(
+      "--temp-gradient",
+      `linear-gradient(90deg, ${stops.join(", ")})`
+    );
   }
 
   /** Called when we externally reset to "now" (e.g. search selected). */
