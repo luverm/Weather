@@ -261,6 +261,17 @@ function placeFromUrl() {
   } catch { return null; }
 }
 
+function offsetHoursFromUrl() {
+  try {
+    const q = new URLSearchParams(location.search);
+    const at = q.get("at");
+    if (at == null) return null;
+    const h = parseFloat(at);
+    if (!isFinite(h)) return null;
+    return h;
+  } catch { return null; }
+}
+
 async function useGeolocation() {
   ui.setLoading("Locating…");
   try {
@@ -412,6 +423,14 @@ installShortcuts({
   if (fromUrl) {
     places.add(fromUrl);
     await loadByCoords(fromUrl);
+    // Apply any ?at=hours offset the shared URL carried.
+    const offH = offsetHoursFromUrl();
+    if (offH != null) {
+      clock.setOffset(offH * 3600_000);
+      scrubber.sync();
+      if (app.weather) applyScene(app.weather);
+      ui.setScrubbing(!clock.isLive());
+    }
     return;
   }
   // Then prefer the most recent saved place — avoids the geolocation prompt

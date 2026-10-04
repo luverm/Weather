@@ -1600,7 +1600,20 @@ function bindShare() {
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
     ].filter(Boolean);
     const text = lines.join("\n");
-    const url = location.href; // includes ?lat/lon/name encoded by app.js
+    // Append ?at=<offset> when scrubbed off live so the share URL opens on
+    // whatever moment the user is looking at.
+    const scrubbing = document.documentElement.getAttribute("data-scrubbing") === "true";
+    let url = location.href;
+    if (scrubbing) {
+      const now = Date.now();
+      const sampledTs = window.__aether?.clock?.now?.();
+      if (sampledTs) {
+        const hours = Math.round((sampledTs - now) / 60_000) / 60;
+        const u = new URL(url);
+        u.searchParams.set("at", hours.toFixed(2));
+        url = u.toString();
+      }
+    }
     try {
       if (navigator.share) {
         await navigator.share({ title: `Aether — ${placeName}`, text, url });
