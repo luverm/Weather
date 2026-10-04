@@ -200,7 +200,7 @@ export const ui = {
       onHourClick: (ts) => state.handlers.onHourClick?.(ts),
     });
     startLocaltime(weather);
-    if (state.chart) state.chart.setHours(weather.hourly);
+    if (state.chart) state.chart.setHours(weather.hourly, { sunEvents: sunEventsFor(weather) });
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
@@ -427,6 +427,17 @@ function renderUvStrip(w) {
   } else {
     sub.textContent = "Low all day — no protection needed";
   }
+}
+
+// Collect sunrise/sunset events across the chart's 24h window.
+function sunEventsFor(w) {
+  if (!w?.daily?.length) return [];
+  const events = [];
+  for (const d of w.daily) {
+    if (d.sunrise) events.push({ kind: "sunrise", time: d.sunrise });
+    if (d.sunset) events.push({ kind: "sunset", time: d.sunset });
+  }
+  return events;
 }
 
 function uvCellClass(v) {

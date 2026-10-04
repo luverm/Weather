@@ -48,8 +48,9 @@ export class HourlyChart {
     return new Date(ts).getHours().toString().padStart(2, "0");
   }
 
-  setHours(hours) {
+  setHours(hours, { sunEvents } = {}) {
     this.hours = (hours || []).slice(0, 24);
+    this.sunEvents = sunEvents || [];
     this._draw();
     this.setCursor(null);
   }
@@ -261,6 +262,50 @@ export class HourlyChart {
         r.setAttribute("height", String(H));
         nightG.appendChild(r);
         runStart = null;
+      }
+    }
+
+    // Sunrise / sunset vertical markers (only when the event lies inside the
+    // chart's time window). Thin dashed line + a tiny glyph at the top.
+    let sunG = this.svg.querySelector("#chart-sun");
+    if (!sunG) {
+      sunG = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      sunG.setAttribute("id", "chart-sun");
+      sunG.setAttribute("class", "chart-sun");
+      // Insert right after night so events render above shading but below cursor.
+      const nightG = this.svg.querySelector("#chart-night");
+      nightG.parentNode.insertBefore(sunG, nightG.nextSibling);
+    }
+    sunG.innerHTML = "";
+    const first = this.hours[0]?.time, last = this.hours[this.hours.length - 1]?.time;
+    if (first != null && last != null && this.sunEvents?.length) {
+      const span = last - first;
+      for (const ev of this.sunEvents) {
+        if (!ev?.time || ev.time < first || ev.time > last) continue;
+        const x = PAD_LEFT + ((ev.time - first) / span) * innerW;
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", x.toFixed(1));
+        line.setAttribute("x2", x.toFixed(1));
+        line.setAttribute("y1", "2");
+        line.setAttribute("y2", String(H - PAD_BOT));
+        line.setAttribute("class", `sun-marker sun-${ev.kind}`);
+        sunG.appendChild(line);
+        // Tiny glyph: filled circle for sunrise, outlined for sunset.
+        const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        g.setAttribute("transform", `translate(${x.toFixed(1)}, 6)`);
+        g.setAttribute("class", `sun-marker-glyph sun-${ev.kind}`);
+        const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        c.setAttribute("r", "3");
+        c.setAttribute("cx", "0");
+        c.setAttribute("cy", "0");
+        g.appendChild(c);
+        // Horizon dash under circle.
+        const dash = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        dash.setAttribute("x1", "-5"); dash.setAttribute("x2", "5");
+        dash.setAttribute("y1", "4"); dash.setAttribute("y2", "4");
+        dash.setAttribute("class", "sun-marker-horizon");
+        g.appendChild(dash);
+        sunG.appendChild(g);
       }
     }
 
