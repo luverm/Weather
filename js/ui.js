@@ -608,6 +608,9 @@ function fmtTime(ts) {
 function renderSun(w) {
   el.sunRise.textContent = fmtTime(w.sunrise);
   el.sunSet.textContent = fmtTime(w.sunset);
+  // Clickable sun events: scrub the time to that moment.
+  bindSunClick(el.sunRise, w.sunrise);
+  bindSunClick(el.sunSet, w.sunset);
   if (w.sunrise && w.sunset) {
     const mins = Math.round((w.sunset - w.sunrise) / 60_000);
     const hh = Math.floor(mins / 60);
@@ -622,6 +625,14 @@ function renderSun(w) {
 // Golden hour / blue hour windows — a mid-latitude approximation that holds
 // up well without pulling in a full solar-elevation library. Hidden when
 // the day is too long (polar day) or too short to make sense of it.
+function bindSunClick(elem, ts) {
+  if (!elem) return;
+  if (!ts) { elem.classList.remove("clickable"); elem.onclick = null; return; }
+  elem.classList.add("clickable");
+  elem.title = `Jump the time scrubber to ${fmtTime(ts)}`;
+  elem.onclick = () => state.handlers.onHourClick?.(ts);
+}
+
 function renderSunHours(w) {
   if (!el.sunHours) return;
   if (!w.sunrise || !w.sunset) { el.sunHours.hidden = true; return; }
