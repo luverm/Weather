@@ -64,7 +64,36 @@ export class Scrubber {
     this._placeMarker(this.sunriseEl, sunrise, "Sunrise");
     this._placeMarker(this.sunsetEl, sunset, "Sunset");
     this._applyTempGradient(hours);
+    this._placeHourTicks();
     this._render(this._currentT());
+  }
+
+  // Light dashed tick marks every 3 hours across the track, with midnight /
+  // noon getting a slightly stronger tick for easier day-boundary reading.
+  _placeHourTicks() {
+    if (!this.track) return;
+    let g = this.track.querySelector(".scrubber-ticks");
+    if (!g) {
+      g = document.createElement("div");
+      g.className = "scrubber-ticks";
+      g.setAttribute("aria-hidden", "true");
+      this.track.insertBefore(g, this.track.firstChild);
+    }
+    g.innerHTML = "";
+    const left = this.start - 3600_000;
+    const totalMs = RANGE_HOURS * 3600_000;
+    for (let h = 0; h < RANGE_HOURS; h += 3) {
+      const ts = left + h * 3600_000;
+      const d = new Date(ts);
+      const hourOfDay = d.getHours();
+      const rel = h / RANGE_HOURS;
+      const tick = document.createElement("span");
+      tick.className = "scrubber-tick";
+      if (hourOfDay === 0) tick.classList.add("major-midnight");
+      else if (hourOfDay === 12) tick.classList.add("major-noon");
+      tick.style.left = `${(rel * 100).toFixed(2)}%`;
+      g.appendChild(tick);
+    }
   }
 
   // Paint the track background as a horizontal gradient coloured by hourly

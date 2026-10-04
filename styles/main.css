@@ -556,6 +556,25 @@ html[data-reduce-motion="true"] *::after {
   pointer-events: none;
   mix-blend-mode: screen;
 }
+.scrubber-ticks {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+.scrubber-tick {
+  position: absolute;
+  top: 25%; bottom: 25%;
+  width: 1px;
+  background: rgba(255,255,255,0.14);
+}
+.scrubber-tick.major-midnight {
+  background: rgba(100, 120, 180, 0.55);
+  top: 10%; bottom: 10%;
+}
+.scrubber-tick.major-noon {
+  background: rgba(255, 220, 160, 0.5);
+  top: 10%; bottom: 10%;
+}
 .scrubber-track:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
 .scrubber-fill {
   position: absolute; inset: 0;
