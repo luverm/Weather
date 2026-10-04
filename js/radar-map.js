@@ -110,8 +110,18 @@ export class RadarMap {
   // ---------- Frame loading ----------
 
   async _load() {
-    const res = await fetch(WEATHER_MAPS_URL);
-    if (!res.ok) throw new Error("RainViewer fetch failed");
+    let res;
+    try {
+      res = await fetch(WEATHER_MAPS_URL);
+    } catch (err) {
+      this.card?.setAttribute("data-unavailable", "offline");
+      throw err;
+    }
+    if (!res.ok) {
+      this.card?.setAttribute("data-unavailable", "offline");
+      throw new Error("RainViewer fetch failed");
+    }
+    this.card?.removeAttribute("data-unavailable");
     const data = await res.json();
     this._host = data.host || this._host;
 

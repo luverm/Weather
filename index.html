@@ -410,6 +410,14 @@
         </header>
         <div class="radar-map-wrap">
           <div id="radar-map" class="radar-map" tabindex="0" aria-label="Precipitation map"></div>
+          <div class="radar-unavailable" aria-hidden="true">
+            <svg viewBox="0 0 48 48" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="24" cy="24" r="4"/>
+              <path d="M24 10v4M24 34v4M10 24h4M34 24h4M14 14l3 3M31 31l3 3M14 34l3-3M31 17l3-3"/>
+            </svg>
+            <strong>Radar unavailable</strong>
+            <span>Offline or the radar service didn't answer. Hourly chart and nowcast still work.</span>
+          </div>
           <div class="radar-legend" aria-hidden="true">
             <span class="swatch" style="background:#2b7"></span>
             <span class="swatch" style="background:#2c9"></span>
