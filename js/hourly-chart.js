@@ -9,12 +9,13 @@ const PAD_TOP = 16;
 const PAD_BOT = 22;
 
 export class HourlyChart {
-  constructor({ svgEl, hoverEl, popoverEl, legendEl, onHoverHour, getUnit, getTimezone }) {
+  constructor({ svgEl, hoverEl, popoverEl, legendEl, onHoverHour, onHoverSync, getUnit, getTimezone }) {
     this.svg = svgEl;
     this.hoverEl = hoverEl;
     this.popover = popoverEl;
     this.legendEl = legendEl;
     this.onHoverHour = onHoverHour;
+    this.onHoverSync = onHoverSync;
     this.getUnit = getUnit || (() => "C");
     this.getTimezone = getTimezone || (() => null);
     this.hours = [];
@@ -213,6 +214,7 @@ export class HourlyChart {
       cursor.setAttribute("x1", p.x); cursor.setAttribute("x2", p.x);
       dot.setAttribute("cx", p.x); dot.setAttribute("cy", p.y);
       this._positionPopover(p, h);
+      this.onHoverSync?.(i);
     });
     this.svg.addEventListener("pointerleave", () => {
       if (this.hoverEl) this.hoverEl.hidden = true;
@@ -220,6 +222,7 @@ export class HourlyChart {
         this.popover.classList.remove("show");
         this.popover.hidden = true;
       }
+      this.onHoverSync?.(null);
     });
     this.svg.addEventListener("click", (e) => {
       const i = toHourIndex(e);

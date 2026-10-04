@@ -155,6 +155,7 @@ export const ui = {
       popoverEl: el.chartPopover,
       legendEl: document.querySelector(".chart-legend"),
       onHoverHour: (ts) => state.handlers.onHourClick?.(ts),
+      onHoverSync: (idx) => state.comfortStrip?.highlight(idx),
       getUnit: () => state.unit,
       getTimezone: () => state.weather?.timezone,
     });
