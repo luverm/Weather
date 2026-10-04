@@ -146,6 +146,26 @@ export class HourlyChart {
     this._draw();
     this._applySeriesVisibility();
     this.setCursor(null);
+    // Nudge the "now" line forward every minute without a full redraw.
+    if (this._nowTicker) clearInterval(this._nowTicker);
+    this._nowTicker = setInterval(() => this._updateNowLine(), 60_000);
+  }
+
+  _updateNowLine() {
+    const line = this.svg.querySelector("#chart-now");
+    if (!line || !this.hours.length) return;
+    const first = this.hours[0].time;
+    const last = this.hours[this.hours.length - 1].time;
+    const nowTs = Date.now();
+    const innerW = W - PAD_LEFT - PAD_RIGHT;
+    if (nowTs >= first && nowTs <= last) {
+      const xNow = PAD_LEFT + ((nowTs - first) / (last - first)) * innerW;
+      line.setAttribute("x1", xNow.toFixed(1));
+      line.setAttribute("x2", xNow.toFixed(1));
+    } else {
+      line.setAttribute("x1", "-10");
+      line.setAttribute("x2", "-10");
+    }
   }
 
   refresh() { this._draw(); }
@@ -421,6 +441,28 @@ export class HourlyChart {
         dash.setAttribute("class", "sun-marker-horizon");
         g.appendChild(dash);
         sunG.appendChild(g);
+      }
+    }
+
+    // "Now" marker: thin vertical line at the real-time timestamp (unaffected
+    // by the scrubber). Stays visible when the cursor is hidden so you always
+    // see where "now" is on the hourly curve.
+    const nowLine = this.svg.querySelector("#chart-now");
+    if (nowLine && this.hours.length) {
+      const first = this.hours[0].time;
+      const last = this.hours[this.hours.length - 1].time;
+      const nowTs = Date.now();
+      if (nowTs >= first && nowTs <= last) {
+        const span = last - first;
+        const xNow = PAD_LEFT + ((nowTs - first) / span) * innerW;
+        nowLine.setAttribute("x1", xNow.toFixed(1));
+        nowLine.setAttribute("x2", xNow.toFixed(1));
+        nowLine.setAttribute("y1", String(PAD_TOP));
+        nowLine.setAttribute("y2", String(H - PAD_BOT));
+        nowLine.style.opacity = "";
+      } else {
+        nowLine.setAttribute("x1", "-10");
+        nowLine.setAttribute("x2", "-10");
       }
     }
 
