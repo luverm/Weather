@@ -70,6 +70,17 @@ export class Scrubber {
     this._render(this._currentT());
   }
 
+  _nearestTempAt(ts) {
+    if (!this._hours?.length) return null;
+    let best = null, bestDiff = Infinity;
+    for (const h of this._hours) {
+      const diff = Math.abs(h.time - ts);
+      if (diff < bestDiff) { bestDiff = diff; best = h; }
+    }
+    if (!best || best.temp == null) return null;
+    return Math.round(best.temp);
+  }
+
   // Light dashed tick marks every 3 hours across the track, with midnight /
   // noon getting a slightly stronger tick for easier day-boundary reading.
   _placeHourTicks() {
@@ -102,6 +113,7 @@ export class Scrubber {
   // feels-like temperature across the 24h window, so the whole day's thermal
   // story is readable at a glance.
   _applyTempGradient(hours) {
+    this._hours = hours || [];
     if (!this.track || !hours?.length) return;
     const totalMs = RANGE_HOURS * 3600_000;
     const left = this.start - 3600_000;
@@ -242,13 +254,17 @@ export class Scrubber {
       }
     }
 
-    // Floating time tooltip above the thumb — only shows while scrubbing.
+    // Floating tooltip above the thumb — shows time (+ sampled temperature,
+    // when the host supplied an hourly array) while scrubbing.
     if (this.tooltipEl) {
       const scrubbing = !clock.isLive();
       this.tooltipEl.classList.toggle("show", scrubbing && this.dragging);
       if (scrubbing) {
         const short = d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
-        this.tooltipEl.textContent = short;
+        const sampledTemp = this._nearestTempAt(time);
+        this.tooltipEl.textContent = sampledTemp != null
+          ? `${sampledTemp}° · ${short}`
+          : short;
         this.tooltipEl.style.left = `${(t * 100).toFixed(2)}%`;
       }
     }
