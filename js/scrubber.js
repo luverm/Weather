@@ -35,7 +35,7 @@ const RANGE_HOURS = 24;
 
 export class Scrubber {
   constructor({ trackEl, thumbEl, fillEl, timeEl, deltaEl, resetEl,
-                sunriseEl, sunsetEl, appEl, onScrub }) {
+                sunriseEl, sunsetEl, appEl, onScrub, onCrossSunEvent }) {
     this.track = trackEl;
     this.thumb = thumbEl;
     this.fill = fillEl;
@@ -46,6 +46,7 @@ export class Scrubber {
     this.sunsetEl = sunsetEl;
     this.appEl = appEl; // receives data-scrubbing attribute
     this.onScrub = onScrub;
+    this.onCrossSunEvent = onCrossSunEvent;
     this.dragging = false;
     this.start = Date.now();
     this.sunrise = null;
@@ -193,13 +194,29 @@ export class Scrubber {
   }
 
   _setOffset(offset) {
+    const prevNow = clock.now();
     clock.setOffset(offset);
     // Snap "close enough" to live — prevents 0.2 min drift when releasing.
     if (Math.abs(offset) < 5 * 60_000) clock.setOffset(0);
     const scrubbing = !clock.isLive();
     this.appEl?.setAttribute("data-scrubbing", scrubbing ? "true" : "false");
     this._render(this._currentT());
+    this._maybeAnnounceCrossing(prevNow, clock.now());
     this.onScrub?.(clock.offset());
+  }
+
+  // Toast when the scrubber slides across sunrise or sunset — gives a
+  // tangible beat for photographers planning around the golden hour and
+  // makes the sky-scene handoff feel intentional.
+  _maybeAnnounceCrossing(prev, next) {
+    if (!this.appEl) return;
+    const announce = (ts, label) => {
+      if (!ts) return;
+      const crossed = (prev < ts && next >= ts) || (prev > ts && next <= ts);
+      if (crossed && this.onCrossSunEvent) this.onCrossSunEvent(label, ts);
+    };
+    announce(this.sunrise, "Sunrise");
+    announce(this.sunset, "Sunset");
   }
 
   _render(t) {

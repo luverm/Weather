@@ -193,6 +193,10 @@ const scrubber = new Scrubber({
     applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
   },
+  onCrossSunEvent: (label, ts) => {
+    const t = new Date(ts).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+    ui.showToast(`${label} · ${t}`);
+  },
 });
 
 // ---------- Load flow ----------
