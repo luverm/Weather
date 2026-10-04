@@ -440,10 +440,48 @@ function updateDocumentTitle() {
   const temp = state.weather?.temp;
   if (temp == null || !place) {
     document.title = "Aether — Interactive Weather";
+    updateFavicon(null, null);
     return;
   }
   const t = Math.round(state.unit === "F" ? temp * 9 / 5 + 32 : temp);
   document.title = `${t}°${state.unit} · ${place} — Aether`;
+  updateFavicon(t, state.weather?.condition);
+}
+
+// Dynamic favicon: temperature number inside a condition-tinted ring.
+function updateFavicon(temp, condition) {
+  const link = document.querySelector('link[rel="icon"]');
+  if (!link) return;
+  if (temp == null) {
+    link.href = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='18' fill='%23fff1c9'/%3E%3C/svg%3E";
+    return;
+  }
+  const bg = conditionBg(condition);
+  const fg = conditionFg(condition);
+  const label = String(temp);
+  // Larger font for 2-digit numbers; shrink for 3-digit (e.g. 110°F or -20°).
+  const fontSize = label.length <= 2 ? 36 : label.length === 3 ? 28 : 22;
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>` +
+    `<rect width='64' height='64' rx='14' fill='${bg}'/>` +
+    `<text x='32' y='34' text-anchor='middle' dominant-baseline='central' ` +
+    `font-family='-apple-system,Segoe UI,Roboto,sans-serif' font-weight='600' ` +
+    `font-size='${fontSize}' fill='${fg}'>${label}°</text></svg>`;
+  link.href = "data:image/svg+xml," + encodeURIComponent(svg);
+}
+
+function conditionBg(c) {
+  switch (c) {
+    case "clear": return "#f0b060";
+    case "clouds": return "#5c7897";
+    case "rain": return "#4575b4";
+    case "snow": return "#d8e4f0";
+    case "storm": return "#2d3461";
+    case "fog": return "#8894a3";
+    default: return "#2d4a7a";
+  }
+}
+function conditionFg(c) {
+  return c === "snow" ? "#2d4a7a" : "#ffffff";
 }
 
 function sunEventsFor(w) {
