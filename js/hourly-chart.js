@@ -403,6 +403,39 @@ export class HourlyChart {
       }
     }
 
+    // Midnight marker — thin vertical rule where the local day flips over.
+    // Reads out of the hour timestamps so it stays in sync with the chart's
+    // own timezone handling.
+    let midG = this.svg.querySelector("#chart-midnight");
+    if (!midG) {
+      midG = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      midG.setAttribute("id", "chart-midnight");
+      midG.setAttribute("class", "chart-midnight");
+      const nightG = this.svg.querySelector("#chart-night");
+      nightG.parentNode.insertBefore(midG, nightG.nextSibling);
+    }
+    midG.innerHTML = "";
+    for (let i = 1; i < this.hours.length; i++) {
+      const prevHour = this._hourOf(this.hours[i - 1].time);
+      const curHour = this._hourOf(this.hours[i].time);
+      if (prevHour === "23" && curHour === "00") {
+        const x = iToX(i - 0.5);
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", x.toFixed(1));
+        line.setAttribute("x2", x.toFixed(1));
+        line.setAttribute("y1", String(PAD_TOP));
+        line.setAttribute("y2", String(H - PAD_BOT));
+        line.setAttribute("class", "midnight-marker");
+        midG.appendChild(line);
+        const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        label.setAttribute("x", (x + 2).toFixed(1));
+        label.setAttribute("y", String(PAD_TOP + 10));
+        label.setAttribute("class", "midnight-label");
+        label.textContent = "next day";
+        midG.appendChild(label);
+      }
+    }
+
     // Sunrise / sunset vertical markers (only when the event lies inside the
     // chart's time window). Thin dashed line + a tiny glyph at the top.
     let sunG = this.svg.querySelector("#chart-sun");
