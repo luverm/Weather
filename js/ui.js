@@ -148,6 +148,7 @@ export const ui = {
       svgEl: el.chartSvg,
       hoverEl: el.chartHover,
       popoverEl: el.chartPopover,
+      legendEl: document.querySelector(".chart-legend"),
       onHoverHour: (ts) => state.handlers.onHourClick?.(ts),
       getUnit: () => state.unit,
       getTimezone: () => state.weather?.timezone,

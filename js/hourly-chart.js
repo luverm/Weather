@@ -9,16 +9,65 @@ const PAD_TOP = 16;
 const PAD_BOT = 22;
 
 export class HourlyChart {
-  constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit, getTimezone }) {
+  constructor({ svgEl, hoverEl, popoverEl, legendEl, onHoverHour, getUnit, getTimezone }) {
     this.svg = svgEl;
     this.hoverEl = hoverEl;
     this.popover = popoverEl;
+    this.legendEl = legendEl;
     this.onHoverHour = onHoverHour;
     this.getUnit = getUnit || (() => "C");
     this.getTimezone = getTimezone || (() => null);
     this.hours = [];
     this.points = [];
+    // Series visibility — persisted per-user.
+    this.series = this._restoreSeries();
     this._bind();
+    this._bindLegend();
+  }
+
+  _restoreSeries() {
+    const defaults = { feels: true, gust: true, precip: true };
+    try {
+      const raw = localStorage.getItem("aether:chart-series");
+      if (!raw) return defaults;
+      const parsed = JSON.parse(raw);
+      return { ...defaults, ...parsed };
+    } catch { return defaults; }
+  }
+
+  _persistSeries() {
+    try { localStorage.setItem("aether:chart-series", JSON.stringify(this.series)); } catch { /* ignore */ }
+  }
+
+  _bindLegend() {
+    if (!this.legendEl) return;
+    // Reflect current visibility on each chip.
+    for (const key of ["feels", "gust", "precip"]) {
+      const chip = this.legendEl.querySelector(`[data-series="${key}"]`);
+      if (!chip) continue;
+      chip.setAttribute("aria-pressed", String(!!this.series[key]));
+      chip.classList.toggle("off", !this.series[key]);
+    }
+    this.legendEl.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-series]");
+      if (!btn) return;
+      const key = btn.dataset.series;
+      this.series[key] = !this.series[key];
+      btn.setAttribute("aria-pressed", String(this.series[key]));
+      btn.classList.toggle("off", !this.series[key]);
+      this._persistSeries();
+      this._applySeriesVisibility();
+    });
+    this._applySeriesVisibility();
+  }
+
+  _applySeriesVisibility() {
+    const feelsEl = this.svg.querySelector("#chart-feels-line");
+    const gustEl = this.svg.querySelector("#chart-gust-line");
+    const precipEl = this.svg.querySelector("#chart-precip");
+    if (feelsEl) feelsEl.style.display = this.series.feels ? "" : "none";
+    if (gustEl) gustEl.style.display = this.series.gust ? "" : "none";
+    if (precipEl) precipEl.style.display = this.series.precip ? "" : "none";
   }
 
   _formatHour(ts) {
@@ -52,6 +101,7 @@ export class HourlyChart {
     this.hours = (hours || []).slice(0, 24);
     this.sunEvents = sunEvents || [];
     this._draw();
+    this._applySeriesVisibility();
     this.setCursor(null);
   }
 
