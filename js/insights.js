@@ -99,5 +99,27 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     });
   }
 
+  // 6. Longest dry streak in the 7-day outlook.
+  if (days.length >= 2) {
+    let streak = 0, best = 0, bestStart = null, curStart = null;
+    for (const d of days) {
+      const dry = (d.precip ?? 0) < 0.5;
+      if (dry) {
+        if (streak === 0) curStart = d;
+        streak++;
+        if (streak > best) { best = streak; bestStart = curStart; }
+      } else {
+        streak = 0;
+      }
+    }
+    if (best >= 3 && bestStart) {
+      out.push({
+        icon: ICONS.sun, label: "Dry streak",
+        value: `${best} days from ${dow(bestStart.time)}`,
+        ts: bestStart.sunrise || bestStart.time,
+      });
+    }
+  }
+
   return out.slice(0, 6);
 }
