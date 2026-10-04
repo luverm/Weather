@@ -72,6 +72,7 @@ export function installShortcuts(handlers) {
     if (key === "g" || key === "G") { handlers.jumpGoldenHour?.(); e.preventDefault(); return; }
     if (key === "r" || key === "R") { handlers.refresh?.(); e.preventDefault(); return; }
     if (key === "s" || key === "S") { handlers.toggleSettings?.(); e.preventDefault(); return; }
+    if (key === "0") { handlers.jumpMidnight?.(); e.preventDefault(); return; }
     if (key === "t" || key === "T") {
       handlers.jumpExtreme?.(e.shiftKey ? "warmest-week" : "warmest");
       e.preventDefault(); return;

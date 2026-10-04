@@ -342,6 +342,27 @@ installShortcuts({
   resetScrubber: () => scrubber.reset(),
   refresh: () => refreshWeather(),
   toggleSettings: () => document.getElementById("settings-btn")?.click(),
+  jumpMidnight: () => {
+    if (!app.weather) return;
+    // Build "next local midnight" from the live time, respecting the location
+    // timezone if available.
+    const tz = app.weather.timezone && app.weather.timezone !== "auto"
+      ? app.weather.timezone : undefined;
+    const now = new Date();
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+    }).formatToParts(now);
+    const hh = parseInt(parts.find((p) => p.type === "hour")?.value ?? "0", 10);
+    const mm = parseInt(parts.find((p) => p.type === "minute")?.value ?? "0", 10);
+    // Minutes until the next midnight in the city's clock.
+    const minsToMidnight = (24 - hh) * 60 - mm;
+    const target = Date.now() + minsToMidnight * 60_000;
+    clock.setOffset(target - Date.now());
+    scrubber.sync();
+    applyScene(app.weather);
+    ui.setScrubbing(!clock.isLive());
+    ui.showToast("Jumped to local midnight");
+  },
   cyclePlace: (dir) => {
     const list = places.all();
     if (list.length < 2) return;
