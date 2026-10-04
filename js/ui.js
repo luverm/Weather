@@ -928,9 +928,10 @@ function renderPollen(pollen) {
     const v = p.value ?? 0;
     const pct = pollenScale(v);
     const level = pollenBand(v);
+    const glyph = pollenGlyph(p.key || p.label);
     return `
       <div class="pollen-item" data-level="${level}">
-        <span class="pollen-item-label">${escapeHtml(p.label)}</span>
+        <span class="pollen-item-label"><span class="pollen-glyph" aria-hidden="true">${glyph}</span>${escapeHtml(p.label)}</span>
         <span class="pollen-item-track"><span class="pollen-item-fill" style="width:${pct}%"></span></span>
         <span class="pollen-item-value">${v.toFixed(1)}</span>
       </div>`;
@@ -944,6 +945,21 @@ function pollenScale(v) {
   if (v < 5) return 20 + ((v - 0.5) / 4.5) * 40;
   if (v < 20) return 60 + ((v - 5) / 15) * 30;
   return Math.min(100, 90 + ((v - 20) / 20) * 10);
+}
+
+function pollenGlyph(key) {
+  const k = String(key || "").toLowerCase();
+  const stroke = 'fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"';
+  if (k.includes("tree")) {
+    return `<svg viewBox="0 0 16 16" width="12" height="12"><path d="M8 2l3 5h-2v3H7V7H5z" ${stroke}/><rect x="7" y="10" width="2" height="4" ${stroke}/></svg>`;
+  }
+  if (k.includes("grass")) {
+    return `<svg viewBox="0 0 16 16" width="12" height="12"><path d="M3 14c1-4 3-7 5-7M8 14c1-4 3-7 5-7M8 14V8" ${stroke}/></svg>`;
+  }
+  if (k.includes("weed")) {
+    return `<svg viewBox="0 0 16 16" width="12" height="12"><path d="M8 14V5m0 0l-3-3m3 3l3-3m-3 3v3M5 8l-2-1m2 1l-2 2m8-2l2-1m-2 1l2 2" ${stroke}/></svg>`;
+  }
+  return `<svg viewBox="0 0 16 16" width="12" height="12"><circle cx="8" cy="8" r="4" ${stroke}/></svg>`;
 }
 
 function pollenBand(v) {

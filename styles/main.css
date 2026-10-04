@@ -747,11 +747,22 @@ html[data-reduce-motion="true"] *::after {
   font-variant-numeric: tabular-nums;
 }
 .pollen-item-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-size: 10px;
   color: var(--fg-dim);
 }
+.pollen-glyph {
+  display: inline-flex;
+  color: inherit;
+  opacity: 0.85;
+}
+.pollen-item[data-level="moderate"] .pollen-glyph { color: #ffdc8a; }
+.pollen-item[data-level="high"] .pollen-glyph { color: #ffbb92; }
+.pollen-item[data-level="very-high"] .pollen-glyph { color: #ff9a9a; }
 .pollen-item-track {
   position: relative;
   height: 6px;
