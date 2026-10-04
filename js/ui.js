@@ -1224,6 +1224,14 @@ function renderDailyDelta(days) {
   if (Math.abs(dPop) >= 20) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
   }
+  // Add weekly spread suffix: "range 10° – 24°".
+  const highs = days.map((d) => d.tempMax).filter((v) => v != null);
+  const lows = days.map((d) => d.tempMin).filter((v) => v != null);
+  if (highs.length && lows.length) {
+    const wMax = Math.round(convertTemp(Math.max(...highs)));
+    const wMin = Math.round(convertTemp(Math.min(...lows)));
+    parts.push(`range ${wMin}° – ${wMax}°`);
+  }
   el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
 }
 
