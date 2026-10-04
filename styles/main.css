@@ -124,6 +124,27 @@ ul { list-style: none; margin: 0; padding: 0; }
   background: radial-gradient(circle at 35% 30%, #fff, var(--accent) 60%, transparent 70%);
   box-shadow: 0 0 24px var(--accent);
   animation: breathe 4.5s ease-in-out infinite;
+  transition: box-shadow 400ms var(--ease);
+}
+[data-condition="clouds"] .brand-mark {
+  background: radial-gradient(circle at 35% 30%, #e0e4ec, #92a0b4 60%, transparent 70%);
+  box-shadow: 0 0 20px rgba(148, 162, 184, 0.5);
+}
+[data-condition="rain"] .brand-mark {
+  background: radial-gradient(circle at 35% 30%, #c3dfff, #4a7eb8 60%, transparent 70%);
+  box-shadow: 0 0 24px rgba(104, 144, 196, 0.65);
+}
+[data-condition="snow"] .brand-mark {
+  background: radial-gradient(circle at 35% 30%, #ffffff, #d4e4ea 60%, transparent 70%);
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.5);
+}
+[data-condition="storm"] .brand-mark {
+  background: radial-gradient(circle at 35% 30%, #c4b5fd, #4a3fa6 60%, transparent 70%);
+  box-shadow: 0 0 24px rgba(124, 108, 220, 0.7);
+}
+[data-condition="fog"] .brand-mark {
+  background: radial-gradient(circle at 35% 30%, #d8dde3, #8893a3 60%, transparent 70%);
+  box-shadow: 0 0 20px rgba(154, 162, 180, 0.4);
 }
 .brand-name {
   font-weight: 600; font-size: 14px;
