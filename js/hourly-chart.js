@@ -65,7 +65,7 @@ export class HourlyChart {
     this._applySeriesVisibility();
   }
 
-  _addExtremeMark(group, x, y, label, kind) {
+  _addExtremeMark(group, x, y, label, kind, ts) {
     const svgNS = "http://www.w3.org/2000/svg";
     const g = document.createElementNS(svgNS, "g");
     g.setAttribute("class", `extreme-mark ex-${kind}`);
@@ -85,6 +85,20 @@ export class HourlyChart {
     text.setAttribute("class", "extreme-label");
     text.textContent = label;
     g.appendChild(text);
+    if (ts && this.onHoverHour) {
+      // Make the whole marker a scrub trigger. SVG pointer events ignore the
+      // transparent space between triangle and label, so overlay a hit rect.
+      const hit = document.createElementNS(svgNS, "rect");
+      hit.setAttribute("x", "-14");
+      hit.setAttribute("y", kind === "peak" ? "-16" : "-2");
+      hit.setAttribute("width", "28");
+      hit.setAttribute("height", "20");
+      hit.setAttribute("fill", "transparent");
+      hit.style.cursor = "pointer";
+      hit.addEventListener("click", (e) => { e.stopPropagation(); this.onHoverHour(ts); });
+      g.appendChild(hit);
+      g.classList.add("clickable");
+    }
     group.appendChild(g);
   }
 
@@ -430,10 +444,10 @@ export class HourlyChart {
       const unitLocal = this.getUnit();
       const tempToStr = (v) => `${Math.round(unitLocal === "F" ? v * 9 / 5 + 32 : v)}°`;
       if (iMax >= 0 && iMax !== iMin) {
-        this._addExtremeMark(peakG, iToX(iMax), tToY(tMaxVal), tempToStr(tMaxVal), "peak");
+        this._addExtremeMark(peakG, iToX(iMax), tToY(tMaxVal), tempToStr(tMaxVal), "peak", this.hours[iMax].time);
       }
       if (iMin >= 0 && iMin !== iMax) {
-        this._addExtremeMark(peakG, iToX(iMin), tToY(tMinVal), tempToStr(tMinVal), "trough");
+        this._addExtremeMark(peakG, iToX(iMin), tToY(tMinVal), tempToStr(tMinVal), "trough", this.hours[iMin].time);
       }
     }
 

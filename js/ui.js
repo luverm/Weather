@@ -378,11 +378,8 @@ function renderMetrics(w) {
 function renderUvStrip(w) {
   const sub = el.metricUVSub;
   if (!el.uvStrip) {
-    if (sub) {
-      sub.textContent = w.uvPeak?.time
-        ? `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`
-        : "peak —";
-    }
+    if (sub) sub.innerHTML = formatUvPeakSub(w);
+    bindUvPeakClick(sub, w);
     return;
   }
   const hourly = (w.hourly || []).filter((h) => h.uv != null);
@@ -391,9 +388,8 @@ function renderUvStrip(w) {
   if (!day.length || day.every((h) => h.uv <= 0)) {
     el.uvStrip.innerHTML = "";
     el.uvStrip.hidden = true;
-    if (sub) sub.textContent = w.uvPeak?.time
-      ? `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`
-      : "peak —";
+    if (sub) sub.innerHTML = formatUvPeakSub(w);
+    bindUvPeakClick(sub, w);
     return;
   }
   el.uvStrip.hidden = false;
@@ -428,9 +424,10 @@ function renderUvStrip(w) {
     const endTs = day[lastHigh].time + 3600_000; // end-of-hour
     const end = fmtTime(endTs);
     const peak = w.uvPeak && w.uvPeak.value >= 3
-      ? ` · peak ${Math.round(w.uvPeak.value)}`
+      ? ` · peak <span class="uv-peak-time" role="button" tabindex="0">${Math.round(w.uvPeak.value)} at ${escapeHtml(fmtTime(w.uvPeak.time))}</span>`
       : "";
-    sub.textContent = `Protect ${start} – ${end}${peak}`;
+    sub.innerHTML = `Protect ${escapeHtml(start)} – ${escapeHtml(end)}${peak}`;
+    bindUvPeakClick(sub, w);
   } else {
     sub.textContent = "Low all day — no protection needed";
   }
@@ -445,6 +442,22 @@ function sunEventsFor(w) {
     if (d.sunset) events.push({ kind: "sunset", time: d.sunset });
   }
   return events;
+}
+
+function formatUvPeakSub(w) {
+  if (!w?.uvPeak?.time) return "peak —";
+  return `peak ${Math.round(w.uvPeak.value)} at <span class="uv-peak-time" role="button" tabindex="0">${escapeHtml(fmtTime(w.uvPeak.time))}</span>`;
+}
+
+function bindUvPeakClick(sub, w) {
+  if (!sub || !w?.uvPeak?.time) return;
+  const target = sub.querySelector(".uv-peak-time");
+  if (!target) return;
+  const handler = () => state.handlers.onHourClick?.(w.uvPeak.time);
+  target.addEventListener("click", handler);
+  target.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handler(); }
+  });
 }
 
 function uvCellClass(v) {

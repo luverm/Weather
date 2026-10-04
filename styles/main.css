@@ -619,6 +619,18 @@ html[data-reduce-motion="true"] *::after {
   position: relative;
 }
 .uv-cell:focus-visible { outline: 1.5px solid #fff; outline-offset: 1px; }
+.uv-peak-time {
+  color: var(--fg);
+  cursor: pointer;
+  border-bottom: 1px dotted rgba(255,255,255,0.35);
+  transition: color 160ms var(--ease), border-color 160ms var(--ease);
+}
+.uv-peak-time:hover,
+.uv-peak-time:focus-visible {
+  color: #fff1c9;
+  border-bottom-color: #fff1c9;
+  outline: none;
+}
 .uv-cell.lv0 { background: rgba(255,255,255,0.08); }
 .uv-cell.lv1 { background: #4ade80; }
 .uv-cell.lv2 { background: #facc15; }
@@ -939,6 +951,9 @@ html[data-reduce-motion="true"] *::after {
 .chart-extremes .ex-peak .extreme-label { fill: #ffcfae; }
 .chart-extremes .ex-trough polygon { fill: #9ad1ff; opacity: 0.9; }
 .chart-extremes .ex-trough .extreme-label { fill: #c3dfff; }
+.chart-extremes .extreme-mark.clickable:hover polygon { opacity: 1; transform: scale(1.3); transform-origin: center; }
+.chart-extremes .extreme-mark.clickable:hover .extreme-label { fill: #fff; }
+.chart-extremes .extreme-mark { transition: transform 160ms var(--ease); }
 
 /* Sunrise / sunset vertical markers on the hourly chart. */
 .chart-sun .sun-marker {
