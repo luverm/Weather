@@ -52,6 +52,11 @@ const el = {
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  sunHours: $("#sun-hours"),
+  sunGoldenAm: $("#sun-golden-am"),
+  sunGoldenPm: $("#sun-golden-pm"),
+  sunBlueAm: $("#sun-blue-am"),
+  sunBluePm: $("#sun-blue-pm"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -609,8 +614,33 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderSunHours(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+// Golden hour / blue hour windows — a mid-latitude approximation that holds
+// up well without pulling in a full solar-elevation library. Hidden when
+// the day is too long (polar day) or too short to make sense of it.
+function renderSunHours(w) {
+  if (!el.sunHours) return;
+  if (!w.sunrise || !w.sunset) { el.sunHours.hidden = true; return; }
+  const dayLen = w.sunset - w.sunrise;
+  if (dayLen < 90 * 60_000 || dayLen > 20 * 3600_000) {
+    el.sunHours.hidden = true;
+    return;
+  }
+  el.sunHours.hidden = false;
+  const H = 3600_000, HALF = H / 2;
+  const g1a = w.sunrise, g1b = w.sunrise + H;
+  const g2a = w.sunset - H, g2b = w.sunset;
+  const b1a = w.sunrise - HALF, b1b = w.sunrise;
+  const b2a = w.sunset,         b2b = w.sunset + HALF;
+  const r = (a, b) => `${fmtTime(a)}–${fmtTime(b)}`;
+  el.sunGoldenAm.textContent = r(g1a, g1b);
+  el.sunGoldenPm.textContent = r(g2a, g2b);
+  el.sunBlueAm.textContent = r(b1a, b1b);
+  el.sunBluePm.textContent = r(b2a, b2b);
 }
 
 function scheduleSunArc(w) {

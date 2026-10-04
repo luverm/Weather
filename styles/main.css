@@ -1080,6 +1080,35 @@ kbd {
 .sun-item { display: grid; gap: 2px; }
 .sun-label { font-size: 10.5px; color: var(--fg-dim); letter-spacing: 0.14em; text-transform: uppercase; }
 .sun-item strong { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.sun-hours {
+  display: grid;
+  gap: 3px;
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--stroke);
+}
+.sun-hours[hidden] { display: none; }
+.sun-hours-row {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr;
+  gap: 8px;
+  align-items: center;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-muted);
+}
+.sun-hours-label {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 9.5px;
+  font-weight: 600;
+}
+.sun-hours-label.sun-hours-golden { color: #ffd9a8; }
+.sun-hours-label.sun-hours-blue { color: #9ab6e0; }
+.sun-hours-row span:not(.sun-hours-label) {
+  text-align: right;
+  color: var(--fg);
+}
 .sun-arc {
   width: 100%;
   height: 76px;
