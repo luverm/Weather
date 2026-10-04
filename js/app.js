@@ -344,17 +344,39 @@ installShortcuts({
     ui.setScrubbing(!clock.isLive());
   },
   jumpExtreme: (which) => {
-    if (!app.weather?.hourly?.length) return;
-    const temps = app.weather.hourly.map((h) => h.temp).filter((v) => v != null);
-    if (!temps.length) return;
-    const target = which === "coldest" ? Math.min(...temps) : Math.max(...temps);
-    const hit = app.weather.hourly.find((h) => h.temp === target);
-    if (!hit) return;
-    clock.setOffset(hit.time - Date.now());
+    if (!app.weather) return;
+    const weekly = which === "warmest-week" || which === "coldest-week";
+    let target = null, label = "";
+    if (weekly) {
+      const days = (app.weather.daily || []).filter((d) =>
+        which === "coldest-week" ? d.tempMin != null : d.tempMax != null
+      );
+      if (!days.length) return;
+      if (which === "coldest-week") {
+        const d = days.reduce((best, x) => (x.tempMin < best.tempMin ? x : best));
+        // Scrub to that day's local noon-ish time (sunrise + 12h).
+        target = (d.sunrise ?? d.time) + 12 * 3600_000;
+        label = `Coldest day · ${Math.round(d.tempMin)}° on ${new Date(target).toLocaleDateString(undefined, { weekday: "short" })}`;
+      } else {
+        const d = days.reduce((best, x) => (x.tempMax > best.tempMax ? x : best));
+        target = (d.sunrise ?? d.time) + 12 * 3600_000;
+        label = `Warmest day · ${Math.round(d.tempMax)}° on ${new Date(target).toLocaleDateString(undefined, { weekday: "short" })}`;
+      }
+    } else {
+      const hourly = app.weather.hourly || [];
+      const temps = hourly.map((h) => h.temp).filter((v) => v != null);
+      if (!temps.length) return;
+      const extreme = which === "coldest" ? Math.min(...temps) : Math.max(...temps);
+      const hit = hourly.find((h) => h.temp === extreme);
+      if (!hit) return;
+      target = hit.time;
+      label = `${which === "coldest" ? "Coldest" : "Warmest"} · ${Math.round(hit.temp)}° at ${new Date(target).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}`;
+    }
+    clock.setOffset(target - Date.now());
     scrubber.sync();
     applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
-    ui.showToast(`${which === "coldest" ? "Coldest" : "Warmest"} · ${Math.round(hit.temp)}° at ${new Date(hit.time).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}`);
+    ui.showToast(label);
   },
   jumpGoldenHour: () => {
     // Jump to the nearest golden hour window (sunrise+30 min or sunset-30 min)

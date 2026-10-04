@@ -71,8 +71,14 @@ export function installShortcuts(handlers) {
     if (key === "]") { handlers.cyclePlace?.(1); e.preventDefault(); return; }
     if (key === "g" || key === "G") { handlers.jumpGoldenHour?.(); e.preventDefault(); return; }
     if (key === "r" || key === "R") { handlers.refresh?.(); e.preventDefault(); return; }
-    if (key === "t" || key === "T") { handlers.jumpExtreme?.("warmest"); e.preventDefault(); return; }
-    if (key === "c" || key === "C") { handlers.jumpExtreme?.("coldest"); e.preventDefault(); return; }
+    if (key === "t" || key === "T") {
+      handlers.jumpExtreme?.(e.shiftKey ? "warmest-week" : "warmest");
+      e.preventDefault(); return;
+    }
+    if (key === "c" || key === "C") {
+      handlers.jumpExtreme?.(e.shiftKey ? "coldest-week" : "coldest");
+      e.preventDefault(); return;
+    }
   });
 }
 
