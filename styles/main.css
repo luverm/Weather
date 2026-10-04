@@ -561,6 +561,32 @@ html[data-reduce-motion="true"] *::after {
 }
 .metric-humidity .pressure-spark { color: #9ad1ff; }
 
+/* ---------- UV strip (inside UV metric) ---------- */
+.metric-uv { grid-template-rows: auto auto auto auto; }
+.uv-strip {
+  grid-column: 1 / span 2;
+  display: grid;
+  grid-template-columns: repeat(var(--uv-cells, 12), 1fr);
+  gap: 1px;
+  height: 8px;
+  margin-top: 4px;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.uv-strip[hidden] { display: none; }
+.uv-cell {
+  height: 100%;
+  background: rgba(255,255,255,0.06);
+  transition: filter 160ms var(--ease);
+}
+.uv-cell:hover { filter: brightness(1.35); }
+.uv-cell.lv0 { background: rgba(255,255,255,0.08); }
+.uv-cell.lv1 { background: #4ade80; }
+.uv-cell.lv2 { background: #facc15; }
+.uv-cell.lv3 { background: #fb923c; }
+.uv-cell.lv4 { background: #f87171; }
+.uv-cell.lv5 { background: #c084fc; }
+
 /* ---------- Daily expand ---------- */
 .daily-item { cursor: pointer; }
 .daily-item[data-expanded="true"] { background: var(--glass-strong); }

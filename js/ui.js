@@ -36,6 +36,7 @@ const el = {
   metricPressureSub: $("#m-pressure-sub"),
   metricUV: $("#m-uv"),
   metricUVSub: $("#m-uv-sub"),
+  uvStrip: $("#uv-strip"),
   aqArc: $("#aq-arc"),
   aqValue: $("#aq-value"),
   aqLabel: $("#aq-label"),
@@ -358,12 +359,71 @@ function renderMetrics(w) {
       el.uvLevel.textContent = "";
     }
   }
-  if (w.uvPeak?.time) {
-    el.metricUVSub.textContent = `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`;
-  } else {
-    el.metricUVSub.textContent = "peak —";
-  }
+  renderUvStrip(w);
   renderPressureSparkline(w);
+}
+
+// Hourly UV strip for the UV metric card. Picks daylight hours, colours each
+// cell by UV level, and swaps the "peak X at HH:MM" sub for a
+// "Protect from Xa – Yp" window when UV ≥ 3 for a stretch.
+function renderUvStrip(w) {
+  const sub = el.metricUVSub;
+  if (!el.uvStrip) {
+    if (sub) {
+      sub.textContent = w.uvPeak?.time
+        ? `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`
+        : "peak —";
+    }
+    return;
+  }
+  const hourly = (w.hourly || []).filter((h) => h.uv != null);
+  // Keep the daylight window: isDay=true OR uv>0.
+  const day = hourly.filter((h) => h.isDay || h.uv > 0).slice(0, 16);
+  if (!day.length || day.every((h) => h.uv <= 0)) {
+    el.uvStrip.innerHTML = "";
+    el.uvStrip.hidden = true;
+    if (sub) sub.textContent = w.uvPeak?.time
+      ? `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`
+      : "peak —";
+    return;
+  }
+  el.uvStrip.hidden = false;
+  el.uvStrip.style.setProperty("--uv-cells", day.length);
+  el.uvStrip.innerHTML = day.map((h) => {
+    const cls = uvCellClass(h.uv);
+    const label = `${fmtTime(h.time)} · UV ${h.uv.toFixed(1)}`;
+    return `<span class="uv-cell ${cls}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}"></span>`;
+  }).join("");
+
+  // Figure out a sun-protection window: first/last hour with UV ≥ 3.
+  let firstHigh = -1, lastHigh = -1;
+  for (let i = 0; i < day.length; i++) {
+    if (day[i].uv >= 3) {
+      if (firstHigh < 0) firstHigh = i;
+      lastHigh = i;
+    }
+  }
+  if (!sub) return;
+  if (firstHigh >= 0) {
+    const start = fmtTime(day[firstHigh].time);
+    const endTs = day[lastHigh].time + 3600_000; // end-of-hour
+    const end = fmtTime(endTs);
+    const peak = w.uvPeak && w.uvPeak.value >= 3
+      ? ` · peak ${Math.round(w.uvPeak.value)}`
+      : "";
+    sub.textContent = `Protect ${start} – ${end}${peak}`;
+  } else {
+    sub.textContent = "Low all day — no protection needed";
+  }
+}
+
+function uvCellClass(v) {
+  if (v == null || v < 0.5) return "lv0";
+  if (v < 3) return "lv1";
+  if (v < 6) return "lv2";
+  if (v < 8) return "lv3";
+  if (v < 11) return "lv4";
+  return "lv5";
 }
 
 function humidityComfort(rh, dew, temp) {
