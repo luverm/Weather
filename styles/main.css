@@ -722,11 +722,48 @@ html[data-reduce-motion="true"] *::after {
 .pollen-level[data-level="Very high"] { background: rgba(255, 106, 106, 0.2); color: #ff9a9a; border-color: rgba(255, 106, 106, 0.35); }
 .pollen-meta strong { display: block; font-size: 14px; font-weight: 500; }
 .pollen-items {
-  display: flex; gap: 8px; flex-wrap: wrap;
-  margin-top: 3px;
+  display: grid;
+  gap: 4px;
+  margin-top: 6px;
   font-size: 11px; color: var(--fg-dim);
 }
-.pollen-items span { font-variant-numeric: tabular-nums; }
+.pollen-item {
+  display: grid;
+  grid-template-columns: 44px 1fr 32px;
+  gap: 8px;
+  align-items: center;
+  font-variant-numeric: tabular-nums;
+}
+.pollen-item-label {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 10px;
+  color: var(--fg-dim);
+}
+.pollen-item-track {
+  position: relative;
+  height: 6px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.pollen-item-fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  min-width: 4px;
+  border-radius: 999px;
+  background: #b4e6a6;
+  transition: width 300ms var(--ease), background 240ms var(--ease);
+}
+.pollen-item[data-level="low"]       .pollen-item-fill { background: #b4e6a6; }
+.pollen-item[data-level="moderate"]  .pollen-item-fill { background: #ffdc8a; }
+.pollen-item[data-level="high"]      .pollen-item-fill { background: #ffbb92; }
+.pollen-item[data-level="very-high"] .pollen-item-fill { background: #ff9a9a; }
+.pollen-item-value {
+  text-align: right;
+  color: var(--fg);
+  font-size: 11px;
+}
 
 /* ---------- Advice ---------- */
 .advice {

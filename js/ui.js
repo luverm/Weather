@@ -909,9 +909,35 @@ function renderPollen(pollen) {
   el.pollenLevel.textContent = pollen.level;
   el.pollenLevel.setAttribute("data-level", pollen.level);
   el.pollenDominant.textContent = `${pollen.dominant.label} dominant`;
-  el.pollenItems.innerHTML = pollen.items.map((p) =>
-    `<span>${escapeHtml(p.label)} ${p.value.toFixed(1)}</span>`
-  ).join("");
+  // Each item gets a horizontal bar whose width maps the value to a
+  // log-ish scale across the EPA-style bands: 0 .. 0.5 .. 5 .. 20+.
+  el.pollenItems.innerHTML = pollen.items.map((p) => {
+    const v = p.value ?? 0;
+    const pct = pollenScale(v);
+    const level = pollenBand(v);
+    return `
+      <div class="pollen-item" data-level="${level}">
+        <span class="pollen-item-label">${escapeHtml(p.label)}</span>
+        <span class="pollen-item-track"><span class="pollen-item-fill" style="width:${pct}%"></span></span>
+        <span class="pollen-item-value">${v.toFixed(1)}</span>
+      </div>`;
+  }).join("");
+}
+
+function pollenScale(v) {
+  if (!(v > 0)) return 2;
+  // Map 0 → 0%, 0.5 → 20%, 5 → 60%, 20 → 90%, 40+ → 100%.
+  if (v < 0.5) return 2 + (v / 0.5) * 18;
+  if (v < 5) return 20 + ((v - 0.5) / 4.5) * 40;
+  if (v < 20) return 60 + ((v - 5) / 15) * 30;
+  return Math.min(100, 90 + ((v - 20) / 20) * 10);
+}
+
+function pollenBand(v) {
+  if (v == null || v < 0.5) return "low";
+  if (v < 5) return "moderate";
+  if (v < 20) return "high";
+  return "very-high";
 }
 
 function renderTrends(w) {
