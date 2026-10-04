@@ -1909,6 +1909,35 @@ button.rain-cell:focus-visible { outline: 1.5px solid #fff; outline-offset: 1px;
 }
 .forecast-item:hover { background: var(--glass); transform: translateY(-2px); }
 .forecast-item.active { background: var(--glass-strong); }
+.forecast-item.is-warmest .forecast-temp {
+  color: #ffb196;
+  text-shadow: 0 0 10px rgba(255, 156, 122, 0.4);
+}
+.forecast-item.is-warmest::before {
+  content: "";
+  position: absolute;
+  top: 4px; left: 50%;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: #ff9c7a;
+  box-shadow: 0 0 6px rgba(255, 156, 122, 0.6);
+  transform: translateX(-50%);
+}
+.forecast-item.is-coldest .forecast-temp {
+  color: #a9c7ff;
+  text-shadow: 0 0 10px rgba(154, 209, 255, 0.4);
+}
+.forecast-item.is-coldest::before {
+  content: "";
+  position: absolute;
+  top: 4px; left: 50%;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: #9ad1ff;
+  box-shadow: 0 0 6px rgba(154, 209, 255, 0.6);
+  transform: translateX(-50%);
+}
+.forecast-item { position: relative; }
 .forecast-time { font-size: 11px; letter-spacing: 0.08em; color: var(--fg-dim); text-transform: uppercase; }
 .forecast-icon { width: 26px; height: 26px; display: grid; place-items: center; color: var(--fg-muted); }
 .forecast-temp { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }

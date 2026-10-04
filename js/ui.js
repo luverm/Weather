@@ -1034,9 +1034,17 @@ function cardinal(deg) {
 
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
-  for (const h of (w.hourly || []).slice(0, 24)) {
+  const hours = (w.hourly || []).slice(0, 24);
+  const temps = hours.map((h) => h.temp).filter((v) => v != null);
+  const warmest = temps.length ? Math.max(...temps) : null;
+  const coldest = temps.length ? Math.min(...temps) : null;
+  const warmestIdx = warmest != null ? hours.findIndex((h) => h.temp === warmest) : -1;
+  const coldestIdx = coldest != null && coldest !== warmest ? hours.findIndex((h) => h.temp === coldest) : -1;
+  hours.forEach((h, i) => {
     const item = document.createElement("div");
     item.className = "forecast-item";
+    if (i === warmestIdx) item.classList.add("is-warmest");
+    if (i === coldestIdx) item.classList.add("is-coldest");
     item.dataset.ts = h.time;
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
@@ -1046,7 +1054,7 @@ function renderHourly(w) {
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
-  }
+  });
 }
 
 function highlightHour(index) {
