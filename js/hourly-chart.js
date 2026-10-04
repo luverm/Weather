@@ -65,6 +65,29 @@ export class HourlyChart {
     this._applySeriesVisibility();
   }
 
+  _addExtremeMark(group, x, y, label, kind) {
+    const svgNS = "http://www.w3.org/2000/svg";
+    const g = document.createElementNS(svgNS, "g");
+    g.setAttribute("class", `extreme-mark ex-${kind}`);
+    g.setAttribute("transform", `translate(${x.toFixed(1)}, ${y.toFixed(1)})`);
+    // Pointer triangle: up-pointing for trough (label below), down for peak (label above).
+    const tri = document.createElementNS(svgNS, "polygon");
+    if (kind === "peak") {
+      tri.setAttribute("points", "-3,-6 3,-6 0,-2");
+    } else {
+      tri.setAttribute("points", "-3,6 3,6 0,2");
+    }
+    g.appendChild(tri);
+    const text = document.createElementNS(svgNS, "text");
+    text.setAttribute("x", "0");
+    text.setAttribute("y", kind === "peak" ? "-10" : "16");
+    text.setAttribute("text-anchor", "middle");
+    text.setAttribute("class", "extreme-label");
+    text.textContent = label;
+    g.appendChild(text);
+    group.appendChild(g);
+  }
+
   _applySeriesVisibility() {
     const feelsEl = this.svg.querySelector("#chart-feels-line");
     const gustEl = this.svg.querySelector("#chart-gust-line");
@@ -383,6 +406,34 @@ export class HourlyChart {
         dash.setAttribute("class", "sun-marker-horizon");
         g.appendChild(dash);
         sunG.appendChild(g);
+      }
+    }
+
+    // Peak and trough markers: tiny triangles above the warmest hour and
+    // below the coolest hour of the window. Only labels one each — the
+    // regular 3-hourly temp labels cover the rest.
+    let peakG = this.svg.querySelector("#chart-extremes");
+    if (!peakG) {
+      peakG = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      peakG.setAttribute("id", "chart-extremes");
+      peakG.setAttribute("class", "chart-extremes");
+      this.svg.querySelector("#chart-temp-line").parentNode
+        .insertBefore(peakG, this.svg.querySelector("#chart-temp-line").nextSibling);
+    }
+    peakG.innerHTML = "";
+    if (temps.length) {
+      const tMaxVal = Math.max(...temps);
+      const tMinVal = Math.min(...temps);
+      // Prefer the earliest occurrence so repeat extremes don't float label mid-chart.
+      const iMax = this.hours.findIndex((h) => h.temp === tMaxVal);
+      const iMin = this.hours.findIndex((h) => h.temp === tMinVal);
+      const unitLocal = this.getUnit();
+      const tempToStr = (v) => `${Math.round(unitLocal === "F" ? v * 9 / 5 + 32 : v)}°`;
+      if (iMax >= 0 && iMax !== iMin) {
+        this._addExtremeMark(peakG, iToX(iMax), tToY(tMaxVal), tempToStr(tMaxVal), "peak");
+      }
+      if (iMin >= 0 && iMin !== iMax) {
+        this._addExtremeMark(peakG, iToX(iMin), tToY(tMinVal), tempToStr(tMinVal), "trough");
       }
     }
 

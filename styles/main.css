@@ -890,6 +890,19 @@ html[data-reduce-motion="true"] *::after {
   pointer-events: none;
   filter: drop-shadow(0 0 6px var(--accent));
 }
+/* Peak / trough temperature annotations. */
+.chart-extremes .extreme-mark polygon { fill: var(--fg); opacity: 0.75; }
+.chart-extremes .extreme-mark .extreme-label {
+  font-size: 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  fill: var(--fg);
+}
+.chart-extremes .ex-peak polygon { fill: #ff9c7a; opacity: 0.9; }
+.chart-extremes .ex-peak .extreme-label { fill: #ffcfae; }
+.chart-extremes .ex-trough polygon { fill: #9ad1ff; opacity: 0.9; }
+.chart-extremes .ex-trough .extreme-label { fill: #c3dfff; }
+
 /* Sunrise / sunset vertical markers on the hourly chart. */
 .chart-sun .sun-marker {
   stroke: rgba(255, 220, 160, 0.4);
