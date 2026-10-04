@@ -3,8 +3,11 @@
 //
 // Reads from weather.hourly[] (precip + pop) and weather.daily[] (precip).
 // Hides itself if neither series carries any usable data.
+//
+// If `onHourClick(ts)` is passed, each hourly cell becomes a button that
+// scrubs the time to that hour.
 
-export function renderRainOutlook(root, weather) {
+export function renderRainOutlook(root, weather, { onHourClick } = {}) {
   if (!root) return;
   const headline = root.querySelector("#rain-outlook-headline");
   const sub = root.querySelector("#rain-outlook-sub");
@@ -92,9 +95,13 @@ export function renderRainOutlook(root, weather) {
   const totalWet = hourly.reduce((a, h) => a + (h.precip ?? 0), 0);
   strip24.classList.toggle("is-dry", totalWet < 0.1);
   strip24.innerHTML = "";
+  const nowTs = Date.now();
   hourly.forEach((h) => {
-    const cell = document.createElement("div");
+    const cell = document.createElement(onHourClick ? "button" : "div");
+    if (onHourClick) cell.type = "button";
     cell.className = "rain-cell";
+    if (Math.abs(h.time - nowTs) <= 30 * 60_000) cell.classList.add("now");
+    if (onHourClick) cell.addEventListener("click", () => onHourClick(h.time));
     const precip = h.precip ?? 0;
     const pop = h.pop ?? 0;
     const heightPct = precip > 0 ? Math.min(100, 15 + (precip / maxPrecip) * 85) : 0;

@@ -196,7 +196,9 @@ export const ui = {
     renderActivity(weather);
     renderAlerts(weather);
     renderWeekend(weather);
-    renderRainOutlook(el.rainOutlookCard, weather);
+    renderRainOutlook(el.rainOutlookCard, weather, {
+      onHourClick: (ts) => state.handlers.onHourClick?.(ts),
+    });
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -389,11 +391,21 @@ function renderUvStrip(w) {
   }
   el.uvStrip.hidden = false;
   el.uvStrip.style.setProperty("--uv-cells", day.length);
+  const now = Date.now();
   el.uvStrip.innerHTML = day.map((h) => {
     const cls = uvCellClass(h.uv);
     const label = `${fmtTime(h.time)} · UV ${h.uv.toFixed(1)}`;
-    return `<span class="uv-cell ${cls}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}"></span>`;
+    const current = Math.abs(h.time - now) <= 30 * 60_000 ? " now" : "";
+    return `<button type="button" class="uv-cell ${cls}${current}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}" data-ts="${h.time}"></button>`;
   }).join("");
+  if (!el.uvStrip.dataset.bound) {
+    el.uvStrip.addEventListener("click", (e) => {
+      const btn = e.target.closest(".uv-cell");
+      if (!btn || !btn.dataset.ts) return;
+      state.handlers.onHourClick?.(Number(btn.dataset.ts));
+    });
+    el.uvStrip.dataset.bound = "1";
+  }
 
   // Figure out a sun-protection window: first/last hour with UV ≥ 3.
   let firstHigh = -1, lastHigh = -1;

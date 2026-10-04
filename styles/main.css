@@ -575,11 +575,20 @@ html[data-reduce-motion="true"] *::after {
 }
 .uv-strip[hidden] { display: none; }
 .uv-cell {
+  all: unset;
+  display: block;
   height: 100%;
   background: rgba(255,255,255,0.06);
-  transition: filter 160ms var(--ease);
+  cursor: pointer;
+  transition: filter 160ms var(--ease), transform 160ms var(--ease);
 }
-.uv-cell:hover { filter: brightness(1.35); }
+.uv-cell:hover { filter: brightness(1.35); transform: scaleY(1.3); transform-origin: center; }
+.uv-cell.now {
+  box-shadow: inset 0 0 0 1.5px #fff, 0 0 6px rgba(255,255,255,0.4);
+  z-index: 1;
+  position: relative;
+}
+.uv-cell:focus-visible { outline: 1.5px solid #fff; outline-offset: 1px; }
 .uv-cell.lv0 { background: rgba(255,255,255,0.08); }
 .uv-cell.lv1 { background: #4ade80; }
 .uv-cell.lv2 { background: #facc15; }
@@ -1399,6 +1408,18 @@ kbd {
   transition: height 320ms var(--ease);
 }
 .rain-cell:hover { filter: brightness(1.3); }
+.rain-cell.now {
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.7);
+}
+button.rain-cell {
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+button.rain-cell:focus-visible { outline: 1.5px solid #fff; outline-offset: 1px; }
 .rain-cell.first-rain::before {
   content: "";
   position: absolute;
