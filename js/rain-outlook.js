@@ -165,9 +165,16 @@ export function renderRainOutlook(root, weather, { onHourClick } = {}) {
       if (precip >= maxDaily * 0.75 && precip > 0.5) bar.classList.add("peak");
       week.appendChild(bar);
     });
+    const wetDays = daily.filter((d) => (d.precip ?? 0) >= 0.5).length;
+    const dryDays = daily.length - wetDays;
+    const mix = wetDays && dryDays
+      ? ` · ${dryDays} dry / ${wetDays} wet`
+      : wetDays
+        ? ` · all wet`
+        : ` · all dry`;
     totalWeek.textContent = sumWeek > 0
-      ? `${sumWeek.toFixed(sumWeek < 10 ? 1 : 0)} mm`
-      : "0 mm";
+      ? `${sumWeek.toFixed(sumWeek < 10 ? 1 : 0)} mm${mix}`
+      : `0 mm${mix}`;
   }
 }
 
