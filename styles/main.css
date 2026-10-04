@@ -806,6 +806,10 @@ html[data-reduce-motion="true"] *::after {
   opacity: 0.55;
 }
 .legend-swatch.precip { background: rgba(154, 209, 255, 0.55); }
+.legend-swatch.dew {
+  background: linear-gradient(90deg, #a9f0d1 0 5px, transparent 5px 7px, #a9f0d1 7px 12px, transparent 12px 14px);
+  opacity: 0.85;
+}
 
 .chart-wrap {
   position: relative;

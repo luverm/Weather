@@ -184,6 +184,7 @@
           <div class="chart-legend" role="group" aria-label="Toggle chart series">
             <span class="legend-chip legend-chip-static"><span class="legend-swatch temp"></span>Temp</span>
             <button type="button" class="legend-chip" data-series="feels" aria-pressed="true"><span class="legend-swatch feels"></span>Feels</button>
+            <button type="button" class="legend-chip" data-series="dew" aria-pressed="false"><span class="legend-swatch dew"></span>Dew</button>
             <button type="button" class="legend-chip" data-series="gust" aria-pressed="true"><span class="legend-swatch gust"></span>Gusts</button>
             <button type="button" class="legend-chip" data-series="precip" aria-pressed="true"><span class="legend-swatch precip"></span>Precip</button>
           </div>
@@ -208,6 +209,7 @@
           <path id="chart-temp-fill" class="chart-temp-fill" fill="url(#temp-fill)"></path>
           <path id="chart-gust-line" class="chart-gust-line" fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="1.5 3" opacity="0.45"></path>
           <path id="chart-feels-line" class="chart-feels-line" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3 3" opacity="0.5"></path>
+          <path id="chart-dew-line" class="chart-dew-line" fill="none" stroke="#6ad8a0" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="4 3" opacity="0.85"></path>
           <path id="chart-temp-line" class="chart-temp-line" fill="none" stroke="url(#temp-stroke)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"></path>
           <g id="chart-labels" class="chart-labels"></g>
           <line id="chart-cursor" class="chart-cursor" x1="-10" x2="-10" y1="0" y2="140"></line>

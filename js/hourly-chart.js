@@ -26,7 +26,7 @@ export class HourlyChart {
   }
 
   _restoreSeries() {
-    const defaults = { feels: true, gust: true, precip: true };
+    const defaults = { feels: true, gust: true, precip: true, dew: false };
     try {
       const raw = localStorage.getItem("aether:chart-series");
       if (!raw) return defaults;
@@ -42,7 +42,7 @@ export class HourlyChart {
   _bindLegend() {
     if (!this.legendEl) return;
     // Reflect current visibility on each chip.
-    for (const key of ["feels", "gust", "precip"]) {
+    for (const key of ["feels", "gust", "precip", "dew"]) {
       const chip = this.legendEl.querySelector(`[data-series="${key}"]`);
       if (!chip) continue;
       chip.setAttribute("aria-pressed", String(!!this.series[key]));
@@ -56,6 +56,10 @@ export class HourlyChart {
       btn.setAttribute("aria-pressed", String(this.series[key]));
       btn.classList.toggle("off", !this.series[key]);
       this._persistSeries();
+      // Toggling dew changes the chart's Y range (it may fold below the temp
+      // extents) — redraw so the dew line sits inside the viewBox and the
+      // temp curve rescales to match.
+      if (key === "dew" && this.hours.length) this._draw();
       this._applySeriesVisibility();
     });
     this._applySeriesVisibility();
@@ -65,9 +69,11 @@ export class HourlyChart {
     const feelsEl = this.svg.querySelector("#chart-feels-line");
     const gustEl = this.svg.querySelector("#chart-gust-line");
     const precipEl = this.svg.querySelector("#chart-precip");
+    const dewEl = this.svg.querySelector("#chart-dew-line");
     if (feelsEl) feelsEl.style.display = this.series.feels ? "" : "none";
     if (gustEl) gustEl.style.display = this.series.gust ? "" : "none";
     if (precipEl) precipEl.style.display = this.series.precip ? "" : "none";
+    if (dewEl) dewEl.style.display = this.series.dew ? "" : "none";
   }
 
   _formatHour(ts) {
@@ -206,8 +212,13 @@ export class HourlyChart {
     const innerH = H - PAD_TOP - PAD_BOT;
 
     const temps = this.hours.map((h) => h.temp).filter((v) => v != null);
-    let tMin = Math.min(...temps);
-    let tMax = Math.max(...temps);
+    // Fold dew point into the Y range when its series is visible so the
+    // dashed curve doesn't clip below the chart.
+    const extras = this.series.dew
+      ? this.hours.map((h) => h.dew).filter((v) => v != null)
+      : [];
+    let tMin = Math.min(...temps, ...extras);
+    let tMax = Math.max(...temps, ...extras);
     if (tMax - tMin < 4) {
       const mid = (tMin + tMax) / 2;
       tMin = mid - 2; tMax = mid + 2;
@@ -253,6 +264,22 @@ export class HourlyChart {
         gustLine.setAttribute("d", gPath.trim());
       } else {
         gustLine.setAttribute("d", "");
+      }
+    }
+
+    // Dew point dashed line — a quick read of humidity-driven comfort.
+    const dewLine = this.svg.querySelector("#chart-dew-line");
+    if (dewLine) {
+      const hasDew = this.hours.some((h) => h.dew != null);
+      if (hasDew) {
+        let dPath = "";
+        this.hours.forEach((h, i) => {
+          if (h.dew == null) return;
+          dPath += (dPath ? "L" : "M") + iToX(i).toFixed(1) + "," + tToY(h.dew).toFixed(1) + " ";
+        });
+        dewLine.setAttribute("d", dPath.trim());
+      } else {
+        dewLine.setAttribute("d", "");
       }
     }
 
