@@ -332,6 +332,28 @@ installShortcuts({
     if (app.weather) applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
   },
+  jumpGoldenHour: () => {
+    // Jump to the nearest golden hour window (sunrise+30 min or sunset-30 min)
+    // across today and the next few days.
+    if (!app.weather?.daily?.length) return;
+    const now = Date.now();
+    let bestTs = null, bestDiff = Infinity;
+    for (const d of app.weather.daily) {
+      for (const base of [d.sunrise, d.sunset]) {
+        if (!base) continue;
+        // Golden hour centre: 30 min after sunrise, 30 min before sunset.
+        const center = base === d.sunrise ? base + 1800_000 : base - 1800_000;
+        const diff = Math.abs(center - now);
+        if (diff < bestDiff) { bestDiff = diff; bestTs = center; }
+      }
+    }
+    if (bestTs == null) return;
+    clock.setOffset(bestTs - Date.now());
+    scrubber.sync();
+    if (app.weather) applyScene(app.weather);
+    ui.setScrubbing(!clock.isLive());
+    ui.showToast(`Jumped to golden hour · ${new Date(bestTs).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}`);
+  },
 });
 
 // ---------- Start ----------
