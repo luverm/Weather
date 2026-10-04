@@ -1755,8 +1755,14 @@ button.rain-cell:focus-visible { outline: 1.5px solid #fff; outline-offset: 1px;
   display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
   overflow: hidden;
   padding-bottom: 1px;
-  transition: transform 160ms var(--ease);
+  transition: transform 160ms var(--ease), background 160ms var(--ease);
 }
+button.rain-week-bar {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+button.rain-week-bar:focus-visible { outline: 1.5px solid var(--accent); outline-offset: 1px; }
 .rain-week-bar:hover { transform: translateY(-1px); }
 .rain-week-bar::after {
   content: "";

@@ -148,7 +148,15 @@ export function renderRainOutlook(root, weather, { onHourClick } = {}) {
     const sumWeek = daily.reduce((a, d) => a + (d.precip ?? 0), 0);
     week.innerHTML = "";
     daily.forEach((d, i) => {
-      const bar = document.createElement("div");
+      const bar = document.createElement(onHourClick ? "button" : "div");
+      if (onHourClick) {
+        bar.type = "button";
+        bar.addEventListener("click", () => {
+          // Scrub to the day's noon (or sunrise + 6h as a fallback).
+          const target = (d.sunrise ?? d.time) + 12 * 3600_000;
+          onHourClick(target);
+        });
+      }
       bar.className = "rain-week-bar";
       const precip = d.precip ?? 0;
       const h = precip > 0 ? Math.min(100, 18 + (precip / maxDaily) * 82) : 4;
