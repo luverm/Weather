@@ -225,17 +225,18 @@ export class HourlyChart {
     const pxX = (rect.left - wrapRect.left) + point.x * sx;
     const pxY = (rect.top - wrapRect.top) + point.y * sy;
     const unit = this.getUnit();
-    const t = unit === "F" ? h.temp * 9 / 5 + 32 : h.temp;
-    const feels = h.feelsLike != null
-      ? (unit === "F" ? h.feelsLike * 9 / 5 + 32 : h.feelsLike)
-      : null;
+    const toUnit = (v) => unit === "F" ? v * 9 / 5 + 32 : v;
+    const t = toUnit(h.temp);
+    const feels = h.feelsLike != null ? toUnit(h.feelsLike) : null;
     const feelsStr = (feels != null && Math.abs(feels - t) >= 1)
       ? `<em>feels ${Math.round(feels)}°</em>` : "";
     const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
+    const dew = h.dew != null ? ` · dew ${Math.round(toUnit(h.dew))}°` : "";
+    const uv = h.uv != null && h.uv >= 1 ? ` · UV ${h.uv.toFixed(1)}` : "";
     this.popover.innerHTML =
       `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
-      `<em>${h.pop}% precip${wind}${hum}</em>`;
+      `<em>${h.pop}% precip${wind}${hum}${dew}${uv}</em>`;
     this.popover.style.left = `${pxX.toFixed(1)}px`;
     this.popover.style.top = `${pxY.toFixed(1)}px`;
     this.popover.hidden = false;
