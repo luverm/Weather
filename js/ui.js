@@ -1410,9 +1410,31 @@ function bindSearch() {
       el.searchResults.hidden = false;
     }
   });
+  // Arrow-key navigation of the dropdown. ↑ / ↓ move the highlight, Enter
+  // selects the highlighted entry, Esc closes the list.
+  el.searchInput.addEventListener("keydown", (e) => {
+    if (el.searchResults.hidden) return;
+    const options = Array.from(el.searchResults.querySelectorAll("li[data-index]"));
+    if (!options.length) return;
+    const current = options.findIndex((o) => o.classList.contains("hl"));
+    let next = current;
+    if (e.key === "ArrowDown") { next = (current + 1) % options.length; e.preventDefault(); }
+    else if (e.key === "ArrowUp") { next = (current - 1 + options.length) % options.length; e.preventDefault(); }
+    else if (e.key === "Enter") {
+      e.preventDefault();
+      const idx = current >= 0 ? current : 0;
+      options[idx]?.click();
+      return;
+    } else {
+      return;
+    }
+    options.forEach((o) => o.classList.remove("hl"));
+    options[next]?.classList.add("hl");
+    options[next]?.scrollIntoView({ block: "nearest" });
+  });
   el.searchResults.addEventListener("click", (e) => {
     const li = e.target.closest("li");
-    if (!li) return;
+    if (!li || !li.dataset.index) return;
     const i = parseInt(li.dataset.index, 10);
     const item = el.searchResults._items?.[i];
     if (!item) return;
