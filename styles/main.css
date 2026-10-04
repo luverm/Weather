@@ -986,6 +986,9 @@ html[data-reduce-motion="true"] *::after {
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
 }
+.chart-comfort .comfort-band {
+  fill: rgba(140, 220, 150, 0.06);
+}
 .chart-labels text {
   font-size: 9px;
   fill: var(--fg-dim);

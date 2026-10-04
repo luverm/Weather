@@ -403,6 +403,31 @@ export class HourlyChart {
       }
     }
 
+    // Comfort band — faint shade of the 18–24 °C range so you can see at a
+    // glance which hours sit in the "T-shirt" zone. Only drawn when the
+    // band intersects the visible Y range.
+    let comfortG = this.svg.querySelector("#chart-comfort");
+    if (!comfortG) {
+      comfortG = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      comfortG.setAttribute("id", "chart-comfort");
+      comfortG.setAttribute("class", "chart-comfort");
+      const nightG = this.svg.querySelector("#chart-night");
+      nightG.parentNode.insertBefore(comfortG, nightG);
+    }
+    comfortG.innerHTML = "";
+    const bandLo = 18, bandHi = 24;
+    const yBandLo = tToY(Math.max(tMin, bandLo));
+    const yBandHi = tToY(Math.min(tMax, bandHi));
+    if (yBandLo > yBandHi && bandLo <= tMax && bandHi >= tMin) {
+      const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      rect.setAttribute("x", String(PAD_LEFT));
+      rect.setAttribute("y", yBandHi.toFixed(1));
+      rect.setAttribute("width", String(W - PAD_LEFT - PAD_RIGHT));
+      rect.setAttribute("height", (yBandLo - yBandHi).toFixed(1));
+      rect.setAttribute("class", "comfort-band");
+      comfortG.appendChild(rect);
+    }
+
     // Midnight marker — thin vertical rule where the local day flips over.
     // Reads out of the hour timestamps so it stays in sync with the chart's
     // own timezone handling.
