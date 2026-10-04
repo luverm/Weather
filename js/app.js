@@ -205,6 +205,9 @@ async function loadByCoords(place) {
   clock.reset();
   ui.setScrubbing(false);
 
+  // Keep the URL in sync so a shared link reopens on the same city.
+  updateUrlForPlace(place);
+
   const w = await getWeather(place.lat, place.lon);
   app.weather = w;
 
@@ -219,6 +222,32 @@ async function loadByCoords(place) {
 
   // Move the radar to the new location (fire-and-forget; resolves later).
   ensureRadar([place.lat, place.lon]).then((r) => r?.setCenter(place.lat, place.lon, place.name));
+}
+
+// Shareable deep links: ?lat=…&lon=…&name=…&country=…
+function updateUrlForPlace(place) {
+  if (!place?.lat || !place?.lon) return;
+  try {
+    const params = new URLSearchParams();
+    params.set("lat", place.lat.toFixed(4));
+    params.set("lon", place.lon.toFixed(4));
+    if (place.name) params.set("name", place.name);
+    if (place.country) params.set("country", place.country);
+    const url = `${location.pathname}?${params.toString()}${location.hash}`;
+    history.replaceState(null, "", url);
+  } catch { /* ignore history errors in sandboxed contexts */ }
+}
+
+function placeFromUrl() {
+  try {
+    const q = new URLSearchParams(location.search);
+    const lat = parseFloat(q.get("lat"));
+    const lon = parseFloat(q.get("lon"));
+    if (!isFinite(lat) || !isFinite(lon)) return null;
+    const name = q.get("name") || "Shared location";
+    const country = q.get("country") || "";
+    return { name, country, lat, lon };
+  } catch { return null; }
 }
 
 async function useGeolocation() {
@@ -307,8 +336,16 @@ installShortcuts({
 
 // ---------- Start ----------
 (async function init() {
-  // Prefer the most recent saved place if we have one — avoids the geolocation
-  // prompt on every load and feels snappier.
+  // Deep link in URL wins over everything so a shared link always opens on
+  // the shared city.
+  const fromUrl = placeFromUrl();
+  if (fromUrl) {
+    places.add(fromUrl);
+    await loadByCoords(fromUrl);
+    return;
+  }
+  // Then prefer the most recent saved place — avoids the geolocation prompt
+  // on every load and feels snappier.
   const saved = places.all();
   if (saved.length) {
     await loadByCoords(saved[0]);
