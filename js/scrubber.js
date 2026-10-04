@@ -35,7 +35,7 @@ const RANGE_HOURS = 24;
 
 export class Scrubber {
   constructor({ trackEl, thumbEl, fillEl, timeEl, deltaEl, resetEl,
-                sunriseEl, sunsetEl, appEl, onScrub, onCrossSunEvent }) {
+                sunriseEl, sunsetEl, tooltipEl, appEl, onScrub, onCrossSunEvent }) {
     this.track = trackEl;
     this.thumb = thumbEl;
     this.fill = fillEl;
@@ -44,6 +44,7 @@ export class Scrubber {
     this.resetEl = resetEl;
     this.sunriseEl = sunriseEl;
     this.sunsetEl = sunsetEl;
+    this.tooltipEl = tooltipEl;
     this.appEl = appEl; // receives data-scrubbing attribute
     this.onScrub = onScrub;
     this.onCrossSunEvent = onCrossSunEvent;
@@ -238,6 +239,17 @@ export class Scrubber {
       else {
         const h = Math.round(offMin / 60);
         this.deltaEl.textContent = `${h > 0 ? "+" : ""}${h}h`;
+      }
+    }
+
+    // Floating time tooltip above the thumb — only shows while scrubbing.
+    if (this.tooltipEl) {
+      const scrubbing = !clock.isLive();
+      this.tooltipEl.classList.toggle("show", scrubbing && this.dragging);
+      if (scrubbing) {
+        const short = d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+        this.tooltipEl.textContent = short;
+        this.tooltipEl.style.left = `${(t * 100).toFixed(2)}%`;
       }
     }
   }

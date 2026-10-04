@@ -561,6 +561,33 @@ html[data-reduce-motion="true"] *::after {
   pointer-events: none;
   z-index: 1;
 }
+.scrubber-tooltip {
+  position: absolute;
+  top: -8px;
+  transform: translate(-50%, -100%);
+  padding: 3px 8px;
+  background: rgba(20, 25, 45, 0.92);
+  border: 1px solid var(--stroke);
+  border-radius: 6px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms var(--ease);
+  white-space: nowrap;
+  z-index: 2;
+}
+.scrubber-tooltip.show { opacity: 1; }
+.scrubber-tooltip::after {
+  content: "";
+  position: absolute;
+  bottom: -5px; left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: rgba(20, 25, 45, 0.92);
+  border-bottom: 0;
+}
 .scrubber-tick {
   position: absolute;
   top: 25%; bottom: 25%;
