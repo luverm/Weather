@@ -2,9 +2,10 @@
 // with a rain-probability overlay. Each cell is clickable to scrub.
 
 export class ComfortStrip {
-  constructor({ rootEl, onCellClick, getUnit }) {
+  constructor({ rootEl, onCellClick, onHoverCell, getUnit }) {
     this.root = rootEl;
     this.onCellClick = onCellClick;
+    this.onHoverCell = onHoverCell;
     this.getUnit = getUnit || (() => "C");
     this.hours = [];
   }
@@ -53,7 +54,12 @@ export class ComfortStrip {
         const ts = parseInt(btn.dataset.ts, 10);
         if (ts) this.onCellClick?.(ts);
       });
+      btn.addEventListener("pointerenter", () => {
+        const ts = parseInt(btn.dataset.ts, 10);
+        if (ts) this.onHoverCell?.(ts);
+      });
     });
+    this.root.addEventListener("pointerleave", () => this.onHoverCell?.(null));
   }
 
   highlight(idx) {

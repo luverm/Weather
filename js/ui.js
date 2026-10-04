@@ -162,6 +162,7 @@ export const ui = {
     state.comfortStrip = new ComfortStrip({
       rootEl: el.comfortStrip,
       onCellClick: (ts) => state.handlers.onHourClick?.(ts),
+      onHoverCell: (ts) => state.chart?.setCursor(ts),
       getUnit: () => state.unit,
     });
     bindInstallPrompt();
