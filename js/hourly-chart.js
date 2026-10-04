@@ -530,6 +530,30 @@ export class HourlyChart {
       }
     }
 
+    // Wind direction arrows — placed just below the x-axis labels (every
+    // ~3 hours alongside the hour label).
+    let windG = this.svg.querySelector("#chart-wind");
+    if (!windG) {
+      windG = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      windG.setAttribute("id", "chart-wind");
+      windG.setAttribute("class", "chart-wind");
+      this.svg.appendChild(windG);
+    }
+    windG.innerHTML = "";
+    const windStep = Math.max(3, Math.floor(this.hours.length / 8));
+    this.hours.forEach((h, i) => {
+      if (i % windStep !== 0 || h.windDir == null) return;
+      const x = iToX(i);
+      const y = H - 14; // just above hour label
+      const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      g.setAttribute("transform", `translate(${x.toFixed(1)}, ${y}) rotate(${h.windDir})`);
+      const arrow = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+      arrow.setAttribute("points", "0,-4 2.2,2.5 -2.2,2.5");
+      arrow.setAttribute("class", "wind-arrow");
+      g.appendChild(arrow);
+      windG.appendChild(g);
+    });
+
     // Labels: every ~3 hours
     const unit = this.getUnit();
     const labG = this.svg.querySelector("#chart-labels");
