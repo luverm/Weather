@@ -343,6 +343,19 @@ installShortcuts({
     if (app.weather) applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
   },
+  jumpExtreme: (which) => {
+    if (!app.weather?.hourly?.length) return;
+    const temps = app.weather.hourly.map((h) => h.temp).filter((v) => v != null);
+    if (!temps.length) return;
+    const target = which === "coldest" ? Math.min(...temps) : Math.max(...temps);
+    const hit = app.weather.hourly.find((h) => h.temp === target);
+    if (!hit) return;
+    clock.setOffset(hit.time - Date.now());
+    scrubber.sync();
+    applyScene(app.weather);
+    ui.setScrubbing(!clock.isLive());
+    ui.showToast(`${which === "coldest" ? "Coldest" : "Warmest"} · ${Math.round(hit.temp)}° at ${new Date(hit.time).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}`);
+  },
   jumpGoldenHour: () => {
     // Jump to the nearest golden hour window (sunrise+30 min or sunset-30 min)
     // across today and the next few days.
