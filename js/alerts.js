@@ -132,6 +132,25 @@ export function buildAlerts(weather) {
     });
   }
 
+  // ---- Pollen (any type at "high" or above) ----
+  const pollenHit = (weather.pollen?.items || []).find((p) => p.value >= 20);
+  const pollenMod = (weather.pollen?.items || []).find((p) => p.value >= 5);
+  if (pollenHit) {
+    out.push({
+      id: "pollen-severe",
+      severity: "warn",
+      title: "Very high pollen",
+      detail: `${pollenHit.label} count ${pollenHit.value.toFixed(1)} — expect strong allergy symptoms.`,
+    });
+  } else if (pollenMod && !out.some((a) => a.severity === "danger")) {
+    out.push({
+      id: "pollen",
+      severity: "info",
+      title: "High pollen",
+      detail: `${pollenMod.label} count ${pollenMod.value.toFixed(1)}. Antihistamines may help.`,
+    });
+  }
+
   // ---- UV (only if not already mentioned by heat) ----
   if (!out.some((a) => a.id === "severe-heat" || a.id === "heat")
       && weather.uvPeak?.value >= 9) {
