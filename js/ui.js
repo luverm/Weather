@@ -50,6 +50,9 @@ const el = {
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  sunDelta: $("#sun-delta"),
+  sunDeltaArrow: $("#sun-delta-arrow"),
+  sunDeltaText: $("#sun-delta-text"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -521,8 +524,41 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderSunDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderSunDelta(w) {
+  if (!el.sunDelta || !el.sunDeltaText || !el.sunDeltaArrow) return;
+  const y = w?.yesterday;
+  if (!w?.sunrise || !w?.sunset || !y?.sunrise || !y?.sunset) {
+    el.sunDelta.hidden = true;
+    return;
+  }
+  const today = Math.round((w.sunset - w.sunrise) / 1000);
+  const prev = Math.round((y.sunset - y.sunrise) / 1000);
+  const deltaSec = today - prev;
+  const abs = Math.abs(deltaSec);
+  // Smaller than ~15 s is below meaningful noise (and roughly equinox-flat).
+  if (abs < 15) {
+    el.sunDeltaArrow.textContent = "≈";
+    el.sunDelta.dataset.dir = "flat";
+    el.sunDeltaText.textContent = "Same length as yesterday";
+    el.sunDelta.hidden = false;
+    return;
+  }
+  const mm = Math.floor(abs / 60);
+  const ss = abs % 60;
+  const parts = [];
+  if (mm) parts.push(`${mm}m`);
+  if (ss) parts.push(`${ss.toString().padStart(mm ? 2 : 1, "0")}s`);
+  const span = parts.join(" ");
+  const longer = deltaSec > 0;
+  el.sunDeltaArrow.textContent = longer ? "▲" : "▼";
+  el.sunDelta.dataset.dir = longer ? "up" : "down";
+  el.sunDeltaText.textContent = `${span} ${longer ? "longer" : "shorter"} than yesterday`;
+  el.sunDelta.hidden = false;
 }
 
 function scheduleSunArc(w) {

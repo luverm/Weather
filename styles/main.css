@@ -976,6 +976,36 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+.sun-delta {
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--stroke);
+  font-size: 11px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+  width: fit-content;
+  letter-spacing: 0.01em;
+}
+.sun-delta[data-dir="up"] {
+  color: #ffd79a;
+  border-color: rgba(255,210,140,0.35);
+  background: rgba(255,210,140,0.08);
+}
+.sun-delta[data-dir="down"] {
+  color: #9ad1ff;
+  border-color: rgba(154,209,255,0.35);
+  background: rgba(154,209,255,0.08);
+}
+.sun-delta-arrow {
+  font-size: 9.5px;
+  line-height: 1;
+  transform: translateY(-0.5px);
+}
 
 /* ---------- Radar map ---------- */
 .radar {
