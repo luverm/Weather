@@ -26,6 +26,10 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  dayRangeYMarker: $("#day-range-y-marker"),
+  vsYesterday: $("#vs-yesterday"),
+  vsYesterdayText: $("#vs-yesterday-text"),
+  vsYesterdayArrow: $("#vs-yesterday-arrow"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -306,6 +310,42 @@ function renderDayRange(w) {
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+  renderVsYesterday(w, lo, hi);
+}
+
+function renderVsYesterday(w, lo, hi) {
+  const y = w.yesterday;
+  const yHi = y?.tempMax;
+  const yLo = y?.tempMin;
+  // Yesterday's-high ghost marker on the day-range track.
+  if (el.dayRangeYMarker) {
+    if (yHi != null && lo != null && hi != null && hi > lo) {
+      const frac = Math.max(0, Math.min(1, (yHi - lo) / (hi - lo)));
+      el.dayRangeYMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+      el.dayRangeYMarker.hidden = false;
+    } else {
+      el.dayRangeYMarker.hidden = true;
+    }
+  }
+  // Delta chip: use high-vs-high (most intuitive "today's warmth vs yesterday's").
+  if (!el.vsYesterday || !el.vsYesterdayText || !el.vsYesterdayArrow) return;
+  const todayHi = hi;
+  if (yHi == null || todayHi == null) { el.vsYesterday.hidden = true; return; }
+  const deltaC = todayHi - yHi;
+  const deltaUnit = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
+  const abs = Math.abs(deltaUnit);
+  if (abs < 0.5) {
+    el.vsYesterdayArrow.textContent = "≈";
+    el.vsYesterday.dataset.dir = "flat";
+    el.vsYesterdayText.textContent = `About the same high as yesterday`;
+  } else {
+    const rounded = abs < 10 ? abs.toFixed(1).replace(/\.0$/, "") : Math.round(abs);
+    const warmer = deltaUnit > 0;
+    el.vsYesterdayArrow.textContent = warmer ? "▲" : "▼";
+    el.vsYesterday.dataset.dir = warmer ? "up" : "down";
+    el.vsYesterdayText.textContent = `${rounded}°${state.unit} ${warmer ? "warmer" : "cooler"} than yesterday`;
+  }
+  el.vsYesterday.hidden = false;
 }
 
 function renderMetrics(w) {
