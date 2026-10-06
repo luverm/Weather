@@ -1404,6 +1404,35 @@ kbd {
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+.rain-outlook {
+  margin-left: auto;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+  background: rgba(255,255,255,0.06);
+  color: var(--fg-muted);
+  border: 1px solid var(--stroke);
+  transition: background 300ms var(--ease), color 300ms var(--ease), border-color 300ms var(--ease);
+}
+.rain-outlook:empty { display: none; }
+.rain-outlook[data-mood="dry"] {
+  background: rgba(154, 209, 255, 0.08);
+  color: #c9e4ff;
+  border-color: rgba(154, 209, 255, 0.2);
+}
+.rain-outlook[data-mood="showers"] {
+  background: rgba(140, 180, 255, 0.14);
+  color: #cdd6ff;
+  border-color: rgba(140, 180, 255, 0.28);
+}
+.rain-outlook[data-mood="wet"] {
+  background: rgba(90, 150, 220, 0.22);
+  color: #e6f1ff;
+  border-color: rgba(140, 180, 255, 0.42);
+}
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;

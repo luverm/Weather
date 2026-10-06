@@ -98,6 +98,7 @@ const el = {
   weekendIconSat: $("#weekend-icon-sat"),
   weekendIconSun: $("#weekend-icon-sun"),
   forecastTrack: $("#forecast-track"),
+  rainOutlook: $("#rain-outlook"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
   nowcastHeadline: $("#nowcast-headline"),
@@ -869,6 +870,36 @@ function renderHourly(w) {
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
   }
+  renderRainOutlook(w);
+}
+
+function renderRainOutlook(w) {
+  if (!el.rainOutlook) return;
+  const hours = (w.hourly || []).slice(0, 24);
+  if (!hours.length) { el.rainOutlook.textContent = ""; el.rainOutlook.removeAttribute("data-mood"); return; }
+  let totalMm = 0;
+  let peakPop = 0;
+  let firstWetAt = null;
+  for (const h of hours) {
+    totalMm += Number(h.precip) || 0;
+    if ((h.pop ?? 0) > peakPop) peakPop = h.pop;
+    if (firstWetAt == null && (h.precip > 0.05 || (h.pop ?? 0) >= 60)) firstWetAt = h.time;
+  }
+  let mood, text;
+  if (totalMm >= 0.1 && firstWetAt) {
+    const starts = fmtTime(firstWetAt);
+    const mm = totalMm >= 10 ? totalMm.toFixed(0) : totalMm.toFixed(1);
+    mood = totalMm >= 5 ? "wet" : "showers";
+    text = `☔ ${mm}mm · from ${starts}`;
+  } else if (peakPop >= 40) {
+    mood = "showers";
+    text = `${peakPop}% chance · stay dry`;
+  } else {
+    mood = "dry";
+    text = `Dry · peak ${peakPop}%`;
+  }
+  el.rainOutlook.textContent = text;
+  el.rainOutlook.setAttribute("data-mood", mood);
 }
 
 function highlightHour(index) {
