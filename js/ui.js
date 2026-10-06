@@ -303,12 +303,27 @@ function animateNumber(node, target, format) {
 
 function capitalize(s) { return (s || "").charAt(0).toUpperCase() + (s || "").slice(1); }
 
+function conditionGlyph(condition, isDay) {
+  switch (condition) {
+    case "clear":  return isDay === false ? "🌙" : "☀️";
+    case "clouds": return isDay === false ? "☁️" : "⛅";
+    case "rain":   return "🌧️";
+    case "snow":   return "❄️";
+    case "storm":  return "⛈️";
+    case "fog":    return "🌫️";
+    default:       return "";
+  }
+}
+
 function renderLiveValues(w, { animate = true } = {}) {
   const temp = convertTemp(w.temp);
   const feels = convertTemp(w.feelsLike ?? w.temp);
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
-  (el.conditionText || el.conditionLabel).textContent = capitalize(w.label);
+  const glyph = conditionGlyph(w.condition, w.isDay);
+  (el.conditionText || el.conditionLabel).textContent = glyph
+    ? `${glyph}  ${capitalize(w.label)}`
+    : capitalize(w.label);
   const mood = feelsMood(w.feelsLike ?? w.temp, w);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°${mood ? " · " + mood : ""}`;
   renderDayRange(w);
