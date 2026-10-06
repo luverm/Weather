@@ -110,10 +110,40 @@ export function narrate(weather) {
     }
   }
 
+  // Clear night → stargazing hint. Only when actually dark and the sky
+  // is calm and clear enough for it to be worth mentioning.
+  if (bits.length < 2 && weather.isDay === false && condition === "clear" && windSpeed < 15) {
+    bits.push("Clear skies tonight — good stargazing conditions.");
+  }
+
+  // Frost / near-freezing dawn.
+  if (bits.length < 2) {
+    const near = findDawnChill(weather);
+    if (near) bits.push(`${near.verb} down to ${near.v}° near dawn — ${near.hint}.`);
+  }
+
   // Calm night fallback.
   if (bits.length < 2 && condition === "clear" && windSpeed < 10) {
     bits.push("Calm and settled for the next few hours.");
   }
 
   return bits.slice(0, 2).join(" ");
+}
+
+// Catch the typical pre-sunrise cold minimum. Only fire when the hourly
+// data actually straddles the small hours.
+function findDawnChill(w) {
+  const hours = (w.hourly || []).slice(0, 24);
+  if (!hours.length) return null;
+  let coldest = null;
+  for (const h of hours) {
+    const d = new Date(h.time);
+    const hr = d.getHours();
+    if (hr < 2 || hr > 8) continue;
+    if (!coldest || h.temp < coldest.temp) coldest = h;
+  }
+  if (!coldest) return null;
+  if (coldest.temp <= -3) return { v: Math.round(coldest.temp), verb: "Dips", hint: "bundle up" };
+  if (coldest.temp <= 2)  return { v: Math.round(coldest.temp), verb: "Falls",  hint: "possible frost" };
+  return null;
 }
