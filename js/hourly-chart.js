@@ -148,9 +148,18 @@ export class HourlyChart {
     const windVal = h.wind != null ? Math.round(windMph ? h.wind * 0.621371 : h.wind) : null;
     const wind = windVal != null ? ` · ${windVal} ${windMph ? "mph" : "km/h"}` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
+    let precipStr = "";
+    if (h.precip != null && h.precip >= 0.1) {
+      if (windMph) {
+        const inches = h.precip / 25.4;
+        precipStr = ` · ${inches < 0.1 ? inches.toFixed(2) : inches.toFixed(1)} in`;
+      } else {
+        precipStr = ` · ${h.precip >= 10 ? h.precip.toFixed(0) : h.precip.toFixed(1)} mm`;
+      }
+    }
     this.popover.innerHTML =
       `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
-      `<em>${h.pop}% precip${wind}${hum}</em>`;
+      `<em>${h.pop}% precip${precipStr}${wind}${hum}</em>`;
     this.popover.style.left = `${pxX.toFixed(1)}px`;
     this.popover.style.top = `${pxY.toFixed(1)}px`;
     this.popover.hidden = false;
