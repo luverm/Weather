@@ -1109,6 +1109,20 @@ function renderRainOutlook(w) {
 function highlightHour(index) {
   const items = el.forecastTrack.querySelectorAll(".forecast-item");
   items.forEach((it, i) => it.classList.toggle("active", i === index));
+  // Keep the active hour visible as the scrubber moves. Only scroll when
+  // we actually have a target and the user isn't mid-scroll (checked via
+  // the pending-scroll flag so rapid scrubs don't fight each other).
+  if (index == null || index < 0) return;
+  const active = items[index];
+  if (!active) return;
+  if (state.hourlyScrollPending) return;
+  state.hourlyScrollPending = true;
+  requestAnimationFrame(() => {
+    state.hourlyScrollPending = false;
+    try {
+      active.scrollIntoView({ behavior: "smooth", inline: "nearest", block: "nearest" });
+    } catch { /* older browsers */ }
+  });
 }
 
 function renderDaily(w) {
