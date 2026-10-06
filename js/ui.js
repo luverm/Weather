@@ -309,9 +309,31 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   (el.conditionText || el.conditionLabel).textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  const mood = feelsMood(w.feelsLike ?? w.temp, w);
+  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°${mood ? " · " + mood : ""}`;
   renderDayRange(w);
   renderCloudCoverChip(w);
+}
+
+// Compact one-word summary of how it actually feels outside: a single
+// adjective derived from the apparent temperature plus the dew point and
+// wind for modifier words. Keeps the hero line glanceable.
+function feelsMood(feelsC, w) {
+  if (feelsC == null || isNaN(feelsC)) return null;
+  let base;
+  if (feelsC <= -10) base = "freezing";
+  else if (feelsC <= 2) base = "cold";
+  else if (feelsC <= 10) base = "chilly";
+  else if (feelsC <= 17) base = "mild";
+  else if (feelsC <= 23) base = "pleasant";
+  else if (feelsC <= 29) base = "warm";
+  else if (feelsC <= 34) base = "hot";
+  else base = "scorching";
+  // Modifiers only kick in when they'd materially change how it feels.
+  if (feelsC >= 18 && w?.dewPoint != null && w.dewPoint >= 20) return "muggy";
+  if (feelsC >= 10 && (w?.windSpeed ?? 0) >= 30) return `${base}, blustery`;
+  if (feelsC <= 5 && (w?.windSpeed ?? 0) >= 25) return `${base}, raw`;
+  return base;
 }
 
 function renderCloudCoverChip(w) {
