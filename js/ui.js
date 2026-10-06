@@ -392,11 +392,7 @@ function renderMetrics(w) {
       el.uvLevel.textContent = "";
     }
   }
-  if (w.uvPeak?.time) {
-    el.metricUVSub.textContent = `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`;
-  } else {
-    el.metricUVSub.textContent = "peak —";
-  }
+  renderUvSub(w);
   renderPressureSparkline(w);
 }
 
@@ -438,6 +434,32 @@ function uvLevel(v) {
   if (v < 8) return { label: "High", cls: "up" };
   if (v < 11) return { label: "Very High", cls: "up" };
   return { label: "Extreme", cls: "up" };
+}
+
+// Minutes of midday sun to a mild erythema for a Fitzpatrick-III baseline.
+// Rough-but-widely-cited rule of thumb — plenty close for a glance.
+function uvBurnMinutes(uv) {
+  if (uv == null || uv < 1) return null;
+  const mins = Math.round(200 / uv);
+  if (mins > 180) return 180;
+  return mins;
+}
+
+function renderUvSub(w) {
+  if (!el.metricUVSub) return;
+  const uv = w.uv;
+  if (w.uvPeak?.time) {
+    const parts = [`peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`];
+    const burn = uvBurnMinutes(uv);
+    if (burn != null && uv >= 3) {
+      parts.push(burn >= 60
+        ? `burn ~${Math.floor(burn / 60)}h ${burn % 60 ? burn % 60 + "m" : ""}`.trim()
+        : `burn ~${burn}m`);
+    }
+    el.metricUVSub.textContent = parts.join(" · ");
+  } else {
+    el.metricUVSub.textContent = "peak —";
+  }
 }
 
 function renderPressureSparkline(w) {
