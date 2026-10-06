@@ -26,6 +26,9 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  dayRangePeaks: $("#day-range-peaks"),
+  peakLoText: $("#peak-lo-text"),
+  peakHiText: $("#peak-hi-text"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -307,6 +310,36 @@ function renderDayRange(w) {
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+  renderDayPeaks(w);
+}
+
+function renderDayPeaks(w) {
+  if (!el.dayRangePeaks || !el.peakLoText || !el.peakHiText) return;
+  // Pick hourly samples that fall within today's local calendar day. Fall
+  // back silently to the first 24 hours if we can't resolve the day boundary.
+  const hours = (w.hourly || []).filter((h) => h.temp != null);
+  if (hours.length < 4) { el.dayRangePeaks.hidden = true; return; }
+  const now = Date.now();
+  const tz = w.timezone;
+  const today = tz && tz !== "auto"
+    ? new Intl.DateTimeFormat(undefined, { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(now)
+    : new Date(now).toDateString();
+  const todayHours = hours.filter((h) => {
+    const ds = tz && tz !== "auto"
+      ? new Intl.DateTimeFormat(undefined, { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(h.time))
+      : new Date(h.time).toDateString();
+    return ds === today;
+  });
+  const sample = todayHours.length >= 4 ? todayHours : hours.slice(0, 24);
+  let lo = sample[0], hi = sample[0];
+  for (const h of sample) {
+    if (h.temp < lo.temp) lo = h;
+    if (h.temp > hi.temp) hi = h;
+  }
+  if (lo === hi) { el.dayRangePeaks.hidden = true; return; }
+  el.dayRangePeaks.hidden = false;
+  el.peakLoText.textContent = `${Math.round(convertTemp(lo.temp))}° at ${fmtTime(lo.time)}`;
+  el.peakHiText.textContent = `${Math.round(convertTemp(hi.temp))}° at ${fmtTime(hi.time)}`;
 }
 
 function renderMetrics(w) {

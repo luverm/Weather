@@ -426,6 +426,30 @@ html[data-reduce-motion="true"] *::after {
   box-shadow: 0 2px 8px rgba(0,0,0,0.35);
   transition: left 380ms var(--ease);
 }
+.day-range-peaks {
+  margin: 6px 0 0;
+  max-width: 240px;
+  margin-left: auto;
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+}
+.day-range-peaks[hidden] { display: none; }
+.day-range-peaks .peak {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.day-range-peaks .peak-glyph {
+  font-size: 11px;
+  line-height: 1;
+}
+.day-range-peaks .peak-lo .peak-glyph { color: #9ad1ff; }
+.day-range-peaks .peak-hi .peak-glyph { color: #ffc27a; }
 
 /* ---------- Nowcast banner ---------- */
 .nowcast {
