@@ -17,6 +17,7 @@ const el = {
   temp: $("#temp-value"),
   unitBtn: $("#unit-toggle"),
   placeName: $("#place-name"),
+  placeLabelText: $("#place-label-text"),
   placeSub: $("#place-sub"),
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
@@ -733,16 +734,32 @@ function renderAdvice(w) {
   }
 }
 
+function greetingForHour(h) {
+  if (h >= 5 && h < 12) return "Morning in";
+  if (h >= 12 && h < 17) return "Afternoon in";
+  if (h >= 17 && h < 21) return "Evening in";
+  return "Night in";
+}
+
 function startLocaltime(w) {
   if (state.localTimer) { clearInterval(state.localTimer); state.localTimer = null; }
-  if (!el.placeLocaltime) return;
-  const tz = w?.timezone;
-  if (!tz || tz === "auto") {
-    // Fall back to browser — still useful.
-    el.placeLocaltime.textContent = "";
+  if (!el.placeLocaltime) {
+    // Even without a clock strip we still want the greeting label to track.
+    if (el.placeLabelText) {
+      const h = new Date().getHours();
+      el.placeLabelText.textContent = greetingForHour(h);
+    }
     return;
   }
+  const tz = w?.timezone;
   const update = () => {
+    if (!tz || tz === "auto") {
+      el.placeLocaltime.textContent = "";
+      if (el.placeLabelText) {
+        el.placeLabelText.textContent = greetingForHour(new Date().getHours());
+      }
+      return;
+    }
     try {
       const parts = new Intl.DateTimeFormat([], {
         timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
@@ -755,6 +772,10 @@ function startLocaltime(w) {
       el.placeLocaltime.innerHTML =
         `<span class="clock-dot" aria-hidden="true"></span>` +
         `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>`;
+      if (el.placeLabelText) {
+        const hNum = parseInt(hour, 10);
+        if (!Number.isNaN(hNum)) el.placeLabelText.textContent = greetingForHour(hNum);
+      }
     } catch {
       el.placeLocaltime.textContent = "";
     }
