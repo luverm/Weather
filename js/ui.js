@@ -583,13 +583,30 @@ function renderAirQuality(aq) {
   const color = aqColor(aq.aqi);
   el.aqCard.style.color = color;
   el.aqValue.textContent = aq.aqi != null ? Math.round(aq.aqi) : "—";
-  el.aqLabel.textContent = aq.label || "—";
+  const dominant = dominantPollutant(aq);
+  el.aqLabel.textContent = (aq.aqi != null && aq.aqi > 100 && dominant)
+    ? `${aq.label || "—"} · ${dominant}`
+    : (aq.label || "—");
   // Circumference of r=20 is ~125.66 — we use 126 in the SVG.
   const frac = Math.max(0, Math.min(1, (aq.aqi ?? 0) / 200));
   el.aqArc.setAttribute("stroke-dashoffset", String(126 * (1 - frac)));
   el.aqDetail.textContent =
     `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
   renderAqTrend(aq);
+}
+
+// Rough-and-ready: pick whichever of PM2.5 or O₃ sits deepest into
+// its respective WHO/EPA unhealthy band. Returns a short "driven by X"
+// hint, or null when neither is meaningfully elevated.
+function dominantPollutant(aq) {
+  if (!aq) return null;
+  const pmRatio = aq.pm25 != null ? aq.pm25 / 35 : null; // 35 µg/m³ ~ unhealthy
+  const o3Ratio = aq.o3 != null ? aq.o3 / 70 : null;     // 70 µg/m³ ~ unhealthy band
+  if (pmRatio == null && o3Ratio == null) return null;
+  const pm = pmRatio ?? 0;
+  const o3 = o3Ratio ?? 0;
+  if (Math.max(pm, o3) < 0.8) return null;
+  return pm >= o3 ? "driven by PM2.5" : "driven by ozone";
 }
 
 function renderAqTrend(aq) {
