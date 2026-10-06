@@ -980,6 +980,41 @@ kbd {
 .sun-daylight-delta[data-dir="up"]   { color: #ffd49a; }
 .sun-daylight-delta[data-dir="down"] { color: #9ad1ff; }
 .sun-daylight-delta[data-dir="flat"] { color: var(--fg-dim); }
+
+.golden-hour {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: linear-gradient(90deg,
+    rgba(255, 180, 110, 0.14),
+    rgba(255, 210, 150, 0.08) 50%,
+    rgba(255, 180, 110, 0.14));
+  border: 1px solid rgba(255, 190, 120, 0.22);
+  font-size: 11.5px;
+  color: #ffe3bc;
+}
+.golden-hour[hidden] { display: none; }
+.golden-icon {
+  display: grid;
+  place-items: center;
+  color: #ffcf8a;
+  filter: drop-shadow(0 0 6px rgba(255,205,140,0.5));
+}
+.golden-label {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 10px;
+  color: #ffcf8a;
+}
+.golden-times {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: #fff1d6;
+}
 .sun-arc {
   width: 100%;
   height: 76px;

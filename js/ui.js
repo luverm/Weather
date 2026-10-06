@@ -49,6 +49,8 @@ const el = {
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
   sunDaylightDelta: $("#sun-daylight-delta"),
+  goldenHour: $("#golden-hour"),
+  goldenTimes: $("#golden-times"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -524,8 +526,33 @@ function renderSun(w) {
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
   renderDaylightDelta(w);
+  renderGoldenHour(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderGoldenHour(w) {
+  if (!el.goldenHour || !el.goldenTimes) return;
+  // Golden hour: ~60 minutes bracketing sunrise/sunset. Simple, good enough
+  // for the UI; the exact figure drifts with latitude and declination but
+  // the warm window is roughly the first hour after sunrise and the last
+  // hour before sunset.
+  const sr = w?.sunrise, ss = w?.sunset;
+  if (!sr || !ss || !(ss > sr)) {
+    el.goldenHour.hidden = true;
+    el.goldenTimes.textContent = "";
+    return;
+  }
+  const h = 60 * 60_000;
+  const dayLen = ss - sr;
+  // Collapse the two windows if the day is too short for a full hour each.
+  const win = Math.max(10 * 60_000, Math.min(h, Math.floor(dayLen / 4)));
+  const amStart = sr;
+  const amEnd = sr + win;
+  const pmStart = ss - win;
+  const pmEnd = ss;
+  el.goldenHour.hidden = false;
+  el.goldenTimes.textContent = `${fmtTime(amStart)}–${fmtTime(amEnd)} · ${fmtTime(pmStart)}–${fmtTime(pmEnd)}`;
 }
 
 function renderDaylightDelta(w) {
