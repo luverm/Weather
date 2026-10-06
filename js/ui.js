@@ -48,6 +48,7 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -521,8 +522,36 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderDaylightDelta(w) {
+  if (!el.sunDaylightDelta) return;
+  const node = el.sunDaylightDelta;
+  // Compare today (daily[0]) vs tomorrow (daily[1]) to show whether
+  // the day is lengthening or shortening — a nice seasonal cue.
+  const today = w?.daily?.[0];
+  const tomorrow = w?.daily?.[1];
+  if (!today?.sunrise || !today?.sunset || !tomorrow?.sunrise || !tomorrow?.sunset) {
+    node.textContent = "";
+    node.removeAttribute("data-dir");
+    return;
+  }
+  const todayMs = today.sunset - today.sunrise;
+  const tomorrowMs = tomorrow.sunset - tomorrow.sunrise;
+  const deltaMin = Math.round((tomorrowMs - todayMs) / 60_000);
+  const abs = Math.abs(deltaMin);
+  let dir;
+  if (deltaMin > 0) dir = "up";
+  else if (deltaMin < 0) dir = "down";
+  else dir = "flat";
+  const arrow = dir === "up" ? "▲" : dir === "down" ? "▼" : "–";
+  node.textContent = abs === 0
+    ? `${arrow} same tomorrow`
+    : `${arrow} ${abs}m tomorrow`;
+  node.setAttribute("data-dir", dir);
 }
 
 function scheduleSunArc(w) {
