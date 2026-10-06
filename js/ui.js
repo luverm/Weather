@@ -262,6 +262,23 @@ function convertSpeed(kmh) {
 }
 function speedUnit() { return state.unit === "F" ? "mph" : "km/h"; }
 
+function formatVisibility(meters) {
+  if (meters == null || isNaN(meters)) return "visibility —";
+  // Open-Meteo caps visibility ~24km; render using the active unit system.
+  const km = meters / 1000;
+  const useMi = state.unit === "F";
+  const value = useMi ? km * 0.621371 : km;
+  const rounded = value >= 10 ? Math.round(value) : Math.round(value * 10) / 10;
+  const unit = useMi ? "mi" : "km";
+  let label;
+  if (km >= 20) label = "crystal";
+  else if (km >= 10) label = "clear";
+  else if (km >= 4) label = "fair";
+  else if (km >= 1) label = "hazy";
+  else label = "foggy";
+  return `visibility ${rounded} ${unit} · ${label}`;
+}
+
 function animateNumber(node, target, format) {
   if (target == null || isNaN(target)) { node.textContent = "–"; return; }
   const prev = parseFloat(node.dataset.v ?? NaN);
@@ -412,9 +429,7 @@ function renderMetrics(w) {
     }
   }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
-  el.metricPressureSub.textContent = w.visibility != null
-    ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
-    : "visibility —";
+  el.metricPressureSub.textContent = formatVisibility(w.visibility);
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
