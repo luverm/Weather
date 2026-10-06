@@ -20,6 +20,8 @@ const el = {
   placeSub: $("#place-sub"),
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
+  conditionText: $("#condition-text"),
+  cloudCoverChip: $("#cloud-cover-chip"),
   feelsLike: $("#feels-like"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
@@ -282,9 +284,30 @@ function renderLiveValues(w, { animate = true } = {}) {
   const feels = convertTemp(w.feelsLike ?? w.temp);
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
-  el.conditionLabel.textContent = capitalize(w.label);
+  (el.conditionText || el.conditionLabel).textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  renderCloudCoverChip(w);
+}
+
+function renderCloudCoverChip(w) {
+  if (!el.cloudCoverChip) return;
+  const cc = w.cloudCover;
+  if (cc == null || cc < 10) {
+    el.cloudCoverChip.hidden = true;
+    el.cloudCoverChip.textContent = "";
+    el.cloudCoverChip.removeAttribute("data-level");
+    return;
+  }
+  const pct = Math.round(cc);
+  let level;
+  if (pct >= 85) level = "overcast";
+  else if (pct >= 60) level = "cloudy";
+  else if (pct >= 30) level = "partly";
+  else level = "wisps";
+  el.cloudCoverChip.textContent = `${pct}% clouds`;
+  el.cloudCoverChip.setAttribute("data-level", level);
+  el.cloudCoverChip.hidden = false;
 }
 
 function renderDayRange(w) {
