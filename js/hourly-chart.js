@@ -57,6 +57,11 @@ export class HourlyChart {
   refresh() { this._draw(); }
 
   setCursor(ts) {
+    this._pinnedTs = ts || null;
+    this._applyCursor(ts);
+  }
+
+  _applyCursor(ts) {
     const cursor = this.svg.querySelector("#chart-cursor");
     const dot = this.svg.querySelector("#chart-dot");
     if (!ts || !this.points.length) {
@@ -64,7 +69,6 @@ export class HourlyChart {
       dot.setAttribute("cx", "-10"); dot.setAttribute("cy", "-10");
       return;
     }
-    // Find nearest point.
     let best = 0, bestDiff = Infinity;
     for (let i = 0; i < this.hours.length; i++) {
       const d = Math.abs(this.hours[i].time - ts);
@@ -106,6 +110,9 @@ export class HourlyChart {
         this.popover.classList.remove("show");
         this.popover.hidden = true;
       }
+      // Restore the cursor to the live/scrubbed position so the chart
+      // doesn't leave a stale hover-mark behind.
+      this._applyCursor(this._pinnedTs);
     });
     this.svg.addEventListener("click", (e) => {
       const i = toHourIndex(e);
