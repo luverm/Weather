@@ -1151,20 +1151,21 @@ function renderDailySpark(days) {
   // Dots at each day + per-day temp labels above/below
   el.dailySparkDots.innerHTML = "";
   days.forEach((d, i) => {
+    const today = i === 0 ? " today" : "";
     if (d.tempMax != null) {
       const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
       c.setAttribute("cx", x(i).toFixed(1));
       c.setAttribute("cy", y(d.tempMax).toFixed(1));
-      c.setAttribute("r", "2.5");
-      c.setAttribute("class", "dot-hi");
+      c.setAttribute("r", i === 0 ? "3.5" : "2.5");
+      c.setAttribute("class", `dot-hi${today}`);
       el.dailySparkDots.appendChild(c);
     }
     if (d.tempMin != null) {
       const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
       c.setAttribute("cx", x(i).toFixed(1));
       c.setAttribute("cy", y(d.tempMin).toFixed(1));
-      c.setAttribute("r", "2.5");
-      c.setAttribute("class", "dot-lo");
+      c.setAttribute("r", i === 0 ? "3.5" : "2.5");
+      c.setAttribute("class", `dot-lo${today}`);
       el.dailySparkDots.appendChild(c);
     }
   });
