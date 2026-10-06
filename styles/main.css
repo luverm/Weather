@@ -1359,6 +1359,16 @@ kbd {
 .alert-warn:hover { background: rgba(255,185,120,0.14); }
 .alert-danger  { color: #ff8a8a; border-color: rgba(255,138,138,0.35); background: rgba(255,138,138,0.10); }
 .alert-danger:hover { background: rgba(255,138,138,0.16); }
+.alert-danger .alert-dot {
+  animation: alertDangerPulse 1.8s ease-in-out infinite;
+}
+@keyframes alertDangerPulse {
+  0%, 100% { box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 22%, transparent); }
+  50%      { box-shadow: 0 0 0 8px color-mix(in srgb, currentColor 10%, transparent); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .alert-danger .alert-dot { animation: none; }
+}
 
 @media (max-width: 720px) {
   .alert-pill .alert-detail { display: none; }
