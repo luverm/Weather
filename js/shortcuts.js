@@ -65,8 +65,8 @@ export function installShortcuts(handlers) {
       handlers.toggleRadar?.();
       return;
     }
-    if (key === "ArrowLeft") { handlers.nudge?.(-1); e.preventDefault(); return; }
-    if (key === "ArrowRight") { handlers.nudge?.(1); e.preventDefault(); return; }
+    if (key === "ArrowLeft") { handlers.nudge?.(e.shiftKey ? -0.5 : -1); e.preventDefault(); return; }
+    if (key === "ArrowRight") { handlers.nudge?.(e.shiftKey ? 0.5 : 1); e.preventDefault(); return; }
     if (key === "[") { handlers.cyclePlace?.(-1); e.preventDefault(); return; }
     if (key === "]") { handlers.cyclePlace?.(1); e.preventDefault(); return; }
     if (key === "r" || key === "R") { e.preventDefault(); handlers.refresh?.(); return; }
