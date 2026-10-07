@@ -350,9 +350,41 @@ installShortcuts({
   togglePresentation: () => {
     const el = document.documentElement;
     const now = el.getAttribute("data-presentation") === "true";
-    el.setAttribute("data-presentation", now ? "false" : "true");
-    ui.showToast(now ? "Presentation mode off" : "Presentation mode on — press P to exit");
+    const next = !now;
+    el.setAttribute("data-presentation", next ? "true" : "false");
+    if (next) {
+      requestWakeLock();
+      ui.showToast("Presentation mode on — press P to exit");
+    } else {
+      releaseWakeLock();
+      ui.showToast("Presentation mode off");
+    }
   },
+});
+
+// Wake Lock keeps the screen on during presentation mode. Chrome+Edge, Safari
+// 16.4+, Opera, Samsung Internet all support it; other browsers degrade
+// silently (the mode still works, the screen may dim).
+let wakeLock = null;
+async function requestWakeLock() {
+  try {
+    if ("wakeLock" in navigator) {
+      wakeLock = await navigator.wakeLock.request("screen");
+      wakeLock.addEventListener("release", () => { wakeLock = null; });
+    }
+  } catch { /* ignore — mode still works */ }
+}
+function releaseWakeLock() {
+  wakeLock?.release?.();
+  wakeLock = null;
+}
+// Re-request on visibility return — Wake Lock drops when the tab goes hidden.
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden
+      && document.documentElement.getAttribute("data-presentation") === "true"
+      && !wakeLock) {
+    requestWakeLock();
+  }
 });
 
 // Shareable deep-link in the URL hash: #lat=51.5&lon=-0.12&name=London
