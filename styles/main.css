@@ -571,6 +571,27 @@ html[data-reduce-motion="true"] *::after {
 }
 .scrubber-track:active .scrubber-thumb { transform: translate(-50%, -50%) scale(1.15); }
 
+/* ---------- Compact mode ---------- */
+html[data-compact="true"] .app { gap: 10px; }
+html[data-compact="true"] .hero { gap: 10px; }
+html[data-compact="true"] .hero-inner { padding: 16px; gap: 16px; }
+html[data-compact="true"] .metrics { gap: 8px; }
+html[data-compact="true"] .metric { padding: 10px 12px; }
+html[data-compact="true"] .metric-value { font-size: 24px; }
+html[data-compact="true"] .extras { gap: 8px; }
+html[data-compact="true"] .extra-card { padding: 10px 12px; }
+html[data-compact="true"] .chart-card,
+html[data-compact="true"] .forecast,
+html[data-compact="true"] .daily { padding: 8px; }
+html[data-compact="true"] .forecast-heading { padding: 4px 8px 6px; font-size: 10.5px; }
+html[data-compact="true"] .forecast-item { padding: 6px 4px; gap: 2px; }
+html[data-compact="true"] .daily-item { padding: 6px 8px; }
+html[data-compact="true"] .daily-icon-strip { padding: 4px 6px; gap: 4px; }
+html[data-compact="true"] .daily-precip-strip { margin: 4px 6px 0; padding: 6px 8px; }
+html[data-compact="true"] .scrubber { padding: 10px 14px 12px; }
+html[data-compact="true"] .radar { padding: 8px; gap: 8px; }
+html[data-compact="true"] .temp-value { font-size: 72px; }
+
 /* ---------- Pressure sparkline ---------- */
 .metric-pressure,
 .metric-humidity {
