@@ -64,6 +64,8 @@ const el = {
   pollenItems: $("#pollen-items"),
   pressureTrend: $("#m-pressure-trend"),
   tempTrend: $("#temp-trend"),
+  liveAnchor: $("#live-anchor"),
+  liveAnchorTemp: $("#live-anchor-temp"),
   pleasantness: $("#pleasantness"),
   pleasantnessDots: $("#pleasantness-dots"),
   pleasantnessLabel: $("#pleasantness-label"),
@@ -253,6 +255,7 @@ export const ui = {
     } else {
       el.hintText.innerHTML = 'Drag the slider, hover the chart, or press <kbd>?</kbd> for shortcuts.';
     }
+    updateLiveAnchor(on);
   },
   setAudioState(on) {
     el.audioBtn.classList.toggle("on", !!on);
@@ -337,6 +340,24 @@ function pleasantnessLabel(score) {
   if (score >= 5) return { label: "Fine", cls: "ok" };
   if (score >= 3) return { label: "Rough", cls: "poor" };
   return { label: "Harsh", cls: "bad" };
+}
+
+function updateLiveAnchor(scrubbing) {
+  if (!el.liveAnchor || !el.liveAnchorTemp) return;
+  const live = state.weather;
+  if (!scrubbing || !live || live.temp == null) {
+    el.liveAnchor.hidden = true;
+    return;
+  }
+  el.liveAnchor.hidden = false;
+  const temp = Math.round(convertTemp(live.temp));
+  el.liveAnchorTemp.textContent = `${temp}°`;
+  if (!el.liveAnchor._bound) {
+    el.liveAnchor._bound = true;
+    el.liveAnchor.addEventListener("click", () => {
+      state.handlers.onHourClick?.(Date.now());
+    });
+  }
 }
 
 function renderPleasantness(w) {

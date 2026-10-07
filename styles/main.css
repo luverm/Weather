@@ -630,6 +630,36 @@ html[data-reduce-motion="true"] *::after {
   background: linear-gradient(180deg, #c7b4ff, #6a40c7);
 }
 
+/* ---------- Live anchor (visible while scrubbing) ---------- */
+.live-anchor {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px dashed var(--stroke);
+  background: transparent;
+  color: var(--fg-dim);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: color 180ms var(--ease), border-color 180ms var(--ease), background 180ms var(--ease);
+}
+.live-anchor:hover {
+  color: var(--fg);
+  border-color: rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.03);
+}
+.live-anchor strong { font-weight: 500; font-variant-numeric: tabular-nums; }
+.live-anchor-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #78d06a;
+  box-shadow: 0 0 6px #78d06a;
+}
+
 /* ---------- Pleasantness pill ---------- */
 .pleasantness {
   display: inline-flex;
