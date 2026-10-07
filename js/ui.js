@@ -1454,34 +1454,32 @@ function renderDailySpark(days) {
     const label = weekday(d.time, i);
     const hiT = d.tempMax != null ? `${Math.round(convertTemp(d.tempMax))}°` : "—";
     const loT = d.tempMin != null ? `${Math.round(convertTemp(d.tempMin))}°` : "—";
-    if (d.tempMax != null) {
-      const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-      c.setAttribute("cx", x(i).toFixed(1));
-      c.setAttribute("cy", y(d.tempMax).toFixed(1));
-      c.setAttribute("r", "2.5");
-      c.setAttribute("class", "dot-hi");
-      c.setAttribute("tabindex", "0");
-      c.setAttribute("style", "cursor:pointer");
-      c.addEventListener("click", () => state.handlers.onHourClick?.(d.sunrise || d.time));
+    const makeDot = (val, cls, titleText) => {
+      if (val == null) return;
+      // Larger invisible hit area so touch taps land reliably.
+      const hit = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      hit.setAttribute("cx", x(i).toFixed(1));
+      hit.setAttribute("cy", y(val).toFixed(1));
+      hit.setAttribute("r", "8");
+      hit.setAttribute("fill", "transparent");
+      hit.setAttribute("tabindex", "0");
+      hit.setAttribute("style", "cursor:pointer");
+      hit.addEventListener("click", () => state.handlers.onHourClick?.(d.sunrise || d.time));
       const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
-      title.textContent = `${label} · high ${hiT} / low ${loT}`;
-      c.appendChild(title);
-      el.dailySparkDots.appendChild(c);
-    }
-    if (d.tempMin != null) {
-      const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-      c.setAttribute("cx", x(i).toFixed(1));
-      c.setAttribute("cy", y(d.tempMin).toFixed(1));
-      c.setAttribute("r", "2.5");
-      c.setAttribute("class", "dot-lo");
-      c.setAttribute("tabindex", "0");
-      c.setAttribute("style", "cursor:pointer");
-      c.addEventListener("click", () => state.handlers.onHourClick?.(d.sunrise || d.time));
-      const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
-      title.textContent = `${label} · low ${loT} / high ${hiT}`;
-      c.appendChild(title);
-      el.dailySparkDots.appendChild(c);
-    }
+      title.textContent = titleText;
+      hit.appendChild(title);
+      el.dailySparkDots.appendChild(hit);
+      // Visible dot sits on top (non-interactive, so clicks hit the hit area).
+      const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      dot.setAttribute("cx", x(i).toFixed(1));
+      dot.setAttribute("cy", y(val).toFixed(1));
+      dot.setAttribute("r", "2.5");
+      dot.setAttribute("class", cls);
+      dot.setAttribute("pointer-events", "none");
+      el.dailySparkDots.appendChild(dot);
+    };
+    makeDot(d.tempMax, "dot-hi", `${label} · high ${hiT} / low ${loT}`);
+    makeDot(d.tempMin, "dot-lo", `${label} · low ${loT} / high ${hiT}`);
   });
 }
 
