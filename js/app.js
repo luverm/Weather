@@ -529,10 +529,11 @@ window.addEventListener("hashchange", () => {
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
     engine.stop();
-  } else if (!app.reducedMotion) {
-    engine.start();
+    audio.setDuckFactor?.(0);
   } else {
-    engine.tickOnce();
+    if (!app.reducedMotion) engine.start();
+    else engine.tickOnce();
+    audio.setDuckFactor?.(clock.isLive() ? 1 : 0.2);
   }
 });
 
