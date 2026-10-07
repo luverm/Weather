@@ -555,6 +555,20 @@ html[data-reduce-motion="true"] *::after {
 }
 .scrubber-sunrise { background: linear-gradient(180deg, transparent, rgba(255, 210, 160, 0.8), transparent); }
 .scrubber-sunset { background: linear-gradient(180deg, transparent, rgba(255, 160, 120, 0.8), transparent); }
+.scrubber-noon {
+  position: absolute; top: 10px; bottom: 10px;
+  width: 2px;
+  background: rgba(255, 240, 190, 0.5);
+  pointer-events: auto;
+  cursor: pointer;
+  margin-left: -1px;
+}
+.scrubber-noon:hover { filter: brightness(1.4); }
+.scrubber-noon::after {
+  content: "☀";
+  position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+  font-size: 9px; color: #ffdc9c; opacity: 0.8;
+}
 .scrubber-twilight {
   position: absolute; top: 4px; bottom: 4px;
   pointer-events: none;
