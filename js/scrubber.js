@@ -40,6 +40,8 @@ export class Scrubber {
     this.sunset = sunset;
     this._placeMarker(this.sunriseEl, sunrise, "Sunrise");
     this._placeMarker(this.sunsetEl, sunset, "Sunset");
+    this._bindSnap(this.sunriseEl, sunrise);
+    this._bindSnap(this.sunsetEl, sunset);
     // Twilight bands span 30 minutes on either side of the solar event.
     const TWI = 30 * 60_000;
     this._placeBand(this.dawnEl, sunrise - TWI, sunrise + TWI);
@@ -83,6 +85,30 @@ export class Scrubber {
     el.style.display = "block";
     el.style.left = `${rel * 100}%`;
     el.setAttribute("data-label", label);
+  }
+
+  _bindSnap(el, ts) {
+    if (!el || !ts) return;
+    if (el._snapBound === ts) return;
+    el._snapBound = ts;
+    el.style.pointerEvents = "auto";
+    el.style.cursor = "pointer";
+    el.setAttribute("role", "button");
+    el.setAttribute("tabindex", "0");
+    const jump = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      // Stop any in-flight drag so the snap isn't immediately overwritten.
+      this.dragging = false;
+      this._setOffset(el._snapBound - Date.now());
+    };
+    if (!el._snapHandler) {
+      el._snapHandler = jump;
+      el.addEventListener("click", jump);
+      el.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter" || ev.key === " ") jump(ev);
+      });
+    }
   }
 
   _bind() {
