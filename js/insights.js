@@ -99,5 +99,43 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     });
   }
 
+  // 6. Best day in the week ahead — a pleasantness composite over days 1..6.
+  const upcoming = days.slice(1, 7);
+  if (upcoming.length >= 2) {
+    let best = null;
+    for (const d of upcoming) {
+      const score = pleasantness(d);
+      if (score == null) continue;
+      if (!best || score > best.score) best = { d, score };
+    }
+    if (best && best.score >= 6) {
+      out.push({
+        icon: ICONS.sun, label: "Best day",
+        value: `${dow(best.d.time)} · ${Math.round(best.d.tempMax)}°`,
+        ts: best.d.sunrise || best.d.time,
+      });
+    }
+  }
+
   return out.slice(0, 6);
+}
+
+function pleasantness(d) {
+  if (d?.tempMax == null) return null;
+  let s = 0;
+  const t = d.tempMax;
+  if (t >= 18 && t <= 25) s += 3;
+  else if ((t >= 15 && t < 18) || (t > 25 && t <= 28)) s += 2;
+  else if ((t >= 12 && t < 15) || (t > 28 && t <= 30)) s += 1;
+  const pop = d.pop ?? 0;
+  if (pop < 20) s += 3;
+  else if (pop < 40) s += 2;
+  else if (pop < 60) s += 1;
+  const gust = d.gustsMax ?? d.windMax ?? 0;
+  if (gust < 25) s += 2;
+  else if (gust < 35) s += 1;
+  if (d.condition === "clear") s += 1;
+  else if (d.condition === "clouds") s += 0.5;
+  if (d.condition === "storm" || d.condition === "snow") s -= 2;
+  return s;
 }
