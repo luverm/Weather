@@ -845,6 +845,16 @@ html[data-reduce-motion="true"] .place-label::after { animation: none; opacity: 
 .pleasantness.bad { color: #ff6a6a; border-color: rgba(255,110,110,0.3); }
 .pleasantness.bad .dot.on { background: #ff6a6a; }
 
+/* ---------- Condition-tinted hero border ---------- */
+html[data-condition="clear"] .hero-inner { border-color: rgba(255, 210, 160, 0.22); }
+html[data-condition="rain"] .hero-inner { border-color: rgba(154, 209, 255, 0.26); }
+html[data-condition="storm"] .hero-inner {
+  border-color: rgba(200, 180, 255, 0.32);
+  box-shadow: 0 0 0 1px rgba(200, 180, 255, 0.08) inset;
+}
+html[data-condition="snow"] .hero-inner { border-color: rgba(220, 230, 255, 0.28); }
+html[data-condition="fog"] .hero-inner { border-color: rgba(200, 210, 220, 0.26); }
+
 /* ---------- Offline / fetch-failure banner ---------- */
 .offline-banner {
   display: flex;

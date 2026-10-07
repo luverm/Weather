@@ -252,6 +252,7 @@ export const ui = {
     }
     renderOfflineBanner(weather);
     flashHero(weather);
+    document.documentElement.setAttribute("data-condition", weather.condition || "");
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
       places.updateSummary(state.place, {
