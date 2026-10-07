@@ -371,6 +371,26 @@ export class HourlyChart {
       }
     }
 
+    // "Now" marker — a thin dotted vertical line fixed at the current
+    // time's x-position so you can see where "live" sits even while
+    // scrubbing elsewhere.
+    const nowLine = this.svg.querySelector("#chart-now");
+    if (nowLine && this.hours.length >= 2) {
+      const t0 = this.hours[0].time;
+      const tN = this.hours[this.hours.length - 1].time;
+      const now = Date.now();
+      if (now >= t0 && now <= tN) {
+        const span = tN - t0;
+        const rel = (now - t0) / span;
+        const x = PAD_LEFT + rel * innerW;
+        nowLine.setAttribute("x1", x.toFixed(1));
+        nowLine.setAttribute("x2", x.toFixed(1));
+      } else {
+        nowLine.setAttribute("x1", "-10");
+        nowLine.setAttribute("x2", "-10");
+      }
+    }
+
     // Labels: every ~3 hours
     const unit = this.getUnit();
     const labG = this.svg.querySelector("#chart-labels");

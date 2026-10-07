@@ -1073,6 +1073,13 @@ html[data-compact="true"] .temp-value { font-size: 72px; }
   opacity: 0.75;
   pointer-events: none;
 }
+.chart-now {
+  stroke: #78d06a;
+  stroke-width: 0.8;
+  stroke-dasharray: 1.5 2;
+  opacity: 0.55;
+  pointer-events: none;
+}
 .chart-dot {
   fill: #fff;
   stroke: var(--accent);
