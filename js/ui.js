@@ -312,7 +312,11 @@ function renderLiveValues(w, { animate = true } = {}) {
   const feels = convertTemp(w.feelsLike ?? w.temp);
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
-  el.conditionLabel.textContent = capitalize(w.label);
+  // Prefix the label with a tiny glyph so condition reads at a glance.
+  const glyph = conditionGlyph(w.condition, w.isDay !== false);
+  el.conditionLabel.textContent = glyph
+    ? `${glyph}  ${capitalize(w.label)}`
+    : capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
   renderPleasantness(w);
@@ -1871,9 +1875,9 @@ function iconFor(condition) {
   }
 }
 
-function conditionGlyph(condition) {
+function conditionGlyph(condition, isDay) {
   switch (condition) {
-    case "clear": return "☀";
+    case "clear": return isDay === false ? "🌙" : "☀";
     case "clouds": return "⛅";
     case "rain": return "🌧";
     case "snow": return "🌨";
