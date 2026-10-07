@@ -228,6 +228,7 @@ export const ui = {
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     renderOfflineBanner(weather);
+    flashHero(weather);
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
       places.updateSummary(state.place, {
@@ -342,6 +343,19 @@ function pleasantnessLabel(score) {
   if (score >= 5) return { label: "Fine", cls: "ok" };
   if (score >= 3) return { label: "Rough", cls: "poor" };
   return { label: "Harsh", cls: "bad" };
+}
+
+function flashHero(w) {
+  if (!el.heroInner) return;
+  // Skip the very first render — that's the initial load, not a refresh.
+  if (!flashHero._primed) { flashHero._primed = true; return; }
+  // Also skip when the user has reduced motion on.
+  if (document.documentElement.getAttribute("data-reduce-motion") === "true") return;
+  el.heroInner.classList.remove("just-refreshed");
+  // Force reflow so the animation re-triggers if it was already applied.
+  void el.heroInner.offsetWidth;
+  el.heroInner.classList.add("just-refreshed");
+  setTimeout(() => el.heroInner.classList.remove("just-refreshed"), 1000);
 }
 
 function renderOfflineBanner(w) {
