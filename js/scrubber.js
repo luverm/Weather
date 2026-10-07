@@ -56,7 +56,8 @@ export class Scrubber {
 
   _renderTicks() {
     // Draw tiny tick marks every 3 hours across the scrubber range so the
-    // scrubber reads like a timeline rather than a bare slider.
+    // scrubber reads like a timeline rather than a bare slider. A "Tomorrow"
+    // label sits on the first midnight after the current time.
     const container = this.track;
     if (!container) return;
     // Remove any previous ticks (idempotent).
@@ -66,6 +67,7 @@ export class Scrubber {
     // Ticks at the start-of-day's 00:00, 03:00, ... 21:00 wall-clock hours.
     const startLocal = new Date(base);
     startLocal.setMinutes(0, 0, 0);
+    let labeledMidnight = false;
     for (let h = 0; h <= RANGE_HOURS + 1; h++) {
       const ts = startLocal.getTime() + h * 3600_000;
       const hourOfDay = new Date(ts).getHours();
@@ -75,6 +77,11 @@ export class Scrubber {
       const tick = document.createElement("span");
       tick.className = "scrubber-tick";
       if (hourOfDay === 0 || hourOfDay === 12) tick.classList.add("major");
+      if (hourOfDay === 0 && ts > this.start && !labeledMidnight) {
+        tick.classList.add("midnight");
+        tick.setAttribute("data-label", "Tomorrow");
+        labeledMidnight = true;
+      }
       tick.style.left = `${rel * 100}%`;
       // Insert as the first child so ticks sit behind markers/thumb.
       container.insertBefore(tick, container.firstChild);

@@ -665,6 +665,21 @@ html[data-reduce-motion="true"] *::after {
   margin-top: -6px;
   background: rgba(255,255,255,0.28);
 }
+.scrubber-tick.midnight {
+  background: rgba(255,255,255,0.5);
+}
+.scrubber-tick.midnight::after {
+  content: attr(data-label);
+  position: absolute;
+  bottom: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  white-space: nowrap;
+}
 
 .scrubber-precip {
   display: grid;
