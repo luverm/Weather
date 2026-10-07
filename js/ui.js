@@ -542,9 +542,13 @@ function renderMetrics(w) {
     }
   }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
-  el.metricPressureSub.textContent = w.visibility != null
-    ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
-    : "visibility —";
+  if (w.visibility != null) {
+    const km = Math.round((w.visibility / 1000) * 10) / 10;
+    const tag = w.visibility < 1000 ? " 🌫" : w.visibility < 3000 ? " 🌫" : "";
+    el.metricPressureSub.textContent = `visibility ${km} km${tag}`;
+  } else {
+    el.metricPressureSub.textContent = "visibility —";
+  }
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
