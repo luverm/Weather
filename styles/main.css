@@ -462,6 +462,13 @@ html[data-reduce-motion="true"] *::after {
 }
 .nowcast-bars .nowcast-bar:hover { opacity: 1; transform: scaleY(1.1); }
 .nowcast-bars .nowcast-bar:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.nowcast-bars .nowcast-bar.intensity-trace { background: #9ad1ff; opacity: 0.5; }
+.nowcast-bars .nowcast-bar.intensity-light { background: #7cc0ff; }
+.nowcast-bars .nowcast-bar.intensity-moderate { background: #4a78c2; }
+.nowcast-bars .nowcast-bar.intensity-heavy {
+  background: linear-gradient(180deg, #c7b4ff, #6a40c7);
+  box-shadow: 0 0 6px rgba(170,120,255,0.5);
+}
 @keyframes slideInUp {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }

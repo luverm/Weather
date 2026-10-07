@@ -1260,6 +1260,26 @@ function toggleDailyExpand(item, d, w) {
   item.dataset.expanded = "true";
 }
 
+function precipIntensityClass(mmPer15Min) {
+  if (mmPer15Min == null) return "intensity-none";
+  // mm/hr = mm/15min * 4 (approx). Thresholds follow NOAA's descriptive bands.
+  const perHr = mmPer15Min * 4;
+  if (perHr >= 7.5) return "intensity-heavy";
+  if (perHr >= 2.5) return "intensity-moderate";
+  if (perHr >= 0.5) return "intensity-light";
+  return "intensity-trace";
+}
+
+function precipIntensityLabel(mmPer15Min) {
+  switch (precipIntensityClass(mmPer15Min)) {
+    case "intensity-heavy": return "heavy";
+    case "intensity-moderate": return "moderate";
+    case "intensity-light": return "light";
+    case "intensity-trace": return "trace";
+    default: return "";
+  }
+}
+
 function renderNowcast(w) {
   const nowcast = (w.nowcast || []).filter((n) => n.time > Date.now());
   // Find first >0.1 precip entry.
@@ -1283,10 +1303,11 @@ function renderNowcast(w) {
   slice.forEach((n, i) => {
     const bar = document.createElement("button");
     bar.type = "button";
-    bar.className = "nowcast-bar";
+    bar.className = `nowcast-bar ${precipIntensityClass(n.precip)}`;
     bar.style.height = `${Math.max(2, (n.precip / maxP) * 28)}px`;
     const mins = Math.round((n.time - Date.now()) / 60_000);
-    bar.title = `+${Math.max(0, mins)} min · ${n.precip.toFixed(1)} mm`;
+    const kindTag = precipIntensityLabel(n.precip);
+    bar.title = `+${Math.max(0, mins)} min · ${n.precip.toFixed(1)} mm${kindTag ? ` · ${kindTag}` : ""}`;
     bar.setAttribute("aria-label", bar.title);
     bar.addEventListener("click", () => state.handlers.onHourClick?.(n.time));
     el.nowcastBars.appendChild(bar);
