@@ -2275,12 +2275,27 @@ function bindSettings() {
   });
 
   el.settingClearPlaces?.addEventListener("click", () => {
-    if (!confirm("Clear all saved places?")) return;
+    const count = places.all().length;
+    if (!confirm(`Clear ${count} saved place${count === 1 ? "" : "s"}?`)) return;
     for (const p of places.all()) places.remove(p);
     renderPlaces();
+    updateClearPlacesLabel();
     ui.showToast("Saved places cleared");
     close();
   });
+
+  // Reflect the saved count on the clear button so users see what they'd lose.
+  const updateClearPlacesLabel = () => {
+    if (!el.settingClearPlaces) return;
+    const n = places.all().length;
+    el.settingClearPlaces.textContent = n
+      ? `Clear saved places (${n})`
+      : "Clear saved places";
+    el.settingClearPlaces.disabled = n === 0;
+  };
+  updateClearPlacesLabel();
+  // Refresh the label whenever the settings menu opens.
+  el.settingsBtn?.addEventListener("click", updateClearPlacesLabel);
 }
 
 function stampBuildInfo() {
