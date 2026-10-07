@@ -1981,6 +1981,14 @@ function bindInstallPrompt() {
     e.preventDefault();
     deferredInstallPrompt = e;
     el.installBtn.hidden = false;
+    // Nudge the user to notice the toolbar install icon on their first
+    // eligible session. We only toast once per device so we don't nag.
+    try {
+      if (!localStorage.getItem("aether:installNudged")) {
+        ui.showToast("Install Aether as an app from the toolbar", 4000);
+        localStorage.setItem("aether:installNudged", "1");
+      }
+    } catch { /* ignore */ }
   });
   window.addEventListener("appinstalled", () => {
     deferredInstallPrompt = null;
