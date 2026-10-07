@@ -236,7 +236,16 @@ export const ui = {
     updateDocumentTitle(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
-    if (el.narrative) el.narrative.textContent = narrative || "";
+    if (el.narrative) {
+      const prev = el.narrative.textContent;
+      const next = narrative || "";
+      if (next !== prev) {
+        el.narrative.classList.remove("fade-in");
+        void el.narrative.offsetWidth;
+        el.narrative.classList.add("fade-in");
+      }
+      el.narrative.textContent = next;
+    }
     renderOfflineBanner(weather);
     flashHero(weather);
     // Save summary for the strip so chips can show current temp.

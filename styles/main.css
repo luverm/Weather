@@ -2200,6 +2200,11 @@ html[data-reduce-motion="true"] .forecast-item.severe {
 
 /* ---------- Reveal animations ---------- */
 .flip-in { animation: flipIn 620ms var(--ease) both; }
+.fade-in { animation: fadeIn 460ms var(--ease) both; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 .hero-inner.just-refreshed {
   animation: hero-refresh 900ms ease-out;
 }
