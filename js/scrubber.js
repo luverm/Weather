@@ -229,6 +229,7 @@ export class Scrubber {
       weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false,
     });
     if (this.timeEl) this.timeEl.textContent = label;
+    this.track.setAttribute("aria-valuetext", clock.isLive() ? `${label} — live` : label);
 
     const offMin = Math.round(clock.offset() / 60_000);
     if (this.deltaEl) {
