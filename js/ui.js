@@ -513,13 +513,18 @@ function renderUvSparkline(w) {
   if (!el.uvSparkLine) return;
   // 14h horizon captures peak UV in nearly all mid-latitude days without
   // smearing night zeroes.
-  const series = (w.hourly || []).slice(0, 14).map((h) => h.uv ?? 0);
+  const hours = (w.hourly || []).slice(0, 14);
+  const series = hours.map((h) => h.uv ?? 0);
   const peakIdx = series.reduce((bi, v, i, arr) => (v > arr[bi] ? i : bi), 0);
   const peakValue = series[peakIdx] ?? 0;
   if (series.length < 2 || peakValue <= 0) {
     el.uvSparkLine.setAttribute("d", "");
     el.uvSparkFill?.setAttribute("d", "");
-    if (el.uvSparkPeak) el.uvSparkPeak.setAttribute("cx", "-10");
+    if (el.uvSparkPeak) {
+      el.uvSparkPeak.setAttribute("cx", "-10");
+      el.uvSparkPeak.style.pointerEvents = "none";
+      el.uvSparkPeak.onclick = null;
+    }
     return;
   }
   drawSparkline(el.uvSparkLine, el.uvSparkFill, series,
@@ -533,6 +538,18 @@ function renderUvSparkline(w) {
     const y = PAD + innerH - (peakValue / max) * innerH;
     el.uvSparkPeak.setAttribute("cx", x.toFixed(1));
     el.uvSparkPeak.setAttribute("cy", y.toFixed(1));
+    el.uvSparkPeak.setAttribute("r", "2.4");
+    el.uvSparkPeak.style.cursor = "pointer";
+    el.uvSparkPeak.style.pointerEvents = "auto";
+    const peakTs = hours[peakIdx]?.time;
+    el.uvSparkPeak.onclick = (ev) => {
+      ev.stopPropagation();
+      if (peakTs) state.handlers.onHourClick?.(peakTs);
+    };
+    el.uvSparkPeak.setAttribute("tabindex", "0");
+    el.uvSparkPeak.setAttribute("role", "button");
+    el.uvSparkPeak.setAttribute("aria-label",
+      `Jump to UV peak (${Math.round(peakValue)}) at ${fmtTime(peakTs)}`);
   }
 }
 
