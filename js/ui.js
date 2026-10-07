@@ -103,6 +103,7 @@ const el = {
   settingVolume: $("#setting-volume"),
   settingRefreshInterval: $("#setting-refresh-interval"),
   settingTheme: $("#setting-theme"),
+  settingCopyLink: $("#setting-copy-link"),
   settingSaveImage: $("#setting-save-image"),
   settingReset: $("#setting-reset"),
   settingClearPlaces: $("#setting-clear-places"),
@@ -2141,6 +2142,16 @@ function bindSettings() {
     const v = el.settingTheme.value;
     document.documentElement.setAttribute("data-theme", v);
     localStorage.setItem("aether:theme", v);
+  });
+
+  el.settingCopyLink?.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      ui.showToast("Link copied to clipboard");
+    } catch {
+      ui.showToast("Couldn't copy — select the address bar manually");
+    }
+    close();
   });
 
   el.settingSaveImage?.addEventListener("click", () => {
