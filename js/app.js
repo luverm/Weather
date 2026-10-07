@@ -354,6 +354,7 @@ installShortcuts({
     if (target) loadByCoords(target);
   },
   share: () => document.getElementById("share-btn")?.click(),
+  toggleSettings: () => document.getElementById("settings-btn")?.click(),
   jumpColdest: () => jumpToExtremeHour("cold"),
   jumpWarmest: () => jumpToExtremeHour("hot"),
   jumpUvPeak: () => {
