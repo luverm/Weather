@@ -281,8 +281,11 @@ export const ui = {
   },
   setAudioState(on) {
     el.audioBtn.classList.toggle("on", !!on);
-    el.audioBtn.setAttribute("aria-label", on ? "Disable ambient sound" : "Enable ambient sound");
-    el.audioBtn.setAttribute("title", on ? "Disable ambient sound (M)" : "Enable ambient sound (M)");
+    const label = on
+      ? "Disable ambient sound (M) — wind, rain, thunder"
+      : "Enable ambient sound (M) — wind, rain, thunder";
+    el.audioBtn.setAttribute("aria-label", label);
+    el.audioBtn.setAttribute("title", label);
   },
   showToast(msg, dur = 2600) {
     el.toast.textContent = msg;
