@@ -371,11 +371,29 @@ function renderMetrics(w) {
     }
   }
   if (w.uvPeak?.time) {
-    el.metricUVSub.textContent = `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`;
+    // Append a conservative "burn in" estimate for average skin when UV is
+    // meaningfully present. Formula follows the ICNIRP/EPA burn-time rule
+    // of thumb: minutes ≈ 200 / UV for Fitzpatrick II skin, unprotected.
+    const burn = uvBurnMinutes(w.uv);
+    const burnPart = burn ? ` · burn ~${burn}` : "";
+    el.metricUVSub.textContent =
+      `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}${burnPart}`;
   } else {
     el.metricUVSub.textContent = "peak —";
   }
   renderPressureSparkline(w);
+}
+
+function uvBurnMinutes(uv) {
+  if (uv == null || uv < 2) return null;
+  const raw = 200 / uv;
+  const mins = Math.round(Math.max(10, Math.min(240, raw)));
+  if (mins >= 60) {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return m ? `${h}h ${m}m` : `${h}h`;
+  }
+  return `${mins}m`;
 }
 
 function humidityComfort(rh, dew, temp) {
