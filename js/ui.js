@@ -101,6 +101,7 @@ const el = {
   settingVolume: $("#setting-volume"),
   settingRefreshInterval: $("#setting-refresh-interval"),
   settingSaveImage: $("#setting-save-image"),
+  settingReset: $("#setting-reset"),
   settingClearPlaces: $("#setting-clear-places"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
@@ -2026,6 +2027,20 @@ function bindSettings() {
   el.settingSaveImage?.addEventListener("click", () => {
     saveSnapshotImage();
     close();
+  });
+
+  el.settingReset?.addEventListener("click", () => {
+    if (!confirm("Reset Aether preferences to defaults? Saved places are kept.")) return;
+    const prefKeys = [
+      "aether:unit", "aether:reduceMotion", "aether:compact", "aether:dim",
+      "aether:volume", "aether:refreshMs",
+    ];
+    for (const k of prefKeys) {
+      try { localStorage.removeItem(k); } catch { /* ignore */ }
+    }
+    ui.showToast("Preferences reset — reloading");
+    close();
+    setTimeout(() => location.reload(), 400);
   });
 
   el.settingClearPlaces?.addEventListener("click", () => {
