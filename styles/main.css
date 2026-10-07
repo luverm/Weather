@@ -592,6 +592,13 @@ html[data-reduce-motion="true"] *::after {
   html:not([data-reduce-motion="true"]) .scrubber-delta .live-pulse {
     animation: live-pulse 1.6s ease-in-out infinite;
   }
+  html:not([data-reduce-motion="true"]) #install-btn:not([hidden]) {
+    animation: install-nudge 2.4s ease-in-out 1.4s 3;
+  }
+}
+@keyframes install-nudge {
+  0%, 60%, 100% { transform: scale(1); }
+  30% { transform: scale(1.14); filter: drop-shadow(0 0 8px var(--accent)); }
 }
 @keyframes live-pulse {
   0%, 100% { box-shadow: 0 0 4px #78d06a; opacity: 1; }
