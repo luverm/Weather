@@ -10,7 +10,7 @@ const RANGE_HOURS = 24;
 
 export class Scrubber {
   constructor({ trackEl, thumbEl, fillEl, timeEl, deltaEl, resetEl,
-                sunriseEl, sunsetEl, appEl, onScrub }) {
+                sunriseEl, sunsetEl, dawnEl, duskEl, appEl, onScrub }) {
     this.track = trackEl;
     this.thumb = thumbEl;
     this.fill = fillEl;
@@ -19,6 +19,8 @@ export class Scrubber {
     this.resetEl = resetEl;
     this.sunriseEl = sunriseEl;
     this.sunsetEl = sunsetEl;
+    this.dawnEl = dawnEl;
+    this.duskEl = duskEl;
     this.appEl = appEl; // receives data-scrubbing attribute
     this.onScrub = onScrub;
     this.dragging = false;
@@ -38,7 +40,26 @@ export class Scrubber {
     this.sunset = sunset;
     this._placeMarker(this.sunriseEl, sunrise, "Sunrise");
     this._placeMarker(this.sunsetEl, sunset, "Sunset");
+    // Twilight bands span 30 minutes on either side of the solar event.
+    const TWI = 30 * 60_000;
+    this._placeBand(this.dawnEl, sunrise - TWI, sunrise + TWI);
+    this._placeBand(this.duskEl, sunset - TWI, sunset + TWI);
     this._render(this._currentT());
+  }
+
+  _placeBand(el, from, to) {
+    if (!el) return;
+    if (!from || !to) { el.style.display = "none"; return; }
+    const totalMs = RANGE_HOURS * 3600_000;
+    const base = this.start - 3600_000;
+    const l = (from - base) / totalMs;
+    const r = (to - base) / totalMs;
+    const left = Math.max(0, l);
+    const right = Math.min(1, r);
+    if (right <= 0 || left >= 1) { el.style.display = "none"; return; }
+    el.style.display = "block";
+    el.style.left = `${left * 100}%`;
+    el.style.width = `${(right - left) * 100}%`;
   }
 
   /** Called when we externally reset to "now" (e.g. search selected). */
