@@ -437,8 +437,22 @@ function renderPleasantness(w) {
     dots.push(`<span class="dot ${i < whole ? "on" : ""}"></span>`);
   }
   el.pleasantnessDots.innerHTML = dots.join("");
-  el.pleasantnessLabel.textContent = `${bucket.label} · ${whole}/10`;
-  el.pleasantness.setAttribute("title", `Pleasantness ${whole}/10`);
+  // Compare against the +3h forecast to hint direction of travel.
+  const future = (state.weather?.hourly || []).find(
+    (h) => h.time > Date.now() + 2.5 * 3600_000
+  );
+  let arrow = "";
+  let longHint = "";
+  if (future) {
+    const fScore = pleasantnessScore({ ...state.weather, ...future });
+    if (fScore != null) {
+      const delta = Math.round(fScore - score);
+      if (delta >= 2) { arrow = " ↗"; longHint = ` — improving in 3h`; }
+      else if (delta <= -2) { arrow = " ↘"; longHint = ` — worsening in 3h`; }
+    }
+  }
+  el.pleasantnessLabel.textContent = `${bucket.label} · ${whole}/10${arrow}`;
+  el.pleasantness.setAttribute("title", `Pleasantness ${whole}/10${longHint}`);
 }
 
 function renderDayRange(w) {
