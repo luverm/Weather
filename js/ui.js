@@ -1290,9 +1290,22 @@ function renderNowcast(w) {
   }
   const inMin = Math.max(0, Math.round((first.time - Date.now()) / 60_000));
   const kind = first.code >= 71 && first.code <= 86 ? "Snow" : "Rain";
-  el.nowcastHeadline.textContent = inMin === 0
-    ? `${kind} now`
-    : `${kind} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
+  // If precipitation is active now, find when the next sustained dry window
+  // begins so we can say "clearing at HH:MM" instead of just "Rain now".
+  let headline;
+  if (inMin === 0) {
+    const dryIdx = nowcast.findIndex((n, i) =>
+      i > 0 && n.precip <= 0.1 && (nowcast[i + 1]?.precip ?? 0) <= 0.1
+    );
+    if (dryIdx > 0) {
+      headline = `${kind} now · clearing at ${fmtTime(nowcast[dryIdx].time)}`;
+    } else {
+      headline = `${kind} now · continuing`;
+    }
+  } else {
+    headline = `${kind} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
+  }
+  el.nowcastHeadline.textContent = headline;
   // 2h outlook summary.
   const totalMm = nowcast.reduce((s, n) => s + (n.precip || 0), 0);
   el.nowcastSub.textContent = `${totalMm.toFixed(1)} mm expected in the next 2 hours`;
