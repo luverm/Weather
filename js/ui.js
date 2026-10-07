@@ -1412,6 +1412,18 @@ function renderDaily(w) {
     const item = document.createElement("div");
     item.className = "daily-item";
     item.dataset.ts = d.time;
+    // Native tooltip with the full day summary — reads out all the fields
+    // that otherwise require clicking to expand.
+    const titleParts = [
+      day,
+      d.label || d.condition,
+      `${Math.round(convertTemp(d.tempMax))}° / ${Math.round(convertTemp(d.tempMin))}°`,
+      d.pop != null ? `${d.pop}% precip` : null,
+      d.precip > 0 ? `${d.precip.toFixed(1)} mm` : null,
+      d.gustsMax ? `gusts ${Math.round(d.gustsMax)} km/h` : null,
+      d.uvMax ? `UV ${Math.round(d.uvMax)}` : null,
+    ].filter(Boolean);
+    item.setAttribute("title", titleParts.join(" · "));
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
