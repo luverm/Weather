@@ -2116,6 +2116,38 @@ function showRecentsIfAny() {
 }
 
 function bindSearch() {
+  // Keyboard navigation inside the results list.
+  el.searchInput.addEventListener("keydown", (e) => {
+    if (el.searchResults.hidden) return;
+    const items = Array.from(el.searchResults.querySelectorAll("li[data-index]"));
+    if (!items.length) return;
+    const active = el.searchResults.querySelector("li.active");
+    const idx = active ? items.indexOf(active) : -1;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const next = items[Math.min(items.length - 1, idx + 1)];
+      items.forEach((li) => li.classList.remove("active"));
+      next.classList.add("active");
+      next.scrollIntoView({ block: "nearest" });
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const prev = items[Math.max(0, idx - 1)];
+      items.forEach((li) => li.classList.remove("active"));
+      prev.classList.add("active");
+      prev.scrollIntoView({ block: "nearest" });
+    } else if (e.key === "Enter") {
+      const toSelect = active || items[0];
+      if (!toSelect) return;
+      e.preventDefault();
+      const i = parseInt(toSelect.dataset.index, 10);
+      const item = el.searchResults._items?.[i];
+      if (!item) return;
+      el.searchInput.value = item.name;
+      el.searchResults.hidden = true;
+      places.add(item);
+      state.handlers.onSearchSelect?.(item);
+    }
+  });
   el.searchInput.addEventListener("input", (e) => {
     const v = e.target.value.trim();
     if (v.length < 2) {
