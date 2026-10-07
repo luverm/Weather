@@ -48,6 +48,7 @@ const el = {
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
   sunRise: $("#sun-rise"),
+  sunNoon: $("#sun-noon"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
   sunDaylightDelta: $("#sun-daylight-delta"),
@@ -866,6 +867,11 @@ function renderSeasonChip(place) {
 function renderSun(w) {
   el.sunRise.textContent = fmtTime(w.sunrise);
   el.sunSet.textContent = fmtTime(w.sunset);
+  if (el.sunNoon) {
+    el.sunNoon.textContent = (w.sunrise && w.sunset)
+      ? fmtTime(Math.round((w.sunrise + w.sunset) / 2))
+      : "—";
+  }
   if (w.sunrise && w.sunset) {
     const mins = Math.round((w.sunset - w.sunrise) / 60_000);
     const hh = Math.floor(mins / 60);
