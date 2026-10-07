@@ -47,6 +47,7 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonNext: $("#moon-next"),
   sunRise: $("#sun-rise"),
   sunNoon: $("#sun-noon"),
   sunSet: $("#sun-set"),
@@ -851,6 +852,19 @@ function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  if (el.moonNext) {
+    // Phase advances ~1/29.53 per day. Pick the sooner of next full (0.5)
+    // or next new (0 or 1).
+    const SYN = 29.5305882;
+    const stepPerDay = 1 / SYN;
+    const distToFull = ((0.5 - moon.phase + 1) % 1) || 1;
+    const distToNew = ((1 - moon.phase + 1) % 1) || 1;
+    const target = distToFull <= distToNew
+      ? { label: "Full moon", d: distToFull }
+      : { label: "New moon", d: distToNew };
+    const days = Math.max(1, Math.round(target.d / stepPerDay));
+    el.moonNext.textContent = `${target.label} in ${days}d`;
+  }
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
