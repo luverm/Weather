@@ -428,6 +428,20 @@ html[data-reduce-motion="true"] *::after {
   font-variant-numeric: tabular-nums;
 }
 .place-localtime:empty { display: none; }
+
+html[data-loading="true"] .place-label::after {
+  content: "";
+  display: inline-block;
+  width: 10px; height: 10px;
+  margin-left: 6px;
+  border: 1.5px solid var(--fg-dim);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: loader-spin 0.9s linear infinite;
+  vertical-align: middle;
+}
+@keyframes loader-spin { to { transform: rotate(360deg); } }
+html[data-reduce-motion="true"] .place-label::after { animation: none; opacity: 0.5; }
 .place-localtime .clock-dot {
   width: 5px; height: 5px; border-radius: 50%;
   background: var(--accent); box-shadow: 0 0 6px var(--accent);
