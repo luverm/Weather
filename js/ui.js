@@ -148,6 +148,7 @@ const state = {
   sunTimer: null,
   sunArcTimer: null,
   sunWindowTimer: null,
+  nowcastTimer: null,
   localTimer: null,
 };
 
@@ -1519,6 +1520,8 @@ function renderScrubberPrecip(w) {
 }
 
 function renderNowcast(w) {
+  // Clear any previous countdown timer before re-rendering.
+  if (state.nowcastTimer) { clearInterval(state.nowcastTimer); state.nowcastTimer = null; }
   const nowcast = (w.nowcast || []).filter((n) => n.time > Date.now());
   // Find first >0.1 precip entry.
   const first = nowcast.find((n) => n.precip > 0.1);
@@ -1530,23 +1533,41 @@ function renderNowcast(w) {
   const kind = first.code >= 71 && first.code <= 86 ? "Snow" : "Rain";
   // If precipitation is active now, find when the next sustained dry window
   // begins so we can say "clearing at HH:MM" instead of just "Rain now".
-  let headline;
+  let dryTs = null;
   if (inMin === 0) {
     const dryIdx = nowcast.findIndex((n, i) =>
       i > 0 && n.precip <= 0.1 && (nowcast[i + 1]?.precip ?? 0) <= 0.1
     );
-    if (dryIdx > 0) {
-      headline = `${kind} now · clearing at ${fmtTime(nowcast[dryIdx].time)}`;
-    } else {
-      headline = `${kind} now · continuing`;
-    }
-  } else {
-    headline = `${kind} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
+    if (dryIdx > 0) dryTs = nowcast[dryIdx].time;
   }
-  el.nowcastHeadline.textContent = headline;
-  // 2h outlook summary.
   const totalMm = nowcast.reduce((s, n) => s + (n.precip || 0), 0);
+  const applyHeadline = () => {
+    let headline;
+    if (inMin === 0) {
+      if (dryTs) {
+        const mins = Math.max(0, Math.round((dryTs - Date.now()) / 60_000));
+        headline = `${kind} now · clearing in ${mins}m`;
+      } else {
+        headline = `${kind} now · continuing`;
+      }
+    } else {
+      headline = `${kind} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
+    }
+    el.nowcastHeadline.textContent = headline;
+  };
+  applyHeadline();
   el.nowcastSub.textContent = `${totalMm.toFixed(1)} mm expected in the next 2 hours`;
+  // If we have a clearing time, keep the countdown ticking each minute.
+  if (dryTs) {
+    state.nowcastTimer = setInterval(() => {
+      if (Date.now() >= dryTs) {
+        clearInterval(state.nowcastTimer);
+        state.nowcastTimer = null;
+        return;
+      }
+      applyHeadline();
+    }, 60_000);
+  }
   // Bars (time-labeled, clickable to scrub).
   el.nowcastBars.innerHTML = "";
   const slice = nowcast.slice(0, 8);
