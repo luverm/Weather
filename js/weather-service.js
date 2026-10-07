@@ -112,13 +112,23 @@ export async function getWeather(lat, lon) {
   });
   const aqUrl = `${AIR_QUALITY}?${aqParams.toString()}`;
 
-  try {
+  // One quick retry on failure — transient DNS/CORS blips are common and
+  // falling straight to the offline mock felt heavy-handed.
+  const attempt = async () => {
     const [forecast, air] = await Promise.allSettled([fetchJson(url), fetchJson(aqUrl)]);
     if (forecast.status !== "fulfilled") throw forecast.reason;
     return normalize(forecast.value, air.status === "fulfilled" ? air.value : null);
-  } catch (err) {
-    console.warn("Weather fetch failed, using mock", err);
-    return mock(lat, lon);
+  };
+  try {
+    return await attempt();
+  } catch (first) {
+    try {
+      await new Promise((r) => setTimeout(r, 1500));
+      return await attempt();
+    } catch (err) {
+      console.warn("Weather fetch failed after retry, using mock", err);
+      return mock(lat, lon);
+    }
   }
 }
 
