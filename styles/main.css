@@ -869,6 +869,22 @@ html[data-compact="true"] .temp-value { font-size: 72px; }
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
 }
+.chart-refline {
+  stroke-width: 0.7;
+  stroke-dasharray: 2 3;
+  opacity: 0.45;
+  pointer-events: none;
+}
+.chart-refline.freeze { stroke: #a9d4ff; }
+.chart-refline.hot { stroke: #ff9c7a; }
+.chart-refline-label {
+  font-size: 8.5px;
+  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+.chart-refline-label.freeze { fill: #a9d4ff; }
+.chart-refline-label.hot { fill: #ff9c7a; }
 .chart-suntime-line {
   stroke-width: 0.9;
   stroke-dasharray: 2 2;

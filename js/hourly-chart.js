@@ -244,6 +244,36 @@ export class HourlyChart {
       precipG.appendChild(r);
     });
 
+    // Reference temperature lines (0°C freezing, 30°C hot). Rendered as
+    // dashed horizontal rules only when they fall inside the chart's domain
+    // so they don't clip into the labels.
+    const refG = this.svg.querySelector("#chart-reflines");
+    if (refG) {
+      refG.innerHTML = "";
+      const refs = [
+        { t: 0,  cls: "freeze", label: "0°" },
+        { t: 30, cls: "hot",    label: "30°" },
+      ];
+      for (const r of refs) {
+        if (r.t < tMin || r.t > tMax) continue;
+        const y = tToY(r.t);
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", PAD_LEFT.toFixed(1));
+        line.setAttribute("x2", (W - PAD_RIGHT).toFixed(1));
+        line.setAttribute("y1", y.toFixed(1));
+        line.setAttribute("y2", y.toFixed(1));
+        line.setAttribute("class", `chart-refline ${r.cls}`);
+        refG.appendChild(line);
+        const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        label.setAttribute("x", (W - PAD_RIGHT - 2).toFixed(1));
+        label.setAttribute("y", (y - 2).toFixed(1));
+        label.setAttribute("text-anchor", "end");
+        label.setAttribute("class", `chart-refline-label ${r.cls}`);
+        label.textContent = r.label;
+        refG.appendChild(label);
+      }
+    }
+
     // Night shading: dim rectangles where !isDay
     const nightG = this.svg.querySelector("#chart-night");
     nightG.innerHTML = "";
