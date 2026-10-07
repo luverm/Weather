@@ -312,6 +312,12 @@ function renderLiveValues(w, { animate = true } = {}) {
   const feels = convertTemp(w.feelsLike ?? w.temp);
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
+  // Dual-unit tooltip so a quick hover converts without toggling.
+  if (w.temp != null) {
+    const c = Math.round(w.temp);
+    const f = Math.round(w.temp * 9 / 5 + 32);
+    el.temp.setAttribute("title", `${c}°C / ${f}°F`);
+  }
   // Prefix the label with a tiny glyph so condition reads at a glance.
   const glyph = conditionGlyph(w.condition, w.isDay !== false);
   el.conditionLabel.textContent = glyph
