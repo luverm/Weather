@@ -356,6 +356,15 @@ installShortcuts({
   share: () => document.getElementById("share-btn")?.click(),
   jumpColdest: () => jumpToExtremeHour("cold"),
   jumpWarmest: () => jumpToExtremeHour("hot"),
+  jumpUvPeak: () => {
+    const peak = app.weather?.uvPeak;
+    if (!peak?.time) { ui.showToast("No UV peak data"); return; }
+    clock.setOffset(peak.time - Date.now());
+    scrubber.sync();
+    if (app.weather) applyScene(app.weather);
+    ui.setScrubbing(!clock.isLive());
+    ui.showToast(`UV peaks at ${Math.round(peak.value)}`);
+  },
   togglePresentation: () => {
     const el = document.documentElement;
     const now = el.getAttribute("data-presentation") === "true";
