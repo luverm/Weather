@@ -867,10 +867,15 @@ html[data-presentation="true"] body {
 }
 
 /* ---------- Dim background scenes ---------- */
+.stage, .vignette { transition: opacity 320ms var(--ease); }
 html[data-dim="true"] .stage { opacity: 0.42; }
 html[data-dim="true"] .vignette { opacity: 0.75; }
 
 /* ---------- Compact mode ---------- */
+.app, .hero, .hero-inner, .metrics, .metric, .extras, .extra-card,
+.chart-card, .forecast, .daily, .scrubber, .radar {
+  transition: padding 280ms var(--ease), gap 280ms var(--ease);
+}
 html[data-compact="true"] .app { gap: 10px; }
 html[data-compact="true"] .hero { gap: 10px; }
 html[data-compact="true"] .hero-inner { padding: 16px; gap: 16px; }
