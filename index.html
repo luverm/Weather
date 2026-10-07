@@ -170,7 +170,7 @@
     <!-- Smart alerts strip (synthesized from forecast). -->
     <div id="alerts-strip" class="alerts-strip" role="region" aria-label="Weather alerts" hidden></div>
 
-    <section class="hero">
+    <section class="hero" aria-label="Current weather for selected city">
       <div class="hero-inner glass" data-tilt>
         <div class="place">
           <p class="place-label"><span id="place-live-dot" class="live-dot"></span><span id="place-label-text">Now in</span></p>
@@ -290,7 +290,7 @@
         <div id="comfort-strip" class="comfort-strip" aria-label="24-hour comfort strip" hidden></div>
       </div>
 
-      <div class="metrics">
+      <div class="metrics" role="group" aria-label="Current conditions">
         <div class="metric glass metric-wind">
           <span class="metric-label">Wind <span id="m-wind-bft" class="trend" aria-hidden="true"></span></span>
           <div class="wind-compass" aria-hidden="true">
@@ -349,7 +349,7 @@
       </div>
 
       <!-- Extras row: air quality + moon -->
-      <div class="extras">
+      <div class="extras" role="group" aria-label="Air quality, moon, and sun">
         <div class="extra-card glass" id="aq-card">
           <span class="metric-label">Air quality</span>
           <div class="aq-row">
