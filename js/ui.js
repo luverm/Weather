@@ -1514,6 +1514,18 @@ function iconFor(condition) {
   }
 }
 
+function conditionGlyph(condition) {
+  switch (condition) {
+    case "clear": return "☀";
+    case "clouds": return "⛅";
+    case "rain": return "🌧";
+    case "snow": return "🌨";
+    case "storm": return "⛈";
+    case "fog": return "🌫";
+    default: return "";
+  }
+}
+
 // ---------- Saved places strip ----------
 function renderPlaces() {
   const all = places.all();
@@ -1522,8 +1534,10 @@ function renderPlaces() {
   const activeId = state.place ? places.idFor(state.place) : null;
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
+    const glyph = conditionGlyph(p.condition);
     return `
       <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
+        ${glyph ? `<span class="place-chip-glyph" aria-hidden="true">${glyph}</span>` : ""}
         <span>${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
         <span class="close" data-action="remove" aria-label="Remove">
