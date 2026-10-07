@@ -95,6 +95,7 @@ const el = {
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
   settingCompact: $("#setting-compact"),
+  settingSaveImage: $("#setting-save-image"),
   settingClearPlaces: $("#setting-clear-places"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
@@ -1506,6 +1507,127 @@ function updateDocumentTitle(w) {
     : `${left} — Aether`;
 }
 
+// Render a shareable PNG snapshot of the current weather and trigger a
+// download. Everything is drawn on a Canvas 2D context — no SVG → raster
+// pipeline, so this works consistently across modern browsers.
+function saveSnapshotImage() {
+  const w = state.weather;
+  const place = state.place;
+  if (!w || !place) { ui.showToast("No weather to snapshot yet"); return; }
+  const scale = 2; // retina
+  const W = 720;
+  const Hh = 1080;
+  const c = document.createElement("canvas");
+  c.width = W * scale;
+  c.height = Hh * scale;
+  const ctx = c.getContext("2d");
+  if (!ctx) { ui.showToast("Canvas unavailable"); return; }
+  ctx.scale(scale, scale);
+  // Background gradient tied to the current tone.
+  const tone = document.documentElement.getAttribute("data-tone") || "dark";
+  const bgTop = tone === "bright" ? "#dfeafc" : tone === "warm" ? "#3a1f28" : "#0d132a";
+  const bgBot = tone === "bright" ? "#a9c8f0" : tone === "warm" ? "#1a0f1f" : "#040718";
+  const g = ctx.createLinearGradient(0, 0, 0, Hh);
+  g.addColorStop(0, bgTop); g.addColorStop(1, bgBot);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, Hh);
+  const isLight = tone === "bright";
+  const fg = isLight ? "#0f1428" : "#f6f7fb";
+  const dim = isLight ? "rgba(15,20,40,0.55)" : "rgba(246,247,251,0.55)";
+  const accent = isLight ? "#5c7cb8" : "#9ad1ff";
+  // Brand strip
+  ctx.fillStyle = accent;
+  ctx.font = "600 22px 'SF Pro Display', system-ui, sans-serif";
+  ctx.fillText("Aether", 56, 72);
+  ctx.fillStyle = dim;
+  ctx.font = "12px system-ui, sans-serif";
+  const dateStr = new Date().toLocaleDateString(undefined, {
+    weekday: "short", month: "short", day: "numeric", year: "numeric",
+  });
+  ctx.fillText(dateStr, 56, 92);
+  // Place
+  ctx.fillStyle = fg;
+  ctx.font = "500 32px 'SF Pro Display', system-ui, sans-serif";
+  ctx.fillText(place.name || "—", 56, 220);
+  ctx.fillStyle = dim;
+  ctx.font = "16px system-ui, sans-serif";
+  const sub = [place.admin1, place.country].filter(Boolean).join(", ");
+  if (sub) ctx.fillText(sub, 56, 248);
+  // Big temperature + glyph
+  const unit = state.unit;
+  const temp = Math.round(unit === "F" ? w.temp * 9 / 5 + 32 : w.temp);
+  ctx.fillStyle = fg;
+  ctx.font = "200 220px 'SF Pro Display', system-ui, sans-serif";
+  ctx.fillText(`${temp}°`, 56, 500);
+  ctx.font = "300 60px system-ui, sans-serif";
+  ctx.fillStyle = dim;
+  const glyph = conditionGlyph(w.condition, w.isDay !== false);
+  if (glyph) ctx.fillText(glyph, 420, 490);
+  // Condition label
+  ctx.fillStyle = fg;
+  ctx.font = "400 28px 'SF Pro Display', system-ui, sans-serif";
+  ctx.fillText(capitalize(w.label || ""), 56, 550);
+  // Secondary row
+  const feels = Math.round(unit === "F" ? (w.feelsLike ?? w.temp) * 9 / 5 + 32 : (w.feelsLike ?? w.temp));
+  ctx.fillStyle = dim;
+  ctx.font = "16px system-ui, sans-serif";
+  const lines = [
+    `Feels like ${feels}°${unit}`,
+    `Wind ${Math.round(w.windSpeed || 0)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
+    `Humidity ${Math.round(w.humidity ?? 0)}%  ·  Pressure ${Math.round(w.pressure ?? 0)} hPa`,
+    w.uv != null ? `UV ${Math.round(w.uv)}` : null,
+    w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
+  ].filter(Boolean);
+  let y = 620;
+  for (const line of lines) {
+    ctx.fillText(line, 56, y);
+    y += 32;
+  }
+  // Daily strip at the bottom (next 7 days high/low).
+  const days = (w.daily || []).slice(0, 7);
+  if (days.length) {
+    const bandTop = Hh - 240;
+    ctx.fillStyle = fg;
+    ctx.font = "500 14px system-ui, sans-serif";
+    ctx.fillText("7-day outlook", 56, bandTop);
+    const cellW = (W - 112) / days.length;
+    days.forEach((d, i) => {
+      const x = 56 + i * cellW;
+      const dayName = i === 0 ? "Today" : new Date(d.time).toLocaleDateString(undefined, { weekday: "short" });
+      ctx.fillStyle = dim;
+      ctx.font = "12px system-ui, sans-serif";
+      ctx.fillText(dayName, x, bandTop + 28);
+      ctx.fillStyle = fg;
+      ctx.font = "500 20px system-ui, sans-serif";
+      const dglyph = conditionGlyph(d.condition, true);
+      if (dglyph) ctx.fillText(dglyph, x, bandTop + 60);
+      ctx.font = "400 16px system-ui, sans-serif";
+      const hi = d.tempMax != null ? `${Math.round(unit === "F" ? d.tempMax * 9 / 5 + 32 : d.tempMax)}°` : "—";
+      const lo = d.tempMin != null ? `${Math.round(unit === "F" ? d.tempMin * 9 / 5 + 32 : d.tempMin)}°` : "—";
+      ctx.fillText(hi, x, bandTop + 90);
+      ctx.fillStyle = dim;
+      ctx.fillText(lo, x, bandTop + 112);
+    });
+  }
+  // Footer attribution.
+  ctx.fillStyle = dim;
+  ctx.font = "11px system-ui, sans-serif";
+  ctx.fillText("Open-Meteo · generated by Aether", 56, Hh - 32);
+  c.toBlob((blob) => {
+    if (!blob) { ui.showToast("Snapshot failed"); return; }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const safeName = (place.name || "aether").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+    a.href = url;
+    a.download = `aether-${safeName}-${Date.now()}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    ui.showToast("Snapshot saved");
+  }, "image/png");
+}
+
 // ---------- Dynamic favicon ----------
 // Rewrite the <link rel="icon"> href with a small SVG matching the condition.
 function updateFavicon(condition, isDay) {
@@ -1772,6 +1894,11 @@ function bindSettings() {
       el.unitBtn.textContent = `°${state.unit}`;
       if (state.weather) ui.setWeather(state.weather);
     }
+  });
+
+  el.settingSaveImage?.addEventListener("click", () => {
+    saveSnapshotImage();
+    close();
   });
 
   el.settingClearPlaces?.addEventListener("click", () => {
