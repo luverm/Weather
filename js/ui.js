@@ -73,6 +73,7 @@ const el = {
   humidityComfort: $("#m-humidity-comfort"),
   pressureSparkLine: $("#pressure-spark-line"),
   pressureSparkFill: $("#pressure-spark-fill"),
+  pressureSparkLow: $("#pressure-spark-low"),
   humiditySparkLine: $("#humidity-spark-line"),
   humiditySparkFill: $("#humidity-spark-fill"),
   windSparkLine: $("#wind-spark-line"),
@@ -554,11 +555,35 @@ function uvLevel(v) {
 }
 
 function renderPressureSparkline(w) {
+  const pSeries = (w.hourly || []).map((h) => h.pressure).filter((v) => v != null).slice(0, 12);
   drawSparkline(
     el.pressureSparkLine, el.pressureSparkFill,
-    (w.hourly || []).map((h) => h.pressure).filter((v) => v != null).slice(0, 12),
+    pSeries,
     { minSpan: 1.5 }
   );
+  if (el.pressureSparkLow) {
+    if (pSeries.length < 2) {
+      el.pressureSparkLow.setAttribute("r", "0");
+    } else {
+      const minVal = Math.min(...pSeries);
+      const maxVal = Math.max(...pSeries);
+      const span = Math.max(1.5, maxVal - minVal);
+      const idx = pSeries.indexOf(minVal);
+      const W = 100, H = 24, PAD = 1.5;
+      const innerW = W - PAD * 2;
+      const innerH = H - PAD * 2;
+      const x = PAD + (idx / (pSeries.length - 1)) * innerW;
+      const y = PAD + innerH - ((minVal - minVal) / span) * innerH; // = PAD + innerH
+      // Only highlight the low when the drop is meaningful (≥ 2 hPa).
+      if (maxVal - minVal >= 2) {
+        el.pressureSparkLow.setAttribute("cx", x.toFixed(1));
+        el.pressureSparkLow.setAttribute("cy", y.toFixed(1));
+        el.pressureSparkLow.setAttribute("r", "1.8");
+      } else {
+        el.pressureSparkLow.setAttribute("r", "0");
+      }
+    }
+  }
   drawSparkline(
     el.humiditySparkLine, el.humiditySparkFill,
     (w.hourly || []).map((h) => h.humidity).filter((v) => v != null).slice(0, 12),
