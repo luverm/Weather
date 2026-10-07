@@ -376,6 +376,16 @@ installShortcuts({
   },
   jumpColdest: () => jumpToExtremeHour("cold"),
   jumpWarmest: () => jumpToExtremeHour("hot"),
+  jumpNextRain: () => {
+    const hours = app.weather?.hourly || [];
+    const next = hours.find((h) => (h.precip ?? 0) >= 0.1 || (h.pop ?? 0) >= 60);
+    if (!next) { ui.showToast("No rain in the next 24h"); return; }
+    clock.setOffset(next.time - Date.now());
+    scrubber.sync();
+    if (app.weather) applyScene(app.weather);
+    ui.setScrubbing(!clock.isLive());
+    ui.showToast(`Next rain window: ${next.pop ?? "—"}%`);
+  },
   jumpGustPeak: () => {
     const hours = app.weather?.hourly || [];
     if (!hours.length) { ui.showToast("No gust data"); return; }
