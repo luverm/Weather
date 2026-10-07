@@ -302,6 +302,40 @@ installShortcuts({
     if (app.weather) applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
   },
+  jumpTomorrow: () => {
+    // Jump to tomorrow at local noon in the city's timezone when possible.
+    const tz = app.weather?.timezone;
+    const now = new Date();
+    let target;
+    if (tz && tz !== "auto") {
+      // Compute tomorrow 12:00 in that zone by resolving the local date parts.
+      const parts = new Intl.DateTimeFormat("en-GB", {
+        timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit",
+      }).formatToParts(now);
+      const year = parseInt(parts.find((p) => p.type === "year").value, 10);
+      const month = parseInt(parts.find((p) => p.type === "month").value, 10);
+      const day = parseInt(parts.find((p) => p.type === "day").value, 10);
+      // Build "tomorrow 12:00" in UTC, then adjust by the zone offset at that
+      // instant so the clock in `tz` reads 12:00 local.
+      const utcMidday = Date.UTC(year, month - 1, day + 1, 12, 0, 0);
+      const probe = new Date(utcMidday);
+      const probeStr = new Intl.DateTimeFormat("en-GB", {
+        timeZone: tz, hour: "2-digit", hour12: false,
+      }).format(probe);
+      const probeHour = parseInt(probeStr, 10);
+      target = utcMidday - (probeHour - 12) * 3600_000;
+    } else {
+      const d = new Date(now);
+      d.setDate(d.getDate() + 1);
+      d.setHours(12, 0, 0, 0);
+      target = d.getTime();
+    }
+    clock.setOffset(target - Date.now());
+    scrubber.sync();
+    if (app.weather) applyScene(app.weather);
+    ui.setScrubbing(!clock.isLive());
+  },
+  refresh: () => refreshWeather(),
 });
 
 // ---------- Start ----------
