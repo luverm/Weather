@@ -159,8 +159,10 @@ export class HourlyChart {
       vis = ` · vis ${km} km${tag}`;
     }
     const glyph = conditionGlyph(h.condition, h.isDay);
+    const label = h.label ? ` <span class="pop-label">${h.label}</span>` : "";
     this.popover.innerHTML =
-      `<strong>${this._formatHour(h.time)}</strong> ${glyph ? `<span class="pop-glyph">${glyph}</span>` : ""} ${Math.round(t)}° ${feelsStr}<br>` +
+      `<strong>${this._formatHour(h.time)}</strong> ${glyph ? `<span class="pop-glyph">${glyph}</span>` : ""}${label}<br>` +
+      `<span>${Math.round(t)}° ${feelsStr}</span><br>` +
       `<em>${h.pop}% precip${wind}${hum}${vis}</em>`;
     this.popover.style.left = `${pxX.toFixed(1)}px`;
     this.popover.style.top = `${pxY.toFixed(1)}px`;

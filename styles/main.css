@@ -1135,6 +1135,11 @@ html[data-compact="true"] .temp-value { font-size: 72px; }
   color: var(--fg-dim);
   margin-left: 6px;
 }
+.chart-popover .pop-label {
+  color: var(--fg-muted);
+  font-size: 11px;
+  margin-left: 2px;
+}
 .chart-hover {
   font-size: 12px;
   color: var(--fg);
