@@ -1537,7 +1537,11 @@ function renderScrubberPrecip(w) {
     const heightPct = mm > 0 ? Math.min(100, (mm / maxP) * 90 + 10) : 0;
     const cls = precipIntensityClass(mm / 4); // chart cells show per-hour, class wants per-15min scale
     const opacity = (0.35 + popFrac * 0.55).toFixed(2);
-    return `<span class="sp-cell ${cls}" style="--h:${heightPct.toFixed(0)}%;--o:${opacity}"></span>`;
+    const hh = new Date(h.time).getHours().toString().padStart(2, "0");
+    const title = mm > 0
+      ? `${hh}:00 · ${mm.toFixed(1)} mm · ${h.pop ?? 0}%`
+      : `${hh}:00 · ${h.pop ?? 0}% chance`;
+    return `<span class="sp-cell ${cls}" style="--h:${heightPct.toFixed(0)}%;--o:${opacity}" title="${escapeHtml(title)}"></span>`;
   }).join("");
 }
 
