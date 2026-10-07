@@ -135,6 +135,12 @@ export class Scrubber {
     this.track.addEventListener("pointermove", onMove);
     this.track.addEventListener("pointerup", onUp);
     this.track.addEventListener("pointercancel", onUp);
+    // Double-click (or double-tap) resets to live — faster than hunting for
+    // the Now button, especially on mobile.
+    this.track.addEventListener("dblclick", (e) => {
+      e.preventDefault();
+      this.reset();
+    });
 
     // Keyboard: arrow keys nudge by 1h, shift+arrow by 6h.
     this.track.addEventListener("keydown", (e) => {
