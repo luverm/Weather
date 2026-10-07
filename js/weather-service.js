@@ -83,7 +83,7 @@ export async function getWeather(lat, lon) {
       "precipitation_probability", "precipitation",
       "wind_speed_10m", "wind_gusts_10m",
       "is_day", "uv_index", "pressure_msl",
-      "relative_humidity_2m",
+      "relative_humidity_2m", "visibility",
     ].join(","),
     daily: [
       "sunrise", "sunset",
@@ -146,6 +146,7 @@ function normalize(d, aq) {
         uv: d.hourly.uv_index?.[i] ?? null,
         pressure: d.hourly.pressure_msl?.[i] ?? null,
         humidity: d.hourly.relative_humidity_2m?.[i] ?? null,
+        visibility: d.hourly.visibility?.[i] ?? null,
         ...mapWmo(d.hourly.weather_code[i]),
       });
     }
