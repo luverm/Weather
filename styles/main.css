@@ -97,8 +97,13 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  transition: color var(--dur) var(--ease);
+  transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
   overscroll-behavior: none;
+}
+.glass, .metric, .extra-card, .place-chip, .scrubber-track, .alert-pill,
+.pleasantness, .forecast-item, .sun-window, .live-anchor {
+  transition: background 420ms var(--ease), color 420ms var(--ease),
+              border-color 420ms var(--ease);
 }
 button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
 input { font: inherit; color: inherit; }
