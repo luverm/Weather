@@ -841,6 +841,20 @@ function fmtTime(ts) {
   return `${hh}:${mm}`;
 }
 
+function renderSeasonChip(place) {
+  const chip = document.getElementById("season-chip");
+  if (!chip) return;
+  if (!place || place.lat == null) { chip.textContent = ""; return; }
+  const south = place.lat < 0;
+  const month = new Date().getMonth(); // 0..11
+  // Meteorological seasons: Dec-Feb winter in N; shift 6 months in S.
+  const seasonsN = ["Winter","Winter","Spring","Spring","Spring","Summer","Summer","Summer","Autumn","Autumn","Autumn","Winter"];
+  const seasonsS = ["Summer","Summer","Autumn","Autumn","Autumn","Winter","Winter","Winter","Spring","Spring","Spring","Summer"];
+  const name = (south ? seasonsS : seasonsN)[month];
+  const glyph = { Winter: "❄", Spring: "🌱", Summer: "🌻", Autumn: "🍂" }[name] || "";
+  chip.textContent = `${glyph} ${name}`;
+}
+
 function renderSun(w) {
   el.sunRise.textContent = fmtTime(w.sunrise);
   el.sunSet.textContent = fmtTime(w.sunset);
@@ -857,6 +871,7 @@ function renderSun(w) {
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   scheduleSunWindow(w);
+  renderSeasonChip(state.place);
 }
 
 function scheduleSunWindow(w) {

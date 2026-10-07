@@ -1179,6 +1179,17 @@ html[data-compact="true"] .temp-value { font-size: 72px; }
   font-variant-numeric: tabular-nums;
 }
 .sun-countdown:empty { display: none; }
+.season-chip {
+  margin-left: auto;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--fg-dim);
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  text-transform: none;
+}
+.season-chip:empty { display: none; }
 
 /* ---------- Keyboard shortcuts overlay ---------- */
 .shortcuts {
