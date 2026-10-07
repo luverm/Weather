@@ -168,6 +168,8 @@ ul { list-style: none; margin: 0; padding: 0; }
 }
 .brand {
   display: flex; align-items: center; gap: 10px;
+  background: transparent; border: 0; padding: 0; color: inherit;
+  font: inherit; cursor: pointer;
   letter-spacing: 0.02em;
 }
 .brand-mark {

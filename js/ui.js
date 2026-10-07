@@ -140,6 +140,7 @@ const el = {
   searchInput: $("#search-input"),
   searchResults: $("#search-results"),
   locateBtn: $("#locate-btn"),
+  brandBtn: $("#brand-btn"),
   audioBtn: $("#audio-btn"),
   hintText: $("#hint-text"),
   heroInner: document.querySelector(".hero-inner"),
@@ -2162,6 +2163,7 @@ function bindUnitToggle() {
 
 function bindLocate() {
   el.locateBtn.addEventListener("click", () => state.handlers.onLocate?.());
+  el.brandBtn?.addEventListener("click", () => state.handlers.onLocate?.());
 }
 
 function bindAudio() {
