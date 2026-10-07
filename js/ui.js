@@ -206,6 +206,7 @@ export const ui = {
     renderHourly(weather);
     renderDaily(weather);
     renderNowcast(weather);
+    renderScrubberPrecip(weather);
     renderAdvice(weather);
     renderPollen(weather.pollen);
     renderTrends(weather);
@@ -1347,6 +1348,28 @@ function precipIntensityLabel(mmPer15Min) {
     case "intensity-trace": return "trace";
     default: return "";
   }
+}
+
+function renderScrubberPrecip(w) {
+  const root = document.getElementById("scrubber-precip");
+  if (!root) return;
+  const hours = (w.hourly || []).slice(0, 24);
+  const anyRain = hours.some((h) => (h.precip || 0) >= 0.1 || (h.pop || 0) >= 30);
+  if (hours.length < 4 || !anyRain) {
+    root.hidden = true;
+    root.innerHTML = "";
+    return;
+  }
+  root.hidden = false;
+  const maxP = Math.max(0.5, ...hours.map((h) => h.precip || 0));
+  root.innerHTML = hours.map((h) => {
+    const mm = Math.max(0, h.precip || 0);
+    const popFrac = Math.min(1, (h.pop || 0) / 100);
+    const heightPct = mm > 0 ? Math.min(100, (mm / maxP) * 90 + 10) : 0;
+    const cls = precipIntensityClass(mm / 4); // chart cells show per-hour, class wants per-15min scale
+    const opacity = (0.35 + popFrac * 0.55).toFixed(2);
+    return `<span class="sp-cell ${cls}" style="--h:${heightPct.toFixed(0)}%;--o:${opacity}"></span>`;
+  }).join("");
 }
 
 function renderNowcast(w) {

@@ -585,6 +585,31 @@ html[data-reduce-motion="true"] *::after {
 }
 .scrubber-track:active .scrubber-thumb { transform: translate(-50%, -50%) scale(1.15); }
 
+.scrubber-precip {
+  display: grid;
+  grid-template-columns: repeat(24, minmax(0, 1fr));
+  gap: 2px;
+  height: 14px;
+  margin-top: 6px;
+  padding: 0 2px;
+  align-items: end;
+  pointer-events: none;
+}
+.scrubber-precip .sp-cell {
+  display: block;
+  height: var(--h, 0);
+  min-height: 2px;
+  border-radius: 1px;
+  background: #9ad1ff;
+  opacity: var(--o, 0.6);
+}
+.scrubber-precip .sp-cell.intensity-trace { background: rgba(154,209,255,0.55); }
+.scrubber-precip .sp-cell.intensity-light { background: #7cc0ff; }
+.scrubber-precip .sp-cell.intensity-moderate { background: #4a78c2; }
+.scrubber-precip .sp-cell.intensity-heavy {
+  background: linear-gradient(180deg, #c7b4ff, #6a40c7);
+}
+
 /* ---------- Pleasantness pill ---------- */
 .pleasantness {
   display: inline-flex;
