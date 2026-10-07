@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { nextSunWindow } from "./sun-windows.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -90,6 +91,11 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunWindow: $("#sun-window"),
+  sunWindowHeadline: $("#sun-window-headline"),
+  sunWindowDetail: $("#sun-window-detail"),
+  sunWindowCountdown: $("#sun-window-countdown"),
+  sunWindowSwatch: $("#sun-window-swatch"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -122,6 +128,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  sunWindowTimer: null,
   localTimer: null,
 };
 
@@ -523,6 +530,42 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleSunWindow(w);
+}
+
+function scheduleSunWindow(w) {
+  if (!el.sunWindow) return;
+  if (state.sunWindowTimer) { clearInterval(state.sunWindowTimer); state.sunWindowTimer = null; }
+  const update = () => {
+    const win = nextSunWindow(w?.daily);
+    if (!win) { el.sunWindow.hidden = true; return; }
+    el.sunWindow.hidden = false;
+    el.sunWindow.dataset.kind = win.kind;
+    el.sunWindow.dataset.state = win.state;
+    const whenLabel = win.when === "am" ? "morning" : "evening";
+    el.sunWindowHeadline.textContent = `${win.label} · ${whenLabel}`;
+    el.sunWindowDetail.textContent = `${fmtTime(win.start)} – ${fmtTime(win.end)}`;
+    const ms = win.state === "active" ? win.msToEnd : win.msToStart;
+    const totalMin = Math.max(0, Math.round(ms / 60_000));
+    const compact = totalMin >= 60
+      ? `${Math.floor(totalMin / 60)}h ${totalMin % 60}m`
+      : `${totalMin}m`;
+    el.sunWindowCountdown.textContent = win.state === "active"
+      ? `ends in ${compact}`
+      : `in ${compact}`;
+    el.sunWindow.setAttribute("title",
+      `${win.label} ${whenLabel}: ${fmtTime(win.start)} – ${fmtTime(win.end)}. Click to preview.`);
+  };
+  update();
+  // Tick each minute — windows are short, countdown should feel live.
+  state.sunWindowTimer = setInterval(update, 60_000);
+  el.sunWindow.onclick = () => {
+    const win = nextSunWindow(w?.daily);
+    if (!win) return;
+    // Scrub to the middle of the window for the best preview.
+    const mid = Math.round((win.start + win.end) / 2);
+    state.handlers.onHourClick?.(mid);
+  };
 }
 
 function scheduleSunArc(w) {

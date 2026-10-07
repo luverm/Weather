@@ -977,6 +977,86 @@ kbd {
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
 
+/* Golden-hour / blue-hour chip beneath the sun row. */
+.sun-window {
+  margin-top: 10px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 10px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--stroke);
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0));
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 240ms var(--ease), border-color 240ms var(--ease), transform 180ms var(--ease);
+}
+.sun-window:hover {
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.01));
+  border-color: rgba(255,255,255,0.22);
+}
+.sun-window:active { transform: translateY(1px); }
+.sun-window[data-kind="golden"] .sun-window-swatch {
+  background: linear-gradient(180deg, #ffe3a7, #ff9a5b);
+  box-shadow: 0 0 8px rgba(255,180,110,0.55);
+}
+.sun-window[data-kind="blue"] .sun-window-swatch {
+  background: linear-gradient(180deg, #8bb0ff, #3f5fb8);
+  box-shadow: 0 0 8px rgba(130,170,255,0.55);
+}
+.sun-window[data-state="active"] {
+  border-color: rgba(255,210,150,0.5);
+  background: linear-gradient(180deg, rgba(255,210,150,0.1), rgba(255,210,150,0.02));
+}
+.sun-window[data-state="active"][data-kind="blue"] {
+  border-color: rgba(140,180,255,0.5);
+  background: linear-gradient(180deg, rgba(140,180,255,0.1), rgba(140,180,255,0.02));
+}
+.sun-window-swatch {
+  width: 10px;
+  height: 24px;
+  border-radius: 4px;
+}
+.sun-window-meta {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.sun-window-headline {
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sun-window-detail {
+  font-size: 11px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+}
+.sun-window-countdown {
+  font-size: 11px;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+}
+.sun-window[data-state="active"] .sun-window-countdown {
+  color: #0b1020;
+  background: #ffd79a;
+}
+.sun-window[data-state="active"][data-kind="blue"] .sun-window-countdown {
+  color: #0b1020;
+  background: #a9c2ff;
+}
+
 /* ---------- Radar map ---------- */
 .radar {
   padding: 12px;
