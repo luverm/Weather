@@ -673,7 +673,18 @@ function renderAirQuality(aq) {
   el.aqArc.setAttribute("stroke-dashoffset", String(126 * (1 - frac)));
   el.aqDetail.textContent =
     `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
+  el.aqCard.setAttribute("title", aqAdvice(aq.aqi));
   renderAqTrend(aq);
+}
+
+function aqAdvice(aqi) {
+  if (aqi == null) return "Air quality unknown";
+  if (aqi <= 50) return "Good — air quality poses little or no risk.";
+  if (aqi <= 100) return "Moderate — unusually sensitive people should limit prolonged outdoor exertion.";
+  if (aqi <= 150) return "Unhealthy for sensitive groups — reduce outdoor time if asthmatic or heart-condition prone.";
+  if (aqi <= 200) return "Unhealthy — everyone should limit outdoor exertion.";
+  if (aqi <= 300) return "Very unhealthy — avoid outdoor activity, keep windows closed.";
+  return "Hazardous — stay indoors with air filtration if possible.";
 }
 
 function renderAqTrend(aq) {
