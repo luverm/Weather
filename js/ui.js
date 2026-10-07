@@ -95,6 +95,7 @@ const el = {
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
   settingCompact: $("#setting-compact"),
+  settingVolume: $("#setting-volume"),
   settingSaveImage: $("#setting-save-image"),
   settingClearPlaces: $("#setting-clear-places"),
   chartPopover: $("#chart-popover"),
@@ -1896,6 +1897,12 @@ function bindSettings() {
     }
   });
 
+  el.settingVolume?.addEventListener("input", () => {
+    const v = parseInt(el.settingVolume.value, 10) / 100;
+    localStorage.setItem("aether:volume", String(v));
+    state.handlers.onVolume?.(v);
+  });
+
   el.settingSaveImage?.addEventListener("click", () => {
     saveSnapshotImage();
     close();
@@ -1924,6 +1931,10 @@ function applyStoredPreferences() {
     document.documentElement.setAttribute("data-compact", "true");
     if (el.settingCompact) el.settingCompact.checked = true;
   }
+  const storedVol = parseFloat(localStorage.getItem("aether:volume"));
+  const vol = isFinite(storedVol) ? storedVol : 0.5;
+  if (el.settingVolume) el.settingVolume.value = String(Math.round(vol * 100));
+  queueMicrotask(() => state.handlers.onVolume?.(vol));
 }
 
 // Exposed so app.js can query the current preference on boot.

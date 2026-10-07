@@ -271,6 +271,7 @@ ui.init({
   onAudioToggle: () => toggleAudio(),
   onRefresh: () => refreshWeather(),
   onReduceMotion: (on) => setReducedMotion(on),
+  onVolume: (v) => audio.setVolume?.(v),
   onPlaceClick: (place) => loadByCoords(place),
   onHourClick: (ts) => {
     clock.setOffset(ts - Date.now());

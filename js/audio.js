@@ -20,6 +20,17 @@ export class AmbientAudio {
     this.noiseBuffer = null;
     this.nightInterval = null;
     this.listeners = new Set();
+    // 0..1 overall gain, independent of per-channel ambient mix.
+    this.volume = 0.5;
+  }
+
+  setVolume(v) {
+    this.volume = Math.max(0, Math.min(1, v));
+    if (this.enabled && this.master) {
+      const t = this.ctx.currentTime;
+      this.master.gain.cancelScheduledValues(t);
+      this.master.gain.linearRampToValueAtTime(this.volume, t + 0.3);
+    }
   }
 
   isEnabled() { return this.enabled; }
@@ -72,9 +83,9 @@ export class AmbientAudio {
     this.nightGain.gain.value = 0;
     this.nightGain.connect(this.master);
 
-    // Fade master up.
+    // Fade master up to the user-configured volume.
     const t = this.ctx.currentTime;
-    this.master.gain.linearRampToValueAtTime(0.5, t + 0.6);
+    this.master.gain.linearRampToValueAtTime(this.volume, t + 0.6);
     this.enabled = true;
     for (const fn of this.listeners) fn(true);
   }
