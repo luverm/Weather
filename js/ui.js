@@ -1676,6 +1676,9 @@ function bindShare() {
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
     ].filter(Boolean);
+    // Append a deep-link that reopens Aether on the same city.
+    const url = window.location.href;
+    if (url && window.location.hash) lines.push(url);
     const text = lines.join("\n");
     try {
       if (navigator.share) {

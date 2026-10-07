@@ -201,6 +201,7 @@ async function loadByCoords(place) {
   app.place = place;
   ui.setPlace(place);
   ui.setLoading(`Fetching weather for ${place.name}…`);
+  writeHash(place);
 
   // Drop any scrubber offset so we start live on each new city.
   clock.reset();
@@ -345,10 +346,55 @@ installShortcuts({
   },
 });
 
+// Shareable deep-link in the URL hash: #lat=51.5&lon=-0.12&name=London
+function writeHash(place) {
+  if (!place || place.lat == null || place.lon == null) return;
+  const params = new URLSearchParams();
+  params.set("lat", place.lat.toFixed(4));
+  params.set("lon", place.lon.toFixed(4));
+  if (place.name && place.name !== "Current location") params.set("name", place.name);
+  if (place.country) params.set("country", place.country);
+  const next = "#" + params.toString();
+  if (next !== window.location.hash) {
+    history.replaceState(null, "", next);
+  }
+}
+
+function readHash() {
+  const raw = window.location.hash.replace(/^#/, "");
+  if (!raw) return null;
+  const params = new URLSearchParams(raw);
+  const lat = parseFloat(params.get("lat"));
+  const lon = parseFloat(params.get("lon"));
+  if (!isFinite(lat) || !isFinite(lon)) return null;
+  return {
+    lat, lon,
+    name: params.get("name") || "Shared location",
+    country: params.get("country") || "",
+  };
+}
+
+// Respond to in-page hash changes (user pastes a new link, uses browser back).
+window.addEventListener("hashchange", () => {
+  const place = readHash();
+  if (!place) return;
+  const current = app.place;
+  if (current && Math.abs(current.lat - place.lat) < 0.01
+      && Math.abs(current.lon - place.lon) < 0.01) return;
+  loadByCoords(place);
+});
+
 // ---------- Start ----------
 (async function init() {
-  // Prefer the most recent saved place if we have one — avoids the geolocation
-  // prompt on every load and feels snappier.
+  // 1. Honor an explicit URL hash — this is how shared links reopen Aether
+  //    on a specific city, even on a device with no saved places.
+  const linked = readHash();
+  if (linked) {
+    await loadByCoords(linked);
+    return;
+  }
+  // 2. Otherwise prefer the most recent saved place — avoids the geolocation
+  //    prompt on every load and feels snappier.
   const saved = places.all();
   if (saved.length) {
     await loadByCoords(saved[0]);
