@@ -1080,8 +1080,10 @@ function renderTrends(w) {
       const cls = direction === "rising" ? "up" : direction === "falling" ? "down" : "flat";
       el.pressureTrend.className = `trend ${cls}`;
       el.pressureTrend.textContent = `${arrow} ${delta >= 0 ? "+" : ""}${delta.toFixed(1)}`;
+      el.pressureTrend.setAttribute("title", pressureNarrative(direction, delta));
     } else {
       el.pressureTrend.textContent = "";
+      el.pressureTrend.removeAttribute("title");
     }
   }
   // Temperature trend: next-3-hours delta vs now.
@@ -1102,6 +1104,21 @@ function renderTrends(w) {
       el.tempTrend.textContent = "";
     }
   }
+}
+
+function pressureNarrative(direction, delta) {
+  const mag = Math.abs(delta);
+  if (direction === "falling") {
+    if (mag >= 4) return "Falling fast — storms possible";
+    if (mag >= 2) return "Falling — unsettled weather moving in";
+    return "Easing lower — some change ahead";
+  }
+  if (direction === "rising") {
+    if (mag >= 4) return "Rising quickly — rapid clearing";
+    if (mag >= 2) return "Rising — skies trending clearer";
+    return "Nudging higher — settling pattern";
+  }
+  return "Steady — no quick change";
 }
 
 function cardinal(deg) {
