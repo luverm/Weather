@@ -347,6 +347,12 @@ installShortcuts({
     if (target) loadByCoords(target);
   },
   share: () => document.getElementById("share-btn")?.click(),
+  togglePresentation: () => {
+    const el = document.documentElement;
+    const now = el.getAttribute("data-presentation") === "true";
+    el.setAttribute("data-presentation", now ? "false" : "true");
+    ui.showToast(now ? "Presentation mode off" : "Presentation mode on — press P to exit");
+  },
 });
 
 // Shareable deep-link in the URL hash: #lat=51.5&lon=-0.12&name=London

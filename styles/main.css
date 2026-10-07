@@ -696,6 +696,25 @@ html[data-reduce-motion="true"] *::after {
 .pleasantness.bad { color: #ff6a6a; border-color: rgba(255,110,110,0.3); }
 .pleasantness.bad .dot.on { background: #ff6a6a; }
 
+/* ---------- Presentation mode ---------- */
+html[data-presentation="true"] .topbar,
+html[data-presentation="true"] .places-strip,
+html[data-presentation="true"] .alerts-strip,
+html[data-presentation="true"] .insights,
+html[data-presentation="true"] .forecast,
+html[data-presentation="true"] .daily,
+html[data-presentation="true"] .radar,
+html[data-presentation="true"] .scrubber,
+html[data-presentation="true"] .hint {
+  display: none !important;
+}
+html[data-presentation="true"] .hero-inner {
+  padding: 36px 40px;
+}
+html[data-presentation="true"] body {
+  overflow: hidden;
+}
+
 /* ---------- Compact mode ---------- */
 html[data-compact="true"] .app { gap: 10px; }
 html[data-compact="true"] .hero { gap: 10px; }
