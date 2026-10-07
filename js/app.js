@@ -355,6 +355,12 @@ installShortcuts({
   },
   share: () => document.getElementById("share-btn")?.click(),
   toggleSettings: () => document.getElementById("settings-btn")?.click(),
+  toggleInsights: () => {
+    const card = document.getElementById("insights-card");
+    if (!card) return;
+    card.hidden = !card.hidden;
+    ui.showToast(card.hidden ? "Insights hidden" : "Insights shown", 1400);
+  },
   volumeDelta: (step) => {
     const slider = document.getElementById("setting-volume");
     if (!slider) return;

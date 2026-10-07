@@ -92,6 +92,7 @@ export function installShortcuts(handlers) {
     if (key === "g" || key === "G") { handlers.toggleSettings?.(); e.preventDefault(); return; }
     if (key === "+" || (e.shiftKey && key === "=")) { handlers.volumeDelta?.(0.1); e.preventDefault(); return; }
     if (key === "-" || key === "_") { handlers.volumeDelta?.(-0.1); e.preventDefault(); return; }
+    if (key === "i" || key === "I") { handlers.toggleInsights?.(); e.preventDefault(); return; }
     if (/^[1-9]$/.test(key)) {
       handlers.jumpToPlaceIndex?.(parseInt(key, 10) - 1);
       e.preventDefault();
