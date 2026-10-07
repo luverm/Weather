@@ -6,6 +6,7 @@
 const ICONS = {
   walk: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4" r="2"/><path d="M9 21l3-7 4 3 2-4M7 13l3-3 3 4"/></svg>',
   stars: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 4.5L18 9l-4.4 1.5L12 15l-1.6-4.5L6 9l4.4-1.5L12 3z"/><path d="M19 14l.7 1.8L21 17l-1.3.6L19 19l-.7-1.4L17 17l1.3-1.2z"/></svg>',
+  bike: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="17" r="3.5"/><circle cx="18" cy="17" r="3.5"/><path d="M6 17l5-7h3l3 7M11 10l-1.5-3h-2M14 10l1-3"/></svg>',
 };
 
 function tempScore(t) {
@@ -45,6 +46,16 @@ function activityScore(h) {
   const ww = windScore(h.wind ?? h.windSpeed) * 0.25;
   const pw = precipScore(h.pop, h.precip) * 0.40;
   const daytimeBonus = h.isDay ? 5 : -8;
+  return Math.round(tw + ww + pw + daytimeBonus - uvPenalty(h.uv));
+}
+
+function bikeScore(h) {
+  if (!h) return 0;
+  // Cyclists feel wind twice as much and dislike rain more than walkers.
+  const tw = tempScore(h.temp) * 0.25;
+  const ww = windScore(h.wind ?? h.windSpeed) * 0.35;
+  const pw = precipScore(h.pop, h.precip) * 0.40;
+  const daytimeBonus = h.isDay ? 10 : -20;
   return Math.round(tw + ww + pw + daytimeBonus - uvPenalty(h.uv));
 }
 
@@ -117,6 +128,29 @@ export function findActivityWindows(weather) {
       score: Math.round(walk.score),
       why: reasonsFor(walk, hours),
     });
+  }
+
+  // Cycling: 2h window, dry + lower wind weighted heavier.
+  const bike = rollingPeak(hours, bikeScore, 2);
+  if (bike && bike.score >= 60) {
+    const biking = {
+      start: hours[bike.startIdx].time,
+      end: hours[bike.endIdx].time + 60 * 60 * 1000,
+    };
+    // Only add if it differs enough from the walk window to be worth showing.
+    const walkMid = walk ? (hours[walk.startIdx].time + hours[walk.endIdx].time) / 2 : null;
+    const bikeMid = (biking.start + biking.end) / 2;
+    if (walkMid == null || Math.abs(bikeMid - walkMid) >= 90 * 60_000) {
+      out.push({
+        kind: "bike",
+        icon: ICONS.bike,
+        label: "Best for cycling",
+        start: biking.start,
+        end: biking.end,
+        score: Math.round(bike.score),
+        why: reasonsFor(bike, hours),
+      });
+    }
   }
 
   // Stargazing: 2h window.
