@@ -1872,9 +1872,12 @@ function saveSnapshotImage() {
     if (!blob) { ui.showToast("Snapshot failed"); return; }
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    const safeName = (place.name || "aether").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+    const safePlace = (place.name || "aether").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+    const condSlug = (w.condition || "").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+    const tempSlug = `${temp}${unit.toLowerCase()}`;
+    const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
     a.href = url;
-    a.download = `aether-${safeName}-${Date.now()}.png`;
+    a.download = `aether-${safePlace}-${tempSlug}-${condSlug}-${stamp}.png`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
