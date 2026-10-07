@@ -177,12 +177,14 @@ export class Scrubber {
       this.reset();
     });
 
-    // Keyboard: arrow keys nudge by 1h, shift+arrow by 6h.
+    // Keyboard: arrow keys nudge by 1h (shift ± 6h), PgUp/PgDown ± 12h.
     this.track.addEventListener("keydown", (e) => {
       const step = e.shiftKey ? 6 : 1;
       let newOffset = clock.offset();
       if (e.key === "ArrowLeft") newOffset -= step * 3600_000;
       else if (e.key === "ArrowRight") newOffset += step * 3600_000;
+      else if (e.key === "PageDown") newOffset -= 12 * 3600_000;
+      else if (e.key === "PageUp") newOffset += 12 * 3600_000;
       else if (e.key === "Home") newOffset = -3600_000;
       else if (e.key === "End") newOffset = (RANGE_HOURS - 1) * 3600_000;
       else return;
