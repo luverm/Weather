@@ -43,6 +43,7 @@ const el = {
   aqCard: $("#aq-card"),
   aqTrendLine: $("#aq-trend-line"),
   aqTrendFill: $("#aq-trend-fill"),
+  aqTrendPeak: $("#aq-trend-peak"),
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
@@ -637,13 +638,42 @@ function renderAirQuality(aq) {
 
 function renderAqTrend(aq) {
   if (!el.aqTrendLine || !el.aqTrendFill) return;
-  const pts = (aq?.trend || []).map((p) => p.aqi);
+  const trend = aq?.trend || [];
+  const pts = trend.map((p) => p.aqi);
   if (pts.length < 2) {
     el.aqTrendLine.setAttribute("d", "");
     el.aqTrendFill.setAttribute("d", "");
+    if (el.aqTrendPeak) {
+      el.aqTrendPeak.setAttribute("r", "0");
+      el.aqTrendPeak.onclick = null;
+    }
     return;
   }
   drawSparkline(el.aqTrendLine, el.aqTrendFill, pts, { minSpan: 20 });
+  if (el.aqTrendPeak) {
+    const peakIdx = pts.reduce((bi, v, i, arr) => (v > arr[bi] ? i : bi), 0);
+    const peakVal = pts[peakIdx];
+    const W = 100, H = 24, PAD = 1.5;
+    const innerW = W - PAD * 2;
+    const innerH = H - PAD * 2;
+    const min = Math.min(...pts);
+    const max = Math.max(...pts);
+    const span = Math.max(20, max - min);
+    const x = PAD + (peakIdx / (pts.length - 1)) * innerW;
+    const y = PAD + innerH - ((peakVal - min) / span) * innerH;
+    el.aqTrendPeak.setAttribute("cx", x.toFixed(1));
+    el.aqTrendPeak.setAttribute("cy", y.toFixed(1));
+    el.aqTrendPeak.setAttribute("r", "2.1");
+    el.aqTrendPeak.style.cursor = "pointer";
+    el.aqTrendPeak.style.pointerEvents = "auto";
+    const ts = trend[peakIdx]?.time;
+    el.aqTrendPeak.onclick = (ev) => {
+      ev.stopPropagation();
+      if (ts) state.handlers.onHourClick?.(ts);
+    };
+    el.aqTrendPeak.setAttribute("aria-label",
+      `Jump to AQ peak (${Math.round(peakVal)}) at ${fmtTime(ts)}`);
+  }
 }
 
 function renderMoon(moon) {
