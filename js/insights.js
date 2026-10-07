@@ -99,6 +99,19 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     });
   }
 
+  // 5b. Dry / wet streak over the forecast window.
+  if (days.length >= 3) {
+    const streak = findRainStreak(days);
+    if (streak && streak.length >= 3) {
+      out.push({
+        icon: streak.wet ? ICONS.rain : ICONS.sun,
+        label: streak.wet ? "Wet stretch" : "Dry stretch",
+        value: `${streak.length} days${streak.wet ? "" : " · no measurable rain"}`,
+        ts: streak.firstTs,
+      });
+    }
+  }
+
   // 6. Best day in the week ahead — a pleasantness composite over days 1..6.
   const upcoming = days.slice(1, 7);
   if (upcoming.length >= 2) {
@@ -118,6 +131,21 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
   }
 
   return out.slice(0, 6);
+}
+
+function findRainStreak(days) {
+  // Classify each day as wet/dry; find the longest streak starting at day 0.
+  const WET_MM = 1.0;
+  const classify = (d) => (d?.precip ?? 0) >= WET_MM;
+  if (!days.length) return null;
+  const firstWet = classify(days[0]);
+  let length = 1;
+  for (let i = 1; i < days.length; i++) {
+    if (classify(days[i]) === firstWet) length++;
+    else break;
+  }
+  if (length < 3) return null;
+  return { wet: firstWet, length, firstTs: days[0].sunrise || days[0].time };
 }
 
 function pleasantness(d) {
