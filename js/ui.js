@@ -63,6 +63,9 @@ const el = {
   pollenItems: $("#pollen-items"),
   pressureTrend: $("#m-pressure-trend"),
   tempTrend: $("#temp-trend"),
+  pleasantness: $("#pleasantness"),
+  pleasantnessDots: $("#pleasantness-dots"),
+  pleasantnessLabel: $("#pleasantness-label"),
   uvLevel: $("#m-uv-level"),
   humidityComfort: $("#m-humidity-comfort"),
   pressureSparkLine: $("#pressure-spark-line"),
@@ -297,6 +300,56 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  renderPleasantness(w);
+}
+
+function pleasantnessScore(w) {
+  if (!w || w.temp == null) return null;
+  let s = 0;
+  const t = w.temp;
+  if (t >= 16 && t <= 26) s += 3;
+  else if ((t >= 12 && t < 16) || (t > 26 && t <= 30)) s += 2;
+  else if ((t >= 5 && t < 12) || (t > 30 && t <= 33)) s += 1;
+  const wind = w.windSpeed ?? 0;
+  if (wind < 12) s += 2;
+  else if (wind < 25) s += 1;
+  const rh = w.humidity;
+  if (rh != null && rh >= 35 && rh <= 70) s += 2;
+  else if (rh != null && rh >= 25 && rh <= 85) s += 1;
+  // Not raining right now.
+  if (!(w.condition === "rain" || w.condition === "storm" || w.condition === "snow")) s += 1;
+  // Low UV burn risk (but still some sun).
+  if (w.uv != null && w.uv >= 1 && w.uv < 7) s += 1;
+  else if (w.uv != null && w.uv < 1) s += 0.5;
+  // Clear or partly cloudy bonus.
+  if (w.condition === "clear" || w.condition === "clouds") s += 1;
+  return Math.max(0, Math.min(10, s));
+}
+
+function pleasantnessLabel(score) {
+  if (score == null) return null;
+  if (score >= 9) return { label: "Lovely", cls: "great" };
+  if (score >= 7) return { label: "Pleasant", cls: "good" };
+  if (score >= 5) return { label: "Fine", cls: "ok" };
+  if (score >= 3) return { label: "Rough", cls: "poor" };
+  return { label: "Harsh", cls: "bad" };
+}
+
+function renderPleasantness(w) {
+  if (!el.pleasantness || !el.pleasantnessDots || !el.pleasantnessLabel) return;
+  const score = pleasantnessScore(w);
+  if (score == null) { el.pleasantness.hidden = true; return; }
+  const bucket = pleasantnessLabel(score);
+  el.pleasantness.hidden = false;
+  el.pleasantness.className = `pleasantness ${bucket.cls}`;
+  const whole = Math.round(score);
+  const dots = [];
+  for (let i = 0; i < 10; i++) {
+    dots.push(`<span class="dot ${i < whole ? "on" : ""}"></span>`);
+  }
+  el.pleasantnessDots.innerHTML = dots.join("");
+  el.pleasantnessLabel.textContent = `${bucket.label} · ${whole}/10`;
+  el.pleasantness.setAttribute("title", `Pleasantness ${whole}/10`);
 }
 
 function renderDayRange(w) {

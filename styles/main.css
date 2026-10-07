@@ -571,6 +571,42 @@ html[data-reduce-motion="true"] *::after {
 }
 .scrubber-track:active .scrubber-thumb { transform: translate(-50%, -50%) scale(1.15); }
 
+/* ---------- Pleasantness pill ---------- */
+.pleasantness {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,0.03);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--fg-dim);
+  transition: color 240ms var(--ease), border-color 240ms var(--ease);
+}
+.pleasantness-dots {
+  display: inline-flex;
+  gap: 2px;
+}
+.pleasantness-dots .dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.14);
+}
+.pleasantness.great { color: #a8e6a0; border-color: rgba(140,220,130,0.3); }
+.pleasantness.great .dot.on { background: #a8e6a0; }
+.pleasantness.good { color: #cfe59a; border-color: rgba(210,230,160,0.3); }
+.pleasantness.good .dot.on { background: #cfe59a; }
+.pleasantness.ok { color: #ffd79a; border-color: rgba(255,215,160,0.3); }
+.pleasantness.ok .dot.on { background: #ffd79a; }
+.pleasantness.poor { color: #ff9c7a; border-color: rgba(255,155,125,0.3); }
+.pleasantness.poor .dot.on { background: #ff9c7a; }
+.pleasantness.bad { color: #ff6a6a; border-color: rgba(255,110,110,0.3); }
+.pleasantness.bad .dot.on { background: #ff6a6a; }
+
 /* ---------- Compact mode ---------- */
 html[data-compact="true"] .app { gap: 10px; }
 html[data-compact="true"] .hero { gap: 10px; }
