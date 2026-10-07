@@ -410,6 +410,13 @@ function flashHero(w) {
   void el.heroInner.offsetWidth;
   el.heroInner.classList.add("just-refreshed");
   setTimeout(() => el.heroInner.classList.remove("just-refreshed"), 1000);
+  // Also briefly highlight the fetched-ago badge so users know it just updated.
+  if (el.fetchedAgo) {
+    el.fetchedAgo.classList.remove("just-updated");
+    void el.fetchedAgo.offsetWidth;
+    el.fetchedAgo.classList.add("just-updated");
+    setTimeout(() => el.fetchedAgo?.classList.remove("just-updated"), 1600);
+  }
 }
 
 function renderOfflineBanner(w) {
