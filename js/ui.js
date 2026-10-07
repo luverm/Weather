@@ -211,6 +211,7 @@ export const ui = {
     renderWeekend(weather);
     startLocaltime(weather);
     updateFavicon(weather.condition, weather.isDay !== false);
+    updateDocumentTitle(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
@@ -1327,6 +1328,20 @@ function renderNowcast(w) {
     el.nowcastBars.appendChild(bar);
   });
   el.nowcast.hidden = false;
+}
+
+// Live page title: "22° Partly cloudy · London — Aether".
+function updateDocumentTitle(w) {
+  if (!w || w.temp == null) return;
+  const unit = state.unit;
+  const temp = Math.round(unit === "F" ? w.temp * 9 / 5 + 32 : w.temp);
+  const placeName = state.place?.name || "";
+  const parts = [`${temp}°`];
+  if (w.label) parts.push(capitalize(w.label));
+  const left = parts.join(" ");
+  document.title = placeName
+    ? `${left} · ${placeName} — Aether`
+    : `${left} — Aether`;
 }
 
 // ---------- Dynamic favicon ----------
