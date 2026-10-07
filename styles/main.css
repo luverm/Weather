@@ -90,6 +90,7 @@ html, body { height: 100%; }
 body {
   margin: 0;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-feature-settings: "cv11", "ss01";
   color: var(--fg);
   background: var(--bg);
   overflow-x: hidden;
