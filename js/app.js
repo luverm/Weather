@@ -345,6 +345,7 @@ installShortcuts({
     const target = list[idx];
     if (target) loadByCoords(target);
   },
+  share: () => document.getElementById("share-btn")?.click(),
 });
 
 // Shareable deep-link in the URL hash: #lat=51.5&lon=-0.12&name=London

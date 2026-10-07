@@ -81,6 +81,7 @@ export function installShortcuts(handlers) {
     if (key === "]") { handlers.cyclePlace?.(1); e.preventDefault(); return; }
     if (key === "t" || key === "T") { handlers.jumpTomorrow?.(); e.preventDefault(); return; }
     if (key === "r" || key === "R") { handlers.refresh?.(); e.preventDefault(); return; }
+    if (key === "s" || key === "S") { handlers.share?.(); e.preventDefault(); return; }
     if (/^[1-9]$/.test(key)) {
       handlers.jumpToPlaceIndex?.(parseInt(key, 10) - 1);
       e.preventDefault();
