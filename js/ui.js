@@ -1992,8 +1992,13 @@ function renderPlaces() {
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
     const glyph = conditionGlyph(p.condition);
+    const admin = [p.admin1, p.country].filter(Boolean).join(", ");
+    const coords = (p.lat != null && p.lon != null)
+      ? `${p.lat.toFixed(2)}, ${p.lon.toFixed(2)}`
+      : "";
+    const title = [admin, coords].filter(Boolean).join(" · ");
     return `
-      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
+      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}" title="${escapeHtml(title)}">
         ${glyph ? `<span class="place-chip-glyph" aria-hidden="true">${glyph}</span>` : ""}
         <span>${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
