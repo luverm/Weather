@@ -49,6 +49,7 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -528,7 +529,11 @@ function renderSun(w) {
     const hh = Math.floor(mins / 60);
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
-  } else el.sunDaylight.textContent = "—";
+    renderDaylightDelta(w, mins);
+  } else {
+    el.sunDaylight.textContent = "—";
+    if (el.sunDaylightDelta) el.sunDaylightDelta.textContent = "";
+  }
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   scheduleSunWindow(w);
@@ -567,6 +572,27 @@ function scheduleSunWindow(w) {
     const mid = Math.round((win.start + win.end) / 2);
     state.handlers.onHourClick?.(mid);
   };
+}
+
+function renderDaylightDelta(w, todayMins) {
+  if (!el.sunDaylightDelta) return;
+  const tmrw = w?.daily?.[1];
+  if (!tmrw?.sunrise || !tmrw?.sunset) { el.sunDaylightDelta.textContent = ""; return; }
+  const tmrwMins = Math.round((tmrw.sunset - tmrw.sunrise) / 60_000);
+  const delta = tmrwMins - todayMins;
+  if (delta === 0) {
+    el.sunDaylightDelta.className = "sun-daylight-delta flat";
+    el.sunDaylightDelta.textContent = "same tmrw";
+    return;
+  }
+  const seconds = Math.abs(delta) * 60;
+  const label = seconds >= 60
+    ? `${Math.round(seconds / 60)}m`
+    : `${seconds}s`;
+  const dir = delta > 0 ? "up" : "down";
+  const sign = delta > 0 ? "+" : "−";
+  el.sunDaylightDelta.className = `sun-daylight-delta ${dir}`;
+  el.sunDaylightDelta.textContent = `${sign}${label} tmrw`;
 }
 
 function scheduleSunArc(w) {
