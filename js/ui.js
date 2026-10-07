@@ -210,6 +210,7 @@ export const ui = {
     renderAlerts(weather);
     renderWeekend(weather);
     startLocaltime(weather);
+    updateFavicon(weather.condition, weather.isDay !== false);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
@@ -1326,6 +1327,48 @@ function renderNowcast(w) {
     el.nowcastBars.appendChild(bar);
   });
   el.nowcast.hidden = false;
+}
+
+// ---------- Dynamic favicon ----------
+// Rewrite the <link rel="icon"> href with a small SVG matching the condition.
+function updateFavicon(condition, isDay) {
+  const link = document.querySelector('link[rel="icon"]');
+  if (!link) return;
+  const svg = faviconSvg(condition, isDay);
+  link.href = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
+function faviconSvg(condition, isDay) {
+  const bg = isDay ? "#1b2340" : "#070a16";
+  const strokeDay = "#fff";
+  const stroke = isDay ? "#f0e6cb" : "#9ad1ff";
+  const open = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="${bg}"/>`;
+  const close = `</svg>`;
+  const common = `fill="none" stroke="${stroke}" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"`;
+  const sun = `<circle cx="32" cy="32" r="12" fill="${isDay ? "#fff1c9" : "#9ad1ff"}"/>
+    <path d="M32 10v6M32 48v6M10 32h6M48 32h6M15 15l4 4M45 45l4 4M15 49l4-4M45 19l4-4" stroke="${isDay ? "#fff1c9" : "#9ad1ff"}" stroke-width="3.5" stroke-linecap="round"/>`;
+  const cloud = `<path d="M18 42a9 9 0 010-18 11 11 0 0121-2 9 9 0 013 20H18z" fill="${stroke}" opacity="0.9"/>`;
+  const moon = `<path d="M44 36a16 16 0 11-16-16 12 12 0 0016 16z" fill="#f0e6cb"/>`;
+  switch (condition) {
+    case "clear":
+      return open + (isDay ? sun : moon) + close;
+    case "clouds":
+      return open + (isDay ? sun : moon) + cloud + close;
+    case "rain":
+      return open + cloud +
+        `<path d="M22 48l-3 8M32 48l-3 8M42 48l-3 8" stroke="#9ad1ff" stroke-width="3.5" stroke-linecap="round"/>` + close;
+    case "snow":
+      return open + cloud +
+        `<path d="M22 52l0 4M20 54l4 0M32 50l0 4M30 52l4 0M42 52l0 4M40 54l4 0" ${common}/>` + close;
+    case "storm":
+      return open + cloud +
+        `<path d="M30 44l-5 10h7l-4 8" fill="none" stroke="#ffd36a" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>` + close;
+    case "fog":
+      return open +
+        `<path d="M12 24h40M8 36h48M14 48h36" ${common}/>` + close;
+    default:
+      return open + (isDay ? sun : moon) + close;
+  }
 }
 
 // ---------- Icons ----------
