@@ -1501,6 +1501,79 @@ kbd {
 .daily-spark circle { transition: r 160ms var(--ease); }
 .daily-spark .dot-hi { fill: #ff9c7a; }
 .daily-spark .dot-lo { fill: #9ad1ff; }
+
+/* 7-day precipitation accumulation strip, slotted under the sparkline. */
+.daily-precip-strip {
+  margin: 6px 10px 2px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(120,160,255,0.07), rgba(120,160,255,0.01));
+  border: 1px solid var(--stroke);
+  display: grid;
+  gap: 6px;
+}
+.precip-strip-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  color: var(--fg-muted);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.precip-strip-bars {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  align-items: end;
+}
+.precip-bar-cell {
+  background: transparent;
+  border: 0;
+  padding: 2px 0 0;
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  cursor: pointer;
+  color: inherit;
+}
+.precip-bar-wrap {
+  width: 100%;
+  height: 32px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 6px;
+}
+.precip-bar {
+  width: 100%;
+  min-height: 2px;
+  border-radius: 3px 3px 1px 1px;
+  background: linear-gradient(180deg, #9ad1ff, #4a78c2);
+  box-shadow: 0 0 10px rgba(120,170,255,0.3);
+  transition: height 320ms var(--ease), background 240ms var(--ease);
+}
+.precip-bar-cell.dry .precip-bar {
+  background: rgba(255,255,255,0.1);
+  box-shadow: none;
+}
+.precip-bar-cell:hover .precip-bar {
+  background: linear-gradient(180deg, #c7e3ff, #6d93d9);
+}
+.precip-bar-day {
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+}
+.precip-dry {
+  display: block;
+  padding: 6px 2px;
+  font-size: 11.5px;
+  color: var(--fg-dim);
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
 .forecast-track {
   display: grid;
   grid-auto-flow: column;

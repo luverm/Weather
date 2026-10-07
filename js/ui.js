@@ -73,6 +73,7 @@ const el = {
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
+  dailyPrecipStrip: $("#daily-precip-strip"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -896,6 +897,7 @@ function renderDaily(w) {
   if (!days.length) return;
   renderDailyIconStrip(days);
   renderDailySpark(days);
+  renderDailyPrecipStrip(days);
   renderDailyDelta(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
@@ -978,6 +980,57 @@ function renderDailySpark(days) {
       c.setAttribute("class", "dot-lo");
       el.dailySparkDots.appendChild(c);
     }
+  });
+}
+
+function renderDailyPrecipStrip(days) {
+  if (!el.dailyPrecipStrip) return;
+  const totals = days.map((d) => Math.max(0, d.precip ?? 0));
+  const anyRain = totals.some((v) => v > 0.1);
+  if (!anyRain) {
+    el.dailyPrecipStrip.hidden = false;
+    el.dailyPrecipStrip.innerHTML =
+      `<span class="precip-dry">Dry week · no measurable rain forecast</span>`;
+    return;
+  }
+  el.dailyPrecipStrip.hidden = false;
+  // Scale bar heights off the wettest day so the ratios read clearly;
+  // cap at 20mm so a single storm doesn't flatten every other day's bar.
+  const maxMm = Math.max(2, Math.min(20, Math.max(...totals)));
+  const tz = state.weather?.timezone;
+  const weekday = (ts) => new Date(ts).toLocaleDateString(undefined, {
+    weekday: "short",
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  const sum = totals.reduce((s, v) => s + v, 0);
+  const summary = `${sum.toFixed(1)} mm total · 7 days`;
+  const cells = days.map((d, i) => {
+    const mm = totals[i];
+    const pct = Math.min(100, (mm / maxMm) * 100);
+    const label = i === 0 ? "Today" : weekday(d.time);
+    const title = mm > 0.1
+      ? `${label} · ${mm.toFixed(1)} mm · ${d.pop ?? 0}%`
+      : `${label} · dry`;
+    const dryClass = mm <= 0.1 ? "dry" : "";
+    return `
+      <button type="button" class="precip-bar-cell ${dryClass}"
+              data-ts="${d.time}" title="${escapeHtml(title)}">
+        <span class="precip-bar-wrap">
+          <span class="precip-bar" style="height:${pct.toFixed(1)}%"></span>
+        </span>
+        <span class="precip-bar-day">${escapeHtml(label)}</span>
+      </button>
+    `;
+  }).join("");
+  el.dailyPrecipStrip.innerHTML =
+    `<div class="precip-strip-head"><span>Rainfall</span><span>${escapeHtml(summary)}</span></div>` +
+    `<div class="precip-strip-bars">${cells}</div>`;
+  el.dailyPrecipStrip.querySelectorAll(".precip-bar-cell").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const ts = parseInt(btn.dataset.ts, 10);
+      // Scrub to the day's noon so the chart cursor lands somewhere useful.
+      if (ts) state.handlers.onHourClick?.(ts + 12 * 3600_000);
+    });
   });
 }
 
