@@ -569,7 +569,23 @@ html[data-reduce-motion="true"] *::after {
   margin-left: auto;
   font-size: 13px;
 }
-.scrubber-delta { font-size: 11px; color: var(--fg-dim); font-variant-numeric: tabular-nums; }
+.scrubber-delta { font-size: 11px; color: var(--fg-dim); font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; gap: 6px; }
+.scrubber-delta .live-pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #78d06a;
+  box-shadow: 0 0 6px #78d06a;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html:not([data-reduce-motion="true"]) .scrubber-delta .live-pulse {
+    animation: live-pulse 1.6s ease-in-out infinite;
+  }
+}
+@keyframes live-pulse {
+  0%, 100% { box-shadow: 0 0 4px #78d06a; opacity: 1; }
+  50% { box-shadow: 0 0 10px #78d06a; opacity: 0.75; }
+}
 .scrubber-track {
   position: relative;
   height: 36px;

@@ -233,9 +233,11 @@ export class Scrubber {
 
     const offMin = Math.round(clock.offset() / 60_000);
     if (this.deltaEl) {
-      if (!offMin) this.deltaEl.textContent = "live";
-      else if (Math.abs(offMin) < 60) this.deltaEl.textContent = `${offMin > 0 ? "+" : ""}${offMin}m`;
-      else {
+      if (!offMin) {
+        this.deltaEl.innerHTML = `<span class="live-pulse" aria-hidden="true"></span>live`;
+      } else if (Math.abs(offMin) < 60) {
+        this.deltaEl.textContent = `${offMin > 0 ? "+" : ""}${offMin}m`;
+      } else {
         const h = Math.round(offMin / 60);
         this.deltaEl.textContent = `${h > 0 ? "+" : ""}${h}h`;
       }
