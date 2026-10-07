@@ -1926,6 +1926,10 @@ kbd {
   background: rgba(255,255,255,0.1);
   box-shadow: none;
 }
+.precip-bar-cell.snow .precip-bar {
+  background: linear-gradient(180deg, #e4edff, #a9c2ff);
+  box-shadow: 0 0 10px rgba(220,230,255,0.35);
+}
 .precip-bar-cell:hover .precip-bar {
   background: linear-gradient(180deg, #c7e3ff, #6d93d9);
 }

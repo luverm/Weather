@@ -1403,12 +1403,17 @@ function renderDailyPrecipStrip(days) {
     const mm = totals[i];
     const pct = Math.min(100, (mm / maxMm) * 100);
     const label = i === 0 ? "Today" : weekday(d.time);
+    const isSnow = d.condition === "snow";
+    const amount = isSnow && mm > 0.1
+      ? `${Math.round(mm * 10)} cm snow`
+      : `${mm.toFixed(1)} mm`;
     const title = mm > 0.1
-      ? `${label} · ${mm.toFixed(1)} mm · ${d.pop ?? 0}%`
+      ? `${label} · ${amount} · ${d.pop ?? 0}%`
       : `${label} · dry`;
     const dryClass = mm <= 0.1 ? "dry" : "";
+    const snowClass = isSnow && mm > 0.1 ? "snow" : "";
     return `
-      <button type="button" class="precip-bar-cell ${dryClass}"
+      <button type="button" class="precip-bar-cell ${dryClass} ${snowClass}"
               data-ts="${d.time}" title="${escapeHtml(title)}">
         <span class="precip-bar-wrap">
           <span class="precip-bar" style="height:${pct.toFixed(1)}%"></span>
