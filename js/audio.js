@@ -22,15 +22,26 @@ export class AmbientAudio {
     this.listeners = new Set();
     // 0..1 overall gain, independent of per-channel ambient mix.
     this.volume = 0.5;
+    this.duckFactor = 1;
   }
 
   setVolume(v) {
     this.volume = Math.max(0, Math.min(1, v));
-    if (this.enabled && this.master) {
-      const t = this.ctx.currentTime;
-      this.master.gain.cancelScheduledValues(t);
-      this.master.gain.linearRampToValueAtTime(this.volume, t + 0.3);
-    }
+    this._applyMasterGain();
+  }
+
+  /** 1 while live; 0.2 while scrubbing off-live so the sound stops lying. */
+  setDuckFactor(factor) {
+    this.duckFactor = Math.max(0, Math.min(1, factor));
+    this._applyMasterGain();
+  }
+
+  _applyMasterGain() {
+    if (!this.enabled || !this.master) return;
+    const t = this.ctx.currentTime;
+    const target = this.volume * (this.duckFactor ?? 1);
+    this.master.gain.cancelScheduledValues(t);
+    this.master.gain.linearRampToValueAtTime(target, t + 0.3);
   }
 
   isEnabled() { return this.enabled; }
@@ -83,9 +94,9 @@ export class AmbientAudio {
     this.nightGain.gain.value = 0;
     this.nightGain.connect(this.master);
 
-    // Fade master up to the user-configured volume.
+    // Fade master up to the user-configured volume (ducked if scrubbing).
     const t = this.ctx.currentTime;
-    this.master.gain.linearRampToValueAtTime(this.volume, t + 0.6);
+    this.master.gain.linearRampToValueAtTime(this.volume * (this.duckFactor ?? 1), t + 0.6);
     this.enabled = true;
     for (const fn of this.listeners) fn(true);
   }

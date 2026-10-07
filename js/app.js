@@ -193,7 +193,9 @@ const scrubber = new Scrubber({
   onScrub: () => {
     if (!app.weather) return;
     applyScene(app.weather);
-    ui.setScrubbing(!clock.isLive());
+    const scrubbing = !clock.isLive();
+    ui.setScrubbing(scrubbing);
+    audio.setDuckFactor?.(scrubbing ? 0.2 : 1);
   },
 });
 
