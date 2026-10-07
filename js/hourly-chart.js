@@ -8,6 +8,18 @@ const PAD_RIGHT = 6;
 const PAD_TOP = 16;
 const PAD_BOT = 22;
 
+function conditionGlyph(condition, isDay) {
+  switch (condition) {
+    case "clear": return isDay === false ? "🌙" : "☀";
+    case "clouds": return "⛅";
+    case "rain": return "🌧";
+    case "snow": return "🌨";
+    case "storm": return "⛈";
+    case "fog": return "🌫";
+    default: return "";
+  }
+}
+
 export class HourlyChart {
   constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit, getTimezone }) {
     this.svg = svgEl;
@@ -142,8 +154,9 @@ export class HourlyChart {
     const vis = h.visibility != null && h.visibility < 10000
       ? ` · vis ${(h.visibility / 1000).toFixed(1)} km`
       : "";
+    const glyph = conditionGlyph(h.condition, h.isDay);
     this.popover.innerHTML =
-      `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
+      `<strong>${this._formatHour(h.time)}</strong> ${glyph ? `<span class="pop-glyph">${glyph}</span>` : ""} ${Math.round(t)}° ${feelsStr}<br>` +
       `<em>${h.pop}% precip${wind}${hum}${vis}</em>`;
     this.popover.style.left = `${pxX.toFixed(1)}px`;
     this.popover.style.top = `${pxY.toFixed(1)}px`;
