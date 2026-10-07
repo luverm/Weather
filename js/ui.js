@@ -970,16 +970,41 @@ function renderHourly(w) {
   for (const h of (w.hourly || []).slice(0, 24)) {
     const item = document.createElement("div");
     item.className = "forecast-item";
+    const severe = hourSeverity(h);
+    if (severe) {
+      item.classList.add("severe", `severe-${severe.kind}`);
+    }
     item.dataset.ts = h.time;
+    const severeBadge = severe ? `<span class="forecast-flag" title="${escapeHtml(severe.title)}">${severe.glyph}</span>` : "";
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
-      <span class="forecast-icon">${iconFor(h.condition)}</span>
+      <span class="forecast-icon">${iconFor(h.condition)}${severeBadge}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
   }
+}
+
+function hourSeverity(h) {
+  // Highest-priority alert wins — a thunderstorm already implies rain.
+  if (h.condition === "storm") {
+    return { kind: "storm", glyph: "⚡", title: "Thunderstorm" };
+  }
+  if (h.gusts != null && h.gusts >= 50) {
+    return { kind: "gale", glyph: "⚠", title: `Gale-force gusts (${Math.round(h.gusts)} km/h)` };
+  }
+  if (h.precip != null && h.precip >= 4) {
+    return { kind: "heavy", glyph: "☔", title: `Heavy rain (${h.precip.toFixed(1)} mm/h)` };
+  }
+  if (h.temp != null && h.temp <= 0) {
+    return { kind: "freeze", glyph: "❆", title: `Freezing (${Math.round(h.temp)}°C)` };
+  }
+  if (h.temp != null && h.temp >= 32) {
+    return { kind: "hot", glyph: "🔥", title: `Very hot (${Math.round(h.temp)}°C)` };
+  }
+  return null;
 }
 
 function highlightHour(index) {
