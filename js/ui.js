@@ -326,9 +326,23 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = glyph
     ? `${glyph}  ${capitalize(w.label)}`
     : capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  el.feelsLike.textContent = `${feelsLabel(w)} ${Math.round(feels)}°`;
   renderDayRange(w);
   renderPleasantness(w);
+}
+
+function feelsLabel(w) {
+  // Name the apparent temperature by its physical driver when it diverges
+  // from air temp enough to tell.
+  const air = w?.temp;
+  const feels = w?.feelsLike;
+  if (air == null || feels == null) return "Feels like";
+  const diff = feels - air;
+  if (Math.abs(diff) < 1) return "Feels like";
+  // Hot + humid → Humidex. Cold + windy → Wind chill. The rest stays "Feels like".
+  if (air >= 20 && diff > 0 && (w.dewPoint ?? 0) >= 15) return "Humidex";
+  if (air <= 10 && diff < 0 && (w.windSpeed ?? 0) >= 10) return "Wind chill";
+  return "Feels like";
 }
 
 function pleasantnessScore(w) {
