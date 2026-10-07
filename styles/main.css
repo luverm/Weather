@@ -1711,6 +1711,16 @@ html[data-reduce-motion="true"] .forecast-item.severe {
 }
 .daily-item:hover { background: var(--glass); }
 .daily-day { font-size: 13px; font-weight: 500; }
+.daily-trend {
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-dim);
+}
+.daily-trend.up { color: #ff9c7a; }
+.daily-trend.down { color: #9ad1ff; }
+.daily-trend.flat { opacity: 0.65; }
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
 .daily-range {
   position: relative;

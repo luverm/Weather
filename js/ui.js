@@ -1086,8 +1086,10 @@ function renderDaily(w) {
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const prev = i > 0 ? days[i - 1] : null;
+    const trend = dailyTempTrend(d, prev);
     item.innerHTML = `
-      <span class="daily-day">${day}</span>
+      <span class="daily-day">${day}${trend ? ` <span class="daily-trend ${trend.cls}" title="${escapeHtml(trend.title)}">${trend.glyph}</span>` : ""}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
@@ -1099,6 +1101,17 @@ function renderDaily(w) {
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+}
+
+function dailyTempTrend(d, prev) {
+  if (!prev || d?.tempMax == null || prev?.tempMax == null) return null;
+  const deltaC = d.tempMax - prev.tempMax;
+  const unit = state.unit;
+  const delta = unit === "F" ? deltaC * 9 / 5 : deltaC;
+  const absR = Math.round(Math.abs(delta));
+  if (absR < 1) return { cls: "flat", glyph: "→", title: `Similar to prior day` };
+  if (delta > 0) return { cls: "up", glyph: "▲", title: `+${absR}° vs prior day` };
+  return { cls: "down", glyph: "▼", title: `−${absR}° vs prior day` };
 }
 
 function renderDailyIconStrip(days) {
