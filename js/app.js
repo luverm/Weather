@@ -336,6 +336,11 @@ installShortcuts({
     ui.setScrubbing(!clock.isLive());
   },
   refresh: () => refreshWeather(),
+  jumpToPlaceIndex: (idx) => {
+    const list = places.all();
+    const target = list[idx];
+    if (target) loadByCoords(target);
+  },
 });
 
 // ---------- Start ----------
