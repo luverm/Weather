@@ -69,6 +69,9 @@ const el = {
   pressureSparkFill: $("#pressure-spark-fill"),
   humiditySparkLine: $("#humidity-spark-line"),
   humiditySparkFill: $("#humidity-spark-fill"),
+  windSparkLine: $("#wind-spark-line"),
+  windSparkFill: $("#wind-spark-fill"),
+  windSparkGusts: $("#wind-spark-gusts"),
   dailySpark: $("#daily-spark"),
   dailyHi: $("#daily-hi"),
   dailyLo: $("#daily-lo"),
@@ -423,6 +426,42 @@ function renderPressureSparkline(w) {
     (w.hourly || []).map((h) => h.humidity).filter((v) => v != null).slice(0, 12),
     { minSpan: 10, fixedMin: 0, fixedMax: 100 }
   );
+  renderWindSparkline(w);
+}
+
+function renderWindSparkline(w) {
+  if (!el.windSparkLine) return;
+  const hours = (w.hourly || []).slice(0, 12);
+  const winds = hours.map((h) => h.wind).filter((v) => v != null);
+  const gusts = hours.map((h) => h.gusts).filter((v) => v != null);
+  // Share a common vertical scale between wind + gusts so they read together.
+  const allVals = [...winds, ...gusts];
+  if (allVals.length < 2) {
+    el.windSparkLine.setAttribute("d", "");
+    el.windSparkFill?.setAttribute("d", "");
+    el.windSparkGusts?.setAttribute("d", "");
+    return;
+  }
+  const fixedMax = Math.max(...allVals) * 1.1;
+  drawSparkline(el.windSparkLine, el.windSparkFill, winds,
+    { minSpan: 4, fixedMin: 0, fixedMax });
+  if (el.windSparkGusts && gusts.length >= 2) {
+    // Reuse the same geometry logic as drawSparkline for the gust overlay,
+    // but write only the stroke path (no fill).
+    const W = 100, H = 24, PAD = 1.5;
+    const innerW = W - PAD * 2;
+    const innerH = H - PAD * 2;
+    const span = Math.max(4, fixedMax);
+    const x = (i) => PAD + (i / (gusts.length - 1)) * innerW;
+    const y = (v) => PAD + innerH - (v / span) * innerH;
+    let path = "";
+    gusts.forEach((v, i) => {
+      path += (i === 0 ? "M" : "L") + x(i).toFixed(1) + "," + y(v).toFixed(1) + " ";
+    });
+    el.windSparkGusts.setAttribute("d", path.trim());
+  } else if (el.windSparkGusts) {
+    el.windSparkGusts.setAttribute("d", "");
+  }
 }
 
 function drawSparkline(lineEl, fillEl, series, { minSpan = 1, fixedMin, fixedMax } = {}) {
