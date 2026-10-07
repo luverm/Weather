@@ -854,6 +854,9 @@ html[data-condition="storm"] .hero-inner {
 }
 html[data-condition="snow"] .hero-inner { border-color: rgba(220, 230, 255, 0.28); }
 html[data-condition="fog"] .hero-inner { border-color: rgba(200, 210, 220, 0.26); }
+html[data-isday="false"] .hero-inner {
+  background: linear-gradient(180deg, rgba(10, 15, 35, 0.08), transparent), var(--glass);
+}
 
 /* ---------- Offline / fetch-failure banner ---------- */
 .offline-banner {
