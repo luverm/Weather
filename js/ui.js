@@ -175,6 +175,7 @@ export const ui = {
     bindTilt();
     applyStoredPreferences();
     renderPlaces();
+    stampBuildInfo();
     startFetchedTicker();
     state.chart = new HourlyChart({
       svgEl: el.chartSvg,
@@ -2254,6 +2255,21 @@ function bindSettings() {
     ui.showToast("Saved places cleared");
     close();
   });
+}
+
+function stampBuildInfo() {
+  const node = document.getElementById("settings-foot-build");
+  if (!node) return;
+  // Pull the service worker cache name as a lightweight build marker — it's
+  // the cache-busting handle that bumps with every deploy anyway.
+  if ("serviceWorker" in navigator) {
+    try {
+      caches.keys().then((keys) => {
+        const aether = keys.find((k) => k.startsWith("aether-"));
+        if (aether) node.textContent = `Build ${aether.replace("aether-", "")}`;
+      }).catch(() => {});
+    } catch { /* ignore */ }
+  }
 }
 
 function applyStoredPreferences() {
