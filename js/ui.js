@@ -2064,12 +2064,17 @@ function bindSearch() {
 }
 
 function bindUnitToggle() {
-  el.unitBtn.addEventListener("click", () => {
+  const toggleUnit = () => {
     state.unit = state.unit === "C" ? "F" : "C";
     localStorage.setItem("aether:unit", state.unit);
     el.unitBtn.textContent = `°${state.unit}`;
     if (state.weather) ui.setWeather(state.weather);
-  });
+  };
+  el.unitBtn.addEventListener("click", toggleUnit);
+  // Clicking the big temperature number also toggles units — matches the
+  // natural "tap the number to change what it reads" instinct.
+  el.temp.addEventListener("click", toggleUnit);
+  el.temp.style.cursor = "pointer";
 }
 
 function bindLocate() {
