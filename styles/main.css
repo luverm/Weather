@@ -605,6 +605,22 @@ html[data-reduce-motion="true"] *::after {
 }
 .scrubber-track:active .scrubber-thumb { transform: translate(-50%, -50%) scale(1.15); }
 
+.scrubber-tick {
+  position: absolute;
+  top: 50%;
+  width: 1px;
+  height: 6px;
+  margin-top: -3px;
+  margin-left: -0.5px;
+  background: rgba(255,255,255,0.14);
+  pointer-events: none;
+}
+.scrubber-tick.major {
+  height: 12px;
+  margin-top: -6px;
+  background: rgba(255,255,255,0.28);
+}
+
 .scrubber-precip {
   display: grid;
   grid-template-columns: repeat(24, minmax(0, 1fr));

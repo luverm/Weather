@@ -39,6 +39,7 @@ export class Scrubber {
     this.start = start || Date.now();
     this.sunrise = sunrise;
     this.sunset = sunset;
+    this._renderTicks();
     this._placeMarker(this.sunriseEl, sunrise, "Sunrise");
     this._placeMarker(this.sunsetEl, sunset, "Sunset");
     this._bindSnap(this.sunriseEl, sunrise);
@@ -51,6 +52,33 @@ export class Scrubber {
     this._placeMarker(this.noonEl, noon, "Noon");
     if (noon) this._bindSnap(this.noonEl, noon);
     this._render(this._currentT());
+  }
+
+  _renderTicks() {
+    // Draw tiny tick marks every 3 hours across the scrubber range so the
+    // scrubber reads like a timeline rather than a bare slider.
+    const container = this.track;
+    if (!container) return;
+    // Remove any previous ticks (idempotent).
+    container.querySelectorAll(".scrubber-tick").forEach((e) => e.remove());
+    const RANGE_MS = RANGE_HOURS * 3600_000;
+    const base = this.start - 3600_000;
+    // Ticks at the start-of-day's 00:00, 03:00, ... 21:00 wall-clock hours.
+    const startLocal = new Date(base);
+    startLocal.setMinutes(0, 0, 0);
+    for (let h = 0; h <= RANGE_HOURS + 1; h++) {
+      const ts = startLocal.getTime() + h * 3600_000;
+      const hourOfDay = new Date(ts).getHours();
+      if (hourOfDay % 3 !== 0) continue;
+      const rel = (ts - base) / RANGE_MS;
+      if (rel < 0 || rel > 1) continue;
+      const tick = document.createElement("span");
+      tick.className = "scrubber-tick";
+      if (hourOfDay === 0 || hourOfDay === 12) tick.classList.add("major");
+      tick.style.left = `${rel * 100}%`;
+      // Insert as the first child so ticks sit behind markers/thumb.
+      container.insertBefore(tick, container.firstChild);
+    }
   }
 
   _placeBand(el, from, to) {
