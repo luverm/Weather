@@ -109,6 +109,7 @@ const el = {
   settingCopyLink: $("#setting-copy-link"),
   settingSaveImage: $("#setting-save-image"),
   settingReset: $("#setting-reset"),
+  settingClearCache: $("#setting-clear-cache"),
   settingClearPlaces: $("#setting-clear-places"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
@@ -2291,6 +2292,23 @@ function bindSettings() {
 
   el.settingSaveImage?.addEventListener("click", () => {
     saveSnapshotImage();
+    close();
+  });
+
+  el.settingClearCache?.addEventListener("click", () => {
+    // Clear every weather cache entry (keyed "aether:cache:lat,lon").
+    try {
+      const prefix = "aether:cache:";
+      const toRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(prefix)) toRemove.push(key);
+      }
+      for (const k of toRemove) localStorage.removeItem(k);
+      ui.showToast(`Cleared ${toRemove.length} cached forecast${toRemove.length === 1 ? "" : "s"}`);
+    } catch {
+      ui.showToast("Couldn't clear cache");
+    }
     close();
   });
 
