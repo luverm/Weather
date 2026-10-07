@@ -415,6 +415,15 @@ function renderOfflineBanner(w) {
   if (!banner) return;
   if (!w?.offline) { banner.hidden = true; return; }
   banner.hidden = false;
+  // Distinguish stale-cache from static-mock by looking at fetchedAt age.
+  const textEl = banner.querySelector(".offline-text");
+  if (textEl && w.fetchedAt) {
+    const ageMin = Math.max(0, Math.round((Date.now() - w.fetchedAt) / 60_000));
+    const ageStr = ageMin < 60 ? `${ageMin}m` : `${Math.floor(ageMin / 60)}h`;
+    textEl.innerHTML =
+      `<strong>Showing cached forecast (${ageStr} old).</strong> ` +
+      `Can't reach Open-Meteo right now — tap Retry when the connection is back.`;
+  }
   if (!banner._bound) {
     banner._bound = true;
     document.getElementById("offline-retry")?.addEventListener("click", () => {
