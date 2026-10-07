@@ -100,6 +100,7 @@ const el = {
   settingDim: $("#setting-dim"),
   settingVolume: $("#setting-volume"),
   settingRefreshInterval: $("#setting-refresh-interval"),
+  settingTheme: $("#setting-theme"),
   settingSaveImage: $("#setting-save-image"),
   settingReset: $("#setting-reset"),
   settingClearPlaces: $("#setting-clear-places"),
@@ -2024,6 +2025,12 @@ function bindSettings() {
     state.handlers.onRefreshInterval?.(ms);
   });
 
+  el.settingTheme?.addEventListener("change", () => {
+    const v = el.settingTheme.value;
+    document.documentElement.setAttribute("data-theme", v);
+    localStorage.setItem("aether:theme", v);
+  });
+
   el.settingSaveImage?.addEventListener("click", () => {
     saveSnapshotImage();
     close();
@@ -2079,6 +2086,9 @@ function applyStoredPreferences() {
   const refreshMs = isFinite(storedRefresh) ? storedRefresh : 15 * 60_000;
   if (el.settingRefreshInterval) el.settingRefreshInterval.value = String(refreshMs);
   queueMicrotask(() => state.handlers.onRefreshInterval?.(refreshMs));
+  const theme = localStorage.getItem("aether:theme") || "dark";
+  document.documentElement.setAttribute("data-theme", theme);
+  if (el.settingTheme) el.settingTheme.value = theme;
 }
 
 // Exposed so app.js can query the current preference on boot.

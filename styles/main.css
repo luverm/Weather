@@ -37,6 +37,51 @@
   --accent: #ffd39a;
 }
 
+/* Explicit light theme — overrides the dark defaults regardless of scene tone.
+   `data-theme="auto"` falls through to the dark base above (and the scene's
+   dynamic data-tone keeps mixing in warm/bright variants). */
+html[data-theme="light"] {
+  --bg: #eef2fa;
+  --fg: #0f1428;
+  --fg-muted: rgba(15, 20, 40, 0.7);
+  --fg-dim: rgba(15, 20, 40, 0.46);
+  --glass: rgba(255, 255, 255, 0.65);
+  --glass-strong: rgba(255, 255, 255, 0.82);
+  --stroke: rgba(15, 20, 40, 0.14);
+  --shadow: 0 20px 60px rgba(30, 40, 80, 0.14);
+  --accent: #2b7dd1;
+  color-scheme: light;
+}
+html[data-theme="light"] .stage { opacity: 0.5; }
+html[data-theme="light"] .vignette { opacity: 0.2; }
+html[data-theme="light"][data-tone] {
+  /* Scene-driven tone overrides are suppressed in explicit light mode so
+     the panels stay consistently light. */
+  --fg: #0f1428;
+  --fg-muted: rgba(15, 20, 40, 0.7);
+  --fg-dim: rgba(15, 20, 40, 0.46);
+  --glass: rgba(255, 255, 255, 0.65);
+  --glass-strong: rgba(255, 255, 255, 0.82);
+  --stroke: rgba(15, 20, 40, 0.14);
+  --accent: #2b7dd1;
+}
+html[data-theme="light"] .chart-night rect { fill: rgba(60, 80, 140, 0.1); }
+
+@media (prefers-color-scheme: light) {
+  html[data-theme="auto"] {
+    --bg: #eef2fa;
+    --fg: #0f1428;
+    --fg-muted: rgba(15, 20, 40, 0.7);
+    --fg-dim: rgba(15, 20, 40, 0.46);
+    --glass: rgba(255, 255, 255, 0.6);
+    --glass-strong: rgba(255, 255, 255, 0.78);
+    --stroke: rgba(15, 20, 40, 0.14);
+    --accent: #2b7dd1;
+    color-scheme: light;
+  }
+  html[data-theme="auto"] .stage { opacity: 0.55; }
+}
+
 /* ---------- Reset ---------- */
 *,
 *::before,
