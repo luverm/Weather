@@ -119,6 +119,17 @@
     <!-- Saved locations strip -->
     <nav id="places-strip" class="places-strip" aria-label="Saved locations" hidden></nav>
 
+    <!-- Offline / fetch-failure banner -->
+    <div id="offline-banner" class="offline-banner" role="status" hidden>
+      <span class="offline-icon" aria-hidden="true">⚠</span>
+      <span class="offline-text">
+        <strong>Can't reach Open-Meteo.</strong>
+        Showing a sample forecast — real values will return once connection resumes.
+      </span>
+      <button id="offline-retry" class="offline-retry" type="button">Retry</button>
+      <button id="offline-dismiss" class="offline-dismiss" type="button" aria-label="Dismiss">×</button>
+    </div>
+
     <!-- Smart alerts strip (synthesized from forecast). -->
     <div id="alerts-strip" class="alerts-strip" role="region" aria-label="Weather alerts" hidden></div>
 

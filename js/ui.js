@@ -225,7 +225,7 @@ export const ui = {
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
-    if (weather.offline) ui.showToast("Offline — showing sample weather");
+    renderOfflineBanner(weather);
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
       places.updateSummary(state.place, {
@@ -340,6 +340,22 @@ function pleasantnessLabel(score) {
   if (score >= 5) return { label: "Fine", cls: "ok" };
   if (score >= 3) return { label: "Rough", cls: "poor" };
   return { label: "Harsh", cls: "bad" };
+}
+
+function renderOfflineBanner(w) {
+  const banner = document.getElementById("offline-banner");
+  if (!banner) return;
+  if (!w?.offline) { banner.hidden = true; return; }
+  banner.hidden = false;
+  if (!banner._bound) {
+    banner._bound = true;
+    document.getElementById("offline-retry")?.addEventListener("click", () => {
+      state.handlers.onRefresh?.();
+    });
+    document.getElementById("offline-dismiss")?.addEventListener("click", () => {
+      banner.hidden = true;
+    });
+  }
 }
 
 function updateLiveAnchor(scrubbing) {
