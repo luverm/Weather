@@ -1495,6 +1495,15 @@ kbd {
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+.forecast-summary {
+  margin-left: auto;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-muted);
+  text-transform: none;
+  font-size: 11px;
+}
+.forecast-summary:empty { display: none; }
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;

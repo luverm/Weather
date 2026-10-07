@@ -111,6 +111,7 @@ const el = {
   weekendIconSat: $("#weekend-icon-sat"),
   weekendIconSun: $("#weekend-icon-sun"),
   forecastTrack: $("#forecast-track"),
+  forecastSummary: $("#forecast-summary"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
   nowcastHeadline: $("#nowcast-headline"),
@@ -984,6 +985,7 @@ function cardinal(deg) {
 }
 
 function renderHourly(w) {
+  renderForecastSummary(w);
   el.forecastTrack.innerHTML = "";
   for (const h of (w.hourly || []).slice(0, 24)) {
     const item = document.createElement("div");
@@ -1003,6 +1005,26 @@ function renderHourly(w) {
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
   }
+}
+
+function renderForecastSummary(w) {
+  if (!el.forecastSummary) return;
+  const hours = (w.hourly || []).slice(0, 24);
+  if (hours.length < 4) { el.forecastSummary.textContent = ""; return; }
+  const totalMm = hours.reduce((s, h) => s + (h.precip || 0), 0);
+  const rainyHours = hours.filter((h) => (h.precip || 0) >= 0.1).length;
+  const temps = hours.map((h) => h.temp).filter((v) => v != null);
+  const hiC = Math.max(...temps);
+  const loC = Math.min(...temps);
+  const unit = state.unit;
+  const t = (c) => Math.round(unit === "F" ? c * 9 / 5 + 32 : c);
+  const parts = [`${t(hiC)}° / ${t(loC)}°`];
+  if (totalMm >= 0.1) {
+    parts.push(`${totalMm.toFixed(1)} mm · ${rainyHours}h rain`);
+  } else {
+    parts.push("dry");
+  }
+  el.forecastSummary.textContent = parts.join(" · ");
 }
 
 function hourSeverity(h) {
