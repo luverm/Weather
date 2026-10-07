@@ -103,6 +103,7 @@ const el = {
   settingVolume: $("#setting-volume"),
   settingRefreshInterval: $("#setting-refresh-interval"),
   settingTheme: $("#setting-theme"),
+  settingShortcuts: $("#setting-shortcuts"),
   settingCopyLink: $("#setting-copy-link"),
   settingSaveImage: $("#setting-save-image"),
   settingReset: $("#setting-reset"),
@@ -2142,6 +2143,12 @@ function bindSettings() {
     const v = el.settingTheme.value;
     document.documentElement.setAttribute("data-theme", v);
     localStorage.setItem("aether:theme", v);
+  });
+
+  el.settingShortcuts?.addEventListener("click", () => {
+    close();
+    document.getElementById("shortcuts").hidden = false;
+    document.getElementById("shortcuts-close")?.focus();
   });
 
   el.settingCopyLink?.addEventListener("click", async () => {
