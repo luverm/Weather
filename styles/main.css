@@ -773,6 +773,20 @@ html[data-reduce-motion="true"] *::after {
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
 }
+.chart-suntime-line {
+  stroke-width: 0.9;
+  stroke-dasharray: 2 2;
+  opacity: 0.55;
+  pointer-events: none;
+}
+.chart-suntime-line.sunrise { stroke: #ffd79a; }
+.chart-suntime-line.sunset { stroke: #c0a0ff; }
+.chart-suntime-glyph {
+  font-size: 10px;
+  pointer-events: none;
+}
+.chart-suntime-glyph.sunrise { fill: #ffd79a; }
+.chart-suntime-glyph.sunset { fill: #c0a0ff; }
 .chart-labels text {
   font-size: 9px;
   fill: var(--fg-dim);

@@ -248,9 +248,13 @@ export class HourlyChart {
     const nightG = this.svg.querySelector("#chart-night");
     nightG.innerHTML = "";
     let runStart = null;
+    const transitions = [];
     for (let i = 0; i <= this.hours.length; i++) {
       const dark = i < this.hours.length && !this.hours[i].isDay;
-      if (dark && runStart == null) runStart = i;
+      if (dark && runStart == null) {
+        runStart = i;
+        if (i > 0) transitions.push({ kind: "sunset", i });
+      }
       if ((!dark || i === this.hours.length) && runStart != null) {
         const x1 = iToX(Math.max(0, runStart - 0.5));
         const x2 = iToX(Math.min(this.hours.length - 1, i - 0.5));
@@ -260,7 +264,32 @@ export class HourlyChart {
         r.setAttribute("width", Math.max(0, x2 - x1).toFixed(1));
         r.setAttribute("height", String(H));
         nightG.appendChild(r);
+        if (i < this.hours.length) transitions.push({ kind: "sunrise", i });
         runStart = null;
+      }
+    }
+
+    // Sunrise / sunset markers: a short vertical hairline + a tiny glyph.
+    const sunG = this.svg.querySelector("#chart-suntimes");
+    if (sunG) {
+      sunG.innerHTML = "";
+      for (const { kind, i } of transitions) {
+        if (i <= 0 || i >= this.hours.length) continue;
+        const x = iToX(i - 0.5);
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", x.toFixed(1));
+        line.setAttribute("x2", x.toFixed(1));
+        line.setAttribute("y1", PAD_TOP.toFixed(1));
+        line.setAttribute("y2", (PAD_TOP + innerH).toFixed(1));
+        line.setAttribute("class", `chart-suntime-line ${kind}`);
+        sunG.appendChild(line);
+        const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        label.setAttribute("x", x.toFixed(1));
+        label.setAttribute("y", (PAD_TOP + 8).toFixed(1));
+        label.setAttribute("text-anchor", "middle");
+        label.setAttribute("class", `chart-suntime-glyph ${kind}`);
+        label.textContent = kind === "sunrise" ? "☀" : "☾";
+        sunG.appendChild(label);
       }
     }
 
