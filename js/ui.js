@@ -1621,6 +1621,16 @@ function renderNowcast(w) {
   }
   const inMin = Math.max(0, Math.round((first.time - Date.now()) / 60_000));
   const kind = first.code >= 71 && first.code <= 86 ? "Snow" : "Rain";
+  // Clicking the headline area jumps to the first precipitation moment.
+  if (!el.nowcast._clickBound) {
+    el.nowcast._clickBound = true;
+    el.nowcast.querySelector(".nowcast-text")?.addEventListener("click", () => {
+      if (el.nowcast._firstTs) state.handlers.onHourClick?.(el.nowcast._firstTs);
+    });
+    const text = el.nowcast.querySelector(".nowcast-text");
+    if (text) { text.style.cursor = "pointer"; }
+  }
+  el.nowcast._firstTs = first.time;
   // If precipitation is active now, find when the next sustained dry window
   // begins so we can say "clearing at HH:MM" instead of just "Rain now".
   let dryTs = null;
