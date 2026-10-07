@@ -72,6 +72,9 @@ const el = {
   windSparkLine: $("#wind-spark-line"),
   windSparkFill: $("#wind-spark-fill"),
   windSparkGusts: $("#wind-spark-gusts"),
+  uvSparkLine: $("#uv-spark-line"),
+  uvSparkFill: $("#uv-spark-fill"),
+  uvSparkPeak: $("#uv-spark-peak"),
   dailySpark: $("#daily-spark"),
   dailyHi: $("#daily-hi"),
   dailyLo: $("#daily-lo"),
@@ -427,6 +430,34 @@ function renderPressureSparkline(w) {
     { minSpan: 10, fixedMin: 0, fixedMax: 100 }
   );
   renderWindSparkline(w);
+  renderUvSparkline(w);
+}
+
+function renderUvSparkline(w) {
+  if (!el.uvSparkLine) return;
+  // 14h horizon captures peak UV in nearly all mid-latitude days without
+  // smearing night zeroes.
+  const series = (w.hourly || []).slice(0, 14).map((h) => h.uv ?? 0);
+  const peakIdx = series.reduce((bi, v, i, arr) => (v > arr[bi] ? i : bi), 0);
+  const peakValue = series[peakIdx] ?? 0;
+  if (series.length < 2 || peakValue <= 0) {
+    el.uvSparkLine.setAttribute("d", "");
+    el.uvSparkFill?.setAttribute("d", "");
+    if (el.uvSparkPeak) el.uvSparkPeak.setAttribute("cx", "-10");
+    return;
+  }
+  drawSparkline(el.uvSparkLine, el.uvSparkFill, series,
+    { minSpan: 3, fixedMin: 0 });
+  if (el.uvSparkPeak) {
+    const W = 100, H = 24, PAD = 1.5;
+    const innerW = W - PAD * 2;
+    const innerH = H - PAD * 2;
+    const max = Math.max(3, ...series);
+    const x = PAD + (peakIdx / (series.length - 1)) * innerW;
+    const y = PAD + innerH - (peakValue / max) * innerH;
+    el.uvSparkPeak.setAttribute("cx", x.toFixed(1));
+    el.uvSparkPeak.setAttribute("cy", y.toFixed(1));
+  }
 }
 
 function renderWindSparkline(w) {
