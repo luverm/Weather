@@ -1317,7 +1317,8 @@ function renderForecastSummary(w) {
   const hours = (w.hourly || []).slice(0, 24);
   if (hours.length < 4) { el.forecastSummary.textContent = ""; return; }
   const totalMm = hours.reduce((s, h) => s + (h.precip || 0), 0);
-  const rainyHours = hours.filter((h) => (h.precip || 0) >= 0.1).length;
+  const wetHours = hours.filter((h) => (h.precip || 0) >= 0.1).length;
+  const snowyHours = hours.filter((h) => h.condition === "snow" && (h.precip || 0) >= 0.1).length;
   const temps = hours.map((h) => h.temp).filter((v) => v != null);
   const hiC = Math.max(...temps);
   const loC = Math.min(...temps);
@@ -1325,7 +1326,12 @@ function renderForecastSummary(w) {
   const t = (c) => Math.round(unit === "F" ? c * 9 / 5 + 32 : c);
   const parts = [`${t(hiC)}° / ${t(loC)}°`];
   if (totalMm >= 0.1) {
-    parts.push(`${totalMm.toFixed(1)} mm · ${rainyHours}h rain`);
+    // When the window is predominantly snow, report cm equivalent.
+    if (snowyHours >= wetHours / 2) {
+      parts.push(`~${Math.round(totalMm * 10)} cm snow · ${snowyHours}h`);
+    } else {
+      parts.push(`${totalMm.toFixed(1)} mm · ${wetHours}h rain`);
+    }
   } else {
     parts.push("dry");
   }
