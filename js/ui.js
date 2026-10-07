@@ -97,6 +97,7 @@ const el = {
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
   settingCompact: $("#setting-compact"),
+  settingDim: $("#setting-dim"),
   settingVolume: $("#setting-volume"),
   settingRefreshInterval: $("#setting-refresh-interval"),
   settingSaveImage: $("#setting-save-image"),
@@ -1993,6 +1994,12 @@ function bindSettings() {
     localStorage.setItem("aether:compact", on ? "1" : "0");
   });
 
+  el.settingDim?.addEventListener("change", () => {
+    const on = el.settingDim.checked;
+    document.documentElement.setAttribute("data-dim", on ? "true" : "false");
+    localStorage.setItem("aether:dim", on ? "1" : "0");
+  });
+
   el.settingUnitF?.addEventListener("change", () => {
     const wantF = el.settingUnitF.checked;
     const desired = wantF ? "F" : "C";
@@ -2043,6 +2050,11 @@ function applyStoredPreferences() {
   if (compact) {
     document.documentElement.setAttribute("data-compact", "true");
     if (el.settingCompact) el.settingCompact.checked = true;
+  }
+  const dim = localStorage.getItem("aether:dim") === "1";
+  if (dim) {
+    document.documentElement.setAttribute("data-dim", "true");
+    if (el.settingDim) el.settingDim.checked = true;
   }
   const storedVol = parseFloat(localStorage.getItem("aether:volume"));
   const vol = isFinite(storedVol) ? storedVol : 0.5;

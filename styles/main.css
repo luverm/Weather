@@ -770,6 +770,10 @@ html[data-presentation="true"] body {
   overflow: hidden;
 }
 
+/* ---------- Dim background scenes ---------- */
+html[data-dim="true"] .stage { opacity: 0.42; }
+html[data-dim="true"] .vignette { opacity: 0.75; }
+
 /* ---------- Compact mode ---------- */
 html[data-compact="true"] .app { gap: 10px; }
 html[data-compact="true"] .hero { gap: 10px; }
