@@ -85,6 +85,7 @@ const el = {
   dailySpark: $("#daily-spark"),
   dailyHi: $("#daily-hi"),
   dailyLo: $("#daily-lo"),
+  dailyRangeArea: $("#daily-range-area"),
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
   dailyPrecipStrip: $("#daily-precip-strip"),
@@ -1361,6 +1362,12 @@ function renderDailySpark(days) {
   const linePath = (arr) => arr.map((v, i) => (i === 0 ? "M" : "L") + x(i).toFixed(1) + "," + y(v).toFixed(1)).join(" ");
   el.dailyHi.setAttribute("d", linePath(days.map((d) => d.tempMax)));
   el.dailyLo.setAttribute("d", linePath(days.map((d) => d.tempMin)));
+  // Fill between hi and lo as a gradient band — visualizes diurnal range.
+  if (el.dailyRangeArea) {
+    const hiPts = days.map((d, i) => `${x(i).toFixed(1)},${y(d.tempMax).toFixed(1)}`);
+    const loPts = days.map((d, i) => `${x(i).toFixed(1)},${y(d.tempMin).toFixed(1)}`).reverse();
+    el.dailyRangeArea.setAttribute("d", `M${hiPts.join(" L")} L${loPts.join(" L")} Z`);
+  }
   // Dots at each day + per-day temp labels above/below
   el.dailySparkDots.innerHTML = "";
   const tz = state.weather?.timezone;
