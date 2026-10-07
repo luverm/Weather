@@ -478,6 +478,13 @@ function renderDayRange(w) {
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+  const nowTxt = `${Math.round(convertTemp(t))}°`;
+  const loTxt = `${Math.round(convertTemp(lo))}°`;
+  const hiTxt = `${Math.round(convertTemp(hi))}°`;
+  el.dayRangeMarker.setAttribute("title",
+    `Now ${nowTxt} · today ${loTxt} → ${hiTxt}`);
+  el.dayRange.setAttribute("title",
+    `Today's range: ${loTxt} low → ${hiTxt} high`);
 }
 
 function renderMetrics(w) {
