@@ -355,6 +355,17 @@ installShortcuts({
   },
   share: () => document.getElementById("share-btn")?.click(),
   toggleSettings: () => document.getElementById("settings-btn")?.click(),
+  volumeDelta: (step) => {
+    const slider = document.getElementById("setting-volume");
+    if (!slider) return;
+    const current = parseInt(slider.value, 10) || 0;
+    const next = Math.max(0, Math.min(100, current + Math.round(step * 100)));
+    slider.value = String(next);
+    const v = next / 100;
+    localStorage.setItem("aether:volume", String(v));
+    audio.setVolume?.(v);
+    ui.showToast(`Ambient volume ${next}%`, 1200);
+  },
   jumpColdest: () => jumpToExtremeHour("cold"),
   jumpWarmest: () => jumpToExtremeHour("hot"),
   jumpUvPeak: () => {
