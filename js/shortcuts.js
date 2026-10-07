@@ -89,6 +89,7 @@ export function installShortcuts(handlers) {
     if (key === ",") { handlers.jumpColdest?.(); e.preventDefault(); return; }
     if (key === ".") { handlers.jumpWarmest?.(); e.preventDefault(); return; }
     if (key === "v" || key === "V") { handlers.jumpUvPeak?.(); e.preventDefault(); return; }
+    if (key === "x" || key === "X") { handlers.jumpGustPeak?.(); e.preventDefault(); return; }
     if (key === "g" || key === "G") { handlers.toggleSettings?.(); e.preventDefault(); return; }
     if (key === "+" || (e.shiftKey && key === "=")) { handlers.volumeDelta?.(0.1); e.preventDefault(); return; }
     if (key === "-" || key === "_") { handlers.volumeDelta?.(-0.1); e.preventDefault(); return; }

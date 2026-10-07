@@ -376,6 +376,22 @@ installShortcuts({
   },
   jumpColdest: () => jumpToExtremeHour("cold"),
   jumpWarmest: () => jumpToExtremeHour("hot"),
+  jumpGustPeak: () => {
+    const hours = app.weather?.hourly || [];
+    if (!hours.length) { ui.showToast("No gust data"); return; }
+    let peak = null;
+    for (const h of hours) {
+      const g = h.gusts ?? h.wind ?? 0;
+      if (g == null) continue;
+      if (!peak || g > peak.v) peak = { v: g, time: h.time };
+    }
+    if (!peak || peak.v < 15) { ui.showToast("Winds are mild — no gust peak"); return; }
+    clock.setOffset(peak.time - Date.now());
+    scrubber.sync();
+    if (app.weather) applyScene(app.weather);
+    ui.setScrubbing(!clock.isLive());
+    ui.showToast(`Peak gust: ${Math.round(peak.v)} km/h`);
+  },
   jumpUvPeak: () => {
     const peak = app.weather?.uvPeak;
     if (!peak?.time) { ui.showToast("No UV peak data"); return; }
