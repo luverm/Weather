@@ -2040,7 +2040,7 @@ function bindSettings() {
     if (!confirm("Reset Aether preferences to defaults? Saved places are kept.")) return;
     const prefKeys = [
       "aether:unit", "aether:reduceMotion", "aether:compact", "aether:dim",
-      "aether:volume", "aether:refreshMs",
+      "aether:volume", "aether:refreshMs", "aether:theme",
     ];
     for (const k of prefKeys) {
       try { localStorage.removeItem(k); } catch { /* ignore */ }
