@@ -42,6 +42,8 @@ export function installShortcuts(handlers) {
     // Let browsers handle modifier combos (copy, find, etc.)
     if (e.metaKey || e.ctrlKey || e.altKey) return;
 
+    // Shift+Arrow is a shortcut on its own (±6h scrub) — allow it even though
+    // shiftKey is set, as long as it isn't paired with a modifier.
     const typing = isTyping(e.target);
 
     // Always available, even while typing.
@@ -65,8 +67,16 @@ export function installShortcuts(handlers) {
       handlers.toggleRadar?.();
       return;
     }
-    if (key === "ArrowLeft") { handlers.nudge?.(-1); e.preventDefault(); return; }
-    if (key === "ArrowRight") { handlers.nudge?.(1); e.preventDefault(); return; }
+    if (key === "ArrowLeft") {
+      handlers.nudge?.(e.shiftKey ? -6 : -1);
+      e.preventDefault();
+      return;
+    }
+    if (key === "ArrowRight") {
+      handlers.nudge?.(e.shiftKey ? 6 : 1);
+      e.preventDefault();
+      return;
+    }
     if (key === "[") { handlers.cyclePlace?.(-1); e.preventDefault(); return; }
     if (key === "]") { handlers.cyclePlace?.(1); e.preventDefault(); return; }
     if (key === "t" || key === "T") { handlers.jumpTomorrow?.(); e.preventDefault(); return; }
