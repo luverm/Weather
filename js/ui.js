@@ -1187,7 +1187,12 @@ function renderDaily(w) {
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
-    const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const uvLabel = (d.uvMax != null && d.uvMax >= 8)
+      ? ` · UV ${Math.round(d.uvMax)}`
+      : "";
+    const extra = gustLabel || popLabel || uvLabel
+      ? `<span class="daily-gust">${popLabel}${gustLabel}${uvLabel}</span>`
+      : "";
     const prev = i > 0 ? days[i - 1] : null;
     const trend = dailyTempTrend(d, prev);
     item.innerHTML = `
