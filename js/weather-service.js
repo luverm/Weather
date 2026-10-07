@@ -120,16 +120,49 @@ export async function getWeather(lat, lon) {
     return normalize(forecast.value, air.status === "fulfilled" ? air.value : null);
   };
   try {
-    return await attempt();
+    const w = await attempt();
+    cacheLastGoodWeather(lat, lon, w);
+    return w;
   } catch (first) {
     try {
       await new Promise((r) => setTimeout(r, 1500));
-      return await attempt();
+      const w = await attempt();
+      cacheLastGoodWeather(lat, lon, w);
+      return w;
     } catch (err) {
       console.warn("Weather fetch failed after retry, using mock", err);
+      const cached = readLastGoodWeather(lat, lon);
+      if (cached) {
+        return { ...cached, offline: true };
+      }
       return mock(lat, lon);
     }
   }
+}
+
+// Lightweight last-good-weather cache so an offline session shows the last
+// seen numbers (with an offline banner), not a generic sample.
+function cacheKey(lat, lon) {
+  return `aether:cache:${lat.toFixed(2)},${lon.toFixed(2)}`;
+}
+function cacheLastGoodWeather(lat, lon, weather) {
+  try {
+    localStorage.setItem(cacheKey(lat, lon), JSON.stringify({
+      at: Date.now(),
+      // Strip the methods / non-serializable bits.
+      weather,
+    }));
+  } catch { /* localStorage quota — ignore */ }
+}
+function readLastGoodWeather(lat, lon) {
+  try {
+    const raw = localStorage.getItem(cacheKey(lat, lon));
+    if (!raw) return null;
+    const { at, weather } = JSON.parse(raw);
+    // Reject entries older than 24h — stale forecasts aren't helpful.
+    if (!at || Date.now() - at > 24 * 3600_000) return null;
+    return weather;
+  } catch { return null; }
 }
 
 function normalize(d, aq) {
