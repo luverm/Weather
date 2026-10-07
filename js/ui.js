@@ -271,7 +271,7 @@ export const ui = {
   setAudioState(on) {
     el.audioBtn.classList.toggle("on", !!on);
     el.audioBtn.setAttribute("aria-label", on ? "Disable ambient sound" : "Enable ambient sound");
-    el.audioBtn.setAttribute("title", on ? "Disable ambient sound" : "Enable ambient sound");
+    el.audioBtn.setAttribute("title", on ? "Disable ambient sound (M)" : "Enable ambient sound (M)");
   },
   showToast(msg, dur = 2600) {
     el.toast.textContent = msg;
@@ -2269,7 +2269,7 @@ function startFetchedTicker() {
   const update = () => {
     if (!el.fetchedAgo || !state.weather?.fetchedAt) {
       if (el.fetchedAgo) el.fetchedAgo.textContent = "";
-      if (el.refreshBtn) el.refreshBtn.setAttribute("title", "Refresh weather");
+      if (el.refreshBtn) el.refreshBtn.setAttribute("title", "Refresh weather (R)");
       return;
     }
     const ms = Date.now() - state.weather.fetchedAt;
@@ -2285,7 +2285,7 @@ function startFetchedTicker() {
         weekday: "short", hour: "2-digit", minute: "2-digit",
       });
       el.refreshBtn.setAttribute("title",
-        `Refresh weather · last fetched ${stamp} (${label.toLowerCase()})`);
+        `Refresh weather (R) · last fetched ${stamp} (${label.toLowerCase()})`);
     }
   };
   update();
