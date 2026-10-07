@@ -278,6 +278,7 @@ ui.init({
   onRefresh: () => refreshWeather(),
   onReduceMotion: (on) => setReducedMotion(on),
   onVolume: (v) => audio.setVolume?.(v),
+  onRefreshInterval: (ms) => setAutoRefreshInterval(ms),
   onPlaceClick: (place) => loadByCoords(place),
   onHourClick: (ts) => {
     clock.setOffset(ts - Date.now());
@@ -472,12 +473,18 @@ setInterval(() => {
   applyScene(app.weather);
 }, 60_000);
 
-// Auto-refresh every 15 minutes (but only when live and visible).
-setInterval(() => {
-  if (document.hidden) return;
-  if (!app.weather || !clock.isLive()) return;
-  refreshWeather();
-}, 15 * 60_000);
+// Auto-refresh — user-configurable interval, default 15 minutes.
+let autoRefreshTimer = null;
+function setAutoRefreshInterval(ms) {
+  if (autoRefreshTimer) { clearInterval(autoRefreshTimer); autoRefreshTimer = null; }
+  if (!ms || ms < 60_000) return; // "off" or too tight
+  autoRefreshTimer = setInterval(() => {
+    if (document.hidden) return;
+    if (!app.weather || !clock.isLive()) return;
+    refreshWeather();
+  }, ms);
+}
+setAutoRefreshInterval(15 * 60_000);
 
 // PWA service worker — optional, best-effort.
 if ("serviceWorker" in navigator) {

@@ -98,6 +98,7 @@ const el = {
   settingUnitF: $("#setting-unit-f"),
   settingCompact: $("#setting-compact"),
   settingVolume: $("#setting-volume"),
+  settingRefreshInterval: $("#setting-refresh-interval"),
   settingSaveImage: $("#setting-save-image"),
   settingClearPlaces: $("#setting-clear-places"),
   chartPopover: $("#chart-popover"),
@@ -1957,6 +1958,12 @@ function bindSettings() {
     state.handlers.onVolume?.(v);
   });
 
+  el.settingRefreshInterval?.addEventListener("change", () => {
+    const ms = parseInt(el.settingRefreshInterval.value, 10) || 0;
+    localStorage.setItem("aether:refreshMs", String(ms));
+    state.handlers.onRefreshInterval?.(ms);
+  });
+
   el.settingSaveImage?.addEventListener("click", () => {
     saveSnapshotImage();
     close();
@@ -1989,6 +1996,10 @@ function applyStoredPreferences() {
   const vol = isFinite(storedVol) ? storedVol : 0.5;
   if (el.settingVolume) el.settingVolume.value = String(Math.round(vol * 100));
   queueMicrotask(() => state.handlers.onVolume?.(vol));
+  const storedRefresh = parseInt(localStorage.getItem("aether:refreshMs"), 10);
+  const refreshMs = isFinite(storedRefresh) ? storedRefresh : 15 * 60_000;
+  if (el.settingRefreshInterval) el.settingRefreshInterval.value = String(refreshMs);
+  queueMicrotask(() => state.handlers.onRefreshInterval?.(refreshMs));
 }
 
 // Exposed so app.js can query the current preference on boot.

@@ -76,6 +76,15 @@
             <span>Ambient volume</span>
             <input type="range" id="setting-volume" min="0" max="100" step="1" />
           </label>
+          <label class="settings-row">
+            <span>Auto refresh</span>
+            <select id="setting-refresh-interval">
+              <option value="0">Off</option>
+              <option value="300000">Every 5 min</option>
+              <option value="900000" selected>Every 15 min</option>
+              <option value="1800000">Every 30 min</option>
+            </select>
+          </label>
           <button id="setting-save-image" class="settings-btn-inline" type="button">Save snapshot as PNG</button>
           <button id="setting-clear-places" class="settings-btn-inline" type="button">Clear saved places</button>
           <div class="settings-foot">Aether · Open-Meteo + RainViewer</div>
