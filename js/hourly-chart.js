@@ -151,9 +151,13 @@ export class HourlyChart {
       ? `<em>feels ${Math.round(feels)}°</em>` : "";
     const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
-    const vis = h.visibility != null && h.visibility < 10000
-      ? ` · vis ${(h.visibility / 1000).toFixed(1)} km`
-      : "";
+    let vis = "";
+    if (h.visibility != null && h.visibility < 10000) {
+      const km = (h.visibility / 1000).toFixed(1);
+      const tag = h.visibility < 1000 ? " 🌫 fog"
+        : h.visibility < 3000 ? " 🌫 misty" : "";
+      vis = ` · vis ${km} km${tag}`;
+    }
     const glyph = conditionGlyph(h.condition, h.isDay);
     this.popover.innerHTML =
       `<strong>${this._formatHour(h.time)}</strong> ${glyph ? `<span class="pop-glyph">${glyph}</span>` : ""} ${Math.round(t)}° ${feelsStr}<br>` +
