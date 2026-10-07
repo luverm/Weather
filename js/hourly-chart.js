@@ -227,6 +227,38 @@ export class HourlyChart {
       }
     }
 
+    // Cumulative precipitation curve — top-anchored at 0 mm, running total
+    // scaled against the chart's upper half. Only draws when today has
+    // enough rain to be worth plotting.
+    const accumLine = this.svg.querySelector("#chart-accum");
+    const accumLabel = this.svg.querySelector("#chart-accum-label");
+    if (accumLine) {
+      const totals = [];
+      let running = 0;
+      for (const h of this.hours) {
+        running += Math.max(0, h.precip ?? 0);
+        totals.push(running);
+      }
+      const total = running;
+      if (total >= 0.5) {
+        const topY = PAD_TOP + 2;
+        const botY = PAD_TOP + innerH * 0.5;
+        const scale = (v) => botY - (v / total) * (botY - topY);
+        let path = "";
+        totals.forEach((v, i) => {
+          path += (i === 0 ? "M" : "L") + iToX(i).toFixed(1) + "," + scale(v).toFixed(1) + " ";
+        });
+        accumLine.setAttribute("d", path.trim());
+        if (accumLabel) {
+          accumLabel.textContent = `${total.toFixed(1)} mm total`;
+          accumLabel.setAttribute("y", (topY + 4).toFixed(1));
+        }
+      } else {
+        accumLine.setAttribute("d", "");
+        if (accumLabel) accumLabel.textContent = "";
+      }
+    }
+
     // Precipitation probability bars (0-100% -> 0..12px height)
     const precipG = this.svg.querySelector("#chart-precip");
     precipG.innerHTML = "";

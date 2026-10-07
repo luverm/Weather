@@ -900,6 +900,15 @@ html[data-compact="true"] .temp-value { font-size: 72px; }
   opacity: 0.45;
   pointer-events: none;
 }
+.chart-accum {
+  pointer-events: none;
+}
+.chart-accum-label {
+  font-size: 9px;
+  fill: #8bb0ff;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
 .chart-refline.freeze { stroke: #a9d4ff; }
 .chart-refline.hot { stroke: #ff9c7a; }
 .chart-refline-label {
