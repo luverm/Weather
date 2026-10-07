@@ -354,6 +354,8 @@ installShortcuts({
     if (target) loadByCoords(target);
   },
   share: () => document.getElementById("share-btn")?.click(),
+  jumpColdest: () => jumpToExtremeHour("cold"),
+  jumpWarmest: () => jumpToExtremeHour("hot"),
   togglePresentation: () => {
     const el = document.documentElement;
     const now = el.getAttribute("data-presentation") === "true";
@@ -368,6 +370,28 @@ installShortcuts({
     }
   },
 });
+
+function jumpToExtremeHour(kind) {
+  const hours = app.weather?.hourly || [];
+  if (!hours.length) return;
+  let best = null;
+  for (const h of hours) {
+    if (h.temp == null) continue;
+    if (!best) { best = h; continue; }
+    if (kind === "cold" && h.temp < best.temp) best = h;
+    if (kind === "hot" && h.temp > best.temp) best = h;
+  }
+  if (!best) return;
+  clock.setOffset(best.time - Date.now());
+  scrubber.sync();
+  applyScene(app.weather);
+  ui.setScrubbing(!clock.isLive());
+  ui.showToast(
+    kind === "cold"
+      ? `Coldest hour: ${Math.round(best.temp)}°`
+      : `Warmest hour: ${Math.round(best.temp)}°`
+  );
+}
 
 // Wake Lock keeps the screen on during presentation mode. Chrome+Edge, Safari
 // 16.4+, Opera, Samsung Internet all support it; other browsers degrade
