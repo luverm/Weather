@@ -1254,12 +1254,18 @@ function renderDaily(w) {
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
-    const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
+    const isSnow = d.condition === "snow";
+    const snowLabel = isSnow && d.precip > 0
+      // Rough liquid-equivalent → snow ratio: 1 mm ≈ 1 cm fresh snow when
+      // close to 0°C, higher when colder. Keep it conservative at ×10.
+      ? ` · ~${(d.precip * 10).toFixed(0)} cm snow`
+      : "";
+    const popLabel = !isSnow && d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const uvLabel = (d.uvMax != null && d.uvMax >= 8)
       ? ` · UV ${Math.round(d.uvMax)}`
       : "";
-    const extra = gustLabel || popLabel || uvLabel
-      ? `<span class="daily-gust">${popLabel}${gustLabel}${uvLabel}</span>`
+    const extra = gustLabel || popLabel || snowLabel || uvLabel
+      ? `<span class="daily-gust">${popLabel}${snowLabel}${gustLabel}${uvLabel}</span>`
       : "";
     const prev = i > 0 ? days[i - 1] : null;
     const trend = dailyTempTrend(d, prev);
