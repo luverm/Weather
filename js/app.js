@@ -199,10 +199,16 @@ const scrubber = new Scrubber({
 
 // ---------- Load flow ----------
 async function loadByCoords(place) {
+  const switching = !!(app.place && (app.place.lat !== place.lat || app.place.lon !== place.lon));
   app.place = place;
   ui.setPlace(place);
   ui.setLoading(`Fetching weather for ${place.name}…`);
   writeHash(place);
+  if (switching) {
+    // Smooth scroll back to the hero so the new city reads from the top.
+    const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    window.scrollTo({ top: 0, behavior: prefersReducedMotion ? "auto" : "smooth" });
+  }
 
   // Drop any scrubber offset so we start live on each new city.
   clock.reset();
