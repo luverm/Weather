@@ -562,6 +562,34 @@ function renderPressureSparkline(w) {
     pSeries,
     { minSpan: 1.5 }
   );
+  // Expose min/max/range on hover for anyone curious.
+  const pSvg = document.getElementById("pressure-spark");
+  if (pSvg && pSeries.length >= 2) {
+    pSvg.setAttribute("aria-label",
+      `Pressure next 12h: ${Math.round(Math.min(...pSeries))}–${Math.round(Math.max(...pSeries))} hPa`);
+    pSvg.setAttribute("title", pSvg.getAttribute("aria-label"));
+  }
+  const hSvg = document.getElementById("humidity-spark");
+  const hSeries = (w.hourly || []).map((h) => h.humidity).filter((v) => v != null).slice(0, 12);
+  if (hSvg && hSeries.length >= 2) {
+    hSvg.setAttribute("aria-label",
+      `Humidity next 12h: ${Math.round(Math.min(...hSeries))}–${Math.round(Math.max(...hSeries))}%`);
+    hSvg.setAttribute("title", hSvg.getAttribute("aria-label"));
+  }
+  const wSvg = document.getElementById("wind-spark");
+  const wSeries = (w.hourly || []).map((h) => h.wind).filter((v) => v != null).slice(0, 12);
+  if (wSvg && wSeries.length >= 2) {
+    wSvg.setAttribute("aria-label",
+      `Wind next 12h: ${Math.round(Math.min(...wSeries))}–${Math.round(Math.max(...wSeries))} km/h`);
+    wSvg.setAttribute("title", wSvg.getAttribute("aria-label"));
+  }
+  const uSvg = document.getElementById("uv-spark");
+  const uSeries = (w.hourly || []).slice(0, 14).map((h) => h.uv ?? 0);
+  if (uSvg && uSeries.length >= 2) {
+    const uMax = Math.max(...uSeries);
+    uSvg.setAttribute("aria-label", `UV next 14h: peak ${uMax.toFixed(1)}`);
+    uSvg.setAttribute("title", uSvg.getAttribute("aria-label"));
+  }
   if (el.pressureSparkLow) {
     if (pSeries.length < 2) {
       el.pressureSparkLow.setAttribute("r", "0");
