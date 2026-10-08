@@ -1809,7 +1809,14 @@ function bindSettings() {
   };
   el.settingsBtn.addEventListener("click", (e) => {
     e.stopPropagation();
-    if (el.settingsMenu.hidden) open(); else close();
+    if (el.settingsMenu.hidden) {
+      open();
+      // Focus first interactive element so keyboard users can tab.
+      requestAnimationFrame(() => {
+        const first = el.settingsMenu.querySelector("input, button");
+        first?.focus?.();
+      });
+    } else close();
   });
   document.addEventListener("click", (e) => {
     if (el.settingsMenu.hidden) return;

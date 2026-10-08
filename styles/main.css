@@ -1219,6 +1219,8 @@ kbd {
 .moon-next { color: var(--fg-muted); font-style: italic; }
 
 .visibility-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
+#visibility-card:hover .visibility-dial { filter: brightness(1.1); }
+.visibility-dial { transition: filter 200ms var(--ease); }
 .visibility-dial { width: 60px; height: 42px; }
 .visibility-dial svg { width: 60px; height: 42px; display: block; }
 #visibility-arc { transition: stroke-dashoffset 700ms var(--ease); }
