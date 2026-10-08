@@ -1282,6 +1282,7 @@ function renderVisibility(w) {
   if (el.visibilityLevel) {
     el.visibilityLevel.className = `trend ${d.cls}`;
     el.visibilityLevel.textContent = d.pill;
+    el.visibilityLevel.setAttribute("title", d.text);
   }
 }
 
