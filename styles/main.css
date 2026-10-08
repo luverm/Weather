@@ -1530,7 +1530,13 @@ kbd {
   flex-wrap: wrap;
   gap: 8px;
   margin-top: -4px;
+  animation: alertsIn 500ms var(--ease) both;
 }
+@keyframes alertsIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: none; }
+}
+[data-reduce-motion="true"] .alerts-strip { animation: none; }
 .alerts-strip[hidden] { display: none; }
 .alert-pill {
   display: inline-flex;
