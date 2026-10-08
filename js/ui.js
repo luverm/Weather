@@ -930,6 +930,15 @@ function renderAlerts(w) {
   // Respect per-place dismissals so the user isn't nagged.
   const dismissed = getDismissedAlerts();
   const visible = alerts.filter((a) => !dismissed.has(a.id));
+  const topSeverity = visible.reduce((max, a) => {
+    const rank = { info: 1, warn: 2, danger: 3 };
+    return Math.max(max, rank[a.severity] || 0);
+  }, 0);
+  // Expose on <html> so the hero/background can respond.
+  document.documentElement.setAttribute(
+    "data-alert-severity",
+    topSeverity ? String(topSeverity) : ""
+  );
   if (!visible.length) {
     el.alertsStrip.hidden = true;
     el.alertsStrip.innerHTML = "";

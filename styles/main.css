@@ -367,8 +367,15 @@ html[data-reduce-motion="true"] *::after {
   align-items: end;
   gap: 24px;
   transform: perspective(1200px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
-  transition: transform 400ms var(--ease);
+  transition: transform 400ms var(--ease), box-shadow 400ms var(--ease), border-color 400ms var(--ease);
   will-change: transform;
+}
+[data-alert-severity="3"] .hero-inner {
+  border-color: rgba(255, 150, 110, 0.4);
+  box-shadow: var(--shadow), 0 0 0 1px rgba(255, 150, 110, 0.2), 0 0 40px rgba(255, 150, 110, 0.08);
+}
+[data-alert-severity="2"] .hero-inner {
+  border-color: rgba(255, 211, 106, 0.3);
 }
 .place-label {
   margin: 0 0 6px;
