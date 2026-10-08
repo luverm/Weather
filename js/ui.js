@@ -45,6 +45,7 @@ const el = {
   aqCard: $("#aq-card"),
   aqTrendLine: $("#aq-trend-line"),
   aqTrendFill: $("#aq-trend-fill"),
+  aqHealthTip: $("#aq-health-tip"),
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
@@ -601,6 +602,29 @@ function renderAirQuality(aq) {
   el.aqDetail.textContent =
     `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
   renderAqTrend(aq);
+  renderAqHealthTip(aq);
+}
+
+function renderAqHealthTip(aq) {
+  if (!el.aqHealthTip) return;
+  const tip = aqHealthTip(aq);
+  if (!tip) {
+    el.aqHealthTip.hidden = true;
+    el.aqHealthTip.textContent = "";
+    return;
+  }
+  el.aqHealthTip.hidden = false;
+  el.aqHealthTip.textContent = tip;
+}
+
+function aqHealthTip(aq) {
+  const v = aq?.aqi;
+  if (v == null) return "";
+  if (v > 300) return "Hazardous — stay indoors, run a HEPA purifier if possible.";
+  if (v > 200) return "Very unhealthy — avoid strenuous outdoor activity.";
+  if (v > 150) return "Unhealthy — sensitive groups should limit prolonged outdoor exertion.";
+  if (v > 100) return "Moderate — unusually sensitive people may feel symptoms.";
+  return "";
 }
 
 function renderAqTrend(aq) {
