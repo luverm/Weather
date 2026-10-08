@@ -75,6 +75,7 @@ const el = {
   pressureTrendArc: $("#pressure-trend-arc"),
   humiditySparkLine: $("#humidity-spark-line"),
   humiditySparkFill: $("#humidity-spark-fill"),
+  dewScaleMarker: $("#dew-scale-marker"),
   dailySpark: $("#daily-spark"),
   dailyHi: $("#daily-hi"),
   dailyLo: $("#daily-lo"),
@@ -369,8 +370,18 @@ function renderMetrics(w) {
   }
   el.metricHumidity.textContent = Math.round(w.humidity ?? 0);
   el.metricHumiditySub.textContent = w.dewPoint != null
-    ? `dew ${Math.round(convertTemp(w.dewPoint))}°`
+    ? `dew ${Math.round(convertTemp(w.dewPoint))}°${describeDew(w.dewPoint)}`
     : "dew —";
+  if (el.dewScaleMarker) {
+    if (w.dewPoint == null) {
+      el.dewScaleMarker.style.opacity = "0";
+    } else {
+      // Dew-point scale 0..26 °C (dry → oppressive).
+      const frac = Math.max(0, Math.min(1, w.dewPoint / 26));
+      el.dewScaleMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+      el.dewScaleMarker.style.opacity = "1";
+    }
+  }
   if (el.humidityComfort) {
     const pill = humidityComfort(w.humidity, w.dewPoint, w.temp);
     if (pill) {
@@ -439,6 +450,16 @@ function renderPressureDial(w) {
   } else if (el.pressureTrendArc) {
     el.pressureTrendArc.setAttribute("d", "");
   }
+}
+
+function describeDew(dew) {
+  // Returns a parenthetical tag matched to dew-point comfort (°C).
+  if (dew < 10) return " · crisp";
+  if (dew < 13) return " · pleasant";
+  if (dew < 16) return " · comfy";
+  if (dew < 19) return " · sticky";
+  if (dew < 22) return " · humid";
+  return " · oppressive";
 }
 
 function humidityComfort(rh, dew, temp) {

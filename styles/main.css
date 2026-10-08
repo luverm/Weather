@@ -597,6 +597,26 @@ html[data-reduce-motion="true"] *::after {
   margin-top: 2px;
 }
 .metric-humidity .pressure-spark { color: #9ad1ff; }
+.dew-scale {
+  grid-column: 1 / span 2;
+  position: relative;
+  height: 6px;
+  margin-top: 2px;
+}
+.dew-scale-track {
+  position: absolute; inset: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #9ad1ff 0%, #8be0a0 30%, #ffd47b 60%, #ff8a6a 85%, #a73838 100%);
+  opacity: 0.72;
+}
+.dew-scale-marker {
+  position: absolute; top: -2px;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #fff; border: 1.5px solid rgba(0,0,0,0.4);
+  box-shadow: 0 0 6px rgba(255,255,255,0.5);
+  transform: translateX(-50%);
+  transition: left 500ms var(--ease), opacity 300ms var(--ease);
+}
 
 /* ---------- Pressure barometer dial ---------- */
 .pressure-dial {
