@@ -204,20 +204,27 @@ async function loadByCoords(place) {
   clock.reset();
   ui.setScrubbing(false);
 
-  const w = await getWeather(place.lat, place.lon);
-  app.weather = w;
+  try {
+    const w = await getWeather(place.lat, place.lon);
+    app.weather = w;
 
-  // Render full UI (live + forecasts + narrative).
-  ui.setWeather(w, { narrative: narrate(w) });
+    // Render full UI (live + forecasts + narrative).
+    ui.setWeather(w, { narrative: narrate(w) });
 
-  // Apply to scenes at current (live) time.
-  applyScene(w);
+    // Apply to scenes at current (live) time.
+    applyScene(w);
 
-  // Update scrubber bounds to this location's sunrise/sunset.
-  scrubber.setBounds({ start: Date.now(), sunrise: w.sunrise, sunset: w.sunset });
+    // Update scrubber bounds to this location's sunrise/sunset.
+    scrubber.setBounds({ start: Date.now(), sunrise: w.sunrise, sunset: w.sunset });
 
-  // Move the radar to the new location (fire-and-forget; resolves later).
-  ensureRadar([place.lat, place.lon]).then((r) => r?.setCenter(place.lat, place.lon, place.name));
+    // Move the radar to the new location (fire-and-forget; resolves later).
+    ensureRadar([place.lat, place.lon]).then((r) => r?.setCenter(place.lat, place.lon, place.name));
+  } finally {
+    // Belt-and-braces: setWeather clears data-loading on success. If anything
+    // throws before that (unlikely — getWeather has internal mock fallback)
+    // the shimmer must still go away so the hero doesn't pulse forever.
+    document.documentElement.removeAttribute("data-loading");
+  }
 }
 
 async function useGeolocation() {

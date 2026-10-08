@@ -1336,12 +1336,13 @@ function renderDaily(w) {
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
     let popLabel = "";
+    const pop = d.pop ?? 0;
     if (d.snowfall >= 0.5) {
       popLabel = ` · ${d.snowfall.toFixed(1)} cm snow`;
     } else if (d.precip >= 0.5) {
-      popLabel = ` · ${d.precip.toFixed(1)} mm (${d.pop}%)`;
-    } else if (d.pop >= 30) {
-      popLabel = ` · ${d.pop}% rain`;
+      popLabel = ` · ${d.precip.toFixed(1)} mm (${pop}%)`;
+    } else if (pop >= 30) {
+      popLabel = ` · ${pop}% rain`;
     }
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
     const bestBadge = (best && best.index === i)
