@@ -2001,6 +2001,8 @@ function bindShare() {
       `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
+      // Only mention visibility when it's genuinely poor — otherwise it's noise.
+      w.visibility != null && w.visibility < 4000 ? `Visibility ${(w.visibility / 1000).toFixed(1)} km` : null,
       weekendLine,
       url,
     ].filter(Boolean);
