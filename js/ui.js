@@ -69,8 +69,6 @@ const el = {
   tempTrend: $("#temp-trend"),
   uvLevel: $("#m-uv-level"),
   humidityComfort: $("#m-humidity-comfort"),
-  pressureSparkLine: $("#pressure-spark-line"),
-  pressureSparkFill: $("#pressure-spark-fill"),
   pressureNeedle: $("#pressure-needle"),
   pressureTrendArc: $("#pressure-trend-arc"),
   humiditySparkLine: $("#humidity-spark-line"),
@@ -411,7 +409,7 @@ function renderMetrics(w) {
   } else {
     el.metricUVSub.textContent = "peak —";
   }
-  renderPressureSparkline(w);
+  renderHumiditySparkline(w);
   renderPressureDial(w);
 }
 
@@ -503,8 +501,7 @@ function uvLevel(v) {
   return { label: "Extreme", cls: "up" };
 }
 
-function renderPressureSparkline(w) {
-  // Pressure now gets a barometer dial instead of a sparkline.
+function renderHumiditySparkline(w) {
   drawSparkline(
     el.humiditySparkLine, el.humiditySparkFill,
     (w.hourly || []).map((h) => h.humidity).filter((v) => v != null).slice(0, 12),
