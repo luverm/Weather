@@ -419,6 +419,8 @@ html[data-reduce-motion="true"] *::after {
   transition: transform 400ms var(--ease), box-shadow 400ms var(--ease), border-color 400ms var(--ease);
   will-change: transform;
 }
+/* Already transitions on border-color + box-shadow (set on .hero-inner),
+   so these state changes animate smoothly on condition and alert flips. */
 [data-alert-severity="3"] .hero-inner {
   border-color: rgba(255, 150, 110, 0.4);
   box-shadow: var(--shadow), 0 0 0 1px rgba(255, 150, 110, 0.2), 0 0 40px rgba(255, 150, 110, 0.08);
