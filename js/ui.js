@@ -1671,13 +1671,19 @@ function renderPlaces() {
       ? `<span class="chip-range" title="Today's range">${Math.round(convertTemp(p.tempMin))}°/${Math.round(convertTemp(p.tempMax))}°</span>`
       : "";
     const titleBits = [p.admin1, p.country, p.label].filter(Boolean).join(" · ");
+    const ariaLabel = `${p.name}${p.label ? " — " + p.label : ""}${p.temp != null ? ", " + Math.round(convertTemp(p.temp)) + "°" : ""}`;
     return `
-      <div class="place-chip ${active ? "active" : ""} ${dayCls}" data-id="${p.id}" title="${escapeHtml(titleBits)}">
+      <div class="place-chip ${active ? "active" : ""} ${dayCls}"
+           data-id="${p.id}"
+           title="${escapeHtml(titleBits)}"
+           role="button"
+           tabindex="0"
+           aria-label="${escapeHtml(ariaLabel)}">
         ${icon ? `<span class="chip-icon" aria-hidden="true">${icon}</span>` : ""}
         <span class="chip-name">${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
         ${range}
-        <span class="close" data-action="remove" aria-label="Remove">
+        <span class="close" data-action="remove" role="button" aria-label="Remove ${escapeHtml(p.name)} from saved places">
           <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
         </span>
       </div>`;
@@ -1692,6 +1698,16 @@ function renderPlaces() {
         return;
       }
       state.handlers.onPlaceClick?.(item);
+    });
+    chip.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        state.handlers.onPlaceClick?.(item);
+      } else if (e.key === "Delete" || e.key === "Backspace") {
+        e.preventDefault();
+        places.remove(item);
+        renderPlaces();
+      }
     });
   });
 }
