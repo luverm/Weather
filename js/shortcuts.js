@@ -19,7 +19,8 @@ export function installShortcuts(handlers) {
     }
   }
   overlay?.addEventListener("click", (e) => {
-    if (e.target === overlay) toggleOverlay(false);
+    // Click outside the inner card closes the overlay.
+    if (!e.target.closest(".shortcuts-inner")) toggleOverlay(false);
   });
   closeBtn?.addEventListener("click", () => toggleOverlay(false));
 
