@@ -167,6 +167,7 @@ export const ui = {
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
+    maybeShowFirstVisitTip();
     state.chart = new HourlyChart({
       svgEl: el.chartSvg,
       hoverEl: el.chartHover,
@@ -1801,6 +1802,18 @@ function applyStoredPreferences() {
 
 // Exposed so app.js can query the current preference on boot.
 ui.isReduceMotion = () => localStorage.getItem("aether:reduceMotion") === "1";
+
+function maybeShowFirstVisitTip() {
+  try {
+    if (localStorage.getItem("aether:seen-tip")) return;
+    // Show on second render after a short delay, so it doesn't fight the
+    // staggered hero entrance.
+    setTimeout(() => {
+      ui.showToast("Tip: press ? to see all keyboard shortcuts.", 4600);
+      localStorage.setItem("aether:seen-tip", "1");
+    }, 1800);
+  } catch { /* ignore */ }
+}
 
 function startFetchedTicker() {
   const update = () => {
