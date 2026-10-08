@@ -1929,7 +1929,8 @@ function bindShare() {
         await navigator.share({ title: `Aether — ${placeName}`, text });
       } else {
         await navigator.clipboard.writeText(text);
-        ui.showToast("Summary copied to clipboard");
+        const glyph = CONDITION_GLYPHS[w.condition] || "✓";
+        ui.showToast(`${glyph} Summary copied to clipboard`);
       }
       el.shareBtn.classList.add("just-copied");
       setTimeout(() => el.shareBtn.classList.remove("just-copied"), 600);
