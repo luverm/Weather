@@ -1309,10 +1309,12 @@ function renderDaily(w) {
   days.forEach((d, i) => {
     const dt = new Date(d.time);
     const tz = state.weather?.timezone;
-    const day = i === 0 ? "Today" : dt.toLocaleDateString(undefined, {
-      weekday: "short",
-      ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
-    });
+    const dateOpts = tz && tz !== "auto" ? { timeZone: tz } : {};
+    const weekday = dt.toLocaleDateString(undefined, { weekday: "short", ...dateOpts });
+    const dayNum = dt.toLocaleDateString(undefined, { day: "numeric", ...dateOpts });
+    const day = i === 0
+      ? "Today"
+      : `${weekday} <span class="daily-date">${dayNum}</span>`;
     const left = ((d.tempMin - gMin) / span) * 100;
     const width = ((d.tempMax - d.tempMin) / span) * 100;
     const item = document.createElement("div");

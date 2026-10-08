@@ -1829,6 +1829,7 @@ kbd {
   padding-left: 6px;
 }
 .daily-day { font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.daily-date { color: var(--fg-dim); font-weight: 400; font-size: 11px; }
 .daily-best {
   display: inline-flex; align-items: center;
   font-size: 10px; letter-spacing: 0.03em; font-weight: 500;
