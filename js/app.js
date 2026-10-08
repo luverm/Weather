@@ -240,10 +240,13 @@ async function useGeolocation() {
 }
 
 async function toggleAudio() {
-  if (audio.isEnabled()) await audio.disable();
-  else {
+  if (audio.isEnabled()) {
+    await audio.disable();
+    try { localStorage.setItem("aether:audio", "0"); } catch { /* ignore */ }
+  } else {
     await audio.enable();
     if (app.sampled) audio.setWeather(app.sampled, app.bucket);
+    try { localStorage.setItem("aether:audio", "1"); } catch { /* ignore */ }
   }
   ui.setAudioState(audio.isEnabled());
 }
