@@ -1962,6 +1962,15 @@ kbd {
 }
 .fetched-ago:empty { display: none; }
 .fetched-ago.stale { color: #ffb86b; }
+.fetched-ago.fresh {
+  color: var(--accent);
+  animation: freshPulse 1.2s ease-out;
+}
+@keyframes freshPulse {
+  0% { text-shadow: 0 0 0 var(--accent); }
+  40% { text-shadow: 0 0 10px var(--accent); }
+  100% { text-shadow: 0 0 0 var(--accent); }
+}
 
 #refresh-btn.spinning svg { animation: spin 700ms var(--ease) both; }
 @keyframes spin { from { transform: rotate(0) } to { transform: rotate(360deg) } }

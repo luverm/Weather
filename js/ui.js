@@ -222,6 +222,10 @@ export const ui = {
       el.brandBtn.classList.add("just-tapped");
       setTimeout(() => el.brandBtn.classList.remove("just-tapped"), 500);
     }
+    if (el.fetchedAgo) {
+      el.fetchedAgo.classList.add("fresh");
+      setTimeout(() => el.fetchedAgo.classList.remove("fresh"), 1200);
+    }
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
     renderMoon(weather.moon);
