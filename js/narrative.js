@@ -65,7 +65,9 @@ export function narrate(weather) {
   const feels = Math.abs((feelsLike ?? temp) - temp) >= 3
     ? ` — feels closer to ${Math.round(feelsLike)}°`
     : "";
-  bits.push(`${label} at ${Math.round(temp)}°${feels}.`);
+  const glyphs = { clear: "☀", clouds: "⛅", rain: "🌧", snow: "🌨", storm: "⛈", fog: "🌫" };
+  const g = weather.isDay === false && condition === "clear" ? "🌙" : (glyphs[condition] || "");
+  bits.push(`${g ? g + " " : ""}${label} at ${Math.round(temp)}°${feels}.`);
 
   // Precipitation arriving.
   const rain = findNextPrecip(weather.nowcast, weather.hourly);
