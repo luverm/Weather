@@ -103,6 +103,9 @@ const el = {
   windStrip: $("#wind-strip"),
   windStripArrows: $("#wind-strip-arrows"),
   windStripNote: $("#wind-strip-note"),
+  yesterdayDelta: $("#yesterday-delta"),
+  ydArrow: $("#yd-arrow"),
+  ydText: $("#yd-text"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
   weekendDetail: $("#weekend-detail"),
@@ -211,6 +214,7 @@ export const ui = {
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     renderPrecipStrip(weather);
     renderWindStrip(weather);
+    renderYesterdayDelta(weather);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
@@ -845,6 +849,31 @@ function renderPrecipStrip(w) {
       if (ts) state.handlers.onHourClick?.(ts);
     });
   });
+}
+
+function renderYesterdayDelta(w) {
+  if (!el.yesterdayDelta || !el.ydText || !el.ydArrow) return;
+  const y = w.yesterday;
+  if (!y || y.temp == null || w.temp == null) {
+    el.yesterdayDelta.hidden = true;
+    return;
+  }
+  const deltaC = w.temp - y.temp;
+  // Convert to display unit so copy matches the toggle.
+  const displayDelta = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
+  const absRounded = Math.round(Math.abs(displayDelta));
+  if (absRounded < 1) {
+    el.yesterdayDelta.hidden = false;
+    el.yesterdayDelta.dataset.dir = "flat";
+    el.ydArrow.textContent = "→";
+    el.ydText.textContent = "Same as yesterday";
+    return;
+  }
+  const dir = displayDelta > 0 ? "up" : "down";
+  el.yesterdayDelta.hidden = false;
+  el.yesterdayDelta.dataset.dir = dir;
+  el.ydArrow.textContent = dir === "up" ? "▲" : "▼";
+  el.ydText.textContent = `${absRounded}° ${dir === "up" ? "warmer" : "cooler"} than yesterday`;
 }
 
 function renderWindStrip(w) {

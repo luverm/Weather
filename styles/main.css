@@ -402,6 +402,20 @@ html[data-reduce-motion="true"] *::after {
 .unit:hover { background: var(--glass); color: var(--fg); }
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
+.yesterday-delta {
+  margin: 6px 0 0; font-size: 12px;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 8px; border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--stroke);
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+.yesterday-delta[hidden] { display: none; }
+.yesterday-delta .yd-arrow { font-size: 10px; }
+.yesterday-delta[data-dir="up"]   { color: #ffb27a; border-color: rgba(255,178,122,0.3); }
+.yesterday-delta[data-dir="down"] { color: #9ad1ff; border-color: rgba(154,209,255,0.3); }
+.yesterday-delta[data-dir="flat"] { color: var(--fg-muted); }
 .day-range {
   margin-top: 10px;
   display: grid;
