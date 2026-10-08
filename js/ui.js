@@ -1368,6 +1368,15 @@ function renderDailySpark(days) {
   if (!hi.length || !lo.length) return;
   const tMin = Math.min(...lo);
   const tMax = Math.max(...hi);
+  // Expose min/max for a11y / tooltip over the whole svg.
+  el.dailySpark?.setAttribute(
+    "aria-label",
+    `7-day temperature range: ${Math.round(convertTemp(tMin))}° to ${Math.round(convertTemp(tMax))}°`
+  );
+  el.dailySpark?.setAttribute(
+    "title",
+    `${Math.round(convertTemp(tMin))}° low · ${Math.round(convertTemp(tMax))}° high across the week`
+  );
   const span = Math.max(4, tMax - tMin);
   const innerW = W - PAD * 2;
   const innerH = H - TOP - BOT;
