@@ -310,7 +310,7 @@ export const ui = {
   haptic(pattern = 20) {
     try { navigator.vibrate?.(pattern); } catch { /* best-effort */ }
   },
-  version: "Aether · 130 rounds, dozens of micro-features",
+  version: "Aether · 145 rounds, ~2000 lines of micro-features",
   getUnit: () => state.unit,
 };
 
