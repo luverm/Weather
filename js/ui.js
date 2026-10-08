@@ -291,8 +291,9 @@ export const ui = {
   },
   setAudioState(on) {
     el.audioBtn.classList.toggle("on", !!on);
-    el.audioBtn.setAttribute("aria-label", on ? "Disable ambient sound" : "Enable ambient sound");
-    el.audioBtn.setAttribute("title", on ? "Disable ambient sound" : "Enable ambient sound");
+    el.audioBtn.setAttribute("aria-pressed", on ? "true" : "false");
+    el.audioBtn.setAttribute("aria-label", on ? "Disable ambient sound (shortcut M)" : "Enable ambient sound (shortcut M)");
+    el.audioBtn.setAttribute("title", on ? "Disable ambient sound (shortcut M)" : "Enable ambient sound (shortcut M)");
   },
   showToast(msg, dur = 2600) {
     el.toast.textContent = msg;
