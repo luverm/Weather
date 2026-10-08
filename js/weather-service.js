@@ -357,6 +357,37 @@ function findUvPeak(hourly) {
 
 // Conway's simplified moon-phase algorithm — accurate enough for UI glyphs.
 // Returns { phase: 0..1, name: "Waxing crescent", illum: 0..1 }
+function moonAt(date) {
+  // Same as computeMoonPhase but returns just the phase fraction (0..1).
+  const year = date.getUTCFullYear();
+  const month = date.getUTCMonth() + 1;
+  const day = date.getUTCDate() + date.getUTCHours() / 24;
+  let r = year % 100;
+  r %= 19;
+  if (r > 9) r -= 19;
+  r = (r * 11) % 30 + month + day;
+  if (month < 3) r += 2;
+  r -= (year < 2000 ? 4 : 8.3);
+  r = ((r % 30) + 30) % 30;
+  return r / 29.5305882;
+}
+
+function daysUntilPhase(date, targetPhase) {
+  // Scan day-by-day up to ~30 days.
+  for (let i = 1; i < 32; i++) {
+    const d = new Date(date.getTime() + i * 86400_000);
+    const p1 = moonAt(new Date(d.getTime() - 86400_000));
+    const p2 = moonAt(d);
+    // Normalize crossings around 0.
+    const target = targetPhase;
+    const crossed =
+      (p1 < target && p2 >= target) ||
+      (target === 0 && p2 < p1); // wrap-around for new moon
+    if (crossed) return i;
+  }
+  return null;
+}
+
 function computeMoonPhase(date) {
   const year = date.getUTCFullYear();
   const month = date.getUTCMonth() + 1;
@@ -379,7 +410,9 @@ function computeMoonPhase(date) {
     phase < 0.72 ? "Waning gibbous" :
     phase < 0.78 ? "Last quarter" :
     "Waning crescent";
-  return { phase, illum, name };
+  const daysToFull = daysUntilPhase(date, 0.5);
+  const daysToNew = daysUntilPhase(date, 1); // next new moon via wrap
+  return { phase, illum, name, daysToFull, daysToNew };
 }
 
 function mock(lat, lon) {
