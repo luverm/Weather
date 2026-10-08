@@ -1767,9 +1767,17 @@ function bindShare() {
     const unit = state.unit;
     const t = (v) => `${Math.round(unit === "F" ? v * 9 / 5 + 32 : v)}°${unit}`;
     const today = w.daily?.[0];
+    // "Yesterday delta" line if we have data and the delta is interesting.
+    let yLine = null;
+    if (w.yesterday?.temp != null && w.temp != null) {
+      const dc = w.temp - w.yesterday.temp;
+      const dAbs = Math.abs(Math.round(unit === "F" ? dc * 9 / 5 : dc));
+      if (dAbs >= 2) yLine = `${dAbs}° ${dc > 0 ? "warmer" : "cooler"} than yesterday`;
+    }
     const lines = [
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
+      yLine,
       today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
       `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
