@@ -1618,9 +1618,21 @@ function renderNowcast(w) {
   }
   const inMin = Math.max(0, Math.round((first.time - Date.now()) / 60_000));
   const kind = first.code >= 71 && first.code <= 86 ? "Snow" : "Rain";
-  el.nowcastHeadline.textContent = inMin === 0
-    ? `${kind} now`
-    : `${kind} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
+  // If precip is already in progress, project when it ends by scanning forward
+  // for the first entry back below 0.1 mm.
+  if (inMin === 0) {
+    const after = nowcast.slice(nowcast.indexOf(first) + 1);
+    const dryIdx = after.findIndex((n) => (n.precip || 0) < 0.1);
+    if (dryIdx >= 0) {
+      const endMs = after[dryIdx].time;
+      const minsToEnd = Math.max(1, Math.round((endMs - Date.now()) / 60_000));
+      el.nowcastHeadline.textContent = `${kind} now · ends in ~${minsToEnd} min`;
+    } else {
+      el.nowcastHeadline.textContent = `${kind} now`;
+    }
+  } else {
+    el.nowcastHeadline.textContent = `${kind} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
+  }
   // 2h outlook summary.
   const totalMm = nowcast.reduce((s, n) => s + (n.precip || 0), 0);
   el.nowcastSub.textContent = `${totalMm.toFixed(1)} mm expected in the next 2 hours`;
