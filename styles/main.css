@@ -1257,6 +1257,11 @@ kbd {
   background: rgba(255, 160, 90, 0.08);
   border: 1px solid rgba(255, 160, 90, 0.3);
 }
+#aq-card[style*="color: rgb(120, 208, 106)"] .aq-health-tip,
+#aq-card[style*="color: #78d06a"] .aq-health-tip {
+  background: rgba(120, 208, 106, 0.08);
+  border-color: rgba(120, 208, 106, 0.3);
+}
 .aq-health-tip[hidden] { display: none; }
 
 .moon-row, .sun-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }

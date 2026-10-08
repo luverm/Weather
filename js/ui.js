@@ -687,6 +687,7 @@ function aqHealthTip(aq) {
   if (v > 200) return "Very unhealthy — avoid strenuous outdoor activity.";
   if (v > 150) return "Unhealthy — sensitive groups should limit prolonged outdoor exertion.";
   if (v > 100) return "Moderate — unusually sensitive people may feel symptoms.";
+  if (v <= 20)  return "✨ Fresh air — exceptional outdoor conditions.";
   return "";
 }
 
