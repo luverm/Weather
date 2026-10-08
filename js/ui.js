@@ -1360,6 +1360,8 @@ function renderDaily(w) {
     const bestBadge = (best && best.index === i)
       ? `<span class="daily-best" title="Looks like the pick of the week">${escapeHtml(best.tag)}</span>` : "";
     const drops = rainDrops(d);
+    const srTitle = `${new Date(d.time).toLocaleDateString()}: ${Math.round(convertTemp(d.tempMin))}° to ${Math.round(convertTemp(d.tempMax))}°, ${d.label || d.condition}`;
+    item.setAttribute("title", srTitle);
     item.innerHTML = `
       <span class="daily-day">${day}${bestBadge}</span>
       <span class="daily-icon">${iconFor(d.condition)}${drops}</span>
