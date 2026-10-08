@@ -1248,10 +1248,6 @@ function renderVisibility(w) {
     return;
   }
   el.visibilityCard.hidden = false;
-  el.visibilityCard.setAttribute(
-    "title",
-    `Horizontal visibility ${(meters / 1000).toFixed(1)} km (dial scale 0-20 km)`
-  );
   const km = meters / 1000;
   el.visibilityValue.textContent = km >= 10
     ? `${Math.round(km)} km`
