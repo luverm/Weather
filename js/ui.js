@@ -1760,6 +1760,10 @@ function startFetchedTicker() {
       minutes < 60 ? `Updated ${minutes}m ago` :
       `Updated ${Math.floor(minutes / 60)}h ago`;
     el.fetchedAgo.textContent = "· " + label;
+    const exact = new Date(state.weather.fetchedAt).toLocaleTimeString(undefined, {
+      hour: "2-digit", minute: "2-digit", second: "2-digit",
+    });
+    el.fetchedAgo.title = `Last fetched at ${exact}. Press R to refresh.`;
     el.fetchedAgo.classList.toggle("stale", minutes >= 20);
   };
   update();
