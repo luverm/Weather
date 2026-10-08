@@ -85,6 +85,11 @@ export class Scrubber {
     el.style.display = "block";
     el.style.left = `${rel * 100}%`;
     el.setAttribute("data-label", label);
+    // Include the clock time in the tooltip so hovering teaches when it is.
+    const d = new Date(ts);
+    const timeStr = `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+    el.setAttribute("title", `${label} at ${timeStr} — click to jump`);
+    el.setAttribute("aria-label", `Jump to ${label.toLowerCase()} at ${timeStr}`);
   }
 
   _bind() {
