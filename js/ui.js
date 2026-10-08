@@ -168,6 +168,7 @@ export const ui = {
     bindSettings();
     bindTilt();
     bindBrand();
+    maybeShowAudioHint();
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
@@ -1954,6 +1955,24 @@ ui.isPerformanceMode = () => localStorage.getItem("aether:performance") === "1";
 
 // Exposed so app.js can query the current preference on boot.
 ui.isReduceMotion = () => localStorage.getItem("aether:reduceMotion") === "1";
+
+function maybeShowAudioHint() {
+  // If someone has used the app a few times but never enabled audio, hint
+  // at the ambient-sound feature once.
+  try {
+    const seenCount = parseInt(localStorage.getItem("aether:loads") || "0", 10);
+    localStorage.setItem("aether:loads", String(seenCount + 1));
+    if (seenCount < 3) return;
+    if (localStorage.getItem("aether:audio-hinted")) return;
+    if (localStorage.getItem("aether:audio") === "1") return; // user has used it
+    setTimeout(() => {
+      if (!el.audioBtn) return;
+      el.audioBtn.classList.add("hint-pulse");
+      setTimeout(() => el.audioBtn.classList.remove("hint-pulse"), 2400);
+      localStorage.setItem("aether:audio-hinted", "1");
+    }, 2600);
+  } catch { /* ignore */ }
+}
 
 function maybeShowFirstVisitTip() {
   try {

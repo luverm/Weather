@@ -319,6 +319,12 @@ html[data-reduce-motion="true"] *::after {
   50%      { transform: scale(1.12); opacity: 0.6; }
 }
 [data-reduce-motion="true"] .icon-btn.on .sound-waves { animation: none; }
+.icon-btn.hint-pulse { animation: hintPulse 800ms var(--ease) 3; }
+@keyframes hintPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 rgba(154, 209, 255, 0); }
+  50%      { transform: scale(1.08); box-shadow: 0 0 16px rgba(154, 209, 255, 0.6); }
+}
+[data-reduce-motion="true"] .icon-btn.hint-pulse { animation: none; }
 .icon-btn.on { color: var(--accent); }
 .icon-btn.on .sound-waves { opacity: 1; }
 
