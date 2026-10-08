@@ -258,6 +258,14 @@ async function refreshWeather() {
   }
 }
 
+function setPerformanceMode(on) {
+  app.performance = !!on;
+  // Call onQualityChange(true) to force low-quality on scenes that implement it.
+  for (const s of [sky, stars, clouds, wind, rain, snow, lightning]) {
+    s?.onQualityChange?.(!!on);
+  }
+}
+
 function setReducedMotion(on) {
   app.reducedMotion = !!on;
   if (on) {
@@ -275,6 +283,7 @@ ui.init({
   onAudioToggle: () => toggleAudio(),
   onRefresh: () => refreshWeather(),
   onReduceMotion: (on) => setReducedMotion(on),
+  onPerformanceToggle: (on) => setPerformanceMode(on),
   onPlaceClick: (place) => loadByCoords(place),
   onHourClick: (ts) => {
     clock.setOffset(ts - Date.now());
@@ -286,6 +295,7 @@ ui.init({
 
 // Apply saved reduce-motion preference on boot.
 if (ui.isReduceMotion?.()) setReducedMotion(true);
+if (ui.isPerformanceMode?.()) setPerformanceMode(true);
 
 // Keyboard shortcuts.
 installShortcuts({

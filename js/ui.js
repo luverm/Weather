@@ -92,6 +92,7 @@ const el = {
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
   settingGeolocate: $("#setting-geolocate"),
+  settingPerformance: $("#setting-performance"),
   settingClearPlaces: $("#setting-clear-places"),
   settingShowShortcuts: $("#setting-show-shortcuts"),
   chartPopover: $("#chart-popover"),
@@ -1887,6 +1888,13 @@ function bindSettings() {
     ui.showToast(on ? "Will use your location on next launch" : "Will use last saved place on next launch");
   });
 
+  el.settingPerformance?.addEventListener("change", () => {
+    const on = el.settingPerformance.checked;
+    localStorage.setItem("aether:performance", on ? "1" : "0");
+    state.handlers.onPerformanceToggle?.(on);
+    ui.showToast(on ? "Performance mode on — scenes simplified" : "Performance mode off");
+  });
+
   el.settingClearPlaces?.addEventListener("click", () => {
     if (!confirm("Clear all saved places?")) return;
     for (const p of places.all()) places.remove(p);
@@ -1915,7 +1923,12 @@ function applyStoredPreferences() {
   if (el.settingGeolocate) {
     el.settingGeolocate.checked = localStorage.getItem("aether:startLocate") === "1";
   }
+  if (el.settingPerformance) {
+    el.settingPerformance.checked = localStorage.getItem("aether:performance") === "1";
+  }
 }
+
+ui.isPerformanceMode = () => localStorage.getItem("aether:performance") === "1";
 
 // Exposed so app.js can query the current preference on boot.
 ui.isReduceMotion = () => localStorage.getItem("aether:reduceMotion") === "1";
