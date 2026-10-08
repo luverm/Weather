@@ -325,6 +325,13 @@ html[data-reduce-motion="true"] *::after {
 [data-reduce-motion="true"] .place-chip { animation: none; }
 .place-chip:hover { background: var(--glass-strong); transform: translateY(-1px); }
 .place-chip.active { background: var(--glass-strong); border-color: rgba(255,255,255,0.35); }
+[data-loading="true"] .place-chip.active {
+  animation: chipLoading 1.4s ease-in-out infinite;
+}
+@keyframes chipLoading {
+  0%, 100% { opacity: 0.9; }
+  50%      { opacity: 0.6; }
+}
 .place-chip .temp { color: var(--fg-muted); font-variant-numeric: tabular-nums; }
 .place-chip .chip-icon {
   display: inline-grid; place-items: center;
@@ -455,11 +462,19 @@ html[data-reduce-motion="true"] *::after {
 [data-loading="true"] .temp-value {
   animation: shimmer 1.4s ease-in-out infinite;
 }
+[data-loading="true"] .metric-value,
+[data-loading="true"] .aq-value,
+[data-loading="true"] #visibility-value,
+[data-loading="true"] #moon-name {
+  animation: shimmer 1.4s ease-in-out infinite;
+  animation-delay: 180ms;
+}
 @keyframes shimmer {
   0%, 100% { opacity: 0.6; }
   50%      { opacity: 0.95; filter: blur(0.6px); }
 }
-[data-reduce-motion="true"] .temp-value { animation: none !important; }
+[data-reduce-motion="true"] .temp-value,
+[data-reduce-motion="true"] [data-loading="true"] * { animation: none !important; }
 .unit {
   font-size: clamp(16px, 2vw, 24px);
   line-height: 1;
