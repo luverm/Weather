@@ -371,10 +371,13 @@ installShortcuts({
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
     engine.stop();
+    audio.soften?.(0);
   } else if (!app.reducedMotion) {
     engine.start();
+    audio.soften?.(0.5);
   } else {
     engine.tickOnce();
+    audio.soften?.(0.5);
   }
 });
 

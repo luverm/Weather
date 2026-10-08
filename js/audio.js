@@ -79,6 +79,14 @@ export class AmbientAudio {
     for (const fn of this.listeners) fn(true);
   }
 
+  /** Soft-fade the master gain without destroying the AudioContext. */
+  soften(level = 0.0) {
+    if (!this.enabled || !this.ctx) return;
+    const t = this.ctx.currentTime;
+    this.master.gain.cancelScheduledValues(t);
+    this.master.gain.linearRampToValueAtTime(level, t + 0.4);
+  }
+
   async disable() {
     if (!this.enabled || !this.ctx) return;
     const t = this.ctx.currentTime;
