@@ -1,8 +1,8 @@
 // Saved locations persisted to localStorage.
 //
-// Each entry: { id, name, country, admin1, lat, lon, temp?, condition? }
-// `temp` and `condition` are populated when that location is loaded so the
-// chip strip can show a mini summary.
+// Each entry: { id, name, country, admin1, lat, lon, temp?, condition?, label?, isDay? }
+// `temp`, `condition`, `label` and `isDay` are populated when a location is
+// loaded so the chip strip can show a mini summary.
 
 const KEY = "aether:places";
 const MAX = 8;

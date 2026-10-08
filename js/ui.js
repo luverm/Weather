@@ -201,7 +201,12 @@ export const ui = {
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
       places.updateSummary(state.place, {
-        temp: weather.temp, condition: weather.condition,
+        temp: weather.temp,
+        condition: weather.condition,
+        label: weather.label,
+        isDay: weather.isDay,
+        tempMin: weather.daily?.[0]?.tempMin,
+        tempMax: weather.daily?.[0]?.tempMax,
       });
     }
     renderPlaces();
@@ -1066,10 +1071,17 @@ function renderPlaces() {
   const activeId = state.place ? places.idFor(state.place) : null;
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
+    const dayCls = p.isDay === false ? "night" : "";
+    const icon = p.condition ? iconFor(p.condition) : "";
+    const range = (p.tempMin != null && p.tempMax != null)
+      ? `<span class="chip-range" title="Today's range">${Math.round(convertTemp(p.tempMin))}°/${Math.round(convertTemp(p.tempMax))}°</span>`
+      : "";
     return `
-      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
-        <span>${escapeHtml(p.name)}</span>
+      <div class="place-chip ${active ? "active" : ""} ${dayCls}" data-id="${p.id}" title="${escapeHtml(p.label || "")}">
+        ${icon ? `<span class="chip-icon" aria-hidden="true">${icon}</span>` : ""}
+        <span class="chip-name">${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
+        ${range}
         <span class="close" data-action="remove" aria-label="Remove">
           <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
         </span>
