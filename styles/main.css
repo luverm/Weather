@@ -569,7 +569,21 @@ html[data-reduce-motion="true"] *::after {
   margin-left: auto;
   font-size: 13px;
 }
-.scrubber-delta { font-size: 11px; color: var(--fg-dim); font-variant-numeric: tabular-nums; }
+.scrubber-delta {
+  font-size: 11px; color: var(--fg-dim); font-variant-numeric: tabular-nums;
+  padding: 2px 6px; border-radius: 999px; border: 1px solid transparent;
+  transition: background 200ms var(--ease), color 200ms var(--ease), border-color 200ms var(--ease);
+}
+[data-scrubbing="false"] .scrubber-delta {
+  color: var(--accent);
+  background: rgba(154, 209, 255, 0.1);
+  border-color: rgba(154, 209, 255, 0.25);
+}
+[data-scrubbing="true"] .scrubber-delta {
+  color: #ffb86b;
+  background: rgba(255, 184, 107, 0.1);
+  border-color: rgba(255, 184, 107, 0.25);
+}
 .scrubber-track {
   position: relative;
   height: 36px;
