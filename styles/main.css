@@ -325,6 +325,17 @@ html[data-reduce-motion="true"] *::after {
 /* ---------- Saved locations strip ---------- */
 .places-strip {
   display: flex; flex-wrap: wrap; gap: 8px;
+  max-width: 100%;
+}
+@media (max-width: 640px) {
+  .places-strip {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  .places-strip::-webkit-scrollbar { display: none; }
+  .places-strip .place-chip { flex: 0 0 auto; }
 }
 .place-chip {
   display: inline-flex; align-items: center; gap: 6px;
