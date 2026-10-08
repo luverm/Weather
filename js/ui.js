@@ -75,6 +75,7 @@ const el = {
   humiditySparkLine: $("#humidity-spark-line"),
   humiditySparkFill: $("#humidity-spark-fill"),
   dewScaleMarker: $("#dew-scale-marker"),
+  uvScaleMarker: $("#uv-scale-marker"),
   dailySpark: $("#daily-spark"),
   dailyHi: $("#daily-hi"),
   dailyLo: $("#daily-lo"),
@@ -420,6 +421,16 @@ function renderMetrics(w) {
     el.metricUVSub.textContent = `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`;
   } else {
     el.metricUVSub.textContent = "peak —";
+  }
+  if (el.uvScaleMarker) {
+    if (w.uv == null) {
+      el.uvScaleMarker.style.opacity = "0";
+    } else {
+      // UV scale 0..12 maps across the bar.
+      const frac = Math.max(0, Math.min(1, w.uv / 12));
+      el.uvScaleMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+      el.uvScaleMarker.style.opacity = "1";
+    }
   }
   renderHumiditySparkline(w);
   renderPressureDial(w);

@@ -657,7 +657,7 @@ html[data-reduce-motion="true"] *::after {
   margin-top: 2px;
 }
 .metric-humidity .pressure-spark { color: #9ad1ff; }
-.dew-scale {
+.dew-scale, .uv-scale {
   grid-column: 1 / span 2;
   position: relative;
   height: 6px;
@@ -669,13 +669,24 @@ html[data-reduce-motion="true"] *::after {
   background: linear-gradient(90deg, #9ad1ff 0%, #8be0a0 30%, #ffd47b 60%, #ff8a6a 85%, #a73838 100%);
   opacity: 0.72;
 }
-.dew-scale-marker {
+.dew-scale-marker, .uv-scale-marker {
   position: absolute; top: -2px;
   width: 10px; height: 10px; border-radius: 50%;
   background: #fff; border: 1.5px solid rgba(0,0,0,0.4);
   box-shadow: 0 0 6px rgba(255,255,255,0.5);
   transform: translateX(-50%);
   transition: left 500ms var(--ease), opacity 300ms var(--ease);
+}
+.uv-scale-track {
+  position: absolute; inset: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg,
+    #78d06a 0%, #78d06a 24%,
+    #ffd36a 24%, #ffd36a 46%,
+    #ff9f5c 46%, #ff9f5c 60%,
+    #ff6a6a 60%, #ff6a6a 83%,
+    #b75cff 83%);
+  opacity: 0.78;
 }
 
 /* ---------- Pressure barometer dial ---------- */
