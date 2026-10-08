@@ -113,6 +113,23 @@ export class Scrubber {
     this.track.addEventListener("pointerup", onUp);
     this.track.addEventListener("pointercancel", onUp);
 
+    // Hover tooltip — show what time the pointer corresponds to, even
+    // without dragging. Fine-pointer only (mouse) so it doesn't fight touch.
+    const canHover = window.matchMedia?.("(hover: hover)").matches ?? true;
+    if (canHover) {
+      this.track.addEventListener("pointerenter", (e) => {
+        if (e.pointerType === "touch") return;
+        this._updateHoverTitle(e);
+      });
+      this.track.addEventListener("pointermove", (e) => {
+        if (this.dragging || e.pointerType === "touch") return;
+        this._updateHoverTitle(e);
+      });
+      this.track.addEventListener("pointerleave", () => {
+        this.track.removeAttribute("title");
+      });
+    }
+
     // Keyboard: arrow keys nudge by 1h, shift+arrow by 6h.
     this.track.addEventListener("keydown", (e) => {
       const step = e.shiftKey ? 6 : 1;
@@ -135,6 +152,19 @@ export class Scrubber {
     this._render(this._currentT());
     this.onScrub?.(0);
     try { navigator.vibrate?.(10); } catch { /* best-effort */ }
+  }
+
+  _updateHoverTitle(e) {
+    const r = this.track.getBoundingClientRect();
+    const t = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+    const totalMs = RANGE_HOURS * 3600_000;
+    const offset = t * totalMs - 3600_000;
+    const ts = Date.now() + offset;
+    const d = new Date(ts);
+    const label = d.toLocaleString(undefined, {
+      weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false,
+    });
+    this.track.title = label;
   }
 
   _updateFromEvent(e) {
