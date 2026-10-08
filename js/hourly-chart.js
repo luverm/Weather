@@ -365,6 +365,14 @@ export class HourlyChart {
         const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
         g.setAttribute("transform", `translate(${x.toFixed(1)} ${y})`);
         g.setAttribute("class", `chart-sunmark ${kind}`);
+        g.setAttribute("data-ts", String(ts));
+        g.style.cursor = "pointer";
+        // Hit area so the 10px icon isn't the only hit target.
+        const hit = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        hit.setAttribute("x", "-6"); hit.setAttribute("y", "-2");
+        hit.setAttribute("width", "12"); hit.setAttribute("height", "20");
+        hit.setAttribute("fill", "transparent");
+        g.appendChild(hit);
         const tri = document.createElementNS("http://www.w3.org/2000/svg", "path");
         tri.setAttribute("d", "M 0 0 L -4 5 L 4 5 Z");
         g.appendChild(tri);
@@ -373,6 +381,13 @@ export class HourlyChart {
         t.setAttribute("text-anchor", "middle");
         t.textContent = kind === "rise" ? "↑" : "↓";
         g.appendChild(t);
+        const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+        title.textContent = `${kind === "rise" ? "Sunrise" : "Sunset"} — click to jump`;
+        g.appendChild(title);
+        g.addEventListener("click", (e) => {
+          e.stopPropagation();
+          this.onHoverHour?.(ts);
+        });
         sunG.appendChild(g);
       };
       for (const d of daily) {
