@@ -97,6 +97,9 @@ const el = {
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
   comfortStrip: $("#comfort-strip"),
+  precipStrip: $("#precip-strip"),
+  precipStripBars: $("#precip-strip-bars"),
+  precipStripTotal: $("#precip-strip-total"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
   weekendDetail: $("#weekend-detail"),
@@ -203,6 +206,7 @@ export const ui = {
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
+    renderPrecipStrip(weather);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
@@ -779,6 +783,61 @@ function renderActivity(w) {
   el.activityList.querySelectorAll("li[data-ts]").forEach((li) => {
     li.addEventListener("click", () => {
       const ts = parseInt(li.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
+}
+
+function renderPrecipStrip(w) {
+  if (!el.precipStrip || !el.precipStripBars) return;
+  const hours = (w.hourly || []).slice(0, 24);
+  if (!hours.length) {
+    el.precipStrip.hidden = true;
+    return;
+  }
+  const totalMm = hours.reduce((s, h) => s + (h.precip ?? 0), 0);
+  // Hide the strip entirely on bone-dry days — otherwise we show a row of flat
+  // 0-mm bars that adds no information.
+  if (totalMm < 0.1 && !hours.some((h) => (h.pop ?? 0) >= 30)) {
+    el.precipStrip.hidden = true;
+    return;
+  }
+  el.precipStrip.hidden = false;
+  const peakMm = Math.max(0.3, ...hours.map((h) => h.precip ?? 0));
+  const peakHour = hours.reduce((best, h) => (h.precip > (best?.precip ?? -1) ? h : best), null);
+  const peakStr = peakHour && peakHour.precip > 0.05
+    ? ` · peak ${peakHour.precip.toFixed(1)} mm at ${fmtTime(peakHour.time)}`
+    : "";
+  el.precipStripTotal.textContent = `${totalMm.toFixed(1)} mm in 24 h${peakStr}`;
+
+  const kindColor = (h) => {
+    // Snow conditions get a cooler hue; rain stays blue.
+    if (h.condition === "snow") return "#dfe9ff";
+    if ((h.pop ?? 0) >= 70) return "#4aa0ff";
+    if ((h.pop ?? 0) >= 40) return "#6cb7ff";
+    return "#88c6ff";
+  };
+
+  el.precipStripBars.innerHTML = hours.map((h, i) => {
+    const popPct = Math.round(h.pop ?? 0);
+    const mm = h.precip ?? 0;
+    const hgt = mm > 0 ? Math.max(3, Math.min(32, (mm / peakMm) * 32)) : 0;
+    const popHgt = mm === 0 ? Math.round(popPct * 0.22) : 0; // ghost bar when 0mm but chance exists
+    const totalH = Math.max(hgt, popHgt);
+    const bg = kindColor(h);
+    const alpha = mm > 0 ? 0.95 : 0.3;
+    const hh = new Date(h.time).getHours();
+    const tick = (hh % 6 === 0) ? `<span class="precip-strip-tick">${hh.toString().padStart(2,"0")}:00</span>` : "";
+    const title = `${hh.toString().padStart(2,"0")}:00 · ${mm.toFixed(1)} mm · ${popPct}%`;
+    return `<button class="precip-strip-cell" data-i="${i}" data-ts="${h.time}" title="${title}">
+      <span class="precip-strip-bar" style="height:${totalH}px;background:${bg};opacity:${alpha}"></span>
+      ${tick}
+    </button>`;
+  }).join("");
+
+  el.precipStripBars.querySelectorAll(".precip-strip-cell").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const ts = parseInt(btn.dataset.ts, 10);
       if (ts) state.handlers.onHourClick?.(ts);
     });
   });
