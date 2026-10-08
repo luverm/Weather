@@ -387,6 +387,8 @@ function renderMetrics(w) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
     el.windNeedle.style.opacity = "1";
+    const parent = el.windNeedle.closest(".wind-compass");
+    if (parent) parent.setAttribute("title", `From ${dirLabel} (${Math.round(dir)}°)`);
   } else if (el.windNeedle) {
     el.windNeedle.style.opacity = "0.3";
   }
