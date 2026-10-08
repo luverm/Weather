@@ -327,7 +327,15 @@ function renderLiveValues(w, { animate = true } = {}) {
   const feels = convertTemp(w.feelsLike ?? w.temp);
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
-  el.conditionLabel.textContent = capitalize(w.label);
+  // Append a cloud-cover hint to the condition label when it adds info
+  // beyond what the label already says.
+  let condition = capitalize(w.label);
+  if (w.cloudCover != null && w.condition === "clear" && w.cloudCover >= 20) {
+    condition = `${condition} · ${Math.round(w.cloudCover)}% cloud`;
+  } else if (w.cloudCover != null && w.condition === "clouds") {
+    condition = `${condition} · ${Math.round(w.cloudCover)}%`;
+  }
+  el.conditionLabel.textContent = condition;
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
 }
