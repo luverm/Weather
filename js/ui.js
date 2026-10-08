@@ -1608,6 +1608,8 @@ function renderNowcast(w) {
     bar.className = "nowcast-bar";
     bar.style.height = `${Math.max(2, (n.precip / maxP) * 28)}px`;
     const mins = Math.round((n.time - Date.now()) / 60_000);
+    // Dim bars further out so the near-term reads first.
+    bar.style.opacity = String(1 - Math.min(0.5, i * 0.06));
     bar.title = `+${Math.max(0, mins)} min · ${n.precip.toFixed(1)} mm`;
     bar.setAttribute("aria-label", bar.title);
     bar.addEventListener("click", () => state.handlers.onHourClick?.(n.time));
