@@ -378,9 +378,7 @@ function renderMetrics(w) {
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
   el.metricPressureSub.textContent = w.cloudCover != null
     ? `clouds ${Math.round(w.cloudCover)}%`
-    : (w.visibility != null
-        ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
-        : "clouds —");
+    : "clouds —";
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
@@ -966,10 +964,13 @@ function renderWindStrip(w) {
     if (dir == null) {
       return `<div class="wind-strip-cell"><span class="wind-strip-dot"></span>${tick}</div>`;
     }
-    // Wind direction is where it comes FROM; arrow should point TO (dir + 180).
-    const theta = dir + 180;
+    // SVG arrow base points down (tip at +y, i.e. compass 180° at θ=0). A
+    // clockwise rotation θ puts the tip at compass bearing (180 + θ). Wind
+    // direction is where the wind comes FROM, so to point TO its destination
+    // we need bearing (dir + 180), giving θ = dir.
+    const theta = dir;
     const hot = spd >= 40 ? "hot" : spd >= 25 ? "warm" : "";
-    const title = `${hh}:00 · ${Math.round(spd)} km/h ${cardinal(dir)}`;
+    const title = `${hh.toString().padStart(2, "0")}:00 · ${Math.round(spd)} km/h ${cardinal(dir)}`;
     return `<button class="wind-strip-cell ${hot}" data-ts="${h.time}" title="${title}">
       <svg viewBox="-12 -12 24 24" style="transform:rotate(${theta}deg)">
         <path d="M 0 ${-len/2} L 0 ${len/2} M 0 ${len/2} L -3 ${len/2 - 4} M 0 ${len/2} L 3 ${len/2 - 4}"
@@ -1334,8 +1335,9 @@ function renderPlaces() {
     const range = (p.tempMin != null && p.tempMax != null)
       ? `<span class="chip-range" title="Today's range">${Math.round(convertTemp(p.tempMin))}°/${Math.round(convertTemp(p.tempMax))}°</span>`
       : "";
+    const titleBits = [p.admin1, p.country, p.label].filter(Boolean).join(" · ");
     return `
-      <div class="place-chip ${active ? "active" : ""} ${dayCls}" data-id="${p.id}" title="${escapeHtml(p.label || "")}">
+      <div class="place-chip ${active ? "active" : ""} ${dayCls}" data-id="${p.id}" title="${escapeHtml(titleBits)}">
         ${icon ? `<span class="chip-icon" aria-hidden="true">${icon}</span>` : ""}
         <span class="chip-name">${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
