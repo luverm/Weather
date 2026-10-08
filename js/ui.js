@@ -91,6 +91,7 @@ const el = {
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
+  settingGeolocate: $("#setting-geolocate"),
   settingClearPlaces: $("#setting-clear-places"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
@@ -1827,6 +1828,12 @@ function bindSettings() {
     }
   });
 
+  el.settingGeolocate?.addEventListener("change", () => {
+    const on = el.settingGeolocate.checked;
+    localStorage.setItem("aether:startLocate", on ? "1" : "0");
+    ui.showToast(on ? "Will use your location on next launch" : "Will use last saved place on next launch");
+  });
+
   el.settingClearPlaces?.addEventListener("click", () => {
     if (!confirm("Clear all saved places?")) return;
     for (const p of places.all()) places.remove(p);
@@ -1845,6 +1852,9 @@ function applyStoredPreferences() {
     queueMicrotask(() => state.handlers.onReduceMotion?.(true));
   }
   if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
+  if (el.settingGeolocate) {
+    el.settingGeolocate.checked = localStorage.getItem("aether:startLocate") === "1";
+  }
 }
 
 // Exposed so app.js can query the current preference on boot.

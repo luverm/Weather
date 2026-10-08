@@ -348,7 +348,7 @@ installShortcuts({
 (async function init() {
   // ?action=locate (from the PWA shortcut) always runs geolocation first.
   const action = new URLSearchParams(location.search).get("action");
-  if (action === "locate") {
+  if (action === "locate" || localStorage.getItem("aether:startLocate") === "1") {
     await useGeolocation();
     return;
   }
