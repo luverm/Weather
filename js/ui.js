@@ -885,7 +885,7 @@ function renderInsights(w) {
   }
   el.insightsCard.hidden = false;
   el.insightsList.innerHTML = items.map((it, i) => `
-    <li data-i="${i}" ${it.ts ? `data-ts="${it.ts}" style="cursor:pointer"` : ""}>
+    <li data-i="${i}" ${it.ts ? `data-ts="${it.ts}" style="cursor:pointer"` : ""} ${it.tone ? `data-tone="${escapeHtml(it.tone)}"` : ""}>
       <span class="insight-icon">${it.icon}</span>
       <span class="insight-meta">
         <span class="insight-label">${escapeHtml(it.label)}</span>

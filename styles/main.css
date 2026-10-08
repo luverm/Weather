@@ -1399,6 +1399,9 @@ kbd {
   display: grid; place-items: center;
   color: var(--accent);
 }
+.insights-list li[data-tone="warm"] .insight-icon { color: #ffb27a; }
+.insights-list li[data-tone="hot"]  .insight-icon { color: #ff8c66; }
+.insights-list li[data-tone="cool"] .insight-icon { color: #9ad1ff; }
 .insights-list .insight-icon svg { width: 20px; height: 20px; }
 .insights-list .insight-meta { display: grid; gap: 2px; min-width: 0; }
 .insights-list .insight-label {

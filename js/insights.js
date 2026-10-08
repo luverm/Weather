@@ -26,18 +26,18 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
   const rainyHour = hours.find((h) => (h.pop ?? 0) >= 60 || (h.precip ?? 0) > 0.4);
   if (rainyHour) {
     out.push({
-      icon: ICONS.rain, label: "Next rain",
+      icon: ICONS.rain, label: "Next rain", tone: "cool",
       value: `${fmt(rainyHour.time)} · ${rainyHour.pop}%`,
       ts: rainyHour.time,
     });
   } else if (rainyDay) {
     out.push({
-      icon: ICONS.rain, label: "Next rain",
+      icon: ICONS.rain, label: "Next rain", tone: "cool",
       value: `${dow(rainyDay.time)} · ${rainyDay.pop}%`,
       ts: rainyDay.sunrise || rainyDay.time,
     });
   } else {
-    out.push({ icon: ICONS.sun, label: "This week", value: "No rain in the outlook" });
+    out.push({ icon: ICONS.sun, label: "This week", tone: "warm", value: "No rain in the outlook" });
   }
 
   // 2. Peak wind in next 24h.
@@ -48,7 +48,7 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
   }
   if (peakGust && peakGust.v >= 20) {
     out.push({
-      icon: ICONS.wind, label: "Peak gust",
+      icon: ICONS.wind, label: "Peak gust", tone: peakGust.v >= 50 ? "hot" : "cool",
       value: `${Math.round(peakGust.v)} km/h at ${fmt(peakGust.ts)}`,
       ts: peakGust.ts,
     });
@@ -62,12 +62,12 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
   }
   if (coldest && warmest && warmest.t - coldest.t >= 4) {
     out.push({
-      icon: ICONS.cold, label: "Coldest",
+      icon: ICONS.cold, label: "Coldest", tone: "cool",
       value: `${Math.round(coldest.t)}° at ${fmt(coldest.ts)}`,
       ts: coldest.ts,
     });
     out.push({
-      icon: ICONS.warm, label: "Warmest",
+      icon: ICONS.warm, label: "Warmest", tone: "warm",
       value: `${Math.round(warmest.t)}° at ${fmt(warmest.ts)}`,
       ts: warmest.ts,
     });
@@ -83,7 +83,7 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     }
     if (hotDay && coolDay && hotDay !== coolDay) {
       out.push({
-        icon: ICONS.warm, label: "Week high",
+        icon: ICONS.warm, label: "Week high", tone: "warm",
         value: `${Math.round(hotDay.tempMax)}° on ${dow(hotDay.time)}`,
         ts: hotDay.sunrise || hotDay.time,
       });
@@ -93,7 +93,7 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
   // 5. UV peak
   if (weather.uvPeak?.value >= 6) {
     out.push({
-      icon: ICONS.uv, label: "UV peak",
+      icon: ICONS.uv, label: "UV peak", tone: weather.uvPeak.value >= 10 ? "hot" : "warm",
       value: `${Math.round(weather.uvPeak.value)} at ${fmt(weather.uvPeak.time)}`,
       ts: weather.uvPeak.time,
     });
@@ -103,7 +103,7 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
   const snowDay = days.find((d) => (d.snowfall ?? 0) >= 1);
   if (snowDay) {
     out.push({
-      icon: ICONS.humid, label: "Snow expected",
+      icon: ICONS.cold, label: "Snow expected", tone: "cool",
       value: `${snowDay.snowfall.toFixed(1)} cm on ${dow(snowDay.time)}`,
       ts: snowDay.sunrise || snowDay.time,
     });
@@ -114,7 +114,7 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     const rainiest = days.reduce((best, d) => ((d.precip ?? 0) > (best?.precip ?? 0) ? d : best), null);
     if (rainiest && (rainiest.precip ?? 0) >= 3) {
       out.push({
-        icon: ICONS.rain, label: "Wettest day",
+        icon: ICONS.rain, label: "Wettest day", tone: "cool",
         value: `${rainiest.precip.toFixed(1)} mm on ${dow(rainiest.time)}`,
         ts: rainiest.sunrise || rainiest.time,
       });
@@ -136,7 +136,7 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     if (best && best.len >= 6) {
       const end = hours[best.start + best.len - 1].time;
       out.push({
-        icon: ICONS.sun, label: "Dry window",
+        icon: ICONS.sun, label: "Dry window", tone: "warm",
         value: `${best.len}h from ${fmt(best.startTs)}`,
         ts: best.startTs,
         _endTs: end,
