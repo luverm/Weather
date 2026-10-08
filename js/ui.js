@@ -1267,9 +1267,12 @@ function cardinal(deg) {
 
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
+  const now = Date.now();
   for (const h of (w.hourly || []).slice(0, 24)) {
     const item = document.createElement("div");
     item.className = "forecast-item";
+    // Mark the hour whose window contains "now" so it stands out.
+    if (Math.abs(h.time - now) < 30 * 60_000) item.classList.add("is-now");
     item.dataset.ts = h.time;
     const windArrow = h.windDir != null && (h.wind ?? 0) >= 12
       ? `<svg class="forecast-wind" viewBox="-6 -6 12 12" style="transform:rotate(${h.windDir}deg)"><path d="M 0 -4 L 0 4 M 0 4 L -2 2 M 0 4 L 2 2" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>`
