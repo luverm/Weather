@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { findBestDay } from "./best-day.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -1068,6 +1069,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  const best = findBestDay(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1092,8 +1094,10 @@ function renderDaily(w) {
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const bestBadge = (best && best.index === i)
+      ? `<span class="daily-best" title="Looks like the pick of the week">${escapeHtml(best.tag)}</span>` : "";
     item.innerHTML = `
-      <span class="daily-day">${day}</span>
+      <span class="daily-day">${day}${bestBadge}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
@@ -1102,6 +1106,7 @@ function renderDaily(w) {
       <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°</span>
       ${extra}
     `;
+    if (best && best.index === i) item.classList.add("is-best");
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });

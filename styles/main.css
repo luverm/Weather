@@ -1596,7 +1596,21 @@ kbd {
   transition: background 200ms var(--ease);
 }
 .daily-item:hover { background: var(--glass); }
-.daily-day { font-size: 13px; font-weight: 500; }
+.daily-item.is-best {
+  background: linear-gradient(90deg, rgba(140, 220, 150, 0.08), rgba(255,255,255,0.02));
+  border-left: 2px solid rgba(140, 220, 150, 0.6);
+  padding-left: 6px;
+}
+.daily-day { font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.daily-best {
+  display: inline-flex; align-items: center;
+  font-size: 10px; letter-spacing: 0.03em; font-weight: 500;
+  padding: 1px 6px; border-radius: 999px;
+  background: rgba(140, 220, 150, 0.14);
+  color: #a9e8b4;
+  border: 1px solid rgba(140, 220, 150, 0.35);
+  white-space: nowrap;
+}
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
 .daily-range {
   position: relative;
