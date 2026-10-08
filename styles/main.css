@@ -829,6 +829,13 @@ html[data-reduce-motion="true"] *::after {
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
 }
+.chart-sunmark path { fill: rgba(255, 210, 140, 0.9); }
+.chart-sunmark.set path { fill: rgba(255, 150, 110, 0.85); }
+.chart-sunmark text {
+  font-size: 7.5px;
+  fill: var(--fg-dim);
+  font-weight: 600;
+}
 .chart-labels text {
   font-size: 9px;
   fill: var(--fg-dim);

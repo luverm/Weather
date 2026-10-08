@@ -9,13 +9,14 @@ const PAD_TOP = 16;
 const PAD_BOT = 22;
 
 export class HourlyChart {
-  constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit, getTimezone }) {
+  constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit, getTimezone, getDaily }) {
     this.svg = svgEl;
     this.hoverEl = hoverEl;
     this.popover = popoverEl;
     this.onHoverHour = onHoverHour;
     this.getUnit = getUnit || (() => "C");
     this.getTimezone = getTimezone || (() => null);
+    this.getDaily = getDaily || (() => null);
     this.hours = [];
     this.points = [];
     this._bind();
@@ -243,6 +244,48 @@ export class HourlyChart {
       r.setAttribute("opacity", (0.35 + (pop / 100) * 0.55).toFixed(2));
       precipG.appendChild(r);
     });
+
+    // Sunrise/sunset chevron markers — gold triangles anchored to the bottom.
+    const sunG = this.svg.querySelector("#chart-sunmarks");
+    if (sunG) {
+      sunG.innerHTML = "";
+      const daily = this.getDaily?.() || [];
+      const minTs = this.hours[0].time;
+      const maxTs = this.hours[this.hours.length - 1].time;
+      const inside = (ts) => ts >= minTs && ts <= maxTs;
+      const tsToX = (ts) => {
+        // Linear interp across hour indices.
+        for (let i = 0; i < this.hours.length - 1; i++) {
+          const a = this.hours[i].time, b = this.hours[i + 1].time;
+          if (ts >= a && ts <= b) {
+            return iToX(i) + ((ts - a) / (b - a)) * (iToX(i + 1) - iToX(i));
+          }
+        }
+        return null;
+      };
+      const addMark = (ts, kind) => {
+        if (!inside(ts)) return;
+        const x = tsToX(ts);
+        if (x == null) return;
+        const y = H - PAD_BOT + 6;
+        const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        g.setAttribute("transform", `translate(${x.toFixed(1)} ${y})`);
+        g.setAttribute("class", `chart-sunmark ${kind}`);
+        const tri = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        tri.setAttribute("d", "M 0 0 L -4 5 L 4 5 Z");
+        g.appendChild(tri);
+        const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        t.setAttribute("y", "14");
+        t.setAttribute("text-anchor", "middle");
+        t.textContent = kind === "rise" ? "↑" : "↓";
+        g.appendChild(t);
+        sunG.appendChild(g);
+      };
+      for (const d of daily) {
+        if (d.sunrise) addMark(d.sunrise, "rise");
+        if (d.sunset) addMark(d.sunset, "set");
+      }
+    }
 
     // Night shading: dim rectangles where !isDay
     const nightG = this.svg.querySelector("#chart-night");

@@ -167,6 +167,7 @@ export const ui = {
       onHoverHour: (ts) => state.handlers.onHourClick?.(ts),
       getUnit: () => state.unit,
       getTimezone: () => state.weather?.timezone,
+      getDaily: () => state.weather?.daily,
     });
     state.comfortStrip = new ComfortStrip({
       rootEl: el.comfortStrip,
