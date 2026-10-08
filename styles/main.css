@@ -114,7 +114,13 @@ ul { list-style: none; margin: 0; padding: 0; }
   grid-template-columns: auto 1fr auto;
   gap: 12px;
   align-items: center;
+  animation: topbarIn 500ms var(--ease) both;
 }
+@keyframes topbarIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: none; }
+}
+[data-reduce-motion="true"] .topbar { animation: none; }
 .brand {
   display: flex; align-items: center; gap: 10px;
   letter-spacing: 0.02em;
