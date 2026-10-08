@@ -656,9 +656,10 @@ html[data-reduce-motion="true"] *::after {
   width: 28px; height: 28px; border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #fff, var(--accent) 70%);
   box-shadow: 0 0 0 1px rgba(255,255,255,0.3), 0 4px 14px rgba(0,0,0,0.4), 0 0 20px var(--accent);
-  transition: left 120ms linear, transform 200ms var(--ease);
+  transition: left 320ms var(--ease), transform 200ms var(--ease);
   pointer-events: none;
 }
+.scrubber-track:active .scrubber-thumb { transition: left 60ms linear, transform 200ms var(--ease); }
 .scrubber-track:active .scrubber-thumb { transform: translate(-50%, -50%) scale(1.15); }
 
 /* ---------- Pressure sparkline ---------- */
