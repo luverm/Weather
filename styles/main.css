@@ -1693,7 +1693,17 @@ kbd {
   border: 1px solid rgba(140, 220, 150, 0.35);
   white-space: nowrap;
 }
-.daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
+.daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; position: relative; }
+.daily-drops {
+  position: absolute; left: 50%; bottom: -8px; transform: translateX(-50%);
+  font-size: 8px; letter-spacing: 1px; line-height: 1;
+  color: #4aa0ff;
+  text-shadow: 0 0 4px rgba(74, 160, 255, 0.5);
+  pointer-events: none;
+}
+.daily-drops[data-level="mod"]    { color: #4aa0ff; }
+.daily-drops[data-level="heavy"]  { color: #a78bff; }
+.daily-drops[data-level="deluge"] { color: #ff6a9a; }
 .daily-range {
   position: relative;
   height: 6px; border-radius: 3px;

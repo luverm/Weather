@@ -1207,13 +1207,19 @@ function renderDaily(w) {
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
-    const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
+    let popLabel = "";
+    if (d.precip >= 0.5) {
+      popLabel = ` · ${d.precip.toFixed(1)} mm (${d.pop}%)`;
+    } else if (d.pop >= 30) {
+      popLabel = ` · ${d.pop}% rain`;
+    }
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
     const bestBadge = (best && best.index === i)
       ? `<span class="daily-best" title="Looks like the pick of the week">${escapeHtml(best.tag)}</span>` : "";
+    const drops = rainDrops(d);
     item.innerHTML = `
       <span class="daily-day">${day}${bestBadge}</span>
-      <span class="daily-icon">${iconFor(d.condition)}</span>
+      <span class="daily-icon">${iconFor(d.condition)}${drops}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
       </div>
@@ -1225,6 +1231,15 @@ function renderDaily(w) {
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+}
+
+function rainDrops(d) {
+  const precip = d?.precip ?? 0;
+  // 1 drop = 1-3mm (light), 2 = 3-8mm (moderate), 3 = 8-20mm (heavy), 4 = >20mm (deluge).
+  if (precip < 0.5) return "";
+  const n = precip < 3 ? 1 : precip < 8 ? 2 : precip < 20 ? 3 : 4;
+  const level = n >= 4 ? "deluge" : n >= 3 ? "heavy" : n >= 2 ? "mod" : "light";
+  return `<span class="daily-drops" data-level="${level}" aria-hidden="true">${"•".repeat(n)}</span>`;
 }
 
 function renderDailyIconStrip(days) {
