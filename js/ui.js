@@ -1075,6 +1075,26 @@ function renderPrecipStrip(w) {
     ? ` · peak ${peakHour.precip.toFixed(1)} mm at ${fmtTime(peakHour.time)}`
     : "";
   el.precipStripTotal.textContent = `${totalMm.toFixed(1)} mm in 24 h${peakStr}`;
+  if (peakHour && peakHour.precip > 0.05) {
+    el.precipStripTotal.style.cursor = "pointer";
+    el.precipStripTotal.setAttribute("role", "button");
+    el.precipStripTotal.setAttribute("tabindex", "0");
+    el.precipStripTotal.setAttribute("title", "Click to scrub to peak rain hour");
+    el.precipStripTotal.onclick = () => state.handlers.onHourClick?.(peakHour.time);
+    el.precipStripTotal.onkeydown = (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        state.handlers.onHourClick?.(peakHour.time);
+      }
+    };
+  } else {
+    el.precipStripTotal.style.cursor = "default";
+    el.precipStripTotal.removeAttribute("role");
+    el.precipStripTotal.removeAttribute("tabindex");
+    el.precipStripTotal.removeAttribute("title");
+    el.precipStripTotal.onclick = null;
+    el.precipStripTotal.onkeydown = null;
+  }
 
   const kindColor = (h) => {
     // Snow conditions get a cooler hue; rain stays blue.
