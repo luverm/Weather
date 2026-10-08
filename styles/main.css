@@ -409,6 +409,11 @@ html[data-reduce-motion="true"] *::after {
 [data-alert-severity="2"] .hero-inner {
   border-color: rgba(255, 211, 106, 0.3);
 }
+/* Subtle condition tint — only applies when no alert border has taken over. */
+:not([data-alert-severity="2"]):not([data-alert-severity="3"])[data-condition="rain"]  .hero-inner { border-color: rgba(136, 198, 255, 0.25); }
+:not([data-alert-severity="2"]):not([data-alert-severity="3"])[data-condition="snow"]  .hero-inner { border-color: rgba(223, 233, 255, 0.3); }
+:not([data-alert-severity="2"]):not([data-alert-severity="3"])[data-condition="storm"] .hero-inner { border-color: rgba(167, 139, 255, 0.3); }
+:not([data-alert-severity="2"]):not([data-alert-severity="3"])[data-condition="fog"]   .hero-inner { border-color: rgba(181, 192, 208, 0.3); }
 .place-label {
   margin: 0 0 6px;
   font-size: 12px;
