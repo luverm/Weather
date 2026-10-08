@@ -1906,3 +1906,20 @@ function escapeHtml(s) {
 // Export renderPlaces so the app can refresh the strip after a load.
 ui.refreshPlaces = renderPlaces;
 ui.refreshChart = () => state.chart?.refresh?.();
+
+// Sync unit + reduce-motion prefs across tabs via the storage event — makes
+// opening Aether in two tabs behave consistently without a reload.
+window.addEventListener("storage", (e) => {
+  if (e.key === "aether:unit" && e.newValue && e.newValue !== state.unit) {
+    state.unit = e.newValue;
+    if (el.unitBtn) el.unitBtn.textContent = `°${state.unit}`;
+    if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
+    if (state.weather) ui.setWeather(state.weather);
+  }
+  if (e.key === "aether:reduceMotion") {
+    const on = e.newValue === "1";
+    document.documentElement.setAttribute("data-reduce-motion", on ? "true" : "false");
+    if (el.settingReduceMotion) el.settingReduceMotion.checked = on;
+    state.handlers.onReduceMotion?.(on);
+  }
+});
