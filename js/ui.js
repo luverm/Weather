@@ -2021,6 +2021,8 @@ function bindShare() {
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
       // Only mention visibility when it's genuinely poor — otherwise it's noise.
       w.visibility != null && w.visibility < 4000 ? `Visibility ${(w.visibility / 1000).toFixed(1)} km` : null,
+      // Daylight bookends when sunrise+sunset today are known.
+      w.sunrise && w.sunset ? `Daylight ${fmtTime(w.sunrise)} → ${fmtTime(w.sunset)}` : null,
       weekendLine,
       url,
     ].filter(Boolean);
