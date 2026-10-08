@@ -1217,6 +1217,53 @@ kbd {
   font-variant-numeric: tabular-nums;
 }
 
+/* ---------- Hourly wind-direction strip ---------- */
+.wind-strip {
+  margin-top: 12px;
+  padding: 10px 10px 18px;
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--stroke);
+}
+.wind-strip[hidden] { display: none; }
+.wind-strip-head {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 11.5px; color: var(--fg-dim);
+  letter-spacing: 0.08em; text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.wind-strip-note { color: var(--fg-muted); text-transform: none; letter-spacing: 0; font-size: 11.5px; }
+.wind-strip-arrows {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  gap: 1px;
+  position: relative;
+  align-items: center;
+}
+.wind-strip-cell {
+  position: relative;
+  padding: 0; border: 0; background: transparent;
+  display: grid; place-items: center;
+  width: 100%; height: 26px;
+  cursor: pointer;
+  color: var(--fg-muted);
+  transition: color 160ms var(--ease), transform 160ms var(--ease);
+}
+.wind-strip-cell:hover { color: var(--fg); transform: scale(1.1); }
+.wind-strip-cell.warm { color: #ffd36a; }
+.wind-strip-cell.hot  { color: #ff8c66; }
+.wind-strip-cell svg { width: 20px; height: 20px; display: block; }
+.wind-strip-dot {
+  display: block; width: 3px; height: 3px; border-radius: 50%;
+  background: var(--fg-dim);
+}
+.wind-strip-tick {
+  position: absolute; bottom: -14px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 9.5px; color: var(--fg-dim);
+  pointer-events: none; font-variant-numeric: tabular-nums;
+}
+
 /* ---------- Hourly precipitation (mm) strip ---------- */
 .precip-strip {
   margin-top: 14px;

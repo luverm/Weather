@@ -100,6 +100,9 @@ const el = {
   precipStrip: $("#precip-strip"),
   precipStripBars: $("#precip-strip-bars"),
   precipStripTotal: $("#precip-strip-total"),
+  windStrip: $("#wind-strip"),
+  windStripArrows: $("#wind-strip-arrows"),
+  windStripNote: $("#wind-strip-note"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
   weekendDetail: $("#weekend-detail"),
@@ -207,6 +210,7 @@ export const ui = {
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     renderPrecipStrip(weather);
+    renderWindStrip(weather);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
@@ -836,6 +840,72 @@ function renderPrecipStrip(w) {
   }).join("");
 
   el.precipStripBars.querySelectorAll(".precip-strip-cell").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const ts = parseInt(btn.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
+}
+
+function renderWindStrip(w) {
+  if (!el.windStrip || !el.windStripArrows) return;
+  const hours = (w.hourly || []).slice(0, 24);
+  const haveDir = hours.some((h) => h.windDir != null);
+  if (!hours.length || !haveDir) {
+    el.windStrip.hidden = true;
+    return;
+  }
+  const speeds = hours.map((h) => h.wind ?? 0);
+  const peak = Math.max(...speeds);
+  const peakIdx = speeds.indexOf(peak);
+  const peakHour = hours[peakIdx];
+  const avg = speeds.reduce((s, v) => s + v, 0) / speeds.length;
+  // Prevailing direction: average of unit vectors.
+  let sx = 0, sy = 0, n = 0;
+  for (const h of hours) {
+    if (h.windDir == null) continue;
+    const r = (h.windDir * Math.PI) / 180;
+    sx += Math.cos(r); sy += Math.sin(r); n++;
+  }
+  const prevailDeg = n ? ((Math.atan2(sy, sx) * 180) / Math.PI + 360) % 360 : null;
+
+  if (peak < 5 && avg < 3) {
+    // Dead-calm — hide to keep the surface quiet.
+    el.windStrip.hidden = true;
+    return;
+  }
+  el.windStrip.hidden = false;
+  const prevailLabel = prevailDeg != null ? cardinal(prevailDeg) : "—";
+  const peakStr = peakHour ? `peak ${Math.round(peak)} km/h at ${fmtTime(peakHour.time)}` : "";
+  el.windStripNote.textContent = `prevailing ${prevailLabel} · ${peakStr}`;
+
+  // Scale arrow length by wind speed (clamped) for a visual sense of strength.
+  const maxLen = 16;
+  const minLen = 7;
+  const maxSpeed = Math.max(10, peak);
+  el.windStripArrows.innerHTML = hours.map((h, i) => {
+    const dir = h.windDir;
+    const spd = h.wind ?? 0;
+    const len = minLen + (Math.min(spd, maxSpeed) / maxSpeed) * (maxLen - minLen);
+    const hh = new Date(h.time).getHours();
+    const tick = (hh % 6 === 0) ? `<span class="wind-strip-tick">${hh.toString().padStart(2,"0")}</span>` : "";
+    if (dir == null) {
+      return `<div class="wind-strip-cell"><span class="wind-strip-dot"></span>${tick}</div>`;
+    }
+    // Wind direction is where it comes FROM; arrow should point TO (dir + 180).
+    const theta = dir + 180;
+    const hot = spd >= 40 ? "hot" : spd >= 25 ? "warm" : "";
+    const title = `${hh}:00 · ${Math.round(spd)} km/h ${cardinal(dir)}`;
+    return `<button class="wind-strip-cell ${hot}" data-ts="${h.time}" title="${title}">
+      <svg viewBox="-12 -12 24 24" style="transform:rotate(${theta}deg)">
+        <path d="M 0 ${-len/2} L 0 ${len/2} M 0 ${len/2} L -3 ${len/2 - 4} M 0 ${len/2} L 3 ${len/2 - 4}"
+              fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      ${tick}
+    </button>`;
+  }).join("");
+
+  el.windStripArrows.querySelectorAll(".wind-strip-cell[data-ts]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const ts = parseInt(btn.dataset.ts, 10);
       if (ts) state.handlers.onHourClick?.(ts);
