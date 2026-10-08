@@ -634,6 +634,9 @@ function renderAirQuality(aq) {
   el.aqCard.style.opacity = 1;
   const color = aqColor(aq.aqi);
   el.aqCard.style.color = color;
+  if (aq.aqi != null) {
+    el.aqCard.setAttribute("aria-label", `Air quality index ${Math.round(aq.aqi)}, ${aq.label || ""}`);
+  }
   el.aqValue.textContent = aq.aqi != null ? Math.round(aq.aqi) : "—";
   el.aqLabel.textContent = aq.label || "—";
   // Circumference of r=20 is ~125.66 — we use 126 in the SVG.
