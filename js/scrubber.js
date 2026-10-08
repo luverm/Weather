@@ -176,13 +176,23 @@ export class Scrubber {
   }
 
   _setOffset(offset) {
+    const prevNow = clock.now();
     clock.setOffset(offset);
     // Snap "close enough" to live — prevents 0.2 min drift when releasing.
     if (Math.abs(offset) < 5 * 60_000) clock.setOffset(0);
+    const curNow = clock.now();
     const scrubbing = !clock.isLive();
     this.appEl?.setAttribute("data-scrubbing", scrubbing ? "true" : "false");
     this._render(this._currentT());
     this.onScrub?.(clock.offset());
+
+    // Haptic ping when the scrub crosses sunrise or sunset — makes dragging
+    // feel like you can feel the horizon as you cross it.
+    const crossed = (ts) =>
+      ts && ((prevNow < ts && curNow >= ts) || (prevNow > ts && curNow <= ts));
+    if (crossed(this.sunrise) || crossed(this.sunset)) {
+      try { navigator.vibrate?.(12); } catch { /* best-effort */ }
+    }
   }
 
   _render(t) {
