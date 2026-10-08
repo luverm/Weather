@@ -357,8 +357,20 @@ installShortcuts({
 
 // ---------- Start ----------
 (async function init() {
-  // ?action=locate (from the PWA shortcut) always runs geolocation first.
-  const action = new URLSearchParams(location.search).get("action");
+  // ?q=cityname loads that city directly (good for sharing links).
+  const params = new URLSearchParams(location.search);
+  const action = params.get("action");
+  const q = params.get("q");
+  if (q) {
+    try {
+      const results = await (await import("./weather-service.js")).searchCities(q);
+      if (results.length) {
+        places.add(results[0]);
+        await loadByCoords(results[0]);
+        return;
+      }
+    } catch { /* fall through to normal boot */ }
+  }
   if (action === "locate" || localStorage.getItem("aether:startLocate") === "1") {
     await useGeolocation();
     return;
