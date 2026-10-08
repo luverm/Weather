@@ -253,7 +253,7 @@
             <path id="pressure-spark-fill" fill="currentColor" fill-opacity="0.14"></path>
             <path id="pressure-spark-line" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"></path>
           </svg>
-          <span id="m-pressure-sub" class="metric-sub">visibility —</span>
+          <span id="m-pressure-sub" class="metric-sub">clouds —</span>
         </div>
         <div class="metric glass">
           <span class="metric-label">UV <span id="m-uv-level" class="trend" aria-hidden="true"></span></span>
@@ -316,6 +316,34 @@
         <div class="extra-card glass" id="activity-card" hidden>
           <span class="metric-label">Activity windows</span>
           <ul id="activity-list" class="activity-list"></ul>
+        </div>
+
+        <div class="extra-card glass" id="visibility-card" hidden>
+          <span class="metric-label">Visibility <span id="visibility-level" class="trend" aria-hidden="true"></span></span>
+          <div class="visibility-row">
+            <div class="visibility-dial" aria-hidden="true">
+              <svg viewBox="-30 -30 60 60">
+                <defs>
+                  <linearGradient id="vis-grad" x1="0" x2="1" y1="0" y2="0">
+                    <stop offset="0%" stop-color="#8ca0b8"/>
+                    <stop offset="50%" stop-color="#9ad1ff"/>
+                    <stop offset="100%" stop-color="#fff1c9"/>
+                  </linearGradient>
+                </defs>
+                <path d="M -24 10 A 24 24 0 0 1 24 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="3"/>
+                <path id="visibility-arc" d="M -24 10 A 24 24 0 0 1 24 10"
+                      fill="none" stroke="url(#vis-grad)" stroke-width="3" stroke-linecap="round"
+                      stroke-dasharray="76" stroke-dashoffset="76"/>
+                <g id="visibility-marker" transform="translate(-24 10)">
+                  <circle r="3.2" fill="#fff" />
+                </g>
+              </svg>
+            </div>
+            <div class="visibility-meta">
+              <strong id="visibility-value">—</strong>
+              <span id="visibility-desc" class="visibility-desc">—</span>
+            </div>
+          </div>
         </div>
 
         <div class="extra-card glass" id="sun-card">

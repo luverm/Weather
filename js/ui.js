@@ -87,6 +87,12 @@ const el = {
   insightsList: $("#insights-list"),
   activityCard: $("#activity-card"),
   activityList: $("#activity-list"),
+  visibilityCard: $("#visibility-card"),
+  visibilityValue: $("#visibility-value"),
+  visibilityDesc: $("#visibility-desc"),
+  visibilityArc: $("#visibility-arc"),
+  visibilityMarker: $("#visibility-marker"),
+  visibilityLevel: $("#visibility-level"),
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
@@ -191,6 +197,7 @@ export const ui = {
     renderTrends(weather);
     renderInsights(weather);
     renderActivity(weather);
+    renderVisibility(weather);
     renderAlerts(weather);
     renderWeekend(weather);
     startLocaltime(weather);
@@ -347,9 +354,11 @@ function renderMetrics(w) {
     }
   }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
-  el.metricPressureSub.textContent = w.visibility != null
-    ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
-    : "visibility —";
+  el.metricPressureSub.textContent = w.cloudCover != null
+    ? `clouds ${Math.round(w.cloudCover)}%`
+    : (w.visibility != null
+        ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
+        : "clouds —");
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
@@ -773,6 +782,48 @@ function renderActivity(w) {
       if (ts) state.handlers.onHourClick?.(ts);
     });
   });
+}
+
+function renderVisibility(w) {
+  if (!el.visibilityCard) return;
+  const meters = w.visibility;
+  if (meters == null) {
+    el.visibilityCard.hidden = true;
+    return;
+  }
+  el.visibilityCard.hidden = false;
+  const km = meters / 1000;
+  el.visibilityValue.textContent = km >= 10
+    ? `${Math.round(km)} km`
+    : `${km.toFixed(1)} km`;
+  // Cap meaningful visibility at 20 km for the dial.
+  const frac = Math.max(0, Math.min(1, km / 20));
+  // Half-circle arc length is π·r = π·24 ≈ 75.4 — matches dasharray 76 in HTML.
+  if (el.visibilityArc) {
+    el.visibilityArc.setAttribute("stroke-dashoffset", String(76 * (1 - frac)));
+  }
+  // Place the marker along the half-circle from -24,10 to 24,10 via 0,-14.
+  if (el.visibilityMarker) {
+    const theta = Math.PI * (1 - frac); // π down to 0
+    const x = (24 * Math.cos(theta)).toFixed(2);
+    const y = (10 - 24 * Math.sin(theta)).toFixed(2);
+    el.visibilityMarker.setAttribute("transform", `translate(${x} ${y})`);
+  }
+  const d = describeVisibility(km, w.condition);
+  el.visibilityDesc.textContent = d.text;
+  if (el.visibilityLevel) {
+    el.visibilityLevel.className = `trend ${d.cls}`;
+    el.visibilityLevel.textContent = d.pill;
+  }
+}
+
+function describeVisibility(km, condition) {
+  if (km < 0.2) return { pill: "Dense fog", cls: "down", text: "Can barely see — drive very slowly" };
+  if (km < 1)   return { pill: "Fog", cls: "down", text: "Headlights on, keep extra distance" };
+  if (km < 4)   return { pill: "Mist", cls: "flat", text: "Hazy — distant features washed out" };
+  if (km < 10)  return { pill: "Moderate", cls: "flat", text: "Light haze — otherwise fine" };
+  if (km < 20)  return { pill: "Clear", cls: "up", text: "Sharp views for miles" };
+  return { pill: "Crystal", cls: "up", text: condition === "snow" ? "Crystal clear — bitterly bright" : "You can see the horizon" };
 }
 
 function renderPollen(pollen) {
