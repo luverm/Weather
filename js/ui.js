@@ -131,6 +131,7 @@ const el = {
   audioBtn: $("#audio-btn"),
   hintText: $("#hint-text"),
   heroInner: document.querySelector(".hero-inner"),
+  brandBtn: $("#brand-btn"),
   toast: $("#toast"),
   placesStrip: $("#places-strip"),
 };
@@ -161,6 +162,7 @@ export const ui = {
     bindRefresh();
     bindSettings();
     bindTilt();
+    bindBrand();
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
@@ -1768,6 +1770,15 @@ function bindShare() {
     } catch (err) {
       if (err?.name !== "AbortError") ui.showToast("Share failed");
     }
+  });
+}
+
+function bindBrand() {
+  if (!el.brandBtn) return;
+  el.brandBtn.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    el.brandBtn.classList.add("just-tapped");
+    setTimeout(() => el.brandBtn.classList.remove("just-tapped"), 500);
   });
 }
 
