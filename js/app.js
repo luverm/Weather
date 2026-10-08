@@ -289,6 +289,7 @@ installShortcuts({
   toggleRadar: () => document.getElementById("radar-play")?.click(),
   resetScrubber: () => scrubber.reset(),
   toggleShare: () => document.getElementById("share-btn")?.click(),
+  refresh: () => refreshWeather(),
   jumpGoldenHour: () => {
     if (!app.weather?.daily?.length) return;
     const now = Date.now();
