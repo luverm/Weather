@@ -815,11 +815,29 @@ html[data-reduce-motion="true"] *::after {
 .pollen-level[data-level="Very high"] { background: rgba(255, 106, 106, 0.2); color: #ff9a9a; border-color: rgba(255, 106, 106, 0.35); }
 .pollen-meta strong { display: block; font-size: 14px; font-weight: 500; }
 .pollen-items {
-  display: flex; gap: 8px; flex-wrap: wrap;
-  margin-top: 3px;
+  display: grid; grid-template-columns: 1fr; gap: 4px;
+  margin-top: 4px;
   font-size: 11px; color: var(--fg-dim);
 }
-.pollen-items span { font-variant-numeric: tabular-nums; }
+.pollen-item {
+  display: grid; grid-template-columns: 42px 1fr auto; align-items: center; gap: 6px;
+}
+.pollen-item-label { color: var(--fg-muted); }
+.pollen-item-bar {
+  position: relative;
+  height: 4px; border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  overflow: hidden;
+}
+.pollen-item-bar span {
+  position: absolute; inset: 0 auto 0 0; display: block;
+  background: linear-gradient(90deg, #78d06a, #ffd36a, #ff9f5c);
+  border-radius: 999px;
+  transition: width 400ms var(--ease);
+}
+.pollen-item[data-level="High"] .pollen-item-bar span { background: linear-gradient(90deg, #ffbb92, #ff9a9a); }
+.pollen-item[data-level="Very high"] .pollen-item-bar span { background: linear-gradient(90deg, #ff9a9a, #ff6a6a); }
+.pollen-item-value { font-variant-numeric: tabular-nums; color: var(--fg-muted); }
 
 /* ---------- Advice ---------- */
 .advice {
