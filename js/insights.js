@@ -2,6 +2,8 @@
 // Each returns { label, value, icon, ts? } — ts optional so the UI can let the
 // user click to scrub to that moment.
 
+import { nextAstroEvent } from "./solstice.js";
+
 const ICONS = {
   rain: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 14a4 4 0 010-8 5 5 0 019.9-1A4 4 0 0117 14H7z"/><path d="M8 18l-1 2M12 18l-1 2M16 18l-1 2"/></svg>',
   wind: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h12a3 3 0 100-6M3 14h16a3 3 0 100-6M3 20h9a3 3 0 100-6"/></svg>',
@@ -142,6 +144,15 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
         _endTs: end,
       });
     }
+  }
+
+  // 9. Nearest solstice/equinox when ≤ 30 days away — tiny bit of flavor.
+  const astro = nextAstroEvent();
+  if (astro && astro.days <= 30 && out.length < 6) {
+    out.push({
+      icon: ICONS.sun, label: astro.name, tone: "warm",
+      value: astro.days === 0 ? "today" : astro.days === 1 ? "tomorrow" : `in ${astro.days} days`,
+    });
   }
 
   return out.slice(0, 6);
