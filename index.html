@@ -69,7 +69,9 @@
             <input type="checkbox" id="setting-unit-f" />
           </label>
           <button id="setting-clear-places" class="settings-btn-inline" type="button">Clear saved places</button>
-          <div class="settings-foot">Aether · Open-Meteo + RainViewer</div>
+          <div class="settings-foot">Aether · Open-Meteo + RainViewer<br>
+            <span style="opacity:0.65">Press <kbd>?</kbd> for shortcuts</span>
+          </div>
         </div>
         <button id="refresh-btn" class="icon-btn" title="Refresh weather" aria-label="Refresh">
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -111,7 +113,7 @@
     <nav id="places-strip" class="places-strip" aria-label="Saved locations" hidden></nav>
 
     <!-- Smart alerts strip (synthesized from forecast). -->
-    <div id="alerts-strip" class="alerts-strip" role="region" aria-label="Weather alerts" hidden></div>
+    <div id="alerts-strip" class="alerts-strip" role="region" aria-live="polite" aria-atomic="true" aria-label="Weather alerts" hidden></div>
 
     <section class="hero">
       <div class="hero-inner glass" data-tilt>
