@@ -438,7 +438,9 @@ html[data-reduce-motion="true"] *::after {
 .place-localtime .clock-dot {
   width: 5px; height: 5px; border-radius: 50%;
   background: var(--accent); box-shadow: 0 0 6px var(--accent);
+  animation: pulse 2.4s ease-in-out infinite;
 }
+[data-reduce-motion="true"] .place-localtime .clock-dot { animation: none; }
 .narrative {
   margin: 14px 0 0;
   max-width: 52ch;

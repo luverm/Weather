@@ -984,6 +984,10 @@ function renderAlerts(w) {
     return;
   }
   el.alertsStrip.hidden = false;
+  el.alertsStrip.setAttribute(
+    "aria-label",
+    `${visible.length} active weather alert${visible.length === 1 ? "" : "s"}`
+  );
   el.alertsStrip.innerHTML = visible.map((a) => `
     <button class="alert-pill alert-${a.severity}" type="button"
             data-id="${escapeHtml(a.id)}" ${a.ts ? `data-ts="${a.ts}"` : ""}
