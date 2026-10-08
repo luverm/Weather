@@ -1742,13 +1742,23 @@ kbd {
 .daily-drops {
   position: absolute; left: 50%; bottom: -8px; transform: translateX(-50%);
   font-size: 8px; letter-spacing: 1px; line-height: 1;
-  color: #4aa0ff;
-  text-shadow: 0 0 4px rgba(74, 160, 255, 0.5);
+  color: #88c6ff;
+  text-shadow: 0 0 4px rgba(74, 160, 255, 0.4);
   pointer-events: none;
 }
+.daily-drops[data-level="light"]  { color: #88c6ff; }
 .daily-drops[data-level="mod"]    { color: #4aa0ff; }
 .daily-drops[data-level="heavy"]  { color: #a78bff; }
 .daily-drops[data-level="deluge"] { color: #ff6a9a; }
+.daily-drops.snow {
+  color: #d0e4ff;
+  font-size: 7px;
+  letter-spacing: 0;
+  text-shadow: 0 0 3px rgba(208, 228, 255, 0.4);
+}
+.daily-drops.snow[data-level="mod"]    { color: #cfe6ff; }
+.daily-drops.snow[data-level="heavy"]  { color: #e8ebff; }
+.daily-drops.snow[data-level="deluge"] { color: #fff; }
 .daily-range {
   position: relative;
   height: 6px; border-radius: 3px;

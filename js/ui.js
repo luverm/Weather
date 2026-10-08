@@ -1213,7 +1213,9 @@ function renderDaily(w) {
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
     let popLabel = "";
-    if (d.precip >= 0.5) {
+    if (d.snowfall >= 0.5) {
+      popLabel = ` · ${d.snowfall.toFixed(1)} cm snow`;
+    } else if (d.precip >= 0.5) {
       popLabel = ` · ${d.precip.toFixed(1)} mm (${d.pop}%)`;
     } else if (d.pop >= 30) {
       popLabel = ` · ${d.pop}% rain`;
@@ -1239,8 +1241,15 @@ function renderDaily(w) {
 }
 
 function rainDrops(d) {
+  const snow = d?.snowfall ?? 0;
+  if (snow >= 0.5) {
+    // 1 flake = 0.5-3cm, 2 = 3-10cm, 3 = 10-25cm, 4 = >25cm
+    const n = snow < 3 ? 1 : snow < 10 ? 2 : snow < 25 ? 3 : 4;
+    const level = n >= 4 ? "deluge" : n >= 3 ? "heavy" : n >= 2 ? "mod" : "light";
+    return `<span class="daily-drops snow" data-level="${level}" aria-hidden="true">${"❄".repeat(n)}</span>`;
+  }
   const precip = d?.precip ?? 0;
-  // 1 drop = 1-3mm (light), 2 = 3-8mm (moderate), 3 = 8-20mm (heavy), 4 = >20mm (deluge).
+  // 1 drop = 1-3mm, 2 = 3-8mm, 3 = 8-20mm, 4 = >20mm.
   if (precip < 0.5) return "";
   const n = precip < 3 ? 1 : precip < 8 ? 2 : precip < 20 ? 3 : 4;
   const level = n >= 4 ? "deluge" : n >= 3 ? "heavy" : n >= 2 ? "mod" : "light";
