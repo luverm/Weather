@@ -63,6 +63,7 @@ export function installShortcuts(handlers) {
     if (key === "g" || key === "G") { e.preventDefault(); handlers.jumpGoldenHour?.(); return; }
     if (key === "s" || key === "S") { e.preventDefault(); handlers.toggleShare?.(); return; }
     if (key === "r" || key === "R") { e.preventDefault(); handlers.refresh?.(); return; }
+    if (/^[1-7]$/.test(key)) { e.preventDefault(); handlers.jumpDay?.(parseInt(key, 10) - 1); return; }
     if (key === " ") {
       e.preventDefault();
       handlers.toggleRadar?.();

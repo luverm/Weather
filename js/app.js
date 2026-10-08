@@ -290,6 +290,19 @@ installShortcuts({
   resetScrubber: () => scrubber.reset(),
   toggleShare: () => document.getElementById("share-btn")?.click(),
   refresh: () => refreshWeather(),
+  jumpDay: (idx) => {
+    const d = app.weather?.daily?.[idx];
+    if (!d) return;
+    // Scroll the matching daily row into view and briefly highlight it. The
+    // scrubber window only covers 24 h, so we don't try to scrub past that.
+    const rows = document.querySelectorAll(".daily-item");
+    const row = rows[idx];
+    if (!row) return;
+    row.scrollIntoView({ behavior: "smooth", block: "center" });
+    row.classList.add("just-landed");
+    setTimeout(() => row.classList.remove("just-landed"), 1200);
+    ui.haptic(10);
+  },
   jumpGoldenHour: () => {
     if (!app.weather?.daily?.length) return;
     const now = Date.now();

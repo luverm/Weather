@@ -1846,6 +1846,13 @@ kbd {
   border-left: 2px solid rgba(140, 220, 150, 0.6);
   padding-left: 6px;
 }
+.daily-item.just-landed {
+  animation: landedPulse 1.2s ease-out;
+}
+@keyframes landedPulse {
+  0% { background: rgba(154, 209, 255, 0.22); }
+  100% { background: transparent; }
+}
 .daily-day { font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .daily-date { color: var(--fg-dim); font-weight: 400; font-size: 11px; }
 .daily-best {
