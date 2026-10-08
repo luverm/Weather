@@ -346,6 +346,12 @@ installShortcuts({
 
 // ---------- Start ----------
 (async function init() {
+  // ?action=locate (from the PWA shortcut) always runs geolocation first.
+  const action = new URLSearchParams(location.search).get("action");
+  if (action === "locate") {
+    await useGeolocation();
+    return;
+  }
   // Prefer the most recent saved place if we have one — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();
