@@ -1469,7 +1469,10 @@ function toggleDailyExpand(item, d, w) {
     const summary = document.createElement("div");
     summary.className = "daily-expand";
     summary.style.gridTemplateColumns = "1fr";
-    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${Math.round(d.gustsMax ?? 0)} km/h · UV ${Math.round(d.uvMax ?? 0)}</span>`;
+    const sunStr = d.sunshine != null
+      ? ` · ${Math.round(d.sunshine / 3600)}h sun`
+      : "";
+    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${Math.round(d.gustsMax ?? 0)} km/h · UV ${Math.round(d.uvMax ?? 0)}${sunStr}</span>`;
     item.appendChild(summary);
     item.dataset.expanded = "true";
     return;
