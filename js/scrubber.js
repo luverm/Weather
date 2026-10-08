@@ -115,14 +115,13 @@ export class Scrubber {
 
     // Hover tooltip — show what time the pointer corresponds to, even
     // without dragging. Fine-pointer only (mouse) so it doesn't fight touch.
+    // We ONLY update `title` on pointerenter (not pointermove) because
+    // resetting title on each move resets the browser's hover-dwell timer,
+    // which prevents the native tooltip from ever appearing.
     const canHover = window.matchMedia?.("(hover: hover)").matches ?? true;
     if (canHover) {
       this.track.addEventListener("pointerenter", (e) => {
         if (e.pointerType === "touch") return;
-        this._updateHoverTitle(e);
-      });
-      this.track.addEventListener("pointermove", (e) => {
-        if (this.dragging || e.pointerType === "touch") return;
         this._updateHoverTitle(e);
       });
       this.track.addEventListener("pointerleave", () => {

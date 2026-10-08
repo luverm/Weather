@@ -516,7 +516,6 @@ html[data-reduce-motion="true"] *::after {
   margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em;
   display: inline-flex; align-items: center; gap: 2px;
 }
-.condition-label:first-letter { font-size: 1.08em; }
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
 .yesterday-delta {
   margin: 6px 0 0; font-size: 12px;

@@ -1063,9 +1063,19 @@ function renderActivity(w) {
 
 function renderPrecipStrip(w) {
   if (!el.precipStrip || !el.precipStripBars) return;
+  const clearTotalHandler = () => {
+    if (!el.precipStripTotal) return;
+    el.precipStripTotal.style.cursor = "default";
+    el.precipStripTotal.removeAttribute("role");
+    el.precipStripTotal.removeAttribute("tabindex");
+    el.precipStripTotal.removeAttribute("title");
+    el.precipStripTotal.onclick = null;
+    el.precipStripTotal.onkeydown = null;
+  };
   const hours = (w.hourly || []).slice(0, 24);
   if (!hours.length) {
     el.precipStrip.hidden = true;
+    clearTotalHandler();
     return;
   }
   const totalMm = hours.reduce((s, h) => s + (h.precip ?? 0), 0);
@@ -1073,6 +1083,7 @@ function renderPrecipStrip(w) {
   // 0-mm bars that adds no information.
   if (totalMm < 0.1 && !hours.some((h) => (h.pop ?? 0) >= 30)) {
     el.precipStrip.hidden = true;
+    clearTotalHandler();
     return;
   }
   el.precipStrip.hidden = false;
@@ -1095,12 +1106,7 @@ function renderPrecipStrip(w) {
       }
     };
   } else {
-    el.precipStripTotal.style.cursor = "default";
-    el.precipStripTotal.removeAttribute("role");
-    el.precipStripTotal.removeAttribute("tabindex");
-    el.precipStripTotal.removeAttribute("title");
-    el.precipStripTotal.onclick = null;
-    el.precipStripTotal.onkeydown = null;
+    clearTotalHandler();
   }
 
   const kindColor = (h) => {
