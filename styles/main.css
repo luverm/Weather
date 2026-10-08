@@ -289,7 +289,17 @@ html[data-reduce-motion="true"] *::after {
 .icon-btn:hover { color: var(--fg); transform: translateY(-1px); background: var(--glass-strong); }
 .icon-btn:active { transform: translateY(0) scale(0.97); }
 .icon-btn svg { width: 20px; height: 20px; }
-.icon-btn .sound-waves { opacity: 0; transition: opacity 240ms var(--ease); }
+.icon-btn .sound-waves {
+  opacity: 0;
+  transition: opacity 240ms var(--ease);
+  transform-origin: 15px 12px;
+}
+.icon-btn.on .sound-waves { animation: soundPulse 1.6s ease-in-out infinite; }
+@keyframes soundPulse {
+  0%, 100% { transform: scale(1); opacity: 0.95; }
+  50%      { transform: scale(1.12); opacity: 0.6; }
+}
+[data-reduce-motion="true"] .icon-btn.on .sound-waves { animation: none; }
 .icon-btn.on { color: var(--accent); }
 .icon-btn.on .sound-waves { opacity: 1; }
 
@@ -457,6 +467,7 @@ html[data-reduce-motion="true"] *::after {
   border: 1px solid var(--stroke);
   color: var(--fg-muted);
   font-variant-numeric: tabular-nums;
+  transition: color 300ms var(--ease), background 300ms var(--ease), border-color 300ms var(--ease);
 }
 .yesterday-delta[hidden] { display: none; }
 .yesterday-delta .yd-arrow { font-size: 10px; }
