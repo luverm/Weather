@@ -986,11 +986,12 @@ function renderAlerts(w) {
   el.alertsStrip.innerHTML = visible.map((a) => `
     <button class="alert-pill alert-${a.severity}" type="button"
             data-id="${escapeHtml(a.id)}" ${a.ts ? `data-ts="${a.ts}"` : ""}
-            title="${escapeHtml(a.detail)}">
+            title="${escapeHtml(a.detail)}"
+            aria-label="${escapeHtml(a.severity + " alert: " + a.title + ". " + a.detail)}">
       <span class="alert-dot" aria-hidden="true"></span>
       <span class="alert-title">${escapeHtml(a.title)}</span>
       <span class="alert-detail">${escapeHtml(a.detail)}</span>
-      <span class="alert-close" aria-label="Dismiss alert">×</span>
+      <span class="alert-close" role="button" aria-label="Dismiss ${escapeHtml(a.title)} alert">×</span>
     </button>
   `).join("");
   el.alertsStrip.querySelectorAll(".alert-pill").forEach((btn) => {
