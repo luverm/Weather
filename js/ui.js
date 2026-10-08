@@ -1235,6 +1235,10 @@ function renderPollen(pollen) {
   el.pollenCard.hidden = false;
   el.pollenLevel.textContent = pollen.level;
   el.pollenLevel.setAttribute("data-level", pollen.level);
+  el.pollenCard.setAttribute(
+    "title",
+    `Pollen level: ${pollen.level}. Dominant allergen: ${pollen.dominant.label}.`
+  );
   el.pollenDominant.textContent = `${pollen.dominant.label} dominant`;
   // Scale each item's bar to the max in the set (minimum 1 for visibility).
   const peak = Math.max(1, ...pollen.items.map((p) => p.value));
