@@ -336,6 +336,8 @@ document.addEventListener("visibilitychange", () => {
 setInterval(() => {
   if (!app.weather || !clock.isLive()) return;
   applyScene(app.weather);
+  // Nudge the hourly chart so the "now" marker drifts forward.
+  ui.refreshChart?.();
 }, 60_000);
 
 // Auto-refresh every 15 minutes (but only when live and visible).

@@ -168,6 +168,24 @@ export class HourlyChart {
 
     this.points = this.hours.map((h, i) => ({ x: iToX(i), y: tToY(h.temp) }));
 
+    // "Now" vertical marker — interpolated between the two hours bracketing now.
+    const now = Date.now();
+    const nowLine = this.svg.querySelector("#chart-now");
+    if (nowLine) {
+      let nowX = -10;
+      if (now >= this.hours[0].time && now <= this.hours[this.hours.length - 1].time) {
+        for (let i = 0; i < this.hours.length - 1; i++) {
+          const a = this.hours[i].time, b = this.hours[i + 1].time;
+          if (now >= a && now <= b) {
+            nowX = iToX(i) + ((now - a) / (b - a)) * (iToX(i + 1) - iToX(i));
+            break;
+          }
+        }
+      }
+      nowLine.setAttribute("x1", nowX.toFixed(1));
+      nowLine.setAttribute("x2", nowX.toFixed(1));
+    }
+
     // Temp line path
     let linePath = "";
     this.points.forEach((p, i) => {

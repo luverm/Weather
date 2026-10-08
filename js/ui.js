@@ -1704,3 +1704,4 @@ function escapeHtml(s) {
 
 // Export renderPlaces so the app can refresh the strip after a load.
 ui.refreshPlaces = renderPlaces;
+ui.refreshChart = () => state.chart?.refresh?.();

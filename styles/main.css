@@ -872,6 +872,14 @@ html[data-reduce-motion="true"] *::after {
   opacity: 0.75;
   pointer-events: none;
 }
+.chart-now {
+  stroke: #ff9eb0;
+  stroke-width: 1.4;
+  opacity: 0.65;
+  pointer-events: none;
+  transition: x1 400ms var(--ease), x2 400ms var(--ease);
+}
+[data-tone="bright"] .chart-now { stroke: #d12d6a; opacity: 0.55; }
 .chart-dot {
   fill: #fff;
   stroke: var(--accent);
