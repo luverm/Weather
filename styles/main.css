@@ -316,7 +316,13 @@ html[data-reduce-motion="true"] *::after {
   font-size: 13px;
   transition: background 150ms var(--ease), transform 150ms var(--ease);
   cursor: pointer;
+  animation: chipIn 320ms var(--ease) both;
 }
+@keyframes chipIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: none; }
+}
+[data-reduce-motion="true"] .place-chip { animation: none; }
 .place-chip:hover { background: var(--glass-strong); transform: translateY(-1px); }
 .place-chip.active { background: var(--glass-strong); border-color: rgba(255,255,255,0.35); }
 .place-chip .temp { color: var(--fg-muted); font-variant-numeric: tabular-nums; }
