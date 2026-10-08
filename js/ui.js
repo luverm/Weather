@@ -203,6 +203,7 @@ export const ui = {
   setWeather(weather, { narrative } = {}) {
     state.weather = weather;
     state.sampledWeather = weather; // initially same as live
+    updatePageTitle(weather);
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
@@ -499,6 +500,52 @@ function uvLevel(v) {
   if (v < 8) return { label: "High", cls: "up" };
   if (v < 11) return { label: "Very High", cls: "up" };
   return { label: "Extreme", cls: "up" };
+}
+
+const CONDITION_GLYPHS = {
+  clear: "☀",
+  clouds: "⛅",
+  rain: "🌧",
+  snow: "🌨",
+  storm: "⛈",
+  fog: "🌫",
+};
+
+function updatePageTitle(w) {
+  if (!w || w.temp == null) {
+    document.title = "Aether — Interactive Weather";
+    return;
+  }
+  const g = (w.isDay === false && w.condition === "clear") ? "🌙" : CONDITION_GLYPHS[w.condition] || "•";
+  const temp = Math.round(convertTemp(w.temp));
+  const name = state.place?.name || "Here";
+  document.title = `${g} ${temp}° ${name} · Aether`;
+  updateFavicon(w, temp);
+}
+
+function updateFavicon(w, temp) {
+  const tempColor = (() => {
+    const t = w.temp ?? 15;
+    if (t <= 0) return "#9ad1ff";
+    if (t <= 10) return "#b5e0ff";
+    if (t <= 18) return "#cfe8b7";
+    if (t <= 26) return "#ffd680";
+    if (t <= 32) return "#ff9c6a";
+    return "#ff6666";
+  })();
+  const bg = (w.isDay === false && w.condition === "clear") ? "#0b1020" : (w.condition === "storm" ? "#1a1830" : "#0b1020");
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>
+    <rect width='64' height='64' rx='14' fill='${bg}'/>
+    <text x='32' y='40' text-anchor='middle' font-family='-apple-system,Segoe UI,sans-serif' font-weight='700' font-size='30' fill='${tempColor}'>${temp}°</text>
+  </svg>`.replace(/\s+/g, " ");
+  const url = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+  let link = document.querySelector("link[rel~='icon']");
+  if (!link) {
+    link = document.createElement("link");
+    link.rel = "icon";
+    document.head.appendChild(link);
+  }
+  link.href = url;
 }
 
 function renderHumiditySparkline(w) {
@@ -1541,7 +1588,10 @@ function bindUnitToggle() {
     state.unit = state.unit === "C" ? "F" : "C";
     localStorage.setItem("aether:unit", state.unit);
     el.unitBtn.textContent = `°${state.unit}`;
-    if (state.weather) ui.setWeather(state.weather);
+    if (state.weather) {
+      ui.setWeather(state.weather);
+      updatePageTitle(state.weather);
+    }
   });
 }
 
