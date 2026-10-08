@@ -165,6 +165,7 @@ function applyScene(weather) {
   ui.setSampledWeather(sampled, { highlightHourIndex: sampled._sampledIndex });
 
   document.documentElement.setAttribute("data-tone", sky.getTone());
+  document.documentElement.setAttribute("data-condition", sampled.condition || "");
   document.querySelector('meta[name="theme-color"]').setAttribute(
     "content", toneToColor(sky.getTone())
   );
