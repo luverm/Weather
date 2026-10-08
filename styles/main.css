@@ -1481,6 +1481,14 @@ kbd {
   pointer-events: none;
   font-variant-numeric: tabular-nums;
 }
+.cstrip-drop {
+  position: absolute; top: -4px; left: 50%; transform: translateX(-50%);
+  width: 3px; height: 5px;
+  background: #4aa0ff;
+  clip-path: path("M 1.5 0 Q 3 2.5 1.5 5 Q 0 2.5 1.5 0");
+  box-shadow: 0 0 4px rgba(74, 160, 255, 0.6);
+  pointer-events: none;
+}
 
 /* ---------- Hourly wind-direction strip ---------- */
 .wind-strip {

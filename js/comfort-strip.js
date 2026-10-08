@@ -39,11 +39,13 @@ export class ComfortStrip {
       const tickLabel = showTick ? `${tickHour.toString().padStart(2, "0")}:00` : "";
       const windPart = h.wind != null ? ` · ${Math.round(h.wind)} km/h` : "";
       const hhStr = tickHour.toString().padStart(2, "0");
+      const heavyRain = (h.precip ?? 0) >= 1 ? '<span class="cstrip-drop" aria-hidden="true"></span>' : "";
       return `
         <button class="cstrip-cell" data-i="${i}" data-ts="${h.time}"
                 title="${hhStr}:00 · ${display} feels · ${h.pop ?? 0}% rain${windPart}"
                 style="--c:${color}">
           <span class="cstrip-bar" style="--rain:${rainOpacity}"></span>
+          ${heavyRain}
           ${showTick ? `<span class="cstrip-tick">${tickLabel}</span>` : ""}
         </button>
       `;
