@@ -181,11 +181,23 @@ export class HourlyChart {
     this.popover.innerHTML =
       `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
       `<em>${h.pop}% precip${mmStr}${wind}${hum}${label}</em>`;
+    this.popover.hidden = false;
+    // Make the popover visible first so we can measure it, then clamp inside
+    // the wrap so it doesn't overflow the right edge of the card.
     this.popover.style.left = `${pxX.toFixed(1)}px`;
     this.popover.style.top = `${pxY.toFixed(1)}px`;
-    this.popover.hidden = false;
-    // Next frame to allow transition.
-    requestAnimationFrame(() => this.popover.classList.add("show"));
+    requestAnimationFrame(() => {
+      this.popover.classList.add("show");
+      const popRect = this.popover.getBoundingClientRect();
+      const wrapWidth = wrapRect.width;
+      const left = parseFloat(this.popover.style.left);
+      const maxLeft = Math.max(0, wrapWidth - popRect.width - 8);
+      const minLeft = 8;
+      const clamped = Math.max(minLeft, Math.min(maxLeft, left));
+      if (Math.abs(clamped - left) > 0.5) {
+        this.popover.style.left = `${clamped.toFixed(1)}px`;
+      }
+    });
   }
 
   _draw() {
