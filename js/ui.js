@@ -1161,10 +1161,14 @@ function renderHourly(w) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    const windArrow = h.windDir != null && (h.wind ?? 0) >= 12
+      ? `<svg class="forecast-wind" viewBox="-6 -6 12 12" style="transform:rotate(${h.windDir}deg)"><path d="M 0 -4 L 0 4 M 0 4 L -2 2 M 0 4 L 2 2" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>`
+      : "";
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
+      <span class="forecast-wind-wrap">${windArrow}</span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));

@@ -1661,8 +1661,8 @@ kbd {
 .forecast-track::-webkit-scrollbar { display: none; }
 .forecast-item {
   display: grid;
-  grid-template-rows: auto auto auto auto;
-  gap: 4px;
+  grid-template-rows: auto auto auto auto auto;
+  gap: 3px;
   justify-items: center;
   padding: 10px 6px;
   border-radius: 12px;
@@ -1675,6 +1675,8 @@ kbd {
 .forecast-time { font-size: 11px; letter-spacing: 0.08em; color: var(--fg-dim); text-transform: uppercase; }
 .forecast-icon { width: 26px; height: 26px; display: grid; place-items: center; color: var(--fg-muted); }
 .forecast-temp { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.forecast-wind-wrap { min-height: 12px; display: grid; place-items: center; color: var(--fg-dim); }
+.forecast-wind { width: 12px; height: 12px; display: block; opacity: 0.65; }
 .forecast-pop {
   font-size: 10px; color: var(--accent); font-variant-numeric: tabular-nums;
   opacity: 0.9;
