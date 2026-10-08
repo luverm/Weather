@@ -410,6 +410,7 @@ html[data-reduce-motion="true"] *::after {
   animation: pulse 2.4s ease-in-out infinite;
 }
 [data-scrubbing="true"] .live-dot { background: #ffb86b; box-shadow: 0 0 8px #ffb86b; animation: none; }
+[data-scrubbing="true"] .place-label { color: #ffd0a0; }
 .place-name {
   margin: 0;
   font-size: clamp(30px, 4.8vw, 52px);
@@ -503,7 +504,11 @@ html[data-reduce-motion="true"] *::after {
   transition: background 200ms var(--ease), color 200ms var(--ease);
 }
 .unit:hover { background: var(--glass); color: var(--fg); }
-.condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
+.condition-label {
+  margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em;
+  display: inline-flex; align-items: center; gap: 2px;
+}
+.condition-label:first-letter { font-size: 1.08em; }
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
 .yesterday-delta {
   margin: 6px 0 0; font-size: 12px;
