@@ -283,6 +283,9 @@ export const ui = {
     clearTimeout(el.toast._t);
     el.toast._t = setTimeout(() => (el.toast.hidden = true), dur);
   },
+  haptic(pattern = 20) {
+    try { navigator.vibrate?.(pattern); } catch { /* best-effort */ }
+  },
   getUnit: () => state.unit,
 };
 
@@ -1767,6 +1770,7 @@ function bindShare() {
       }
       el.shareBtn.classList.add("just-copied");
       setTimeout(() => el.shareBtn.classList.remove("just-copied"), 600);
+      ui.haptic(15);
     } catch (err) {
       if (err?.name !== "AbortError") ui.showToast("Share failed");
     }

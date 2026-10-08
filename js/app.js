@@ -305,6 +305,7 @@ installShortcuts({
     applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
     ui.showToast(`Jumped to ${next.kind}`);
+    ui.haptic(20);
   },
   cyclePlace: (dir) => {
     const list = places.all();

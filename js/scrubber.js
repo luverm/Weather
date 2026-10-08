@@ -129,6 +129,7 @@ export class Scrubber {
     this.appEl?.setAttribute("data-scrubbing", "false");
     this._render(this._currentT());
     this.onScrub?.(0);
+    try { navigator.vibrate?.(10); } catch { /* best-effort */ }
   }
 
   _updateFromEvent(e) {
