@@ -429,6 +429,14 @@ html[data-reduce-motion="true"] *::after {
   font-variant-numeric: tabular-nums;
   transition: opacity 200ms var(--ease);
 }
+[data-loading="true"] .temp-value {
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+@keyframes shimmer {
+  0%, 100% { opacity: 0.6; }
+  50%      { opacity: 0.95; filter: blur(0.6px); }
+}
+[data-reduce-motion="true"] .temp-value { animation: none !important; }
 .unit {
   font-size: clamp(16px, 2vw, 24px);
   line-height: 1;

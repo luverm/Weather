@@ -192,7 +192,10 @@ export const ui = {
     if (!el.refreshBtn) return;
     el.refreshBtn.classList.toggle("spinning", !!on);
   },
-  setLoading(text) { el.placeSub.textContent = text; },
+  setLoading(text) {
+    el.placeSub.textContent = text;
+    document.documentElement.setAttribute("data-loading", "true");
+  },
   setPlace(place) {
     state.place = place;
     el.placeName.classList.remove("flip-in"); void el.placeName.offsetWidth;
@@ -209,6 +212,7 @@ export const ui = {
     state.sampledWeather = weather; // initially same as live
     updatePageTitle(weather);
     renderLiveValues(weather);
+    document.documentElement.removeAttribute("data-loading");
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
     renderMoon(weather.moon);
