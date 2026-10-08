@@ -110,6 +110,26 @@ export function narrate(weather) {
     }
   }
 
+  // Humidity narrative — only in the warm season when dew-point matters.
+  if (bits.length < 2 && weather.dewPoint != null && temp >= 20) {
+    if (weather.dewPoint >= 22) {
+      bits.push("Dew point is tropical — expect sticky, uncomfortable air.");
+    } else if (weather.dewPoint >= 19) {
+      bits.push("Air feels humid — a shady breeze helps.");
+    }
+  }
+
+  // Cold-side narrative.
+  if (bits.length < 2 && weather.dewPoint != null && temp <= 5 && weather.dewPoint <= -5) {
+    bits.push("Air is bitingly dry — static shocks and chapped lips today.");
+  }
+
+  // Visibility narrative when limited.
+  if (bits.length < 2 && weather.visibility != null && weather.visibility < 2000) {
+    const km = (weather.visibility / 1000).toFixed(1);
+    bits.push(`Visibility down to ${km} km — drive with care.`);
+  }
+
   // Calm night fallback.
   if (bits.length < 2 && condition === "clear" && windSpeed < 10) {
     bits.push("Calm and settled for the next few hours.");
