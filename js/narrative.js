@@ -137,6 +137,12 @@ export function narrate(weather) {
     bits.push("Air is bitingly dry — static shocks and chapped lips today.");
   }
 
+  // Snow-fall day narrative — only when a non-zero daily snowfall is in the forecast today.
+  if (bits.length < 2 && weather.daily?.[0]?.snowfall >= 1) {
+    const cm = weather.daily[0].snowfall;
+    bits.push(`Expect ${cm.toFixed(1)} cm of fresh snow today — watch for slick roads.`);
+  }
+
   // Visibility narrative when limited.
   if (bits.length < 2 && weather.visibility != null && weather.visibility < 2000) {
     const km = (weather.visibility / 1000).toFixed(1);
