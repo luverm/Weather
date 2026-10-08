@@ -99,5 +99,50 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     });
   }
 
+  // 6. Snow in the week.
+  const snowDay = days.find((d) => (d.snowfall ?? 0) >= 1);
+  if (snowDay) {
+    out.push({
+      icon: ICONS.humid, label: "Snow expected",
+      value: `${snowDay.snowfall.toFixed(1)} cm on ${dow(snowDay.time)}`,
+      ts: snowDay.sunrise || snowDay.time,
+    });
+  }
+
+  // 7. Rainiest day in the week.
+  if (days.length >= 2) {
+    const rainiest = days.reduce((best, d) => ((d.precip ?? 0) > (best?.precip ?? 0) ? d : best), null);
+    if (rainiest && (rainiest.precip ?? 0) >= 3) {
+      out.push({
+        icon: ICONS.rain, label: "Wettest day",
+        value: `${rainiest.precip.toFixed(1)} mm on ${dow(rainiest.time)}`,
+        ts: rainiest.sunrise || rainiest.time,
+      });
+    }
+  }
+
+  // 8. Longest dry run of hours (≥6 consecutive <20% pop).
+  if (hours.length > 6) {
+    let runStart = -1, runLen = 0, best = null;
+    for (let i = 0; i < hours.length; i++) {
+      if ((hours[i].pop ?? 0) < 20) {
+        if (runStart < 0) runStart = i;
+        runLen++;
+        if (!best || runLen > best.len) best = { start: runStart, len: runLen, startTs: hours[runStart].time };
+      } else {
+        runStart = -1; runLen = 0;
+      }
+    }
+    if (best && best.len >= 6) {
+      const end = hours[best.start + best.len - 1].time;
+      out.push({
+        icon: ICONS.sun, label: "Dry window",
+        value: `${best.len}h from ${fmt(best.startTs)}`,
+        ts: best.startTs,
+        _endTs: end,
+      });
+    }
+  }
+
   return out.slice(0, 6);
 }
