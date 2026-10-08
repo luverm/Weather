@@ -1278,6 +1278,10 @@ function renderDailySpark(days) {
   el.dailyLo.setAttribute("d", linePath(days.map((d) => d.tempMin)));
   // Dots at each day + per-day temp labels above/below
   el.dailySparkDots.innerHTML = "";
+  const tz = state.weather?.timezone;
+  const dowFmt = (ts) => new Date(ts).toLocaleDateString(undefined, {
+    weekday: "short", ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
   days.forEach((d, i) => {
     if (d.tempMax != null) {
       const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
@@ -1285,6 +1289,9 @@ function renderDailySpark(days) {
       c.setAttribute("cy", y(d.tempMax).toFixed(1));
       c.setAttribute("r", "2.5");
       c.setAttribute("class", "dot-hi");
+      const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+      title.textContent = `${dowFmt(d.time)} · ${Math.round(convertTemp(d.tempMax))}° high`;
+      c.appendChild(title);
       el.dailySparkDots.appendChild(c);
     }
     if (d.tempMin != null) {
@@ -1293,6 +1300,9 @@ function renderDailySpark(days) {
       c.setAttribute("cy", y(d.tempMin).toFixed(1));
       c.setAttribute("r", "2.5");
       c.setAttribute("class", "dot-lo");
+      const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+      title.textContent = `${dowFmt(d.time)} · ${Math.round(convertTemp(d.tempMin))}° low`;
+      c.appendChild(title);
       el.dailySparkDots.appendChild(c);
     }
   });
