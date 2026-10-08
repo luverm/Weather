@@ -145,7 +145,12 @@ ul { list-style: none; margin: 0; padding: 0; }
   background: radial-gradient(circle at 35% 30%, #fff, var(--accent) 60%, transparent 70%);
   box-shadow: 0 0 24px var(--accent);
   animation: breathe 4.5s ease-in-out infinite;
+  transition: background 500ms var(--ease), box-shadow 500ms var(--ease);
 }
+[data-condition="rain"]  .brand-mark { background: radial-gradient(circle at 35% 30%, #fff, #88c6ff 60%, transparent 70%); box-shadow: 0 0 24px #88c6ff; }
+[data-condition="snow"]  .brand-mark { background: radial-gradient(circle at 35% 30%, #fff, #dfe9ff 60%, transparent 70%); box-shadow: 0 0 24px #dfe9ff; }
+[data-condition="storm"] .brand-mark { background: radial-gradient(circle at 35% 30%, #fff, #a78bff 60%, transparent 70%); box-shadow: 0 0 24px #a78bff; }
+[data-condition="fog"]   .brand-mark { background: radial-gradient(circle at 35% 30%, #fff, #b5c0d0 60%, transparent 70%); box-shadow: 0 0 24px #b5c0d0; }
 .brand-name {
   font-weight: 600; font-size: 14px;
   text-transform: uppercase; letter-spacing: 0.22em;
