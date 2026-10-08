@@ -9,7 +9,7 @@ const PAD_TOP = 16;
 const PAD_BOT = 22;
 
 export class HourlyChart {
-  constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit, getTimezone, getDaily }) {
+  constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit, getTimezone, getDaily, getYesterday }) {
     this.svg = svgEl;
     this.hoverEl = hoverEl;
     this.popover = popoverEl;
@@ -17,6 +17,7 @@ export class HourlyChart {
     this.getUnit = getUnit || (() => "C");
     this.getTimezone = getTimezone || (() => null);
     this.getDaily = getDaily || (() => null);
+    this.getYesterday = getYesterday || (() => null);
     this.hours = [];
     this.points = [];
     this._bind();
@@ -221,6 +222,40 @@ export class HourlyChart {
         gustLine.setAttribute("d", gPath.trim());
       } else {
         gustLine.setAttribute("d", "");
+      }
+    }
+
+    // Yesterday ghost line — shift the past series forward by 24h so it maps
+    // onto the same clock positions as today, and clip to the chart domain.
+    const ghostLine = this.svg.querySelector("#chart-yesterday-line");
+    if (ghostLine) {
+      const series = this.getYesterday?.() || [];
+      if (series.length >= 2) {
+        const first = this.hours[0].time;
+        const last = this.hours[this.hours.length - 1].time;
+        const timeToX = (t) => {
+          for (let i = 0; i < this.hours.length - 1; i++) {
+            const a = this.hours[i].time, b = this.hours[i + 1].time;
+            if (t >= a && t <= b) {
+              return iToX(i) + ((t - a) / (b - a)) * (iToX(i + 1) - iToX(i));
+            }
+          }
+          return null;
+        };
+        let path = "";
+        let started = false;
+        for (const p of series) {
+          const shifted = p.time + 24 * 3600_000;
+          if (shifted < first || shifted > last) continue;
+          const x = timeToX(shifted);
+          if (x == null) continue;
+          const y = tToY(p.temp);
+          path += (started ? "L" : "M") + x.toFixed(1) + "," + y.toFixed(1) + " ";
+          started = true;
+        }
+        ghostLine.setAttribute("d", path.trim());
+      } else {
+        ghostLine.setAttribute("d", "");
       }
     }
 

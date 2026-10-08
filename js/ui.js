@@ -173,6 +173,7 @@ export const ui = {
       getUnit: () => state.unit,
       getTimezone: () => state.weather?.timezone,
       getDaily: () => state.weather?.daily,
+      getYesterday: () => state.weather?.yesterday?.series,
     });
     state.comfortStrip = new ComfortStrip({
       rootEl: el.comfortStrip,

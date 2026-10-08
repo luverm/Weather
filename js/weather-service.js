@@ -131,8 +131,10 @@ function normalize(d, aq) {
 
   // 24-hour hourly forecast starting from the next hour.
   const hourly = [];
-  // Yesterday-at-this-hour snapshot for the "yesterday delta" badge.
+  // Yesterday-at-this-hour snapshot for the "yesterday delta" badge, plus a
+  // ~24h series ending at "now" for the chart overlay.
   let yesterday = null;
+  const yesterdaySeries = [];
   if (d.hourly?.time) {
     const target = now - 24 * 3600_000;
     let best = -1, bestDiff = Infinity;
@@ -140,6 +142,11 @@ function normalize(d, aq) {
       const t = new Date(d.hourly.time[i]).getTime();
       const diff = Math.abs(t - target);
       if (diff < bestDiff) { bestDiff = diff; best = i; }
+      // Collect every point from -24h..now for the ghost line.
+      if (t >= now - 25 * 3600_000 && t <= now - 60_000) {
+        const temp = d.hourly.temperature_2m?.[i];
+        if (temp != null) yesterdaySeries.push({ time: t, temp });
+      }
     }
     if (best >= 0 && bestDiff < 60 * 60_000) {
       yesterday = {
@@ -147,6 +154,7 @@ function normalize(d, aq) {
         temp: d.hourly.temperature_2m?.[best],
         feelsLike: d.hourly.apparent_temperature?.[best],
         humidity: d.hourly.relative_humidity_2m?.[best],
+        series: yesterdaySeries,
       };
     }
     for (let i = 0; i < d.hourly.time.length && hourly.length < 24; i++) {
