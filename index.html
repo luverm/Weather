@@ -265,12 +265,38 @@
         </div>
         <div class="metric glass metric-pressure">
           <span class="metric-label">Pressure <span id="m-pressure-trend" class="trend" aria-hidden="true"></span></span>
+          <div class="pressure-dial" aria-hidden="true">
+            <svg viewBox="-50 -34 100 52">
+              <defs>
+                <linearGradient id="pressure-grad" x1="0" x2="1" y1="0" y2="0">
+                  <stop offset="0%"   stop-color="#8aa0ff"/>
+                  <stop offset="35%"  stop-color="#9ad1ff"/>
+                  <stop offset="65%"  stop-color="#cfe6b7"/>
+                  <stop offset="100%" stop-color="#ffd36a"/>
+                </linearGradient>
+              </defs>
+              <!-- Base arc (980 to 1040 hPa roughly spans half circle) -->
+              <path d="M -40 0 A 40 40 0 0 1 40 0" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4"/>
+              <path d="M -40 0 A 40 40 0 0 1 40 0" fill="none" stroke="url(#pressure-grad)" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+              <!-- Tick marks -->
+              <g stroke="rgba(255,255,255,0.25)" stroke-width="1">
+                <line x1="-40" y1="0" x2="-36" y2="0"/>
+                <line x1="-28.28" y1="-28.28" x2="-25.46" y2="-25.46"/>
+                <line x1="0" y1="-40" x2="0" y2="-36"/>
+                <line x1="28.28" y1="-28.28" x2="25.46" y2="-25.46"/>
+                <line x1="40" y1="0" x2="36" y2="0"/>
+              </g>
+              <!-- Trend arc highlight (3h sweep) -->
+              <path id="pressure-trend-arc" d="M -40 0 A 40 40 0 0 1 -40 0" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" opacity="0.75" style="color: var(--accent)"/>
+              <!-- Needle -->
+              <g id="pressure-needle" transform="rotate(0)">
+                <line x1="0" y1="2" x2="0" y2="-34" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
+                <circle cx="0" cy="0" r="3" fill="#fff"/>
+              </g>
+            </svg>
+          </div>
           <span id="m-pressure" class="metric-value">—</span>
           <span class="metric-unit">hPa</span>
-          <svg id="pressure-spark" class="pressure-spark" viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true">
-            <path id="pressure-spark-fill" fill="currentColor" fill-opacity="0.14"></path>
-            <path id="pressure-spark-line" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"></path>
-          </svg>
           <span id="m-pressure-sub" class="metric-sub">clouds —</span>
         </div>
         <div class="metric glass">

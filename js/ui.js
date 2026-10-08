@@ -66,6 +66,8 @@ const el = {
   humidityComfort: $("#m-humidity-comfort"),
   pressureSparkLine: $("#pressure-spark-line"),
   pressureSparkFill: $("#pressure-spark-fill"),
+  pressureNeedle: $("#pressure-needle"),
+  pressureTrendArc: $("#pressure-trend-arc"),
   humiditySparkLine: $("#humidity-spark-line"),
   humiditySparkFill: $("#humidity-spark-fill"),
   dailySpark: $("#daily-spark"),
@@ -388,6 +390,45 @@ function renderMetrics(w) {
     el.metricUVSub.textContent = "peak —";
   }
   renderPressureSparkline(w);
+  renderPressureDial(w);
+}
+
+function renderPressureDial(w) {
+  if (!el.pressureNeedle) return;
+  // Map 980..1040 hPa to -90°..+90° (half circle).
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const toDeg = (hPa) => {
+    const t = (clamp(hPa, 980, 1040) - 980) / 60;
+    return -90 + t * 180;
+  };
+  const p = w.pressure;
+  if (p == null) {
+    el.pressureNeedle.setAttribute("transform", "rotate(0)");
+    if (el.pressureTrendArc) el.pressureTrendArc.setAttribute("d", "");
+    return;
+  }
+  const curDeg = toDeg(p);
+  el.pressureNeedle.setAttribute("transform", `rotate(${curDeg.toFixed(1)})`);
+
+  // Trend arc: from pressure-3h-ago to current.
+  if (el.pressureTrendArc && w.pressureTrend) {
+    const past = p - w.pressureTrend.delta;
+    const pastDeg = toDeg(past);
+    const r = 40;
+    const a1 = (Math.min(pastDeg, curDeg) - 90) * Math.PI / 180;
+    const a2 = (Math.max(pastDeg, curDeg) - 90) * Math.PI / 180;
+    const x1 = (r * Math.cos(a1)).toFixed(2);
+    const y1 = (r * Math.sin(a1)).toFixed(2);
+    const x2 = (r * Math.cos(a2)).toFixed(2);
+    const y2 = (r * Math.sin(a2)).toFixed(2);
+    if (Math.abs(pastDeg - curDeg) < 0.5) {
+      el.pressureTrendArc.setAttribute("d", "");
+    } else {
+      el.pressureTrendArc.setAttribute("d", `M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2}`);
+    }
+  } else if (el.pressureTrendArc) {
+    el.pressureTrendArc.setAttribute("d", "");
+  }
 }
 
 function humidityComfort(rh, dew, temp) {
@@ -431,11 +472,7 @@ function uvLevel(v) {
 }
 
 function renderPressureSparkline(w) {
-  drawSparkline(
-    el.pressureSparkLine, el.pressureSparkFill,
-    (w.hourly || []).map((h) => h.pressure).filter((v) => v != null).slice(0, 12),
-    { minSpan: 1.5 }
-  );
+  // Pressure now gets a barometer dial instead of a sparkline.
   drawSparkline(
     el.humiditySparkLine, el.humiditySparkFill,
     (w.hourly || []).map((h) => h.humidity).filter((v) => v != null).slice(0, 12),

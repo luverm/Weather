@@ -586,6 +586,25 @@ html[data-reduce-motion="true"] *::after {
 }
 .metric-humidity .pressure-spark { color: #9ad1ff; }
 
+/* ---------- Pressure barometer dial ---------- */
+.pressure-dial {
+  grid-column: 1 / span 2;
+  width: 100%; max-width: 110px;
+  margin: 2px auto -4px;
+}
+.pressure-dial svg { width: 100%; display: block; }
+#pressure-needle {
+  transform-origin: 0 0;
+  transition: transform 700ms var(--ease);
+  filter: drop-shadow(0 0 3px rgba(255,255,255,0.4));
+}
+#pressure-trend-arc { transition: d 500ms var(--ease); }
+.metric-pressure {
+  text-align: center;
+}
+.metric-pressure .metric-label { text-align: left; }
+.metric-pressure .metric-sub { text-align: left; }
+
 /* ---------- Daily expand ---------- */
 .daily-item { cursor: pointer; }
 .daily-item[data-expanded="true"] { background: var(--glass-strong); }
