@@ -195,6 +195,7 @@ export class Scrubber {
     const label = d.toLocaleString(undefined, {
       weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false,
     });
+    this.track.setAttribute("aria-valuetext", `Simulated time ${label}`);
     if (this.timeEl) this.timeEl.textContent = label;
 
     const offMin = Math.round(clock.offset() / 60_000);
