@@ -1596,7 +1596,9 @@ function toggleDailyExpand(item, d, w) {
     const height = 10 + (pct / 100) * 36;
     const precipLevel = h.pop >= 60 ? 2 : h.pop >= 25 ? 1 : 0;
     const hh = new Date(h.time).getHours().toString().padStart(2, "0");
-    return `<div class="daily-expand-bar" data-precip="${precipLevel}" style="height:${height.toFixed(1)}px" title="${hh}:00 · ${Math.round(convertTemp(h.temp))}° · ${h.pop}%"><span>${Math.round(convertTemp(h.temp))}°</span></div>`;
+    const feelsPart = (h.feelsLike != null && Math.abs(h.feelsLike - h.temp) >= 2)
+      ? ` (feels ${Math.round(convertTemp(h.feelsLike))}°)` : "";
+    return `<div class="daily-expand-bar" data-precip="${precipLevel}" style="height:${height.toFixed(1)}px" title="${hh}:00 · ${Math.round(convertTemp(h.temp))}°${feelsPart} · ${h.pop}%"><span>${Math.round(convertTemp(h.temp))}°</span></div>`;
   }).join("");
   item.appendChild(box);
   item.dataset.expanded = "true";
