@@ -93,6 +93,7 @@ const el = {
   settingUnitF: $("#setting-unit-f"),
   settingGeolocate: $("#setting-geolocate"),
   settingClearPlaces: $("#setting-clear-places"),
+  settingShowShortcuts: $("#setting-show-shortcuts"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
@@ -950,6 +951,10 @@ function renderWeekend(w) {
   }
   el.weekendChip.hidden = false;
   el.weekendChip.dataset.tone = snap.tone;
+  el.weekendChip.setAttribute(
+    "aria-label",
+    `Weekend outlook: ${snap.headline}. Click to scrub to Saturday.`
+  );
   el.weekendIconSat.textContent = snap.iconSat;
   el.weekendIconSun.textContent = snap.iconSun;
   el.weekendHeadline.textContent = snap.headline;
@@ -1867,6 +1872,13 @@ function bindSettings() {
     renderPlaces();
     ui.showToast("Saved places cleared");
     close();
+  });
+
+  el.settingShowShortcuts?.addEventListener("click", () => {
+    close();
+    const overlay = document.getElementById("shortcuts");
+    if (overlay) overlay.hidden = false;
+    document.getElementById("shortcuts-close")?.focus?.();
   });
 }
 
