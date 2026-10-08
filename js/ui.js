@@ -53,6 +53,9 @@ const el = {
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  sunPhaseBadge: $("#sun-phase-badge"),
+  sunPhaseIcon: $("#sun-phase-icon"),
+  sunPhaseText: $("#sun-phase-text"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -142,6 +145,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  sunPhaseTimer: null,
   localTimer: null,
 };
 
@@ -593,6 +597,50 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleSunPhaseBadge(w);
+}
+
+function scheduleSunPhaseBadge(w) {
+  if (!el.sunPhaseBadge || !el.sunPhaseIcon || !el.sunPhaseText) return;
+  if (state.sunPhaseTimer) { clearInterval(state.sunPhaseTimer); state.sunPhaseTimer = null; }
+  const update = () => {
+    const phase = currentSunPhase(w);
+    if (!phase) { el.sunPhaseBadge.hidden = true; return; }
+    el.sunPhaseBadge.hidden = false;
+    el.sunPhaseBadge.dataset.kind = phase.kind;
+    el.sunPhaseIcon.textContent = phase.icon;
+    el.sunPhaseText.textContent = phase.text;
+  };
+  update();
+  state.sunPhaseTimer = setInterval(update, 60_000);
+}
+
+function currentSunPhase(w) {
+  const now = Date.now();
+  const WIN = 45 * 60_000;
+  // Scan daily for a sunrise/sunset within ±45 min of now.
+  for (const d of (w.daily || [])) {
+    if (d.sunrise) {
+      const delta = now - d.sunrise;
+      if (Math.abs(delta) < WIN) {
+        // Pre-sunrise = blue hour; post-sunrise = golden hour.
+        if (delta < 0) {
+          return { kind: "blue", icon: "✦", text: `Blue hour — sunrise in ${Math.round(-delta / 60_000)}m` };
+        }
+        return { kind: "golden", icon: "☀", text: `Golden hour — ${Math.round(delta / 60_000)}m since sunrise` };
+      }
+    }
+    if (d.sunset) {
+      const delta = now - d.sunset;
+      if (Math.abs(delta) < WIN) {
+        if (delta < 0) {
+          return { kind: "golden", icon: "☀", text: `Golden hour — sunset in ${Math.round(-delta / 60_000)}m` };
+        }
+        return { kind: "blue", icon: "✦", text: `Blue hour — ${Math.round(delta / 60_000)}m after sunset` };
+      }
+    }
+  }
+  return null;
 }
 
 function scheduleSunArc(w) {
