@@ -1438,7 +1438,7 @@ function renderDaily(w) {
     item.setAttribute("title", srTitle);
     item.innerHTML = `
       <span class="daily-day">${day}${bestBadge}</span>
-      <span class="daily-icon">${iconFor(d.condition)}${drops}</span>
+      <span class="daily-icon" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}${drops}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
       </div>
