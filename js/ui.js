@@ -341,7 +341,13 @@ function renderLiveValues(w, { animate = true } = {}) {
     condition = `${condition} · ${Math.round(w.cloudCover)}%`;
   }
   el.conditionLabel.textContent = condition;
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  const diff = (w.feelsLike ?? w.temp) - w.temp;
+  const absDiff = Math.abs(Math.round(state.unit === "F" ? diff * 9 / 5 : diff));
+  let feelsSuffix = "";
+  if (absDiff >= 3) {
+    feelsSuffix = diff > 0 ? ` — ${absDiff}° warmer` : ` — ${absDiff}° colder`;
+  }
+  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°${feelsSuffix}`;
   renderDayRange(w);
 }
 
