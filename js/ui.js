@@ -1300,7 +1300,8 @@ function renderPollen(pollen) {
   const peak = Math.max(1, ...pollen.items.map((p) => p.value));
   el.pollenItems.innerHTML = pollen.items.map((p) => {
     const w = Math.round((p.value / peak) * 100);
-    return `<span class="pollen-item" data-level="${pollen.level}">
+    const title = `${p.label} pollen: ${p.value.toFixed(1)} grains/m³`;
+    return `<span class="pollen-item" data-level="${pollen.level}" title="${escapeHtml(title)}">
       <span class="pollen-item-label">${escapeHtml(p.label)}</span>
       <span class="pollen-item-bar" aria-hidden="true"><span style="width:${w}%"></span></span>
       <span class="pollen-item-value">${p.value.toFixed(1)}</span>
