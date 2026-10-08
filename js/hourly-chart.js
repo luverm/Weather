@@ -8,8 +8,19 @@ const PAD_RIGHT = 6;
 const PAD_TOP = 16;
 const PAD_BOT = 22;
 
+const LEGEND_KEY = "aether:chart-legend";
+function loadLegendPrefs() {
+  try {
+    const raw = localStorage.getItem(LEGEND_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
+function saveLegendPrefs(prefs) {
+  try { localStorage.setItem(LEGEND_KEY, JSON.stringify(prefs)); } catch { /* ignore */ }
+}
+
 export class HourlyChart {
-  constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit, getTimezone, getDaily, getYesterday }) {
+  constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit, getTimezone, getDaily, getYesterday, legendEl }) {
     this.svg = svgEl;
     this.hoverEl = hoverEl;
     this.popover = popoverEl;
@@ -20,7 +31,28 @@ export class HourlyChart {
     this.getYesterday = getYesterday || (() => null);
     this.hours = [];
     this.points = [];
+    this.enabled = loadLegendPrefs();
+    this.legendEl = legendEl || null;
     this._bind();
+    this._bindLegend();
+  }
+
+  _bindLegend() {
+    if (!this.legendEl) return;
+    // Reflect stored prefs onto the chip buttons.
+    this.legendEl.querySelectorAll(".legend-chip").forEach((btn) => {
+      const key = btn.dataset.series;
+      if (!key) return;
+      btn.setAttribute("aria-pressed", this.enabled[key] !== false ? "true" : "false");
+      btn.addEventListener("click", () => {
+        if (btn.disabled) return;
+        const now = this.enabled[key] !== false;
+        this.enabled[key] = !now;
+        btn.setAttribute("aria-pressed", String(this.enabled[key]));
+        saveLegendPrefs(this.enabled);
+        this._draw();
+      });
+    });
   }
 
   _formatHour(ts) {
@@ -207,7 +239,7 @@ export class HourlyChart {
     const gustLine = this.svg.querySelector("#chart-gust-line");
     if (gustLine) {
       const gusts = this.hours.map((h) => h.gusts ?? h.wind).filter((v) => v != null);
-      if (gusts.length) {
+      if (gusts.length && this.enabled.gust !== false) {
         const gMax = Math.max(20, ...gusts);
         // Gust line plotted in bottom 40% of chart, inverted.
         const gBot = PAD_TOP + innerH - 2;
@@ -230,7 +262,7 @@ export class HourlyChart {
     const ghostLine = this.svg.querySelector("#chart-yesterday-line");
     if (ghostLine) {
       const series = this.getYesterday?.() || [];
-      if (series.length >= 2) {
+      if (series.length >= 2 && this.enabled.yesterday !== false) {
         const first = this.hours[0].time;
         const last = this.hours[this.hours.length - 1].time;
         const timeToX = (t) => {
@@ -265,7 +297,7 @@ export class HourlyChart {
       const hasFeels = this.hours.some((h) =>
         h.feelsLike != null && Math.abs(h.feelsLike - h.temp) >= 2
       );
-      if (hasFeels) {
+      if (hasFeels && this.enabled.feels !== false) {
         let fPath = "";
         this.hours.forEach((h, i) => {
           const v = h.feelsLike ?? h.temp;
@@ -281,6 +313,9 @@ export class HourlyChart {
     // Precipitation probability bars (0-100% -> 0..12px height)
     const precipG = this.svg.querySelector("#chart-precip");
     precipG.innerHTML = "";
+    if (this.enabled.precip === false) {
+      // Skip bar drawing but keep the group empty.
+    } else {
     const barW = Math.max(4, innerW / this.hours.length - 3);
     this.hours.forEach((h, i) => {
       const pop = Math.max(0, Math.min(100, h.pop || 0));
@@ -297,6 +332,7 @@ export class HourlyChart {
       r.setAttribute("opacity", (0.35 + (pop / 100) * 0.55).toFixed(2));
       precipG.appendChild(r);
     });
+    }
 
     // Sunrise/sunset chevron markers — gold triangles anchored to the bottom.
     const sunG = this.svg.querySelector("#chart-sunmarks");

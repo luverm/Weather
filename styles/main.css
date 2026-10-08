@@ -805,10 +805,24 @@ html[data-reduce-motion="true"] *::after {
   color: var(--fg-dim);
 }
 .chart-legend {
-  display: inline-flex; align-items: center; gap: 8px;
+  display: inline-flex; align-items: center; gap: 4px;
   font-size: 11px; color: var(--fg-dim);
   margin-left: auto;
+  flex-wrap: wrap;
 }
+.legend-chip {
+  display: inline-flex; align-items: center; gap: 2px;
+  padding: 2px 6px; border-radius: 999px;
+  color: var(--fg-dim);
+  background: transparent; border: 1px solid transparent;
+  transition: color 160ms var(--ease), opacity 160ms var(--ease), background 160ms var(--ease);
+  cursor: pointer;
+}
+.legend-chip:hover:not(:disabled) {
+  background: var(--glass); color: var(--fg-muted);
+}
+.legend-chip[aria-pressed="false"] { opacity: 0.3; }
+.legend-chip:disabled { cursor: default; }
 .legend-swatch {
   display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle;
   margin-right: 4px;
