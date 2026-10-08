@@ -288,6 +288,24 @@ installShortcuts({
   toggleFullscreenRadar: () => document.getElementById("radar-full")?.click(),
   toggleRadar: () => document.getElementById("radar-play")?.click(),
   resetScrubber: () => scrubber.reset(),
+  toggleShare: () => document.getElementById("share-btn")?.click(),
+  jumpGoldenHour: () => {
+    if (!app.weather?.daily?.length) return;
+    const now = Date.now();
+    const picks = [];
+    for (const d of app.weather.daily) {
+      if (d.sunrise && d.sunrise > now - 60_000) picks.push({ ts: d.sunrise, kind: "sunrise" });
+      if (d.sunset  && d.sunset  > now - 60_000) picks.push({ ts: d.sunset,  kind: "sunset" });
+    }
+    picks.sort((a, b) => a.ts - b.ts);
+    const next = picks[0];
+    if (!next) return;
+    clock.setOffset(next.ts - Date.now());
+    scrubber.sync();
+    applyScene(app.weather);
+    ui.setScrubbing(!clock.isLive());
+    ui.showToast(`Jumped to ${next.kind}`);
+  },
   cyclePlace: (dir) => {
     const list = places.all();
     if (list.length < 2) return;
