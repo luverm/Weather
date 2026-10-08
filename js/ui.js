@@ -214,6 +214,11 @@ export const ui = {
     updatePageTitle(weather);
     renderLiveValues(weather);
     document.documentElement.removeAttribute("data-loading");
+    // Momentary "pulse once" cue on the brand mark that fresh data landed.
+    if (el.brandBtn) {
+      el.brandBtn.classList.add("just-tapped");
+      setTimeout(() => el.brandBtn.classList.remove("just-tapped"), 500);
+    }
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
     renderMoon(weather.moon);
