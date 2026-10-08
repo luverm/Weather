@@ -560,11 +560,22 @@ html[data-reduce-motion="true"] *::after {
 }
 .scrubber-sunrise,
 .scrubber-sunset {
-  position: absolute; top: 0; bottom: 0; width: 2px;
-  pointer-events: none;
+  position: absolute; top: -6px; bottom: -6px; width: 10px;
+  margin-left: -4px;
+  pointer-events: auto;
+  cursor: pointer;
+  display: grid; place-items: center;
+  background: transparent;
 }
-.scrubber-sunrise { background: linear-gradient(180deg, transparent, rgba(255, 210, 160, 0.8), transparent); }
-.scrubber-sunset { background: linear-gradient(180deg, transparent, rgba(255, 160, 120, 0.8), transparent); }
+.scrubber-sunrise::before,
+.scrubber-sunset::before {
+  content: ""; position: absolute; top: 6px; bottom: 6px; width: 2px;
+  left: 50%; transform: translateX(-50%);
+}
+.scrubber-sunrise::before { background: linear-gradient(180deg, transparent, rgba(255, 210, 160, 0.8), transparent); }
+.scrubber-sunset::before  { background: linear-gradient(180deg, transparent, rgba(255, 160, 120, 0.8), transparent); }
+.scrubber-sunrise:hover::before { box-shadow: 0 0 10px rgba(255, 210, 160, 0.9); }
+.scrubber-sunset:hover::before  { box-shadow: 0 0 10px rgba(255, 160, 120, 0.9); }
 .scrubber-sunrise::after,
 .scrubber-sunset::after {
   content: attr(data-label);
