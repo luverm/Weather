@@ -2028,6 +2028,12 @@ kbd {
   transition: transform 320ms var(--ease), opacity 320ms var(--ease);
 }
 .toast:not([hidden]) { opacity: 1; transform: translate(-50%, 0); }
+.toast.just-shown { animation: toastBump 240ms var(--ease); }
+@keyframes toastBump {
+  0%   { transform: translate(-50%, 0) scale(1); }
+  40%  { transform: translate(-50%, 0) scale(1.05); }
+  100% { transform: translate(-50%, 0) scale(1); }
+}
 
 /* ---------- Reveal animations ---------- */
 .flip-in { animation: flipIn 620ms var(--ease) both; }

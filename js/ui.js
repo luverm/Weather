@@ -301,6 +301,11 @@ export const ui = {
     el.toast.hidden = false;
     clearTimeout(el.toast._t);
     el.toast._t = setTimeout(() => (el.toast.hidden = true), dur);
+    // Nudge the toast with a tiny animation if it was already visible so a
+    // rapid-fire sequence (eg. multiple refreshes) isn't visually silent.
+    el.toast.classList.remove("just-shown");
+    void el.toast.offsetWidth;
+    el.toast.classList.add("just-shown");
   },
   haptic(pattern = 20) {
     try { navigator.vibrate?.(pattern); } catch { /* best-effort */ }
