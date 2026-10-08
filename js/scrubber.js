@@ -208,7 +208,15 @@ export class Scrubber {
       weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false,
     });
     this.track.setAttribute("aria-valuetext", `Simulated time ${label}`);
-    if (this.timeEl) this.timeEl.textContent = label;
+    // Mark the thumb as "tomorrow" visually when the scrubbed day differs
+    // from today's day — a tiny +1d indicator reads at a glance.
+    const nowDate = new Date();
+    const sameDay = d.getFullYear() === nowDate.getFullYear() &&
+                    d.getMonth() === nowDate.getMonth() &&
+                    d.getDate() === nowDate.getDate();
+    if (this.timeEl) {
+      this.timeEl.textContent = sameDay ? label : `${label} (next day)`;
+    }
 
     const offMin = Math.round(clock.offset() / 60_000);
     if (this.deltaEl) {
