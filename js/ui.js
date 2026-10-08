@@ -1675,7 +1675,7 @@ function bindSearch() {
 }
 
 function bindUnitToggle() {
-  el.unitBtn.addEventListener("click", () => {
+  const toggle = () => {
     state.unit = state.unit === "C" ? "F" : "C";
     localStorage.setItem("aether:unit", state.unit);
     el.unitBtn.textContent = `°${state.unit}`;
@@ -1683,7 +1683,12 @@ function bindUnitToggle() {
       ui.setWeather(state.weather);
       updatePageTitle(state.weather);
     }
-  });
+  };
+  el.unitBtn.addEventListener("click", toggle);
+  // Clicking the big temperature number also flips units — the degree sits
+  // next to a toggle anyway, so this just extends the hit target.
+  el.temp?.addEventListener("click", toggle);
+  if (el.temp) el.temp.style.cursor = "pointer";
 }
 
 function bindLocate() {
