@@ -277,7 +277,7 @@ export const ui = {
   setScrubbing(on) {
     document.documentElement.setAttribute("data-scrubbing", on ? "true" : "false");
     if (on) {
-      el.hintText.textContent = "Drag to explore future weather.";
+      el.hintText.innerHTML = 'Press <kbd>N</kbd> to return to live.';
     } else {
       el.hintText.innerHTML = 'Drag the slider, hover the chart, or press <kbd>?</kbd> for shortcuts.';
     }
