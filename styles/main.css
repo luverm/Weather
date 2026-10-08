@@ -436,7 +436,13 @@ html[data-reduce-motion="true"] *::after {
   font-size: 14px;
   line-height: 1.55;
   color: var(--fg-muted);
+  animation: narrFade 400ms var(--ease) both;
 }
+@keyframes narrFade {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: none; }
+}
+[data-reduce-motion="true"] .narrative { animation: none; }
 .story {
   margin: 6px 0 0;
   max-width: 52ch;
@@ -447,8 +453,14 @@ html[data-reduce-motion="true"] *::after {
   border-left: 2px solid rgba(255,255,255,0.14);
   font-style: italic;
   opacity: 0.9;
+  animation: storyFade 500ms var(--ease) 160ms both;
 }
 .story[hidden] { display: none; }
+@keyframes storyFade {
+  from { opacity: 0; transform: translateX(-4px); }
+  to { opacity: 0.9; transform: none; }
+}
+[data-reduce-motion="true"] .story { animation: none; }
 .temp-wrap { text-align: right; }
 .temp {
   display: inline-flex; align-items: flex-start; gap: 6px;
