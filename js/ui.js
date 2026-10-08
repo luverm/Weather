@@ -1856,6 +1856,8 @@ function bindShare() {
       const dAbs = Math.abs(Math.round(unit === "F" ? dc * 9 / 5 : dc));
       if (dAbs >= 2) yLine = `${dAbs}° ${dc > 0 ? "warmer" : "cooler"} than yesterday`;
     }
+    const weekend = weekendSnapshot(w);
+    const weekendLine = weekend ? `This weekend: ${weekend.headline}` : null;
     const lines = [
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
@@ -1864,6 +1866,7 @@ function bindShare() {
       `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
+      weekendLine,
     ].filter(Boolean);
     const text = lines.join("\n");
     try {
