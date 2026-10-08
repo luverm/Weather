@@ -303,6 +303,7 @@ export const ui = {
   haptic(pattern = 20) {
     try { navigator.vibrate?.(pattern); } catch { /* best-effort */ }
   },
+  version: "Aether · 100+ rounds",
   getUnit: () => state.unit,
 };
 
