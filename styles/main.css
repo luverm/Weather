@@ -1576,7 +1576,8 @@ kbd {
   cursor: pointer;
   transition: filter 160ms var(--ease);
 }
-.precip-strip-cell:hover { filter: brightness(1.2); }
+.precip-strip-cell:hover { filter: brightness(1.3); transform: translateY(-1px); }
+.precip-strip-cell { transition: filter 160ms var(--ease), transform 160ms var(--ease); }
 .precip-strip-bar {
   display: block; width: 100%;
   border-radius: 2px 2px 0 0;

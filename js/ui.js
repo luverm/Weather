@@ -1409,7 +1409,7 @@ function renderDaily(w) {
     }
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
     const bestBadge = (best && best.index === i)
-      ? `<span class="daily-best" title="Looks like the pick of the week">${escapeHtml(best.tag)}</span>` : "";
+      ? `<span class="daily-best" title="Looks like the pick of the week">★ ${escapeHtml(best.tag)}</span>` : "";
     const drops = rainDrops(d);
     const srTitle = `${new Date(d.time).toLocaleDateString()}: ${Math.round(convertTemp(d.tempMin))}° to ${Math.round(convertTemp(d.tempMax))}°, ${d.label || d.condition}`;
     item.setAttribute("title", srTitle);
