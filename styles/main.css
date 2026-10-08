@@ -374,6 +374,18 @@ html[data-reduce-motion="true"] *::after {
   line-height: 1.55;
   color: var(--fg-muted);
 }
+.story {
+  margin: 6px 0 0;
+  max-width: 52ch;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--fg-muted);
+  padding-left: 10px;
+  border-left: 2px solid rgba(255,255,255,0.14);
+  font-style: italic;
+  opacity: 0.9;
+}
+.story[hidden] { display: none; }
 .temp-wrap { text-align: right; }
 .temp {
   display: inline-flex; align-items: flex-start; gap: 6px;

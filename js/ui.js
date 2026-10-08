@@ -11,6 +11,7 @@ import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { findBestDay } from "./best-day.js";
+import { tellStory } from "./story.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -23,6 +24,7 @@ const el = {
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
   narrative: $("#narrative"),
+  story: $("#story"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
@@ -219,6 +221,11 @@ export const ui = {
     renderWindStrip(weather);
     renderYesterdayDelta(weather);
     if (el.narrative) el.narrative.textContent = narrative || "";
+    if (el.story) {
+      const line = tellStory(weather);
+      el.story.textContent = line;
+      el.story.hidden = !line;
+    }
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
