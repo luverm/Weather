@@ -2002,7 +2002,9 @@ function startFetchedTicker() {
     const exact = new Date(state.weather.fetchedAt).toLocaleTimeString(undefined, {
       hour: "2-digit", minute: "2-digit", second: "2-digit",
     });
-    el.fetchedAgo.title = `Last fetched at ${exact}. Press R to refresh.`;
+    el.fetchedAgo.title = `Last fetched at ${exact}. Click or press R to refresh.`;
+    el.fetchedAgo.style.cursor = "pointer";
+    el.fetchedAgo.onclick = () => state.handlers.onRefresh?.();
     el.fetchedAgo.classList.toggle("stale", minutes >= 20);
   };
   update();

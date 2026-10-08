@@ -2021,6 +2021,7 @@ kbd {
   animation: pulse 2.4s ease-in-out infinite;
 }
 .fetched-ago {
+  cursor: default;
   font-size: 10.5px;
   color: var(--fg-dim);
   letter-spacing: 0.12em;
