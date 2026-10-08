@@ -705,6 +705,8 @@ function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  const moonSvg = document.querySelector(".moon-svg");
+  if (moonSvg) moonSvg.setAttribute("title", `${moon.name}, ${Math.round(moon.illum * 100)}% illuminated`);
   if (el.moonNext) {
     // Show whichever upcoming event (full or new) is nearer.
     const full = moon.daysToFull, nnew = moon.daysToNew;
