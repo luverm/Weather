@@ -1165,6 +1165,10 @@ function renderYesterdayDelta(w) {
     el.yesterdayDelta.hidden = true;
     return;
   }
+  el.yesterdayDelta.setAttribute(
+    "title",
+    `Yesterday at this hour: ${Math.round(convertTemp(y.temp))}°${y.humidity != null ? `, ${Math.round(y.humidity)}% rh` : ""}`
+  );
   const deltaC = w.temp - y.temp;
   // Convert to display unit so copy matches the toggle.
   const displayDelta = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
