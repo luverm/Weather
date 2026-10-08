@@ -1987,6 +1987,10 @@ function bindShare() {
     }
     const weekend = weekendSnapshot(w);
     const weekendLine = weekend ? `This weekend: ${weekend.headline}` : null;
+    // Build a shareable deep link to this city.
+    const url = state.place?.name
+      ? `${location.origin}${location.pathname}?q=${encodeURIComponent(state.place.name)}`
+      : null;
     const lines = [
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
@@ -1996,6 +2000,7 @@ function bindShare() {
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
       weekendLine,
+      url,
     ].filter(Boolean);
     const text = lines.join("\n");
     try {
