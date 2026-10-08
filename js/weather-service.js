@@ -48,12 +48,17 @@ async function fetchJson(url, opts) {
   }
 }
 
+const SEARCH_CACHE = new Map();
+const SEARCH_CACHE_MAX = 32;
+
 export async function searchCities(query) {
   if (!query || query.trim().length < 2) return [];
+  const key = query.trim().toLowerCase();
+  if (SEARCH_CACHE.has(key)) return SEARCH_CACHE.get(key);
   const url = `${GEO}?name=${encodeURIComponent(query)}&count=6&language=en&format=json`;
   try {
     const data = await fetchJson(url);
-    return (data.results || []).map((r) => ({
+    const results = (data.results || []).map((r) => ({
       id: `${r.latitude},${r.longitude}`,
       name: r.name,
       country: r.country,
@@ -62,6 +67,13 @@ export async function searchCities(query) {
       lon: r.longitude,
       timezone: r.timezone,
     }));
+    // Evict oldest if we've hit the cap.
+    if (SEARCH_CACHE.size >= SEARCH_CACHE_MAX) {
+      const oldest = SEARCH_CACHE.keys().next().value;
+      if (oldest) SEARCH_CACHE.delete(oldest);
+    }
+    SEARCH_CACHE.set(key, results);
+    return results;
   } catch {
     return [];
   }
