@@ -718,7 +718,7 @@ html[data-reduce-motion="true"] *::after {
 .metric-humidity {
   grid-template-rows: auto auto auto auto;
 }
-.pressure-spark {
+.metric-spark {
   grid-column: 1 / span 2;
   width: 100%;
   height: 22px;
@@ -726,7 +726,7 @@ html[data-reduce-motion="true"] *::after {
   opacity: 0.85;
   margin-top: 2px;
 }
-.metric-humidity .pressure-spark { color: #9ad1ff; }
+.metric-humidity .metric-spark { color: #9ad1ff; }
 .dew-scale, .uv-scale {
   grid-column: 1 / span 2;
   position: relative;
