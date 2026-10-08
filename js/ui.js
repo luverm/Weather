@@ -341,7 +341,9 @@ function renderLiveValues(w, { animate = true } = {}) {
   } else if (w.cloudCover != null && w.condition === "clouds") {
     condition = `${condition} · ${Math.round(w.cloudCover)}%`;
   }
-  el.conditionLabel.textContent = condition;
+  // Prepend a tiny glyph when it fits — matches the glyph in the page title.
+  const glyph = (w.isDay === false && w.condition === "clear") ? "🌙" : CONDITION_GLYPHS[w.condition];
+  el.conditionLabel.textContent = glyph ? `${glyph} ${condition}` : condition;
   const diff = (w.feelsLike ?? w.temp) - w.temp;
   const absDiff = Math.abs(Math.round(state.unit === "F" ? diff * 9 / 5 : diff));
   let feelsSuffix = "";
