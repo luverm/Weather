@@ -112,6 +112,17 @@ export function narrate(weather) {
     }
   }
 
+  // Yesterday delta — only call out when it's a meaningful swing.
+  if (bits.length < 2 && weather.yesterday?.temp != null) {
+    const d = temp - weather.yesterday.temp;
+    const dAbs = Math.abs(Math.round(d));
+    if (dAbs >= 6) {
+      bits.push(d > 0
+        ? `A notable ${dAbs}° jump above yesterday.`
+        : `Down ${dAbs}° from yesterday — layer up.`);
+    }
+  }
+
   // Humidity narrative — only in the warm season when dew-point matters.
   if (bits.length < 2 && weather.dewPoint != null && temp >= 20) {
     if (weather.dewPoint >= 22) {
