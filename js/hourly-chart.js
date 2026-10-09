@@ -291,5 +291,34 @@ export class HourlyChart {
       tTxt.textContent = `${Math.round(tVal)}°`;
       labG.appendChild(tTxt);
     });
+
+    // Mark the hottest and coldest hours with a glow + 'high' / 'low' tag.
+    let hotIdx = -1, coldIdx = -1;
+    this.hours.forEach((h, i) => {
+      if (h.temp == null) return;
+      if (hotIdx < 0 || h.temp > this.hours[hotIdx].temp) hotIdx = i;
+      if (coldIdx < 0 || h.temp < this.hours[coldIdx].temp) coldIdx = i;
+    });
+    const marks = [];
+    if (hotIdx >= 0) marks.push({ i: hotIdx, cls: "chart-mark-hot",  label: "max" });
+    if (coldIdx >= 0 && coldIdx !== hotIdx) marks.push({ i: coldIdx, cls: "chart-mark-cold", label: "min" });
+    for (const m of marks) {
+      const p = this.points[m.i];
+      const halo = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      halo.setAttribute("cx", p.x.toFixed(1));
+      halo.setAttribute("cy", p.y.toFixed(1));
+      halo.setAttribute("r", "5");
+      halo.setAttribute("class", `chart-mark ${m.cls}`);
+      labG.appendChild(halo);
+      const tag = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      // Place min tag below, max tag above to minimize overlap with the point label.
+      const y = m.cls === "chart-mark-hot" ? p.y - 16 : p.y + 14;
+      tag.setAttribute("x", p.x.toFixed(1));
+      tag.setAttribute("y", y.toFixed(1));
+      tag.setAttribute("text-anchor", "middle");
+      tag.setAttribute("class", `chart-mark-label ${m.cls}`);
+      tag.textContent = m.label;
+      labG.appendChild(tag);
+    }
   }
 }

@@ -910,6 +910,21 @@ html[data-reduce-motion="true"] *::after {
   fill: var(--fg-muted);
   font-size: 9.5px;
 }
+.chart-mark {
+  fill: none;
+  stroke-width: 1.2;
+  stroke-dasharray: 2 2;
+  opacity: 0.8;
+}
+.chart-mark-hot  { stroke: #ff9c7a; filter: drop-shadow(0 0 4px rgba(255,156,122,0.6)); }
+.chart-mark-cold { stroke: #9ad1ff; filter: drop-shadow(0 0 4px rgba(154,209,255,0.6)); }
+.chart-labels text.chart-mark-label {
+  font-size: 8.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.chart-labels text.chart-mark-label.chart-mark-hot  { fill: #ff9c7a; }
+.chart-labels text.chart-mark-label.chart-mark-cold { fill: #9ad1ff; }
 .chart-cursor {
   stroke: var(--accent);
   stroke-width: 1.2;
