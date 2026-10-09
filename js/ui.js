@@ -101,6 +101,7 @@ const el = {
   outfitDetail: $("#outfit-detail"),
   chartPrecipTotal: $("#chart-precip-total"),
   chartPrecipTotalValue: $("#chart-precip-total-value"),
+  cloudRibbon: $("#cloud-ribbon"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
   weekendDetail: $("#weekend-detail"),
@@ -1021,8 +1022,44 @@ function renderPrecipTotal(w) {
   }
 }
 
+function renderCloudRibbon(w) {
+  if (!el.cloudRibbon) return;
+  const hours = (w?.hourly || []).slice(0, 24);
+  const haveCloud = hours.some((h) => h.cloudCover != null);
+  if (!haveCloud || hours.length < 4) {
+    el.cloudRibbon.hidden = true;
+    el.cloudRibbon.innerHTML = "";
+    return;
+  }
+  el.cloudRibbon.hidden = false;
+  // Build 24 segments. Each colored by cloud cover: clear sky warm pale,
+  // overcast cool gray. Night cells are tinted darker.
+  const parts = hours.map((h) => {
+    const cc = Math.max(0, Math.min(100, h.cloudCover ?? 0));
+    const dayTone = h.isDay !== false;
+    // Interpolate base color: open-sky blue -> cloud gray.
+    const open = dayTone ? [160, 198, 230] : [40, 50, 80];
+    const overcast = dayTone ? [140, 150, 165] : [80, 85, 100];
+    const t = cc / 100;
+    const r = Math.round(open[0] + (overcast[0] - open[0]) * t);
+    const g = Math.round(open[1] + (overcast[1] - open[1]) * t);
+    const b = Math.round(open[2] + (overcast[2] - open[2]) * t);
+    const alpha = 0.35 + 0.5 * t;
+    return `<span class="cloud-cell" title="${fmtTime(h.time)} · ${Math.round(cc)}% cloud" style="background:rgba(${r},${g},${b},${alpha.toFixed(2)})" data-ts="${h.time}"></span>`;
+  });
+  el.cloudRibbon.innerHTML = parts.join("");
+  // Clicking a segment jumps the scrubber to that hour.
+  el.cloudRibbon.querySelectorAll(".cloud-cell").forEach((cell) => {
+    cell.addEventListener("click", () => {
+      const ts = parseInt(cell.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
+}
+
 function renderHourly(w) {
   renderPrecipTotal(w);
+  renderCloudRibbon(w);
   el.forecastTrack.innerHTML = "";
   for (const h of (w.hourly || []).slice(0, 24)) {
     const item = document.createElement("div");
