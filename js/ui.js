@@ -183,6 +183,7 @@ export const ui = {
     // Reset alert dismissals so a fresh location can re-surface them.
     try { sessionStorage.removeItem("aether:dismissed-alerts"); } catch { /* ignore */ }
     renderPlaces();
+    updatePageTitle(state.weather);
   },
   setWeather(weather, { narrative } = {}) {
     state.weather = weather;
@@ -197,6 +198,7 @@ export const ui = {
     renderNowcast(weather);
     renderAdvice(weather);
     renderOutfit(weather);
+    updatePageTitle(weather);
     renderPollen(weather.pollen);
     renderTrends(weather);
     renderInsights(weather);
@@ -223,6 +225,7 @@ export const ui = {
     renderMetrics(sampled);
     renderAdvice(sampled);
     renderOutfit(sampled);
+    updatePageTitle(sampled);
     highlightHour(highlightHourIndex);
     if (state.comfortStrip) state.comfortStrip.highlight(highlightHourIndex);
     if (state.chart && sampled._sampledTs != null) {
@@ -714,6 +717,22 @@ function renderOutfit(w) {
   el.outfitIcon.textContent = o.icon;
   el.outfitLabel.textContent = o.label;
   el.outfitDetail.textContent = o.detail;
+}
+
+// Keep the browser-tab title up-to-date so a backgrounded tab shows the
+// live temperature at a glance ("18° · Berlin — Aether").
+function updatePageTitle(w) {
+  const base = "Aether — Interactive Weather";
+  const place = state.place?.name;
+  const temp = w?.temp;
+  if (place && temp != null && !isNaN(temp)) {
+    const t = Math.round(convertTemp(temp));
+    document.title = `${t}°${state.unit} · ${place} — Aether`;
+  } else if (place) {
+    document.title = `${place} — Aether`;
+  } else {
+    document.title = base;
+  }
 }
 
 function startLocaltime(w) {
