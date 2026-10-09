@@ -53,30 +53,41 @@ function findGusts(hourly) {
   return null;
 }
 
+const CONDITION_GLYPH = {
+  clear:  "☀",
+  clouds: "☁",
+  rain:   "☔",
+  snow:   "❄",
+  storm:  "⚡",
+  fog:    "〰",
+};
+
 /**
  * Return a one or two-sentence narrative for the current weather.
  */
 export function narrate(weather) {
   if (!weather) return "";
   const bits = [];
-  const { condition, label, temp, feelsLike, uvPeak, windSpeed } = weather;
+  const { condition, label, temp, feelsLike, uvPeak, windSpeed, isDay } = weather;
 
-  // Lead: describe current state.
+  // Lead: describe current state. Clear sky at night gets the moon.
   const feels = Math.abs((feelsLike ?? temp) - temp) >= 3
     ? ` — feels closer to ${Math.round(feelsLike)}°`
     : "";
-  bits.push(`${label} at ${Math.round(temp)}°${feels}.`);
+  const glyph = condition === "clear" && !isDay ? "☾" : CONDITION_GLYPH[condition] || "·";
+  bits.push(`${glyph} ${label} at ${Math.round(temp)}°${feels}.`);
 
   // Precipitation arriving.
   const rain = findNextPrecip(weather.nowcast, weather.hourly);
   if (rain && condition !== "rain" && condition !== "storm" && condition !== "snow") {
     if (rain.inMin <= 120) {
-      bits.push(`${rain.kind === "snow" ? "Snow" : "Rain"} starting around ${fmtHour(rain.ts)}.`);
+      const rg = rain.kind === "snow" ? "❄" : "☔";
+      bits.push(`${rg} ${rain.kind === "snow" ? "Snow" : "Rain"} starting around ${fmtHour(rain.ts)}.`);
     }
   } else if (condition === "rain" || condition === "storm") {
     // If it's raining now, look ahead for when it stops.
     const dry = weather.hourly?.find((h) => h.pop < 30 && h.time > Date.now() + 30 * 60_000);
-    if (dry) bits.push(`Easing off by ${fmtHour(dry.time)}.`);
+    if (dry) bits.push(`☀ Easing off by ${fmtHour(dry.time)}.`);
   }
 
   // Temperature swing.
