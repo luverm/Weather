@@ -188,6 +188,7 @@ const scrubber = new Scrubber({
   sunsetEl: document.getElementById("scrubber-sunset"),
   goldenDawnEl: document.getElementById("scrubber-golden-dawn"),
   goldenDuskEl: document.getElementById("scrubber-golden-dusk"),
+  nowEl: document.getElementById("scrubber-now"),
   appEl: document.querySelector(".app"),
   onScrub: () => {
     if (!app.weather) return;

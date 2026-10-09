@@ -10,7 +10,7 @@ const RANGE_HOURS = 24;
 
 export class Scrubber {
   constructor({ trackEl, thumbEl, fillEl, timeEl, deltaEl, resetEl,
-                sunriseEl, sunsetEl, goldenDawnEl, goldenDuskEl, appEl, onScrub }) {
+                sunriseEl, sunsetEl, goldenDawnEl, goldenDuskEl, nowEl, appEl, onScrub }) {
     this.track = trackEl;
     this.thumb = thumbEl;
     this.fill = fillEl;
@@ -21,6 +21,7 @@ export class Scrubber {
     this.sunsetEl = sunsetEl;
     this.goldenDawnEl = goldenDawnEl;
     this.goldenDuskEl = goldenDuskEl;
+    this.nowEl = nowEl;
     this.appEl = appEl; // receives data-scrubbing attribute
     this.onScrub = onScrub;
     this.dragging = false;
@@ -158,6 +159,7 @@ export class Scrubber {
     if (this.timeEl) this.timeEl.textContent = label;
 
     const offMin = Math.round(clock.offset() / 60_000);
+    const scrubbing = !clock.isLive();
     if (this.deltaEl) {
       if (!offMin) this.deltaEl.textContent = "live";
       else if (Math.abs(offMin) < 60) this.deltaEl.textContent = `${offMin > 0 ? "+" : ""}${offMin}m`;
@@ -165,6 +167,13 @@ export class Scrubber {
         const h = Math.round(offMin / 60);
         this.deltaEl.textContent = `${h > 0 ? "+" : ""}${h}h`;
       }
+    }
+    // Position the "now" reference tick: live time sits 1h into the 24h range.
+    if (this.nowEl) {
+      const nowFrac = 1 / RANGE_HOURS;
+      this.nowEl.style.left = `${nowFrac * 100}%`;
+      // Only show while scrubbing — hide when the thumb is already at "now".
+      this.nowEl.hidden = !scrubbing;
     }
   }
 }

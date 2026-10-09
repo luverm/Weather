@@ -561,6 +561,25 @@ html[data-reduce-motion="true"] *::after {
     rgba(255, 160, 120, 0.32) 50%,
     rgba(255, 160, 120, 0) 100%);
 }
+.scrubber-now {
+  position: absolute; top: 2px; bottom: 2px; width: 2px;
+  background: linear-gradient(180deg, transparent, var(--accent), transparent);
+  box-shadow: 0 0 8px var(--accent);
+  pointer-events: none;
+  transform: translateX(-50%);
+  opacity: 0.9;
+}
+.scrubber-now[hidden] { display: none; }
+.scrubber-now::after {
+  content: "NOW";
+  position: absolute;
+  top: -14px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 8.5px;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+  font-weight: 600;
+}
 .scrubber-sunrise::after,
 .scrubber-sunset::after {
   content: attr(data-label);
