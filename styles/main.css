@@ -390,7 +390,24 @@ html[data-reduce-motion="true"] *::after {
 }
 .unit:hover { background: var(--glass); color: var(--fg); }
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
-.feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
+.feels-like {
+  margin: 4px 0 0; font-size: 13px; color: var(--fg-muted);
+  display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+.feels-gap {
+  display: inline-block;
+  padding: 1px 7px;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+  background: rgba(255,255,255,0.08);
+  color: var(--fg-dim);
+  border: 1px solid var(--stroke);
+}
+.feels-gap[hidden] { display: none; }
+.feels-gap[data-dir="warmer"] { color: #ffc296; background: rgba(255, 170, 110, 0.14); border-color: rgba(255, 170, 110, 0.2); }
+.feels-gap[data-dir="cooler"] { color: #9fcdff; background: rgba(130, 180, 255, 0.14); border-color: rgba(130, 180, 255, 0.2); }
 .day-range {
   margin-top: 10px;
   display: grid;

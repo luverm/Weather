@@ -22,6 +22,8 @@ const el = {
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
+  feelsText: $("#feels-text"),
+  feelsGap: $("#feels-gap"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -294,8 +296,36 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  if (el.feelsText) el.feelsText.textContent = `Feels like ${Math.round(feels)}°`;
+  else el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  renderFeelsGap(w, feels, temp);
   renderDayRange(w);
+}
+
+function renderFeelsGap(w, feelsDisplay, tempDisplay) {
+  if (!el.feelsGap) return;
+  const gap = feelsDisplay - tempDisplay;
+  // Only show when the gap is big enough to notice (≥ 2° in display units).
+  if (Math.abs(gap) < 2) {
+    el.feelsGap.hidden = true;
+    return;
+  }
+  // Pick the dominant explanation.
+  const windy = (w.windSpeed ?? 0) >= 15;
+  const humid = (w.humidity ?? 0) >= 60 && (w.temp ?? 0) >= 18;
+  const dry = (w.humidity ?? 100) <= 30 && (w.temp ?? 0) >= 25;
+  const cold = (w.temp ?? 20) <= 10;
+  let reason = "";
+  if (gap < 0) {
+    reason = (windy && cold) ? "wind chill" : windy ? "wind" : "evaporation";
+  } else {
+    reason = humid ? "humidity" : dry ? "dry heat" : "sun";
+  }
+  const sign = gap > 0 ? "+" : "−";
+  const magnitude = Math.round(Math.abs(gap));
+  el.feelsGap.hidden = false;
+  el.feelsGap.textContent = `${sign}${magnitude}° ${reason}`;
+  el.feelsGap.dataset.dir = gap > 0 ? "warmer" : "cooler";
 }
 
 function renderDayRange(w) {
