@@ -372,10 +372,34 @@ setInterval(() => {
   refreshWeather();
 }, 15 * 60_000);
 
-// PWA service worker — optional, best-effort.
+// PWA service worker — optional, best-effort. We also listen for a waiting
+// worker so we can toast the user when a new build is ready; clicking the
+// toast activates the new worker and reloads the page.
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js").catch(() => {});
+  window.addEventListener("load", async () => {
+    try {
+      const reg = await navigator.serviceWorker.register("sw.js");
+      const promptUpdate = (worker) => {
+        if (!worker) return;
+        const show = () => {
+          if (worker.state !== "installed") return;
+          if (!navigator.serviceWorker.controller) return; // first install, no refresh needed
+          ui.showToast("A newer Aether is ready — tap to update", 8000);
+          const toastEl = document.getElementById("toast");
+          toastEl?.addEventListener("click", () => {
+            worker.postMessage({ type: "SKIP_WAITING" });
+          }, { once: true });
+        };
+        worker.addEventListener("statechange", show);
+        show();
+      };
+      // In case a waiting worker already exists.
+      if (reg.waiting) promptUpdate(reg.waiting);
+      reg.addEventListener("updatefound", () => promptUpdate(reg.installing));
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        window.location.reload();
+      });
+    } catch { /* ignore */ }
   });
 }
 

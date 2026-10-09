@@ -1,7 +1,7 @@
 // Simple service worker: cache the shell, network-first for everything else.
 // Bump CACHE_VERSION on any deploy that changes which files exist.
 
-const CACHE_VERSION = "aether-v37";
+const CACHE_VERSION = "aether-v38";
 const SHELL = [
   "./",
   "./index.html",
@@ -40,7 +40,12 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_VERSION).then((cache) => cache.addAll(SHELL)).catch(() => {})
   );
-  self.skipWaiting();
+  // The main thread opts into a controlled update via a SKIP_WAITING message
+  // so the user can decide when a reload happens — don't force it here.
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
