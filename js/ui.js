@@ -251,7 +251,7 @@ export const ui = {
     if (on) {
       el.hintText.textContent = "Drag to explore future weather.";
     } else {
-      el.hintText.innerHTML = 'Drag the slider, hover the chart, or press <kbd>?</kbd> for shortcuts.';
+      el.hintText.innerHTML = 'Drag the slider · hover the chart · <kbd>G</kbd> gold · <kbd>C</kbd> share · <kbd>?</kbd> all';
     }
   },
   setAudioState(on) {
