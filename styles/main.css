@@ -1763,7 +1763,9 @@ kbd {
   text-transform: uppercase;
   border-left: 1px dashed var(--stroke);
   border-right: 1px dashed var(--stroke);
-  scroll-snap-align: start;
+  /* Don't let horizontal scrolling snap to a decorative column — snap
+     targets should always be forecast hours. */
+  scroll-snap-align: none;
   flex-shrink: 0;
 }
 .forecast-item:hover .forecast-wind { color: var(--fg-muted); opacity: 1; }
