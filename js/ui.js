@@ -1789,6 +1789,19 @@ function applyStoredPreferences() {
 ui.isReduceMotion = () => localStorage.getItem("aether:reduceMotion") === "1";
 
 function startFetchedTicker() {
+  if (el.fetchedAgo) {
+    el.fetchedAgo.setAttribute("role", "button");
+    el.fetchedAgo.setAttribute("tabindex", "0");
+    el.fetchedAgo.setAttribute("title", "Click to refresh");
+    const trigger = () => {
+      if (!state.weather) return;
+      state.handlers.onRefresh?.();
+    };
+    el.fetchedAgo.addEventListener("click", trigger);
+    el.fetchedAgo.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); trigger(); }
+    });
+  }
   const update = () => {
     if (!el.fetchedAgo || !state.weather?.fetchedAt) {
       if (el.fetchedAgo) el.fetchedAgo.textContent = "";

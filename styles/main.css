@@ -1827,8 +1827,13 @@ kbd {
   color: var(--fg-dim);
   letter-spacing: 0.12em;
   margin-left: 8px;
+  cursor: pointer;
+  user-select: none;
+  transition: color 160ms var(--ease);
 }
-.fetched-ago:empty { display: none; }
+.fetched-ago:hover,
+.fetched-ago:focus-visible { color: var(--fg-muted); outline: none; }
+.fetched-ago:empty { display: none; cursor: default; }
 .fetched-ago.stale { color: #ffb86b; }
 .fetched-ago.fresh {
   color: var(--accent);
