@@ -79,6 +79,7 @@ const el = {
   dailyHi: $("#daily-hi"),
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
+  dailySparkRain: $("#daily-spark-rain"),
   dailyDelta: $("#daily-delta"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
@@ -1373,6 +1374,32 @@ function renderDailySpark(days) {
   const linePath = (arr) => arr.map((v, i) => (i === 0 ? "M" : "L") + x(i).toFixed(1) + "," + y(v).toFixed(1)).join(" ");
   el.dailyHi.setAttribute("d", linePath(days.map((d) => d.tempMax)));
   el.dailyLo.setAttribute("d", linePath(days.map((d) => d.tempMin)));
+  // Precipitation bars behind the lines — height scaled against the day
+  // with the most rain (minimum 10 mm so a drizzle doesn't fill the chart).
+  if (el.dailySparkRain) {
+    el.dailySparkRain.innerHTML = "";
+    const maxMm = Math.max(10, ...days.map((d) => d.precip || 0));
+    const barMaxH = 10;
+    const slot = innerW / days.length;
+    const barW = Math.max(2, Math.min(10, slot - 6));
+    days.forEach((d, i) => {
+      const mm = d.precip || 0;
+      if (mm < 0.1) return;
+      const h = (mm / maxMm) * barMaxH;
+      const cx = x(i);
+      const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      rect.setAttribute("x", (cx - barW / 2).toFixed(1));
+      rect.setAttribute("y", (H - BOT - h).toFixed(1));
+      rect.setAttribute("width", barW.toFixed(1));
+      rect.setAttribute("height", h.toFixed(1));
+      rect.setAttribute("rx", "1");
+      rect.setAttribute("class", "daily-spark-rain-bar");
+      const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+      title.textContent = `${mm.toFixed(1)} mm`;
+      rect.appendChild(title);
+      el.dailySparkRain.appendChild(rect);
+    });
+  }
   // Dots at each day + per-day temp labels above/below. The embedded <title>
   // gives us a native hover tooltip (hi/lo + condition) at near-zero cost.
   el.dailySparkDots.innerHTML = "";
