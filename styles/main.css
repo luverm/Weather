@@ -722,6 +722,14 @@ html[data-reduce-motion="true"] *::after {
   font-size: 11px; color: var(--fg-dim);
 }
 .pollen-items span { font-variant-numeric: tabular-nums; }
+.pollen-tip {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--fg-muted);
+}
+.pollen-tip[hidden] { display: none; }
 
 /* ---------- Advice ---------- */
 .advice {

@@ -66,6 +66,7 @@ const el = {
   pollenLevel: $("#pollen-level"),
   pollenDominant: $("#pollen-dominant"),
   pollenItems: $("#pollen-items"),
+  pollenTip: $("#pollen-tip"),
   pressureTrend: $("#m-pressure-trend"),
   tempTrend: $("#temp-trend"),
   uvLevel: $("#m-uv-level"),
@@ -1078,6 +1079,26 @@ function renderPollen(pollen) {
   el.pollenItems.innerHTML = pollen.items.map((p) =>
     `<span>${escapeHtml(p.label)} ${p.value.toFixed(1)}</span>`
   ).join("");
+  if (el.pollenTip) {
+    const tip = pollenTip(pollen);
+    if (tip) {
+      el.pollenTip.textContent = tip;
+      el.pollenTip.hidden = false;
+    } else {
+      el.pollenTip.hidden = true;
+    }
+  }
+}
+
+function pollenTip(pollen) {
+  if (!pollen) return "";
+  const level = pollen.level;
+  const kind = pollen.dominant?.key;
+  const kindName = kind === "grass" ? "grass" : kind === "tree" ? "tree" : "weed";
+  if (level === "Very high") return `Heavy ${kindName} pollen · take meds early, close windows`;
+  if (level === "High")      return `High ${kindName} pollen · sensitive sufferers may react`;
+  if (level === "Moderate")  return `Moderate ${kindName} · mild symptoms possible`;
+  return "";
 }
 
 function renderTrends(w) {
