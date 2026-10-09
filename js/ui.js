@@ -91,6 +91,9 @@ const el = {
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
   comfortStrip: $("#comfort-strip"),
+  goldenDawnArc: $("#golden-dawn-arc"),
+  goldenDuskArc: $("#golden-dusk-arc"),
+  goldenHourLine: $("#golden-hour-line"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
   weekendDetail: $("#weekend-detail"),
@@ -122,6 +125,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  goldenHourTimer: null,
   localTimer: null,
 };
 
@@ -523,6 +527,103 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleGoldenHour(w);
+}
+
+// Compute (x,y) on the sun arc's quadratic Bezier at parameter t ∈ [0,1].
+// Must stay in sync with the SVG path "M10 74 Q100 -26 190 74".
+function sunArcPoint(t) {
+  const u = 1 - t;
+  const x = u * u * 10 + 2 * u * t * 100 + t * t * 190;
+  const y = u * u * 74 + 2 * u * t * -26 + t * t * 74;
+  return { x, y };
+}
+
+function sunArcSegment(fracStart, fracEnd, steps = 14) {
+  const a = Math.max(0, Math.min(1, fracStart));
+  const b = Math.max(0, Math.min(1, fracEnd));
+  if (b - a < 1e-3) return "";
+  const parts = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = a + (b - a) * (i / steps);
+    const { x, y } = sunArcPoint(t);
+    parts.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+  }
+  return "M" + parts.join(" L");
+}
+
+function scheduleGoldenHour(w) {
+  if (state.goldenHourTimer) {
+    clearInterval(state.goldenHourTimer);
+    state.goldenHourTimer = null;
+  }
+  if (!el.goldenHourLine) return;
+
+  const update = () => {
+    const sr = w?.sunrise, ss = w?.sunset;
+    const totalMs = (sr && ss) ? ss - sr : 0;
+    // Golden hour window = ~60 min after sunrise / before sunset.
+    const windowMs = 60 * 60_000;
+    // Only meaningful when the day is long enough that the two windows don't collide.
+    if (!sr || !ss || totalMs < 2.5 * 3600_000) {
+      el.goldenHourLine.hidden = true;
+      el.goldenDawnArc?.setAttribute("opacity", "0");
+      el.goldenDuskArc?.setAttribute("opacity", "0");
+      return;
+    }
+    // Draw colored arc segments covering the two windows.
+    const dawnEndFrac = windowMs / totalMs;
+    const duskStartFrac = (totalMs - windowMs) / totalMs;
+    if (el.goldenDawnArc) {
+      el.goldenDawnArc.setAttribute("d", sunArcSegment(0, dawnEndFrac));
+      el.goldenDawnArc.setAttribute("opacity", "0.7");
+    }
+    if (el.goldenDuskArc) {
+      el.goldenDuskArc.setAttribute("d", sunArcSegment(duskStartFrac, 1));
+      el.goldenDuskArc.setAttribute("opacity", "0.7");
+    }
+
+    const now = Date.now();
+    const dawnStart = sr;
+    const dawnEnd = sr + windowMs;
+    const duskStart = ss - windowMs;
+    const duskEnd = ss;
+
+    let line = "", tone = "idle";
+    if (now >= dawnStart && now <= dawnEnd) {
+      const left = Math.max(0, Math.round((dawnEnd - now) / 60_000));
+      line = `✦ Golden hour · ${left}m left`;
+      tone = "active";
+    } else if (now >= duskStart && now <= duskEnd) {
+      const left = Math.max(0, Math.round((duskEnd - now) / 60_000));
+      line = `✦ Golden hour · ${left}m left`;
+      tone = "active";
+    } else {
+      const candidates = [];
+      if (now < dawnStart) candidates.push({ ts: dawnStart, label: "Dawn gold" });
+      if (now < duskStart) candidates.push({ ts: duskStart, label: "Golden hour" });
+      // Next day's dawn, if we're past dusk.
+      const nextDawn = w?.daily?.[1]?.sunrise;
+      if (nextDawn && now > duskEnd) candidates.push({ ts: nextDawn, label: "Dawn gold" });
+      candidates.sort((a, b) => a.ts - b.ts);
+      const next = candidates[0];
+      if (next) {
+        const mins = Math.max(0, Math.round((next.ts - now) / 60_000));
+        const inLabel = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
+        line = `${next.label} at ${fmtTime(next.ts)} · in ${inLabel}`;
+      }
+    }
+
+    if (line) {
+      el.goldenHourLine.hidden = false;
+      el.goldenHourLine.textContent = line;
+      el.goldenHourLine.dataset.tone = tone;
+    } else {
+      el.goldenHourLine.hidden = true;
+    }
+  };
+  update();
+  state.goldenHourTimer = setInterval(update, 30_000);
 }
 
 function scheduleSunArc(w) {
