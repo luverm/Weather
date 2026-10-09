@@ -1727,7 +1727,16 @@ kbd {
 }
 .forecast-item:hover { background: var(--glass); transform: translateY(-2px); }
 .forecast-item.active { background: var(--glass-strong); }
+.forecast-item.is-now {
+  background: linear-gradient(180deg, rgba(154, 209, 255, 0.1), rgba(154, 209, 255, 0.04));
+  border: 1px solid rgba(154, 209, 255, 0.22);
+}
 .forecast-time { font-size: 11px; letter-spacing: 0.08em; color: var(--fg-dim); text-transform: uppercase; }
+.forecast-time-now {
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+}
 .forecast-icon { width: 26px; height: 26px; display: grid; place-items: center; color: var(--fg-muted); }
 .forecast-temp { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .forecast-wind {

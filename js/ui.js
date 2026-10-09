@@ -1228,7 +1228,18 @@ function renderHourly(w) {
         : new Date(ts).toLocaleDateString(undefined, { weekday: "short" });
     } catch { return ""; }
   };
-  for (const h of hours) {
+  // Flag the hour nearest to live time so we can decorate it as "NOW".
+  const nowTs = Date.now();
+  let nowIdx = -1;
+  if (hours.length) {
+    nowIdx = 0;
+    let bestDiff = Math.abs(hours[0].time - nowTs);
+    for (let i = 1; i < hours.length; i++) {
+      const diff = Math.abs(hours[i].time - nowTs);
+      if (diff < bestDiff) { bestDiff = diff; nowIdx = i; }
+    }
+  }
+  hours.forEach((h, idx) => {
     const key = dayKey(h.time);
     if (lastDay != null && key !== lastDay) {
       const sep = document.createElement("div");
@@ -1238,7 +1249,7 @@ function renderHourly(w) {
     }
     lastDay = key;
     const item = document.createElement("div");
-    item.className = "forecast-item";
+    item.className = "forecast-item" + (idx === nowIdx ? " is-now" : "");
     item.dataset.ts = h.time;
     // Always render the wind arrow span so the grid rows stay aligned; just
     // hide the content when a hour lacks a direction.
@@ -1249,8 +1260,11 @@ function renderHourly(w) {
            </svg>
          </span>`
       : `<span class="forecast-wind forecast-wind-empty" aria-hidden="true"></span>`;
+    const nowLabel = idx === nowIdx
+      ? `<span class="forecast-time forecast-time-now">NOW</span>`
+      : `<span class="forecast-time">${fmtTime(h.time)}</span>`;
     item.innerHTML = `
-      <span class="forecast-time">${fmtTime(h.time)}</span>
+      ${nowLabel}
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       ${windArrow}
@@ -1258,7 +1272,7 @@ function renderHourly(w) {
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
-  }
+  });
 }
 
 function highlightHour(index) {
