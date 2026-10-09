@@ -1115,6 +1115,20 @@ kbd {
 .sun-item { display: grid; gap: 2px; }
 .sun-label { font-size: 10.5px; color: var(--fg-dim); letter-spacing: 0.14em; text-transform: uppercase; }
 .sun-item strong { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.sun-trend {
+  display: inline-block;
+  margin-top: 2px;
+  padding: 1px 7px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  color: var(--fg-dim);
+}
+.sun-trend[hidden] { display: none; }
+.sun-trend[data-dir="longer"] { color: #ffd09a; background: rgba(255, 210, 160, 0.14); }
+.sun-trend[data-dir="shorter"] { color: #9fcdff; background: rgba(130, 180, 255, 0.14); }
 .sun-arc {
   width: 100%;
   height: 76px;

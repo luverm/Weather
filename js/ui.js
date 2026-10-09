@@ -54,6 +54,7 @@ const el = {
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  sunTrend: $("#sun-trend"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -597,9 +598,36 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderSunTrend(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   scheduleGoldenHour(w);
+}
+
+function renderSunTrend(w) {
+  if (!el.sunTrend) return;
+  const days = w?.daily || [];
+  const today = days[0];
+  // Prefer tomorrow's delta — the single most relevant reading.
+  const next = days[1];
+  if (!today?.sunrise || !today?.sunset || !next?.sunrise || !next?.sunset) {
+    el.sunTrend.hidden = true;
+    return;
+  }
+  const todayMins = Math.round((today.sunset - today.sunrise) / 60_000);
+  const nextMins = Math.round((next.sunset - next.sunrise) / 60_000);
+  const delta = nextMins - todayMins;
+  if (Math.abs(delta) < 1) {
+    el.sunTrend.hidden = true;
+    return;
+  }
+  const sign = delta > 0 ? "+" : "−";
+  el.sunTrend.hidden = false;
+  el.sunTrend.textContent = `${sign}${Math.abs(delta)}m tomorrow`;
+  el.sunTrend.dataset.dir = delta > 0 ? "longer" : "shorter";
+  el.sunTrend.title = delta > 0
+    ? `Days are getting longer — ${Math.abs(delta)} minutes gained by tomorrow`
+    : `Days are getting shorter — ${Math.abs(delta)} minutes lost by tomorrow`;
 }
 
 // Compute (x,y) on the sun arc's quadratic Bezier at parameter t ∈ [0,1].
