@@ -99,6 +99,8 @@ const el = {
   outfitIcon: $("#outfit-icon"),
   outfitLabel: $("#outfit-label"),
   outfitDetail: $("#outfit-detail"),
+  chartPrecipTotal: $("#chart-precip-total"),
+  chartPrecipTotalValue: $("#chart-precip-total-value"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
   weekendDetail: $("#weekend-detail"),
@@ -988,7 +990,39 @@ function cardinal(deg) {
   return dirs[i];
 }
 
+function renderPrecipTotal(w) {
+  if (!el.chartPrecipTotal) return;
+  const hours = (w?.hourly || []).slice(0, 24);
+  if (!hours.length) {
+    el.chartPrecipTotal.hidden = true;
+    return;
+  }
+  const totalMm = hours.reduce((sum, h) => sum + (h.precip || 0), 0);
+  // Hide the chip for truly dry days — otherwise it's just visual noise.
+  if (totalMm < 0.1) {
+    el.chartPrecipTotal.hidden = true;
+    el.chartPrecipTotal.dataset.tone = "dry";
+    return;
+  }
+  el.chartPrecipTotal.hidden = false;
+  const value = totalMm < 1 ? totalMm.toFixed(1) : Math.round(totalMm);
+  el.chartPrecipTotalValue.textContent = `${value} mm`;
+  el.chartPrecipTotal.dataset.tone =
+    totalMm >= 25 ? "heavy" : totalMm >= 5 ? "wet" : "trace";
+  // Peak hour tooltip.
+  let peakIdx = 0;
+  hours.forEach((h, i) => { if ((h.precip || 0) > (hours[peakIdx]?.precip || 0)) peakIdx = i; });
+  const peak = hours[peakIdx];
+  if (peak && (peak.precip || 0) > 0.05) {
+    el.chartPrecipTotal.title =
+      `${totalMm.toFixed(1)} mm expected · heaviest ${peak.precip.toFixed(1)} mm at ${fmtTime(peak.time)}`;
+  } else {
+    el.chartPrecipTotal.title = `${totalMm.toFixed(1)} mm expected in the next 24h`;
+  }
+}
+
 function renderHourly(w) {
+  renderPrecipTotal(w);
   el.forecastTrack.innerHTML = "";
   for (const h of (w.hourly || []).slice(0, 24)) {
     const item = document.createElement("div");
