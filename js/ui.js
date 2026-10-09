@@ -1290,6 +1290,19 @@ function renderHourly(w) {
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
   });
+  // After render, scroll the strip itself so the NOW hour starts near the
+  // left edge. We only touch the track's scrollLeft (never the page's
+  // scrollTop) to avoid an unwanted vertical jump on load.
+  requestAnimationFrame(() => {
+    const nowItem = el.forecastTrack.querySelector(".forecast-item.is-now");
+    if (!nowItem) return;
+    const trackRect = el.forecastTrack.getBoundingClientRect();
+    const itemRect = nowItem.getBoundingClientRect();
+    const offset = (itemRect.left - trackRect.left) + el.forecastTrack.scrollLeft - 6;
+    if (Math.abs(offset - el.forecastTrack.scrollLeft) > 4) {
+      el.forecastTrack.scrollLeft = offset;
+    }
+  });
 }
 
 function highlightHour(index) {
