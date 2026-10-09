@@ -70,6 +70,7 @@ export function installShortcuts(handlers) {
     if (key === "[") { handlers.cyclePlace?.(-1); e.preventDefault(); return; }
     if (key === "]") { handlers.cyclePlace?.(1); e.preventDefault(); return; }
     if (key === "g" || key === "G") { handlers.jumpGoldenHour?.(); e.preventDefault(); return; }
+    if (key === "c" || key === "C") { handlers.share?.(); e.preventDefault(); return; }
   });
 }
 

@@ -305,6 +305,7 @@ installShortcuts({
     if (app.weather) applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
   },
+  share: () => document.getElementById("share-btn")?.click(),
   jumpGoldenHour: () => {
     const w = app.weather;
     if (!w?.sunrise || !w?.sunset) return;
