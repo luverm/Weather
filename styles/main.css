@@ -1116,6 +1116,20 @@ kbd {
   line-height: 1.35;
 }
 .aq-tip[hidden] { display: none; }
+.aq-trend-arrow {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 10px;
+  line-height: 1;
+  padding: 1px 5px;
+  border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+  background: rgba(255,255,255,0.08);
+}
+.aq-trend-arrow[hidden] { display: none; }
+.aq-trend-arrow[data-dir="better"] { color: #78d06a; background: rgba(120, 208, 106, 0.14); }
+.aq-trend-arrow[data-dir="worse"]  { color: #ff6a6a; background: rgba(255, 106, 106, 0.14); }
+.aq-trend-arrow[data-dir="steady"] { color: var(--fg-dim); }
 #aq-card[data-severity="unhealthy"],
 #aq-card[data-severity="very-unhealthy"],
 #aq-card[data-severity="hazardous"] {

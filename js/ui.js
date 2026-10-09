@@ -46,6 +46,7 @@ const el = {
   aqTrendLine: $("#aq-trend-line"),
   aqTrendFill: $("#aq-trend-fill"),
   aqTip: $("#aq-tip"),
+  aqTrendArrow: $("#aq-trend-arrow"),
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
@@ -546,9 +547,32 @@ function renderAqTrend(aq) {
   if (pts.length < 2) {
     el.aqTrendLine.setAttribute("d", "");
     el.aqTrendFill.setAttribute("d", "");
+    if (el.aqTrendArrow) el.aqTrendArrow.hidden = true;
     return;
   }
   drawSparkline(el.aqTrendLine, el.aqTrendFill, pts, { minSpan: 20 });
+  // Trend arrow: compare first few hours to last few in the window.
+  if (el.aqTrendArrow) {
+    const start = pts.slice(0, Math.max(1, Math.floor(pts.length / 4)));
+    const end = pts.slice(-Math.max(1, Math.floor(pts.length / 4)));
+    const avg = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
+    const delta = avg(end) - avg(start);
+    if (Math.abs(delta) < 5) {
+      el.aqTrendArrow.hidden = false;
+      el.aqTrendArrow.textContent = "→";
+      el.aqTrendArrow.dataset.dir = "steady";
+      el.aqTrendArrow.title = "Air quality steady over the next few hours";
+    } else {
+      el.aqTrendArrow.hidden = false;
+      // Rising AQI = worsening; falling = improving.
+      const improving = delta < 0;
+      el.aqTrendArrow.textContent = improving ? "▼" : "▲";
+      el.aqTrendArrow.dataset.dir = improving ? "better" : "worse";
+      el.aqTrendArrow.title = improving
+        ? `Air quality improving (AQI ${Math.round(delta)} by end of window)`
+        : `Air quality worsening (AQI +${Math.round(delta)} by end of window)`;
+    }
+  }
 }
 
 function renderMoon(moon) {
