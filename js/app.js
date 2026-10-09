@@ -302,6 +302,30 @@ installShortcuts({
     if (app.weather) applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
   },
+  jumpGoldenHour: () => {
+    const w = app.weather;
+    if (!w?.sunrise || !w?.sunset) return;
+    const windowMs = 60 * 60_000;
+    const now = Date.now();
+    // Prefer the most relevant future golden hour: whichever of
+    // today's dawn, today's dusk, or tomorrow's dawn comes next.
+    const candidates = [
+      { ts: w.sunrise + 30 * 60_000, label: "Dawn golden hour" },
+      { ts: w.sunset  - 30 * 60_000, label: "Dusk golden hour" },
+    ];
+    if (w.daily?.[1]?.sunrise) {
+      candidates.push({ ts: w.daily[1].sunrise + 30 * 60_000, label: "Tomorrow's dawn gold" });
+    }
+    const next = candidates
+      .filter((c) => c.ts > now - windowMs)
+      .sort((a, b) => a.ts - b.ts)[0];
+    if (!next) return;
+    clock.setOffset(next.ts - Date.now());
+    scrubber.sync();
+    applyScene(w);
+    ui.setScrubbing(true);
+    ui.showToast(`✦ Jumped to ${next.label}`);
+  },
 });
 
 // ---------- Start ----------
