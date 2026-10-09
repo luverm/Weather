@@ -43,6 +43,7 @@ const el = {
   aqCard: $("#aq-card"),
   aqTrendLine: $("#aq-trend-line"),
   aqTrendFill: $("#aq-trend-fill"),
+  aqTip: $("#aq-tip"),
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
@@ -478,6 +479,34 @@ function renderAirQuality(aq) {
   el.aqDetail.textContent =
     `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
   renderAqTrend(aq);
+  // Health tip + card tone.
+  const tip = aqAdvice(aq.aqi);
+  if (el.aqTip) {
+    if (tip) {
+      el.aqTip.textContent = tip;
+      el.aqTip.hidden = false;
+    } else {
+      el.aqTip.hidden = true;
+    }
+  }
+  el.aqCard.dataset.severity =
+    aq.aqi == null ? "unknown" :
+    aq.aqi <= 50 ? "good" :
+    aq.aqi <= 100 ? "moderate" :
+    aq.aqi <= 150 ? "sensitive" :
+    aq.aqi <= 200 ? "unhealthy" :
+    aq.aqi <= 300 ? "very-unhealthy" :
+    "hazardous";
+}
+
+function aqAdvice(aqi) {
+  if (aqi == null) return "";
+  if (aqi <= 50)  return "Great day for a run";
+  if (aqi <= 100) return "OK for most, sensitive groups go lighter";
+  if (aqi <= 150) return "Sensitive groups should limit exertion";
+  if (aqi <= 200) return "Reduce prolonged outdoor activity";
+  if (aqi <= 300) return "Avoid outdoor exertion · wear a mask";
+  return "Stay indoors · N95 if you must go out";
 }
 
 function renderAqTrend(aq) {
