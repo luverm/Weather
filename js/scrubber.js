@@ -10,7 +10,7 @@ const RANGE_HOURS = 24;
 
 export class Scrubber {
   constructor({ trackEl, thumbEl, fillEl, timeEl, deltaEl, resetEl,
-                sunriseEl, sunsetEl, appEl, onScrub }) {
+                sunriseEl, sunsetEl, goldenDawnEl, goldenDuskEl, appEl, onScrub }) {
     this.track = trackEl;
     this.thumb = thumbEl;
     this.fill = fillEl;
@@ -19,6 +19,8 @@ export class Scrubber {
     this.resetEl = resetEl;
     this.sunriseEl = sunriseEl;
     this.sunsetEl = sunsetEl;
+    this.goldenDawnEl = goldenDawnEl;
+    this.goldenDuskEl = goldenDuskEl;
     this.appEl = appEl; // receives data-scrubbing attribute
     this.onScrub = onScrub;
     this.dragging = false;
@@ -38,7 +40,24 @@ export class Scrubber {
     this.sunset = sunset;
     this._placeMarker(this.sunriseEl, sunrise, "Sunrise");
     this._placeMarker(this.sunsetEl, sunset, "Sunset");
+    this._placeGoldenBand(this.goldenDawnEl, sunrise, sunrise ? sunrise + 60 * 60_000 : null);
+    this._placeGoldenBand(this.goldenDuskEl, sunset ? sunset - 60 * 60_000 : null, sunset);
     this._render(this._currentT());
+  }
+
+  _placeGoldenBand(el, startTs, endTs) {
+    if (!el || !startTs || !endTs || endTs <= startTs) { if (el) el.style.display = "none"; return; }
+    const totalMs = RANGE_HOURS * 3600_000;
+    const base = this.start - 3600_000;
+    const left = (startTs - base) / totalMs;
+    const right = (endTs - base) / totalMs;
+    if (right < 0 || left > 1) { el.style.display = "none"; return; }
+    const l = Math.max(0, left);
+    const r = Math.min(1, right);
+    if (r - l < 1e-3) { el.style.display = "none"; return; }
+    el.style.display = "block";
+    el.style.left = `${l * 100}%`;
+    el.style.width = `${(r - l) * 100}%`;
   }
 
   /** Called when we externally reset to "now" (e.g. search selected). */
