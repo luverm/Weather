@@ -350,7 +350,10 @@ function computeMoonPhase(date) {
     phase < 0.72 ? "Waning gibbous" :
     phase < 0.78 ? "Last quarter" :
     "Waning crescent";
-  return { phase, illum, name };
+  const CYCLE = 29.5305882;
+  const daysToFull = ((0.5 - phase + 1) % 1) * CYCLE;
+  const daysToNew  = ((1 - phase) % 1) * CYCLE;
+  return { phase, illum, name, daysToFull, daysToNew };
 }
 
 function mock(lat, lon) {

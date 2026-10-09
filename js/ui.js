@@ -50,6 +50,7 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonNext: $("#moon-next"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -579,6 +580,23 @@ function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  // Days-to-next pill: pick whichever landmark (full or new) is sooner.
+  if (el.moonNext) {
+    const df = moon.daysToFull;
+    const dn = moon.daysToNew;
+    if (df != null && dn != null) {
+      const soonest = df < dn ? { d: df, label: "Full", glyph: "●" } : { d: dn, label: "New", glyph: "○" };
+      const days = Math.max(0, Math.round(soonest.d));
+      if (days === 0) {
+        el.moonNext.textContent = `${soonest.glyph} ${soonest.label} today`;
+      } else {
+        el.moonNext.textContent = `${soonest.glyph} ${soonest.label} in ${days} day${days === 1 ? "" : "s"}`;
+      }
+      el.moonNext.hidden = false;
+    } else {
+      el.moonNext.hidden = true;
+    }
+  }
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
