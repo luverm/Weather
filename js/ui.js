@@ -209,6 +209,7 @@ export const ui = {
     renderAdvice(weather);
     renderOutfit(weather);
     updatePageTitle(weather);
+    appendPlaceElevation(weather);
     renderPollen(weather.pollen);
     renderTrends(weather);
     renderInsights(weather);
@@ -850,6 +851,21 @@ function renderOutfit(w) {
   el.outfitIcon.textContent = o.icon;
   el.outfitLabel.textContent = o.label;
   el.outfitDetail.textContent = o.detail;
+}
+
+// Append elevation to the place subtitle so coastal, mountain, and valley
+// cities read differently at a glance. Keeps the admin1/country prefix.
+function appendPlaceElevation(w) {
+  if (!el.placeSub || !state.place) return;
+  const admin = [state.place.admin1, state.place.country].filter(Boolean).join(", ");
+  const elev = w?.elevation;
+  if (elev == null || isNaN(elev)) {
+    el.placeSub.textContent = admin || "—";
+    return;
+  }
+  const m = Math.round(elev);
+  const elevStr = m >= 1 ? `${m.toLocaleString()} m` : "sea level";
+  el.placeSub.textContent = admin ? `${admin} · ${elevStr}` : elevStr;
 }
 
 // Keep the browser-tab title up-to-date so a backgrounded tab shows the
