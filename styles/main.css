@@ -792,6 +792,7 @@ html[data-reduce-motion="true"] *::after {
   color: var(--fg-dim);
   margin-left: 6px;
 }
+.chart-popover .pop-wet { color: #9ad1ff; font-weight: 500; }
 .chart-hover {
   font-size: 12px;
   color: var(--fg);

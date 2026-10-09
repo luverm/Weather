@@ -139,9 +139,12 @@ export class HourlyChart {
       ? `<em>feels ${Math.round(feels)}°</em>` : "";
     const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
+    const mm = (h.precip != null && h.precip >= 0.1)
+      ? ` · <span class="pop-wet">${h.precip.toFixed(1)} mm</span>` : "";
+    const cloud = h.cloudCover != null ? ` · ${Math.round(h.cloudCover)}% ☁` : "";
     this.popover.innerHTML =
       `<strong>${this._formatHour(h.time)}</strong> ${Math.round(t)}° ${feelsStr}<br>` +
-      `<em>${h.pop}% precip${wind}${hum}</em>`;
+      `<em>${h.pop}% precip${mm}${wind}${hum}${cloud}</em>`;
     this.popover.style.left = `${pxX.toFixed(1)}px`;
     this.popover.style.top = `${pxY.toFixed(1)}px`;
     this.popover.hidden = false;
