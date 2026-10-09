@@ -1172,7 +1172,32 @@ function renderHourly(w) {
   renderPrecipTotal(w);
   renderCloudRibbon(w);
   el.forecastTrack.innerHTML = "";
-  for (const h of (w.hourly || []).slice(0, 24)) {
+  const hours = (w.hourly || []).slice(0, 24);
+  let lastDay = null;
+  const tz = w?.timezone;
+  const dayKey = (ts) => {
+    try {
+      return tz && tz !== "auto"
+        ? new Intl.DateTimeFormat([], { timeZone: tz, day: "2-digit" }).format(new Date(ts))
+        : new Date(ts).getDate();
+    } catch { return new Date(ts).getDate(); }
+  };
+  const dayLabel = (ts) => {
+    try {
+      return tz && tz !== "auto"
+        ? new Intl.DateTimeFormat([], { timeZone: tz, weekday: "short" }).format(new Date(ts))
+        : new Date(ts).toLocaleDateString(undefined, { weekday: "short" });
+    } catch { return ""; }
+  };
+  for (const h of hours) {
+    const key = dayKey(h.time);
+    if (lastDay != null && key !== lastDay) {
+      const sep = document.createElement("div");
+      sep.className = "forecast-day-sep";
+      sep.textContent = dayLabel(h.time);
+      el.forecastTrack.appendChild(sep);
+    }
+    lastDay = key;
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
@@ -1198,6 +1223,7 @@ function renderHourly(w) {
 }
 
 function highlightHour(index) {
+  // Only count .forecast-item nodes — .forecast-day-sep nodes are decorative.
   const items = el.forecastTrack.querySelectorAll(".forecast-item");
   items.forEach((it, i) => it.classList.toggle("active", i === index));
 }
