@@ -269,8 +269,23 @@ export class HourlyChart {
 
     // Labels: every ~3 hours
     const unit = this.getUnit();
+    const toDisplay = (c) => unit === "F" ? c * 9 / 5 + 32 : c;
     const labG = this.svg.querySelector("#chart-labels");
     labG.innerHTML = "";
+    // Y-axis min/max temperature labels on the left margin.
+    const axisMin = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    axisMin.setAttribute("x", "2");
+    axisMin.setAttribute("y", (PAD_TOP + innerH - 1).toFixed(1));
+    axisMin.setAttribute("class", "axis-tick");
+    axisMin.textContent = `${Math.round(toDisplay(tMin))}°`;
+    labG.appendChild(axisMin);
+    const axisMax = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    axisMax.setAttribute("x", "2");
+    axisMax.setAttribute("y", (PAD_TOP + 8).toFixed(1));
+    axisMax.setAttribute("class", "axis-tick");
+    axisMax.textContent = `${Math.round(toDisplay(tMax))}°`;
+    labG.appendChild(axisMax);
+
     const labelStep = Math.max(3, Math.floor(this.hours.length / 8));
     this.hours.forEach((h, i) => {
       if (i % labelStep !== 0) return;

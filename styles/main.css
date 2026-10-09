@@ -941,6 +941,13 @@ html[data-reduce-motion="true"] *::after {
 }
 .chart-labels text.chart-mark-label.chart-mark-hot  { fill: #ff9c7a; }
 .chart-labels text.chart-mark-label.chart-mark-cold { fill: #9ad1ff; }
+.chart-labels text.axis-tick {
+  font-size: 8.5px;
+  letter-spacing: 0.04em;
+  fill: var(--fg-dim);
+  opacity: 0.6;
+  text-anchor: start;
+}
 .chart-cursor {
   stroke: var(--accent);
   stroke-width: 1.2;
