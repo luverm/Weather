@@ -1508,8 +1508,17 @@ kbd {
   color: var(--fg-dim);
   margin-top: 2px;
   letter-spacing: 0.04em;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
 }
-.daily-gust.show { display: block; }
+.daily-gust.show { display: inline-flex; }
+.daily-sun-times {
+  display: inline-flex; align-items: center; gap: 4px;
+  color: #ffd09a;
+  font-variant-numeric: tabular-nums;
+}
+.daily-sun-glyph { opacity: 0.75; }
 .daily-item { grid-auto-rows: auto; }
 
 /* ---------- Forecast (hourly + daily) ---------- */

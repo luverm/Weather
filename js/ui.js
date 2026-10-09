@@ -1174,11 +1174,14 @@ function renderDaily(w) {
     const item = document.createElement("div");
     item.className = "daily-item";
     item.dataset.ts = d.time;
-    const gustLabel = (d.gustsMax && d.gustsMax >= 25)
-      ? ` · gusts ${Math.round(d.gustsMax)} km/h`
-      : "";
-    const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
-    const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const details = [];
+    if (d.sunrise && d.sunset) {
+      details.push(`<span class="daily-sun-times"><span class="daily-sun-glyph" aria-hidden="true">☀</span>${fmtTime(d.sunrise)} → ${fmtTime(d.sunset)}</span>`);
+    }
+    if (d.pop >= 30) details.push(`${d.pop}% rain`);
+    if (d.precip != null && d.precip >= 1) details.push(`${d.precip.toFixed(1)} mm`);
+    if (d.gustsMax && d.gustsMax >= 25) details.push(`gusts ${Math.round(d.gustsMax)} km/h`);
+    const extra = details.length ? `<span class="daily-gust">${details.join(" · ")}</span>` : "";
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
