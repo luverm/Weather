@@ -733,6 +733,32 @@ function updatePageTitle(w) {
   } else {
     document.title = base;
   }
+  updateFavicon(w);
+}
+
+// Map an internal condition code to a favicon emoji + accent background.
+function faviconFor(w) {
+  const cond = w?.condition;
+  const isDay = w?.isDay !== false;
+  if (cond === "clear")   return isDay ? { emoji: "☀", bg: "#1b2850" } : { emoji: "☾", bg: "#0b1020" };
+  if (cond === "clouds")  return isDay ? { emoji: "☁", bg: "#28374f" } : { emoji: "☁", bg: "#131a2a" };
+  if (cond === "rain")    return { emoji: "☂", bg: "#1d3148" };
+  if (cond === "snow")    return { emoji: "❄", bg: "#2a3b55" };
+  if (cond === "storm")   return { emoji: "⚡", bg: "#2a1c3a" };
+  if (cond === "fog")     return { emoji: "≋", bg: "#2a2f3a" };
+  return { emoji: "✸", bg: "#0b1020" };
+}
+
+function updateFavicon(w) {
+  const link = document.querySelector('link[rel="icon"]');
+  if (!link) return;
+  const spec = faviconFor(w);
+  // Inline SVG with a colored background disc and a weather glyph.
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>
+    <rect width='64' height='64' rx='14' fill='${spec.bg}'/>
+    <text x='32' y='48' font-size='48' text-anchor='middle' fill='#ffe9b6' font-family='Segoe UI Symbol, Apple Color Emoji, sans-serif'>${spec.emoji}</text>
+  </svg>`;
+  link.href = "data:image/svg+xml," + encodeURIComponent(svg);
 }
 
 function startLocaltime(w) {
