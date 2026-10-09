@@ -1357,23 +1357,46 @@ function renderDailySpark(days) {
   const linePath = (arr) => arr.map((v, i) => (i === 0 ? "M" : "L") + x(i).toFixed(1) + "," + y(v).toFixed(1)).join(" ");
   el.dailyHi.setAttribute("d", linePath(days.map((d) => d.tempMax)));
   el.dailyLo.setAttribute("d", linePath(days.map((d) => d.tempMin)));
-  // Dots at each day + per-day temp labels above/below
+  // Dots at each day + per-day temp labels above/below. The embedded <title>
+  // gives us a native hover tooltip (hi/lo + condition) at near-zero cost.
   el.dailySparkDots.innerHTML = "";
+  const tz = state.weather?.timezone;
+  const dayLabel = (ts) => {
+    try {
+      return new Date(ts).toLocaleDateString(undefined, {
+        weekday: "short", day: "numeric",
+        ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+      });
+    } catch { return ""; }
+  };
+  const SVG = "http://www.w3.org/2000/svg";
   days.forEach((d, i) => {
+    const hiDisp = d.tempMax != null ? Math.round(convertTemp(d.tempMax)) : "—";
+    const loDisp = d.tempMin != null ? Math.round(convertTemp(d.tempMin)) : "—";
+    const label = d.label || d.condition || "";
+    const dayStr = dayLabel(d.time);
+    const popStr = (d.pop != null) ? ` · ${d.pop}%` : "";
+    const tooltip = `${dayStr} · ${hiDisp}° / ${loDisp}° · ${label}${popStr}`;
     if (d.tempMax != null) {
-      const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      const c = document.createElementNS(SVG, "circle");
       c.setAttribute("cx", x(i).toFixed(1));
       c.setAttribute("cy", y(d.tempMax).toFixed(1));
       c.setAttribute("r", "2.5");
       c.setAttribute("class", "dot-hi");
+      const title = document.createElementNS(SVG, "title");
+      title.textContent = tooltip;
+      c.appendChild(title);
       el.dailySparkDots.appendChild(c);
     }
     if (d.tempMin != null) {
-      const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      const c = document.createElementNS(SVG, "circle");
       c.setAttribute("cx", x(i).toFixed(1));
       c.setAttribute("cy", y(d.tempMin).toFixed(1));
       c.setAttribute("r", "2.5");
       c.setAttribute("class", "dot-lo");
+      const title = document.createElementNS(SVG, "title");
+      title.textContent = tooltip;
+      c.appendChild(title);
       el.dailySparkDots.appendChild(c);
     }
   });
