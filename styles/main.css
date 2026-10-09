@@ -1519,6 +1519,19 @@ kbd {
   font-variant-numeric: tabular-nums;
 }
 .daily-sun-glyph { opacity: 0.75; }
+.daily-uv {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  background: rgba(255, 180, 110, 0.14);
+  color: #ffc78a;
+  border: 1px solid rgba(255, 180, 110, 0.2);
+}
+.daily-uv[data-level="very-high"] { color: #ff9b6a; background: rgba(255, 150, 100, 0.18); border-color: rgba(255, 150, 100, 0.28); }
+.daily-uv[data-level="extreme"]   { color: #ff6a6a; background: rgba(255, 95, 95, 0.22); border-color: rgba(255, 95, 95, 0.34); }
 .daily-item { grid-auto-rows: auto; }
 
 /* ---------- Forecast (hourly + daily) ---------- */
@@ -1611,6 +1624,7 @@ kbd {
   opacity: 0.75;
 }
 .forecast-wind svg { width: 100%; height: 100%; transition: transform 500ms var(--ease); }
+.forecast-wind-empty { visibility: hidden; }
 .forecast-item:hover .forecast-wind { color: var(--fg-muted); opacity: 1; }
 .forecast-pop {
   font-size: 10px; color: var(--accent); font-variant-numeric: tabular-nums;

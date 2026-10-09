@@ -1124,13 +1124,15 @@ function renderHourly(w) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    // Always render the wind arrow span so the grid rows stay aligned; just
+    // hide the content when a hour lacks a direction.
     const windArrow = h.windDir != null
       ? `<span class="forecast-wind" title="${Math.round(h.wind ?? 0)} km/h from ${cardinal(h.windDir)}">
            <svg viewBox="-6 -6 12 12" style="transform:rotate(${h.windDir}deg)" aria-hidden="true">
              <path d="M 0 -4.5 L 2.4 3 L 0 1.5 L -2.4 3 Z" fill="currentColor"/>
            </svg>
          </span>`
-      : "";
+      : `<span class="forecast-wind forecast-wind-empty" aria-hidden="true"></span>`;
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
@@ -1181,6 +1183,10 @@ function renderDaily(w) {
     if (d.pop >= 30) details.push(`${d.pop}% rain`);
     if (d.precip != null && d.precip >= 1) details.push(`${d.precip.toFixed(1)} mm`);
     if (d.gustsMax && d.gustsMax >= 25) details.push(`gusts ${Math.round(d.gustsMax)} km/h`);
+    if (d.uvMax != null && d.uvMax >= 6) {
+      const uvLvl = d.uvMax >= 11 ? "extreme" : d.uvMax >= 8 ? "very-high" : "high";
+      details.push(`<span class="daily-uv" data-level="${uvLvl}">UV ${Math.round(d.uvMax)}</span>`);
+    }
     const extra = details.length ? `<span class="daily-gust">${details.join(" · ")}</span>` : "";
     item.innerHTML = `
       <span class="daily-day">${day}</span>
