@@ -384,11 +384,18 @@ if ("serviceWorker" in navigator) {
         const show = () => {
           if (worker.state !== "installed") return;
           if (!navigator.serviceWorker.controller) return; // first install, no refresh needed
-          ui.showToast("A newer Aether is ready — tap to update", 8000);
+          const message = "A newer Aether is ready — tap to update";
+          ui.showToast(message, 8000);
           const toastEl = document.getElementById("toast");
-          toastEl?.addEventListener("click", () => {
-            worker.postMessage({ type: "SKIP_WAITING" });
-          }, { once: true });
+          if (!toastEl) return;
+          // Guard against stale handlers firing on later unrelated toasts
+          // by checking the current message before posting SKIP_WAITING.
+          const onClick = () => {
+            if (toastEl.textContent === message) {
+              worker.postMessage({ type: "SKIP_WAITING" });
+            }
+          };
+          toastEl.addEventListener("click", onClick, { once: true });
         };
         worker.addEventListener("statechange", show);
         show();
