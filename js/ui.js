@@ -1632,6 +1632,19 @@ function bindShare() {
     const unit = state.unit;
     const t = (v) => `${Math.round(unit === "F" ? v * 9 / 5 + 32 : v)}°${unit}`;
     const today = w.daily?.[0];
+    const outfit = suggestOutfit(w);
+    // Next golden hour window (dawn or dusk, whichever is next).
+    let goldenLine = null;
+    if (w.sunrise && w.sunset) {
+      const now = Date.now();
+      const win = 60 * 60_000;
+      const candidates = [];
+      if (now < w.sunrise + win) candidates.push({ ts: w.sunrise + 30 * 60_000, label: "Dawn gold" });
+      if (now < w.sunset) candidates.push({ ts: w.sunset - 30 * 60_000, label: "Golden hour" });
+      const next = candidates.sort((a, b) => a.ts - b.ts)[0];
+      if (next) goldenLine = `✦ ${next.label} ${fmtTime(next.ts)}`;
+    }
+    const totalMm = (w.hourly || []).slice(0, 24).reduce((s, h) => s + (h.precip || 0), 0);
     const lines = [
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
@@ -1639,6 +1652,10 @@ function bindShare() {
       `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
+      totalMm >= 1 ? `${totalMm.toFixed(1)} mm expected in 24h` : null,
+      w.sunrise && w.sunset ? `☀ ${fmtTime(w.sunrise)} → ${fmtTime(w.sunset)}` : null,
+      goldenLine,
+      outfit ? `${outfit.icon} ${outfit.label}` : null,
     ].filter(Boolean);
     const text = lines.join("\n");
     try {
