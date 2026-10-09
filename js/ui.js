@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { suggestOutfit } from "./outfit.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -94,6 +95,10 @@ const el = {
   goldenDawnArc: $("#golden-dawn-arc"),
   goldenDuskArc: $("#golden-dusk-arc"),
   goldenHourLine: $("#golden-hour-line"),
+  outfit: $("#outfit"),
+  outfitIcon: $("#outfit-icon"),
+  outfitLabel: $("#outfit-label"),
+  outfitDetail: $("#outfit-detail"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
   weekendDetail: $("#weekend-detail"),
@@ -191,6 +196,7 @@ export const ui = {
     renderDaily(weather);
     renderNowcast(weather);
     renderAdvice(weather);
+    renderOutfit(weather);
     renderPollen(weather.pollen);
     renderTrends(weather);
     renderInsights(weather);
@@ -216,6 +222,7 @@ export const ui = {
     renderLiveValues(sampled, { animate: false });
     renderMetrics(sampled);
     renderAdvice(sampled);
+    renderOutfit(sampled);
     highlightHour(highlightHourIndex);
     if (state.comfortStrip) state.comfortStrip.highlight(highlightHourIndex);
     if (state.chart && sampled._sampledTs != null) {
@@ -697,6 +704,16 @@ function renderAdvice(w) {
   } else {
     el.advice.hidden = true;
   }
+}
+
+function renderOutfit(w) {
+  if (!el.outfit) return;
+  const o = suggestOutfit(w);
+  if (!o) { el.outfit.hidden = true; return; }
+  el.outfit.hidden = false;
+  el.outfitIcon.textContent = o.icon;
+  el.outfitLabel.textContent = o.label;
+  el.outfitDetail.textContent = o.detail;
 }
 
 function startLocaltime(w) {
