@@ -348,9 +348,16 @@ function renderMetrics(w) {
     }
   }
   el.metricHumidity.textContent = Math.round(w.humidity ?? 0);
-  el.metricHumiditySub.textContent = w.dewPoint != null
-    ? `dew ${Math.round(convertTemp(w.dewPoint))}°`
-    : "dew —";
+  if (w.dewPoint != null) {
+    const gapRaw = (w.temp ?? w.dewPoint) - w.dewPoint;
+    // Convert the gap (a delta in °C) into the active unit's span.
+    const gap = Math.round(convertTemp(gapRaw) - convertTemp(0));
+    const gapSuffix = Math.abs(gap) >= 1 ? ` · ${gap}° gap` : "";
+    el.metricHumiditySub.textContent =
+      `dew ${Math.round(convertTemp(w.dewPoint))}°${gapSuffix}`;
+  } else {
+    el.metricHumiditySub.textContent = "dew —";
+  }
   if (el.humidityComfort) {
     const pill = humidityComfort(w.humidity, w.dewPoint, w.temp);
     if (pill) {
