@@ -123,6 +123,13 @@ export class Scrubber {
     const scrubbing = !clock.isLive();
     this.appEl?.setAttribute("data-scrubbing", scrubbing ? "true" : "false");
     this._render(this._currentT());
+    // Light haptic click when the drag crosses an hour boundary, so you
+    // can feel the time ticking even on a silent phone.
+    const hour = Math.round(clock.offset() / 3600_000);
+    if (this.dragging && hour !== this._lastHapticHour) {
+      this._lastHapticHour = hour;
+      try { navigator.vibrate?.(4); } catch { /* ignore */ }
+    }
     this.onScrub?.(clock.offset());
   }
 
