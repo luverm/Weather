@@ -327,6 +327,24 @@
           <ul id="activity-list" class="activity-list"></ul>
         </div>
 
+        <div class="extra-card glass" id="visibility-card" hidden>
+          <span class="metric-label">Visibility <span id="vis-badge" class="trend" aria-hidden="true"></span></span>
+          <div class="vis-row">
+            <div class="vis-numbers">
+              <span id="vis-value" class="vis-value">—</span>
+              <span class="vis-unit">km</span>
+            </div>
+            <div class="vis-track" aria-hidden="true">
+              <div class="vis-fill" id="vis-fill"></div>
+              <span class="vis-tick" style="left:10%"></span>
+              <span class="vis-tick" style="left:30%"></span>
+              <span class="vis-tick" style="left:60%"></span>
+              <span class="vis-tick" style="left:90%"></span>
+            </div>
+            <span id="vis-sub" class="vis-sub">—</span>
+          </div>
+        </div>
+
         <div class="extra-card glass" id="sun-card">
           <span class="metric-label"><span id="sun-next-label">Sun</span> <span id="sun-countdown" class="sun-countdown"></span></span>
           <svg id="sun-arc" class="sun-arc" viewBox="0 0 200 84" aria-hidden="true">

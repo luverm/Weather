@@ -59,6 +59,11 @@ const el = {
   pollenLevel: $("#pollen-level"),
   pollenDominant: $("#pollen-dominant"),
   pollenItems: $("#pollen-items"),
+  visibilityCard: $("#visibility-card"),
+  visValue: $("#vis-value"),
+  visFill: $("#vis-fill"),
+  visBadge: $("#vis-badge"),
+  visSub: $("#vis-sub"),
   pressureTrend: $("#m-pressure-trend"),
   tempTrend: $("#temp-trend"),
   uvLevel: $("#m-uv-level"),
@@ -191,6 +196,7 @@ export const ui = {
     renderNowcast(weather);
     renderAdvice(weather);
     renderPollen(weather.pollen);
+    renderVisibility(weather);
     renderTrends(weather);
     renderInsights(weather);
     renderActivity(weather);
@@ -786,6 +792,34 @@ function renderPollen(pollen) {
   el.pollenItems.innerHTML = pollen.items.map((p) =>
     `<span>${escapeHtml(p.label)} ${p.value.toFixed(1)}</span>`
   ).join("");
+}
+
+function renderVisibility(w) {
+  if (!el.visibilityCard) return;
+  const meters = w.visibility;
+  if (meters == null) {
+    el.visibilityCard.hidden = true;
+    return;
+  }
+  const km = meters / 1000;
+  el.visibilityCard.hidden = false;
+  el.visValue.textContent = km >= 10 ? Math.round(km) : km.toFixed(1);
+  // Scale: 0..20 km fills the bar. Beyond 20 km still shows full-bar + clear tag.
+  const pct = Math.max(2, Math.min(100, (km / 20) * 100));
+  el.visFill.style.width = `${pct.toFixed(1)}%`;
+  const info = visibilityCategory(km);
+  el.visBadge.textContent = info.label;
+  el.visBadge.className = `trend ${info.cls}`;
+  el.visFill.dataset.tone = info.tone;
+  el.visSub.textContent = info.sub;
+}
+
+function visibilityCategory(km) {
+  if (km < 1)   return { label: "Dense fog", cls: "down", tone: "bad",  sub: "under 1 km — drive carefully" };
+  if (km < 4)   return { label: "Foggy",     cls: "down", tone: "bad",  sub: "limited sightline" };
+  if (km < 10)  return { label: "Hazy",      cls: "flat", tone: "warn", sub: "distant hills softened" };
+  if (km < 20)  return { label: "Clear",     cls: "up",   tone: "ok",   sub: "crisp horizon" };
+  return          { label: "Crystal",   cls: "up",   tone: "ok",   sub: "far peaks visible" };
 }
 
 function renderTrends(w) {

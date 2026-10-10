@@ -957,6 +957,62 @@ kbd {
   opacity: 0.85;
 }
 
+/* Visibility card */
+.vis-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+.vis-numbers {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.vis-value {
+  font-size: 24px; font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+  line-height: 1;
+}
+.vis-unit {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--fg-dim);
+  text-transform: uppercase;
+}
+.vis-track {
+  position: relative;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  overflow: visible;
+}
+.vis-fill {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255,138,138,0.8), rgba(255,220,160,0.9), rgba(130,205,170,0.95));
+  transition: width 420ms var(--ease);
+}
+.vis-fill[data-tone="ok"]   { background: linear-gradient(90deg, rgba(154,209,255,0.8), rgba(130,205,170,0.95)); }
+.vis-fill[data-tone="warn"] { background: linear-gradient(90deg, rgba(255,220,160,0.85), rgba(255,196,120,0.95)); }
+.vis-fill[data-tone="bad"]  { background: linear-gradient(90deg, rgba(255,156,122,0.85), rgba(255,138,138,0.95)); }
+.vis-tick {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 1px;
+  background: rgba(255,255,255,0.18);
+  pointer-events: none;
+}
+.vis-sub {
+  font-size: 11.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.02em;
+}
+
 .moon-row, .sun-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
 .moon-svg { width: 48px; height: 48px; }
 .moon-meta strong { display: block; font-size: 14px; font-weight: 500; }
