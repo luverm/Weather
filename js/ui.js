@@ -1230,7 +1230,14 @@ function renderDailyDelta(days) {
   if (Math.abs(dPop) >= 20) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
   }
-  el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
+  // Week-total precipitation (summed across the forecast horizon).
+  const weekMm = days.reduce((s, d) => s + (d.precip ?? 0), 0);
+  const weekTail = weekMm >= 1
+    ? ` · ${Math.round(weekMm)} mm this week`
+    : weekMm > 0
+      ? ` · <1 mm this week`
+      : "";
+  el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}${weekTail}`;
 }
 
 function toggleDailyExpand(item, d, w) {
