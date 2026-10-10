@@ -1169,13 +1169,32 @@ function renderDailySpark(days) {
   el.dailyLo.setAttribute("d", linePath(days.map((d) => d.tempMin)));
   // Dots at each day + per-day temp labels above/below
   el.dailySparkDots.innerHTML = "";
+  const tz = state.weather?.timezone;
+  const dayLabel = (ts, i) => {
+    if (i === 0) return "Today";
+    try {
+      return new Date(ts).toLocaleDateString(undefined, {
+        weekday: "short",
+        ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+      });
+    } catch { return ""; }
+  };
   days.forEach((d, i) => {
+    const dLabel = dayLabel(d.time, i);
+    const unitSym = state.unit === "F" ? "°F" : "°C";
+    const tHi = Math.round(convertTemp(d.tempMax));
+    const tLo = Math.round(convertTemp(d.tempMin));
+    const tipHi = `${dLabel} high ${tHi}${unitSym}${d.pop ? ` · ${d.pop}% rain` : ""}`;
+    const tipLo = `${dLabel} low ${tLo}${unitSym}`;
     if (d.tempMax != null) {
       const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
       c.setAttribute("cx", x(i).toFixed(1));
       c.setAttribute("cy", y(d.tempMax).toFixed(1));
       c.setAttribute("r", "2.5");
       c.setAttribute("class", "dot-hi");
+      const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+      title.textContent = tipHi;
+      c.appendChild(title);
       el.dailySparkDots.appendChild(c);
     }
     if (d.tempMin != null) {
@@ -1184,6 +1203,9 @@ function renderDailySpark(days) {
       c.setAttribute("cy", y(d.tempMin).toFixed(1));
       c.setAttribute("r", "2.5");
       c.setAttribute("class", "dot-lo");
+      const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+      title.textContent = tipLo;
+      c.appendChild(title);
       el.dailySparkDots.appendChild(c);
     }
   });
