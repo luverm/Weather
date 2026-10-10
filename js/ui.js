@@ -968,6 +968,7 @@ function renderDaily(w) {
     if (d.tempMax > gMax) gMax = d.tempMax;
   }
   const span = Math.max(1, gMax - gMin);
+  const superlatives = computeDailySuperlatives(days);
   days.forEach((d, i) => {
     const dt = new Date(d.time);
     const tz = state.weather?.timezone;
@@ -985,8 +986,11 @@ function renderDaily(w) {
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const badge = superlatives[i]
+      ? `<span class="daily-superlative" data-kind="${superlatives[i].kind}">${superlatives[i].label}</span>`
+      : "";
     item.innerHTML = `
-      <span class="daily-day">${day}</span>
+      <span class="daily-day">${day}${badge}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
@@ -998,6 +1002,44 @@ function renderDaily(w) {
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+}
+
+// Pick at most one superlative badge per day — warmest, coldest, wettest,
+// windiest, sunniest — so a day whose single interesting feature is "it's
+// just the warmest" gets flagged. A spread of < 3° between hi and lo of the
+// relevant metric skips the badge; a flat week shouldn't nag the user.
+function computeDailySuperlatives(days) {
+  const result = new Array(days.length).fill(null);
+  if (days.length < 2) return result;
+  const argMaxBy = (fn, minSpread = 0) => {
+    const vals = days.map(fn);
+    const defined = vals.filter((v) => v != null);
+    if (defined.length < 2) return -1;
+    const max = Math.max(...defined), min = Math.min(...defined);
+    if (max - min < minSpread) return -1;
+    return vals.indexOf(max);
+  };
+  const argMinBy = (fn, minSpread = 0) => {
+    const vals = days.map(fn);
+    const defined = vals.filter((v) => v != null);
+    if (defined.length < 2) return -1;
+    const max = Math.max(...defined), min = Math.min(...defined);
+    if (max - min < minSpread) return -1;
+    return vals.indexOf(min);
+  };
+  const assigned = new Set();
+  const put = (idx, kind, label) => {
+    if (idx < 0 || assigned.has(idx)) return;
+    result[idx] = { kind, label };
+    assigned.add(idx);
+  };
+  // Order picked for perceived importance.
+  put(argMaxBy((d) => d.tempMax, 3), "warm", "warmest");
+  put(argMinBy((d) => d.tempMin, 3), "cold", "coldest");
+  put(argMaxBy((d) => d.precip, 2), "wet", "wettest");
+  put(argMaxBy((d) => d.gustsMax ?? d.windMax, 10), "wind", "windiest");
+  put(argMaxBy((d) => d.uvMax, 2), "sun", "sunniest");
+  return result;
 }
 
 function renderDailyIconStrip(days) {
