@@ -927,6 +927,20 @@ kbd {
   margin-top: 4px;
   font-variant-numeric: tabular-nums;
 }
+.peak-jump {
+  background: none;
+  border: none;
+  padding: 1px 4px;
+  margin: 0 -1px;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 160ms var(--ease), color 160ms var(--ease);
+}
+.peak-jump:hover  { background: rgba(154,209,255,0.12); }
+.peak-jump:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
 /* ---------- Extras row: AQ + moon + sun ---------- */
 .extras {

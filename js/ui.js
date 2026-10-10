@@ -371,7 +371,15 @@ function renderMetrics(w) {
     }
   }
   if (w.uvPeak?.time) {
-    el.metricUVSub.textContent = `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`;
+    el.metricUVSub.innerHTML =
+      `peak ${Math.round(w.uvPeak.value)} at ` +
+      `<button class="peak-jump" type="button" data-ts="${w.uvPeak.time}" ` +
+      `title="Jump to peak UV time">${fmtTime(w.uvPeak.time)}</button>`;
+    const btn = el.metricUVSub.querySelector(".peak-jump");
+    btn?.addEventListener("click", () => {
+      const t = Number(btn.dataset.ts);
+      if (t) state.handlers.onHourClick?.(t);
+    });
   } else {
     el.metricUVSub.textContent = "peak —";
   }
