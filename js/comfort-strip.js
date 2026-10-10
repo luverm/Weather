@@ -2,16 +2,31 @@
 // with a rain-probability overlay. Each cell is clickable to scrub.
 
 export class ComfortStrip {
-  constructor({ rootEl, onCellClick, getUnit }) {
+  constructor({ rootEl, onCellClick, getUnit, getTimezone }) {
     this.root = rootEl;
     this.onCellClick = onCellClick;
     this.getUnit = getUnit || (() => "C");
+    this.getTimezone = getTimezone || (() => null);
     this.hours = [];
   }
 
   setHours(hours) {
     this.hours = (hours || []).slice(0, 24);
     this.render();
+  }
+
+  _hourOf(ts) {
+    const tz = this.getTimezone?.();
+    if (tz && tz !== "auto") {
+      try {
+        const parts = new Intl.DateTimeFormat("en-US", {
+          timeZone: tz, hour: "2-digit", hour12: false,
+        }).formatToParts(new Date(ts));
+        const h = parts.find((p) => p.type === "hour")?.value ?? "00";
+        return parseInt(h, 10);
+      } catch { /* fall through */ }
+    }
+    return new Date(ts).getHours();
   }
 
   render() {
@@ -23,23 +38,18 @@ export class ComfortStrip {
     }
     this.root.hidden = false;
     const unit = this.getUnit();
-    // Min/max across the displayed range for crisp colors.
-    const temps = this.hours.map((h) => h.feelsLike ?? h.temp).filter((v) => v != null);
-    const tMin = Math.min(...temps);
-    const tMax = Math.max(...temps);
-    const span = Math.max(4, tMax - tMin);
 
     const cells = this.hours.map((h, i) => {
       const t = h.feelsLike ?? h.temp;
       const color = colorForFeels(t);
       const rainOpacity = clamp01((h.pop ?? 0) / 100) * 0.85;
       const display = t == null ? "—" : Math.round(unit === "F" ? t * 9 / 5 + 32 : t) + "°";
-      const tickHour = new Date(h.time).getHours();
+      const tickHour = this._hourOf(h.time);
       const showTick = tickHour % 6 === 0;
       const tickLabel = showTick ? `${tickHour.toString().padStart(2, "0")}:00` : "";
       return `
         <button class="cstrip-cell" data-i="${i}" data-ts="${h.time}"
-                title="${tickHour}:00 · ${display} feels · ${h.pop ?? 0}% rain"
+                title="${tickHour.toString().padStart(2, "0")}:00 · ${display} feels · ${h.pop ?? 0}% rain"
                 style="--c:${color}">
           <span class="cstrip-bar" style="--rain:${rainOpacity}"></span>
           ${showTick ? `<span class="cstrip-tick">${tickLabel}</span>` : ""}
