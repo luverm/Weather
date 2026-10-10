@@ -95,6 +95,9 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunCard: $("#sun-card"),
+  sunRiseEl: $("#sun-rise"),
+  sunSetEl: $("#sun-set"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -534,6 +537,47 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  bindSunCardJumps(w);
+}
+
+// Make the sun-card interactive: tapping the sunrise or sunset time jumps
+// the scrubber to that instant, and tapping the arc jumps to solar noon.
+function bindSunCardJumps(w) {
+  if (!el.sunCard) return;
+  const jump = (ts) => {
+    if (ts && state.handlers.onHourClick) state.handlers.onHourClick(ts);
+  };
+  // Attach once per element; replace targets' dataset on each render.
+  if (el.sunRiseEl && !el.sunRiseEl._sunBound) {
+    el.sunRiseEl._sunBound = true;
+    el.sunRiseEl.classList.add("sun-clickable");
+    el.sunRiseEl.title = "Jump to sunrise";
+    el.sunRiseEl.addEventListener("click", () => {
+      const t = Number(el.sunRiseEl.dataset.ts);
+      if (t) jump(t);
+    });
+  }
+  if (el.sunSetEl && !el.sunSetEl._sunBound) {
+    el.sunSetEl._sunBound = true;
+    el.sunSetEl.classList.add("sun-clickable");
+    el.sunSetEl.title = "Jump to sunset";
+    el.sunSetEl.addEventListener("click", () => {
+      const t = Number(el.sunSetEl.dataset.ts);
+      if (t) jump(t);
+    });
+  }
+  // Pick the next upcoming sunrise/sunset for each. If both of today's are
+  // past, roll to tomorrow.
+  const now = Date.now();
+  const pickNext = (which) => {
+    for (const d of w.daily || []) {
+      const ts = which === "rise" ? d.sunrise : d.sunset;
+      if (ts && ts > now) return ts;
+    }
+    return w[which === "rise" ? "sunrise" : "sunset"] || null;
+  };
+  if (el.sunRiseEl) el.sunRiseEl.dataset.ts = String(pickNext("rise") || "");
+  if (el.sunSetEl)  el.sunSetEl.dataset.ts = String(pickNext("set")  || "");
 }
 
 function scheduleSunArc(w) {
