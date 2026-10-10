@@ -688,15 +688,17 @@ function startLocaltime(w) {
     try {
       const parts = new Intl.DateTimeFormat([], {
         timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
-        weekday: "short", timeZoneName: "short",
+        weekday: "short", day: "numeric", month: "short", timeZoneName: "short",
       }).formatToParts(new Date());
-      const day = parts.find((p) => p.type === "weekday")?.value ?? "";
+      const weekday = parts.find((p) => p.type === "weekday")?.value ?? "";
+      const dayNum = parts.find((p) => p.type === "day")?.value ?? "";
+      const monthName = parts.find((p) => p.type === "month")?.value ?? "";
       const hour = parts.find((p) => p.type === "hour")?.value ?? "";
       const minute = parts.find((p) => p.type === "minute")?.value ?? "";
       const tzName = parts.find((p) => p.type === "timeZoneName")?.value ?? "";
       el.placeLocaltime.innerHTML =
         `<span class="clock-dot" aria-hidden="true"></span>` +
-        `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>`;
+        `${escapeHtml(weekday)} ${escapeHtml(dayNum)} ${escapeHtml(monthName)} · ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>`;
     } catch {
       el.placeLocaltime.textContent = "";
     }
