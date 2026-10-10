@@ -1590,10 +1590,20 @@ function bindShare() {
     const unit = state.unit;
     const t = (v) => `${Math.round(unit === "F" ? v * 9 / 5 + 32 : v)}°${unit}`;
     const today = w.daily?.[0];
+    const dry = computeDryWindow(w.hourly);
+    let dryLine = null;
+    if (dry) {
+      if (dry.kind === "all-dry")      dryLine = `Dry all day`;
+      else if (dry.kind === "all-wet") dryLine = `Wet all day`;
+      else if (dry.kind === "rain-after") dryLine = `Dry until ${fmtTime(dry.rainAt)}`;
+      else if (dry.kind === "clear-by") dryLine = `Clear by ${fmtTime(dry.start)}`;
+      else                              dryLine = `Dry ${fmtTime(dry.start)}–${fmtTime(dry.end)} (${dry.hours}h)`;
+    }
     const lines = [
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
       today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
+      dryLine,
       `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
