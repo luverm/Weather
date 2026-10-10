@@ -56,16 +56,19 @@ function findGusts(hourly) {
 /**
  * Return a one or two-sentence narrative for the current weather.
  */
-export function narrate(weather) {
+export function narrate(weather, { convertTemp } = {}) {
   if (!weather) return "";
   const bits = [];
   const { condition, label, temp, feelsLike, uvPeak, windSpeed } = weather;
+  const toTemp = typeof convertTemp === "function" ? convertTemp : ((c) => c);
+  // Deltas scale with the unit: 1 °C delta == 1.8 °F delta.
+  const toDelta = (c) => toTemp(c) - toTemp(0);
 
   // Lead: describe current state.
   const feels = Math.abs((feelsLike ?? temp) - temp) >= 3
-    ? ` — feels closer to ${Math.round(feelsLike)}°`
+    ? ` — feels closer to ${Math.round(toTemp(feelsLike))}°`
     : "";
-  bits.push(`${label} at ${Math.round(temp)}°${feels}.`);
+  bits.push(`${label} at ${Math.round(toTemp(temp))}°${feels}.`);
 
   // Precipitation arriving.
   const rain = findNextPrecip(weather.nowcast, weather.hourly);
@@ -83,9 +86,10 @@ export function narrate(weather) {
   if (bits.length < 2) {
     const swing = findTempSwing(weather.hourly);
     if (swing) {
+      const by = Math.round(Math.abs(toDelta(swing.by)));
       bits.push(swing.kind === "drop"
-        ? `Temperature drops ${swing.by}° by ${fmtHour(swing.ts)}.`
-        : `Warming ${swing.by}° by ${fmtHour(swing.ts)}.`);
+        ? `Temperature drops ${by}° by ${fmtHour(swing.ts)}.`
+        : `Warming ${by}° by ${fmtHour(swing.ts)}.`);
     }
   }
 
