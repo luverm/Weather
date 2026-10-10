@@ -391,6 +391,30 @@ html[data-reduce-motion="true"] *::after {
 .unit:hover { background: var(--glass); color: var(--fg); }
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
+.feels-delta {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid var(--stroke);
+  color: var(--fg);
+  vertical-align: 1px;
+}
+.feels-delta.warm {
+  color: #ffd0b8;
+  background: rgba(255,156,122,0.14);
+  border-color: rgba(255,156,122,0.3);
+}
+.feels-delta.cool {
+  color: #c6e4ff;
+  background: rgba(154,209,255,0.14);
+  border-color: rgba(154,209,255,0.3);
+}
 .day-range {
   margin-top: 10px;
   display: grid;

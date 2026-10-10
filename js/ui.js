@@ -295,7 +295,28 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  // Keep the #temp-trend span intact (its text is written by renderTrends).
+  // Setting textContent on #feels-like would blow it away, so build a text
+  // node + optional delta chip instead.
+  const feelsText = `Feels like ${Math.round(feels)}°`;
+  // Remove existing text nodes and feels-delta spans, keep #temp-trend.
+  const toRemove = [];
+  for (const node of el.feelsLike.childNodes) {
+    if (node.nodeType === Node.TEXT_NODE) toRemove.push(node);
+    else if (node.nodeType === Node.ELEMENT_NODE && node.id !== "temp-trend") toRemove.push(node);
+  }
+  toRemove.forEach((n) => n.remove());
+  el.feelsLike.appendChild(document.createTextNode(feelsText));
+  // Show an explicit (±N°) chip if feels-like diverges meaningfully.
+  const feelsDeltaRaw = (w.feelsLike ?? w.temp) - w.temp;
+  const feelsDelta = Math.round(convertTemp(feelsDeltaRaw) - convertTemp(0));
+  if (Math.abs(feelsDelta) >= 3) {
+    const chip = document.createElement("span");
+    chip.className = `feels-delta ${feelsDelta > 0 ? "warm" : "cool"}`;
+    chip.textContent = `${feelsDelta > 0 ? "+" : ""}${feelsDelta}°`;
+    chip.title = feelsDelta > 0 ? "Feels warmer than air temp" : "Feels colder than air temp";
+    el.feelsLike.appendChild(chip);
+  }
   renderDayRange(w);
 }
 
