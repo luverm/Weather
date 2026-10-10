@@ -777,7 +777,7 @@ function renderWeekend(w) {
 
 function renderAlerts(w) {
   if (!el.alertsStrip) return;
-  const alerts = buildAlerts(w);
+  const alerts = buildAlerts(w, { convertTemp });
   // Respect per-place dismissals so the user isn't nagged.
   const dismissed = getDismissedAlerts();
   const visible = alerts.filter((a) => !dismissed.has(a.id));
@@ -833,7 +833,7 @@ function rememberDismissedAlert(id) {
 
 function renderActivity(w) {
   if (!el.activityCard || !el.activityList) return;
-  const items = findActivityWindows(w);
+  const items = findActivityWindows(w, { convertTemp });
   if (!items.length) {
     el.activityCard.hidden = true;
     return;

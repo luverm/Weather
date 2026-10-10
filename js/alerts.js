@@ -3,12 +3,16 @@
 // derive them locally. Each alert is { id, severity, title, detail, ts? }.
 // `ts` lets the UI scrub to the exact moment of the alert when clicked.
 
-export function buildAlerts(weather) {
+export function buildAlerts(weather, { convertTemp } = {}) {
   if (!weather) return [];
   const out = [];
   const hours = (weather.hourly || []).slice(0, 24);
   const today = (weather.daily || [])[0];
   const tomorrow = (weather.daily || [])[1];
+  // Thresholds stay in °C (API's native unit); only the detail string
+  // uses the display unit.
+  const toTemp = typeof convertTemp === "function" ? convertTemp : ((c) => c);
+  const t = (c) => Math.round(toTemp(c));
 
   // ---- Heat ----
   const hottest = hottestHour(hours);
@@ -17,7 +21,7 @@ export function buildAlerts(weather) {
       id: "severe-heat",
       severity: "danger",
       title: "Severe heat",
-      detail: `Up to ${Math.round(hottest.t)}° at ${shortClock(hottest.ts)} — hydrate, avoid sun.`,
+      detail: `Up to ${t(hottest.t)}° at ${shortClock(hottest.ts)} — hydrate, avoid sun.`,
       ts: hottest.ts,
     });
   } else if (hottest && hottest.t >= 30) {
@@ -25,7 +29,7 @@ export function buildAlerts(weather) {
       id: "heat",
       severity: "warn",
       title: "Heat advisory",
-      detail: `Peaks near ${Math.round(hottest.t)}° around ${shortClock(hottest.ts)}.`,
+      detail: `Peaks near ${t(hottest.t)}° around ${shortClock(hottest.ts)}.`,
       ts: hottest.ts,
     });
   }
@@ -37,7 +41,7 @@ export function buildAlerts(weather) {
       id: "hard-freeze",
       severity: "danger",
       title: "Hard freeze tonight",
-      detail: `Lows near ${Math.round(coldest.t)}° — bring plants in, drip pipes.`,
+      detail: `Lows near ${t(coldest.t)}° — bring plants in, drip pipes.`,
       ts: coldest.ts,
     });
   } else if (coldest && coldest.t <= 2) {
@@ -45,7 +49,7 @@ export function buildAlerts(weather) {
       id: "frost",
       severity: "warn",
       title: "Frost overnight",
-      detail: `Drops to ${Math.round(coldest.t)}° around ${shortClock(coldest.ts)}.`,
+      detail: `Drops to ${t(coldest.t)}° around ${shortClock(coldest.ts)}.`,
       ts: coldest.ts,
     });
   }
