@@ -280,6 +280,26 @@ ui.init({
 if (ui.isReduceMotion?.()) setReducedMotion(true);
 
 // Keyboard shortcuts.
+// Pick the next sunrise/sunset timestamp (looking across the forecast days).
+function nextSolarEvent(kind) {
+  const w = app.weather;
+  if (!w?.daily?.length) return null;
+  const now = Date.now();
+  for (const d of w.daily) {
+    const ts = kind === "rise" ? d.sunrise : d.sunset;
+    if (ts && ts > now) return ts;
+  }
+  return kind === "rise" ? w.sunrise : w.sunset;
+}
+function jumpTo(ts, label) {
+  if (!ts) return;
+  clock.setOffset(ts - Date.now());
+  scrubber.sync();
+  if (app.weather) applyScene(app.weather);
+  ui.setScrubbing(!clock.isLive());
+  if (label) ui.showToast(`Jumped to ${label}`);
+}
+
 installShortcuts({
   focusSearch: () => ui.focusSearch(),
   locate: () => useGeolocation(),
@@ -288,6 +308,8 @@ installShortcuts({
   toggleFullscreenRadar: () => document.getElementById("radar-full")?.click(),
   toggleRadar: () => document.getElementById("radar-play")?.click(),
   resetScrubber: () => scrubber.reset(),
+  jumpGolden: () => jumpTo(nextSolarEvent("set"), "sunset"),
+  jumpSunrise: () => jumpTo(nextSolarEvent("rise"), "sunrise"),
   cyclePlace: (dir) => {
     const list = places.all();
     if (list.length < 2) return;
