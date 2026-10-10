@@ -1583,9 +1583,23 @@ function startFetchedTicker() {
       `Updated ${Math.floor(minutes / 60)}h ago`;
     el.fetchedAgo.textContent = "· " + label;
     el.fetchedAgo.classList.toggle("stale", minutes >= 20);
+    el.fetchedAgo.title = minutes >= 20
+      ? "Click to refresh — data is getting stale"
+      : "Click to refresh";
   };
   update();
   setInterval(update, 30_000);
+  if (el.fetchedAgo && !el.fetchedAgo._bound) {
+    el.fetchedAgo._bound = true;
+    el.fetchedAgo.style.cursor = "pointer";
+    el.fetchedAgo.setAttribute("role", "button");
+    el.fetchedAgo.setAttribute("tabindex", "0");
+    const trigger = () => el.refreshBtn?.click();
+    el.fetchedAgo.addEventListener("click", trigger);
+    el.fetchedAgo.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); trigger(); }
+    });
+  }
 }
 
 function bindShare() {
