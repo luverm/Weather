@@ -351,9 +351,11 @@ function renderMetrics(w) {
     }
   }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
-  el.metricPressureSub.textContent = w.visibility != null
-    ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
-    : "visibility —";
+  // Cloud cover goes well with pressure as "atmospheric at a glance";
+  // visibility has its own card now, so no need to duplicate it here.
+  el.metricPressureSub.textContent = w.cloudCover != null
+    ? `${Math.round(w.cloudCover)}% cloud`
+    : "cloud —";
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
