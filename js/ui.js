@@ -98,6 +98,7 @@ const el = {
   sunCard: $("#sun-card"),
   sunRiseEl: $("#sun-rise"),
   sunSetEl: $("#sun-set"),
+  sunTrend: $("#sun-trend"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -535,9 +536,30 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightTrend(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   bindSunCardJumps(w);
+}
+
+// Compare today's daylight length to tomorrow's and show a tiny
+// "+2m" / "−1m" chip under the daylight number. Hidden when
+// data is missing or the delta is sub-minute.
+function renderDaylightTrend(w) {
+  if (!el.sunTrend) return;
+  const today = w.daily?.[0], tomorrow = w.daily?.[1];
+  const tLen = today?.sunrise && today?.sunset ? today.sunset - today.sunrise : null;
+  const mLen = tomorrow?.sunrise && tomorrow?.sunset ? tomorrow.sunset - tomorrow.sunrise : null;
+  if (tLen == null || mLen == null) { el.sunTrend.textContent = ""; return; }
+  const diffMin = Math.round((mLen - tLen) / 60_000);
+  if (diffMin === 0) {
+    el.sunTrend.className = "sun-trend flat";
+    el.sunTrend.textContent = "steady tomorrow";
+    return;
+  }
+  const arrow = diffMin > 0 ? "▲" : "▼";
+  el.sunTrend.className = `sun-trend ${diffMin > 0 ? "up" : "down"}`;
+  el.sunTrend.textContent = `${arrow} ${Math.abs(diffMin)}m tomorrow`;
 }
 
 // Make the sun-card interactive: tapping the sunrise or sunset time jumps
