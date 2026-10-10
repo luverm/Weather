@@ -1,11 +1,22 @@
 // Build a short natural-language summary from the weather data.
 // Picks the most noteworthy signal: rain arrival, cold snap, heat, wind, etc.
 
-function fmtHour(ts) {
-  const d = new Date(ts);
-  const m = d.getMinutes();
-  return `${d.getHours()}${m ? ":" + String(m).padStart(2, "0") : ""}${d.getHours() < 12 ? "am" : "pm"}`
-    .replace(/^(\d{1,2})/, (s) => (parseInt(s, 10) % 12 || 12));
+function makeFmtHour(timezone) {
+  // Return a time formatter that respects the city's timezone when available.
+  if (timezone && timezone !== "auto") {
+    try {
+      const fmt = new Intl.DateTimeFormat("en-US", {
+        timeZone: timezone, hour: "numeric", hour12: true,
+      });
+      return (ts) => fmt.format(new Date(ts)).toLowerCase().replace(/\s*/g, "");
+    } catch { /* fall through */ }
+  }
+  return (ts) => {
+    const d = new Date(ts);
+    const m = d.getMinutes();
+    return `${d.getHours()}${m ? ":" + String(m).padStart(2, "0") : ""}${d.getHours() < 12 ? "am" : "pm"}`
+      .replace(/^(\d{1,2})/, (s) => (parseInt(s, 10) % 12 || 12));
+  };
 }
 
 function findNextPrecip(nowcast, hourly) {
@@ -63,6 +74,7 @@ export function narrate(weather, { convertTemp } = {}) {
   const toTemp = typeof convertTemp === "function" ? convertTemp : ((c) => c);
   // Deltas scale with the unit: 1 °C delta == 1.8 °F delta.
   const toDelta = (c) => toTemp(c) - toTemp(0);
+  const fmtHour = makeFmtHour(weather.timezone);
 
   // Lead: describe current state.
   const feels = Math.abs((feelsLike ?? temp) - temp) >= 3
