@@ -280,6 +280,13 @@ ui.init({
 if (ui.isReduceMotion?.()) setReducedMotion(true);
 
 // Keyboard shortcuts.
+// Clicking the brand snaps the scrubber back to live now (no-op if already
+// live). Keeps the "zoom out" affordance in a corner that's always visible.
+document.getElementById("brand-reset")?.addEventListener("click", () => {
+  if (clock.isLive()) return;
+  scrubber.reset();
+});
+
 // Pick the next sunrise/sunset timestamp (looking across the forecast days).
 function nextSolarEvent(kind) {
   const w = app.weather;
