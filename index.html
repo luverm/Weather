@@ -180,6 +180,15 @@
       <div class="chart-card glass" id="chart-card" aria-label="Hourly forecast chart">
         <div class="chart-head">
           <span class="chart-title">Hourly trend</span>
+          <button id="dry-window-chip" class="dry-window-chip" type="button" hidden aria-label="Jump to dry window">
+            <svg class="dry-window-icon" viewBox="0 0 24 24" aria-hidden="true" width="12" height="12">
+              <circle cx="12" cy="12" r="4.5" fill="currentColor"/>
+              <g stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+                <path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.5 5.5l1.8 1.8M16.7 16.7l1.8 1.8M18.5 5.5l-1.8 1.8M7.3 16.7l-1.8 1.8"/>
+              </g>
+            </svg>
+            <span class="dry-window-text" id="dry-window-text">—</span>
+          </button>
           <div class="chart-legend">
             <span class="legend-swatch temp"></span><span>Temp</span>
             <span class="legend-swatch feels"></span><span>Feels-like</span>

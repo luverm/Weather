@@ -97,6 +97,8 @@ const el = {
   weekendIconSat: $("#weekend-icon-sat"),
   weekendIconSun: $("#weekend-icon-sun"),
   forecastTrack: $("#forecast-track"),
+  dryWindowChip: $("#dry-window-chip"),
+  dryWindowText: $("#dry-window-text"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
   nowcastHeadline: $("#nowcast-headline"),
@@ -184,6 +186,7 @@ export const ui = {
     renderMoon(weather.moon);
     renderSun(weather);
     renderHourly(weather);
+    renderDryWindow(weather);
     renderDaily(weather);
     renderNowcast(weather);
     renderAdvice(weather);
@@ -845,6 +848,105 @@ function renderHourly(w) {
 function highlightHour(index) {
   const items = el.forecastTrack.querySelectorAll(".forecast-item");
   items.forEach((it, i) => it.classList.toggle("active", i === index));
+}
+
+// Scan the next ~24 hourly entries and surface the most useful "dry window"
+// chip: when rain is coming for a dry-right-now viewer, when rain clears for
+// a rainy-right-now viewer, or the longest consecutive dry stretch otherwise.
+function computeDryWindow(hours) {
+  if (!hours || hours.length < 2) return null;
+  const slice = hours.slice(0, Math.min(24, hours.length));
+  const isDry = (h) => (h.pop ?? 0) < 30 && (h.precip ?? 0) < 0.1;
+
+  // All-dry fast path.
+  if (slice.every(isDry)) {
+    return { kind: "all-dry", hours: slice.length, start: slice[0].time, end: slice[slice.length - 1].time };
+  }
+  // All-wet fast path.
+  if (slice.every((h) => !isDry(h))) {
+    return { kind: "all-wet", hours: slice.length, start: slice[0].time, end: slice[slice.length - 1].time };
+  }
+
+  // Longest consecutive dry run.
+  let bestLen = 0, bestStart = -1;
+  let runStart = -1;
+  for (let i = 0; i < slice.length; i++) {
+    if (isDry(slice[i])) {
+      if (runStart < 0) runStart = i;
+      const len = i - runStart + 1;
+      if (len > bestLen) { bestLen = len; bestStart = runStart; }
+    } else {
+      runStart = -1;
+    }
+  }
+  if (bestLen <= 0) return null;
+  const endIdx = bestStart + bestLen - 1;
+  const nowDry = isDry(slice[0]);
+  // "Rain soon" if we're dry now and rain hits inside this window later.
+  if (nowDry && bestStart === 0 && endIdx < slice.length - 1) {
+    return {
+      kind: "rain-after",
+      hours: bestLen,
+      start: slice[0].time,
+      end: slice[endIdx].time,
+      rainAt: slice[endIdx + 1].time,
+    };
+  }
+  // "Clear by" if we're wet now and the longest dry run is coming later.
+  if (!nowDry && bestStart > 0) {
+    return {
+      kind: "clear-by",
+      hours: bestLen,
+      start: slice[bestStart].time,
+      end: slice[endIdx].time,
+    };
+  }
+  // Generic longest-run.
+  return {
+    kind: "window",
+    hours: bestLen,
+    start: slice[bestStart].time,
+    end: slice[endIdx].time,
+  };
+}
+
+function renderDryWindow(w) {
+  const chip = el.dryWindowChip;
+  const text = el.dryWindowText;
+  if (!chip || !text) return;
+  const info = computeDryWindow(w.hourly);
+  if (!info) { chip.hidden = true; return; }
+  let label = "";
+  let tone = "ok";
+  switch (info.kind) {
+    case "all-dry":
+      label = info.hours >= 24 ? "Dry all day" : `Dry · ${info.hours}h`;
+      tone = "ok";
+      break;
+    case "all-wet":
+      label = info.hours >= 24 ? "Wet all day" : `Wet · ${info.hours}h`;
+      tone = "bad";
+      break;
+    case "rain-after":
+      label = `Dry until ${fmtTime(info.rainAt)}`;
+      tone = "warn";
+      break;
+    case "clear-by":
+      label = `Clear by ${fmtTime(info.start)}`;
+      tone = "warn";
+      break;
+    case "window":
+      label = `Dry ${fmtTime(info.start)}–${fmtTime(info.end)} · ${info.hours}h`;
+      tone = "ok";
+      break;
+  }
+  text.textContent = label;
+  chip.dataset.tone = tone;
+  chip.hidden = false;
+  chip.title = `Longest dry stretch in the next 24 h — click to jump the scrubber there`;
+  chip.onclick = () => {
+    if (info.start) state.handlers.onHourClick?.(info.start);
+  };
 }
 
 function renderDaily(w) {
