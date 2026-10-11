@@ -1953,13 +1953,20 @@ kbd {
   border-radius: 999px;
   border: 1px solid var(--stroke);
   background: rgba(255,255,255,0.06);
+  transition: transform 160ms var(--ease), background 160ms var(--ease);
+}
+.alert-pill:hover { transform: translateY(-1px); background: rgba(255,255,255,0.1); }
+.alert-pill:active { transform: translateY(0) scale(0.98); }
+.alert-pill {
   color: var(--fg);
   font-size: 12px;
   cursor: pointer;
-  transition: transform 160ms var(--ease), background 160ms var(--ease);
   max-width: 100%;
 }
-.alert-pill:hover { transform: translateY(-1px); background: rgba(255,255,255,0.1); }
+.alert-pill.alert-danger {
+  border-color: rgba(255, 106, 106, 0.4);
+  background: rgba(255, 106, 106, 0.08);
+}
 .alert-pill .alert-dot {
   width: 8px; height: 8px; border-radius: 50%;
   background: currentColor;
