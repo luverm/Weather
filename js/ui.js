@@ -81,6 +81,7 @@ const el = {
   refreshBtn: $("#refresh-btn"),
   fetchedAgo: $("#fetched-ago"),
   dailyIconStrip: $("#daily-icon-strip"),
+  dailyPrecipStrip: $("#daily-precip-strip"),
   settingsBtn: $("#settings-btn"),
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
@@ -1083,6 +1084,27 @@ function renderDailyIconStrip(days) {
   el.dailyIconStrip.innerHTML = days.map((d) =>
     `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
   ).join("");
+  renderDailyPrecipStrip(days);
+}
+
+function renderDailyPrecipStrip(days) {
+  if (!el.dailyPrecipStrip) return;
+  const totals = days.map((d) => Math.max(0, d.precip ?? 0));
+  const peak = Math.max(0.5, ...totals);
+  const hasAny = totals.some((v) => v > 0.1);
+  if (!hasAny) {
+    el.dailyPrecipStrip.hidden = true;
+    el.dailyPrecipStrip.innerHTML = "";
+    return;
+  }
+  el.dailyPrecipStrip.hidden = false;
+  el.dailyPrecipStrip.innerHTML = days.map((d, i) => {
+    const v = totals[i];
+    const h = v > 0 ? Math.max(3, (v / peak) * 24) : 2;
+    const dim = v < 0.1 ? "dim" : "";
+    const title = v > 0.1 ? `${v.toFixed(1)} mm` : "trace";
+    return `<span class="strip-precip ${dim}" title="${title}"><span style="height:${h.toFixed(1)}px"></span></span>`;
+  }).join("");
 }
 
 function renderDailySpark(days) {

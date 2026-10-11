@@ -1515,6 +1515,36 @@ kbd {
   width: 22px; height: 22px;
   display: block;
 }
+.daily-precip-strip {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 4px;
+  padding: 0 10px 6px;
+  align-items: end;
+  justify-items: center;
+  height: 28px;
+}
+.daily-precip-strip[hidden] { display: none; }
+.daily-precip-strip .strip-precip {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+.daily-precip-strip .strip-precip span {
+  display: block;
+  width: 70%;
+  max-width: 14px;
+  background: linear-gradient(180deg, rgba(154, 209, 255, 0.55), rgba(154, 209, 255, 0.9));
+  border-radius: 3px 3px 1px 1px;
+  box-shadow: 0 0 6px rgba(154, 209, 255, 0.25);
+  transition: height 320ms var(--ease);
+}
+.daily-precip-strip .strip-precip.dim span {
+  background: rgba(255, 255, 255, 0.09);
+  box-shadow: none;
+}
 
 .daily-spark {
   width: 100%;
