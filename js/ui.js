@@ -2150,6 +2150,7 @@ function bindSearch() {
     el.searchResults.hidden = true;
     places.add(item);
     state.handlers.onSearchSelect?.(item);
+    try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch { /* ignore */ }
   });
 }
 
