@@ -395,6 +395,7 @@ function renderMetrics(w) {
       // 0 … 100 km/h scale (covers up to strong gale).
       const ws = Math.max(0, Math.min(100, w.windSpeed));
       el.windScaleMark.style.left = `${(ws / 100 * 100).toFixed(1)}%`;
+      el.windScale.title = "Wind scale (0 km/h calm → 100 km/h gale); dot is current gust";
       el.windScaleMark.title = `Wind ${Math.round(w.windSpeed)} km/h`;
       if (el.windScaleGust && w.windGusts != null && w.windGusts > w.windSpeed + 1) {
         const g = Math.max(0, Math.min(100, w.windGusts));
@@ -426,6 +427,7 @@ function renderMetrics(w) {
         : w.dewPoint < 21 ? "humid"
         : "oppressive";
       el.dewScale.dataset.tone = tone;
+      el.dewScale.title = "Dew-point comfort scale (0 °C dry → 25 °C oppressive)";
       el.dewScaleMark.title = `Dew ${Math.round(convertTemp(w.dewPoint))}° · ${tone}`;
     }
   }
@@ -452,6 +454,7 @@ function renderMetrics(w) {
       const p = Math.max(970, Math.min(1040, w.pressure));
       const frac = (p - 970) / 70;
       el.pressureScaleMark.style.left = `${(frac * 100).toFixed(1)}%`;
+      el.pressureScale.title = "Pressure scale (970 low → 1040 high); grey tick at the 1013 standard";
       el.pressureScaleMark.title = `${Math.round(w.pressure)} hPa`;
     }
   }
@@ -478,6 +481,7 @@ function renderMetrics(w) {
       el.uvScale.hidden = false;
       const u = Math.max(0, Math.min(12, w.uv));
       el.uvScaleMark.style.left = `${(u / 12 * 100).toFixed(1)}%`;
+      el.uvScale.title = "UV index scale (0 low → 12 extreme)";
       el.uvScaleMark.title = `UV ${Math.round(w.uv)}`;
     }
   }
