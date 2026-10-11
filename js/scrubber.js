@@ -124,6 +124,19 @@ export class Scrubber {
     this.appEl?.setAttribute("data-scrubbing", scrubbing ? "true" : "false");
     this._render(this._currentT());
     this.onScrub?.(clock.offset());
+    this._scheduleIdleReturn();
+  }
+
+  // After ~3 minutes of no further scrubbing, auto-return to live so a
+  // forgotten scrub session doesn't leave the UI stuck on last Tuesday.
+  _scheduleIdleReturn() {
+    if (this._idleTimer) clearTimeout(this._idleTimer);
+    if (clock.isLive()) return;
+    this._idleTimer = setTimeout(() => {
+      this._idleTimer = null;
+      if (clock.isLive()) return;
+      this.reset();
+    }, 3 * 60_000);
   }
 
   _render(t) {
