@@ -285,6 +285,7 @@ export const ui = {
     renderWeatherTags(weather);
     setFavicon(weather.condition, weather.isDay);
     setDocTitle(weather);
+    document.documentElement.setAttribute("data-daynight", weather.isDay ? "day" : "night");
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly, { daily: weather.daily });

@@ -427,6 +427,9 @@ html[data-reduce-motion="true"] *::after {
 .place-save:hover { color: var(--accent); background: rgba(154,209,255,0.1); transform: scale(1.1); }
 .place-save svg { width: 12px; height: 12px; }
 [data-scrubbing="true"] .live-dot { background: #ffb86b; box-shadow: 0 0 8px #ffb86b; animation: none; }
+:root[data-daynight="night"] .glass {
+  background: color-mix(in srgb, var(--glass) 92%, #000 8%);
+}
 :root[data-loading="true"] .temp-value {
   animation: tempLoading 1200ms var(--ease) infinite;
 }
