@@ -219,6 +219,10 @@ export const ui = {
     el.placeName.textContent = place.name || "Unknown";
     const sub = [place.admin1, place.country].filter(Boolean).join(", ");
     el.placeSub.textContent = sub || "—";
+    if (place.lat != null && place.lon != null) {
+      el.placeSub.title = `${place.lat.toFixed(4)}, ${place.lon.toFixed(4)}`;
+      el.placeName.title = `${place.name || ""}${sub ? " · " + sub : ""}`;
+    }
     // Reset alert dismissals so a fresh location can re-surface them.
     try { sessionStorage.removeItem("aether:dismissed-alerts"); } catch { /* ignore */ }
     renderPlaces();
