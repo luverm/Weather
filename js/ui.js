@@ -90,6 +90,11 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcGoldenRise: $("#sun-arc-golden-rise"),
+  sunArcGoldenSet: $("#sun-arc-golden-set"),
+  sunGolden: $("#sun-golden"),
+  sunGoldenLabel: $("#sun-golden-label"),
+  sunGoldenDetail: $("#sun-golden-detail"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -523,6 +528,94 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderGoldenHour(w);
+}
+
+// ---------- Golden & blue hour ----------
+// Golden hour: the ~60 min after sunrise and the ~60 min before sunset, when
+// light is warm and low. Blue hour: the ~30 min before sunrise and after
+// sunset, when the sky is deep blue. For UI purposes we approximate using
+// the civil-twilight-like window of ±1h around the horizon crossings.
+function renderGoldenHour(w) {
+  if (!el.sunGolden) return;
+  const sr = w?.sunrise, ss = w?.sunset;
+  if (!sr || !ss) { el.sunGolden.hidden = true; renderGoldenArcs(null, null); return; }
+  const HOUR = 60 * 60_000;
+  const now = Date.now();
+
+  // Choose which window to feature: the next one that hasn't ended.
+  const windows = [
+    { label: "Blue hour",   start: sr - 30 * 60_000, end: sr, kind: "blue"   },
+    { label: "Golden hour", start: sr,             end: sr + HOUR, kind: "golden-rise" },
+    { label: "Golden hour", start: ss - HOUR,      end: ss,        kind: "golden-set"  },
+    { label: "Blue hour",   start: ss,             end: ss + 30 * 60_000, kind: "blue" },
+  ];
+  // Also compute tomorrow's blue hour (dawn) using the next day's sunrise, if
+  // available, so the chip stays useful overnight.
+  const tomorrowRise = w?.daily?.[1]?.sunrise;
+  if (tomorrowRise) {
+    windows.push({ label: "Blue hour", start: tomorrowRise - 30 * 60_000, end: tomorrowRise, kind: "blue" });
+    windows.push({ label: "Golden hour", start: tomorrowRise, end: tomorrowRise + HOUR, kind: "golden-rise" });
+  }
+  const upcoming = windows.find((wn) => wn.end > now);
+  if (!upcoming) {
+    el.sunGolden.hidden = true;
+    renderGoldenArcs(null, null);
+    return;
+  }
+  el.sunGolden.hidden = false;
+  el.sunGoldenLabel.textContent = upcoming.label;
+  const tLabel = `${fmtTime(upcoming.start)} – ${fmtTime(upcoming.end)}`;
+  const inMs = upcoming.start - now;
+  let countdown = "";
+  if (inMs > 0) {
+    const mins = Math.round(inMs / 60_000);
+    countdown = mins >= 60 ? ` · in ${Math.floor(mins / 60)}h ${mins % 60}m`
+                           : ` · in ${mins}m`;
+  } else {
+    countdown = " · now";
+  }
+  el.sunGoldenDetail.textContent = `${tLabel}${countdown}`;
+  renderGoldenArcs(sr, ss);
+}
+
+// Draw two short arc segments onto the sun arc for the sunrise/sunset golden
+// windows. The sun arc path is: M10 74 Q100 -26 190 74 (0..1 parametrized).
+function renderGoldenArcs(sunrise, sunset) {
+  if (!el.sunArcGoldenRise || !el.sunArcGoldenSet) return;
+  if (!sunrise || !sunset) {
+    el.sunArcGoldenRise.setAttribute("d", "");
+    el.sunArcGoldenSet.setAttribute("d", "");
+    return;
+  }
+  // 60 min of a daylight span. Golden hour is roughly the first/last hour.
+  const span = sunset - sunrise;
+  if (span <= 0) {
+    el.sunArcGoldenRise.setAttribute("d", "");
+    el.sunArcGoldenSet.setAttribute("d", "");
+    return;
+  }
+  const windowFrac = Math.min(0.3, (60 * 60_000) / span);
+  // Quadratic Bezier point: P(t) = (1-t)² P0 + 2(1-t)t P1 + t² P2
+  const pt = (t) => {
+    const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
+    const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
+    return [x, y];
+  };
+  // Build each sub-arc as a sequence of short line segments — simpler and
+  // visually indistinguishable from a true sub-Bezier at this size.
+  const arcPath = (t0, t1) => {
+    const steps = 10;
+    let d = "";
+    for (let i = 0; i <= steps; i++) {
+      const t = t0 + (t1 - t0) * (i / steps);
+      const [x, y] = pt(t);
+      d += (i === 0 ? "M" : "L") + x.toFixed(1) + "," + y.toFixed(1) + " ";
+    }
+    return d.trim();
+  };
+  el.sunArcGoldenRise.setAttribute("d", arcPath(0, windowFrac));
+  el.sunArcGoldenSet.setAttribute("d", arcPath(1 - windowFrac, 1));
 }
 
 function scheduleSunArc(w) {
@@ -574,14 +667,16 @@ function scheduleSunCountdown(w) {
     if (!nextTs) {
       if (el.sunCountdown) el.sunCountdown.textContent = "";
       if (el.sunNextLabel) el.sunNextLabel.textContent = "Sun";
-      return;
+    } else {
+      const mins = Math.max(0, Math.round((nextTs - now) / 60_000));
+      const label = mins >= 60
+        ? `${Math.floor(mins / 60)}h ${mins % 60}m`
+        : `${mins}m`;
+      if (el.sunNextLabel) el.sunNextLabel.textContent = `${nextKind} in`;
+      if (el.sunCountdown) el.sunCountdown.textContent = label;
     }
-    const mins = Math.max(0, Math.round((nextTs - now) / 60_000));
-    const label = mins >= 60
-      ? `${Math.floor(mins / 60)}h ${mins % 60}m`
-      : `${mins}m`;
-    if (el.sunNextLabel) el.sunNextLabel.textContent = `${nextKind} in`;
-    if (el.sunCountdown) el.sunCountdown.textContent = label;
+    // Keep golden-hour chip's countdown fresh too.
+    renderGoldenHour(w);
   };
   update();
   state.sunTimer = setInterval(update, 30_000);
