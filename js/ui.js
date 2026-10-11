@@ -1142,7 +1142,8 @@ function renderInsights(w) {
   }
   el.insightsCard.hidden = false;
   el.insightsList.innerHTML = items.map((it, i) => `
-    <li data-i="${i}" ${it.ts ? `data-ts="${it.ts}" style="cursor:pointer"` : ""}>
+    <li data-i="${i}" data-label="${escapeHtml(it.label)}" data-value="${escapeHtml(it.value)}"
+        ${it.ts ? `data-ts="${it.ts}"` : ""} style="cursor:pointer">
       <span class="insight-icon">${it.icon}</span>
       <span class="insight-meta">
         <span class="insight-label">${escapeHtml(it.label)}</span>
@@ -1150,10 +1151,14 @@ function renderInsights(w) {
       </span>
     </li>
   `).join("");
-  el.insightsList.querySelectorAll("li[data-ts]").forEach((li) => {
+  el.insightsList.querySelectorAll("li").forEach((li) => {
     li.addEventListener("click", () => {
       const ts = parseInt(li.dataset.ts, 10);
-      if (ts) state.handlers.onHourClick?.(ts);
+      if (ts) {
+        state.handlers.onHourClick?.(ts);
+      } else {
+        ui.showToast(`${li.dataset.label}: ${li.dataset.value}`, 3400);
+      }
     });
   });
 }
