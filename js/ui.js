@@ -12,6 +12,7 @@ import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { rainOutlook } from "./rain-outlook.js";
 import { sunsetScore } from "./sunset-score.js";
+import { weatherTags } from "./tags.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -106,6 +107,7 @@ const el = {
   activityCard: $("#activity-card"),
   activityList: $("#activity-list"),
   alertsStrip: $("#alerts-strip"),
+  weatherTags: $("#weather-tags"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
   sunArcGoldenRise: $("#sun-arc-golden-rise"),
@@ -225,6 +227,7 @@ export const ui = {
     renderWeekend(weather);
     renderRainOutlook(weather);
     renderVisibility(weather);
+    renderWeatherTags(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly, { daily: weather.daily });
@@ -960,6 +963,23 @@ function renderRainOutlook(w) {
     const ts = outlook.heaviest?.time;
     if (ts) state.handlers.onHourClick?.(ts);
   };
+}
+
+function renderWeatherTags(w) {
+  if (!el.weatherTags) return;
+  const tags = weatherTags(w);
+  if (!tags.length) {
+    el.weatherTags.hidden = true;
+    el.weatherTags.innerHTML = "";
+    return;
+  }
+  el.weatherTags.hidden = false;
+  el.weatherTags.innerHTML = tags.map((t) => `
+    <span class="w-tag" data-tone="${t.tone}">
+      <span class="w-tag-emoji" aria-hidden="true">${t.emoji}</span>
+      ${escapeHtml(t.label)}
+    </span>
+  `).join("");
 }
 
 function renderAlerts(w) {
