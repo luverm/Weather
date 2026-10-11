@@ -617,7 +617,13 @@ html[data-reduce-motion="true"] *::after {
   background: #9ad1ff;
   border-radius: 2px;
   transform: translateX(-50%);
+  pointer-events: auto;
+  cursor: pointer;
+  border: 0;
+  padding: 0;
+  transition: height 160ms var(--ease), opacity 160ms var(--ease);
 }
+.scrubber-precip-bar:hover { height: 14px; margin-top: -7px; opacity: 1 !important; }
 .scrubber-ticks { position: absolute; inset: 0; pointer-events: none; }
 .scrubber-tick {
   position: absolute;

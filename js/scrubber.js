@@ -57,12 +57,19 @@ export class Scrubber {
       if (precip < 0.1 && pop < 40) continue;
       const rel = (h.time - base) / totalMs;
       if (rel < 0 || rel > 1) continue;
-      const span = document.createElement("span");
-      span.className = "scrubber-precip-bar";
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "scrubber-precip-bar";
       const strength = Math.min(1, Math.max(precip / 3, pop / 100));
-      span.style.left = `${(rel * 100).toFixed(2)}%`;
-      span.style.opacity = (0.3 + strength * 0.6).toFixed(2);
-      el.appendChild(span);
+      btn.style.left = `${(rel * 100).toFixed(2)}%`;
+      btn.style.opacity = (0.3 + strength * 0.6).toFixed(2);
+      btn.title = `${new Date(h.time).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false })} · ${precip.toFixed(1)} mm · ${pop}% rain`;
+      btn.setAttribute("aria-label", btn.title);
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this._setOffset(h.time - Date.now());
+      });
+      el.appendChild(btn);
     }
   }
 
