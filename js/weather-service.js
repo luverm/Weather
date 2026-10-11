@@ -94,6 +94,7 @@ export async function getWeather(lat, lon) {
     timezone: "auto",
     forecast_days: 7,
     past_hours: 1,
+    past_days: 1, // for yesterday vs today comparisons
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -151,12 +152,13 @@ function normalize(d, aq) {
     }
   }
 
-  // 7-day daily forecast.
-  const dailyForecast = [];
+  // Daily forecast (past 1 day + today + next 6). We split the past day out
+  // into `yesterday` so UI code can keep assuming `daily[0]` is today.
+  const dailyAll = [];
   if (daily.time) {
     for (let i = 0; i < daily.time.length; i++) {
       const ts = new Date(daily.time[i]).getTime();
-      dailyForecast.push({
+      dailyAll.push({
         time: ts,
         tempMax: daily.temperature_2m_max?.[i],
         tempMin: daily.temperature_2m_min?.[i],
@@ -171,6 +173,11 @@ function normalize(d, aq) {
       });
     }
   }
+  // Split out yesterday (any day whose end is before today-start).
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const yesterday = dailyAll.find((d) => d.time < todayStart.getTime()) || null;
+  const dailyForecast = dailyAll.filter((d) => d.time >= todayStart.getTime());
 
   // 15-min nowcast for the next ~2h — used for "rain in 12 min" banner.
   const nowcast = [];
@@ -204,13 +211,14 @@ function normalize(d, aq) {
     isDay: !!c.is_day,
     condition,
     label,
-    sunrise: daily.sunrise?.[0] ? new Date(daily.sunrise[0]).getTime() : null,
-    sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null,
-    uv: daily.uv_index_max?.[0] ?? null,
+    sunrise: dailyForecast[0]?.sunrise ?? null,
+    sunset: dailyForecast[0]?.sunset ?? null,
+    uv: dailyForecast[0]?.uvMax ?? null,
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
     hourly,
     daily: dailyForecast,
+    yesterday,
     nowcast,
     moon,
     airQuality: normalizeAq(aq),
@@ -386,6 +394,13 @@ function mock(lat, lon) {
       sunset: new Date().setHours(19, 0, 0, 0),
       condition: CONDITIONS.CLOUDS, label: "Cloudy",
     })),
+    yesterday: {
+      time: now - 86400_000,
+      tempMax: 19, tempMin: 11,
+      sunrise: new Date().setHours(6, 32, 0, 0) - 86400_000,
+      sunset: new Date().setHours(19, 2, 0, 0) - 86400_000,
+      condition: CONDITIONS.CLOUDS, label: "Cloudy",
+    },
     nowcast: [],
     moon: computeMoonPhase(new Date()),
     airQuality: { aqi: 42, pm25: 8, pm10: 14, o3: 40, no2: 15, co: 0.2, label: "Good" },

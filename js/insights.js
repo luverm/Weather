@@ -99,5 +99,33 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     });
   }
 
+  // 6. Daylight delta vs yesterday.
+  const todayLight = daylightMinutes(days[0]);
+  const yesterdayLight = daylightMinutes(weather.yesterday);
+  if (todayLight && yesterdayLight) {
+    const delta = todayLight - yesterdayLight;
+    const sign = delta > 0 ? "+" : delta < 0 ? "−" : "";
+    const abs = Math.abs(delta);
+    const deltaLabel = abs === 0 ? "same as yesterday"
+      : abs < 60 ? `${sign}${abs} min vs yesterday`
+      : `${sign}${Math.floor(abs / 60)}h ${abs % 60}m vs yesterday`;
+    out.push({
+      icon: ICONS.sun, label: "Daylight",
+      value: `${formatHM(todayLight)} · ${deltaLabel}`,
+    });
+  }
+
   return out.slice(0, 6);
+}
+
+function daylightMinutes(day) {
+  if (!day?.sunrise || !day?.sunset) return null;
+  const m = Math.round((day.sunset - day.sunrise) / 60_000);
+  return m > 0 ? m : null;
+}
+
+function formatHM(mins) {
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return `${h}h ${m}m`;
 }
