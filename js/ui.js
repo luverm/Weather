@@ -250,7 +250,12 @@ export const ui = {
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly, { daily: weather.daily });
     if (el.narrative) el.narrative.textContent = narrative || "";
-    if (weather.offline) ui.showToast("Offline — showing sample weather");
+    if (weather.offline) {
+      ui.showToast("Offline — showing sample weather");
+      document.documentElement.setAttribute("data-offline", "true");
+    } else {
+      document.documentElement.removeAttribute("data-offline");
+    }
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
       places.updateSummary(state.place, {
