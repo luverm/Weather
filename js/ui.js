@@ -228,7 +228,15 @@ export const ui = {
     const sub = [place.admin1, place.country].filter(Boolean).join(", ");
     el.placeSub.textContent = sub || "—";
     if (place.lat != null && place.lon != null) {
-      el.placeSub.title = `${place.lat.toFixed(4)}, ${place.lon.toFixed(4)}`;
+      const coords = `${place.lat.toFixed(4)}, ${place.lon.toFixed(4)}`;
+      el.placeSub.title = `${coords} · click to copy`;
+      el.placeSub.style.cursor = "pointer";
+      el.placeSub.onclick = () => {
+        navigator.clipboard?.writeText(coords).then(
+          () => ui.showToast(`Copied ${coords}`),
+          () => ui.showToast("Copy failed")
+        );
+      };
       el.placeName.title = `${place.name || ""}${sub ? " · " + sub : ""}`;
     }
     const saveBtn = document.getElementById("place-save");
