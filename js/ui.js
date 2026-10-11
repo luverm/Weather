@@ -48,6 +48,11 @@ const el = {
   moonIllum: $("#moon-illum"),
   moonFullCount: $("#moon-full-count"),
   moonNewCount: $("#moon-new-count"),
+  visCard: $("#visibility-card"),
+  visValue: $("#vis-value"),
+  visLabel: $("#vis-label"),
+  visBarFill: $("#vis-bar-fill"),
+  visCloud: $("#vis-cloud"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -207,6 +212,7 @@ export const ui = {
     renderAlerts(weather);
     renderWeekend(weather);
     renderRainOutlook(weather);
+    renderVisibility(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly, { daily: weather.daily });
@@ -915,6 +921,44 @@ function renderActivity(w) {
       if (ts) state.handlers.onHourClick?.(ts);
     });
   });
+}
+
+function renderVisibility(w) {
+  if (!el.visCard || !el.visValue || !el.visBarFill) return;
+  const meters = w?.visibility;
+  if (meters == null) {
+    el.visCard.hidden = true;
+    return;
+  }
+  el.visCard.hidden = false;
+  const km = meters / 1000;
+  // Display: fewer decimals as it gets clearer.
+  const display = km < 1 ? km.toFixed(2) : km < 10 ? km.toFixed(1) : Math.round(km);
+  el.visValue.textContent = display;
+  const { label, tone } = visibilityLabel(km);
+  el.visLabel.textContent = label;
+  el.visCard.dataset.tone = tone;
+  // Bar: non-linear scale so changes under 10 km are visible. Full bar = 40+ km.
+  const frac = km >= 40 ? 1 : Math.pow(km / 40, 0.55);
+  el.visBarFill.style.width = `${Math.max(2, frac * 100).toFixed(1)}%`;
+  if (el.visCloud) {
+    const cc = w?.cloudCover;
+    if (cc != null) {
+      el.visCloud.className = `trend ${cc >= 70 ? "down" : cc <= 30 ? "up" : "flat"}`;
+      el.visCloud.textContent = `${Math.round(cc)}% cloud`;
+    } else {
+      el.visCloud.textContent = "";
+    }
+  }
+}
+
+function visibilityLabel(km) {
+  if (km < 1)   return { label: "Dense fog", tone: "poor" };
+  if (km < 4)   return { label: "Hazy", tone: "fair" };
+  if (km < 10)  return { label: "Moderate", tone: "fair" };
+  if (km < 20)  return { label: "Clear", tone: "good" };
+  if (km < 40)  return { label: "Very clear", tone: "good" };
+  return { label: "Crystal clear", tone: "excellent" };
 }
 
 function renderPollen(pollen) {
