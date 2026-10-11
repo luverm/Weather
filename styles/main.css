@@ -2112,6 +2112,10 @@ kbd {
   stroke-width: 1.4;
   filter: drop-shadow(0 0 4px rgba(255,255,255,0.4));
 }
+.daily-spark .dot-ghost {
+  opacity: 0.45;
+  filter: none;
+}
 .daily-spark .spark-today-rule {
   stroke: var(--fg);
   stroke-width: 1;

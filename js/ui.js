@@ -1515,11 +1515,16 @@ function renderDailyPrecipStrip(days) {
 function renderDailySpark(days) {
   if (!el.dailyHi || !el.dailyLo || !el.dailySparkDots) return;
   const W = 600, H = 60, PAD = 10, TOP = 6, BOT = 6;
+  const yday = state.weather?.yesterday;
   const hi = days.map((d) => d.tempMax).filter((v) => v != null);
   const lo = days.map((d) => d.tempMin).filter((v) => v != null);
   if (!hi.length || !lo.length) return;
-  const tMin = Math.min(...lo);
-  const tMax = Math.max(...hi);
+  let tMin = Math.min(...lo);
+  let tMax = Math.max(...hi);
+  if (yday) {
+    if (yday.tempMin != null) tMin = Math.min(tMin, yday.tempMin);
+    if (yday.tempMax != null) tMax = Math.max(tMax, yday.tempMax);
+  }
   const span = Math.max(4, tMax - tMin);
   const innerW = W - PAD * 2;
   const innerH = H - TOP - BOT;
@@ -1582,6 +1587,29 @@ function renderDailySpark(days) {
     line.setAttribute("y2", String(TOP + innerH));
     line.setAttribute("class", "spark-today-rule");
     el.dailySparkDots.appendChild(line);
+  }
+  // Yesterday ghost dots at a position just left of x(0), so the past
+  // bookends the week visually.
+  if (yday && (yday.tempMin != null || yday.tempMax != null)) {
+    const xGhost = Math.max(1, x(0) - 10);
+    if (yday.tempMax != null) {
+      const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      c.setAttribute("cx", xGhost.toFixed(1));
+      c.setAttribute("cy", y(yday.tempMax).toFixed(1));
+      c.setAttribute("r", "2");
+      c.setAttribute("class", "dot-hi dot-ghost");
+      c.setAttribute("title", `Yesterday ${Math.round(convertTemp(yday.tempMax))}°`);
+      el.dailySparkDots.appendChild(c);
+    }
+    if (yday.tempMin != null) {
+      const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      c.setAttribute("cx", xGhost.toFixed(1));
+      c.setAttribute("cy", y(yday.tempMin).toFixed(1));
+      c.setAttribute("r", "2");
+      c.setAttribute("class", "dot-lo dot-ghost");
+      c.setAttribute("title", `Yesterday ${Math.round(convertTemp(yday.tempMin))}°`);
+      el.dailySparkDots.appendChild(c);
+    }
   }
 }
 
