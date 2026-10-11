@@ -1292,8 +1292,13 @@ function renderTrends(w) {
       const cls = direction === "rising" ? "up" : direction === "falling" ? "down" : "flat";
       el.pressureTrend.className = `trend ${cls}`;
       el.pressureTrend.textContent = `${arrow} ${delta >= 0 ? "+" : ""}${delta.toFixed(1)}`;
+      el.pressureTrend.title =
+        direction === "rising"  ? `Rising ${delta >= 0 ? "+" : ""}${delta.toFixed(1)} hPa / 3 h — skies tend to clear`
+        : direction === "falling" ? `Falling ${delta.toFixed(1)} hPa / 3 h — unsettled weather may be coming`
+        : `Steady ${delta >= 0 ? "+" : ""}${delta.toFixed(1)} hPa / 3 h — barometer holding`;
     } else {
       el.pressureTrend.textContent = "";
+      el.pressureTrend.removeAttribute("title");
     }
   }
   // Temperature trend: next-3-hours delta vs now.
