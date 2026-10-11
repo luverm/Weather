@@ -1986,8 +1986,9 @@ function renderPlaces() {
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
     const icon = p.condition ? `<span class="chip-icon">${iconFor(p.condition)}</span>` : "";
+    const title = [p.name, p.admin1, p.country].filter(Boolean).join(", ");
     return `
-      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
+      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}" title="${escapeHtml(title)}">
         ${icon}
         <span>${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
