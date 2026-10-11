@@ -11,6 +11,7 @@ import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { rainOutlook } from "./rain-outlook.js";
+import { sunsetScore } from "./sunset-score.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -112,6 +113,10 @@ const el = {
   sunGolden: $("#sun-golden"),
   sunGoldenLabel: $("#sun-golden-label"),
   sunGoldenDetail: $("#sun-golden-detail"),
+  sunsetScoreCard: $("#sun-sunset-score"),
+  sunsetScoreLabel: $("#sunset-score-label"),
+  sunsetScoreDetail: $("#sunset-score-detail"),
+  sunsetScoreValue: $("#sunset-score-value"),
   rainOutlookBtn: $("#rain-outlook"),
   rainOutlookHeadline: $("#rain-outlook-headline"),
   rainOutlookDetail: $("#rain-outlook-detail"),
@@ -663,6 +668,35 @@ function renderSun(w) {
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   renderGoldenHour(w);
+  renderSunsetScore(w);
+}
+
+function renderSunsetScore(w) {
+  if (!el.sunsetScoreCard) return;
+  // Only surface the score when sunset is still ahead (and within ~24 h).
+  if (!w?.sunset || w.sunset < Date.now() || w.sunset - Date.now() > 24 * 3600_000) {
+    el.sunsetScoreCard.hidden = true;
+    return;
+  }
+  const res = sunsetScore(w);
+  if (!res) {
+    el.sunsetScoreCard.hidden = true;
+    return;
+  }
+  el.sunsetScoreCard.hidden = false;
+  el.sunsetScoreCard.dataset.tone =
+    res.score >= 75 ? "spectacular"
+    : res.score >= 55 ? "vivid"
+    : res.score >= 35 ? "moderate"
+    : "muted";
+  el.sunsetScoreLabel.textContent = `Sunset ${fmtTime(res.sunset)} · ${res.label}`;
+  const bits = [];
+  const f = res.factors;
+  if (f.cloudCover != null) bits.push(`${Math.round(f.cloudCover)}% cloud`);
+  if (f.humidity != null)   bits.push(`${Math.round(f.humidity)}% rh`);
+  if (f.pm25 != null)       bits.push(`PM2.5 ${Math.round(f.pm25)}`);
+  el.sunsetScoreDetail.textContent = bits.join(" · ") || "—";
+  el.sunsetScoreValue.textContent = `${res.score}`;
 }
 
 // ---------- Golden & blue hour ----------
