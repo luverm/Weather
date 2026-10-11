@@ -306,7 +306,34 @@ installShortcuts({
   },
   share: () => document.getElementById("share-btn")?.click(),
   refresh: () => refreshWeather(),
+  goldenHour: () => jumpToGoldenHour(),
 });
+
+function jumpToGoldenHour() {
+  if (!app.weather) return;
+  const now = Date.now();
+  const HOUR = 60 * 60_000;
+  // Candidate times: sunrise, sunrise+1h (end of morning golden), sunset-1h
+  // (start of evening golden), sunset. First future candidate wins.
+  const cand = [];
+  for (const d of (app.weather.daily || [])) {
+    if (d.sunrise) {
+      cand.push({ ts: d.sunrise, label: "Morning golden hour" });
+      cand.push({ ts: d.sunrise + HOUR, label: "Morning golden ends" });
+    }
+    if (d.sunset) {
+      cand.push({ ts: d.sunset - HOUR, label: "Evening golden hour" });
+      cand.push({ ts: d.sunset, label: "Sunset" });
+    }
+  }
+  const next = cand.filter((c) => c.ts > now + 60_000).sort((a, b) => a.ts - b.ts)[0];
+  if (!next) { ui.showToast("No upcoming golden hour in the forecast"); return; }
+  clock.setOffset(next.ts - Date.now());
+  scrubber.sync();
+  applyScene(app.weather);
+  ui.setScrubbing(true);
+  ui.showToast(`${next.label} · ${new Date(next.ts).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false })}`);
+}
 
 // ---------- Start ----------
 (async function init() {
