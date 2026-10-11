@@ -1150,11 +1150,45 @@ function renderWeatherTags(w) {
   }
   el.weatherTags.hidden = false;
   el.weatherTags.innerHTML = tags.map((t) => `
-    <span class="w-tag" data-tone="${t.tone}">
+    <button type="button" class="w-tag" data-tone="${t.tone}" data-label="${escapeHtml(t.label)}">
       <span class="w-tag-emoji" aria-hidden="true">${t.emoji}</span>
       ${escapeHtml(t.label)}
-    </span>
+    </button>
   `).join("");
+  el.weatherTags.querySelectorAll(".w-tag").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const explain = tagExplanation(btn.dataset.label, w);
+      if (explain) ui.showToast(explain, 2800);
+    });
+  });
+}
+
+function tagExplanation(label, w) {
+  switch (label) {
+    case "Sunny":    return `Clear skies with full sun · UV ${Math.round(w.uv ?? 0)}`;
+    case "Clear":    return `Clear night sky · ${w.cloudCover != null ? `${Math.round(w.cloudCover)}% cloud` : "stargazing weather"}`;
+    case "Cloudy":   return `${w.cloudCover != null ? `${Math.round(w.cloudCover)}% cloud cover` : "Overcast"} right now`;
+    case "Overcast": return `${w.cloudCover != null ? `${Math.round(w.cloudCover)}% cloud cover` : "Full overcast"}`;
+    case "Rainy":    return `Active rain · humidity ${Math.round(w.humidity ?? 0)}%`;
+    case "Stormy":   return `Thunderstorm conditions — stay indoors`;
+    case "Snowy":    return `Snow falling · temp ${Math.round(w.temp ?? 0)}°`;
+    case "Foggy":    return `Visibility ${w.visibility != null ? (w.visibility / 1000).toFixed(1) + " km" : "poor"}`;
+    case "Breezy":   return `Wind ${Math.round(w.windSpeed ?? 0)} km/h · gust ${Math.round(w.windGusts ?? 0)}`;
+    case "Windy":    return `Strong wind ${Math.round(w.windSpeed ?? 0)} km/h · gust ${Math.round(w.windGusts ?? 0)}`;
+    case "Calm":     return `Light winds · ${Math.round(w.windSpeed ?? 0)} km/h`;
+    case "Hot":      return `${Math.round(w.temp ?? 0)}° · hydrate often`;
+    case "Warm":     return `${Math.round(w.temp ?? 0)}° · comfy outdoors`;
+    case "Cool":     return `${Math.round(w.temp ?? 0)}° · bring a layer`;
+    case "Cold":     return `${Math.round(w.temp ?? 0)}° · dress warm`;
+    case "Freezing": return `${Math.round(w.temp ?? 0)}° · protect exposed skin`;
+    case "Humid":    return `Humidity ${Math.round(w.humidity ?? 0)}% · dew ${Math.round(w.dewPoint ?? 0)}°`;
+    case "Dry":      return `Humidity ${Math.round(w.humidity ?? 0)}% · low moisture`;
+    case "High UV":  return `UV ${Math.round(w.uv ?? 0)} · sunscreen + hat`;
+    case "Hazy":     return `Visibility ${(w.visibility / 1000).toFixed(1)} km — hazy air`;
+    case "Rain soon": return `${w.hourly?.[0]?.pop ?? 0}% rain chance within the hour`;
+    case "Blue skies": return `${w.cloudCover != null ? Math.round(w.cloudCover) : 0}% cloud cover — classic blue`;
+    default: return `${label} conditions`;
+  }
 }
 
 function renderAlerts(w) {

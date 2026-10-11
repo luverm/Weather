@@ -1866,7 +1866,12 @@ kbd {
   color: var(--fg-muted);
   backdrop-filter: blur(14px) saturate(140%);
   -webkit-backdrop-filter: blur(14px) saturate(140%);
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 160ms var(--ease), background 160ms var(--ease);
 }
+.w-tag:hover { transform: translateY(-1px); background: rgba(255,255,255,0.1); }
+.w-tag:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .w-tag-emoji { font-size: 12.5px; line-height: 1; }
 .w-tag[data-tone="warm"]    { color: #ffd199; border-color: rgba(255, 196, 112, 0.3); background: rgba(255, 196, 112, 0.08); }
 .w-tag[data-tone="cool"]    { color: #9ad1ff; border-color: rgba(154, 209, 255, 0.3); background: rgba(154, 209, 255, 0.08); }
