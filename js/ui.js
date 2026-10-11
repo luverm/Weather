@@ -1436,16 +1436,16 @@ function renderDailySpark(days) {
       const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
       c.setAttribute("cx", x(i).toFixed(1));
       c.setAttribute("cy", y(d.tempMax).toFixed(1));
-      c.setAttribute("r", "2.5");
-      c.setAttribute("class", "dot-hi");
+      c.setAttribute("r", i === 0 ? "3.5" : "2.5");
+      c.setAttribute("class", i === 0 ? "dot-hi dot-today" : "dot-hi");
       el.dailySparkDots.appendChild(c);
     }
     if (d.tempMin != null) {
       const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
       c.setAttribute("cx", x(i).toFixed(1));
       c.setAttribute("cy", y(d.tempMin).toFixed(1));
-      c.setAttribute("r", "2.5");
-      c.setAttribute("class", "dot-lo");
+      c.setAttribute("r", i === 0 ? "3.5" : "2.5");
+      c.setAttribute("class", i === 0 ? "dot-lo dot-today" : "dot-lo");
       el.dailySparkDots.appendChild(c);
     }
     if (i === weekHiIdx && d.tempMax != null) {
@@ -1459,6 +1459,16 @@ function renderDailySpark(days) {
       );
     }
   });
+  // Light vertical rule under today, so the chart's left edge reads clearly.
+  if (days[0]) {
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", x(0).toFixed(1));
+    line.setAttribute("x2", x(0).toFixed(1));
+    line.setAttribute("y1", String(TOP));
+    line.setAttribute("y2", String(TOP + innerH));
+    line.setAttribute("class", "spark-today-rule");
+    el.dailySparkDots.appendChild(line);
+  }
 }
 
 function renderDailyDelta(days) {

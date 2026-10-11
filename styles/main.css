@@ -1906,6 +1906,17 @@ kbd {
 .daily-spark circle { transition: r 160ms var(--ease); }
 .daily-spark .dot-hi { fill: #ff9c7a; }
 .daily-spark .dot-lo { fill: #9ad1ff; }
+.daily-spark .dot-today {
+  stroke: var(--fg);
+  stroke-width: 1.4;
+  filter: drop-shadow(0 0 4px rgba(255,255,255,0.4));
+}
+.daily-spark .spark-today-rule {
+  stroke: var(--fg);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+  opacity: 0.25;
+}
 .daily-spark .spark-label {
   font-size: 9px;
   font-weight: 600;
