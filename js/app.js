@@ -222,8 +222,8 @@ async function loadByCoords(place) {
   // Apply to scenes at current (live) time.
   applyScene(w);
 
-  // Update scrubber bounds to this location's sunrise/sunset.
-  scrubber.setBounds({ start: Date.now(), sunrise: w.sunrise, sunset: w.sunset });
+  // Update scrubber bounds to this location's sunrise/sunset + rain data.
+  scrubber.setBounds({ start: Date.now(), sunrise: w.sunrise, sunset: w.sunset, hourly: w.hourly });
 
   // Move the radar to the new location (fire-and-forget; resolves later).
   ensureRadar([place.lat, place.lon]).then((r) => r?.setCenter(place.lat, place.lon, place.name));

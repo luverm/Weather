@@ -33,13 +33,37 @@ export class Scrubber {
     setInterval(() => { if (clock.isLive()) this._render(0); }, 30_000);
   }
 
-  setBounds({ start, sunrise, sunset }) {
+  setBounds({ start, sunrise, sunset, hourly }) {
     this.start = start || Date.now();
     this.sunrise = sunrise;
     this.sunset = sunset;
     this._placeMarker(this.sunriseEl, sunrise, "Sunrise");
     this._placeMarker(this.sunsetEl, sunset, "Sunset");
+    this._renderPrecip(hourly);
     this._render(this._currentT());
+  }
+
+  _renderPrecip(hourly) {
+    const el = document.getElementById("scrubber-precip");
+    if (!el) return;
+    el.innerHTML = "";
+    if (!hourly?.length) return;
+    const totalMs = RANGE_HOURS * 3600_000;
+    const base = this.start - 3600_000;
+    for (const h of hourly.slice(0, RANGE_HOURS)) {
+      const precip = h.precip ?? 0;
+      const pop = h.pop ?? 0;
+      // Only show hours with meaningful rain chance.
+      if (precip < 0.1 && pop < 40) continue;
+      const rel = (h.time - base) / totalMs;
+      if (rel < 0 || rel > 1) continue;
+      const span = document.createElement("span");
+      span.className = "scrubber-precip-bar";
+      const strength = Math.min(1, Math.max(precip / 3, pop / 100));
+      span.style.left = `${(rel * 100).toFixed(2)}%`;
+      span.style.opacity = (0.3 + strength * 0.6).toFixed(2);
+      el.appendChild(span);
+    }
   }
 
   /** Called when we externally reset to "now" (e.g. search selected). */

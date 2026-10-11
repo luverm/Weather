@@ -603,6 +603,21 @@ html[data-reduce-motion="true"] *::after {
   outline: none;
 }
 .scrubber-track:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
+.scrubber-precip {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.scrubber-precip-bar {
+  position: absolute;
+  top: 50%;
+  width: 3px;
+  height: 10px;
+  margin-top: -5px;
+  background: #9ad1ff;
+  border-radius: 2px;
+  transform: translateX(-50%);
+}
 .scrubber-ticks { position: absolute; inset: 0; pointer-events: none; }
 .scrubber-tick {
   position: absolute;
