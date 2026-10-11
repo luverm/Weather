@@ -44,6 +44,7 @@ const el = {
   aqTrendLine: $("#aq-trend-line"),
   aqTrendFill: $("#aq-trend-fill"),
   aqDominant: $("#aq-dominant"),
+  aqDirection: $("#aq-direction"),
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
@@ -496,8 +497,35 @@ function renderAirQuality(aq) {
   el.aqArc.setAttribute("stroke-dashoffset", String(126 * (1 - frac)));
   el.aqDetail.textContent =
     `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
+  renderAqDirection(aq);
   renderAqDominant(aq);
   renderAqTrend(aq);
+}
+
+// From the hourly AQI trend, infer whether the next ~6 h are heading up
+// (worsening) or down (improving). Threshold keeps noise out of the chip.
+function renderAqDirection(aq) {
+  if (!el.aqDirection) return;
+  const trend = aq?.trend || [];
+  if (trend.length < 4 || aq.aqi == null) {
+    el.aqDirection.textContent = "";
+    return;
+  }
+  const horizon = trend.slice(0, Math.min(6, trend.length));
+  const future = horizon[horizon.length - 1].aqi;
+  const delta = future - aq.aqi;
+  if (Math.abs(delta) < 8) {
+    el.aqDirection.className = "trend flat";
+    el.aqDirection.textContent = "Steady";
+    return;
+  }
+  if (delta > 0) {
+    el.aqDirection.className = "trend up";
+    el.aqDirection.textContent = `Worsening +${Math.round(delta)}`;
+  } else {
+    el.aqDirection.className = "trend down";
+    el.aqDirection.textContent = `Improving ${Math.round(delta)}`;
+  }
 }
 
 function renderAqDominant(aq) {
