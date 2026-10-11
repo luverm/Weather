@@ -463,8 +463,15 @@ function renderMetrics(w) {
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
     if (lvl) {
+      // Look at next ~3 hourly UV values to show rising / falling glyph.
+      const fut = (w.hourly || []).slice(0, 3).map((h) => h.uv).filter((v) => v != null);
+      const dirGlyph = fut.length && w.uv != null
+        ? (Math.max(...fut) > w.uv + 0.5 ? " ↗"
+          : Math.min(...fut) < w.uv - 0.5 ? " ↘"
+          : "")
+        : "";
       el.uvLevel.className = `trend ${lvl.cls}`;
-      el.uvLevel.textContent = lvl.label;
+      el.uvLevel.textContent = `${lvl.label}${dirGlyph}`;
     } else {
       el.uvLevel.textContent = "";
     }
