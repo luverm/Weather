@@ -1412,7 +1412,17 @@ kbd {
   padding: 14px 16px;
   border-radius: var(--radius-sm);
   display: grid; gap: 10px;
+  animation: extraIn 420ms var(--ease) both;
 }
+.extra-card:nth-child(2) { animation-delay: 80ms; }
+.extra-card:nth-child(3) { animation-delay: 160ms; }
+.extra-card:nth-child(4) { animation-delay: 240ms; }
+.extra-card:nth-child(5) { animation-delay: 320ms; }
+@keyframes extraIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+:root[data-reduce-motion="true"] .extra-card { animation: none; }
 .aq-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
 .aq-ring { position: relative; width: 48px; height: 48px; color: #78d06a; }
 .aq-ring svg { width: 48px; height: 48px; display: block; }
