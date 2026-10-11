@@ -2041,8 +2041,10 @@ function renderPlaces() {
     const active = places.idFor(p) === activeId;
     const icon = p.condition ? `<span class="chip-icon">${iconFor(p.condition)}</span>` : "";
     const title = [p.name, p.admin1, p.country].filter(Boolean).join(", ");
+    const ageMs = p._lastUpdated ? Date.now() - p._lastUpdated : null;
+    const stale = ageMs != null && ageMs > 30 * 60_000;
     return `
-      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}" title="${escapeHtml(title)}">
+      <div class="place-chip ${active ? "active" : ""} ${stale ? "stale" : ""}" data-id="${p.id}" title="${escapeHtml(title)}">
         ${icon}
         <span>${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}

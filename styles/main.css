@@ -363,6 +363,8 @@ html[data-reduce-motion="true"] *::after {
 .place-chip:hover { background: var(--glass-strong); transform: translateY(-1px); }
 .place-chip.active { background: var(--glass-strong); border-color: rgba(255,255,255,0.35); }
 .place-chip .temp { color: var(--fg-muted); font-variant-numeric: tabular-nums; }
+.place-chip.stale .temp { opacity: 0.45; }
+.place-chip.stale { opacity: 0.85; }
 .place-chip .chip-icon {
   display: inline-flex; align-items: center; justify-content: center;
   width: 16px; height: 16px;
