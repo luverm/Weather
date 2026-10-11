@@ -2255,6 +2255,14 @@ kbd {
   border-bottom: 1px dashed rgba(255,255,255,0.25);
 }
 .hint .attribution a:hover { color: var(--fg); border-bottom-color: var(--accent); }
+.hint .build-tag {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(154, 209, 255, 0.1);
+  color: var(--accent);
+  letter-spacing: 0.12em;
+  font-size: 9.5px;
+}
 .hint .dot {
   width: 6px; height: 6px; border-radius: 50%;
   background: var(--accent); box-shadow: 0 0 10px var(--accent);

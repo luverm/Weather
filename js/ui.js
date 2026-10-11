@@ -344,8 +344,15 @@ function renderLiveValues(w, { animate = true } = {}) {
   const feels = convertTemp(w.feelsLike ?? w.temp);
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
+  if (w.temp != null) {
+    el.temp.title = `${temp.toFixed(1)}° (click to toggle units)`;
+  }
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  // Preserve the trend chip DOM; rewrite only the text portion.
+  const feelsText = el.feelsLike.lastChild && el.feelsLike.lastChild.nodeType === Node.TEXT_NODE
+    ? el.feelsLike.lastChild
+    : el.feelsLike.appendChild(document.createTextNode(""));
+  feelsText.data = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
 }
 
