@@ -337,8 +337,13 @@ export const ui = {
   },
   setAudioState(on) {
     el.audioBtn.classList.toggle("on", !!on);
-    el.audioBtn.setAttribute("aria-label", on ? "Disable ambient sound" : "Enable ambient sound");
-    el.audioBtn.setAttribute("title", on ? "Disable ambient sound" : "Enable ambient sound");
+    const level = parseFloat(localStorage.getItem("aether:audio-level"));
+    const pct = Math.round((isFinite(level) ? level : 0.5) * 100);
+    const label = on
+      ? `Disable ambient sound (${pct}% volume)`
+      : "Enable ambient sound";
+    el.audioBtn.setAttribute("aria-label", label);
+    el.audioBtn.setAttribute("title", label);
   },
   showToast(msg, dur = 2600) {
     el.toast.textContent = msg;
