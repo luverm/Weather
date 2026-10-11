@@ -741,6 +741,10 @@ function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  const moonCard = document.getElementById("moon-card");
+  if (moonCard) {
+    moonCard.classList.toggle("moon-full-glow", moon.illum >= 0.95);
+  }
   if (el.moonFullCount) el.moonFullCount.textContent = `Full ${fmtDays(moon.daysToFull)}`;
   if (el.moonNewCount)  el.moonNewCount.textContent  = `New ${fmtDays(moon.daysToNew)}`;
   const moonCard = document.getElementById("moon-card");

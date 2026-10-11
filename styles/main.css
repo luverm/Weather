@@ -1487,6 +1487,15 @@ kbd {
 
 .moon-row, .sun-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
 .moon-svg { width: 48px; height: 48px; }
+#moon-card.moon-full-glow .moon-svg {
+  filter: drop-shadow(0 0 10px rgba(240, 230, 203, 0.5));
+  animation: moonGlow 3.4s var(--ease) infinite;
+}
+@keyframes moonGlow {
+  0%, 100% { filter: drop-shadow(0 0 8px rgba(240, 230, 203, 0.3)); }
+  50%      { filter: drop-shadow(0 0 14px rgba(240, 230, 203, 0.6)); }
+}
+:root[data-reduce-motion="true"] #moon-card.moon-full-glow .moon-svg { animation: none; }
 .moon-meta { display: grid; gap: 2px; }
 .moon-meta strong { display: block; font-size: 14px; font-weight: 500; }
 .moon-detail { font-size: 11.5px; color: var(--fg-dim); }
