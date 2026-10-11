@@ -114,6 +114,7 @@ const el = {
   settingAccent: $("#setting-accent"),
   settingClearPlaces: $("#setting-clear-places"),
   settingResetAll: $("#setting-reset-all"),
+  settingFullscreen: $("#setting-fullscreen"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
@@ -2194,6 +2195,16 @@ function bindSettings() {
     const btn = ev.target.closest("[data-accent]");
     if (!btn) return;
     applyAccent(btn.dataset.accent, { persist: true });
+  });
+
+  el.settingFullscreen?.addEventListener("click", () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    } else {
+      document.documentElement.requestFullscreen?.().catch(() => {
+        ui.showToast("Fullscreen not available");
+      });
+    }
   });
 
   el.settingResetAll?.addEventListener("click", () => {
