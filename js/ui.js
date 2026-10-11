@@ -1090,16 +1090,17 @@ function startLocaltime(w) {
   const update = () => {
     try {
       const parts = new Intl.DateTimeFormat([], {
-        timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
+        timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: !!state.use12h,
         weekday: "short", timeZoneName: "short",
       }).formatToParts(new Date());
       const day = parts.find((p) => p.type === "weekday")?.value ?? "";
       const hour = parts.find((p) => p.type === "hour")?.value ?? "";
       const minute = parts.find((p) => p.type === "minute")?.value ?? "";
+      const period = parts.find((p) => p.type === "dayPeriod")?.value ?? "";
       const tzName = parts.find((p) => p.type === "timeZoneName")?.value ?? "";
       el.placeLocaltime.innerHTML =
         `<span class="clock-dot" aria-hidden="true"></span>` +
-        `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>`;
+        `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)}${period ? " " + escapeHtml(period) : ""} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>`;
     } catch {
       el.placeLocaltime.textContent = "";
     }
