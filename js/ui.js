@@ -2312,7 +2312,8 @@ function bindSettings() {
   el.settingResetAll?.addEventListener("click", () => {
     if (!confirm("Reset all preferences and saved places? This can't be undone.")) return;
     const keys = ["aether:unit", "aether:12h", "aether:reduceMotion", "aether:audio-level",
-                  "aether:accent", "aether:places", "aether:welcomed"];
+                  "aether:accent", "aether:places", "aether:welcomed",
+                  "aether:visits", "aether:install-nudged"];
     for (const k of keys) {
       try { localStorage.removeItem(k); } catch { /* ignore */ }
     }
@@ -2390,10 +2391,23 @@ const HINTS = [
 ];
 function maybeShowWelcome() {
   try {
-    if (localStorage.getItem("aether:welcomed") === "1") return;
-    localStorage.setItem("aether:welcomed", "1");
-    // Give the UI a beat before the toast so it feels welcoming, not noisy.
-    setTimeout(() => ui.showToast("Welcome to Aether · press ? for shortcuts", 4600), 1200);
+    const welcomed = localStorage.getItem("aether:welcomed") === "1";
+    if (!welcomed) {
+      localStorage.setItem("aether:welcomed", "1");
+      setTimeout(() => ui.showToast("Welcome to Aether · press ? for shortcuts", 4600), 1200);
+    }
+    // Count visits, and once we've been opened 3+ times without being
+    // installed, nudge the user about the install button.
+    const visits = (parseInt(localStorage.getItem("aether:visits"), 10) || 0) + 1;
+    localStorage.setItem("aether:visits", String(visits));
+    const standalone = window.matchMedia?.("(display-mode: standalone)").matches
+      || window.navigator.standalone === true;
+    const installNudged = localStorage.getItem("aether:install-nudged") === "1";
+    if (visits >= 3 && !standalone && !installNudged
+        && (el.installBtn && !el.installBtn.hidden)) {
+      localStorage.setItem("aether:install-nudged", "1");
+      setTimeout(() => ui.showToast("Enjoying Aether? Tap the ⬇ icon to install.", 5600), 2200);
+    }
   } catch { /* ignore */ }
 }
 
