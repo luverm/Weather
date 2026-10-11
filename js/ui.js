@@ -87,6 +87,7 @@ const el = {
   fetchedAgo: $("#fetched-ago"),
   dailyIconStrip: $("#daily-icon-strip"),
   dailyPrecipStrip: $("#daily-precip-strip"),
+  dailyUvStrip: $("#daily-uv-strip"),
   settingsBtn: $("#settings-btn"),
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
@@ -1129,6 +1130,26 @@ function renderDailyIconStrip(days) {
     `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
   ).join("");
   renderDailyPrecipStrip(days);
+  renderDailyUvStrip(days);
+}
+
+function renderDailyUvStrip(days) {
+  if (!el.dailyUvStrip) return;
+  const uvs = days.map((d) => (d.uvMax != null && isFinite(d.uvMax)) ? d.uvMax : null);
+  const hasAny = uvs.some((v) => v != null && v >= 1);
+  if (!hasAny) {
+    el.dailyUvStrip.hidden = true;
+    el.dailyUvStrip.innerHTML = "";
+    return;
+  }
+  el.dailyUvStrip.hidden = false;
+  el.dailyUvStrip.innerHTML = days.map((d, i) => {
+    const uv = uvs[i];
+    if (uv == null) return `<span class="strip-uv dim" title="UV —">—</span>`;
+    const lvl = uvLevel(uv);
+    const cls = lvl?.cls || "flat";
+    return `<span class="strip-uv ${cls}" title="UV ${Math.round(uv)} · ${lvl?.label ?? ""}">${Math.round(uv)}</span>`;
+  }).join("");
 }
 
 function renderDailyPrecipStrip(days) {

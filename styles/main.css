@@ -1618,6 +1618,33 @@ kbd {
   background: rgba(255, 255, 255, 0.09);
   box-shadow: none;
 }
+.daily-uv-strip {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 4px;
+  padding: 0 10px 4px;
+  justify-items: center;
+  font-size: 10px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+}
+.daily-uv-strip[hidden] { display: none; }
+.daily-uv-strip .strip-uv {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+  background: rgba(255,255,255,0.06);
+}
+.daily-uv-strip .strip-uv.down { background: rgba(154, 209, 255, 0.14); color: #9ad1ff; }
+.daily-uv-strip .strip-uv.flat { background: rgba(255, 211, 106, 0.12); color: #ffd36a; }
+.daily-uv-strip .strip-uv.up   { background: rgba(255, 156, 122, 0.14); color: #ffb196; }
+.daily-uv-strip .strip-uv.dim  { background: transparent; }
 
 .daily-spark {
   width: 100%;
