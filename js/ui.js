@@ -1519,6 +1519,19 @@ function cardinal(deg) {
 
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
+  // Hook vertical scroll wheel → horizontal scroll inside the hourly strip
+  // so a trackpad swipe or mouse wheel moves the forecast tiles.
+  if (!el.forecastTrack._wheelHooked) {
+    el.forecastTrack.addEventListener("wheel", (e) => {
+      if (e.deltaX !== 0) return; // already horizontal
+      if (Math.abs(e.deltaY) < 2) return;
+      const canScroll = el.forecastTrack.scrollWidth > el.forecastTrack.clientWidth + 2;
+      if (!canScroll) return;
+      e.preventDefault();
+      el.forecastTrack.scrollLeft += e.deltaY;
+    }, { passive: false });
+    el.forecastTrack._wheelHooked = true;
+  }
   for (const h of (w.hourly || []).slice(0, 24)) {
     const item = document.createElement("div");
     item.className = "forecast-item";
