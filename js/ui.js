@@ -2153,6 +2153,8 @@ function bindSettings() {
   el.settingAudioLevel?.addEventListener("input", () => {
     const pct = parseInt(el.settingAudioLevel.value, 10);
     el.settingAudioLevel.style.setProperty("--range", `${pct}%`);
+    const lab = document.getElementById("audio-level-label");
+    if (lab) lab.textContent = pct === 0 ? "muted" : pct === 100 ? "full" : String(pct);
     state.handlers.onAudioLevel?.(pct / 100);
   });
 
@@ -2217,6 +2219,8 @@ function applyStoredPreferences() {
     const pct = Math.round((isFinite(level) ? level : 0.5) * 100);
     el.settingAudioLevel.value = String(pct);
     el.settingAudioLevel.style.setProperty("--range", `${pct}%`);
+    const lab = document.getElementById("audio-level-label");
+    if (lab) lab.textContent = pct === 0 ? "muted" : pct === 100 ? "full" : String(pct);
   }
   const accent = localStorage.getItem("aether:accent");
   if (accent && ACCENTS[accent]) applyAccent(accent);

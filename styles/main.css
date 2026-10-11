@@ -186,6 +186,16 @@ ul { list-style: none; margin: 0; padding: 0; }
   background: var(--accent);
 }
 .settings-row-slider { gap: 10px; align-items: center; }
+.volume-label {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  color: var(--fg-muted);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
 .settings-row-slider input[type="range"] {
   appearance: none;
   -webkit-appearance: none;
