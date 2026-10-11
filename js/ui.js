@@ -43,6 +43,7 @@ const el = {
   aqCard: $("#aq-card"),
   aqTrendLine: $("#aq-trend-line"),
   aqTrendFill: $("#aq-trend-fill"),
+  aqDominant: $("#aq-dominant"),
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
@@ -494,7 +495,49 @@ function renderAirQuality(aq) {
   el.aqArc.setAttribute("stroke-dashoffset", String(126 * (1 - frac)));
   el.aqDetail.textContent =
     `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
+  renderAqDominant(aq);
   renderAqTrend(aq);
+}
+
+function renderAqDominant(aq) {
+  if (!el.aqDominant) return;
+  // Only highlight a dominant pollutant when air quality is Moderate+ (AQI>50).
+  if (aq?.aqi == null || aq.aqi <= 50) {
+    el.aqDominant.hidden = true;
+    el.aqDominant.textContent = "";
+    return;
+  }
+  const dom = dominantPollutant(aq);
+  if (!dom) {
+    el.aqDominant.hidden = true;
+    el.aqDominant.textContent = "";
+    return;
+  }
+  el.aqDominant.hidden = false;
+  el.aqDominant.textContent = `${dom.name} driving today · ${dom.value}${dom.unit}`;
+}
+
+// Normalize each measurement to a 0..1 "pressure" against the WHO 2021 daily
+// air-quality guideline, then pick the biggest. Returns null if nothing is
+// above its guideline value.
+function dominantPollutant(aq) {
+  const candidates = [
+    { key: "pm25", name: "PM2.5", value: aq.pm25, guide: 15,  unit: " µg/m³" },
+    { key: "pm10", name: "PM10",  value: aq.pm10, guide: 45,  unit: " µg/m³" },
+    { key: "o3",   name: "O₃",    value: aq.o3,   guide: 100, unit: " µg/m³" },
+    { key: "no2",  name: "NO₂",   value: aq.no2,  guide: 25,  unit: " µg/m³" },
+  ].filter((c) => c.value != null);
+  if (!candidates.length) return null;
+  let best = null;
+  for (const c of candidates) {
+    const pressure = c.value / c.guide;
+    if (!best || pressure > best.pressure) {
+      best = { ...c, pressure, value: Math.round(c.value) };
+    }
+  }
+  // If even the "worst" is well under the guideline, don't highlight anything.
+  if (!best || best.pressure < 0.8) return null;
+  return best;
 }
 
 function renderAqTrend(aq) {
