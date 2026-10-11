@@ -1819,12 +1819,25 @@ function bindSearch() {
 }
 
 function bindUnitToggle() {
-  el.unitBtn.addEventListener("click", () => {
+  const flip = () => {
     state.unit = state.unit === "C" ? "F" : "C";
     localStorage.setItem("aether:unit", state.unit);
     el.unitBtn.textContent = `°${state.unit}`;
     if (state.weather) ui.setWeather(state.weather);
-  });
+    if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
+  };
+  el.unitBtn.addEventListener("click", flip);
+  // Clicking the big number also flips units; it's the most tempting target.
+  if (el.temp) {
+    el.temp.style.cursor = "pointer";
+    el.temp.setAttribute("role", "button");
+    el.temp.setAttribute("tabindex", "0");
+    el.temp.setAttribute("aria-label", "Toggle temperature units");
+    el.temp.addEventListener("click", flip);
+    el.temp.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); flip(); }
+    });
+  }
 }
 
 function bindLocate() {
