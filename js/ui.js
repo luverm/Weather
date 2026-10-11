@@ -368,12 +368,24 @@ function renderMetrics(w) {
       el.uvLevel.textContent = "";
     }
   }
-  if (w.uvPeak?.time) {
-    el.metricUVSub.textContent = `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`;
-  } else {
-    el.metricUVSub.textContent = "peak —";
-  }
+  const burnMin = uvBurnMinutes(w.uv);
+  const peakStr = w.uvPeak?.time
+    ? `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`
+    : "peak —";
+  el.metricUVSub.textContent = burnMin ? `${peakStr} · burn ~${burnMin}m` : peakStr;
   renderPressureSparkline(w);
+}
+
+// Rough minutes-to-sunburn for Fitzpatrick type III skin (medium): the UV
+// index roughly maps to a 200 min / UV time to minimal erythema. Below UV 3
+// we skip the estimate so we don't nag — the ice-cream-cone level of sun
+// isn't going to burn anyone in meaningful time.
+function uvBurnMinutes(uv) {
+  if (uv == null || uv < 3) return null;
+  const min = Math.round(200 / uv);
+  // Cap display at 90 min — above that it's effectively "not soon".
+  if (min > 90) return null;
+  return min;
 }
 
 function humidityComfort(rh, dew, temp) {
