@@ -129,13 +129,14 @@ function normalize(d, aq) {
   const daily = d.daily || {};
   const now = Date.now();
 
-  // 24-hour hourly forecast starting from the next hour.
+  // Hourly series: split into past (<= now) and forecast (> now). Both are
+  // keyed by actual timestamp so same-hour-yesterday lookups are trivial.
   const hourly = [];
+  const pastHourly = [];
   if (d.hourly?.time) {
-    for (let i = 0; i < d.hourly.time.length && hourly.length < 24; i++) {
+    for (let i = 0; i < d.hourly.time.length; i++) {
       const t = new Date(d.hourly.time[i]).getTime();
-      if (t < now - 30 * 60 * 1000) continue; // allow slight past for scrubbing
-      hourly.push({
+      const entry = {
         time: t,
         temp: d.hourly.temperature_2m[i],
         feelsLike: d.hourly.apparent_temperature?.[i],
@@ -148,7 +149,12 @@ function normalize(d, aq) {
         pressure: d.hourly.pressure_msl?.[i] ?? null,
         humidity: d.hourly.relative_humidity_2m?.[i] ?? null,
         ...mapWmo(d.hourly.weather_code[i]),
-      });
+      };
+      if (t < now - 30 * 60 * 1000) {
+        pastHourly.push(entry);
+      } else if (hourly.length < 24) {
+        hourly.push(entry);
+      }
     }
   }
 
@@ -217,6 +223,7 @@ function normalize(d, aq) {
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
     hourly,
+    pastHourly,
     daily: dailyForecast,
     yesterday,
     nowcast,
@@ -381,6 +388,15 @@ function mock(lat, lon) {
       wind: 8 + Math.sin(i) * 3, gusts: 12 + Math.sin(i) * 4,
       isDay: (i + hour) % 24 >= 6 && (i + hour) % 24 < 19,
       uv: Math.max(0, Math.sin((i - 6) * Math.PI / 13) * 6),
+      condition: CONDITIONS.CLOUDS, label: "Cloudy",
+    })),
+    pastHourly: Array.from({ length: 24 }, (_, i) => ({
+      time: now - (24 - i) * 3600_000,
+      temp: 17 + Math.sin(i / 2) * 3,
+      feelsLike: 16 + Math.sin(i / 2) * 3,
+      pop: 20, precip: 0,
+      wind: 8, gusts: 12,
+      isDay: ((i + hour - 24) % 24 + 24) % 24 >= 6 && ((i + hour - 24) % 24 + 24) % 24 < 19,
       condition: CONDITIONS.CLOUDS, label: "Cloudy",
     })),
     daily: Array.from({ length: 7 }, (_, i) => ({

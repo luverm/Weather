@@ -62,6 +62,7 @@ const el = {
   pollenItems: $("#pollen-items"),
   pressureTrend: $("#m-pressure-trend"),
   tempTrend: $("#temp-trend"),
+  tempYesterday: $("#temp-yesterday"),
   uvLevel: $("#m-uv-level"),
   humidityComfort: $("#m-humidity-comfort"),
   pressureSparkLine: $("#pressure-spark-line"),
@@ -933,6 +934,39 @@ function renderTrends(w) {
       el.tempTrend.textContent = "";
     }
   }
+  // Comparison with same hour yesterday.
+  if (el.tempYesterday) {
+    const same = findSameHourYesterday(w);
+    const cur = w.temp;
+    if (same != null && cur != null) {
+      const deltaC = cur - same;
+      const deltaDisplay = Math.round(state.unit === "F" ? deltaC * 9 / 5 : deltaC);
+      if (Math.abs(deltaDisplay) < 1) {
+        el.tempYesterday.className = "temp-yesterday flat";
+        el.tempYesterday.textContent = "≈ yday";
+      } else {
+        el.tempYesterday.className = deltaDisplay > 0 ? "temp-yesterday up" : "temp-yesterday down";
+        el.tempYesterday.textContent = `${deltaDisplay > 0 ? "▲" : "▼"} ${Math.abs(deltaDisplay)}° vs yday`;
+      }
+    } else {
+      el.tempYesterday.className = "temp-yesterday";
+      el.tempYesterday.textContent = "";
+    }
+  }
+}
+
+function findSameHourYesterday(w) {
+  const past = w.pastHourly || [];
+  if (!past.length) return null;
+  const target = Date.now() - 24 * 3600_000;
+  let best = null, bestDiff = Infinity;
+  for (const h of past) {
+    const diff = Math.abs(h.time - target);
+    if (diff < bestDiff) { bestDiff = diff; best = h; }
+  }
+  // Allow a ±90 min tolerance so we don't match across the full day.
+  if (!best || bestDiff > 90 * 60_000) return null;
+  return best.temp;
 }
 
 function cardinal(deg) {
