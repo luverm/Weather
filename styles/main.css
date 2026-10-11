@@ -1234,6 +1234,7 @@ html[data-reduce-motion="true"] *::after {
   fill: var(--fg-muted);
   font-size: 9.5px;
 }
+.chart-svg:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
 .chart-cursor {
   stroke: var(--accent);
   stroke-width: 1.2;
