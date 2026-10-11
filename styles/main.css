@@ -323,7 +323,12 @@ html[data-reduce-motion="true"] *::after {
 .icon-btn svg { width: 20px; height: 20px; }
 .icon-btn .sound-waves { opacity: 0; transition: opacity 240ms var(--ease); }
 .icon-btn.on { color: var(--accent); }
-.icon-btn.on .sound-waves { opacity: 1; }
+.icon-btn.on .sound-waves { opacity: 1; animation: soundWave 1.6s var(--ease) infinite; }
+@keyframes soundWave {
+  0%, 100% { opacity: 1; transform: translateX(0); }
+  50%      { opacity: 0.55; transform: translateX(1px); }
+}
+:root[data-reduce-motion="true"] .icon-btn.on .sound-waves { animation: none; }
 
 /* ---------- Saved locations strip ---------- */
 .places-strip {
