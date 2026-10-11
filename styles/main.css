@@ -507,6 +507,10 @@ html[data-reduce-motion="true"] *::after {
 }
 .nowcast-bars .nowcast-bar:hover { opacity: 1; transform: scaleY(1.1); }
 .nowcast-bars .nowcast-bar:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.nowcast-bars .nowcast-bar[data-tier="trace"]    { background: rgba(154, 209, 255, 0.4); }
+.nowcast-bars .nowcast-bar[data-tier="light"]    { background: #9ad1ff; }
+.nowcast-bars .nowcast-bar[data-tier="moderate"] { background: #78a9ff; }
+.nowcast-bars .nowcast-bar[data-tier="heavy"]    { background: #c7569a; box-shadow: 0 0 6px rgba(199, 86, 154, 0.6); }
 @keyframes slideInUp {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }

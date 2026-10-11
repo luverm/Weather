@@ -1623,8 +1623,14 @@ function renderNowcast(w) {
     bar.type = "button";
     bar.className = "nowcast-bar";
     bar.style.height = `${Math.max(2, (n.precip / maxP) * 28)}px`;
+    // Intensity tier: light → heavy, drives the bar's color.
+    const tier = n.precip >= 3   ? "heavy"
+               : n.precip >= 1   ? "moderate"
+               : n.precip >= 0.3 ? "light"
+               : "trace";
+    bar.dataset.tier = tier;
     const mins = Math.round((n.time - Date.now()) / 60_000);
-    bar.title = `+${Math.max(0, mins)} min · ${n.precip.toFixed(1)} mm`;
+    bar.title = `+${Math.max(0, mins)} min · ${n.precip.toFixed(1)} mm (${tier})`;
     bar.setAttribute("aria-label", bar.title);
     bar.addEventListener("click", () => state.handlers.onHourClick?.(n.time));
     el.nowcastBars.appendChild(bar);
