@@ -190,6 +190,7 @@ export const ui = {
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
+    state._stopHintRotation = startHintRotation();
     state.chart = new HourlyChart({
       svgEl: el.chartSvg,
       hoverEl: el.chartHover,
@@ -331,8 +332,10 @@ export const ui = {
     document.documentElement.setAttribute("data-scrubbing", on ? "true" : "false");
     if (on) {
       el.hintText.textContent = "Drag to explore future weather.";
+      state._stopHintRotation?.();
     } else {
-      el.hintText.innerHTML = 'Drag the slider, hover the chart, or press <kbd>?</kbd> for shortcuts.';
+      state._stopHintRotation?.();
+      state._stopHintRotation = startHintRotation();
     }
   },
   setAudioState(on) {
@@ -2371,6 +2374,22 @@ ui.isReduceMotion = () => {
   if (v === "0") return false;
   return !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 };
+
+const HINTS = [
+  'Drag the slider, hover the chart, or press <kbd>?</kbd> for shortcuts.',
+  'Press <kbd>G</kbd> to jump to the next golden hour.',
+  'Press <kbd>T</kbd> / <kbd>C</kbd> / <kbd>W</kbd> for warmest / coldest / wettest hour.',
+  'Press <kbd>1</kbd> – <kbd>7</kbd> to jump to a day in the forecast.',
+  'Click the hero temp to flip °C / °F.',
+];
+function startHintRotation() {
+  if (!el.hintText) return () => {};
+  let i = 0;
+  const update = () => { el.hintText.innerHTML = HINTS[i++ % HINTS.length]; };
+  update();
+  const t = setInterval(update, 11_000);
+  return () => clearInterval(t);
+}
 
 function startFetchedTicker() {
   if (el.fetchedAgo) {
