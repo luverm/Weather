@@ -82,6 +82,8 @@ const el = {
   humidityComfort: $("#m-humidity-comfort"),
   dewScale: $("#dew-scale"),
   dewScaleMark: $("#dew-scale-mark"),
+  uvScale: $("#uv-scale"),
+  uvScaleMark: $("#uv-scale-mark"),
   pressureSparkLine: $("#pressure-spark-line"),
   pressureSparkFill: $("#pressure-spark-fill"),
   humiditySparkLine: $("#humidity-spark-line"),
@@ -424,6 +426,16 @@ function renderMetrics(w) {
     ? `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`
     : "peak —";
   el.metricUVSub.textContent = burnMin ? `${peakStr} · burn ~${burnMin}m` : peakStr;
+  if (el.uvScale && el.uvScaleMark) {
+    if (w.uv == null) {
+      el.uvScale.hidden = true;
+    } else {
+      el.uvScale.hidden = false;
+      const u = Math.max(0, Math.min(12, w.uv));
+      el.uvScaleMark.style.left = `${(u / 12 * 100).toFixed(1)}%`;
+      el.uvScaleMark.title = `UV ${Math.round(w.uv)}`;
+    }
+  }
   renderPressureSparkline(w);
 }
 
