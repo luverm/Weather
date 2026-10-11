@@ -402,6 +402,22 @@ html[data-reduce-motion="true"] *::after {
   background: var(--accent); box-shadow: 0 0 8px var(--accent);
   animation: pulse 2.4s ease-in-out infinite;
 }
+.place-save {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px; height: 20px;
+  padding: 0;
+  margin-left: 2px;
+  border-radius: 50%;
+  color: var(--fg-dim);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  transition: color 160ms var(--ease), background 160ms var(--ease), transform 160ms var(--ease);
+}
+.place-save:hover { color: var(--accent); background: rgba(154,209,255,0.1); transform: scale(1.1); }
+.place-save svg { width: 12px; height: 12px; }
 [data-scrubbing="true"] .live-dot { background: #ffb86b; box-shadow: 0 0 8px #ffb86b; animation: none; }
 :root[data-offline="true"] .live-dot {
   background: #ff6a6a;

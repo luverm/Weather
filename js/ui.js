@@ -224,6 +224,16 @@ export const ui = {
       el.placeSub.title = `${place.lat.toFixed(4)}, ${place.lon.toFixed(4)}`;
       el.placeName.title = `${place.name || ""}${sub ? " · " + sub : ""}`;
     }
+    const saveBtn = document.getElementById("place-save");
+    if (saveBtn) {
+      saveBtn.hidden = places.isSaved(place);
+      saveBtn.onclick = () => {
+        places.add(place);
+        saveBtn.hidden = true;
+        renderPlaces();
+        ui.showToast(`${place.name} saved`);
+      };
+    }
     // Reset alert dismissals so a fresh location can re-surface them.
     try { sessionStorage.removeItem("aether:dismissed-alerts"); } catch { /* ignore */ }
     renderPlaces();
