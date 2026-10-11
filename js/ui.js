@@ -230,6 +230,12 @@ export const ui = {
   setWeather(weather, { narrative } = {}) {
     state.weather = weather;
     state.sampledWeather = weather; // initially same as live
+    // Briefly pulse the hero so the refresh is tangibly acknowledged.
+    if (el.heroInner) {
+      el.heroInner.classList.remove("hero-pulse");
+      void el.heroInner.offsetWidth;
+      el.heroInner.classList.add("hero-pulse");
+    }
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);

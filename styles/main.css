@@ -367,6 +367,13 @@ html[data-reduce-motion="true"] *::after {
   transition: transform 400ms var(--ease);
   will-change: transform;
 }
+.hero-inner.hero-pulse { animation: heroPulse 900ms var(--ease); }
+@keyframes heroPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(154, 209, 255, 0); }
+  40%  { box-shadow: 0 0 0 6px rgba(154, 209, 255, 0.18); }
+  100% { box-shadow: 0 0 0 0 rgba(154, 209, 255, 0); }
+}
+:root[data-reduce-motion="true"] .hero-inner.hero-pulse { animation: none; }
 .place-label {
   margin: 0 0 6px;
   font-size: 12px;
