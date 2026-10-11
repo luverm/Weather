@@ -924,6 +924,14 @@ html[data-reduce-motion="true"] *::after {
 .pollen-level[data-level="Moderate"]  { background: rgba(255, 211, 106, 0.18); color: #ffdc8a; border-color: rgba(255, 211, 106, 0.35); }
 .pollen-level[data-level="High"]      { background: rgba(255, 159, 92, 0.2);  color: #ffbb92; border-color: rgba(255, 159, 92, 0.35); }
 .pollen-level[data-level="Very high"] { background: rgba(255, 106, 106, 0.2); color: #ff9a9a; border-color: rgba(255, 106, 106, 0.35); }
+#pollen-card.pollen-alert .pollen-level {
+  animation: pollenAlertPulse 1800ms var(--ease) infinite;
+}
+@keyframes pollenAlertPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 159, 92, 0); }
+  50%      { box-shadow: 0 0 10px 0 rgba(255, 159, 92, 0.4); }
+}
+:root[data-reduce-motion="true"] #pollen-card.pollen-alert .pollen-level { animation: none; }
 .pollen-meta strong { display: block; font-size: 14px; font-weight: 500; }
 .pollen-items {
   display: grid; gap: 4px;

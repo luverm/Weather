@@ -1339,6 +1339,7 @@ function renderPollen(pollen) {
     return;
   }
   el.pollenCard.hidden = false;
+  el.pollenCard.classList.toggle("pollen-alert", pollen.level === "Very high" || pollen.level === "High");
   el.pollenLevel.textContent = pollen.level;
   el.pollenLevel.setAttribute("data-level", pollen.level);
   el.pollenDominant.textContent = `${pollen.dominant.label} dominant`;
