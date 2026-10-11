@@ -319,7 +319,39 @@ installShortcuts({
   warmestHour: () => jumpToExtremeHour("warmest"),
   coldestHour: () => jumpToExtremeHour("coldest"),
   wettestHour: () => jumpToExtremeHour("wettest"),
+  nextEvent: () => jumpToNextEvent(),
 });
+
+function jumpToNextEvent() {
+  const w = app.weather;
+  if (!w) return;
+  const now = Date.now();
+  const candidates = [];
+  for (const d of (w.daily || [])) {
+    if (d.sunrise && d.sunrise > now) candidates.push({ ts: d.sunrise, label: "Sunrise" });
+    if (d.sunset && d.sunset > now) candidates.push({ ts: d.sunset, label: "Sunset" });
+  }
+  // Rain start / rain end from hourly series.
+  const hours = w.hourly || [];
+  let raining = (hours[0]?.pop ?? 0) >= 50 || (hours[0]?.precip ?? 0) > 0.3;
+  for (let i = 1; i < hours.length; i++) {
+    const h = hours[i];
+    const wet = (h.pop ?? 0) >= 50 || (h.precip ?? 0) > 0.3;
+    if (wet !== raining) {
+      candidates.push({ ts: h.time, label: wet ? "Rain starts" : "Rain stops" });
+      raining = wet;
+      if (candidates.length >= 10) break;
+    }
+  }
+  const next = candidates.sort((a, b) => a.ts - b.ts).find((c) => c.ts > now + 60_000);
+  if (!next) { ui.showToast("No upcoming events in the forecast"); return; }
+  clock.setOffset(next.ts - Date.now());
+  scrubber.sync();
+  applyScene(app.weather);
+  ui.setScrubbing(!clock.isLive());
+  const time = new Date(next.ts).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false });
+  ui.showToast(`${next.label} · ${time}`);
+}
 
 function jumpToExtremeHour(kind) {
   const hours = app.weather?.hourly || [];
