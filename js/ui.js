@@ -13,6 +13,7 @@ import { weekendSnapshot } from "./weekend.js";
 import { rainOutlook } from "./rain-outlook.js";
 import { sunsetScore } from "./sunset-score.js";
 import { weatherTags } from "./tags.js";
+import { attireItems } from "./attire.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -110,6 +111,7 @@ const el = {
   activityList: $("#activity-list"),
   alertsStrip: $("#alerts-strip"),
   weatherTags: $("#weather-tags"),
+  attireStrip: $("#attire-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
   sunArcGoldenRise: $("#sun-arc-golden-rise"),
@@ -877,13 +879,32 @@ function scheduleSunCountdown(w) {
 
 function renderAdvice(w) {
   const text = advise(w);
-  if (!el.advice || !el.adviceText) return;
-  if (text) {
-    el.adviceText.textContent = text;
-    el.advice.hidden = false;
-  } else {
-    el.advice.hidden = true;
+  if (el.advice && el.adviceText) {
+    if (text) {
+      el.adviceText.textContent = text;
+      el.advice.hidden = false;
+    } else {
+      el.advice.hidden = true;
+    }
   }
+  renderAttire(w);
+}
+
+function renderAttire(w) {
+  if (!el.attireStrip) return;
+  const items = attireItems(w);
+  if (!items.length) {
+    el.attireStrip.hidden = true;
+    el.attireStrip.innerHTML = "";
+    return;
+  }
+  el.attireStrip.hidden = false;
+  el.attireStrip.innerHTML = items.map((it) => `
+    <li class="attire-item" title="${escapeHtml(it.label)}">
+      ${it.svg}
+      <span class="attire-label">${escapeHtml(it.label)}</span>
+    </li>
+  `).join("");
 }
 
 function startLocaltime(w) {

@@ -752,6 +752,41 @@ html[data-reduce-motion="true"] *::after {
 }
 .advice-icon { color: var(--accent); flex: 0 0 auto; }
 
+.attire-strip {
+  margin: 10px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+}
+.attire-strip[hidden] { display: none; }
+.attire-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px 6px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  font-size: 11.5px;
+  color: var(--fg-muted);
+  transition: background 180ms var(--ease), transform 180ms var(--ease);
+}
+.attire-item:hover {
+  background: rgba(255,255,255,0.1);
+  transform: translateY(-1px);
+}
+.attire-item svg {
+  width: 18px; height: 18px;
+  color: var(--fg);
+  flex: 0 0 auto;
+}
+.attire-label {
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+
 /* ---------- Hourly chart ---------- */
 .chart-card {
   padding: 12px 14px 10px;
