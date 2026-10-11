@@ -739,6 +739,8 @@ html[data-reduce-motion="true"] *::after {
   transition: left 120ms linear, transform 200ms var(--ease);
   pointer-events: none;
 }
+.scrubber-track { cursor: grab; }
+.scrubber-track:active { cursor: grabbing; }
 .scrubber-track:active .scrubber-thumb { transform: translate(-50%, -50%) scale(1.15); }
 
 /* ---------- Pressure sparkline ---------- */
