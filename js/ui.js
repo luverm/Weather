@@ -1838,7 +1838,18 @@ function renderDailyDelta(days) {
   if (Math.abs(dPop) >= 20) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
   }
-  el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
+  // Week averages, when we have the full week.
+  const hisAvg = avg(days.map((d) => d.tempMax).filter((v) => v != null));
+  const losAvg = avg(days.map((d) => d.tempMin).filter((v) => v != null));
+  const weekBit = (hisAvg != null && losAvg != null)
+    ? `Week avg ${Math.round(convertTemp(hisAvg))}° / ${Math.round(convertTemp(losAvg))}°`
+    : "";
+  el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}${weekBit ? "  ·  " + weekBit : ""}`;
+}
+
+function avg(arr) {
+  if (!arr.length) return null;
+  return arr.reduce((a, b) => a + b, 0) / arr.length;
 }
 
 function toggleDailyExpand(item, d, w) {
