@@ -46,6 +46,8 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonFullCount: $("#moon-full-count"),
+  moonNewCount: $("#moon-new-count"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -489,6 +491,8 @@ function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  if (el.moonFullCount) el.moonFullCount.textContent = `Full ${fmtDays(moon.daysToFull)}`;
+  if (el.moonNewCount)  el.moonNewCount.textContent  = `New ${fmtDays(moon.daysToNew)}`;
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
@@ -505,6 +509,18 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+}
+
+function fmtDays(d) {
+  if (d == null || !isFinite(d)) return "—";
+  if (d < 1) {
+    const hrs = Math.max(0, Math.round(d * 24));
+    return hrs <= 1 ? "soon" : `in ${hrs}h`;
+  }
+  const days = Math.round(d);
+  if (days === 0) return "today";
+  if (days === 1) return "tomorrow";
+  return `in ${days}d`;
 }
 
 function fmtTime(ts) {
