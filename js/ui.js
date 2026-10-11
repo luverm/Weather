@@ -1597,6 +1597,20 @@ function renderDaily(w) {
     const item = document.createElement("div");
     item.className = "daily-item";
     item.dataset.ts = d.time;
+    // Build a complete tooltip of the day's facts for a slow hover.
+    const tipParts = [capitalize(d.label || d.condition || ""),
+      d.tempMin != null ? `low ${Math.round(convertTemp(d.tempMin))}°` : null,
+      d.tempMax != null ? `high ${Math.round(convertTemp(d.tempMax))}°` : null,
+      d.pop != null ? `${d.pop}% pop` : null,
+      d.precip != null && d.precip > 0 ? `${d.precip.toFixed(1)} mm` : null,
+      d.snowfall && d.snowfall >= 0.5 ? `${d.snowfall.toFixed(1)} cm snow` : null,
+      d.windMax ? `wind ${Math.round(d.windMax)} km/h` : null,
+      d.gustsMax && d.gustsMax >= 25 ? `gust ${Math.round(d.gustsMax)} km/h` : null,
+      d.uvMax ? `UV ${Math.round(d.uvMax)}` : null,
+      d.sunrise ? `rise ${fmtTime(d.sunrise)}` : null,
+      d.sunset ? `set ${fmtTime(d.sunset)}` : null,
+    ].filter(Boolean);
+    item.title = tipParts.join(" · ");
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
