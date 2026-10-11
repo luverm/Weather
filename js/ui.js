@@ -364,7 +364,8 @@ function renderDayRange(w) {
 }
 
 function renderMetrics(w) {
-  el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
+  if (w.windSpeed != null) animateNumber(el.metricWind, w.windSpeed, (v) => `${Math.round(v)}`);
+  else el.metricWind.textContent = "—";
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
   el.metricWindSub.textContent = dirLabel
@@ -405,7 +406,8 @@ function renderMetrics(w) {
       }
     }
   }
-  el.metricHumidity.textContent = Math.round(w.humidity ?? 0);
+  if (w.humidity != null) animateNumber(el.metricHumidity, w.humidity, (v) => `${Math.round(v)}`);
+  else el.metricHumidity.textContent = "—";
   el.metricHumiditySub.textContent = w.dewPoint != null
     ? `dew ${Math.round(convertTemp(w.dewPoint))}°`
     : "dew —";
@@ -436,7 +438,8 @@ function renderMetrics(w) {
       el.humidityComfort.textContent = "";
     }
   }
-  el.metricPressure.textContent = Math.round(w.pressure ?? 0);
+  if (w.pressure != null) animateNumber(el.metricPressure, w.pressure, (v) => `${Math.round(v)}`);
+  else el.metricPressure.textContent = "—";
   el.metricPressureSub.textContent = w.visibility != null
     ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
     : "visibility —";
@@ -452,7 +455,8 @@ function renderMetrics(w) {
       el.pressureScaleMark.title = `${Math.round(w.pressure)} hPa`;
     }
   }
-  el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
+  if (w.uv != null) animateNumber(el.metricUV, w.uv, (v) => `${Math.round(v)}`);
+  else el.metricUV.textContent = "—";
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
     if (lvl) {
