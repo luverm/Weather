@@ -1566,6 +1566,7 @@ function renderHourly(w) {
     const windPart = h.wind != null ? ` · wind ${Math.round(h.wind)} km/h` : "";
     const popPart = h.pop != null ? ` · ${h.pop}% precip` : "";
     item.title = `${fmtTime(h.time)} · ${capitalize(h.label || h.condition || "")} · ${Math.round(convertTemp(h.temp))}°${feelsPart}${popPart}${windPart}`;
+    item.setAttribute("role", "listitem");
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
