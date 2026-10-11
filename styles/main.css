@@ -1683,6 +1683,17 @@ kbd {
 .daily-spark circle { transition: r 160ms var(--ease); }
 .daily-spark .dot-hi { fill: #ff9c7a; }
 .daily-spark .dot-lo { fill: #9ad1ff; }
+.daily-spark .spark-label {
+  font-size: 9px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  paint-order: stroke;
+  stroke: rgba(10, 15, 30, 0.55);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.daily-spark .spark-label-hi { fill: #ffb196; }
+.daily-spark .spark-label-lo { fill: #c7e3ff; }
 .forecast-track {
   display: grid;
   grid-auto-flow: column;

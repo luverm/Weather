@@ -1249,8 +1249,22 @@ function renderDailySpark(days) {
   const linePath = (arr) => arr.map((v, i) => (i === 0 ? "M" : "L") + x(i).toFixed(1) + "," + y(v).toFixed(1)).join(" ");
   el.dailyHi.setAttribute("d", linePath(days.map((d) => d.tempMax)));
   el.dailyLo.setAttribute("d", linePath(days.map((d) => d.tempMin)));
-  // Dots at each day + per-day temp labels above/below
+  // Dots at each day + per-day temp labels above/below. Also annotate the
+  // week-high and week-low days with a small value label.
   el.dailySparkDots.innerHTML = "";
+  const weekHiIdx = days.reduce((best, d, i) =>
+    (d.tempMax != null && (best < 0 || d.tempMax > days[best].tempMax)) ? i : best, -1);
+  const weekLoIdx = days.reduce((best, d, i) =>
+    (d.tempMin != null && (best < 0 || d.tempMin < days[best].tempMin)) ? i : best, -1);
+  const makeText = (cx, cy, text, cls) => {
+    const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    t.setAttribute("x", cx.toFixed(1));
+    t.setAttribute("y", cy.toFixed(1));
+    t.setAttribute("class", `spark-label ${cls}`);
+    t.setAttribute("text-anchor", "middle");
+    t.textContent = text;
+    return t;
+  };
   days.forEach((d, i) => {
     if (d.tempMax != null) {
       const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
@@ -1267,6 +1281,16 @@ function renderDailySpark(days) {
       c.setAttribute("r", "2.5");
       c.setAttribute("class", "dot-lo");
       el.dailySparkDots.appendChild(c);
+    }
+    if (i === weekHiIdx && d.tempMax != null) {
+      el.dailySparkDots.appendChild(
+        makeText(x(i), y(d.tempMax) - 5, `${Math.round(convertTemp(d.tempMax))}°`, "spark-label-hi")
+      );
+    }
+    if (i === weekLoIdx && d.tempMin != null) {
+      el.dailySparkDots.appendChild(
+        makeText(x(i), y(d.tempMin) + 11, `${Math.round(convertTemp(d.tempMin))}°`, "spark-label-lo")
+      );
     }
   });
 }
