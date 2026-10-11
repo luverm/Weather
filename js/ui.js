@@ -231,6 +231,7 @@ export const ui = {
     renderVisibility(weather);
     renderWeatherTags(weather);
     setFavicon(weather.condition, weather.isDay);
+    setDocTitle(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly, { daily: weather.daily });
@@ -1506,6 +1507,15 @@ function renderNowcast(w) {
     el.nowcastBars.appendChild(bar);
   });
   el.nowcast.hidden = false;
+}
+
+// ---------- Dynamic document title ----------
+function setDocTitle(w) {
+  if (!w) return;
+  const placeName = state.place?.name || "Aether";
+  const t = Math.round(convertTemp(w.temp));
+  const label = capitalize(w.label || "");
+  document.title = `${t}° ${label} · ${placeName}`;
 }
 
 // ---------- Dynamic favicon ----------
