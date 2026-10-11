@@ -230,6 +230,7 @@ export const ui = {
     renderRainOutlook(weather);
     renderVisibility(weather);
     renderWeatherTags(weather);
+    setFavicon(weather.condition, weather.isDay);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly, { daily: weather.daily });
@@ -1505,6 +1506,42 @@ function renderNowcast(w) {
     el.nowcastBars.appendChild(bar);
   });
   el.nowcast.hidden = false;
+}
+
+// ---------- Dynamic favicon ----------
+function setFavicon(condition, isDay = true) {
+  const link = document.getElementById("favicon");
+  if (!link) return;
+  const bg = "#0b1020"; // keep the dark badge background
+  let fg;
+  switch (condition) {
+    case "clear":
+      fg = isDay
+        ? `<circle cx="32" cy="32" r="14" fill="#fff1c9"/><g stroke="#fff1c9" stroke-width="3" stroke-linecap="round"><path d="M32 8v6M32 50v6M8 32h6M50 32h6M14 14l4 4M46 46l4 4M14 50l4-4M46 18l4-4"/></g>`
+        : `<circle cx="36" cy="28" r="14" fill="#fff1c9"/><circle cx="28" cy="28" r="14" fill="#0b1020"/>`;
+      break;
+    case "clouds":
+      fg = `<path d="M20 42a9 9 0 010-18 11 11 0 0122-2 9 9 0 010 20H20z" fill="#c7d0e0"/>`;
+      break;
+    case "rain":
+      fg = `<path d="M20 32a9 9 0 010-18 11 11 0 0122-2 9 9 0 010 20H20z" fill="#c7d0e0"/><g stroke="#9ad1ff" stroke-width="3" stroke-linecap="round"><path d="M22 42l-2 8M32 42l-2 8M42 42l-2 8"/></g>`;
+      break;
+    case "snow":
+      fg = `<path d="M20 32a9 9 0 010-18 11 11 0 0122-2 9 9 0 010 20H20z" fill="#e5edff"/><g stroke="#ffffff" stroke-width="3" stroke-linecap="round"><path d="M24 44v6M32 42v8M40 44v6"/></g>`;
+      break;
+    case "storm":
+      fg = `<path d="M20 30a9 9 0 010-18 11 11 0 0122-2 9 9 0 010 20H20z" fill="#8a8aa0"/><path d="M30 30l-6 12h8l-4 10" fill="none" stroke="#ffd36a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`;
+      break;
+    case "fog":
+      fg = `<g stroke="#c7d0e0" stroke-width="4" stroke-linecap="round"><path d="M12 24h40M8 36h40M16 48h40"/></g>`;
+      break;
+    default:
+      fg = `<circle cx="32" cy="32" r="14" fill="#fff1c9"/>`;
+  }
+  const raw =
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">` +
+    `<rect width="64" height="64" rx="14" fill="${bg}"/>${fg}</svg>`;
+  link.href = `data:image/svg+xml,${encodeURIComponent(raw)}`;
 }
 
 // ---------- Icons ----------
