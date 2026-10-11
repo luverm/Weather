@@ -1210,6 +1210,12 @@ html[data-reduce-motion="true"] *::after {
   opacity: 0.75;
   pointer-events: none;
 }
+.chart-now {
+  stroke: #ffe6a4;
+  stroke-width: 0.8;
+  opacity: 0.5;
+  pointer-events: none;
+}
 .chart-dot {
   fill: #fff;
   stroke: var(--accent);

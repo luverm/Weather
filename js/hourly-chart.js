@@ -275,6 +275,25 @@ export class HourlyChart {
       precipG.appendChild(r);
     });
 
+    // "Now" indicator — faint vertical line at the hour closest to real time.
+    const nowLine = this.svg.querySelector("#chart-now");
+    if (nowLine) {
+      const now = Date.now();
+      let bestIdx = -1, bestDiff = Infinity;
+      for (let i = 0; i < this.hours.length; i++) {
+        const diff = Math.abs(this.hours[i].time - now);
+        if (diff < bestDiff) { bestDiff = diff; bestIdx = i; }
+      }
+      if (bestIdx >= 0 && bestDiff <= 60 * 60_000) {
+        const nx = this.points[bestIdx]?.x ?? -10;
+        nowLine.setAttribute("x1", nx);
+        nowLine.setAttribute("x2", nx);
+      } else {
+        nowLine.setAttribute("x1", "-10");
+        nowLine.setAttribute("x2", "-10");
+      }
+    }
+
     // Night shading: dim rectangles where !isDay
     const nightG = this.svg.querySelector("#chart-night");
     nightG.innerHTML = "";
