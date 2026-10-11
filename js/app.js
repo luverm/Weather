@@ -319,17 +319,17 @@ installShortcuts({
   warmestHour: () => jumpToExtremeHour("warmest"),
   coldestHour: () => jumpToExtremeHour("coldest"),
   wettestHour: () => jumpToExtremeHour("wettest"),
-  nextEvent: () => jumpToNextEvent(),
+  nextEvent: (dir) => jumpToNextEvent(dir),
 });
 
-function jumpToNextEvent() {
+function jumpToNextEvent(dir = 1) {
   const w = app.weather;
   if (!w) return;
-  const now = Date.now();
+  const anchor = Date.now() + clock.offset();
   const candidates = [];
   for (const d of (w.daily || [])) {
-    if (d.sunrise && d.sunrise > now) candidates.push({ ts: d.sunrise, label: "Sunrise" });
-    if (d.sunset && d.sunset > now) candidates.push({ ts: d.sunset, label: "Sunset" });
+    if (d.sunrise) candidates.push({ ts: d.sunrise, label: "Sunrise" });
+    if (d.sunset)  candidates.push({ ts: d.sunset,  label: "Sunset"  });
   }
   // Rain start / rain end from hourly series.
   const hours = w.hourly || [];
@@ -340,11 +340,13 @@ function jumpToNextEvent() {
     if (wet !== raining) {
       candidates.push({ ts: h.time, label: wet ? "Rain starts" : "Rain stops" });
       raining = wet;
-      if (candidates.length >= 10) break;
     }
   }
-  const next = candidates.sort((a, b) => a.ts - b.ts).find((c) => c.ts > now + 60_000);
-  if (!next) { ui.showToast("No upcoming events in the forecast"); return; }
+  const sorted = candidates.sort((a, b) => a.ts - b.ts);
+  const next = dir >= 0
+    ? sorted.find((c) => c.ts > anchor + 60_000)
+    : [...sorted].reverse().find((c) => c.ts < anchor - 60_000);
+  if (!next) { ui.showToast(dir >= 0 ? "No upcoming events in the forecast" : "No earlier events in range"); return; }
   clock.setOffset(next.ts - Date.now());
   scrubber.sync();
   applyScene(app.weather);

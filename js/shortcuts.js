@@ -79,7 +79,9 @@ export function installShortcuts(handlers) {
     if (key === "t" || key === "T") { e.preventDefault(); handlers.warmestHour?.(); return; }
     if (key === "c" || key === "C") { e.preventDefault(); handlers.coldestHour?.(); return; }
     if (key === "w" || key === "W") { e.preventDefault(); handlers.wettestHour?.(); return; }
-    if (key === "j" || key === "J") { e.preventDefault(); handlers.nextEvent?.(); return; }
+    if (key === "j" || key === "J") { e.preventDefault(); handlers.nextEvent?.(1); return; }
+    if (key === ">" || key === ".") { e.preventDefault(); handlers.nextEvent?.(1); return; }
+    if (key === "<" || key === ",") { e.preventDefault(); handlers.nextEvent?.(-1); return; }
     // Digit keys 1..7 jump to that day's midday in the forecast.
     if (key >= "1" && key <= "7") { e.preventDefault(); handlers.jumpDay?.(parseInt(key, 10) - 1); return; }
   });
