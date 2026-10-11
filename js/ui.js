@@ -1065,6 +1065,13 @@ function renderAlerts(w) {
   // Respect per-place dismissals so the user isn't nagged.
   const dismissed = getDismissedAlerts();
   const visible = alerts.filter((a) => !dismissed.has(a.id));
+  // Toast the top danger-level alert on the first render for this place, so
+  // a user who's away from the strip still gets a nudge.
+  const topDanger = visible.find((a) => a.severity === "danger");
+  if (topDanger && state._lastDangerPlace !== state.place?.id) {
+    state._lastDangerPlace = state.place?.id;
+    ui.showToast(`${topDanger.title}: ${topDanger.detail}`, 5200);
+  }
   if (!visible.length) {
     el.alertsStrip.hidden = true;
     el.alertsStrip.innerHTML = "";
