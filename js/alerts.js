@@ -100,7 +100,18 @@ export function buildAlerts(weather) {
 
   // ---- Snow ----
   const snowHour = hours.find((h) => h.condition === "snow");
-  if (snowHour) {
+  const todaySnow = today?.snowfall ?? 0;
+  const tomorrowSnow = tomorrow?.snowfall ?? 0;
+  const totalSnow = todaySnow + tomorrowSnow;
+  if (totalSnow >= 10) {
+    out.push({
+      id: "heavy-snow",
+      severity: totalSnow >= 25 ? "danger" : "warn",
+      title: totalSnow >= 25 ? "Heavy snowfall" : "Snow accumulation",
+      detail: `${totalSnow.toFixed(0)} cm forecast today + tomorrow.`,
+      ts: snowHour?.time,
+    });
+  } else if (snowHour) {
     out.push({
       id: "snow",
       severity: "info",
@@ -225,5 +236,6 @@ function dedupe(items) {
   if (ids.has("severe-heat")) drop.add("heat");
   if (ids.has("hard-freeze")) drop.add("frost");
   if (ids.has("heavy-rain") || ids.has("soaking-rain")) drop.add("wet-day");
+  if (ids.has("heavy-snow")) drop.add("snow");
   return items.filter((x) => !drop.has(x.id));
 }

@@ -84,12 +84,14 @@ export async function getWeather(lat, lon) {
       "wind_speed_10m", "wind_gusts_10m", "wind_direction_10m",
       "is_day", "uv_index", "pressure_msl",
       "relative_humidity_2m", "cloud_cover", "dew_point_2m",
+      "snowfall",
     ].join(","),
     daily: [
       "sunrise", "sunset",
       "temperature_2m_max", "temperature_2m_min",
       "weather_code", "precipitation_sum", "precipitation_probability_max",
       "wind_speed_10m_max", "wind_gusts_10m_max", "uv_index_max",
+      "snowfall_sum",
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
@@ -151,6 +153,7 @@ function normalize(d, aq) {
         humidity: d.hourly.relative_humidity_2m?.[i] ?? null,
         cloudCover: d.hourly.cloud_cover?.[i] ?? null,
         dewPoint: d.hourly.dew_point_2m?.[i] ?? null,
+        snowfall: d.hourly.snowfall?.[i] ?? null,
         ...mapWmo(d.hourly.weather_code[i]),
       };
       if (t < now - 30 * 60 * 1000) {
@@ -176,6 +179,7 @@ function normalize(d, aq) {
         windMax: daily.wind_speed_10m_max?.[i],
         gustsMax: daily.wind_gusts_10m_max?.[i],
         uvMax: daily.uv_index_max?.[i] ?? null,
+        snowfall: daily.snowfall_sum?.[i] ?? 0,
         sunrise: daily.sunrise?.[i] ? new Date(daily.sunrise[i]).getTime() : null,
         sunset: daily.sunset?.[i] ? new Date(daily.sunset[i]).getTime() : null,
         ...mapWmo(daily.weather_code[i]),
