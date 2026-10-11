@@ -316,7 +316,26 @@ installShortcuts({
   refresh: () => refreshWeather(),
   goldenHour: () => jumpToGoldenHour(),
   jumpDay: (idx) => jumpToDay(idx),
+  warmestHour: () => jumpToWarmestHour(),
 });
+
+function jumpToWarmestHour() {
+  const hours = app.weather?.hourly || [];
+  if (!hours.length) return;
+  let best = null;
+  for (const h of hours) {
+    if (h.temp == null) continue;
+    if (!best || h.temp > best.temp) best = h;
+  }
+  if (!best) return;
+  clock.setOffset(best.time - Date.now());
+  scrubber.sync();
+  applyScene(app.weather);
+  ui.setScrubbing(!clock.isLive());
+  const unit = ui.getUnit();
+  const tDisp = Math.round(unit === "F" ? best.temp * 9 / 5 + 32 : best.temp);
+  ui.showToast(`Warmest hour · ${tDisp}°${unit} at ${new Date(best.time).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false })}`);
+}
 
 function jumpToDay(idx) {
   const days = app.weather?.daily || [];
