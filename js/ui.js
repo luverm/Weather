@@ -1413,10 +1413,17 @@ function renderDaily(w) {
   days.forEach((d, i) => {
     const dt = new Date(d.time);
     const tz = state.weather?.timezone;
-    const day = i === 0 ? "Today" : dt.toLocaleDateString(undefined, {
-      weekday: "short",
+    const dayName = i === 0 ? "Today"
+      : i === 1 ? "Tomorrow"
+      : dt.toLocaleDateString(undefined, {
+          weekday: "short",
+          ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+        });
+    const dateStr = dt.toLocaleDateString(undefined, {
+      month: "short", day: "numeric",
       ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
     });
+    const day = `${dayName} <small class="daily-date">${dateStr}</small>`;
     const left = ((d.tempMin - gMin) / span) * 100;
     const width = ((d.tempMax - d.tempMin) / span) * 100;
     const item = document.createElement("div");
