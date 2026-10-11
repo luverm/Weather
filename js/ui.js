@@ -1530,9 +1530,15 @@ function renderDaily(w) {
 
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
-  el.dailyIconStrip.innerHTML = days.map((d) =>
-    `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
+  el.dailyIconStrip.innerHTML = days.map((d, i) =>
+    `<button type="button" class="strip-day" data-i="${i}" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</button>`
   ).join("");
+  el.dailyIconStrip.querySelectorAll(".strip-day").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const i = parseInt(btn.dataset.i, 10);
+      if (!isNaN(i) && days[i]) jumpToDailyItem(i, days[i]);
+    });
+  });
   renderDailyPrecipStrip(days);
   renderDailyUvStrip(days);
 }
