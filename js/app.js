@@ -307,7 +307,39 @@ installShortcuts({
   share: () => document.getElementById("share-btn")?.click(),
   refresh: () => refreshWeather(),
   goldenHour: () => jumpToGoldenHour(),
+  jumpDay: (idx) => jumpToDay(idx),
 });
+
+function jumpToDay(idx) {
+  const days = app.weather?.daily || [];
+  const d = days[idx];
+  if (!d) return;
+  // Prefer solar noon (midpoint of sunrise/sunset), else noon local.
+  let ts;
+  if (d.sunrise && d.sunset) ts = Math.round((d.sunrise + d.sunset) / 2);
+  else ts = new Date(d.time).setHours(12, 0, 0, 0);
+  // The scrubber only covers the next 24 h. Beyond that, scrubbing can't
+  // show detailed hourly data — just open the day's expand card instead.
+  const offset = ts - Date.now();
+  if (offset > 23 * 3600_000) {
+    const el = document.querySelector(`.daily-item[data-ts="${d.time}"]`);
+    if (el) {
+      el.click();
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    const label = new Date(ts).toLocaleDateString(undefined, { weekday: "long" });
+    ui.showToast(`${label} · opened in 7-day outlook`);
+    return;
+  }
+  clock.setOffset(offset);
+  scrubber.sync();
+  applyScene(app.weather);
+  ui.setScrubbing(!clock.isLive());
+  const label = idx === 0 ? "Today"
+    : idx === 1 ? "Tomorrow"
+    : new Date(ts).toLocaleDateString(undefined, { weekday: "long" });
+  ui.showToast(`${label} midday`);
+}
 
 function jumpToGoldenHour() {
   if (!app.weather) return;
