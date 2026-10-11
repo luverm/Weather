@@ -1227,7 +1227,8 @@ function renderWeatherTags(w) {
   }
   el.weatherTags.hidden = false;
   el.weatherTags.innerHTML = tags.map((t) => `
-    <button type="button" class="w-tag" data-tone="${t.tone}" data-label="${escapeHtml(t.label)}">
+    <button type="button" class="w-tag" data-tone="${t.tone}" data-label="${escapeHtml(t.label)}"
+            aria-label="${escapeHtml(t.label)} tag · tap for context">
       <span class="w-tag-emoji" aria-hidden="true">${t.emoji}</span>
       ${escapeHtml(t.label)}
     </button>
