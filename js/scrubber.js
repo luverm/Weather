@@ -50,6 +50,7 @@ export class Scrubber {
     if (!hourly?.length) return;
     const totalMs = RANGE_HOURS * 3600_000;
     const base = this.start - 3600_000;
+    const nextHour = Date.now() + 60 * 60_000;
     for (const h of hourly.slice(0, RANGE_HOURS)) {
       const precip = h.precip ?? 0;
       const pop = h.pop ?? 0;
@@ -57,6 +58,7 @@ export class Scrubber {
       if (precip < 0.1 && pop < 40) continue;
       const rel = (h.time - base) / totalMs;
       if (rel < 0 || rel > 1) continue;
+      const isImminent = h.time <= nextHour && h.time >= Date.now() - 30 * 60_000;
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "scrubber-precip-bar";
@@ -68,6 +70,7 @@ export class Scrubber {
       : precip >= 1   ? "moderate"
       : precip >= 0.3 ? "light"
       : "trace";
+      if (isImminent) btn.dataset.imminent = "1";
       btn.title = `${new Date(h.time).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false })} · ${precip.toFixed(1)} mm · ${pop}% rain`;
       btn.setAttribute("aria-label", btn.title);
       btn.addEventListener("click", (e) => {

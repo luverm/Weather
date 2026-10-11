@@ -686,6 +686,15 @@ html[data-reduce-motion="true"] *::after {
 .scrubber-precip-bar[data-tier="light"]    { background: #9ad1ff; }
 .scrubber-precip-bar[data-tier="moderate"] { background: #78a9ff; }
 .scrubber-precip-bar[data-tier="heavy"]    { background: #c7569a; box-shadow: 0 0 4px rgba(199, 86, 154, 0.5); }
+.scrubber-precip-bar[data-imminent="1"] {
+  box-shadow: 0 0 8px currentColor, 0 0 0 1px rgba(255,255,255,0.3);
+  animation: scrubberImminent 1600ms var(--ease) infinite;
+}
+@keyframes scrubberImminent {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+:root[data-reduce-motion="true"] .scrubber-precip-bar[data-imminent="1"] { animation: none; }
 .scrubber-ticks { position: absolute; inset: 0; pointer-events: none; }
 .scrubber-tick {
   position: absolute;
