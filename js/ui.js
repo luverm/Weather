@@ -1298,6 +1298,18 @@ function renderVisibility(w) {
   // Display: fewer decimals as it gets clearer.
   const display = km < 1 ? km.toFixed(2) : km < 10 ? km.toFixed(1) : Math.round(km);
   el.visValue.textContent = display;
+  el.visCard.style.cursor = "pointer";
+  el.visCard.onclick = () => {
+    const km2 = meters / 1000;
+    const mi = (meters / 1609).toFixed(1);
+    const near = km2 < 1 ? "street-level haze"
+      : km2 < 4 ? "a few blocks"
+      : km2 < 10 ? "cross-town views"
+      : km2 < 20 ? "the city skyline"
+      : km2 < 40 ? "distant hills"
+      : "the horizon";
+    ui.showToast(`${display} km (~${mi} mi) · you can see ${near}`, 3200);
+  };
   const { label, tone } = visibilityLabel(km);
   el.visLabel.textContent = label;
   el.visCard.dataset.tone = tone;
