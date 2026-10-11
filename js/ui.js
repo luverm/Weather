@@ -2409,11 +2409,12 @@ function startFetchedTicker() {
 
 function bindShare() {
   if (!el.shareBtn) return;
-  el.shareBtn.addEventListener("click", async () => {
+  el.shareBtn.addEventListener("click", async (ev) => {
     const w = state.weather;
     if (!w) { ui.showToast("No weather to share yet"); return; }
     const placeName = state.place?.name || "Here";
     const unit = state.unit;
+    const asMarkdown = ev.shiftKey;
     const t = (v) => `${Math.round(unit === "F" ? v * 9 / 5 + 32 : v)}°${unit}`;
     const today = w.daily?.[0];
     const emoji = conditionEmoji(w.condition, w.isDay);
@@ -2433,7 +2434,12 @@ function bindShare() {
       // this exact spot — include it in whatever we share.
       location.hash ? `🔗 ${location.origin}${location.pathname}${location.hash}` : null,
     ].filter(Boolean);
-    const text = lines.join("\n");
+    let text = lines.join("\n");
+    if (asMarkdown) {
+      // Compact Markdown version for pasting into docs / issues.
+      const [header, ...rest] = lines;
+      text = `**${header}**\n\n${rest.join("  \n")}`;
+    }
     try {
       if (navigator.share) {
         await navigator.share({ title: `Aether — ${placeName}`, text });
