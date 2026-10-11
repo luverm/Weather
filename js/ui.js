@@ -777,15 +777,18 @@ function renderGoldenHour(w) {
   el.sunGoldenLabel.textContent = upcoming.label;
   const tLabel = `${fmtTime(upcoming.start)} – ${fmtTime(upcoming.end)}`;
   const inMs = upcoming.start - now;
+  const live = inMs <= 0 && upcoming.end > now;
   let countdown = "";
   if (inMs > 0) {
     const mins = Math.round(inMs / 60_000);
     countdown = mins >= 60 ? ` · in ${Math.floor(mins / 60)}h ${mins % 60}m`
                            : ` · in ${mins}m`;
-  } else {
-    countdown = " · now";
+  } else if (live) {
+    const remain = Math.max(1, Math.round((upcoming.end - now) / 60_000));
+    countdown = ` · now, ${remain}m left`;
   }
   el.sunGoldenDetail.textContent = `${tLabel}${countdown}`;
+  el.sunGolden.classList.toggle("sun-golden-live", live);
   renderGoldenArcs(sr, ss);
 }
 
