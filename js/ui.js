@@ -87,6 +87,8 @@ const el = {
   windScale: $("#wind-scale"),
   windScaleMark: $("#wind-scale-mark"),
   windScaleGust: $("#wind-scale-gust"),
+  pressureScale: $("#pressure-scale"),
+  pressureScaleMark: $("#pressure-scale-mark"),
   pressureSparkLine: $("#pressure-spark-line"),
   pressureSparkFill: $("#pressure-spark-fill"),
   humiditySparkLine: $("#humidity-spark-line"),
@@ -433,6 +435,18 @@ function renderMetrics(w) {
   el.metricPressureSub.textContent = w.visibility != null
     ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
     : "visibility —";
+  if (el.pressureScale && el.pressureScaleMark) {
+    if (w.pressure == null) {
+      el.pressureScale.hidden = true;
+    } else {
+      el.pressureScale.hidden = false;
+      // Scale: 970..1040 hPa (typical sea-level range). Clamp outside.
+      const p = Math.max(970, Math.min(1040, w.pressure));
+      const frac = (p - 970) / 70;
+      el.pressureScaleMark.style.left = `${(frac * 100).toFixed(1)}%`;
+      el.pressureScaleMark.title = `${Math.round(w.pressure)} hPa`;
+    }
+  }
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);

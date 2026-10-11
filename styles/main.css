@@ -724,6 +724,42 @@ html[data-reduce-motion="true"] *::after {
   transition: left 320ms var(--ease);
 }
 .wind-scale-gust[hidden] { display: none; }
+.pressure-scale {
+  position: relative;
+  height: 10px;
+  margin-top: 6px;
+}
+.pressure-scale[hidden] { display: none; }
+.pressure-scale-track {
+  position: absolute;
+  inset: 4px 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg,
+    #c7b4ff 0%,
+    #9ad1ff 30%,
+    rgba(255,255,255,0.3) 50%,
+    #ffd36a 70%,
+    #ff9c7a 100%);
+  opacity: 0.72;
+}
+.pressure-scale-mark {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 2px;
+  background: var(--fg);
+  box-shadow: 0 0 6px rgba(255,255,255,0.6);
+  transform: translateX(-50%);
+  transition: left 320ms var(--ease);
+}
+.pressure-scale-standard {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 61.43%;
+  width: 1px;
+  background: rgba(255,255,255,0.3);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
 
 /* ---------- Daily expand ---------- */
 .daily-item { cursor: pointer; }
