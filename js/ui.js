@@ -272,7 +272,19 @@ export const ui = {
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly, { daily: weather.daily });
-    if (el.narrative) el.narrative.textContent = narrative || "";
+    if (el.narrative) {
+      el.narrative.textContent = narrative || "";
+      el.narrative.style.cursor = narrative ? "pointer" : "";
+      el.narrative.title = narrative ? "Click to copy" : "";
+      el.narrative.onclick = narrative
+        ? () => {
+            navigator.clipboard?.writeText(narrative).then(
+              () => ui.showToast("Narrative copied"),
+              () => ui.showToast("Copy failed")
+            );
+          }
+        : null;
+    }
     if (weather.offline) {
       ui.showToast("Offline — showing sample weather");
       document.documentElement.setAttribute("data-offline", "true");
