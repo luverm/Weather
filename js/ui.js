@@ -2312,6 +2312,16 @@ ui.isReduceMotion = () => {
 };
 
 function startFetchedTicker() {
+  if (el.fetchedAgo) {
+    el.fetchedAgo.style.cursor = "pointer";
+    el.fetchedAgo.setAttribute("role", "button");
+    el.fetchedAgo.setAttribute("tabindex", "0");
+    const refresh = () => state.handlers.onRefresh?.();
+    el.fetchedAgo.addEventListener("click", refresh);
+    el.fetchedAgo.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); refresh(); }
+    });
+  }
   const update = () => {
     if (!el.fetchedAgo || !state.weather?.fetchedAt) {
       if (el.fetchedAgo) el.fetchedAgo.textContent = "";
