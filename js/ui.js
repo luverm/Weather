@@ -1389,6 +1389,12 @@ function renderHourly(w) {
     const windArrow = h.windDir != null
       ? `<span class="forecast-wind" title="${cardinal(h.windDir)} · ${Math.round(h.wind ?? 0)} km/h" style="transform: rotate(${(h.windDir + 180) % 360}deg)">↑</span>`
       : "";
+    const feelsPart = h.feelsLike != null && Math.abs(h.feelsLike - h.temp) >= 1
+      ? ` (feels ${Math.round(convertTemp(h.feelsLike))}°)`
+      : "";
+    const windPart = h.wind != null ? ` · wind ${Math.round(h.wind)} km/h` : "";
+    const popPart = h.pop != null ? ` · ${h.pop}% precip` : "";
+    item.title = `${fmtTime(h.time)} · ${capitalize(h.label || h.condition || "")} · ${Math.round(convertTemp(h.temp))}°${feelsPart}${popPart}${windPart}`;
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
