@@ -846,6 +846,10 @@ function renderGoldenHour(w) {
   }
   el.sunGoldenDetail.textContent = `${tLabel}${countdown}`;
   el.sunGolden.classList.toggle("sun-golden-live", live);
+  el.sunGolden.onclick = () => {
+    const ts = live ? upcoming.start : upcoming.start;
+    state.handlers.onHourClick?.(ts);
+  };
   renderGoldenArcs(sr, ss);
 }
 
