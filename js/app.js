@@ -201,6 +201,9 @@ async function loadByCoords(place) {
   ui.setPlace(place);
   ui.setLoading(`Fetching weather for ${place.name}…`);
 
+  // Reflect the active place in the URL hash so links are shareable.
+  updateHash(place);
+
   // Drop any scrubber offset so we start live on each new city.
   clock.reset();
   ui.setScrubbing(false);
@@ -367,10 +370,53 @@ function jumpToGoldenHour() {
   ui.showToast(`${next.label} · ${new Date(next.ts).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false })}`);
 }
 
+function updateHash(place) {
+  if (!place || place.lat == null || place.lon == null) return;
+  const params = new URLSearchParams();
+  params.set("name", place.name || "");
+  params.set("lat", place.lat.toFixed(4));
+  params.set("lon", place.lon.toFixed(4));
+  if (place.country) params.set("country", place.country);
+  if (place.admin1) params.set("admin1", place.admin1);
+  const hash = "#" + params.toString();
+  if (hash !== location.hash) {
+    try { history.replaceState(null, "", hash); } catch { location.hash = hash; }
+  }
+}
+
+function placeFromHash() {
+  if (!location.hash || location.hash.length < 2) return null;
+  try {
+    const params = new URLSearchParams(location.hash.slice(1));
+    const lat = parseFloat(params.get("lat"));
+    const lon = parseFloat(params.get("lon"));
+    if (!isFinite(lat) || !isFinite(lon)) return null;
+    return {
+      name: params.get("name") || "Shared location",
+      country: params.get("country") || "",
+      admin1: params.get("admin1") || "",
+      lat, lon,
+    };
+  } catch { return null; }
+}
+
+// Also react to hash changes (e.g. user pastes a new #place).
+window.addEventListener("hashchange", () => {
+  const next = placeFromHash();
+  if (next && (!app.place || next.lat !== app.place.lat || next.lon !== app.place.lon)) {
+    loadByCoords(next);
+  }
+});
+
 // ---------- Start ----------
 (async function init() {
-  // Prefer the most recent saved place if we have one — avoids the geolocation
-  // prompt on every load and feels snappier.
+  // 1. URL hash wins — lets a shared link always open the right place.
+  const hashPlace = placeFromHash();
+  if (hashPlace) {
+    await loadByCoords(hashPlace);
+    return;
+  }
+  // 2. Prefer the most recent saved place.
   const saved = places.all();
   if (saved.length) {
     await loadByCoords(saved[0]);
