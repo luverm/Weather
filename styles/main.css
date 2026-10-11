@@ -2324,6 +2324,25 @@ kbd {
 .daily-temp-min { color: var(--fg-muted); text-align: right; }
 .daily-temp-max { color: var(--fg); text-align: right; font-weight: 500; }
 
+/* ---------- Print ---------- */
+@media print {
+  .stage, .vignette,
+  .scrubber, .scrubber-reset,
+  .radar, .search, .toolbar,
+  .alerts-strip, .places-strip,
+  #audio-btn, #install-btn, #share-btn, #refresh-btn, #settings-btn, #locate-btn,
+  .forecast-track { display: none !important; }
+  body { background: #ffffff; color: #111 !important; }
+  .glass, .hero-inner { background: #ffffff !important; border: 1px solid #ddd !important; box-shadow: none !important; backdrop-filter: none !important; }
+  .temp-value, .place-name, .condition-label { color: #111 !important; }
+  .metric-value, .metric-label, .metric-unit, .metric-sub,
+  .aq-value, .aq-detail, .daily-day, .daily-date,
+  .pollen-items, .sun-row strong { color: #111 !important; }
+  .chart-cursor, .chart-dot { display: none; }
+  .fetched-ago { color: #777 !important; }
+  a { color: #0059c7 !important; }
+}
+
 /* ---------- Hint + toast ---------- */
 .hint {
   display: flex; align-items: center; justify-content: center; gap: 10px;
