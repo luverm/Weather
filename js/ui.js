@@ -1719,7 +1719,9 @@ function renderNowcast(w) {
     return;
   }
   const inMin = Math.max(0, Math.round((first.time - Date.now()) / 60_000));
-  const kind = first.code >= 71 && first.code <= 86 ? "Snow" : "Rain";
+  const isSnow = first.code >= 71 && first.code <= 86;
+  const kind = isSnow ? "Snow" : "Rain";
+  el.nowcast.dataset.kind = isSnow ? "snow" : "rain";
   el.nowcastHeadline.textContent = inMin === 0
     ? `${kind} now`
     : `${kind} in ${inMin} minute${inMin === 1 ? "" : "s"}`;

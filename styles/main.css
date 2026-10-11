@@ -528,6 +528,11 @@ html[data-reduce-motion="true"] *::after {
 .nowcast-bars .nowcast-bar[data-tier="light"]    { background: #9ad1ff; }
 .nowcast-bars .nowcast-bar[data-tier="moderate"] { background: #78a9ff; }
 .nowcast-bars .nowcast-bar[data-tier="heavy"]    { background: #c7569a; box-shadow: 0 0 6px rgba(199, 86, 154, 0.6); }
+.nowcast[data-kind="snow"] .nowcast-icon { color: #d8e3ff; }
+.nowcast[data-kind="snow"] .nowcast-icon path:nth-child(2) { display: none; }
+.nowcast[data-kind="snow"] { border-color: rgba(216, 227, 255, 0.3); }
+.nowcast[data-kind="snow"] .nowcast-bars .nowcast-bar { background: #e5edff; }
+.nowcast[data-kind="rain"] .nowcast-icon { color: #9ad1ff; }
 @keyframes slideInUp {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
