@@ -144,6 +144,18 @@ export function buildAlerts(weather) {
     });
   }
 
+  // ---- Pressure swing ----
+  const pt = weather.pressureTrend;
+  if (pt && Math.abs(pt.delta) >= 3.5) {
+    const dropping = pt.delta < 0;
+    out.push({
+      id: dropping ? "pressure-drop" : "pressure-rise",
+      severity: "info",
+      title: dropping ? "Pressure falling fast" : "Pressure rising fast",
+      detail: `${pt.delta >= 0 ? "+" : ""}${pt.delta.toFixed(1)} hPa over 3 h — ${dropping ? "weather moving in" : "clearing conditions"}.`,
+    });
+  }
+
   // De-dupe (if a daily heat triggers heat AND severe-heat, keep the worst).
   const SEV = { danger: 3, warn: 2, info: 1 };
   return dedupe(out)
