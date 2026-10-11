@@ -1387,6 +1387,16 @@ function renderPollen(pollen) {
   }
   el.pollenCard.hidden = false;
   el.pollenCard.classList.toggle("pollen-alert", pollen.level === "Very high" || pollen.level === "High");
+  el.pollenCard.style.cursor = "pointer";
+  el.pollenCard.onclick = () => {
+    const sorted = [...pollen.items].sort((a, b) => (b.value || 0) - (a.value || 0));
+    const breakdown = sorted.map((p) => `${p.label} ${p.value.toFixed(1)}`).join(" · ");
+    const advice = pollen.level === "Very high" ? "Stay inside if sensitive"
+      : pollen.level === "High" ? "Antihistamines may help"
+      : pollen.level === "Moderate" ? "Minor allergy risk"
+      : "Low exposure";
+    ui.showToast(`${pollen.level} · ${breakdown} · ${advice}`, 4800);
+  };
   el.pollenLevel.textContent = pollen.level;
   el.pollenLevel.setAttribute("data-level", pollen.level);
   el.pollenDominant.textContent = `${pollen.dominant.label} dominant`;
