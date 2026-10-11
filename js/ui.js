@@ -1914,6 +1914,14 @@ function bindAudio() {
 let deferredInstallPrompt = null;
 function bindInstallPrompt() {
   if (!el.installBtn) return;
+  const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const standalone = window.matchMedia?.("(display-mode: standalone)").matches
+    || window.navigator.standalone === true;
+  // Safari/iOS doesn't fire beforeinstallprompt but can still "Add to Home
+  // Screen" via the share sheet. Expose the button with a help toast.
+  if (isIos && !standalone) {
+    el.installBtn.hidden = false;
+  }
   window.addEventListener("beforeinstallprompt", (e) => {
     e.preventDefault();
     deferredInstallPrompt = e;
@@ -1925,11 +1933,16 @@ function bindInstallPrompt() {
     ui.showToast("Aether installed");
   });
   el.installBtn.addEventListener("click", async () => {
-    if (!deferredInstallPrompt) return;
-    deferredInstallPrompt.prompt();
-    const { outcome } = await deferredInstallPrompt.userChoice;
-    if (outcome === "accepted") el.installBtn.hidden = true;
-    deferredInstallPrompt = null;
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+      const { outcome } = await deferredInstallPrompt.userChoice;
+      if (outcome === "accepted") el.installBtn.hidden = true;
+      deferredInstallPrompt = null;
+      return;
+    }
+    if (isIos) {
+      ui.showToast("Tap the share icon → Add to Home Screen", 5000);
+    }
   });
 }
 
