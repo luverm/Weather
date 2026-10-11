@@ -103,6 +103,7 @@ const el = {
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
   settingAudioLevel: $("#setting-audio-level"),
+  settingAccent: $("#setting-accent"),
   settingClearPlaces: $("#setting-clear-places"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
@@ -1825,6 +1826,34 @@ function bindSettings() {
     el.settingAudioLevel.style.setProperty("--range", `${pct}%`);
     state.handlers.onAudioLevel?.(pct / 100);
   });
+
+  el.settingAccent?.addEventListener("click", (ev) => {
+    const btn = ev.target.closest("[data-accent]");
+    if (!btn) return;
+    applyAccent(btn.dataset.accent, { persist: true });
+  });
+}
+
+const ACCENTS = {
+  sky:   "#9ad1ff",
+  teal:  "#78d0b2",
+  amber: "#ffd36a",
+  coral: "#ff9c7a",
+  lilac: "#c7b4ff",
+};
+function applyAccent(name, { persist = false } = {}) {
+  const color = ACCENTS[name];
+  if (!color) return;
+  document.documentElement.style.setProperty("--accent", color);
+  document.documentElement.setAttribute("data-accent", name);
+  if (persist) {
+    try { localStorage.setItem("aether:accent", name); } catch { /* ignore */ }
+  }
+  if (el.settingAccent) {
+    el.settingAccent.querySelectorAll("[data-accent]").forEach((b) =>
+      b.classList.toggle("active", b.dataset.accent === name)
+    );
+  }
 }
 
 function applyStoredPreferences() {
@@ -1842,6 +1871,9 @@ function applyStoredPreferences() {
     el.settingAudioLevel.value = String(pct);
     el.settingAudioLevel.style.setProperty("--range", `${pct}%`);
   }
+  const accent = localStorage.getItem("aether:accent");
+  if (accent && ACCENTS[accent]) applyAccent(accent);
+  else applyAccent("sky");
 }
 
 // Exposed so app.js can query the current preference on boot.

@@ -210,6 +210,20 @@ ul { list-style: none; margin: 0; padding: 0; }
   box-shadow: 0 0 0 3px rgba(154, 209, 255, 0.25);
   border: none; cursor: pointer;
 }
+.settings-row-accent { padding-right: 6px; }
+.accent-picker { display: inline-flex; gap: 6px; align-items: center; }
+.accent-swatch {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--sw, #9ad1ff);
+  border: 2px solid transparent;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.1);
+  cursor: pointer;
+  transition: transform 160ms var(--ease), border-color 160ms var(--ease);
+  padding: 0;
+}
+.accent-swatch:hover { transform: scale(1.1); }
+.accent-swatch.active { border-color: var(--fg); box-shadow: 0 0 10px var(--sw, #9ad1ff); }
 .settings-btn-inline {
   text-align: left; padding: 8px 10px;
   border-radius: 10px;
