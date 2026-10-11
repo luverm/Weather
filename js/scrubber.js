@@ -63,6 +63,11 @@ export class Scrubber {
       const strength = Math.min(1, Math.max(precip / 3, pop / 100));
       btn.style.left = `${(rel * 100).toFixed(2)}%`;
       btn.style.opacity = (0.3 + strength * 0.6).toFixed(2);
+      btn.dataset.tier =
+        precip >= 3   ? "heavy"
+      : precip >= 1   ? "moderate"
+      : precip >= 0.3 ? "light"
+      : "trace";
       btn.title = `${new Date(h.time).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false })} · ${precip.toFixed(1)} mm · ${pop}% rain`;
       btn.setAttribute("aria-label", btn.title);
       btn.addEventListener("click", (e) => {

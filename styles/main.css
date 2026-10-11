@@ -629,6 +629,10 @@ html[data-reduce-motion="true"] *::after {
   transition: height 160ms var(--ease), opacity 160ms var(--ease);
 }
 .scrubber-precip-bar:hover { height: 14px; margin-top: -7px; opacity: 1 !important; }
+.scrubber-precip-bar[data-tier="trace"]    { background: rgba(154, 209, 255, 0.6); }
+.scrubber-precip-bar[data-tier="light"]    { background: #9ad1ff; }
+.scrubber-precip-bar[data-tier="moderate"] { background: #78a9ff; }
+.scrubber-precip-bar[data-tier="heavy"]    { background: #c7569a; box-shadow: 0 0 4px rgba(199, 86, 154, 0.5); }
 .scrubber-ticks { position: absolute; inset: 0; pointer-events: none; }
 .scrubber-tick {
   position: absolute;
