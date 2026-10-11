@@ -717,6 +717,38 @@ html[data-reduce-motion="true"] *::after {
 }
 .legend-swatch.precip { background: rgba(154, 209, 255, 0.55); }
 
+.rain-outlook {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px 5px 8px;
+  border-radius: 999px;
+  background: rgba(154, 209, 255, 0.1);
+  border: 1px solid rgba(154, 209, 255, 0.22);
+  color: var(--fg);
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 220ms var(--ease), transform 220ms var(--ease), border-color 220ms var(--ease);
+}
+.rain-outlook:hover { background: rgba(154, 209, 255, 0.18); transform: translateY(-1px); }
+.rain-outlook:focus-visible { outline: 2px solid rgba(154, 209, 255, 0.6); outline-offset: 2px; }
+.rain-outlook[hidden] { display: none; }
+.rain-outlook[data-tone="dry"]      { background: rgba(255, 196, 112, 0.08); border-color: rgba(255, 196, 112, 0.2); }
+.rain-outlook[data-tone="dry"] .rain-outlook-icon { color: rgba(255, 206, 128, 0.9); }
+.rain-outlook[data-tone="wet"]      { background: rgba(120, 180, 255, 0.18); border-color: rgba(120, 180, 255, 0.4); }
+.rain-outlook-icon { width: 16px; height: 16px; color: rgba(154, 209, 255, 0.95); flex-shrink: 0; }
+.rain-outlook-text { display: inline-grid; text-align: left; line-height: 1.15; }
+.rain-outlook-text strong {
+  font-size: 11.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.rain-outlook-text span {
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+}
+
 .chart-wrap {
   position: relative;
 }

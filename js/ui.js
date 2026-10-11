@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { rainOutlook } from "./rain-outlook.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -95,6 +96,9 @@ const el = {
   sunGolden: $("#sun-golden"),
   sunGoldenLabel: $("#sun-golden-label"),
   sunGoldenDetail: $("#sun-golden-detail"),
+  rainOutlookBtn: $("#rain-outlook"),
+  rainOutlookHeadline: $("#rain-outlook-headline"),
+  rainOutlookDetail: $("#rain-outlook-detail"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -198,6 +202,7 @@ export const ui = {
     renderActivity(weather);
     renderAlerts(weather);
     renderWeekend(weather);
+    renderRainOutlook(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -774,6 +779,23 @@ function renderWeekend(w) {
   el.weekendDetail.textContent = parts.join(" · ");
   el.weekendChip.onclick = () => {
     if (snap.ts) state.handlers.onHourClick?.(snap.ts);
+  };
+}
+
+function renderRainOutlook(w) {
+  if (!el.rainOutlookBtn) return;
+  const outlook = rainOutlook(w);
+  if (!outlook) {
+    el.rainOutlookBtn.hidden = true;
+    return;
+  }
+  el.rainOutlookBtn.hidden = false;
+  el.rainOutlookBtn.dataset.tone = outlook.tone;
+  el.rainOutlookHeadline.textContent = outlook.headline;
+  el.rainOutlookDetail.textContent = outlook.detail;
+  el.rainOutlookBtn.onclick = () => {
+    const ts = outlook.heaviest?.time;
+    if (ts) state.handlers.onHourClick?.(ts);
   };
 }
 
