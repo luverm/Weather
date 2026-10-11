@@ -683,6 +683,19 @@ html[data-reduce-motion="true"] *::after {
   margin-top: -5px;
   background: rgba(255,255,255,0.3);
 }
+.scrubber-tick::after {
+  content: attr(data-label);
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  color: var(--fg-dim);
+  letter-spacing: 0.1em;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  opacity: 0.5;
+}
 .scrubber-fill {
   position: absolute; inset: 0;
   background: linear-gradient(90deg, rgba(255,255,255,0.18), rgba(255,255,255,0.04));
