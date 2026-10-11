@@ -192,6 +192,7 @@ const scrubber = new Scrubber({
     if (!app.weather) return;
     applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
+    if (app.place) updateHash(app.place);
   },
   onAutoReturn: () => {
     ui.showToast("Returned to live");
@@ -227,6 +228,16 @@ async function loadByCoords(place) {
 
   // Move the radar to the new location (fire-and-forget; resolves later).
   ensureRadar([place.lat, place.lon]).then((r) => r?.setCenter(place.lat, place.lon, place.name));
+
+  // Shared links can carry a scrubber offset — apply it once after the
+  // weather is loaded so the preview matches the shared moment.
+  if (place._initialOffsetH != null) {
+    clock.setOffset(place._initialOffsetH * 3600_000);
+    scrubber.sync();
+    applyScene(w);
+    ui.setScrubbing(!clock.isLive());
+    delete place._initialOffsetH;
+  }
 }
 
 async function useGeolocation() {
@@ -459,6 +470,12 @@ function updateHash(place) {
   params.set("lon", place.lon.toFixed(4));
   if (place.country) params.set("country", place.country);
   if (place.admin1) params.set("admin1", place.admin1);
+  // When the user is actively scrubbing, encode the clock offset in hours
+  // so a shared link lands on the previewed moment, not "now".
+  const offH = clock.offset() / 3600_000;
+  if (Math.abs(offH) >= 0.5) {
+    params.set("t", offH.toFixed(1));
+  }
   const hash = "#" + params.toString();
   if (hash !== location.hash) {
     try { history.replaceState(null, "", hash); } catch { location.hash = hash; }
@@ -472,12 +489,15 @@ function placeFromHash() {
     const lat = parseFloat(params.get("lat"));
     const lon = parseFloat(params.get("lon"));
     if (!isFinite(lat) || !isFinite(lon)) return null;
-    return {
+    const place = {
       name: params.get("name") || "Shared location",
       country: params.get("country") || "",
       admin1: params.get("admin1") || "",
       lat, lon,
     };
+    const t = parseFloat(params.get("t"));
+    if (isFinite(t) && Math.abs(t) < 24) place._initialOffsetH = t;
+    return place;
   } catch { return null; }
 }
 
