@@ -113,6 +113,7 @@ const el = {
   settingAudioLevel: $("#setting-audio-level"),
   settingAccent: $("#setting-accent"),
   settingClearPlaces: $("#setting-clear-places"),
+  settingResetAll: $("#setting-reset-all"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
@@ -2158,6 +2159,18 @@ function bindSettings() {
     const btn = ev.target.closest("[data-accent]");
     if (!btn) return;
     applyAccent(btn.dataset.accent, { persist: true });
+  });
+
+  el.settingResetAll?.addEventListener("click", () => {
+    if (!confirm("Reset all preferences and saved places? This can't be undone.")) return;
+    const keys = ["aether:unit", "aether:12h", "aether:reduceMotion", "aether:audio-level",
+                  "aether:accent", "aether:places"];
+    for (const k of keys) {
+      try { localStorage.removeItem(k); } catch { /* ignore */ }
+    }
+    try { sessionStorage.removeItem("aether:dismissed-alerts"); } catch { /* ignore */ }
+    ui.showToast("Preferences reset — reloading…");
+    setTimeout(() => location.reload(), 800);
   });
 }
 
