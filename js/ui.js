@@ -213,7 +213,13 @@ export const ui = {
     if (!el.refreshBtn) return;
     el.refreshBtn.classList.toggle("spinning", !!on);
   },
-  setLoading(text) { el.placeSub.textContent = text; },
+  setLoading(text) {
+    el.placeSub.textContent = text;
+    document.documentElement.setAttribute("data-loading", "true");
+    clearTimeout(state._loadingClear);
+    state._loadingClear = setTimeout(() =>
+      document.documentElement.removeAttribute("data-loading"), 400);
+  },
   setPlace(place) {
     state.place = place;
     el.placeName.classList.remove("flip-in"); void el.placeName.offsetWidth;
