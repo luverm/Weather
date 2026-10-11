@@ -1948,6 +1948,18 @@ function showRecentsIfAny() {
 }
 
 function bindSearch() {
+  // Clicking the hero place name/sub also opens search focused — the most
+  // common thing you want when staring at the current location.
+  if (el.placeName) {
+    el.placeName.style.cursor = "pointer";
+    el.placeName.setAttribute("role", "button");
+    el.placeName.setAttribute("tabindex", "0");
+    const openSearch = () => ui.focusSearch();
+    el.placeName.addEventListener("click", openSearch);
+    el.placeName.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openSearch(); }
+    });
+  }
   el.searchInput.addEventListener("input", (e) => {
     const v = e.target.value.trim();
     if (v.length < 2) {
