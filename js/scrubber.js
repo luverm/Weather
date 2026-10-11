@@ -131,6 +131,12 @@ export class Scrubber {
     });
 
     this.resetEl?.addEventListener("click", () => this.reset());
+
+    // Double-click anywhere on the track also returns to live.
+    this.track.addEventListener("dblclick", (e) => {
+      e.preventDefault();
+      this.reset();
+    });
   }
 
   reset() {
