@@ -1577,9 +1577,15 @@ function renderDailyPrecipStrip(days) {
     const v = totals[i];
     const h = v > 0 ? Math.max(3, (v / peak) * 24) : 2;
     const dim = v < 0.1 ? "dim" : "";
-    const title = v > 0.1 ? `${v.toFixed(1)} mm` : "trace";
-    return `<span class="strip-precip ${dim}" title="${title}"><span style="height:${h.toFixed(1)}px"></span></span>`;
+    const title = v > 0.1 ? `${v.toFixed(1)} mm · ${d.pop ?? 0}% pop` : `trace · ${d.pop ?? 0}% pop`;
+    return `<button type="button" class="strip-precip ${dim}" data-i="${i}" title="${escapeHtml(title)}"><span style="height:${h.toFixed(1)}px"></span></button>`;
   }).join("");
+  el.dailyPrecipStrip.querySelectorAll(".strip-precip").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const i = parseInt(btn.dataset.i, 10);
+      if (!isNaN(i) && days[i]) jumpToDailyItem(i, days[i]);
+    });
+  });
 }
 
 function renderDailySpark(days) {
