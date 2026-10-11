@@ -1285,9 +1285,19 @@ function renderPollen(pollen) {
   el.pollenLevel.textContent = pollen.level;
   el.pollenLevel.setAttribute("data-level", pollen.level);
   el.pollenDominant.textContent = `${pollen.dominant.label} dominant`;
-  el.pollenItems.innerHTML = pollen.items.map((p) =>
-    `<span>${escapeHtml(p.label)} ${p.value.toFixed(1)}</span>`
-  ).join("");
+  // Each species as a labelled mini-bar. All three scale against the
+  // highest value so the dominant species visibly dominates.
+  const peak = Math.max(0.5, ...pollen.items.map((p) => p.value || 0));
+  el.pollenItems.innerHTML = pollen.items.map((p) => {
+    const pct = Math.max(6, Math.min(100, (p.value / peak) * 100));
+    return `
+      <span class="pollen-species">
+        <span class="pollen-species-label">${escapeHtml(p.label)}</span>
+        <span class="pollen-species-bar"><span style="width:${pct.toFixed(1)}%"></span></span>
+        <span class="pollen-species-value">${p.value.toFixed(1)}</span>
+      </span>
+    `;
+  }).join("");
 }
 
 function renderTrends(w) {

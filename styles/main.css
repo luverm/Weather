@@ -893,11 +893,33 @@ html[data-reduce-motion="true"] *::after {
 .pollen-level[data-level="Very high"] { background: rgba(255, 106, 106, 0.2); color: #ff9a9a; border-color: rgba(255, 106, 106, 0.35); }
 .pollen-meta strong { display: block; font-size: 14px; font-weight: 500; }
 .pollen-items {
-  display: flex; gap: 8px; flex-wrap: wrap;
+  display: grid; gap: 4px;
   margin-top: 3px;
   font-size: 11px; color: var(--fg-dim);
 }
-.pollen-items span { font-variant-numeric: tabular-nums; }
+.pollen-species {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  gap: 6px;
+  align-items: center;
+  font-variant-numeric: tabular-nums;
+}
+.pollen-species-label { color: var(--fg-dim); }
+.pollen-species-bar {
+  display: block;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  overflow: hidden;
+}
+.pollen-species-bar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #78d06a, #ffd36a, #ff9f5c);
+  border-radius: 999px;
+  transition: width 320ms var(--ease);
+}
+.pollen-species-value { color: var(--fg-muted); }
 
 /* ---------- Advice ---------- */
 .advice {
