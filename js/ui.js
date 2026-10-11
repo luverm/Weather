@@ -537,6 +537,10 @@ function renderAirQuality(aq) {
   el.aqCard.style.color = color;
   el.aqValue.textContent = aq.aqi != null ? Math.round(aq.aqi) : "—";
   el.aqLabel.textContent = aq.label || "—";
+  // Alert state when AQI crosses "Unhealthy" (>150) — ring + value pulse to
+  // make the card unignorable without the user having to read the label.
+  const alert = aq.aqi != null && aq.aqi > 150;
+  el.aqCard.classList.toggle("aq-alert", alert);
   // Circumference of r=20 is ~125.66 — we use 126 in the SVG.
   const frac = Math.max(0, Math.min(1, (aq.aqi ?? 0) / 200));
   el.aqArc.setAttribute("stroke-dashoffset", String(126 * (1 - frac)));

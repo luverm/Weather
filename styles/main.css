@@ -1132,6 +1132,18 @@ kbd {
   font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums;
   color: var(--fg);
 }
+#aq-card.aq-alert #aq-arc { animation: aqAlert 1500ms var(--ease) infinite; }
+#aq-card.aq-alert .aq-value { animation: aqAlertText 1500ms var(--ease) infinite; }
+@keyframes aqAlert {
+  0%, 100% { opacity: 1; filter: drop-shadow(0 0 2px currentColor); }
+  50%      { opacity: 0.65; filter: drop-shadow(0 0 8px currentColor); }
+}
+@keyframes aqAlertText {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.08); }
+}
+:root[data-reduce-motion="true"] #aq-card.aq-alert #aq-arc,
+:root[data-reduce-motion="true"] #aq-card.aq-alert .aq-value { animation: none; }
 .aq-meta { display: grid; gap: 2px; min-width: 0; }
 .aq-meta strong { font-size: 14px; font-weight: 500; }
 .aq-detail { font-size: 11.5px; color: var(--fg-dim); }
