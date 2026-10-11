@@ -320,6 +320,15 @@ installShortcuts({
   coldestHour: () => jumpToExtremeHour("coldest"),
   wettestHour: () => jumpToExtremeHour("wettest"),
   nextEvent: (dir) => jumpToNextEvent(dir),
+  toggleDaily: () => {
+    const rows = Array.from(document.querySelectorAll(".daily-item"));
+    const anyOpen = rows.some((r) => r.dataset.expanded === "true");
+    for (const r of rows) {
+      const open = r.dataset.expanded === "true";
+      if (anyOpen && open) r.click();
+      else if (!anyOpen && !open) r.click();
+    }
+  },
 });
 
 function jumpToNextEvent(dir = 1) {
