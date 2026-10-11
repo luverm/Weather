@@ -316,16 +316,23 @@ installShortcuts({
   refresh: () => refreshWeather(),
   goldenHour: () => jumpToGoldenHour(),
   jumpDay: (idx) => jumpToDay(idx),
-  warmestHour: () => jumpToWarmestHour(),
+  warmestHour: () => jumpToExtremeHour("warmest"),
+  coldestHour: () => jumpToExtremeHour("coldest"),
+  wettestHour: () => jumpToExtremeHour("wettest"),
 });
 
-function jumpToWarmestHour() {
+function jumpToExtremeHour(kind) {
   const hours = app.weather?.hourly || [];
   if (!hours.length) return;
+  const cmp = {
+    warmest: (a, b) => (a.temp ?? -Infinity) > (b?.temp ?? -Infinity),
+    coldest: (a, b) => (a.temp ?? Infinity) < (b?.temp ?? Infinity),
+    wettest: (a, b) => ((a.precip ?? 0) + (a.pop ?? 0) / 100) > ((b?.precip ?? 0) + (b?.pop ?? 0) / 100),
+  }[kind];
   let best = null;
   for (const h of hours) {
-    if (h.temp == null) continue;
-    if (!best || h.temp > best.temp) best = h;
+    if (kind !== "wettest" && h.temp == null) continue;
+    if (!best || cmp(h, best)) best = h;
   }
   if (!best) return;
   clock.setOffset(best.time - Date.now());
@@ -333,8 +340,15 @@ function jumpToWarmestHour() {
   applyScene(app.weather);
   ui.setScrubbing(!clock.isLive());
   const unit = ui.getUnit();
-  const tDisp = Math.round(unit === "F" ? best.temp * 9 / 5 + 32 : best.temp);
-  ui.showToast(`Warmest hour · ${tDisp}°${unit} at ${new Date(best.time).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false })}`);
+  const timeStr = new Date(best.time).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false });
+  let label;
+  if (kind === "wettest") {
+    label = `Wettest hour · ${(best.precip ?? 0).toFixed(1)} mm · ${best.pop ?? 0}% at ${timeStr}`;
+  } else {
+    const tDisp = Math.round(unit === "F" ? best.temp * 9 / 5 + 32 : best.temp);
+    label = `${kind === "warmest" ? "Warmest" : "Coldest"} hour · ${tDisp}°${unit} at ${timeStr}`;
+  }
+  ui.showToast(label);
 }
 
 function jumpToDay(idx) {
