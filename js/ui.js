@@ -2070,6 +2070,9 @@ function bindShare() {
       `💨 ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `☀ UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `🌬 AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
+      // The URL hash now encodes the place (Round 77) so the link opens
+      // this exact spot — include it in whatever we share.
+      location.hash ? `🔗 ${location.origin}${location.pathname}${location.hash}` : null,
     ].filter(Boolean);
     const text = lines.join("\n");
     try {
