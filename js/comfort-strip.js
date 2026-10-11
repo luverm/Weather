@@ -1,5 +1,6 @@
 // A compact 24-cell strip showing the upcoming day's feels-like temperature
-// with a rain-probability overlay. Each cell is clickable to scrub.
+// with a rain-probability overlay. Each cell is clickable to scrub. The
+// cells also mark the sunrise and sunset transitions in the covered span.
 
 export class ComfortStrip {
   constructor({ rootEl, onCellClick, getUnit }) {
@@ -7,10 +8,12 @@ export class ComfortStrip {
     this.onCellClick = onCellClick;
     this.getUnit = getUnit || (() => "C");
     this.hours = [];
+    this.sunMarkers = [];
   }
 
-  setHours(hours) {
+  setHours(hours, { daily } = {}) {
     this.hours = (hours || []).slice(0, 24);
+    this.sunMarkers = computeSunMarkers(this.hours, daily);
     this.render();
   }
 
@@ -37,11 +40,16 @@ export class ComfortStrip {
       const tickHour = new Date(h.time).getHours();
       const showTick = tickHour % 6 === 0;
       const tickLabel = showTick ? `${tickHour.toString().padStart(2, "0")}:00` : "";
+      const marker = this.sunMarkers.find((m) => m.index === i);
+      const markerHtml = marker
+        ? `<span class="cstrip-sun" data-kind="${marker.kind}" aria-label="${marker.kind === "rise" ? "Sunrise" : "Sunset"}" title="${marker.kind === "rise" ? "Sunrise" : "Sunset"} ${hhmm(marker.ts)}"></span>`
+        : "";
       return `
         <button class="cstrip-cell" data-i="${i}" data-ts="${h.time}"
                 title="${tickHour}:00 · ${display} feels · ${h.pop ?? 0}% rain"
                 style="--c:${color}">
           <span class="cstrip-bar" style="--rain:${rainOpacity}"></span>
+          ${markerHtml}
           ${showTick ? `<span class="cstrip-tick">${tickLabel}</span>` : ""}
         </button>
       `;
@@ -66,6 +74,32 @@ export class ComfortStrip {
 }
 
 function clamp01(v) { return Math.max(0, Math.min(1, v)); }
+
+function hhmm(ts) {
+  const d = new Date(ts);
+  return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+}
+
+// For each sunrise/sunset in `daily` that falls inside the strip's time span,
+// find the hour index whose window (hour..hour+1h) contains that moment.
+function computeSunMarkers(hours, daily) {
+  if (!hours?.length) return [];
+  const start = hours[0].time;
+  const end = hours[hours.length - 1].time + 3600_000;
+  const markers = [];
+  for (const d of (daily || [])) {
+    for (const [ts, kind] of [[d.sunrise, "rise"], [d.sunset, "set"]]) {
+      if (!ts || ts < start || ts >= end) continue;
+      let bestIdx = -1, bestDiff = Infinity;
+      for (let i = 0; i < hours.length; i++) {
+        const diff = Math.abs(hours[i].time + 1800_000 - ts); // compare to cell midpoint
+        if (diff < bestDiff) { bestDiff = diff; bestIdx = i; }
+      }
+      if (bestIdx >= 0) markers.push({ index: bestIdx, ts, kind });
+    }
+  }
+  return markers;
+}
 
 // Feels-like temperature -> CSS color. Inspired by classic isotherm palettes:
 // cold = deep blue, cool = teal, comfy = green, warm = amber, hot = red.

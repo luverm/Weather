@@ -1300,6 +1300,28 @@ kbd {
   pointer-events: none;
   font-variant-numeric: tabular-nums;
 }
+.cstrip-sun {
+  position: absolute;
+  top: -5px;
+  right: -1px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  pointer-events: none;
+  box-shadow: 0 0 6px currentColor;
+}
+.cstrip-sun[data-kind="rise"] { background: #ffd48a; color: rgba(255, 212, 138, 0.65); }
+.cstrip-sun[data-kind="set"]  { background: #ff9c7a; color: rgba(255, 156, 122, 0.65); }
+.cstrip-sun::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 1px;
+  height: 18px;
+  background: linear-gradient(180deg, currentColor, transparent);
+  transform: translateX(-50%);
+}
 
 /* ---------- Alerts strip ---------- */
 .alerts-strip {

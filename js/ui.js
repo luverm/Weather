@@ -209,7 +209,7 @@ export const ui = {
     renderRainOutlook(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
-    if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
+    if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly, { daily: weather.daily });
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
