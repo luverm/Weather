@@ -532,6 +532,7 @@ function renderMetrics(w) {
       el.uvScaleMark.style.left = `${(u / 12 * 100).toFixed(1)}%`;
       el.uvScale.title = "UV index scale (0 low → 12 extreme)";
       el.uvScaleMark.title = `UV ${Math.round(w.uv)}`;
+      el.uvScaleMark.dataset.label = Math.round(w.uv);
     }
   }
   renderPressureSparkline(w);
