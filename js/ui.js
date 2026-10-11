@@ -79,6 +79,8 @@ const el = {
   tempYesterday: $("#temp-yesterday"),
   uvLevel: $("#m-uv-level"),
   humidityComfort: $("#m-humidity-comfort"),
+  dewScale: $("#dew-scale"),
+  dewScaleMark: $("#dew-scale-mark"),
   pressureSparkLine: $("#pressure-spark-line"),
   pressureSparkFill: $("#pressure-spark-fill"),
   humiditySparkLine: $("#humidity-spark-line"),
@@ -367,6 +369,24 @@ function renderMetrics(w) {
   el.metricHumiditySub.textContent = w.dewPoint != null
     ? `dew ${Math.round(convertTemp(w.dewPoint))}°`
     : "dew —";
+  if (el.dewScale && el.dewScaleMark) {
+    if (w.dewPoint == null) {
+      el.dewScale.hidden = true;
+    } else {
+      el.dewScale.hidden = false;
+      // Scale is 0..25 °C mapped left..right.
+      const dp = Math.max(0, Math.min(25, w.dewPoint));
+      el.dewScaleMark.style.left = `${(dp / 25 * 100).toFixed(1)}%`;
+      // Tone the marker by comfort band.
+      const tone = w.dewPoint < 10 ? "dry"
+        : w.dewPoint < 15 ? "pleasant"
+        : w.dewPoint < 18 ? "sticky"
+        : w.dewPoint < 21 ? "humid"
+        : "oppressive";
+      el.dewScale.dataset.tone = tone;
+      el.dewScaleMark.title = `Dew ${Math.round(convertTemp(w.dewPoint))}° · ${tone}`;
+    }
+  }
   if (el.humidityComfort) {
     const pill = humidityComfort(w.humidity, w.dewPoint, w.temp);
     if (pill) {
