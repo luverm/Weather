@@ -620,6 +620,16 @@ function aqColor(aqi) {
 function renderAirQuality(aq) {
   if (!aq) { el.aqCard.style.opacity = 0.5; return; }
   el.aqCard.style.opacity = 1;
+  el.aqCard.style.cursor = "pointer";
+  el.aqCard.onclick = () => {
+    const parts = [];
+    if (aq.aqi != null) parts.push(`AQI ${Math.round(aq.aqi)} · ${aq.label}`);
+    if (aq.pm25 != null) parts.push(`PM2.5 ${Math.round(aq.pm25)}`);
+    if (aq.pm10 != null) parts.push(`PM10 ${Math.round(aq.pm10)}`);
+    if (aq.o3 != null)   parts.push(`O₃ ${Math.round(aq.o3)}`);
+    if (aq.no2 != null)  parts.push(`NO₂ ${Math.round(aq.no2)}`);
+    ui.showToast(parts.join(" · "), 4200);
+  };
   const color = aqColor(aq.aqi);
   el.aqCard.style.color = color;
   el.aqValue.textContent = aq.aqi != null ? Math.round(aq.aqi) : "—";
