@@ -2443,8 +2443,18 @@ function bindShare() {
     const updated = w.fetchedAt
       ? new Date(w.fetchedAt).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false })
       : null;
+    // Local time at the place (if timezone is known).
+    let localTime = null;
+    if (w.timezone && w.timezone !== "auto") {
+      try {
+        localTime = new Intl.DateTimeFormat(undefined, {
+          timeZone: w.timezone, hour: "2-digit", minute: "2-digit", hour12: false,
+        }).format(new Date());
+      } catch { /* ignore */ }
+    }
+    const header = localTime ? `${placeName} · local ${localTime}` : placeName;
     const lines = [
-      `Aether · ${placeName}${updated ? " · " + updated : ""}`,
+      `Aether · ${header}${updated ? " · fetched " + updated : ""}`,
       `${emoji} ${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
       narrativeText ? narrativeText : null,
       today ? `📅 ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
