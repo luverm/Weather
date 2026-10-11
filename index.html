@@ -135,7 +135,7 @@
     <!-- At-a-glance weather vibe tags. -->
     <div id="weather-tags" class="weather-tags" aria-label="Weather tags" hidden></div>
 
-    <section class="hero">
+    <section class="hero" aria-label="Current weather overview">
       <div class="hero-inner glass" data-tilt>
         <div class="place">
           <p class="place-label"><span id="place-live-dot" class="live-dot"></span><span id="place-label-text">Now in</span></p>
@@ -264,7 +264,7 @@
         <div id="comfort-strip" class="comfort-strip" aria-label="24-hour comfort strip" hidden></div>
       </div>
 
-      <div class="metrics">
+      <div class="metrics" role="group" aria-label="Current weather metrics">
         <div class="metric glass metric-wind">
           <span class="metric-label">Wind <span id="m-wind-bft" class="trend" aria-hidden="true"></span></span>
           <div class="wind-compass" aria-hidden="true">
@@ -330,7 +330,7 @@
       </div>
 
       <!-- Extras row: air quality + moon -->
-      <div class="extras">
+      <div class="extras" role="group" aria-label="Extra conditions">
         <div class="extra-card glass" id="aq-card">
           <span class="metric-label">Air quality <span id="aq-direction" class="trend"></span></span>
           <div class="aq-row">
