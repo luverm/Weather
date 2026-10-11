@@ -109,6 +109,7 @@ const el = {
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
+  setting12h: $("#setting-12h"),
   settingAudioLevel: $("#setting-audio-level"),
   settingAccent: $("#setting-accent"),
   settingClearPlaces: $("#setting-clear-places"),
@@ -736,14 +737,18 @@ function fmtDays(d) {
 function fmtTime(ts) {
   if (!ts) return "—";
   const tz = state.weather?.timezone;
+  const h12 = state.use12h;
   if (tz && tz !== "auto") {
     try {
       return new Intl.DateTimeFormat(undefined, {
-        timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
+        timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: !!h12,
       }).format(new Date(ts));
     } catch { /* fall through */ }
   }
   const d = new Date(ts);
+  if (h12) {
+    return d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: true });
+  }
   const hh = d.getHours().toString().padStart(2, "0");
   const mm = d.getMinutes().toString().padStart(2, "0");
   return `${hh}:${mm}`;
@@ -2032,6 +2037,12 @@ function bindSettings() {
     }
   });
 
+  el.setting12h?.addEventListener("change", () => {
+    state.use12h = el.setting12h.checked;
+    localStorage.setItem("aether:12h", state.use12h ? "1" : "0");
+    if (state.weather) ui.setWeather(state.weather);
+  });
+
   el.settingClearPlaces?.addEventListener("click", () => {
     if (!confirm("Clear all saved places?")) return;
     for (const p of places.all()) places.remove(p);
@@ -2088,6 +2099,8 @@ function applyStoredPreferences() {
     queueMicrotask(() => state.handlers.onReduceMotion?.(true));
   }
   if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
+  state.use12h = localStorage.getItem("aether:12h") === "1";
+  if (el.setting12h) el.setting12h.checked = !!state.use12h;
   if (el.settingAudioLevel) {
     const level = parseFloat(localStorage.getItem("aether:audio-level"));
     const pct = Math.round((isFinite(level) ? level : 0.5) * 100);
