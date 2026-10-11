@@ -722,6 +722,18 @@ function renderMoon(moon) {
   el.moonIllum.textContent = Math.round(moon.illum * 100);
   if (el.moonFullCount) el.moonFullCount.textContent = `Full ${fmtDays(moon.daysToFull)}`;
   if (el.moonNewCount)  el.moonNewCount.textContent  = `New ${fmtDays(moon.daysToNew)}`;
+  const moonCard = document.getElementById("moon-card");
+  if (moonCard) {
+    moonCard.style.cursor = "pointer";
+    moonCard.onclick = () => {
+      const ageDays = moon.phase * 29.53;
+      const fullDate = new Date(Date.now() + moon.daysToFull * 86400_000)
+        .toLocaleDateString(undefined, { month: "short", day: "numeric" });
+      const newDate = new Date(Date.now() + moon.daysToNew * 86400_000)
+        .toLocaleDateString(undefined, { month: "short", day: "numeric" });
+      ui.showToast(`${moon.name} · age ${ageDays.toFixed(1)}d · full ${fullDate} · new ${newDate}`, 4200);
+    };
+  }
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
