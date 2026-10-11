@@ -2067,6 +2067,7 @@ function renderPlaces() {
         return;
       }
       state.handlers.onPlaceClick?.(item);
+      try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch { /* ignore */ }
     });
   });
 }
