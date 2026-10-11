@@ -829,6 +829,22 @@ html[data-reduce-motion="true"] *::after {
 }
 .legend-swatch.precip { background: rgba(154, 209, 255, 0.55); }
 
+.chart-range {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.chart-range[hidden] { display: none; }
+.chart-range-hi { color: #ffb196; font-weight: 600; }
+.chart-range-lo { color: #9ad1ff; font-weight: 600; }
+.chart-range-sep { color: var(--fg-dim); font-size: 10px; margin: 0 1px; }
+
 .rain-outlook {
   display: inline-flex;
   align-items: center;

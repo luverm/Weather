@@ -126,6 +126,9 @@ const el = {
   rainOutlookBtn: $("#rain-outlook"),
   rainOutlookHeadline: $("#rain-outlook-headline"),
   rainOutlookDetail: $("#rain-outlook-detail"),
+  chartRange: $("#chart-range"),
+  chartRangeHi: $("#chart-range-hi"),
+  chartRangeLo: $("#chart-range-lo"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -230,6 +233,7 @@ export const ui = {
     renderAlerts(weather);
     renderWeekend(weather);
     renderRainOutlook(weather);
+    renderChartRange(weather);
     renderVisibility(weather);
     renderWeatherTags(weather);
     setFavicon(weather.condition, weather.isDay);
@@ -989,6 +993,25 @@ function renderWeekend(w) {
   el.weekendChip.onclick = () => {
     if (snap.ts) state.handlers.onHourClick?.(snap.ts);
   };
+}
+
+function renderChartRange(w) {
+  if (!el.chartRange || !el.chartRangeHi || !el.chartRangeLo) return;
+  const hours = (w.hourly || []).slice(0, 24);
+  const temps = hours.map((h) => h.temp).filter((v) => v != null);
+  if (temps.length < 2) {
+    el.chartRange.hidden = true;
+    return;
+  }
+  const hi = Math.max(...temps);
+  const lo = Math.min(...temps);
+  if (hi - lo < 1) {
+    el.chartRange.hidden = true;
+    return;
+  }
+  el.chartRange.hidden = false;
+  el.chartRangeHi.textContent = `${Math.round(convertTemp(hi))}°`;
+  el.chartRangeLo.textContent = `${Math.round(convertTemp(lo))}°`;
 }
 
 function renderRainOutlook(w) {
