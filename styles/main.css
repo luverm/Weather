@@ -333,6 +333,12 @@ html[data-reduce-motion="true"] *::after {
 .icon-btn svg { width: 20px; height: 20px; }
 .icon-btn .sound-waves { opacity: 0; transition: opacity 240ms var(--ease); }
 .icon-btn.on { color: var(--accent); }
+.icon-btn.locating svg { animation: locatingPulse 1200ms var(--ease) infinite; color: var(--accent); }
+@keyframes locatingPulse {
+  0%, 100% { opacity: 0.75; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+:root[data-reduce-motion="true"] .icon-btn.locating svg { animation: none; }
 .icon-btn.on .sound-waves { opacity: 1; animation: soundWave 1.6s var(--ease) infinite; }
 @keyframes soundWave {
   0%, 100% { opacity: 1; transform: translateX(0); }

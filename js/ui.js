@@ -2143,7 +2143,14 @@ function bindUnitToggle() {
 }
 
 function bindLocate() {
-  el.locateBtn.addEventListener("click", () => state.handlers.onLocate?.());
+  el.locateBtn.addEventListener("click", async () => {
+    el.locateBtn.classList.add("locating");
+    try {
+      await state.handlers.onLocate?.();
+    } finally {
+      setTimeout(() => el.locateBtn.classList.remove("locating"), 400);
+    }
+  });
 }
 
 function bindAudio() {
