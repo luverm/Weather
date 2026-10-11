@@ -1558,8 +1558,14 @@ function renderDailyUvStrip(days) {
     if (uv == null) return `<span class="strip-uv dim" title="UV —">—</span>`;
     const lvl = uvLevel(uv);
     const cls = lvl?.cls || "flat";
-    return `<span class="strip-uv ${cls}" title="UV ${Math.round(uv)} · ${lvl?.label ?? ""}">${Math.round(uv)}</span>`;
+    return `<button type="button" class="strip-uv ${cls}" data-i="${i}" title="UV ${Math.round(uv)} · ${escapeHtml(lvl?.label ?? "")}">${Math.round(uv)}</button>`;
   }).join("");
+  el.dailyUvStrip.querySelectorAll(".strip-uv[data-i]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const i = parseInt(btn.dataset.i, 10);
+      if (!isNaN(i) && days[i]) jumpToDailyItem(i, days[i]);
+    });
+  });
 }
 
 function renderDailyPrecipStrip(days) {

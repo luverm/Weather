@@ -2157,7 +2157,14 @@ kbd {
   border-radius: 999px;
   letter-spacing: 0.02em;
   background: rgba(255,255,255,0.06);
+  border: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: transform 160ms var(--ease);
 }
+.daily-uv-strip button.strip-uv:hover { transform: translateY(-1px); }
+.daily-uv-strip button.strip-uv:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .daily-uv-strip .strip-uv.down { background: rgba(154, 209, 255, 0.14); color: #9ad1ff; }
 .daily-uv-strip .strip-uv.flat { background: rgba(255, 211, 106, 0.12); color: #ffd36a; }
 .daily-uv-strip .strip-uv.up   { background: rgba(255, 156, 122, 0.14); color: #ffb196; }
