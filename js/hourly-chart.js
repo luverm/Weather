@@ -267,6 +267,11 @@ export class HourlyChart {
       r.setAttribute("height", barH.toFixed(1));
       r.setAttribute("rx", "1.5");
       r.setAttribute("opacity", (0.35 + (pop / 100) * 0.55).toFixed(2));
+      // Snow hours get a brighter near-white tint so winter precipitation
+      // reads differently from rain in the same chart.
+      if (h.condition === "snow" || (h.snowfall ?? 0) > 0.1) {
+        r.setAttribute("fill", "#e5edff");
+      }
       precipG.appendChild(r);
     });
 
