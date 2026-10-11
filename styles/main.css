@@ -1268,6 +1268,21 @@ html[data-reduce-motion="true"] *::after {
 }
 .shortcuts-list dt { display: inline-flex; gap: 4px; }
 .shortcuts-list dd { margin: 0; font-size: 13px; color: var(--fg-muted); }
+.shortcuts-foot {
+  margin: 18px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--stroke);
+  font-size: 11.5px;
+  color: var(--fg-dim);
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+.shortcuts-foot a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px dashed rgba(154, 209, 255, 0.3);
+}
+.shortcuts-foot a:hover { color: var(--fg); border-bottom-color: var(--fg); }
 kbd {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 11px;
