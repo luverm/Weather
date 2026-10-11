@@ -2042,6 +2042,12 @@ function startFetchedTicker() {
       `Updated ${Math.floor(minutes / 60)}h ago`;
     el.fetchedAgo.textContent = "· " + label;
     el.fetchedAgo.classList.toggle("stale", minutes >= 20);
+    try {
+      const exact = new Date(state.weather.fetchedAt).toLocaleTimeString(undefined, {
+        hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+      });
+      el.fetchedAgo.title = `Fetched at ${exact}`;
+    } catch { /* ignore */ }
   };
   update();
   setInterval(update, 30_000);
