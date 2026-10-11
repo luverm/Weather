@@ -1632,6 +1632,18 @@ function renderNowcast(w) {
   el.nowcast.hidden = false;
 }
 
+function conditionEmoji(condition, isDay = true) {
+  switch (condition) {
+    case "clear":  return isDay ? "☀" : "🌙";
+    case "clouds": return "☁";
+    case "rain":   return "🌧";
+    case "snow":   return "🌨";
+    case "storm":  return "⛈";
+    case "fog":    return "🌫";
+    default:       return "🌤";
+  }
+}
+
 // ---------- Dynamic document title ----------
 function setDocTitle(w) {
   if (!w) return;
@@ -1979,13 +1991,14 @@ function bindShare() {
     const unit = state.unit;
     const t = (v) => `${Math.round(unit === "F" ? v * 9 / 5 + 32 : v)}°${unit}`;
     const today = w.daily?.[0];
+    const emoji = conditionEmoji(w.condition, w.isDay);
     const lines = [
       `Aether · ${placeName}`,
-      `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
-      today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
-      `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
-      w.uv != null ? `UV ${Math.round(w.uv)}` : null,
-      w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
+      `${emoji} ${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
+      today ? `📅 ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
+      `💨 ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
+      w.uv != null ? `☀ UV ${Math.round(w.uv)}` : null,
+      w.airQuality?.aqi != null ? `🌬 AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
     ].filter(Boolean);
     const text = lines.join("\n");
     try {
