@@ -331,6 +331,12 @@ installShortcuts({
   coldestHour: () => jumpToExtremeHour("coldest"),
   wettestHour: () => jumpToExtremeHour("wettest"),
   nextEvent: (dir) => jumpToNextEvent(dir),
+  scrubTo: (hoursFromNow) => {
+    clock.setOffset(hoursFromNow * 3600_000);
+    scrubber.sync();
+    if (app.weather) applyScene(app.weather);
+    ui.setScrubbing(!clock.isLive());
+  },
   toggleDaily: () => {
     const rows = Array.from(document.querySelectorAll(".daily-item"));
     const anyOpen = rows.some((r) => r.dataset.expanded === "true");
