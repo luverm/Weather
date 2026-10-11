@@ -1492,7 +1492,15 @@ kbd {
   border-radius: 10px;
   background: linear-gradient(90deg, rgba(255, 120, 70, 0.1), rgba(180, 90, 180, 0.08));
   border: 1px solid rgba(255, 120, 70, 0.22);
+  font-family: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+  transition: background 200ms var(--ease), transform 200ms var(--ease);
 }
+.sun-sunset-score:hover { background: linear-gradient(90deg, rgba(255, 120, 70, 0.18), rgba(180, 90, 180, 0.14)); transform: translateY(-1px); }
+.sun-sunset-score:focus-visible { outline: 2px solid rgba(255, 120, 70, 0.6); outline-offset: 2px; }
 .sun-sunset-score[hidden] { display: none; }
 .sunset-score-dot {
   width: 10px; height: 10px; border-radius: 50%;

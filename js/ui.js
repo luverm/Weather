@@ -812,6 +812,7 @@ function renderSunsetScore(w) {
   if (f.pm25 != null)       bits.push(`PM2.5 ${Math.round(f.pm25)}`);
   el.sunsetScoreDetail.textContent = bits.join(" · ") || "—";
   el.sunsetScoreValue.textContent = `${res.score}`;
+  el.sunsetScoreCard.onclick = () => state.handlers.onHourClick?.(res.sunset);
 }
 
 // ---------- Golden & blue hour ----------
