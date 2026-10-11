@@ -2535,7 +2535,10 @@ kbd {
   bottom: calc(24px + var(--safe-bottom));
   transform: translate(-50%, 20px);
   padding: 10px 16px;
-  border-radius: 999px;
+  border-radius: 20px;
+  max-width: calc(100vw - 32px);
+  text-align: center;
+  line-height: 1.3;
   background: rgba(14, 18, 35, 0.86);
   border: 1px solid var(--stroke);
   color: var(--fg);
