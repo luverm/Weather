@@ -191,6 +191,7 @@ export const ui = {
     renderPlaces();
     startFetchedTicker();
     state._stopHintRotation = startHintRotation();
+    maybeShowWelcome();
     state.chart = new HourlyChart({
       svgEl: el.chartSvg,
       hoverEl: el.chartHover,
@@ -2308,7 +2309,7 @@ function bindSettings() {
   el.settingResetAll?.addEventListener("click", () => {
     if (!confirm("Reset all preferences and saved places? This can't be undone.")) return;
     const keys = ["aether:unit", "aether:12h", "aether:reduceMotion", "aether:audio-level",
-                  "aether:accent", "aether:places"];
+                  "aether:accent", "aether:places", "aether:welcomed"];
     for (const k of keys) {
       try { localStorage.removeItem(k); } catch { /* ignore */ }
     }
@@ -2384,6 +2385,15 @@ const HINTS = [
   'Press <kbd>1</kbd> – <kbd>7</kbd> to jump to a day in the forecast.',
   'Click the hero temp to flip °C / °F.',
 ];
+function maybeShowWelcome() {
+  try {
+    if (localStorage.getItem("aether:welcomed") === "1") return;
+    localStorage.setItem("aether:welcomed", "1");
+    // Give the UI a beat before the toast so it feels welcoming, not noisy.
+    setTimeout(() => ui.showToast("Welcome to Aether · press ? for shortcuts", 4600), 1200);
+  } catch { /* ignore */ }
+}
+
 function startHintRotation() {
   if (!el.hintText) return () => {};
   let i = 0;
