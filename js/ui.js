@@ -1494,22 +1494,23 @@ function renderDailySpark(days) {
     return t;
   };
   days.forEach((d, i) => {
-    if (d.tempMax != null) {
+    const addDot = (cy, cls, val) => {
       const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
       c.setAttribute("cx", x(i).toFixed(1));
-      c.setAttribute("cy", y(d.tempMax).toFixed(1));
+      c.setAttribute("cy", cy.toFixed(1));
       c.setAttribute("r", i === 0 ? "3.5" : "2.5");
-      c.setAttribute("class", i === 0 ? "dot-hi dot-today" : "dot-hi");
+      c.setAttribute("class", `${cls}${i === 0 ? " dot-today" : ""}`);
+      c.setAttribute("tabindex", "0");
+      c.setAttribute("role", "button");
+      const label = i === 0 ? "today" : i === 1 ? "tomorrow"
+        : new Date(d.time).toLocaleDateString(undefined, { weekday: "long" });
+      c.setAttribute("aria-label", `${label} ${Math.round(convertTemp(val))}°`);
+      c.style.cursor = "pointer";
+      c.addEventListener("click", () => jumpToDailyItem(i, d));
       el.dailySparkDots.appendChild(c);
-    }
-    if (d.tempMin != null) {
-      const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-      c.setAttribute("cx", x(i).toFixed(1));
-      c.setAttribute("cy", y(d.tempMin).toFixed(1));
-      c.setAttribute("r", i === 0 ? "3.5" : "2.5");
-      c.setAttribute("class", i === 0 ? "dot-lo dot-today" : "dot-lo");
-      el.dailySparkDots.appendChild(c);
-    }
+    };
+    if (d.tempMax != null) addDot(y(d.tempMax), "dot-hi", d.tempMax);
+    if (d.tempMin != null) addDot(y(d.tempMin), "dot-lo", d.tempMin);
     if (i === weekHiIdx && d.tempMax != null) {
       el.dailySparkDots.appendChild(
         makeText(x(i), y(d.tempMax) - 5, `${Math.round(convertTemp(d.tempMax))}°`, "spark-label-hi")
@@ -1530,6 +1531,22 @@ function renderDailySpark(days) {
     line.setAttribute("y2", String(TOP + innerH));
     line.setAttribute("class", "spark-today-rule");
     el.dailySparkDots.appendChild(line);
+  }
+}
+
+function jumpToDailyItem(i, d) {
+  // For the first two days we can scrub; beyond that, open the expand card.
+  const ts = d.sunrise && d.sunset
+    ? Math.round((d.sunrise + d.sunset) / 2)
+    : new Date(d.time).setHours(12, 0, 0, 0);
+  if (i < 2 && Math.abs(ts - Date.now()) <= 23 * 3600_000) {
+    state.handlers.onHourClick?.(ts);
+    return;
+  }
+  const row = document.querySelector(`.daily-item[data-ts="${d.time}"]`);
+  if (row) {
+    if (row.dataset.expanded !== "true") row.click();
+    row.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 }
 
