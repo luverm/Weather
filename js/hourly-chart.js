@@ -155,7 +155,8 @@ export class HourlyChart {
     const innerH = H - PAD_TOP - PAD_BOT;
 
     const temps = this.hours.map((h) => h.temp).filter((v) => v != null);
-    let tMin = Math.min(...temps);
+    const dews = this.hours.map((h) => h.dewPoint).filter((v) => v != null);
+    let tMin = Math.min(...temps, ...dews);
     let tMax = Math.max(...temps);
     if (tMax - tMin < 4) {
       const mid = (tMin + tMax) / 2;
@@ -202,6 +203,26 @@ export class HourlyChart {
         gustLine.setAttribute("d", gPath.trim());
       } else {
         gustLine.setAttribute("d", "");
+      }
+    }
+
+    // Dew point line — same vertical scale as temperature. Hidden if the
+    // forecast never carries a dew point value (e.g. offline mock).
+    const dewLine = this.svg.querySelector("#chart-dew-line");
+    if (dewLine) {
+      const hasDew = this.hours.some((h) => h.dewPoint != null);
+      if (hasDew) {
+        let dPath = "";
+        let seg = false;
+        this.hours.forEach((h, i) => {
+          if (h.dewPoint == null) { seg = false; return; }
+          const cmd = seg ? "L" : "M";
+          dPath += cmd + iToX(i).toFixed(1) + "," + tToY(h.dewPoint).toFixed(1) + " ";
+          seg = true;
+        });
+        dewLine.setAttribute("d", dPath.trim());
+      } else {
+        dewLine.setAttribute("d", "");
       }
     }
 

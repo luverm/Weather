@@ -83,7 +83,7 @@ export async function getWeather(lat, lon) {
       "precipitation_probability", "precipitation",
       "wind_speed_10m", "wind_gusts_10m", "wind_direction_10m",
       "is_day", "uv_index", "pressure_msl",
-      "relative_humidity_2m", "cloud_cover",
+      "relative_humidity_2m", "cloud_cover", "dew_point_2m",
     ].join(","),
     daily: [
       "sunrise", "sunset",
@@ -150,6 +150,7 @@ function normalize(d, aq) {
         pressure: d.hourly.pressure_msl?.[i] ?? null,
         humidity: d.hourly.relative_humidity_2m?.[i] ?? null,
         cloudCover: d.hourly.cloud_cover?.[i] ?? null,
+        dewPoint: d.hourly.dew_point_2m?.[i] ?? null,
         ...mapWmo(d.hourly.weather_code[i]),
       };
       if (t < now - 30 * 60 * 1000) {

@@ -761,6 +761,10 @@ html[data-reduce-motion="true"] *::after {
   background: linear-gradient(90deg, var(--fg-muted) 0 1px, transparent 1px 3px, var(--fg-muted) 3px 4px, transparent 4px 6px, var(--fg-muted) 6px 7px, transparent 7px 9px, var(--fg-muted) 9px 10px, transparent 10px 12px);
   opacity: 0.55;
 }
+.legend-swatch.dew {
+  background: linear-gradient(90deg, transparent 0 4px, #78c6b0 4px 8px, transparent 8px 10px, #78c6b0 10px 14px);
+  opacity: 0.75;
+}
 .legend-swatch.precip { background: rgba(154, 209, 255, 0.55); }
 
 .rain-outlook {
