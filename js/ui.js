@@ -2357,8 +2357,11 @@ function bindShare() {
     const today = w.daily?.[0];
     const emoji = conditionEmoji(w.condition, w.isDay);
     const narrativeText = (el.narrative?.textContent || "").trim();
+    const updated = w.fetchedAt
+      ? new Date(w.fetchedAt).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false })
+      : null;
     const lines = [
-      `Aether · ${placeName}`,
+      `Aether · ${placeName}${updated ? " · " + updated : ""}`,
       `${emoji} ${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
       narrativeText ? narrativeText : null,
       today ? `📅 ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
