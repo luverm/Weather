@@ -20,10 +20,30 @@ export class AmbientAudio {
     this.noiseBuffer = null;
     this.nightInterval = null;
     this.listeners = new Set();
+    this.level = this._readLevel();
   }
 
   isEnabled() { return this.enabled; }
   onChange(fn) { this.listeners.add(fn); return () => this.listeners.delete(fn); }
+
+  getLevel() { return this.level; }
+  setLevel(v) {
+    this.level = Math.max(0, Math.min(1, v));
+    try { localStorage.setItem("aether:audio-level", String(this.level)); } catch { /* ignore */ }
+    if (this.master && this.enabled && this.ctx) {
+      const t = this.ctx.currentTime;
+      this.master.gain.cancelScheduledValues(t);
+      this.master.gain.linearRampToValueAtTime(this.level, t + 0.15);
+    }
+  }
+  _readLevel() {
+    try {
+      const raw = localStorage.getItem("aether:audio-level");
+      if (raw == null) return 0.5;
+      const v = parseFloat(raw);
+      return isFinite(v) ? Math.max(0, Math.min(1, v)) : 0.5;
+    } catch { return 0.5; }
+  }
 
   async enable() {
     if (this.enabled) return;
@@ -72,9 +92,9 @@ export class AmbientAudio {
     this.nightGain.gain.value = 0;
     this.nightGain.connect(this.master);
 
-    // Fade master up.
+    // Fade master up to the stored level.
     const t = this.ctx.currentTime;
-    this.master.gain.linearRampToValueAtTime(0.5, t + 0.6);
+    this.master.gain.linearRampToValueAtTime(this.level, t + 0.6);
     this.enabled = true;
     for (const fn of this.listeners) fn(true);
   }

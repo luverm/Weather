@@ -94,6 +94,7 @@ const el = {
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
+  settingAudioLevel: $("#setting-audio-level"),
   settingClearPlaces: $("#setting-clear-places"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
@@ -1609,6 +1610,12 @@ function bindSettings() {
     ui.showToast("Saved places cleared");
     close();
   });
+
+  el.settingAudioLevel?.addEventListener("input", () => {
+    const pct = parseInt(el.settingAudioLevel.value, 10);
+    el.settingAudioLevel.style.setProperty("--range", `${pct}%`);
+    state.handlers.onAudioLevel?.(pct / 100);
+  });
 }
 
 function applyStoredPreferences() {
@@ -1620,6 +1627,12 @@ function applyStoredPreferences() {
     queueMicrotask(() => state.handlers.onReduceMotion?.(true));
   }
   if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
+  if (el.settingAudioLevel) {
+    const level = parseFloat(localStorage.getItem("aether:audio-level"));
+    const pct = Math.round((isFinite(level) ? level : 0.5) * 100);
+    el.settingAudioLevel.value = String(pct);
+    el.settingAudioLevel.style.setProperty("--range", `${pct}%`);
+  }
 }
 
 // Exposed so app.js can query the current preference on boot.
