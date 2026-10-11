@@ -686,6 +686,44 @@ html[data-reduce-motion="true"] *::after {
   transform: translateX(-50%);
   transition: left 320ms var(--ease);
 }
+.wind-scale {
+  position: relative;
+  height: 10px;
+  margin-top: 6px;
+}
+.wind-scale[hidden] { display: none; }
+.wind-scale-track {
+  position: absolute;
+  inset: 4px 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg,
+    rgba(255,255,255,0.14) 0%,
+    #9ad1ff 15%,
+    #78d06a 32%,
+    #ffd36a 56%,
+    #ff9f5c 75%,
+    #ff6a6a 100%);
+  opacity: 0.78;
+}
+.wind-scale-mark {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 2px;
+  background: var(--fg);
+  box-shadow: 0 0 6px rgba(255,255,255,0.6);
+  transform: translateX(-50%);
+  transition: left 320ms var(--ease);
+}
+.wind-scale-gust {
+  position: absolute;
+  top: 2px; bottom: 2px;
+  width: 1px;
+  background: rgba(255,255,255,0.9);
+  border-radius: 999px;
+  transform: translateX(-50%);
+  transition: left 320ms var(--ease);
+}
+.wind-scale-gust[hidden] { display: none; }
 
 /* ---------- Daily expand ---------- */
 .daily-item { cursor: pointer; }

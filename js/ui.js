@@ -84,6 +84,9 @@ const el = {
   dewScaleMark: $("#dew-scale-mark"),
   uvScale: $("#uv-scale"),
   uvScaleMark: $("#uv-scale-mark"),
+  windScale: $("#wind-scale"),
+  windScaleMark: $("#wind-scale-mark"),
+  windScaleGust: $("#wind-scale-gust"),
   pressureSparkLine: $("#pressure-spark-line"),
   pressureSparkFill: $("#pressure-spark-fill"),
   humiditySparkLine: $("#humidity-spark-line"),
@@ -374,6 +377,25 @@ function renderMetrics(w) {
       el.windBft.textContent = bft.label;
     } else {
       el.windBft.textContent = "";
+    }
+  }
+  if (el.windScale && el.windScaleMark) {
+    if (w.windSpeed == null) {
+      el.windScale.hidden = true;
+    } else {
+      el.windScale.hidden = false;
+      // 0 … 100 km/h scale (covers up to strong gale).
+      const ws = Math.max(0, Math.min(100, w.windSpeed));
+      el.windScaleMark.style.left = `${(ws / 100 * 100).toFixed(1)}%`;
+      el.windScaleMark.title = `Wind ${Math.round(w.windSpeed)} km/h`;
+      if (el.windScaleGust && w.windGusts != null && w.windGusts > w.windSpeed + 1) {
+        const g = Math.max(0, Math.min(100, w.windGusts));
+        el.windScaleGust.hidden = false;
+        el.windScaleGust.style.left = `${(g / 100 * 100).toFixed(1)}%`;
+        el.windScaleGust.title = `Gust ${Math.round(w.windGusts)} km/h`;
+      } else if (el.windScaleGust) {
+        el.windScaleGust.hidden = true;
+      }
     }
   }
   el.metricHumidity.textContent = Math.round(w.humidity ?? 0);
