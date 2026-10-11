@@ -479,14 +479,20 @@ function uvLevel(v) {
 }
 
 function renderPressureSparkline(w) {
+  // Pressure spark now spans the last 12 hours into the next 12, so the
+  // trend reads as a 24-hour band around "now".
+  const pastP = (w.pastHourly || []).slice(-12).map((h) => h.pressure);
+  const fwdP = (w.hourly || []).slice(0, 12).map((h) => h.pressure);
   drawSparkline(
     el.pressureSparkLine, el.pressureSparkFill,
-    (w.hourly || []).map((h) => h.pressure).filter((v) => v != null).slice(0, 12),
+    [...pastP, ...fwdP].filter((v) => v != null),
     { minSpan: 1.5 }
   );
+  const pastH = (w.pastHourly || []).slice(-12).map((h) => h.humidity);
+  const fwdH = (w.hourly || []).slice(0, 12).map((h) => h.humidity);
   drawSparkline(
     el.humiditySparkLine, el.humiditySparkFill,
-    (w.hourly || []).map((h) => h.humidity).filter((v) => v != null).slice(0, 12),
+    [...pastH, ...fwdH].filter((v) => v != null),
     { minSpan: 10, fixedMin: 0, fixedMax: 100 }
   );
 }
