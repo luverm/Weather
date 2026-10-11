@@ -55,6 +55,8 @@ const el = {
   visLabel: $("#vis-label"),
   visBarFill: $("#vis-bar-fill"),
   visCloud: $("#vis-cloud"),
+  visCloudSparkLine: $("#vis-cloud-line"),
+  visCloudSparkFill: $("#vis-cloud-fill"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -1040,6 +1042,14 @@ function renderVisibility(w) {
     } else {
       el.visCloud.textContent = "";
     }
+  }
+  // Cloud cover sparkline: next ~12 hourly values.
+  if (el.visCloudSparkLine && el.visCloudSparkFill) {
+    const series = (w.hourly || []).map((h) => h.cloudCover).filter((v) => v != null).slice(0, 12);
+    drawSparkline(
+      el.visCloudSparkLine, el.visCloudSparkFill, series,
+      { minSpan: 10, fixedMin: 0, fixedMax: 100 }
+    );
   }
 }
 

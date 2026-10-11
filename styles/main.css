@@ -1095,6 +1095,14 @@ kbd {
   background: rgba(255,255,255,0.25);
   pointer-events: none;
 }
+.vis-cloud-spark {
+  width: 100%;
+  height: 18px;
+  display: block;
+  color: var(--fg-muted);
+  margin-top: 2px;
+}
+.vis-cloud-spark path:not([d]), .vis-cloud-spark path[d=""] { display: none; }
 #visibility-card[data-tone="poor"]      .vis-meta strong { color: #ff9b7a; }
 #visibility-card[data-tone="fair"]      .vis-meta strong { color: #ffd36a; }
 #visibility-card[data-tone="good"]      .vis-meta strong { color: #78d06a; }
