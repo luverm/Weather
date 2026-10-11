@@ -1921,6 +1921,7 @@ function bindUnitToggle() {
     el.unitBtn.textContent = `°${state.unit}`;
     if (state.weather) ui.setWeather(state.weather);
     if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
+    ui.showToast(`Showing °${state.unit}`, 1600);
   };
   el.unitBtn.addEventListener("click", flip);
   // Clicking the big number also flips units; it's the most tempting target.
