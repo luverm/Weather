@@ -193,6 +193,11 @@ const scrubber = new Scrubber({
     applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
   },
+  onAutoReturn: () => {
+    ui.showToast("Returned to live");
+    if (app.weather) applyScene(app.weather);
+    ui.setScrubbing(false);
+  },
 });
 
 // ---------- Load flow ----------

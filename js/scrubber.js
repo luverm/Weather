@@ -10,7 +10,8 @@ const RANGE_HOURS = 24;
 
 export class Scrubber {
   constructor({ trackEl, thumbEl, fillEl, timeEl, deltaEl, resetEl,
-                sunriseEl, sunsetEl, appEl, onScrub }) {
+                sunriseEl, sunsetEl, appEl, onScrub, onAutoReturn }) {
+    this.onAutoReturn = onAutoReturn;
     this.track = trackEl;
     this.thumb = thumbEl;
     this.fill = fillEl;
@@ -136,6 +137,7 @@ export class Scrubber {
       this._idleTimer = null;
       if (clock.isLive()) return;
       this.reset();
+      this.onAutoReturn?.();
     }, 3 * 60_000);
   }
 
