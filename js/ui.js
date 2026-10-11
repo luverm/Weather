@@ -2263,6 +2263,7 @@ function bindSettings() {
       try { localStorage.removeItem(k); } catch { /* ignore */ }
     }
     try { sessionStorage.removeItem("aether:dismissed-alerts"); } catch { /* ignore */ }
+    try { history.replaceState(null, "", location.pathname); } catch { /* ignore */ }
     ui.showToast("Preferences reset — reloading…");
     setTimeout(() => location.reload(), 800);
   });
