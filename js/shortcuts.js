@@ -69,7 +69,23 @@ export function installShortcuts(handlers) {
     if (key === "ArrowRight") { handlers.nudge?.(1); e.preventDefault(); return; }
     if (key === "[") { handlers.cyclePlace?.(-1); e.preventDefault(); return; }
     if (key === "]") { handlers.cyclePlace?.(1); e.preventDefault(); return; }
+
+    // Jump-to-card shortcuts (lowercase single-letter).
+    if (key === "h" || key === "H") { scrollToId("heatmap-card", true); e.preventDefault(); return; }
+    if (key === "g" || key === "G") { scrollToId("golden-card"); e.preventDefault(); return; }
+    if (key === "r" || key === "R") { scrollToId("radar-card"); e.preventDefault(); return; }
   });
+}
+
+function scrollToId(id, focusFirst = false) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "center" });
+  if (focusFirst) {
+    // Focus the first interactive element in the card for keyboard flow.
+    const first = el.querySelector('button:not([disabled]), [tabindex="0"]');
+    first?.focus();
+  }
 }
 
 function isTyping(el) {
