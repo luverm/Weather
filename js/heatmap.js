@@ -82,6 +82,22 @@ export class WeekHeatmap {
     this.render();
   }
 
+  setCursor(ts) {
+    if (!this.root) return;
+    this.root.querySelectorAll(".heatmap-cell.scrubbed").forEach((el) => el.classList.remove("scrubbed"));
+    if (ts == null) return;
+    const hourKey = ts - (ts % 3600_000);
+    const cells = this.root.querySelectorAll(".heatmap-cell[data-hour-ts]");
+    for (const cell of cells) {
+      const cellTs = parseInt(cell.dataset.hourTs, 10);
+      const cellHour = cellTs - (cellTs % 3600_000);
+      if (cellHour === hourKey) {
+        cell.classList.add("scrubbed");
+        break;
+      }
+    }
+  }
+
   render() {
     if (!this.root) return;
     this.root.innerHTML = "";

@@ -299,6 +299,10 @@ export const ui = {
     } else if (state.chart) {
       state.chart.setCursor(sampled.hourly?.[highlightHourIndex]?.time);
     }
+    if (state.heatmap) {
+      const ts = sampled._sampledTs ?? sampled.hourly?.[highlightHourIndex]?.time;
+      state.heatmap.setCursor(ts);
+    }
   },
   setScrubbing(on) {
     document.documentElement.setAttribute("data-scrubbing", on ? "true" : "false");
