@@ -48,8 +48,9 @@ export class HourlyChart {
     return new Date(ts).getHours().toString().padStart(2, "0");
   }
 
-  setHours(hours) {
+  setHours(hours, extras) {
     this.hours = (hours || []).slice(0, 24);
+    this.extras = extras || {};
     this._draw();
     this.setCursor(null);
   }
@@ -147,6 +148,17 @@ export class HourlyChart {
     this.popover.hidden = false;
     // Next frame to allow transition.
     requestAnimationFrame(() => this.popover.classList.add("show"));
+  }
+
+  _ensureGroup(id) {
+    let g = this.svg.querySelector("#" + id);
+    if (!g) {
+      g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      g.setAttribute("id", id);
+      // Append after labels so the lines sit beneath temp dot but above fill.
+      this.svg.querySelector("#chart-labels")?.before(g);
+    }
+    return g;
   }
 
   _draw() {
@@ -263,6 +275,39 @@ export class HourlyChart {
         runStart = null;
       }
     }
+
+    // Sunrise / sunset / UV peak annotations.
+    const annG = this._ensureGroup("chart-annotations");
+    annG.innerHTML = "";
+    const firstTs = this.hours[0].time;
+    const lastTs = this.hours[this.hours.length - 1].time;
+    const timeToX = (ts) => {
+      if (ts == null || ts < firstTs || ts > lastTs) return null;
+      const frac = (ts - firstTs) / (lastTs - firstTs);
+      return PAD_LEFT + frac * innerW;
+    };
+    const annotate = (ts, cls, label) => {
+      const x = timeToX(ts);
+      if (x == null) return;
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("x1", x.toFixed(1));
+      line.setAttribute("x2", x.toFixed(1));
+      line.setAttribute("y1", String(PAD_TOP));
+      line.setAttribute("y2", String(PAD_TOP + innerH));
+      line.setAttribute("class", `chart-annotation ${cls}`);
+      annG.appendChild(line);
+      const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      text.setAttribute("x", x.toFixed(1));
+      text.setAttribute("y", String(PAD_TOP + 10));
+      text.setAttribute("text-anchor", x < 60 ? "start" : x > W - 60 ? "end" : "middle");
+      text.setAttribute("class", `chart-annotation-text ${cls}`);
+      text.textContent = label;
+      annG.appendChild(text);
+    };
+    const ex = this.extras || {};
+    if (ex.sunrise) annotate(ex.sunrise, "sunrise", "☀ rise");
+    if (ex.sunset) annotate(ex.sunset, "sunset", "🌙 set");
+    if (ex.uvPeakTime && ex.uvPeakValue >= 6) annotate(ex.uvPeakTime, "uv-peak", `UV ${Math.round(ex.uvPeakValue)}`);
 
     // Labels: every ~3 hours
     const unit = this.getUnit();

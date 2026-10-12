@@ -245,7 +245,12 @@ export const ui = {
     renderAlerts(weather);
     renderWeekend(weather);
     startLocaltime(weather);
-    if (state.chart) state.chart.setHours(weather.hourly);
+    if (state.chart) state.chart.setHours(weather.hourly, {
+      sunrise: weather.sunrise,
+      sunset: weather.sunset,
+      uvPeakTime: weather.uvPeak?.time,
+      uvPeakValue: weather.uvPeak?.value,
+    });
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (state.heatmap) {
       const extended = weather.hourlyExtended?.length ? weather.hourlyExtended : weather.hourly;

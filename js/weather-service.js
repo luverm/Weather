@@ -158,11 +158,14 @@ function normalize(d, aq) {
     }
   }
 
-  // 7-day daily forecast.
+  // 7-day daily forecast. With past_days=1 the first entry is yesterday,
+  // so skip any day whose sunset is already in the past.
   const dailyForecast = [];
   if (daily.time) {
     for (let i = 0; i < daily.time.length; i++) {
       const ts = new Date(daily.time[i]).getTime();
+      const sunsetRaw = daily.sunset?.[i] ? new Date(daily.sunset[i]).getTime() : null;
+      if (sunsetRaw != null && sunsetRaw < now - 30 * 60_000) continue;
       dailyForecast.push({
         time: ts,
         tempMax: daily.temperature_2m_max?.[i],
@@ -216,9 +219,9 @@ function normalize(d, aq) {
     isDay: !!c.is_day,
     condition,
     label,
-    sunrise: daily.sunrise?.[0] ? new Date(daily.sunrise[0]).getTime() : null,
-    sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null,
-    uv: daily.uv_index_max?.[0] ?? null,
+    sunrise: dailyForecast[0]?.sunrise ?? null,
+    sunset: dailyForecast[0]?.sunset ?? null,
+    uv: findTodayDailyUv(daily, dailyForecast[0]?.time) ?? daily.uv_index_max?.[0] ?? null,
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
     hourly,
@@ -231,6 +234,14 @@ function normalize(d, aq) {
     pollen: normalizePollen(aq),
     fetchedAt: now,
   };
+}
+
+function findTodayDailyUv(daily, todayTs) {
+  if (!daily?.time || todayTs == null) return null;
+  for (let i = 0; i < daily.time.length; i++) {
+    if (new Date(daily.time[i]).getTime() === todayTs) return daily.uv_index_max?.[i] ?? null;
+  }
+  return null;
 }
 
 function extractYesterday(hourly, now) {
