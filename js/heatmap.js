@@ -119,9 +119,15 @@ export class WeekHeatmap {
       const slot = buckets.get(key);
       slot.rows[d.getHours()] = h;
     }
-    const days = Array.from(buckets.entries())
-      .sort(([a], [b]) => (a < b ? -1 : 1))
-      .slice(0, 7);
+    // Pick 7 days starting with today — not the earliest bucket. If past
+    // hours are present (from hourlyExtended's lookback) they end up in
+    // today's row at their own hour slot, which is useful; but we don't
+    // want yesterday eating a whole row.
+    const today = new Date();
+    const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    const sorted = Array.from(buckets.entries()).sort(([a], [b]) => (a < b ? -1 : 1));
+    const todayIdx = sorted.findIndex(([k]) => k >= todayKey);
+    const days = (todayIdx >= 0 ? sorted.slice(todayIdx) : sorted).slice(0, 7);
 
     const field = this.mode;
     const values = [];
