@@ -8,6 +8,7 @@ import { ComfortStrip } from "./comfort-strip.js";
 import { WeekHeatmap } from "./heatmap.js";
 import { renderRainOutlook } from "./rain-outlook.js";
 import { pickHighlights, describeScore } from "./comfort-score.js";
+import { computeGoldenHours, nextWindow, formatRange, minutesUntil } from "./golden-hour.js";
 import { advise } from "./advice.js";
 import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
@@ -108,6 +109,18 @@ const el = {
   bestMomentTime: $("#best-moment-time"),
   bestMomentDetail: $("#best-moment-detail"),
   bestMomentScore: $("#best-moment-score"),
+  goldenCard: $("#golden-card"),
+  goldenNextLabel: $("#golden-next-label"),
+  goldenCountdown: $("#golden-countdown"),
+  goldenAmTime: $("#golden-am-time"),
+  goldenPmTime: $("#golden-pm-time"),
+  goldenBlueAmTime: $("#golden-blue-am-time"),
+  goldenBluePmTime: $("#golden-blue-pm-time"),
+  goldenMarkerNow: $("#golden-marker-now"),
+  goldenMarkerAm: $("#golden-marker-am"),
+  goldenMarkerPm: $("#golden-marker-pm"),
+  goldenMarkerBlueAm: $("#golden-marker-blue-am"),
+  goldenMarkerBluePm: $("#golden-marker-blue-pm"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
   weekendDetail: $("#weekend-detail"),
@@ -244,6 +257,7 @@ export const ui = {
       unit: "mm",
     });
     renderBestMoment(weather);
+    renderGoldenHour(weather);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
@@ -755,6 +769,77 @@ function scoreTone(score) {
   if (score >= 72) return "great";
   if (score >= 50) return "ok";
   return "rough";
+}
+
+function renderGoldenHour(w) {
+  if (!el.goldenCard) return;
+  const windows = computeGoldenHours({ sunrise: w.sunrise, sunset: w.sunset });
+  if (!windows) {
+    el.goldenCard.hidden = true;
+    return;
+  }
+  el.goldenCard.hidden = false;
+  const fmt = (ts) => new Date(ts).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  if (el.goldenAmTime) el.goldenAmTime.textContent = fmt(windows.goldenMorning.start);
+  if (el.goldenPmTime) el.goldenPmTime.textContent = fmt(windows.goldenEvening.start);
+  if (el.goldenBlueAmTime) el.goldenBlueAmTime.textContent = fmt(windows.blueMorning.start);
+  if (el.goldenBluePmTime) el.goldenBluePmTime.textContent = fmt(windows.blueEvening.start);
+
+  const now = Date.now();
+  const next = nextWindow(windows, now);
+  if (next) {
+    const label = next.status === "live" ? `${next.label} — now` : `Next: ${next.label}`;
+    el.goldenNextLabel.textContent = label;
+    if (next.status === "live") {
+      const left = minutesUntil(next.end, now);
+      el.goldenCountdown.textContent = left > 0 ? `${left}m left` : "ending";
+    } else {
+      const until = minutesUntil(next.start, now);
+      el.goldenCountdown.textContent = formatUntil(until);
+    }
+  } else {
+    el.goldenNextLabel.textContent = "Golden hour";
+    el.goldenCountdown.textContent = "";
+  }
+
+  // Position markers on the day timeline (0% = midnight, 100% = next midnight).
+  const dayStart = startOfDay(now);
+  const dayEnd = dayStart + 24 * 3600_000;
+  const pct = (ts) => clamp(0, 100, ((ts - dayStart) / (dayEnd - dayStart)) * 100);
+  setMarker(el.goldenMarkerNow, pct(now));
+  setMarker(el.goldenMarkerAm, pct(windows.goldenMorning.start), pct(windows.goldenMorning.end));
+  setMarker(el.goldenMarkerPm, pct(windows.goldenEvening.start), pct(windows.goldenEvening.end));
+  setMarker(el.goldenMarkerBlueAm, pct(windows.blueMorning.start), pct(windows.blueMorning.end));
+  setMarker(el.goldenMarkerBluePm, pct(windows.blueEvening.start), pct(windows.blueEvening.end));
+}
+
+function setMarker(node, startPct, endPct) {
+  if (!node) return;
+  if (endPct == null) {
+    node.style.left = `${startPct}%`;
+    node.style.width = "";
+  } else {
+    node.style.left = `${startPct}%`;
+    node.style.width = `${Math.max(1, endPct - startPct)}%`;
+  }
+}
+
+function clamp(min, max, v) { return Math.max(min, Math.min(max, v)); }
+
+function startOfDay(ts) {
+  const d = new Date(ts);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+function formatUntil(mins) {
+  if (mins == null || isNaN(mins)) return "";
+  if (mins < 0) return "";
+  if (mins < 60) return `in ${mins}m`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (h < 10) return `in ${h}h ${m}m`;
+  return `in ${h}h`;
 }
 
 function sameDay(a, b) {

@@ -332,6 +332,35 @@
           <ul id="activity-list" class="activity-list"></ul>
         </div>
 
+        <div class="extra-card glass golden-card" id="golden-card" hidden>
+          <span class="metric-label">
+            <span id="golden-next-label">Golden hour</span>
+            <span id="golden-countdown" class="sun-countdown"></span>
+          </span>
+          <div class="golden-row">
+            <div class="golden-timeline" aria-hidden="true">
+              <span class="golden-bar"></span>
+              <span class="golden-marker" id="golden-marker-now" title="Now"></span>
+              <span class="golden-marker gold" id="golden-marker-am" title="Morning golden hour"></span>
+              <span class="golden-marker gold" id="golden-marker-pm" title="Evening golden hour"></span>
+              <span class="golden-marker blue" id="golden-marker-blue-am" title="Morning blue hour"></span>
+              <span class="golden-marker blue" id="golden-marker-blue-pm" title="Evening blue hour"></span>
+            </div>
+            <div class="golden-meta">
+              <div class="golden-window">
+                <span class="golden-tag gold">Golden</span>
+                <strong id="golden-am-time">—</strong>
+                <span id="golden-pm-time">—</span>
+              </div>
+              <div class="golden-window">
+                <span class="golden-tag blue">Blue</span>
+                <strong id="golden-blue-am-time">—</strong>
+                <span id="golden-blue-pm-time">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="extra-card glass rain-outlook" id="rain-outlook-card" hidden>
           <span class="metric-label">Rain outlook <span id="rain-outlook-headline" class="rain-outlook-headline"></span></span>
           <div class="rain-outlook-row">
