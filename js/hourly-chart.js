@@ -217,8 +217,11 @@ export class HourlyChart {
       }
     }
 
-    // Feels-like dashed line — only draw when it meaningfully diverges.
+    // Feels-like dashed line + shaded band — only draw when it meaningfully
+    // diverges from the actual temperature.
     const feelsLine = this.svg.querySelector("#chart-feels-line");
+    const feelsBand = this._ensureGroup("chart-feels-band");
+    feelsBand.innerHTML = "";
     if (feelsLine) {
       const hasFeels = this.hours.some((h) =>
         h.feelsLike != null && Math.abs(h.feelsLike - h.temp) >= 2
@@ -231,6 +234,20 @@ export class HourlyChart {
         });
         feelsLine.setAttribute("d", fPath.trim());
         feelsLine.setAttribute("opacity", "0.55");
+
+        // Build a band polygon: temp line forward then feels line backward.
+        const tempPts = this.hours.map((h, i) => `${iToX(i).toFixed(1)},${tToY(h.temp).toFixed(1)}`);
+        const feelsPts = this.hours.map((h, i) => {
+          const v = h.feelsLike ?? h.temp;
+          return `${iToX(i).toFixed(1)},${tToY(v).toFixed(1)}`;
+        }).reverse();
+        // Decide tone: if feels-like is colder than temp on average → cold band.
+        const avgDiff = this.hours.reduce((s, h) => s + ((h.feelsLike ?? h.temp) - h.temp), 0) / this.hours.length;
+        const tone = avgDiff < -0.5 ? "cold" : avgDiff > 0.5 ? "warm" : "neutral";
+        const poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+        poly.setAttribute("points", [...tempPts, ...feelsPts].join(" "));
+        poly.setAttribute("class", `chart-feels-band ${tone}`);
+        feelsBand.appendChild(poly);
       } else {
         feelsLine.setAttribute("d", "");
       }
