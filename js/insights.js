@@ -90,6 +90,24 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     }
   }
 
+  // 4b. Pressure trend narrative — tells people whether to expect the
+  // weather to improve or deteriorate without needing to decode the hPa
+  // number themselves.
+  if (weather.pressureTrend) {
+    const { direction, delta } = weather.pressureTrend;
+    if (direction === "rising" && Math.abs(delta) >= 2) {
+      out.push({
+        icon: ICONS.sun, label: "Pressure rising",
+        value: `+${delta.toFixed(1)} hPa / 3h — clearing weather`,
+      });
+    } else if (direction === "falling" && Math.abs(delta) >= 2) {
+      out.push({
+        icon: ICONS.rain, label: "Pressure falling",
+        value: `${delta.toFixed(1)} hPa / 3h — weather moving in`,
+      });
+    }
+  }
+
   // 5. UV peak
   if (weather.uvPeak?.value >= 6) {
     out.push({
