@@ -1437,6 +1437,24 @@ kbd {
   width: 22px; height: 22px;
   display: block;
 }
+.daily-icon-strip .strip-day {
+  grid-template-rows: auto auto;
+  gap: 3px;
+}
+.daily-icon-strip .strip-daylight {
+  width: 32px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+  display: block;
+}
+.daily-icon-strip .strip-daylight-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #ffd98a, #ffe6c7);
+  border-radius: 999px;
+}
 
 .daily-spark {
   width: 100%;

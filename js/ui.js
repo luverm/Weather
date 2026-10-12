@@ -1155,9 +1155,27 @@ function renderDaily(w) {
 
 function renderDailyIconStrip(days) {
   if (!el.dailyIconStrip) return;
-  el.dailyIconStrip.innerHTML = days.map((d) =>
-    `<span class="strip-day" title="${escapeHtml(d.label || d.condition || "")}">${iconFor(d.condition)}</span>`
-  ).join("");
+  // Longest-daylight day of the window becomes the "100%" reference so
+  // the bars show relative daylight across the forecast horizon.
+  const minutes = days.map((d) =>
+    d.sunrise && d.sunset ? Math.round((d.sunset - d.sunrise) / 60_000) : null
+  );
+  const maxMin = Math.max(0, ...minutes.filter((v) => v != null));
+  el.dailyIconStrip.innerHTML = days.map((d, i) => {
+    const dm = minutes[i];
+    const pct = dm != null && maxMin > 0 ? Math.round((dm / maxMin) * 100) : null;
+    const title = dm != null
+      ? `${d.label || ""} · daylight ${Math.floor(dm / 60)}h ${dm % 60}m`
+      : (d.label || d.condition || "");
+    const bar = pct != null
+      ? `<span class="strip-daylight" aria-hidden="true"><span class="strip-daylight-fill" style="width:${pct}%"></span></span>`
+      : "";
+    return `
+      <span class="strip-day" title="${escapeHtml(title)}">
+        ${iconFor(d.condition)}
+        ${bar}
+      </span>`;
+  }).join("");
 }
 
 function renderDailySpark(days) {
