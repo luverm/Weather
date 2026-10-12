@@ -253,7 +253,8 @@ export class HourlyChart {
       }
     }
 
-    // Precipitation probability bars (0-100% -> 0..12px height)
+    // Precipitation probability bars (0-100% -> 0..12px height).
+    // Colour by precip type: snow (white), storm (purple), rain (blue).
     const precipG = this.svg.querySelector("#chart-precip");
     precipG.innerHTML = "";
     const barW = Math.max(4, innerW / this.hours.length - 3);
@@ -270,6 +271,7 @@ export class HourlyChart {
       r.setAttribute("height", barH.toFixed(1));
       r.setAttribute("rx", "1.5");
       r.setAttribute("opacity", (0.35 + (pop / 100) * 0.55).toFixed(2));
+      r.setAttribute("class", `precip-bar precip-${h.condition || "rain"}`);
       precipG.appendChild(r);
     });
 

@@ -774,6 +774,9 @@ html[data-reduce-motion="true"] *::after {
   fill: rgba(154, 209, 255, 0.42);
   transition: fill 150ms var(--ease);
 }
+.chart-precip rect.precip-snow  { fill: rgba(230, 240, 255, 0.70); }
+.chart-precip rect.precip-storm { fill: rgba(190, 150, 255, 0.60); }
+.chart-precip rect.precip-rain  { fill: rgba(154, 209, 255, 0.52); }
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
 }
