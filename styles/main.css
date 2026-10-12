@@ -1535,6 +1535,20 @@ kbd {
 }
 .toast:not([hidden]) { opacity: 1; transform: translate(-50%, 0); }
 
+/* ---------- Daylight shift inline chip ---------- */
+.daylight-shift {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.daylight-shift.up    { background: rgba(80, 180, 110, 0.18); color: #b4edc1; }
+.daylight-shift.down  { background: rgba(220, 100, 110, 0.18); color: #f0b8bd; }
+.daylight-shift.flat  { background: rgba(255, 255, 255, 0.08); color: var(--muted); }
+
 /* ---------- Wind rose card ---------- */
 .wind-rose-card { padding: 14px 16px; }
 .wind-rose-headline {

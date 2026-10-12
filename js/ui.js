@@ -430,11 +430,30 @@ function renderMetrics(w) {
     }
   }
   if (w.uvPeak?.time) {
-    el.metricUVSub.textContent = `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`;
+    const minsToBurn = burnTimeMinutes(w.uvPeak.value);
+    const burnStr = minsToBurn ? ` · burns ~${minsToBurn}m` : "";
+    el.metricUVSub.textContent = `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}${burnStr}`;
+    el.metricUVSub.title = sunscreenAdvice(w.uvPeak.value);
   } else {
     el.metricUVSub.textContent = "peak —";
   }
   renderPressureSparkline(w);
+}
+
+// Estimate the minutes to erythema (visible redness) at the given UV index
+// for an average unprotected skin type (Fitzpatrick II–III), using the
+// standard rule of thumb: minutes ≈ 200 / UV. Returns null below UV 2.
+function burnTimeMinutes(uv) {
+  if (uv == null || uv < 2) return null;
+  return Math.round(200 / uv);
+}
+
+function sunscreenAdvice(uv) {
+  if (uv == null || uv < 3) return "Low UV — no sunscreen needed.";
+  if (uv < 6) return "Moderate — SPF 15+ for extended time outside.";
+  if (uv < 8) return "High — SPF 30+, hat and sunglasses recommended.";
+  if (uv < 11) return "Very high — SPF 50+, limit midday exposure.";
+  return "Extreme — avoid direct sun; use SPF 50+ and cover up.";
 }
 
 function humidityComfort(rh, dew, temp) {
@@ -593,10 +612,26 @@ function renderSun(w) {
     const mins = Math.round((w.sunset - w.sunrise) / 60_000);
     const hh = Math.floor(mins / 60);
     const mm = mins % 60;
-    el.sunDaylight.textContent = `${hh}h ${mm}m`;
+    const shift = daylightShift(w);
+    el.sunDaylight.innerHTML = `${hh}h ${mm}m${shift ? ` <span class="daylight-shift ${shift.cls}">${shift.text}</span>` : ""}`;
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function daylightShift(w) {
+  // Compare today's daylight length to tomorrow's.
+  const today = w.daily?.[0];
+  const tomorrow = w.daily?.[1];
+  if (!today?.sunrise || !today?.sunset || !tomorrow?.sunrise || !tomorrow?.sunset) return null;
+  const todayMin = Math.round((today.sunset - today.sunrise) / 60_000);
+  const tomorrowMin = Math.round((tomorrow.sunset - tomorrow.sunrise) / 60_000);
+  const delta = tomorrowMin - todayMin;
+  if (Math.abs(delta) < 1) return { text: "steady", cls: "flat" };
+  const arrow = delta > 0 ? "▲" : "▼";
+  const cls = delta > 0 ? "up" : "down";
+  const abs = Math.abs(delta);
+  return { text: `${arrow} ${abs}m / day`, cls };
 }
 
 function scheduleSunArc(w) {
