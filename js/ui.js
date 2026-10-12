@@ -9,6 +9,7 @@ import { WeekHeatmap } from "./heatmap.js";
 import { renderRainOutlook } from "./rain-outlook.js";
 import { pickHighlights, describeScore } from "./comfort-score.js";
 import { computeGoldenHours, nextWindow, formatRange, minutesUntil } from "./golden-hour.js";
+import { solarAltitudeDeg, shadowRatio, describeShadow } from "./sun-position.js";
 import { renderWindRose } from "./wind-rose.js";
 import { advise } from "./advice.js";
 import { buildInsights } from "./insights.js";
@@ -53,6 +54,7 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunShadow: $("#sun-shadow"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -644,6 +646,18 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderShadow();
+}
+
+function renderShadow() {
+  if (!el.sunShadow) return;
+  const place = state.place;
+  if (!place?.lat) { el.sunShadow.hidden = true; return; }
+  const alt = solarAltitudeDeg({ lat: place.lat, lon: place.lon });
+  if (alt == null || alt < 1) { el.sunShadow.hidden = true; return; }
+  const ratio = shadowRatio(alt);
+  el.sunShadow.hidden = false;
+  el.sunShadow.textContent = `Sun ${Math.round(alt)}° above horizon · ${describeShadow(ratio)}`;
 }
 
 function daylightShift(w) {
