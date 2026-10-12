@@ -40,6 +40,14 @@ export class WeekHeatmap {
       case "ArrowUp":    next = Math.max(0, idx - cols); break;
       case "Home":       next = row * cols; break;
       case "End":        next = Math.min(cells.length - 1, row * cols + cols - 1); break;
+      case "Enter":
+      case " ": {
+        e.preventDefault();
+        e.stopPropagation();
+        const ts = parseInt(current.dataset.hourTs, 10);
+        if (ts) this.onCellClick(ts);
+        return;
+      }
       default: return;
     }
     e.preventDefault();
