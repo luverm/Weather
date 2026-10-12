@@ -18,7 +18,39 @@ export class WeekHeatmap {
     this.mode = localStorage.getItem("aether:heatmap-mode") || "temp";
     this.bindModeBtns();
     this.hidePopover = this.hidePopover.bind(this);
+    this.handleKeydown = this.handleKeydown.bind(this);
     this.root.addEventListener("mouseleave", this.hidePopover);
+    this.root.addEventListener("keydown", this.handleKeydown);
+  }
+
+  handleKeydown(e) {
+    const cells = Array.from(this.root.querySelectorAll(".heatmap-cell:not(.empty)"));
+    const current = document.activeElement;
+    if (!cells.length || !current || !current.classList?.contains("heatmap-cell")) return;
+    const idx = cells.indexOf(current);
+    if (idx < 0) return;
+    const cols = 24;
+    const row = Math.floor(idx / cols);
+    const col = idx % cols;
+    let next = idx;
+    switch (e.key) {
+      case "ArrowRight": next = idx + 1; break;
+      case "ArrowLeft":  next = idx - 1; break;
+      case "ArrowDown":  next = Math.min(cells.length - 1, idx + cols); break;
+      case "ArrowUp":    next = Math.max(0, idx - cols); break;
+      case "Home":       next = row * cols; break;
+      case "End":        next = Math.min(cells.length - 1, row * cols + cols - 1); break;
+      default: return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    const target = cells[Math.max(0, Math.min(cells.length - 1, next))];
+    if (target) {
+      target.setAttribute("tabindex", "0");
+      target.focus();
+      // Reset tabindex on previous.
+      if (current !== target) current.setAttribute("tabindex", "-1");
+    }
   }
 
   bindModeBtns() {
@@ -104,6 +136,7 @@ export class WeekHeatmap {
     }
     this.root.appendChild(header);
 
+    let firstFocusable = null;
     for (const [, { date, rows }] of days) {
       const row = document.createElement("div");
       row.className = "heatmap-row";
@@ -120,6 +153,9 @@ export class WeekHeatmap {
         cell.type = "button";
         cell.className = "heatmap-cell";
         cell.setAttribute("tabindex", "-1");
+        if (!firstFocusable) {
+          // Marked after we know the first non-empty cell exists below.
+        }
         const h = rows[hr];
         if (!h) {
           cell.classList.add("empty");
@@ -137,6 +173,11 @@ export class WeekHeatmap {
             cell.addEventListener("mouseenter", () => this.showPopover(cell, h, date, hr));
             cell.addEventListener("focus", () => this.showPopover(cell, h, date, hr));
             cell.addEventListener("click", () => this.onCellClick(h.time));
+            cell.setAttribute("aria-label", `${date.toLocaleDateString([], { weekday: "short" })} ${hr}:00 — ${h.label || ""}`);
+            if (!firstFocusable) {
+              firstFocusable = cell;
+              cell.setAttribute("tabindex", "0");
+            }
           }
         }
         row.appendChild(cell);
