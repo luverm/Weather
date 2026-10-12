@@ -304,6 +304,24 @@ installShortcuts({
   },
 });
 
+// ---------- Deep-link actions (?action=locate|radar|heatmap) ----------
+function handleActionParam() {
+  const action = new URL(window.location.href).searchParams.get("action");
+  if (!action) return;
+  // Delay until the first weather load has had a chance to complete, so
+  // the user sees content before we scroll or re-locate.
+  const run = () => {
+    if (action === "locate") useGeolocation();
+    else if (action === "radar") document.getElementById("radar-card")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    else if (action === "heatmap") document.getElementById("heatmap-card")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  setTimeout(run, 400);
+  // Clean up the URL so a reload doesn't repeat the action.
+  const url = new URL(window.location.href);
+  url.searchParams.delete("action");
+  history.replaceState({}, "", url.pathname + (url.search || "") + url.hash);
+}
+
 // ---------- Start ----------
 (async function init() {
   // Prefer the most recent saved place if we have one — avoids the geolocation
@@ -311,6 +329,7 @@ installShortcuts({
   const saved = places.all();
   if (saved.length) {
     await loadByCoords(saved[0]);
+    handleActionParam();
     return;
   }
   try {
@@ -319,6 +338,7 @@ installShortcuts({
   } catch {
     await loadByCoords({ name: "Reykjavík", country: "Iceland", lat: 64.1466, lon: -21.9426 });
   }
+  handleActionParam();
 })();
 
 // ---------- Lifecycle ----------
