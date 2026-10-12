@@ -99,5 +99,23 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     });
   }
 
+  // 6. Window-open suggestion. Fresh-air sweet spot: comfortable temp,
+  // bearable humidity, no rain. Pick the earliest upcoming daytime hour
+  // that qualifies within the next 12h.
+  const windowHour = hours.slice(0, 12).find((h) => (
+    h.temp != null && h.temp >= 14 && h.temp <= 24 &&
+    (h.humidity ?? 60) <= 75 &&
+    (h.pop ?? 0) < 25 &&
+    (h.wind ?? 0) < 25 &&
+    h.condition !== "storm"
+  ));
+  if (windowHour) {
+    out.push({
+      icon: ICONS.sun, label: "Open windows",
+      value: `${Math.round(windowHour.temp)}° at ${fmt(windowHour.time)} — fresh-air window`,
+      ts: windowHour.time,
+    });
+  }
+
   return out.slice(0, 6);
 }

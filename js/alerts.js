@@ -132,6 +132,17 @@ export function buildAlerts(weather) {
     });
   }
 
+  // ---- Rapid pressure change (common migraine / joint-ache trigger) ----
+  const pressureDrop = rapidPressureChange(hours);
+  if (pressureDrop) {
+    out.push({
+      id: pressureDrop.direction === "falling" ? "pressure-drop" : "pressure-rise",
+      severity: pressureDrop.abs >= 8 ? "warn" : "info",
+      title: pressureDrop.direction === "falling" ? "Rapid pressure drop" : "Rapid pressure rise",
+      detail: `${pressureDrop.abs.toFixed(1)} hPa over ${pressureDrop.windowH}h — a known migraine / joint-ache trigger.`,
+    });
+  }
+
   // ---- UV (only if not already mentioned by heat) ----
   if (!out.some((a) => a.id === "severe-heat" || a.id === "heat")
       && weather.uvPeak?.value >= 9) {
@@ -182,6 +193,30 @@ function peakGust(hours) {
     const g = h.gusts ?? h.wind ?? 0;
     if (g == null) continue;
     if (!best || g > best.v) best = { v: g, ts: h.time };
+  }
+  return best;
+}
+
+// Return the biggest absolute pressure change over the next 6 or 12 hours
+// that crosses the typical sensitivity threshold (~6 hPa / 6h). Falling
+// pressure matters more than rising, so the threshold is lower on the way
+// down.
+function rapidPressureChange(hours) {
+  const series = hours.filter((h) => h.pressure != null);
+  if (series.length < 7) return null;
+  // Look over 6h and 12h windows and pick the biggest change.
+  let best = null;
+  for (const span of [6, 12]) {
+    if (series.length <= span) continue;
+    for (let i = 0; i + span < series.length; i++) {
+      const delta = series[i + span].pressure - series[i].pressure;
+      const abs = Math.abs(delta);
+      const threshold = delta < 0 ? 5 : 7;
+      if (abs < threshold) continue;
+      if (!best || abs > best.abs) {
+        best = { abs, delta, direction: delta < 0 ? "falling" : "rising", windowH: span };
+      }
+    }
   }
   return best;
 }
