@@ -1535,6 +1535,23 @@ kbd {
 }
 .toast:not([hidden]) { opacity: 1; transform: translate(-50%, 0); }
 
+/* ---------- Vs yesterday chip ---------- */
+.vs-yesterday {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 2px 0 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  width: fit-content;
+}
+.vs-yesterday.up   { background: rgba(255, 180, 130, 0.12); color: #ffd0ad; }
+.vs-yesterday.down { background: rgba(130, 180, 255, 0.12); color: #c1dcff; }
+.vs-yesterday.flat { background: rgba(255, 255, 255, 0.08); color: var(--muted); }
+
 /* ---------- Daylight shift inline chip ---------- */
 .daylight-shift {
   display: inline-block;

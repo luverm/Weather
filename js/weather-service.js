@@ -93,7 +93,8 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
-    past_hours: 1,
+    past_hours: 24,
+    past_days: 1,
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -193,6 +194,10 @@ function normalize(d, aq) {
   // Moon phase is not in Open-Meteo's free tier — compute it locally.
   const moon = computeMoonPhase(new Date());
 
+  // "Yesterday" snapshot — the temperature at the same clock hour exactly
+  // 24 hours ago, so the hero can show a day-on-day delta.
+  const yesterday = extractYesterday(d.hourly, now);
+
   return {
     temp: c.temperature_2m,
     feelsLike: c.apparent_temperature,
@@ -218,9 +223,34 @@ function normalize(d, aq) {
     daily: dailyForecast,
     nowcast,
     moon,
+    yesterday,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
     fetchedAt: now,
+  };
+}
+
+function extractYesterday(hourly, now) {
+  if (!hourly?.time) return null;
+  // Pick the hourly entry closest to (now - 24h). Open-Meteo returns hourly
+  // rows at exact clock hours, so this is a simple nearest-neighbour match.
+  const target = now - 24 * 3600_000;
+  let best = null, bestDiff = Infinity;
+  for (let i = 0; i < hourly.time.length; i++) {
+    const ts = new Date(hourly.time[i]).getTime();
+    const diff = Math.abs(ts - target);
+    if (diff < bestDiff) { best = i; bestDiff = diff; }
+  }
+  if (best == null) return null;
+  if (bestDiff > 2 * 3600_000) return null; // nothing within 2h
+  return {
+    time: new Date(hourly.time[best]).getTime(),
+    temp: hourly.temperature_2m?.[best],
+    feelsLike: hourly.apparent_temperature?.[best],
+    humidity: hourly.relative_humidity_2m?.[best],
+    pressure: hourly.pressure_msl?.[best],
+    wind: hourly.wind_speed_10m?.[best],
+    windDir: hourly.wind_direction_10m?.[best],
   };
 }
 
@@ -418,6 +448,7 @@ function mock(lat, lon) {
       level: "Moderate",
     },
     pressureTrend: { delta: -0.4, direction: "steady" },
+    yesterday: { time: now - 24 * 3600_000, temp: 16, feelsLike: 15, humidity: 70, pressure: 1012, wind: 10 },
     fetchedAt: now,
     offline: true,
   };

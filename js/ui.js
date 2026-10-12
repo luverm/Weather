@@ -66,6 +66,7 @@ const el = {
   pollenItems: $("#pollen-items"),
   pressureTrend: $("#m-pressure-trend"),
   tempTrend: $("#temp-trend"),
+  vsYesterday: $("#vs-yesterday"),
   uvLevel: $("#m-uv-level"),
   humidityComfort: $("#m-humidity-comfort"),
   pressureSparkLine: $("#pressure-spark-line"),
@@ -1007,6 +1008,28 @@ function renderTrends(w) {
       el.pressureTrend.textContent = `${arrow} ${delta >= 0 ? "+" : ""}${delta.toFixed(1)}`;
     } else {
       el.pressureTrend.textContent = "";
+    }
+  }
+  // Vs yesterday at the same clock hour.
+  if (el.vsYesterday) {
+    if (w.yesterday?.temp != null && w.temp != null) {
+      const delta = w.temp - w.yesterday.temp;
+      const unit = state.unit;
+      const absC = Math.abs(delta);
+      const absDisplay = unit === "F" ? absC * 9 / 5 : absC;
+      const rounded = Math.round(absDisplay);
+      if (rounded < 1) {
+        el.vsYesterday.textContent = `Same as this time yesterday`;
+        el.vsYesterday.className = "vs-yesterday flat";
+      } else {
+        const arrow = delta > 0 ? "▲" : "▼";
+        const dir = delta > 0 ? "warmer" : "cooler";
+        el.vsYesterday.textContent = `${arrow} ${rounded}°${unit} ${dir} than yesterday`;
+        el.vsYesterday.className = delta > 0 ? "vs-yesterday up" : "vs-yesterday down";
+      }
+      el.vsYesterday.hidden = false;
+    } else {
+      el.vsYesterday.hidden = true;
     }
   }
   // Temperature trend: next-3-hours delta vs now.
