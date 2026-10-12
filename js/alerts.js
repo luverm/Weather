@@ -99,14 +99,49 @@ export function buildAlerts(weather) {
   }
 
   // ---- Snow ----
-  const snowHour = hours.find((h) => h.condition === "snow");
-  if (snowHour) {
+  const snowHour = hours.find((h) => h.condition === "snow" || (h.snowfall ?? 0) > 0.1);
+  const snowTotal = hours.reduce((s, h) => s + (h.snowfall ?? 0), 0);
+  if (snowHour && snowTotal >= 10) {
+    out.push({
+      id: "heavy-snow",
+      severity: "danger",
+      title: "Heavy snowfall",
+      detail: `${snowTotal.toFixed(0)} cm expected over 24h — starts around ${shortClock(snowHour.time)}.`,
+      ts: snowHour.time,
+    });
+  } else if (snowHour && snowTotal >= 2) {
+    out.push({
+      id: "snow",
+      severity: "warn",
+      title: "Snow in forecast",
+      detail: `${snowTotal.toFixed(1)} cm — starts around ${shortClock(snowHour.time)}.`,
+      ts: snowHour.time,
+    });
+  } else if (snowHour) {
     out.push({
       id: "snow",
       severity: "info",
-      title: "Snow in forecast",
-      detail: `Starts around ${shortClock(snowHour.time)}.`,
+      title: "Snow possible",
+      detail: `Light flurries around ${shortClock(snowHour.time)}.`,
       ts: snowHour.time,
+    });
+  }
+
+  // ---- Icy conditions ----
+  // Freezing rain, or rain just above freezing with temp dropping below 0.
+  const icyHour = hours.find((h) => {
+    const t = h.feelsLike ?? h.temp;
+    if (t == null) return false;
+    const wet = (h.precip ?? 0) > 0.1 || (h.pop ?? 0) >= 50;
+    return wet && t <= 1 && t >= -4;
+  });
+  if (icyHour) {
+    out.push({
+      id: "ice",
+      severity: "warn",
+      title: "Icy conditions",
+      detail: `Freezing rain / ice risk around ${shortClock(icyHour.time)}.`,
+      ts: icyHour.time,
     });
   }
 

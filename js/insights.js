@@ -99,6 +99,25 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     });
   }
 
+  // 5b. Snowfall over next 24h / week.
+  const snowSoon = hours.reduce((s, h) => s + (h.snowfall ?? 0), 0);
+  const weekSnow = days.reduce((s, d) => s + (d.snowfall ?? 0), 0);
+  if (snowSoon >= 0.5) {
+    const firstSnow = hours.find((h) => (h.snowfall ?? 0) > 0.05);
+    out.push({
+      icon: ICONS.cold, label: "Snowfall",
+      value: `${snowSoon.toFixed(1)} cm expected${firstSnow ? ` by ${fmt(firstSnow.time)}` : ""}`,
+      ts: firstSnow?.time,
+    });
+  } else if (weekSnow >= 2) {
+    const firstSnowDay = days.find((d) => (d.snowfall ?? 0) > 0.3);
+    out.push({
+      icon: ICONS.cold, label: "Weekly snow",
+      value: `${weekSnow.toFixed(1)} cm this week${firstSnowDay ? `, starting ${dow(firstSnowDay.time)}` : ""}`,
+      ts: firstSnowDay?.sunrise || firstSnowDay?.time,
+    });
+  }
+
   // 6. Window-open suggestion. Fresh-air sweet spot: comfortable temp,
   // bearable humidity, no rain. Pick the earliest upcoming daytime hour
   // that qualifies within the next 12h.
