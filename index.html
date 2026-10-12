@@ -332,6 +332,23 @@
           <ul id="activity-list" class="activity-list"></ul>
         </div>
 
+        <div class="extra-card glass wind-rose-card" id="wind-rose-card" hidden>
+          <span class="metric-label">Wind over 24h <span id="wind-rose-headline" class="wind-rose-headline"></span></span>
+          <div class="wind-rose-row">
+            <svg id="wind-rose-svg" class="wind-rose-svg" viewBox="0 0 180 180" aria-label="Wind direction over 24 hours"></svg>
+            <div class="wind-rose-meta">
+              <span id="wind-rose-sub" class="wind-rose-sub">—</span>
+              <ul class="wind-rose-legend">
+                <li><span class="wrl-dot" style="background:#9ad1ff"></span>&lt; 10 km/h</li>
+                <li><span class="wrl-dot" style="background:#7ad0b8"></span>10–25</li>
+                <li><span class="wrl-dot" style="background:#ffd98a"></span>25–40</li>
+                <li><span class="wrl-dot" style="background:#ff9c7a"></span>40–60</li>
+                <li><span class="wrl-dot" style="background:#ff5b5b"></span>60+</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
         <div class="extra-card glass golden-card" id="golden-card" hidden>
           <span class="metric-label">
             <span id="golden-next-label">Golden hour</span>

@@ -9,6 +9,7 @@ import { WeekHeatmap } from "./heatmap.js";
 import { renderRainOutlook } from "./rain-outlook.js";
 import { pickHighlights, describeScore } from "./comfort-score.js";
 import { computeGoldenHours, nextWindow, formatRange, minutesUntil } from "./golden-hour.js";
+import { renderWindRose } from "./wind-rose.js";
 import { advise } from "./advice.js";
 import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
@@ -121,6 +122,10 @@ const el = {
   goldenMarkerPm: $("#golden-marker-pm"),
   goldenMarkerBlueAm: $("#golden-marker-blue-am"),
   goldenMarkerBluePm: $("#golden-marker-blue-pm"),
+  windRoseCard: $("#wind-rose-card"),
+  windRoseSvg: $("#wind-rose-svg"),
+  windRoseHeadline: $("#wind-rose-headline"),
+  windRoseSub: $("#wind-rose-sub"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
   weekendDetail: $("#weekend-detail"),
@@ -258,6 +263,13 @@ export const ui = {
     });
     renderBestMoment(weather);
     renderGoldenHour(weather);
+    renderWindRose({
+      card: el.windRoseCard,
+      svg: el.windRoseSvg,
+      headlineEl: el.windRoseHeadline,
+      subEl: el.windRoseSub,
+      hours: weather.hourly,
+    });
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
