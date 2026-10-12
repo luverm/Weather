@@ -1668,6 +1668,46 @@ kbd {
 .daylight-shift.down  { background: rgba(220, 100, 110, 0.18); color: #f0b8bd; }
 .daylight-shift.flat  { background: rgba(255, 255, 255, 0.08); color: var(--muted); }
 
+/* ---------- Visibility card ---------- */
+.visibility-card { padding: 14px 16px; display: grid; gap: 10px; }
+.visibility-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.visibility-row strong {
+  font-size: 22px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.visibility-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.visibility-label.excellent { background: rgba(140, 230, 170, 0.14); color: #c9ffd8; }
+.visibility-label.good      { background: rgba(154, 209, 255, 0.14); color: #c4e2ff; }
+.visibility-label.moderate  { background: rgba(255, 220, 170, 0.14); color: #ffe6c7; }
+.visibility-label.poor      { background: rgba(255, 180, 130, 0.14); color: #ffd0ad; }
+.visibility-label.fog       { background: rgba(255, 110, 110, 0.14); color: #ffbcbc; }
+.visibility-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.visibility-bar-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #ff6e6e, #ffe6c7, #9ad1ff, #a0f0b8);
+  border-radius: 999px;
+  transition: width 400ms var(--ease);
+}
+
 /* ---------- Wind rose card ---------- */
 .wind-rose-card { padding: 14px 16px; }
 .wind-rose-headline {

@@ -127,6 +127,10 @@ const el = {
   goldenMarkerBlueAm: $("#golden-marker-blue-am"),
   goldenMarkerBluePm: $("#golden-marker-blue-pm"),
   windRoseCard: $("#wind-rose-card"),
+  visibilityCard: $("#visibility-card"),
+  visibilityValue: $("#visibility-value"),
+  visibilityLabel: $("#visibility-label"),
+  visibilityBarFill: $("#visibility-bar-fill"),
   windRoseSvg: $("#wind-rose-svg"),
   windRoseHeadline: $("#wind-rose-headline"),
   windRoseSub: $("#wind-rose-sub"),
@@ -274,6 +278,7 @@ export const ui = {
     });
     renderBestMoment(weather);
     renderGoldenHour(weather);
+    renderVisibility(weather);
     renderWindRose({
       card: el.windRoseCard,
       svg: el.windRoseSvg,
@@ -894,6 +899,30 @@ function scoreTone(score) {
   if (score >= 72) return "great";
   if (score >= 50) return "ok";
   return "rough";
+}
+
+function renderVisibility(w) {
+  if (!el.visibilityCard) return;
+  const v = w.visibility;
+  if (v == null) { el.visibilityCard.hidden = true; return; }
+  el.visibilityCard.hidden = false;
+  const km = v / 1000;
+  const km1 = Math.round(km * 10) / 10;
+  el.visibilityValue.textContent = km >= 10 ? "10+ km" : `${km1} km`;
+  const bucket = visibilityBucket(km);
+  el.visibilityLabel.textContent = bucket.label;
+  el.visibilityLabel.className = `visibility-label ${bucket.cls}`;
+  const pct = Math.min(100, (km / 20) * 100);
+  el.visibilityBarFill.style.width = `${pct.toFixed(1)}%`;
+  el.visibilityBarFill.setAttribute("data-level", bucket.cls);
+}
+
+function visibilityBucket(km) {
+  if (km >= 10) return { label: "Excellent", cls: "excellent" };
+  if (km >= 5)  return { label: "Good",      cls: "good" };
+  if (km >= 2)  return { label: "Moderate",  cls: "moderate" };
+  if (km >= 1)  return { label: "Poor",      cls: "poor" };
+  return { label: "Fog",     cls: "fog" };
 }
 
 function renderGoldenHour(w) {
