@@ -1534,6 +1534,29 @@ kbd {
   transition: transform 320ms var(--ease), opacity 320ms var(--ease);
 }
 .toast:not([hidden]) { opacity: 1; transform: translate(-50%, 0); }
+.toast .toast-action {
+  appearance: none;
+  margin-left: 10px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--accent);
+  color: #0b1020;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.toast .toast-dismiss {
+  appearance: none;
+  margin-left: 6px;
+  padding: 2px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 16px;
+  cursor: pointer;
+}
+.toast .toast-dismiss:hover { color: var(--text); }
 
 /* ---------- Vs yesterday chip ---------- */
 .vs-yesterday {

@@ -314,6 +314,23 @@ export const ui = {
     clearTimeout(el.toast._t);
     el.toast._t = setTimeout(() => (el.toast.hidden = true), dur);
   },
+  showUpdateToast(onApply) {
+    // Persistent "new version ready" toast with an Update button.
+    el.toast.innerHTML = `
+      <span>A new version is ready.</span>
+      <button class="toast-action" type="button">Update</button>
+      <button class="toast-dismiss" type="button" aria-label="Dismiss">×</button>
+    `;
+    el.toast.hidden = false;
+    clearTimeout(el.toast._t);
+    const update = el.toast.querySelector(".toast-action");
+    const dismiss = el.toast.querySelector(".toast-dismiss");
+    update.addEventListener("click", () => {
+      el.toast.hidden = true;
+      onApply?.();
+    });
+    dismiss.addEventListener("click", () => { el.toast.hidden = true; });
+  },
   getUnit: () => state.unit,
 };
 

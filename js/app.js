@@ -346,10 +346,42 @@ setInterval(() => {
 }, 15 * 60_000);
 
 // PWA service worker — optional, best-effort.
+// When a new SW is waiting, surface a toast so the user can refresh and
+// pick up new UI without the usual mystery of "why does the icon lie about
+// the version".
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js").catch(() => {});
+    navigator.serviceWorker.register("sw.js").then((reg) => {
+      if (reg.waiting) promptForUpdate(reg.waiting);
+      reg.addEventListener("updatefound", () => {
+        const sw = reg.installing;
+        if (!sw) return;
+        sw.addEventListener("statechange", () => {
+          if (sw.state === "installed" && navigator.serviceWorker.controller) {
+            promptForUpdate(sw);
+          }
+        });
+      });
+    }).catch(() => {});
+    let reloading = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (reloading) return;
+      reloading = true;
+      window.location.reload();
+    });
   });
 }
 
-window.__aether = { engine, app, clock, audio };
+function promptForUpdate(worker) {
+  // Prefer an in-page toast with an action; fall back to a quiet notice.
+  if (window.__aether?.ui?.showUpdateToast) {
+    window.__aether.ui.showUpdateToast(() => worker.postMessage({ type: "SKIP_WAITING" }));
+  } else {
+    // Fallback: simple confirm so the user can still bail out.
+    if (confirm("A new version of Aether is ready. Refresh now?")) {
+      worker.postMessage({ type: "SKIP_WAITING" });
+    }
+  }
+}
+
+window.__aether = { engine, app, clock, audio, ui };
