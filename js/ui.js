@@ -231,6 +231,7 @@ export const ui = {
       const sub = [state.place.admin1, state.place.country].filter(Boolean).join(", ");
       el.placeSub.textContent = sub || "—";
     }
+    updateDocumentTitle(weather, state.place, state.unit);
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
@@ -349,6 +350,14 @@ export const ui = {
 // ---------- Rendering ----------
 
 function convertTemp(c) { return state.unit === "F" ? c * 9 / 5 + 32 : c; }
+
+function updateDocumentTitle(w, place, unit) {
+  if (!w || w.temp == null) return;
+  const t = Math.round(unit === "F" ? w.temp * 9 / 5 + 32 : w.temp);
+  const name = place?.name || "Here";
+  // Keep the format short so it survives the tab width budget.
+  document.title = `${t}°${unit} ${w.label || ""} — ${name} · Aether`;
+}
 
 function animateNumber(node, target, format) {
   if (target == null || isNaN(target)) { node.textContent = "–"; return; }
@@ -1468,7 +1477,10 @@ function bindUnitToggle() {
     state.unit = state.unit === "C" ? "F" : "C";
     localStorage.setItem("aether:unit", state.unit);
     el.unitBtn.textContent = `°${state.unit}`;
-    if (state.weather) ui.setWeather(state.weather);
+    if (state.weather) {
+      ui.setWeather(state.weather);
+      updateDocumentTitle(state.weather, state.place, state.unit);
+    }
   });
 }
 
