@@ -5,6 +5,7 @@ import { searchCities } from "./weather-service.js";
 import { places } from "./places.js";
 import { HourlyChart } from "./hourly-chart.js";
 import { ComfortStrip } from "./comfort-strip.js";
+import { WeekHeatmap } from "./heatmap.js";
 import { advise } from "./advice.js";
 import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
@@ -91,6 +92,10 @@ const el = {
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
   comfortStrip: $("#comfort-strip"),
+  heatmapCard: $("#heatmap-card"),
+  heatmapGrid: $("#heatmap-grid"),
+  heatmapPopover: $("#heatmap-popover"),
+  heatmapLegend: $("#heatmap-legend"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
   weekendDetail: $("#weekend-detail"),
@@ -120,6 +125,7 @@ const state = {
   handlers: {},
   chart: null,
   comfortStrip: null,
+  heatmap: null,
   sunTimer: null,
   sunArcTimer: null,
   localTimer: null,
@@ -153,6 +159,14 @@ export const ui = {
       onCellClick: (ts) => state.handlers.onHourClick?.(ts),
       getUnit: () => state.unit,
     });
+    state.heatmap = new WeekHeatmap({
+      rootEl: el.heatmapGrid,
+      popoverEl: el.heatmapPopover,
+      legendEl: el.heatmapLegend,
+      modeBtns: Array.from(document.querySelectorAll(".heatmap-mode-btn")),
+      onCellClick: (ts) => state.handlers.onHourClick?.(ts),
+      getUnit: () => state.unit,
+    });
     bindInstallPrompt();
   },
   focusSearch() { el.searchInput?.focus(); el.searchInput?.select?.(); },
@@ -178,6 +192,12 @@ export const ui = {
   setWeather(weather, { narrative } = {}) {
     state.weather = weather;
     state.sampledWeather = weather; // initially same as live
+    // Restore the place sub (region, country) if setLoading left a status
+    // message in its place.
+    if (state.place) {
+      const sub = [state.place.admin1, state.place.country].filter(Boolean).join(", ");
+      el.placeSub.textContent = sub || "—";
+    }
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
@@ -196,6 +216,11 @@ export const ui = {
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
+    if (state.heatmap) {
+      const extended = weather.hourlyExtended?.length ? weather.hourlyExtended : weather.hourly;
+      state.heatmap.setHours(extended);
+      if (el.heatmapCard) el.heatmapCard.hidden = !extended?.length;
+    }
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.

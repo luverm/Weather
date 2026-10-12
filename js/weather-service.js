@@ -128,13 +128,14 @@ function normalize(d, aq) {
   const daily = d.daily || {};
   const now = Date.now();
 
-  // 24-hour hourly forecast starting from the next hour.
+  // 24-hour hourly forecast starting from the next hour, plus a longer
+  // 7-day hourly series used for the week heatmap.
   const hourly = [];
+  const hourlyExtended = [];
   if (d.hourly?.time) {
-    for (let i = 0; i < d.hourly.time.length && hourly.length < 24; i++) {
+    for (let i = 0; i < d.hourly.time.length; i++) {
       const t = new Date(d.hourly.time[i]).getTime();
-      if (t < now - 30 * 60 * 1000) continue; // allow slight past for scrubbing
-      hourly.push({
+      const row = {
         time: t,
         temp: d.hourly.temperature_2m[i],
         feelsLike: d.hourly.apparent_temperature?.[i],
@@ -147,7 +148,9 @@ function normalize(d, aq) {
         pressure: d.hourly.pressure_msl?.[i] ?? null,
         humidity: d.hourly.relative_humidity_2m?.[i] ?? null,
         ...mapWmo(d.hourly.weather_code[i]),
-      });
+      };
+      hourlyExtended.push(row);
+      if (hourly.length < 24 && t >= now - 30 * 60 * 1000) hourly.push(row);
     }
   }
 
@@ -210,6 +213,7 @@ function normalize(d, aq) {
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
     hourly,
+    hourlyExtended,
     daily: dailyForecast,
     nowcast,
     moon,
@@ -371,6 +375,18 @@ function mock(lat, lon) {
       feelsLike: 17 + Math.sin(i / 2) * 3,
       pop: 20, precip: 0,
       wind: 8 + Math.sin(i) * 3, gusts: 12 + Math.sin(i) * 4,
+      isDay: (i + hour) % 24 >= 6 && (i + hour) % 24 < 19,
+      uv: Math.max(0, Math.sin((i - 6) * Math.PI / 13) * 6),
+      condition: CONDITIONS.CLOUDS, label: "Cloudy",
+    })),
+    hourlyExtended: Array.from({ length: 168 }, (_, i) => ({
+      time: now + i * 3600_000,
+      temp: 18 + Math.sin(i / 2) * 3 + Math.sin(i / 24) * 4,
+      feelsLike: 17 + Math.sin(i / 2) * 3,
+      pop: i % 24 === 15 ? 60 : 15,
+      precip: i % 24 === 15 ? 0.3 : 0,
+      wind: 8 + Math.sin(i) * 3,
+      gusts: 12 + Math.sin(i) * 4,
       isDay: (i + hour) % 24 >= 6 && (i + hour) % 24 < 19,
       uv: Math.max(0, Math.sin((i - 6) * Math.PI / 13) * 6),
       condition: CONDITIONS.CLOUDS, label: "Cloudy",

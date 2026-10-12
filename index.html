@@ -436,6 +436,23 @@
         </svg>
         <div id="daily-track" class="daily-track"></div>
       </div>
+
+      <!-- Week heatmap: 7 days × 24 hours -->
+      <div class="heatmap-card glass" id="heatmap-card" aria-label="Week heatmap" hidden>
+        <div class="heatmap-head">
+          <span class="forecast-heading">Week heatmap</span>
+          <div class="heatmap-modes" role="tablist" aria-label="Heatmap metric">
+            <button class="heatmap-mode-btn on" data-mode="temp" role="tab" aria-pressed="true">Temp</button>
+            <button class="heatmap-mode-btn" data-mode="pop" role="tab" aria-pressed="false">Rain</button>
+            <button class="heatmap-mode-btn" data-mode="wind" role="tab" aria-pressed="false">Wind</button>
+          </div>
+        </div>
+        <div class="heatmap-wrap">
+          <div id="heatmap-grid" class="heatmap-grid" aria-label="Hourly values across the next 7 days"></div>
+          <div id="heatmap-popover" class="heatmap-popover" hidden></div>
+        </div>
+        <div id="heatmap-legend" class="heatmap-legend" aria-hidden="true"></div>
+      </div>
     </section>
 
     <footer class="hint">
