@@ -261,6 +261,7 @@ export const ui = {
       yesterdayHourly: yesterdayAligned(weather),
     });
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
+    renderConditionRibbon(weather.hourly);
     if (state.heatmap) {
       const extended = weather.hourlyExtended?.length ? weather.hourlyExtended : weather.hourly;
       state.heatmap.setHours(extended);
@@ -928,6 +929,43 @@ function renderVisibility(w) {
   const pct = Math.min(100, (km / 20) * 100);
   el.visibilityBarFill.style.width = `${pct.toFixed(1)}%`;
   el.visibilityBarFill.setAttribute("data-level", bucket.cls);
+}
+
+// A thin horizontal ribbon broken into runs of same-condition hours.
+// Hovering a segment labels it; clicking scrubs to its first hour.
+const RIBBON_COLORS = {
+  clear:  "#ffd98a",
+  clouds: "#8fa3c8",
+  rain:   "#5aa3d6",
+  snow:   "#e6f0ff",
+  storm:  "#a988d6",
+  fog:    "#9ca9b7",
+};
+function renderConditionRibbon(hours) {
+  const root = document.getElementById("condition-ribbon");
+  if (!root) return;
+  const list = (hours || []).slice(0, 24);
+  if (list.length < 2) { root.hidden = true; return; }
+  root.hidden = false;
+  // Collapse consecutive same-condition hours into runs.
+  const runs = [];
+  for (const h of list) {
+    const last = runs[runs.length - 1];
+    if (last && last.condition === h.condition) last.count += 1;
+    else runs.push({ condition: h.condition, label: h.label, startTs: h.time, count: 1 });
+  }
+  root.innerHTML = runs.map((r) => `
+    <button type="button" class="ribbon-seg" style="flex:${r.count}; background:${RIBBON_COLORS[r.condition] || "#8fa3c8"}"
+            data-ts="${r.startTs}" title="${escapeHtml(r.label || r.condition)} · ${r.count}h">
+      <span class="ribbon-label">${r.count >= 3 ? escapeHtml(r.label || r.condition) : ""}</span>
+    </button>
+  `).join("");
+  root.querySelectorAll(".ribbon-seg").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const ts = parseInt(btn.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
 }
 
 function visibilityBucket(km) {

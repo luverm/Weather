@@ -1676,6 +1676,46 @@ kbd {
 .daylight-shift.down  { background: rgba(220, 100, 110, 0.18); color: #f0b8bd; }
 .daylight-shift.flat  { background: rgba(255, 255, 255, 0.08); color: var(--muted); }
 
+/* ---------- Condition ribbon ---------- */
+.condition-ribbon {
+  display: flex;
+  gap: 2px;
+  margin-top: 8px;
+  padding: 0 4px;
+  height: 20px;
+  align-items: stretch;
+}
+.condition-ribbon[hidden] { display: none; }
+.condition-ribbon .ribbon-seg {
+  appearance: none;
+  border: 0;
+  padding: 0 6px;
+  min-width: 0;
+  cursor: pointer;
+  border-radius: 4px;
+  font: inherit;
+  color: #0b1020;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.75;
+  transition: opacity 160ms var(--ease), transform 160ms var(--ease);
+}
+.condition-ribbon .ribbon-seg:hover,
+.condition-ribbon .ribbon-seg:focus-visible {
+  opacity: 1;
+  transform: translateY(-1px);
+  outline: none;
+}
+.condition-ribbon .ribbon-label {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
 /* ---------- Visibility card ---------- */
 .visibility-card { padding: 14px 16px; display: grid; gap: 10px; }
 .visibility-row {
