@@ -442,9 +442,13 @@ function renderMetrics(w) {
   el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
-  el.metricWindSub.textContent = dirLabel
-    ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
-    : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+  const trend = windTrendLabel(w);
+  const gustStr = w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—";
+  el.metricWindSub.textContent = [
+    dirLabel ? `${dirLabel}` : null,
+    `gust ${gustStr}`,
+    trend,
+  ].filter(Boolean).join(" · ");
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
@@ -513,6 +517,15 @@ function sunscreenAdvice(uv) {
   if (uv < 8) return "High — SPF 30+, hat and sunglasses recommended.";
   if (uv < 11) return "Very high — SPF 50+, limit midday exposure.";
   return "Extreme — avoid direct sun; use SPF 50+ and cover up.";
+}
+
+function windTrendLabel(w) {
+  if (!w?.hourly?.length || w.windSpeed == null) return null;
+  const future = w.hourly.find((h) => h.time > Date.now() + 2.5 * 3600_000);
+  if (!future?.wind) return null;
+  const delta = future.wind - w.windSpeed;
+  if (Math.abs(delta) < 3) return null;
+  return delta > 0 ? `▲ ${Math.round(delta)} in 3h` : `▼ ${Math.round(Math.abs(delta))} in 3h`;
 }
 
 function humidityComfort(rh, dew, temp) {
