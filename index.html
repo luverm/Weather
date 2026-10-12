@@ -178,6 +178,20 @@
 
       <!-- Interactive hourly chart -->
       <div class="chart-card glass" id="chart-card" aria-label="Hourly forecast chart">
+        <button id="best-moment" class="best-moment" type="button" hidden>
+          <span class="best-moment-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="14" height="14">
+              <path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1L7 17M17 7l2.1-2.1"
+                    stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+              <circle cx="12" cy="12" r="4" fill="currentColor"/>
+            </svg>
+          </span>
+          <span class="best-moment-text">
+            <strong id="best-moment-time">—</strong>
+            <span id="best-moment-detail">—</span>
+          </span>
+          <span id="best-moment-score" class="best-moment-score">—</span>
+        </button>
         <div class="chart-head">
           <span class="chart-title">Hourly trend</span>
           <div class="chart-legend">

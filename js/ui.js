@@ -7,6 +7,7 @@ import { HourlyChart } from "./hourly-chart.js";
 import { ComfortStrip } from "./comfort-strip.js";
 import { WeekHeatmap } from "./heatmap.js";
 import { renderRainOutlook } from "./rain-outlook.js";
+import { pickHighlights, describeScore } from "./comfort-score.js";
 import { advise } from "./advice.js";
 import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
@@ -103,6 +104,10 @@ const el = {
   rainOutlookLine: $("#rain-outlook-line"),
   rainOutlookFill: $("#rain-outlook-fill"),
   rainOutlookLabels: $("#rain-outlook-labels"),
+  bestMoment: $("#best-moment"),
+  bestMomentTime: $("#best-moment-time"),
+  bestMomentDetail: $("#best-moment-detail"),
+  bestMomentScore: $("#best-moment-score"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
   weekendDetail: $("#weekend-detail"),
@@ -238,6 +243,7 @@ export const ui = {
       hours: weather.hourly,
       unit: "mm",
     });
+    renderBestMoment(weather);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
@@ -722,6 +728,37 @@ function renderWeekend(w) {
   el.weekendChip.onclick = () => {
     if (snap.ts) state.handlers.onHourClick?.(snap.ts);
   };
+}
+
+function renderBestMoment(w) {
+  if (!el.bestMoment) return;
+  const { best } = pickHighlights(w.hourly);
+  if (!best || best.score == null) {
+    el.bestMoment.hidden = true;
+    return;
+  }
+  el.bestMoment.hidden = false;
+  const t = new Date(best.h.time);
+  const timeLabel = t.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  const dayLabel = sameDay(t, new Date()) ? "Today" : t.toLocaleDateString([], { weekday: "short" });
+  el.bestMomentTime.textContent = `${dayLabel} · ${timeLabel}`;
+  const tempStr = best.h.temp == null ? "—" : `${Math.round(convertTemp(best.h.temp))}°`;
+  const pop = Math.round(best.h.pop ?? 0);
+  const wind = Math.round(best.h.wind ?? 0);
+  el.bestMomentDetail.textContent = `${tempStr} · ${pop}% rain · ${wind} km/h`;
+  el.bestMomentScore.textContent = `${describeScore(best.score)} ${best.score}`;
+  el.bestMoment.setAttribute("data-tone", scoreTone(best.score));
+  el.bestMoment.onclick = () => state.handlers.onHourClick?.(best.h.time);
+}
+
+function scoreTone(score) {
+  if (score >= 72) return "great";
+  if (score >= 50) return "ok";
+  return "rough";
+}
+
+function sameDay(a, b) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
 function renderAlerts(w) {
