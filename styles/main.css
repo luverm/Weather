@@ -716,6 +716,10 @@ html[data-reduce-motion="true"] *::after {
   opacity: 0.55;
 }
 .legend-swatch.precip { background: rgba(154, 209, 255, 0.55); }
+.legend-swatch.yesterday {
+  background: linear-gradient(90deg, rgba(255,255,255,0.35) 50%, transparent 50%);
+  background-size: 4px 100%;
+}
 
 .chart-wrap {
   position: relative;
@@ -782,6 +786,15 @@ html[data-reduce-motion="true"] *::after {
   fill: var(--fg-muted);
   font-size: 9.5px;
 }
+.chart-yesterday-line {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.35);
+  stroke-width: 1;
+  stroke-dasharray: 1 3;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
 polygon.chart-feels-band {
   opacity: 0.22;
   stroke: none;

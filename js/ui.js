@@ -252,6 +252,7 @@ export const ui = {
       sunset: weather.sunset,
       uvPeakTime: weather.uvPeak?.time,
       uvPeakValue: weather.uvPeak?.value,
+      yesterdayHourly: yesterdayAligned(weather),
     });
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (state.heatmap) {
@@ -658,6 +659,18 @@ function renderShadow() {
   const ratio = shadowRatio(alt);
   el.sunShadow.hidden = false;
   el.sunShadow.textContent = `Sun ${Math.round(alt)}° above horizon · ${describeShadow(ratio)}`;
+}
+
+// Build an aligned 24-hour yesterday temperature series. Each entry's
+// `time` is shifted +24h to overlap today's chart x-axis.
+function yesterdayAligned(w) {
+  if (!Array.isArray(w.hourlyExtended) || !w.hourlyExtended.length) return null;
+  const now = Date.now();
+  const start = now - 24 * 3600_000;
+  const end = now - 30 * 60_000;
+  const past = w.hourlyExtended.filter((h) => h.time >= start && h.time <= end);
+  if (past.length < 10) return null;
+  return past.map((h) => ({ time: h.time + 24 * 3600_000, temp: h.temp }));
 }
 
 function daylightShift(w) {

@@ -293,6 +293,28 @@ export class HourlyChart {
       }
     }
 
+    // Yesterday temperature line (ghost trace for comparison).
+    const yesterdayLineGroup = this._ensureGroup("chart-yesterday");
+    yesterdayLineGroup.innerHTML = "";
+    if (Array.isArray(this.extras?.yesterdayHourly) && this.extras.yesterdayHourly.length) {
+      const firstTs = this.hours[0].time;
+      const lastTs = this.hours[this.hours.length - 1].time;
+      const span = lastTs - firstTs || 1;
+      const pts = this.extras.yesterdayHourly
+        .filter((p) => p.time >= firstTs && p.time <= lastTs && p.temp != null)
+        .map((p) => {
+          const frac = (p.time - firstTs) / span;
+          return { x: PAD_LEFT + frac * innerW, y: tToY(p.temp) };
+        });
+      if (pts.length >= 2) {
+        const path = pts.map((p, i) => (i === 0 ? "M" : "L") + p.x.toFixed(1) + "," + p.y.toFixed(1)).join(" ");
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        line.setAttribute("d", path);
+        line.setAttribute("class", "chart-yesterday-line");
+        yesterdayLineGroup.appendChild(line);
+      }
+    }
+
     // Sunrise / sunset / UV peak annotations.
     const annG = this._ensureGroup("chart-annotations");
     annG.innerHTML = "";
