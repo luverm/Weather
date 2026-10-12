@@ -32,6 +32,7 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  dayRangeYesterday: $("#day-range-yesterday"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -416,6 +417,20 @@ function renderDayRange(w) {
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+
+  // Yesterday-at-this-hour ghost marker — only when yesterday falls within
+  // today's range (otherwise it would snap to the edge and be misleading).
+  if (el.dayRangeYesterday) {
+    const yTemp = w.yesterday?.temp;
+    if (yTemp != null && yTemp >= lo - 0.5 && yTemp <= hi + 0.5) {
+      const yFrac = Math.max(0, Math.min(1, (yTemp - lo) / (hi - lo)));
+      el.dayRangeYesterday.style.left = `${(yFrac * 100).toFixed(1)}%`;
+      el.dayRangeYesterday.hidden = false;
+      el.dayRangeYesterday.title = `Yesterday at this hour: ${Math.round(convertTemp(yTemp))}°`;
+    } else {
+      el.dayRangeYesterday.hidden = true;
+    }
+  }
 }
 
 function renderMetrics(w) {

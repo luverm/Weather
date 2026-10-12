@@ -426,6 +426,16 @@ html[data-reduce-motion="true"] *::after {
   box-shadow: 0 2px 8px rgba(0,0,0,0.35);
   transition: left 380ms var(--ease);
 }
+.day-range-yesterday {
+  position: absolute;
+  top: 50%;
+  width: 2px; height: 10px;
+  margin-left: -1px;
+  background: rgba(255, 255, 255, 0.55);
+  transform: translateY(-50%);
+  border-radius: 1px;
+  transition: left 380ms var(--ease);
+}
 
 /* ---------- Nowcast banner ---------- */
 .nowcast {
