@@ -980,11 +980,19 @@ kbd {
   font-variant-numeric: tabular-nums;
 }
 
-/* ---------- Extras row: AQ + moon + sun ---------- */
+/* ---------- Extras row: AQ + moon + sun + friends ---------- */
 .extras {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
+}
+/* The extras row has grown — on wide screens pack into 4 columns, on
+   very wide screens 5, so the collection doesn't stretch to narrow strips. */
+@media (min-width: 1100px) {
+  .extras { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (min-width: 1400px) {
+  .extras { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 }
 .extra-card {
   padding: 14px 16px;
