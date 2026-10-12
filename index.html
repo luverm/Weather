@@ -318,6 +318,27 @@
           <ul id="activity-list" class="activity-list"></ul>
         </div>
 
+        <div class="extra-card glass rain-outlook" id="rain-outlook-card" hidden>
+          <span class="metric-label">Rain outlook <span id="rain-outlook-headline" class="rain-outlook-headline"></span></span>
+          <div class="rain-outlook-row">
+            <div class="rain-outlook-total">
+              <strong id="rain-outlook-total">0 mm</strong>
+              <span class="rain-outlook-sub">next 24h</span>
+            </div>
+            <svg class="rain-outlook-svg" viewBox="0 0 160 36" preserveAspectRatio="none" aria-hidden="true">
+              <defs>
+                <linearGradient id="rain-outlook-grad" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%"   stop-color="#7cc0ff" stop-opacity="0.55"/>
+                  <stop offset="100%" stop-color="#7cc0ff" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path id="rain-outlook-fill" fill="url(#rain-outlook-grad)"></path>
+              <path id="rain-outlook-line" fill="none" stroke="#9ad1ff" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"></path>
+              <g id="rain-outlook-labels"></g>
+            </svg>
+          </div>
+        </div>
+
         <div class="extra-card glass" id="sun-card">
           <span class="metric-label"><span id="sun-next-label">Sun</span> <span id="sun-countdown" class="sun-countdown"></span></span>
           <svg id="sun-arc" class="sun-arc" viewBox="0 0 200 84" aria-hidden="true">

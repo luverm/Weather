@@ -6,6 +6,7 @@ import { places } from "./places.js";
 import { HourlyChart } from "./hourly-chart.js";
 import { ComfortStrip } from "./comfort-strip.js";
 import { WeekHeatmap } from "./heatmap.js";
+import { renderRainOutlook } from "./rain-outlook.js";
 import { advise } from "./advice.js";
 import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
@@ -96,6 +97,12 @@ const el = {
   heatmapGrid: $("#heatmap-grid"),
   heatmapPopover: $("#heatmap-popover"),
   heatmapLegend: $("#heatmap-legend"),
+  rainOutlookCard: $("#rain-outlook-card"),
+  rainOutlookTotal: $("#rain-outlook-total"),
+  rainOutlookHeadline: $("#rain-outlook-headline"),
+  rainOutlookLine: $("#rain-outlook-line"),
+  rainOutlookFill: $("#rain-outlook-fill"),
+  rainOutlookLabels: $("#rain-outlook-labels"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
   weekendDetail: $("#weekend-detail"),
@@ -221,6 +228,16 @@ export const ui = {
       state.heatmap.setHours(extended);
       if (el.heatmapCard) el.heatmapCard.hidden = !extended?.length;
     }
+    renderRainOutlook({
+      card: el.rainOutlookCard,
+      totalEl: el.rainOutlookTotal,
+      headlineEl: el.rainOutlookHeadline,
+      pathLineEl: el.rainOutlookLine,
+      pathFillEl: el.rainOutlookFill,
+      labelsEl: el.rainOutlookLabels,
+      hours: weather.hourly,
+      unit: "mm",
+    });
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
