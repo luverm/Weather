@@ -2032,6 +2032,47 @@ kbd {
   0%   { opacity: 0; transform: translateY(12px) scale(0.98); filter: blur(6px); }
   100% { opacity: 1; transform: translateY(0)   scale(1);    filter: blur(0);   }
 }
+
+/* Gentle staggered reveal for the major sections on first paint. Only
+   runs once per load — the animation is `forwards` with a delay. */
+.hero-inner,
+.nowcast,
+.scrubber,
+.chart-card,
+.metrics > *,
+.extras > *,
+.forecast,
+.daily,
+.heatmap-card,
+.insights,
+.radar {
+  animation: card-rise 560ms var(--ease) both;
+}
+.hero-inner    { animation-delay:  40ms; }
+.nowcast       { animation-delay:  90ms; }
+.scrubber      { animation-delay: 110ms; }
+.chart-card    { animation-delay: 150ms; }
+.metrics > *:nth-child(1) { animation-delay: 170ms; }
+.metrics > *:nth-child(2) { animation-delay: 200ms; }
+.metrics > *:nth-child(3) { animation-delay: 230ms; }
+.metrics > *:nth-child(4) { animation-delay: 260ms; }
+.extras > *:nth-child(1) { animation-delay: 280ms; }
+.extras > *:nth-child(2) { animation-delay: 310ms; }
+.extras > *:nth-child(3) { animation-delay: 340ms; }
+.extras > *:nth-child(4) { animation-delay: 370ms; }
+.extras > *:nth-child(5) { animation-delay: 400ms; }
+.extras > *:nth-child(6) { animation-delay: 430ms; }
+.extras > *:nth-child(7) { animation-delay: 460ms; }
+.radar         { animation-delay: 490ms; }
+.insights      { animation-delay: 520ms; }
+.forecast      { animation-delay: 550ms; }
+.daily         { animation-delay: 580ms; }
+.heatmap-card  { animation-delay: 610ms; }
+
+@keyframes card-rise {
+  0%   { opacity: 0; transform: translateY(10px); filter: blur(3px); }
+  100% { opacity: 1; transform: translateY(0);     filter: blur(0); }
+}
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0ms !important; animation-iteration-count: 1 !important;
       transition-duration: 0ms !important; }
