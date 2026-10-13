@@ -234,7 +234,7 @@ export const ui = {
   setSampledWeather(sampled, { highlightHourIndex } = {}) {
     state.sampledWeather = sampled;
     renderLiveValues(sampled, { animate: false });
-    renderMetrics(sampled);
+    renderMetrics(sampled, { animate: false });
     renderAdvice(sampled);
     highlightHour(highlightHourIndex);
     if (state.comfortStrip) state.comfortStrip.highlight(highlightHourIndex);
@@ -346,8 +346,11 @@ function renderDayRange(w) {
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
 }
 
-function renderMetrics(w) {
-  el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
+function renderMetrics(w, { animate = true } = {}) {
+  const put = animate
+    ? (node, val, fmt) => animateNumber(node, val, fmt)
+    : (node, val, fmt) => { node.textContent = fmt(val); node.dataset.v = String(val); };
+  put(el.metricWind, w.windSpeed ?? 0, (v) => String(Math.round(v)));
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
   el.metricWindSub.textContent = dirLabel
@@ -369,7 +372,7 @@ function renderMetrics(w) {
       el.windBft.textContent = "";
     }
   }
-  el.metricHumidity.textContent = Math.round(w.humidity ?? 0);
+  put(el.metricHumidity, w.humidity ?? 0, (v) => String(Math.round(v)));
   el.metricHumiditySub.textContent = w.dewPoint != null
     ? `dew ${Math.round(convertTemp(w.dewPoint))}°`
     : "dew —";
@@ -393,12 +396,13 @@ function renderMetrics(w) {
       el.humidityTrendPill.textContent = "";
     }
   }
-  el.metricPressure.textContent = Math.round(w.pressure ?? 0);
+  put(el.metricPressure, w.pressure ?? 0, (v) => String(Math.round(v)));
   el.metricPressureSub.textContent = w.visibility != null
     ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
     : "visibility —";
   renderPressureForecast(w);
-  el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
+  if (w.uv != null) put(el.metricUV, w.uv, (v) => String(Math.round(v)));
+  else el.metricUV.textContent = "—";
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
     if (lvl) {
