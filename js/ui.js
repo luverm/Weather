@@ -73,6 +73,9 @@ const el = {
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
+  dailySummaryRow: $("#daily-summary-row"),
+  dailyRainTally: $("#daily-rain-tally"),
+  dailyTrendPill: $("#daily-trend-pill"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -856,6 +859,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderDailySummary(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -960,6 +964,86 @@ function renderDailyDelta(days) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
   }
   el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
+}
+
+function renderDailySummary(days) {
+  if (!el.dailySummaryRow || !el.dailyRainTally || !el.dailyTrendPill) return;
+  if (!days?.length) {
+    el.dailySummaryRow.hidden = true;
+    return;
+  }
+
+  // Rain tally: sum mm + count rainy days (precip >= 0.5 mm or pop >= 50%).
+  let totalMm = 0;
+  let rainyDays = 0;
+  let wettest = null;
+  for (const d of days) {
+    const mm = d.precip ?? 0;
+    totalMm += mm;
+    if (mm >= 0.5 || (d.pop ?? 0) >= 50) rainyDays += 1;
+    if (mm > 0 && (!wettest || mm > wettest.mm)) wettest = { mm, time: d.time };
+  }
+
+  if (totalMm < 0.1) {
+    el.dailyRainTally.innerHTML = `
+      <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.5 5.5l1.5 1.5M17 17l1.5 1.5M5.5 18.5l1.5-1.5M17 7l1.5-1.5"/>
+      </svg>
+      <span>Dry outlook</span>`;
+    el.dailyRainTally.classList.add("dry");
+  } else {
+    const total = totalMm >= 10 ? Math.round(totalMm) : totalMm.toFixed(1);
+    const dayLabel = rainyDays === 1 ? "day" : "days";
+    const tz = state.weather?.timezone;
+    const wettestDow = wettest ? new Date(wettest.time).toLocaleDateString(undefined, {
+      weekday: "short", ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    }) : null;
+    const wettestFragment = wettest && days.length >= 3
+      ? ` · wettest ${wettestDow}`
+      : "";
+    el.dailyRainTally.innerHTML = `
+      <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M7 14a4 4 0 010-8 5 5 0 019.9-1A4 4 0 0117 14H7z"/>
+        <path d="M9 18l-1 3M13 18l-1 3M17 18l-1 3"/>
+      </svg>
+      <span>${total} mm · ${rainyDays} rainy ${dayLabel}${wettestFragment}</span>`;
+    el.dailyRainTally.classList.remove("dry");
+  }
+  el.dailyRainTally.hidden = false;
+
+  // Trend pill: slope of weekly max temps.
+  const highs = days.map((d) => d.tempMax).filter((v) => v != null);
+  if (highs.length >= 3) {
+    // Fit y = m*i + b (least squares, i = 0..n-1).
+    const n = highs.length;
+    const sx = (n - 1) * n / 2;
+    const sx2 = (n - 1) * n * (2 * n - 1) / 6;
+    const sy = highs.reduce((a, b) => a + b, 0);
+    const sxy = highs.reduce((a, v, i) => a + v * i, 0);
+    const denom = n * sx2 - sx * sx;
+    const slopeC = denom === 0 ? 0 : (n * sxy - sx * sy) / denom;
+    const slopeDisplay = state.unit === "F" ? slopeC * 9 / 5 : slopeC;
+    const magnitude = Math.abs(slopeDisplay);
+    let kind, text;
+    if (magnitude < 0.5) {
+      kind = "steady";
+      text = `Steady · ~${Math.round(highs.reduce((a, b) => a + b, 0) / n)}°`;
+    } else if (slopeDisplay > 0) {
+      kind = "warming";
+      text = `Warming · +${magnitude.toFixed(1)}°/day`;
+    } else {
+      kind = "cooling";
+      text = `Cooling · ${magnitude.toFixed(1)}°/day`;
+    }
+    const arrow = kind === "warming" ? "↑" : kind === "cooling" ? "↓" : "→";
+    el.dailyTrendPill.dataset.kind = kind;
+    el.dailyTrendPill.innerHTML = `<span class="trend-arrow">${arrow}</span><span>${text}</span>`;
+    el.dailyTrendPill.hidden = false;
+  } else {
+    el.dailyTrendPill.hidden = true;
+  }
+
+  el.dailySummaryRow.hidden = false;
 }
 
 function toggleDailyExpand(item, d, w) {
