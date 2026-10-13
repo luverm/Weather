@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { updateLiveTab } from "./live-tab.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -205,6 +206,7 @@ export const ui = {
       });
     }
     renderPlaces();
+    updateLiveTab(weather, state.place, state.unit);
   },
   /** Called by the scrubber whenever simulated time moves. */
   setSampledWeather(sampled, { highlightHourIndex } = {}) {
@@ -1164,6 +1166,7 @@ function bindUnitToggle() {
     localStorage.setItem("aether:unit", state.unit);
     el.unitBtn.textContent = `°${state.unit}`;
     if (state.weather) ui.setWeather(state.weather);
+    else if (state.sampledWeather) updateLiveTab(state.sampledWeather, state.place, state.unit);
   });
 }
 
