@@ -49,6 +49,7 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -526,8 +527,71 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderDaylightDelta(w) {
+  if (!el.sunDaylightDelta) return;
+  const lat = state.place?.lat;
+  if (lat == null || !Number.isFinite(lat) || !w?.sunrise || !w?.sunset) {
+    el.sunDaylightDelta.hidden = true;
+    return;
+  }
+  const d = daylightDeltaSeconds(lat, new Date(w.sunrise));
+  if (d == null) {
+    el.sunDaylightDelta.hidden = true;
+    return;
+  }
+  const abs = Math.abs(d);
+  const mm = Math.floor(abs / 60);
+  const ss = Math.round(abs % 60);
+  const magnitude = mm > 0 ? `${mm}m ${ss.toString().padStart(2, "0")}s` : `${ss}s`;
+  const sign = d > 0 ? "+" : d < 0 ? "−" : "";
+  const label = Math.abs(d) < 2 ? "near solstice" :
+                d > 0 ? `${sign}${magnitude} today` : `${sign}${magnitude} today`;
+  el.sunDaylightDelta.textContent = label;
+  el.sunDaylightDelta.dataset.trend = d > 1 ? "longer" : d < -1 ? "shorter" : "steady";
+  el.sunDaylightDelta.hidden = false;
+}
+
+// Approximate change in daylight length between the day of `date` and the
+// day before, at latitude `latDeg`. Returns seconds (positive = today is
+// longer). Uses Spencer's declination formula; returns null in polar
+// twilight regions where the model cannot resolve sunrise.
+function daylightDeltaSeconds(latDeg, date) {
+  const today = daylightHours(latDeg, dayOfYear(date));
+  const yd = new Date(date.getTime());
+  yd.setDate(yd.getDate() - 1);
+  const yesterday = daylightHours(latDeg, dayOfYear(yd));
+  if (today == null || yesterday == null) return null;
+  return Math.round((today - yesterday) * 3600);
+}
+
+function dayOfYear(date) {
+  const start = Date.UTC(date.getUTCFullYear(), 0, 0);
+  const diff = date.getTime() - start;
+  return Math.floor(diff / 86_400_000);
+}
+
+function daylightHours(latDeg, n) {
+  const phi = (latDeg * Math.PI) / 180;
+  // Spencer approximation for solar declination (radians).
+  const gamma = (2 * Math.PI / 365) * (n - 1);
+  const delta =
+    0.006918
+    - 0.399912 * Math.cos(gamma)
+    + 0.070257 * Math.sin(gamma)
+    - 0.006758 * Math.cos(2 * gamma)
+    + 0.000907 * Math.sin(2 * gamma)
+    - 0.002697 * Math.cos(3 * gamma)
+    + 0.00148 * Math.sin(3 * gamma);
+  const cosH = -Math.tan(phi) * Math.tan(delta);
+  if (cosH >= 1) return 0;        // polar night
+  if (cosH <= -1) return 24;      // midnight sun
+  const H = Math.acos(cosH);
+  return (24 / Math.PI) * H;
 }
 
 function scheduleSunArc(w) {
