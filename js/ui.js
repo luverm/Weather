@@ -22,6 +22,7 @@ const el = {
   placeSub: $("#place-sub"),
   placeLocaltime: $("#place-localtime"),
   placeLabelText: $("#place-label-text"),
+  placeSeason: $("#place-season"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
   feelsText: $("#feels-text"),
@@ -200,6 +201,7 @@ export const ui = {
     el.placeName.textContent = place.name || "Unknown";
     const sub = [place.admin1, place.country].filter(Boolean).join(", ");
     el.placeSub.textContent = sub || "—";
+    renderSeason();
     // Reset alert dismissals so a fresh location can re-surface them.
     try { sessionStorage.removeItem("aether:dismissed-alerts"); } catch { /* ignore */ }
     renderPlaces();
@@ -938,6 +940,26 @@ function startLocaltime(w) {
   };
   update();
   state.localTimer = setInterval(update, 10_000);
+}
+
+function renderSeason() {
+  if (!el.placeSeason) return;
+  const lat = state.place?.lat;
+  if (lat == null) { el.placeSeason.hidden = true; return; }
+  const m = new Date().getUTCMonth(); // 0..11
+  // Boundary months (Mar/Jun/Sep/Dec) are shoulders — we still bucket by
+  // meteorological seasons which snap on the first of those months.
+  const season = seasonAt(lat, m);
+  el.placeSeason.textContent = season;
+  el.placeSeason.hidden = false;
+}
+
+function seasonAt(lat, month) {
+  // Northern meteorological seasons.
+  const north = ["Winter","Winter","Spring","Spring","Spring","Summer","Summer","Summer","Autumn","Autumn","Autumn","Winter"];
+  const south = ["Summer","Summer","Autumn","Autumn","Autumn","Winter","Winter","Winter","Spring","Spring","Spring","Summer"];
+  if (Math.abs(lat) <= 10) return "Tropics";
+  return (lat >= 0 ? north : south)[month];
 }
 
 function greetingFor(hour) {

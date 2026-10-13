@@ -336,6 +336,19 @@ html[data-reduce-motion="true"] *::after {
   transition: transform 400ms var(--ease);
   will-change: transform;
 }
+.place-season {
+  margin-left: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  color: var(--fg-dim);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  vertical-align: 2px;
+}
+.place-season[hidden] { display: none; }
+
 .place-label {
   margin: 0 0 6px;
   font-size: 12px;
