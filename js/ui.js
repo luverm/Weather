@@ -178,6 +178,14 @@ export const ui = {
   focusSearch() { el.searchInput?.focus(); el.searchInput?.select?.(); },
   toggleUnits() { el.unitBtn?.click(); },
   getUnit() { return state.unit; },
+  setUnit(u) {
+    if (u !== "C" && u !== "F") return;
+    if (state.unit === u) return;
+    state.unit = u;
+    try { localStorage.setItem("aether:unit", u); } catch { /* ignore */ }
+    if (el.unitBtn) el.unitBtn.textContent = `°${u}`;
+    if (state.weather) ui.setWeather(state.weather);
+  },
   isSearchOpen() { return !el.searchResults.hidden; },
   closeSearch() { el.searchResults.hidden = true; el.searchInput?.blur(); },
   markRefreshSpin(on) {

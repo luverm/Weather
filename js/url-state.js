@@ -21,6 +21,14 @@ export function readPlace() {
   return { lat, lon, name, country, admin1 };
 }
 
+export function readUnitPreference() {
+  const params = new URLSearchParams(window.location.search);
+  const raw = (params.get("unit") || "").trim().toUpperCase();
+  if (raw === "F" || raw === "FAHRENHEIT") return "F";
+  if (raw === "C" || raw === "CELSIUS") return "C";
+  return null;
+}
+
 export function writePlace(place) {
   if (!place || place.lat == null || place.lon == null) return;
   const url = new URL(window.location.href);

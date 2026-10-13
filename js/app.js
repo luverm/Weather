@@ -17,7 +17,7 @@ import { narrate } from "./narrative.js";
 import { places } from "./places.js";
 import { RadarMap } from "./radar-map.js";
 import { installShortcuts } from "./shortcuts.js";
-import { readPlace as readUrlPlace, writePlace as writeUrlPlace } from "./url-state.js";
+import { readPlace as readUrlPlace, writePlace as writeUrlPlace, readUnitPreference } from "./url-state.js";
 
 const engine = new AnimationEngine();
 
@@ -403,6 +403,10 @@ installShortcuts({
 
 // ---------- Start ----------
 (async function init() {
+  // Honour `?unit=F` / `?unit=C` before any UI renders.
+  const unitPref = readUnitPreference();
+  if (unitPref) ui.setUnit(unitPref);
+
   // 1) Shared/bookmarked URL wins over everything.
   const urlPlace = readUrlPlace();
   if (urlPlace) {
