@@ -95,6 +95,10 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunLightQuality: $("#sun-light-quality"),
+  sunLightIcon: $("#sun-light-icon"),
+  sunLightLabel: $("#sun-light-label"),
+  sunLightDetail: $("#sun-light-detail"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -127,6 +131,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  sunLightTimer: null,
   localTimer: null,
 };
 
@@ -530,6 +535,82 @@ function renderSun(w) {
   renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleSunLightQuality();
+}
+
+function scheduleSunLightQuality() {
+  if (state.sunLightTimer) { clearInterval(state.sunLightTimer); state.sunLightTimer = null; }
+  if (!el.sunLightQuality || !el.sunLightLabel || !el.sunLightDetail || !el.sunLightIcon) return;
+  const update = () => {
+    const lat = state.place?.lat, lon = state.place?.lon;
+    if (lat == null || lon == null) {
+      el.sunLightQuality.hidden = true;
+      return;
+    }
+    const alt = solarElevationDeg(lat, lon, new Date());
+    const q = classifyLight(alt);
+    el.sunLightIcon.innerHTML = q.icon;
+    el.sunLightLabel.textContent = q.label;
+    const altLabel = `${alt >= 0 ? "+" : ""}${alt.toFixed(1)}°`;
+    const detail = (alt > 1)
+      ? `sun ${altLabel} · shadow ${shadowMultiplier(alt)}× your height`
+      : (alt > -6)
+        ? `sun ${altLabel} · horizon glow`
+        : `sun ${altLabel}`;
+    el.sunLightDetail.textContent = detail;
+    el.sunLightQuality.dataset.kind = q.kind;
+    el.sunLightQuality.hidden = false;
+  };
+  update();
+  state.sunLightTimer = setInterval(update, 60_000);
+}
+
+function shadowMultiplier(altDeg) {
+  const t = Math.tan(altDeg * Math.PI / 180);
+  if (t <= 0.01) return "∞";
+  const m = 1 / t;
+  if (m >= 10) return m.toFixed(0);
+  if (m >= 1) return m.toFixed(1);
+  return m.toFixed(2);
+}
+
+function classifyLight(alt) {
+  if (alt >= 55) return { kind: "high",   label: "High sun",     icon: lightIcon("sun") };
+  if (alt >= 15) return { kind: "mid",    label: "Midday sun",   icon: lightIcon("sun") };
+  if (alt >= 6)  return { kind: "low",    label: "Low sun",      icon: lightIcon("sun-low") };
+  if (alt >= 0)  return { kind: "golden", label: "Golden hour",  icon: lightIcon("sun-low") };
+  if (alt >= -6) return { kind: "blue",   label: "Blue hour",    icon: lightIcon("twilight") };
+  if (alt >= -12) return { kind: "civil", label: "Civil twilight", icon: lightIcon("twilight") };
+  if (alt >= -18) return { kind: "astro", label: "Astronomical twilight", icon: lightIcon("night") };
+  return { kind: "night", label: "Night", icon: lightIcon("night") };
+}
+
+function lightIcon(name) {
+  if (name === "sun") return `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.5 5.5l1.5 1.5M17 17l1.5 1.5M5.5 18.5l1.5-1.5M17 7l1.5-1.5"/></svg>`;
+  if (name === "sun-low") return `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18h16"/><path d="M8 14a4 4 0 018 0"/><path d="M3 18h18M12 7v2M6 10l1.4 1.4M18 10l-1.4 1.4"/></svg>`;
+  if (name === "twilight") return `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18h18"/><path d="M8 14a4 4 0 018 0"/><path d="M12 2a7 7 0 00-7 7"/></svg>`;
+  return `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13A7 7 0 0111 6a7 7 0 1010 7z"/></svg>`;
+}
+
+// Solar elevation (degrees) using NOAA simplified formulas. Accurate to
+// within ~0.1° for ordinary inhabited latitudes — more than enough for
+// classifying golden hour / shadow length.
+function solarElevationDeg(latDeg, lonDeg, date) {
+  const d = (date.getTime() - Date.UTC(2000, 0, 1, 12)) / 86_400_000;
+  const rad = Math.PI / 180;
+  const g = (357.528 + 0.9856003 * d) * rad;
+  const L = (280.46 + 0.9856474 * d) * rad;
+  const lambda = L + (1.915 * Math.sin(g) + 0.020 * Math.sin(2 * g)) * rad;
+  const eps = 23.439 * rad;
+  const sinDec = Math.sin(eps) * Math.sin(lambda);
+  const dec = Math.asin(sinDec);
+  const ra = Math.atan2(Math.cos(eps) * Math.sin(lambda), Math.cos(lambda));
+  const gmstHours = (18.697374558 + 24.06570982441908 * d) % 24;
+  const lstDeg = gmstHours * 15 + lonDeg;
+  const H = (lstDeg * rad) - ra;
+  const phi = latDeg * rad;
+  const sinAlt = Math.sin(phi) * sinDec + Math.cos(phi) * Math.cos(dec) * Math.cos(H);
+  return Math.asin(Math.max(-1, Math.min(1, sinAlt))) / rad;
 }
 
 function renderDaylightDelta(w) {

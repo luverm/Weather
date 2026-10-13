@@ -976,6 +976,59 @@ kbd {
 .sun-daylight-delta[data-trend="longer"]  { color: #ffd49a; }
 .sun-daylight-delta[data-trend="shorter"] { color: #9ad1ff; }
 .sun-daylight-delta[data-trend="steady"]  { color: var(--fg-dim); }
+
+.sun-light-quality {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 6px 10px;
+  margin: -4px 0 6px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  font-size: 11.5px;
+  color: var(--fg);
+  line-height: 1.15;
+}
+.sun-light-quality[hidden] { display: none; }
+.sun-light-quality .sun-light-icon { display: inline-flex; opacity: 0.9; }
+.sun-light-quality .sun-light-label {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.sun-light-quality .sun-light-detail {
+  margin-left: auto;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+}
+.sun-light-quality[data-kind="golden"] {
+  background: rgba(255,196,120,0.10);
+  border-color: rgba(255,196,120,0.28);
+  color: #ffd49a;
+}
+.sun-light-quality[data-kind="blue"],
+.sun-light-quality[data-kind="civil"] {
+  background: rgba(130,170,255,0.09);
+  border-color: rgba(130,170,255,0.22);
+  color: #b9d1ff;
+}
+.sun-light-quality[data-kind="astro"],
+.sun-light-quality[data-kind="night"] {
+  background: rgba(255,255,255,0.03);
+  color: var(--fg-dim);
+}
+.sun-light-quality[data-kind="high"],
+.sun-light-quality[data-kind="mid"] {
+  background: rgba(255,230,162,0.08);
+  border-color: rgba(255,230,162,0.22);
+  color: #ffe6a2;
+}
+.sun-light-quality[data-kind="low"] {
+  background: rgba(255,196,120,0.07);
+  border-color: rgba(255,196,120,0.20);
+  color: #ffd49a;
+}
 .sun-arc {
   width: 100%;
   height: 76px;
