@@ -21,6 +21,7 @@ const el = {
   placeName: $("#place-name"),
   placeSub: $("#place-sub"),
   placeLocaltime: $("#place-localtime"),
+  placeLabelText: $("#place-label-text"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
   narrative: $("#narrative"),
@@ -753,30 +754,44 @@ function startLocaltime(w) {
   if (state.localTimer) { clearInterval(state.localTimer); state.localTimer = null; }
   if (!el.placeLocaltime) return;
   const tz = w?.timezone;
-  if (!tz || tz === "auto") {
-    // Fall back to browser — still useful.
-    el.placeLocaltime.textContent = "";
-    return;
-  }
+  const useTz = tz && tz !== "auto";
   const update = () => {
     try {
-      const parts = new Intl.DateTimeFormat([], {
-        timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
-        weekday: "short", timeZoneName: "short",
-      }).formatToParts(new Date());
+      const opts = { hour: "2-digit", minute: "2-digit", hour12: false, weekday: "short" };
+      if (useTz) opts.timeZone = tz;
+      if (useTz) opts.timeZoneName = "short";
+      const parts = new Intl.DateTimeFormat([], opts).formatToParts(new Date());
       const day = parts.find((p) => p.type === "weekday")?.value ?? "";
       const hour = parts.find((p) => p.type === "hour")?.value ?? "";
       const minute = parts.find((p) => p.type === "minute")?.value ?? "";
       const tzName = parts.find((p) => p.type === "timeZoneName")?.value ?? "";
-      el.placeLocaltime.innerHTML =
-        `<span class="clock-dot" aria-hidden="true"></span>` +
-        `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>`;
+      if (useTz) {
+        el.placeLocaltime.innerHTML =
+          `<span class="clock-dot" aria-hidden="true"></span>` +
+          `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>`;
+      } else {
+        el.placeLocaltime.textContent = "";
+      }
+      // Greeting label — reads the local hour at the place (or browser).
+      if (el.placeLabelText) {
+        const h = parseInt(hour, 10);
+        el.placeLabelText.textContent = Number.isFinite(h) ? greetingFor(h) : "Now in";
+      }
     } catch {
       el.placeLocaltime.textContent = "";
+      if (el.placeLabelText) el.placeLabelText.textContent = "Now in";
     }
   };
   update();
   state.localTimer = setInterval(update, 10_000);
+}
+
+function greetingFor(hour) {
+  if (hour < 5) return "Late night in";
+  if (hour < 12) return "Good morning in";
+  if (hour < 17) return "Good afternoon in";
+  if (hour < 21) return "Good evening in";
+  return "Good night in";
 }
 
 function renderInsights(w) {
