@@ -59,6 +59,7 @@ const el = {
   adviceText: $("#advice-text"),
   chartSvg: $("#chart-svg"),
   chartHover: $("#chart-hover"),
+  rainSummary: $("#rain-summary"),
   pollenCard: $("#pollen-card"),
   pollenLevel: $("#pollen-level"),
   pollenDominant: $("#pollen-dominant"),
@@ -1028,7 +1029,41 @@ function cardinal(deg) {
   return dirs[i];
 }
 
+function renderRainSummary(w) {
+  if (!el.rainSummary) return;
+  const hours = (w.hourly || []).slice(0, 24);
+  if (!hours.length) { el.rainSummary.hidden = true; return; }
+  let total = 0, peak = null;
+  for (const h of hours) {
+    const mm = h.precip ?? 0;
+    total += mm;
+    if (mm > 0 && (!peak || mm > peak.mm)) peak = { mm, time: h.time };
+  }
+  if (total < 0.1) {
+    // Suppress when hardly any rain is forecast — don't crowd the chart.
+    const maxPop = hours.reduce((m, h) => Math.max(m, h.pop ?? 0), 0);
+    if (maxPop < 30) {
+      el.rainSummary.hidden = true;
+      return;
+    }
+    el.rainSummary.dataset.tone = "dry";
+    el.rainSummary.innerHTML = `<span>24h · dry · ${maxPop}% peak</span>`;
+    el.rainSummary.hidden = false;
+    return;
+  }
+  const totalLabel = total >= 10 ? `${Math.round(total)} mm` : `${total.toFixed(1)} mm`;
+  const peakLabel = peak ? ` · peak ${fmtTime(peak.time)}` : "";
+  el.rainSummary.dataset.tone = "wet";
+  el.rainSummary.innerHTML = `
+    <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3c3.5 4.5 6 7.5 6 10a6 6 0 01-12 0c0-2.5 2.5-5.5 6-10z"/>
+    </svg>
+    <span>24h · ${totalLabel}${peakLabel}</span>`;
+  el.rainSummary.hidden = false;
+}
+
 function renderHourly(w) {
+  renderRainSummary(w);
   el.forecastTrack.innerHTML = "";
   for (const h of (w.hourly || []).slice(0, 24)) {
     const item = document.createElement("div");
