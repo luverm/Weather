@@ -71,6 +71,7 @@ const el = {
   tempTrend: $("#temp-trend"),
   uvLevel: $("#m-uv-level"),
   humidityComfort: $("#m-humidity-comfort"),
+  humidityTrendPill: $("#m-humidity-trend"),
   pressureSparkLine: $("#pressure-spark-line"),
   pressureSparkFill: $("#pressure-spark-fill"),
   humiditySparkLine: $("#humidity-spark-line"),
@@ -379,6 +380,17 @@ function renderMetrics(w) {
       el.humidityComfort.textContent = pill.label;
     } else {
       el.humidityComfort.textContent = "";
+    }
+  }
+  if (el.humidityTrendPill) {
+    const delta = w.humidityTrend?.delta;
+    if (delta != null && Math.abs(delta) >= 10) {
+      const cls = delta > 0 ? "up" : "down";
+      const arrow = delta > 0 ? "▲" : "▼";
+      el.humidityTrendPill.className = `trend ${cls}`;
+      el.humidityTrendPill.textContent = `${arrow} ${Math.round(Math.abs(delta))}%/3h`;
+    } else {
+      el.humidityTrendPill.textContent = "";
     }
   }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);

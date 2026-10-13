@@ -195,6 +195,7 @@ function normalize(d, aq) {
     humidity: c.relative_humidity_2m,
     pressure: c.pressure_msl,
     pressureTrend: computePressureTrend(d.hourly, now),
+    humidityTrend: computeSeriesTrend(d.hourly, "relative_humidity_2m", now, 3),
     windSpeed: c.wind_speed_10m,
     windGusts: c.wind_gusts_10m,
     windDir: c.wind_direction_10m,
@@ -217,6 +218,23 @@ function normalize(d, aq) {
     pollen: normalizePollen(aq),
     fetchedAt: now,
   };
+}
+
+// Generic N-hour trend of a named hourly series (returns null for sparse
+// data or missing key).
+function computeSeriesTrend(hourly, key, now, hoursBack = 3) {
+  if (!hourly?.time || !hourly?.[key]) return null;
+  let nowIdx = -1;
+  for (let i = 0; i < hourly.time.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    if (t >= now - 30 * 60_000) { nowIdx = i; break; }
+  }
+  if (nowIdx < 0) return null;
+  const cur = hourly[key][nowIdx];
+  const pastIdx = Math.max(0, nowIdx - hoursBack);
+  const past = hourly[key][pastIdx];
+  if (cur == null || past == null) return null;
+  return { delta: cur - past, past, cur };
 }
 
 function computePressureTrend(hourly, now) {
