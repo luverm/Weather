@@ -1455,8 +1455,10 @@ function renderPlaces() {
         deltaHtml = `<span class="delta" data-kind="same">±0°</span>`;
       }
     }
+    const iconHtml = p.condition ? `<span class="place-chip-icon" aria-hidden="true">${iconFor(p.condition)}</span>` : "";
     return `
       <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
+        ${iconHtml}
         <span>${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
         ${deltaHtml}
