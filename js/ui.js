@@ -1612,6 +1612,10 @@ function bindSearch() {
 }
 
 function bindUnitToggle() {
+  // Double-tap the big hero temperature to toggle units (nice on touch too).
+  el.temp?.addEventListener("dblclick", () => el.unitBtn?.click());
+  el.temp?.style.setProperty("cursor", "pointer");
+  el.temp?.setAttribute("title", "Double-click to toggle units");
   el.unitBtn.addEventListener("click", () => {
     state.unit = state.unit === "C" ? "F" : "C";
     localStorage.setItem("aether:unit", state.unit);
