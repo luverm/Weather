@@ -378,6 +378,41 @@ function renderMetrics(w) {
     el.metricUVSub.textContent = "peak —";
   }
   renderPressureSparkline(w);
+  markNoteworthyMetrics(w);
+}
+
+// Add a subtle highlight (`data-note`) to any metric card whose reading
+// is unusual, so the eye lands on it without hunting. Tones:
+//   warn   — pay attention (strong wind, high UV, poor air)
+//   alert  — don't miss it (gale, extreme UV, hazardous air)
+function markNoteworthyMetrics(w) {
+  const windCard = el.metricWind?.closest(".metric");
+  const uvCard   = el.metricUV?.closest(".metric");
+  const prCard   = el.metricPressure?.closest(".metric");
+  const humCard  = el.metricHumidity?.closest(".metric");
+  const aqCard   = el.aqCard;
+
+  const applyTone = (card, tone) => {
+    if (!card) return;
+    if (tone) card.dataset.note = tone;
+    else delete card.dataset.note;
+  };
+
+  const gust = w.windGusts ?? w.windSpeed;
+  applyTone(windCard, gust >= 75 ? "alert" : gust >= 40 ? "warn" : null);
+
+  applyTone(uvCard, w.uv >= 11 ? "alert" : w.uv >= 7 ? "warn" : null);
+
+  const prMove = Math.abs(w.pressureTrend?.delta ?? 0);
+  applyTone(prCard, prMove >= 4 ? "warn" : null);
+
+  // Low humidity + heat, or very humid dew points.
+  const dewMuggy = w.temp >= 18 && w.dewPoint != null && w.dewPoint >= 21;
+  const veryDry = w.humidity != null && w.humidity <= 20;
+  applyTone(humCard, dewMuggy ? "warn" : veryDry ? "warn" : null);
+
+  const aqi = w.airQuality?.aqi;
+  applyTone(aqCard, aqi >= 200 ? "alert" : aqi >= 100 ? "warn" : null);
 }
 
 function humidityComfort(rh, dew, temp) {

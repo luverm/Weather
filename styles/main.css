@@ -932,6 +932,26 @@ kbd {
   transition: transform 400ms var(--ease);
 }
 .metric:hover { transform: translateY(-2px); }
+
+/* Noteworthy readings get a quiet border + glow accent. Honours
+   reduce-motion by dropping the pulse. */
+.metric[data-note="warn"],
+.extra-card[data-note="warn"] {
+  box-shadow: inset 0 0 0 1px rgba(255,196,120,0.35), 0 0 18px -8px rgba(255,196,120,0.35);
+}
+.metric[data-note="alert"],
+.extra-card[data-note="alert"] {
+  box-shadow: inset 0 0 0 1px rgba(255,118,118,0.45), 0 0 22px -6px rgba(255,118,118,0.45);
+  animation: metricPulse 2200ms var(--ease) infinite;
+}
+@keyframes metricPulse {
+  0%, 100% { box-shadow: inset 0 0 0 1px rgba(255,118,118,0.35), 0 0 14px -8px rgba(255,118,118,0.25); }
+  50%      { box-shadow: inset 0 0 0 1px rgba(255,118,118,0.55), 0 0 28px -2px rgba(255,118,118,0.55); }
+}
+:root[data-reduce-motion="true"] .metric[data-note="alert"],
+:root[data-reduce-motion="true"] .extra-card[data-note="alert"] {
+  animation: none;
+}
 .metric-label {
   grid-column: 1 / span 2;
   font-size: 10.5px;
