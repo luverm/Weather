@@ -303,6 +303,18 @@ html[data-reduce-motion="true"] *::after {
 .place-chip:hover { background: var(--glass-strong); transform: translateY(-1px); }
 .place-chip.active { background: var(--glass-strong); border-color: rgba(255,255,255,0.35); }
 .place-chip .temp { color: var(--fg-muted); font-variant-numeric: tabular-nums; }
+.place-chip .delta {
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  color: var(--fg-dim);
+  line-height: 1.3;
+}
+.place-chip .delta[data-kind="warmer"] { color: #ffcf9b; background: rgba(255,156,122,0.14); }
+.place-chip .delta[data-kind="cooler"] { color: #b9d4ff; background: rgba(154,180,255,0.14); }
+.place-chip .delta[data-kind="same"]   { color: var(--fg-dim); }
 .place-chip .close {
   width: 16px; height: 16px; display: grid; place-items: center;
   border-radius: 50%; color: var(--fg-dim);

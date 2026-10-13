@@ -1418,12 +1418,28 @@ function renderPlaces() {
   if (!all.length) { el.placesStrip.hidden = true; el.placesStrip.innerHTML = ""; return; }
   el.placesStrip.hidden = false;
   const activeId = state.place ? places.idFor(state.place) : null;
+  // The active city's live temp (C); fall back to the saved summary temp.
+  const activeTempC = state.weather?.temp ?? all.find((p) => places.idFor(p) === activeId)?.temp;
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
+    let deltaHtml = "";
+    if (!active && p.temp != null && activeTempC != null) {
+      // Diff in the user's display unit so °F swapping stays honest.
+      const diffC = p.temp - activeTempC;
+      const diffDisplay = Math.round(state.unit === "F" ? diffC * 9 / 5 : diffC);
+      if (diffDisplay !== 0) {
+        const kind = diffDisplay > 0 ? "warmer" : "cooler";
+        const sign = diffDisplay > 0 ? "+" : "−";
+        deltaHtml = `<span class="delta" data-kind="${kind}">${sign}${Math.abs(diffDisplay)}°</span>`;
+      } else {
+        deltaHtml = `<span class="delta" data-kind="same">±0°</span>`;
+      }
+    }
     return `
       <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
         <span>${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
+        ${deltaHtml}
         <span class="close" data-action="remove" aria-label="Remove">
           <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
         </span>
