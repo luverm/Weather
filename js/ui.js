@@ -71,6 +71,9 @@ const el = {
   pressureSparkFill: $("#pressure-spark-fill"),
   humiditySparkLine: $("#humidity-spark-line"),
   humiditySparkFill: $("#humidity-spark-fill"),
+  uvSparkLine: $("#uv-spark-line"),
+  uvSparkFill: $("#uv-spark-fill"),
+  uvSparkNow: $("#uv-spark-now"),
   dailySpark: $("#daily-spark"),
   dailyHi: $("#daily-hi"),
   dailyLo: $("#daily-lo"),
@@ -427,6 +430,40 @@ function renderPressureSparkline(w) {
     (w.hourly || []).map((h) => h.humidity).filter((v) => v != null).slice(0, 12),
     { minSpan: 10, fixedMin: 0, fixedMax: 100 }
   );
+  renderUvSparkline(w);
+}
+
+function renderUvSparkline(w) {
+  if (!el.uvSparkLine || !el.uvSparkFill) return;
+  const hourly = (w.hourly || []).slice(0, 24);
+  const series = hourly.map((h) => (h.uv ?? 0));
+  if (series.length < 2 || series.every((v) => v === 0)) {
+    el.uvSparkLine.setAttribute("d", "");
+    el.uvSparkFill.setAttribute("d", "");
+    if (el.uvSparkNow) el.uvSparkNow.setAttribute("opacity", "0");
+    return;
+  }
+  // Pin the max to at least 6 so a quiet UV day doesn't fill the strip
+  // and misrepresent risk; cap at 11 for clean colour-ramp alignment.
+  const max = Math.max(6, Math.min(11, Math.max(...series)));
+  drawSparkline(el.uvSparkLine, el.uvSparkFill, series, { fixedMin: 0, fixedMax: max });
+  // "Now" dot: lerp between the hourly timestamps.
+  if (el.uvSparkNow && hourly.length) {
+    const now = Date.now();
+    const first = hourly[0].time, last = hourly[hourly.length - 1].time;
+    const frac = Math.max(0, Math.min(1, (now - first) / Math.max(1, last - first)));
+    const idx = frac * (series.length - 1);
+    const i0 = Math.floor(idx), i1 = Math.min(series.length - 1, i0 + 1);
+    const t = idx - i0;
+    const v = series[i0] + (series[i1] - series[i0]) * t;
+    const W = 100, H = 24, PAD = 1.5;
+    const innerW = W - PAD * 2, innerH = H - PAD * 2;
+    const cx = PAD + (idx / (series.length - 1)) * innerW;
+    const cy = PAD + innerH - (v / max) * innerH;
+    el.uvSparkNow.setAttribute("cx", cx.toFixed(1));
+    el.uvSparkNow.setAttribute("cy", cy.toFixed(1));
+    el.uvSparkNow.setAttribute("opacity", "1");
+  }
 }
 
 function drawSparkline(lineEl, fillEl, series, { minSpan = 1, fixedMin, fixedMax } = {}) {

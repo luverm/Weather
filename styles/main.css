@@ -560,6 +560,7 @@ html[data-reduce-motion="true"] *::after {
   margin-top: 2px;
 }
 .metric-humidity .pressure-spark { color: #9ad1ff; }
+.metric-uv .uv-spark { color: #ffd36a; }
 
 /* ---------- Daily expand ---------- */
 .daily-item { cursor: pointer; }
