@@ -309,6 +309,39 @@ installShortcuts({
   },
 });
 
+// ---------- Touch: swipe hero left/right to cycle saved places ----------
+(function bindHeroSwipe() {
+  const target = document.querySelector(".hero-inner") || document.querySelector(".hero");
+  if (!target) return;
+  let startX = 0, startY = 0, startedAt = 0, tracking = false;
+  const THRESHOLD = 60;      // px
+  const MAX_OFFAXIS = 50;    // px of vertical drift tolerated
+  const MAX_DURATION = 700;  // ms
+  target.addEventListener("touchstart", (e) => {
+    if (e.touches.length !== 1) { tracking = false; return; }
+    const t = e.touches[0];
+    startX = t.clientX; startY = t.clientY; startedAt = Date.now();
+    tracking = true;
+  }, { passive: true });
+  target.addEventListener("touchend", (e) => {
+    if (!tracking) return;
+    tracking = false;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - startX;
+    const dy = t.clientY - startY;
+    if (Date.now() - startedAt > MAX_DURATION) return;
+    if (Math.abs(dy) > MAX_OFFAXIS) return;
+    if (Math.abs(dx) < THRESHOLD) return;
+    const list = places.all();
+    if (list.length < 2) return;
+    const dir = dx < 0 ? 1 : -1;
+    const currentId = app.place ? places.idFor(app.place) : null;
+    const idx = Math.max(0, list.findIndex((p) => places.idFor(p) === currentId));
+    const next = list[(idx + dir + list.length) % list.length];
+    if (next) loadByCoords(next);
+  }, { passive: true });
+})();
+
 // ---------- Start ----------
 (async function init() {
   // 1) Shared/bookmarked URL wins over everything.
