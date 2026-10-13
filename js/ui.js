@@ -220,7 +220,9 @@ export const ui = {
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
       places.updateSummary(state.place, {
-        temp: weather.temp, condition: weather.condition,
+        temp: weather.temp,
+        condition: weather.condition,
+        fetchedAt: Date.now(),
       });
     }
     renderPlaces();

@@ -8,7 +8,7 @@ import { RainScene } from "./scenes/rain.js";
 import { SnowScene } from "./scenes/snow.js";
 import { LightningScene } from "./scenes/lightning.js";
 import { WindScene } from "./scenes/wind.js";
-import { getWeather, getLocation } from "./weather-service.js";
+import { getWeather, getLocation, getCurrentSummary } from "./weather-service.js";
 import { ui } from "./ui.js";
 import { clock } from "./clock.js";
 import { Scrubber } from "./scrubber.js";
@@ -237,6 +237,40 @@ async function loadByCoords(place) {
 
   // Move the radar to the new location (fire-and-forget; resolves later).
   ensureRadar([place.lat, place.lon]).then((r) => r?.setCenter(place.lat, place.lon, place.name));
+
+  // Background: top up every saved chip's current temp + condition so the
+  // places strip isn't a row of blanks until each city has been visited.
+  // Only chips with stale (> 20 min) or missing summaries get refreshed.
+  prefetchSavedSummaries();
+}
+
+const STALE_MS = 20 * 60_000;
+let prefetchInFlight = false;
+async function prefetchSavedSummaries() {
+  if (prefetchInFlight) return;
+  prefetchInFlight = true;
+  try {
+    const list = places.all();
+    const now = Date.now();
+    const stale = list.filter((p) => {
+      if (p.lat == null || p.lon == null) return false;
+      if (p.temp == null || !p.condition) return true;
+      if (!p.fetchedAt || now - p.fetchedAt > STALE_MS) return true;
+      return false;
+    });
+    if (!stale.length) return;
+    // Give the main fetch a head start; keep concurrency modest.
+    await new Promise((r) => setTimeout(r, 400));
+    const batch = async (p) => {
+      const s = await getCurrentSummary(p.lat, p.lon);
+      if (!s) return;
+      places.updateSummary(p, { ...s });
+    };
+    await Promise.allSettled(stale.map(batch));
+    ui.refreshPlaces?.();
+  } finally {
+    prefetchInFlight = false;
+  }
 }
 
 async function useGeolocation() {
