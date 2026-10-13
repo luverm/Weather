@@ -197,6 +197,8 @@ const scrubber = new Scrubber({
 
 // ---------- Load flow ----------
 async function loadByCoords(place) {
+  const prevPlace = app.place;
+  const prevTempC = app.weather?.temp;
   app.place = place;
   writeUrlPlace(place);
   ui.setPlace(place);
@@ -208,6 +210,21 @@ async function loadByCoords(place) {
 
   const w = await getWeather(place.lat, place.lon);
   app.weather = w;
+
+  // Comparative toast when switching between distinct places.
+  if (
+    prevPlace && place.name && prevPlace.name &&
+    prevPlace.name !== place.name &&
+    prevTempC != null && w?.temp != null
+  ) {
+    const diffC = w.temp - prevTempC;
+    const unit = ui.getUnit?.() || "C";
+    const diffDisp = Math.round(unit === "F" ? diffC * 9 / 5 : diffC);
+    if (Math.abs(diffDisp) >= 1) {
+      const sign = diffDisp > 0 ? "+" : "";
+      ui.showToast(`${place.name} is ${sign}${diffDisp}°${unit} vs ${prevPlace.name}`);
+    }
+  }
 
   // Render full UI (live + forecasts + narrative).
   ui.setWeather(w, { narrative: narrate(w) });
