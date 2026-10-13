@@ -24,6 +24,8 @@ const el = {
   placeLabelText: $("#place-label-text"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
+  feelsText: $("#feels-text"),
+  feelsReason: $("#feels-reason"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -294,8 +296,25 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  if (el.feelsText) el.feelsText.textContent = `Feels like ${Math.round(feels)}°`;
+  const reason = feelsLikeReason(w);
+  if (el.feelsReason) el.feelsReason.textContent = reason ? ` · ${reason}` : "";
   renderDayRange(w);
+}
+
+function feelsLikeReason(w) {
+  const dt = (w.feelsLike ?? w.temp) - w.temp;
+  if (Math.abs(dt) < 1.5) return "";
+  // Colder than air: usually wind chill (or evaporative chill in rain).
+  if (dt < 0) {
+    if (w.windSpeed >= 15) return "wind chill";
+    if (w.humidity != null && w.humidity < 25) return "dry air";
+    return "cooler feel";
+  }
+  // Warmer than air: usually humidity (heat index) or strong sun.
+  if (w.humidity != null && w.humidity >= 60) return "humidity";
+  if (w.uv != null && w.uv >= 6) return "sun load";
+  return "warmer feel";
 }
 
 function renderDayRange(w) {
