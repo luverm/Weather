@@ -577,6 +577,22 @@ html[data-reduce-motion="true"] *::after {
 .metric-humidity .pressure-spark { color: #9ad1ff; }
 .metric-uv .uv-spark { color: #ffd36a; }
 
+.pressure-forecast {
+  grid-column: 1 / span 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  color: var(--fg-dim);
+  margin-top: 2px;
+}
+.pressure-forecast[hidden] { display: none; }
+.pressure-forecast .pf-arrow { font-weight: 700; width: 10px; display: inline-flex; justify-content: center; }
+.pressure-forecast[data-tone="rising"]  { color: #c9e4ff; }
+.pressure-forecast[data-tone="falling"] { color: #ffcf9b; }
+.pressure-forecast[data-tone="steady"]  { color: var(--fg-dim); }
+
 /* ---------- Daily expand ---------- */
 .daily-item { cursor: pointer; }
 .daily-item[data-expanded="true"] { background: var(--glass-strong); }

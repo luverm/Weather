@@ -38,6 +38,7 @@ const el = {
   metricHumiditySub: $("#m-humidity-sub"),
   metricPressure: $("#m-pressure"),
   metricPressureSub: $("#m-pressure-sub"),
+  metricPressureForecast: $("#m-pressure-forecast"),
   metricUV: $("#m-uv"),
   metricUVSub: $("#m-uv-sub"),
   aqArc: $("#aq-arc"),
@@ -384,6 +385,7 @@ function renderMetrics(w) {
   el.metricPressureSub.textContent = w.visibility != null
     ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
     : "visibility —";
+  renderPressureForecast(w);
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
@@ -435,6 +437,39 @@ function markNoteworthyMetrics(w) {
 
   const aqi = w.airQuality?.aqi;
   applyTone(aqCard, aqi >= 200 ? "alert" : aqi >= 100 ? "warn" : null);
+}
+
+function renderPressureForecast(w) {
+  if (!el.metricPressureForecast) return;
+  const trend = w.pressureTrend;
+  const p = w.pressure;
+  if (!trend || p == null) { el.metricPressureForecast.hidden = true; return; }
+  const delta = trend.delta ?? 0;
+  const absDelta = Math.abs(delta);
+  // Barometer-style folk forecast, keyed on both level + rate.
+  let text = null, tone = "steady";
+  if (delta > 2) {
+    text = p >= 1020 ? "Settled, fair ahead" : "Clearing";
+    tone = "rising";
+  } else if (delta > 0.8) {
+    text = "Weather improving";
+    tone = "rising";
+  } else if (delta < -2) {
+    text = p < 1005 ? "Unsettled — storms possible" : "Weather turning";
+    tone = "falling";
+  } else if (delta < -0.8) {
+    text = "Weather changing soon";
+    tone = "falling";
+  } else {
+    // Steady — label by absolute level instead.
+    if (p >= 1025) { text = "High pressure, settled"; tone = "steady"; }
+    else if (p <= 1000) { text = "Low pressure, unsettled"; tone = "falling"; }
+    else { el.metricPressureForecast.hidden = true; return; }
+  }
+  const arrow = tone === "rising" ? "↑" : tone === "falling" ? "↓" : "·";
+  el.metricPressureForecast.dataset.tone = tone;
+  el.metricPressureForecast.innerHTML = `<span class="pf-arrow">${arrow}</span> ${text}`;
+  el.metricPressureForecast.hidden = false;
 }
 
 function humidityComfort(rh, dew, temp) {
