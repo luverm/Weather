@@ -11,6 +11,7 @@ import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { updateLiveTab } from "./live-tab.js";
+import { shareUrlFor } from "./url-state.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -1534,13 +1535,14 @@ function bindShare() {
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
     ].filter(Boolean);
-    const text = lines.join("\n");
+    const shareUrl = shareUrlFor(state.place);
+    const text = lines.join("\n") + (shareUrl ? `\n${shareUrl}` : "");
     try {
       if (navigator.share) {
-        await navigator.share({ title: `Aether — ${placeName}`, text });
+        await navigator.share({ title: `Aether — ${placeName}`, text, url: shareUrl });
       } else {
         await navigator.clipboard.writeText(text);
-        ui.showToast("Summary copied to clipboard");
+        ui.showToast("Summary + link copied");
       }
       el.shareBtn.classList.add("just-copied");
       setTimeout(() => el.shareBtn.classList.remove("just-copied"), 600);

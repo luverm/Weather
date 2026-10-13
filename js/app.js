@@ -17,6 +17,7 @@ import { narrate } from "./narrative.js";
 import { places } from "./places.js";
 import { RadarMap } from "./radar-map.js";
 import { installShortcuts } from "./shortcuts.js";
+import { readPlace as readUrlPlace, writePlace as writeUrlPlace } from "./url-state.js";
 
 const engine = new AnimationEngine();
 
@@ -197,6 +198,7 @@ const scrubber = new Scrubber({
 // ---------- Load flow ----------
 async function loadByCoords(place) {
   app.place = place;
+  writeUrlPlace(place);
   ui.setPlace(place);
   ui.setLoading(`Fetching weather for ${place.name}…`);
 
@@ -306,13 +308,20 @@ installShortcuts({
 
 // ---------- Start ----------
 (async function init() {
-  // Prefer the most recent saved place if we have one — avoids the geolocation
-  // prompt on every load and feels snappier.
+  // 1) Shared/bookmarked URL wins over everything.
+  const urlPlace = readUrlPlace();
+  if (urlPlace) {
+    await loadByCoords(urlPlace);
+    return;
+  }
+  // 2) Most-recent saved place — avoids the geolocation prompt on repeat
+  //    visits and feels snappier.
   const saved = places.all();
   if (saved.length) {
     await loadByCoords(saved[0]);
     return;
   }
+  // 3) Browser geolocation.
   try {
     const { lat, lon } = await getLocation();
     await loadByCoords({ name: "Current location", lat, lon });
