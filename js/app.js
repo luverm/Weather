@@ -318,6 +318,14 @@ installShortcuts({
     const next = list[(idx + dir + list.length) % list.length];
     if (next) loadByCoords(next);
   },
+  jumpToPlace: (idx) => {
+    const list = places.all();
+    const target = list[idx];
+    if (!target) return;
+    const currentId = app.place ? places.idFor(app.place) : null;
+    if (places.idFor(target) === currentId) return;
+    loadByCoords(target);
+  },
   nudge: (hours) => {
     clock.setOffset(clock.offset() + hours * 3600_000);
     scrubber.sync();
