@@ -93,7 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
-    past_hours: 1,
+    past_hours: 24,
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -128,9 +128,30 @@ function normalize(d, aq) {
   const daily = d.daily || {};
   const now = Date.now();
 
-  // 24-hour hourly forecast starting from the next hour.
+  // 24-hour hourly forecast starting from the next hour, plus the 24-hour
+  // "yesterday" trail used by the chart ghost line + vs-yesterday chip.
   const hourly = [];
+  const yesterday = [];
   if (d.hourly?.time) {
+    // Find the first index at (or near) "now" — same rule as the hourly loop
+    // uses to decide what counts as the present-and-future window.
+    let nowIdx = -1;
+    for (let i = 0; i < d.hourly.time.length; i++) {
+      const t = new Date(d.hourly.time[i]).getTime();
+      if (t >= now - 30 * 60 * 1000) { nowIdx = i; break; }
+    }
+    if (nowIdx > 0) {
+      const start = Math.max(0, nowIdx - 24);
+      for (let i = start; i < nowIdx; i++) {
+        const temp = d.hourly.temperature_2m?.[i];
+        if (temp == null) continue;
+        yesterday.push({
+          time: new Date(d.hourly.time[i]).getTime(),
+          temp,
+          feelsLike: d.hourly.apparent_temperature?.[i] ?? null,
+        });
+      }
+    }
     for (let i = 0; i < d.hourly.time.length && hourly.length < 24; i++) {
       const t = new Date(d.hourly.time[i]).getTime();
       if (t < now - 30 * 60 * 1000) continue; // allow slight past for scrubbing
@@ -148,6 +169,19 @@ function normalize(d, aq) {
         humidity: d.hourly.relative_humidity_2m?.[i] ?? null,
         ...mapWmo(d.hourly.weather_code[i]),
       });
+    }
+  }
+
+  // Compare now vs same-hour yesterday (first entry is ~24h ago).
+  let vsYesterday = null;
+  if (yesterday.length && c.temperature_2m != null) {
+    const past = yesterday[0];
+    if (past?.temp != null) {
+      vsYesterday = {
+        delta: c.temperature_2m - past.temp,
+        yesterdayTemp: past.temp,
+        time: past.time,
+      };
     }
   }
 
@@ -210,6 +244,8 @@ function normalize(d, aq) {
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
     hourly,
+    yesterday,
+    vsYesterday,
     daily: dailyForecast,
     nowcast,
     moon,
@@ -387,6 +423,12 @@ function mock(lat, lon) {
       condition: CONDITIONS.CLOUDS, label: "Cloudy",
     })),
     nowcast: [],
+    yesterday: Array.from({ length: 24 }, (_, i) => ({
+      time: now - (24 - i) * 3600_000,
+      temp: 17 + Math.sin((i - 2) / 2) * 3,
+      feelsLike: 16 + Math.sin((i - 2) / 2) * 3,
+    })),
+    vsYesterday: { delta: 1, yesterdayTemp: 17, time: now - 24 * 3600_000 },
     moon: computeMoonPhase(new Date()),
     airQuality: { aqi: 42, pm25: 8, pm10: 14, o3: 40, no2: 15, co: 0.2, label: "Good" },
     pollen: {

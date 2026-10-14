@@ -136,6 +136,12 @@
           </div>
           <p id="condition-label" class="condition-label">—</p>
           <p id="feels-like" class="feels-like"><span id="temp-trend" class="temp-trend" aria-hidden="true"></span>Feels like —</p>
+          <p id="vs-yesterday" class="vs-yesterday" hidden aria-label="Compared to yesterday at this hour">
+            <svg class="vs-yesterday-icon" viewBox="0 0 24 24" aria-hidden="true" width="12" height="12">
+              <path d="M4 12h12M11 7l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span id="vs-yesterday-text">—</span>
+          </p>
           <div id="day-range" class="day-range" hidden aria-label="Today's temperature range">
             <span class="day-range-end" id="day-range-min">—</span>
             <div class="day-range-track">
@@ -183,6 +189,7 @@
           <div class="chart-legend">
             <span class="legend-swatch temp"></span><span>Temp</span>
             <span class="legend-swatch feels"></span><span>Feels-like</span>
+            <span class="legend-swatch yesterday"></span><span>Yesterday</span>
             <span class="legend-swatch gust"></span><span>Gusts</span>
             <span class="legend-swatch precip"></span><span>Precip</span>
           </div>
@@ -205,6 +212,7 @@
           <g id="chart-night" class="chart-night"></g>
           <g id="chart-precip" class="chart-precip"></g>
           <path id="chart-temp-fill" class="chart-temp-fill" fill="url(#temp-fill)"></path>
+          <path id="chart-yesterday-line" class="chart-yesterday-line" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="2 4" opacity="0.42"></path>
           <path id="chart-gust-line" class="chart-gust-line" fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="1.5 3" opacity="0.45"></path>
           <path id="chart-feels-line" class="chart-feels-line" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3 3" opacity="0.5"></path>
           <path id="chart-temp-line" class="chart-temp-line" fill="none" stroke="url(#temp-stroke)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"></path>

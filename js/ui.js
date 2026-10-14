@@ -26,6 +26,8 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  vsYesterday: $("#vs-yesterday"),
+  vsYesterdayText: $("#vs-yesterday-text"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -194,7 +196,11 @@ export const ui = {
     renderAlerts(weather);
     renderWeekend(weather);
     startLocaltime(weather);
-    if (state.chart) state.chart.setHours(weather.hourly);
+    renderVsYesterday(weather);
+    if (state.chart) {
+      state.chart.setHours(weather.hourly);
+      state.chart.setYesterday(weather.yesterday || []);
+    }
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
@@ -278,6 +284,28 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+}
+
+function renderVsYesterday(w) {
+  if (!el.vsYesterday || !el.vsYesterdayText) return;
+  const vy = w?.vsYesterday;
+  // Only show when the delta is meaningful (≥ ~1°C either way) so it doesn't
+  // compete with other glanceable info when the day is near-identical.
+  if (!vy || vy.delta == null || !isFinite(vy.delta) || Math.abs(vy.delta) < 1) {
+    el.vsYesterday.hidden = true;
+    return;
+  }
+  const unitDelta = state.unit === "F" ? vy.delta * 9 / 5 : vy.delta;
+  const mag = Math.round(Math.abs(unitDelta));
+  if (mag < 1) { el.vsYesterday.hidden = true; return; }
+  let tone, word, rot;
+  if (unitDelta > 0) { tone = "up"; word = "warmer"; rot = -45; }
+  else { tone = "down"; word = "cooler"; rot = 45; }
+  el.vsYesterday.hidden = false;
+  el.vsYesterday.dataset.tone = tone;
+  el.vsYesterdayText.textContent = `${mag}° ${word} than yesterday`;
+  const icon = el.vsYesterday.querySelector(".vs-yesterday-icon");
+  if (icon) icon.style.transform = `rotate(${rot}deg)`;
 }
 
 function renderDayRange(w) {

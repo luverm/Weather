@@ -17,6 +17,7 @@ export class HourlyChart {
     this.getUnit = getUnit || (() => "C");
     this.getTimezone = getTimezone || (() => null);
     this.hours = [];
+    this.yesterday = [];
     this.points = [];
     this._bind();
   }
@@ -52,6 +53,12 @@ export class HourlyChart {
     this.hours = (hours || []).slice(0, 24);
     this._draw();
     this.setCursor(null);
+  }
+
+  /** Optional 24-hour trail of the previous day's temperatures. */
+  setYesterday(yesterday) {
+    this.yesterday = (yesterday || []).slice(-24);
+    this._draw();
   }
 
   refresh() { this._draw(); }
@@ -155,8 +162,9 @@ export class HourlyChart {
     const innerH = H - PAD_TOP - PAD_BOT;
 
     const temps = this.hours.map((h) => h.temp).filter((v) => v != null);
-    let tMin = Math.min(...temps);
-    let tMax = Math.max(...temps);
+    const yTemps = this.yesterday.map((h) => h.temp).filter((v) => v != null);
+    let tMin = Math.min(...temps, ...(yTemps.length ? yTemps : temps));
+    let tMax = Math.max(...temps, ...(yTemps.length ? yTemps : temps));
     if (tMax - tMin < 4) {
       const mid = (tMin + tMax) / 2;
       tMin = mid - 2; tMax = mid + 2;
@@ -181,6 +189,33 @@ export class HourlyChart {
       `L${firstX.toFixed(1)},${(PAD_TOP + innerH).toFixed(1)} Z`;
     this.svg.querySelector("#chart-temp-line").setAttribute("d", linePath.trim());
     this.svg.querySelector("#chart-temp-fill").setAttribute("d", fillPath);
+
+    // Yesterday ghost line: faint, aligned by hour-of-day so each X on the
+    // forecast line sits above the same hour from the previous day.
+    const ghost = this.svg.querySelector("#chart-yesterday-line");
+    if (ghost) {
+      if (this.yesterday.length >= 2 && this.hours.length) {
+        // Map yesterday by hour-of-day; for each forecast x pick the matching hour.
+        const byHour = new Map();
+        for (const y of this.yesterday) {
+          if (y?.temp == null) continue;
+          const hh = new Date(y.time).getHours();
+          byHour.set(hh, y.temp);
+        }
+        let yPath = "";
+        let open = false;
+        this.hours.forEach((h, i) => {
+          const hh = new Date(h.time).getHours();
+          const v = byHour.get(hh);
+          if (v == null) { open = false; return; }
+          yPath += (open ? "L" : "M") + iToX(i).toFixed(1) + "," + tToY(v).toFixed(1) + " ";
+          open = true;
+        });
+        ghost.setAttribute("d", yPath.trim());
+      } else {
+        ghost.setAttribute("d", "");
+      }
+    }
 
     // Gust dashed line — mapped onto the lower half of the plot so it
     // doesn't collide with the temperature line. Shows relative magnitude.
