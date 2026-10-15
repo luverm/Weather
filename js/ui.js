@@ -53,6 +53,9 @@ const el = {
   yesterdayChip: $("#yesterday-chip"),
   yesterdayArrow: $("#yesterday-arrow"),
   yesterdayText: $("#yesterday-text"),
+  goldenRow: $("#golden-row"),
+  goldenHour: $("#golden-hour"),
+  blueHour: $("#blue-hour"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -609,6 +612,50 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderGoldenHour(w);
+}
+
+// Pick the sunrise/sunset pair most relevant to "right now" so late-evening
+// visits get tomorrow morning's blue/golden window instead of the already-
+// finished morning one.
+function pickRelevantSunPair(w) {
+  const now = Date.now();
+  const days = w?.daily || [];
+  // Prefer today if the evening golden-hour hasn't ended yet (sunset + 30min).
+  const today = days[0];
+  if (today?.sunrise && today?.sunset && now < today.sunset + 30 * 60_000) {
+    return { sunrise: today.sunrise, sunset: today.sunset, isTomorrow: false };
+  }
+  const tomorrow = days[1];
+  if (tomorrow?.sunrise && tomorrow?.sunset) {
+    return { sunrise: tomorrow.sunrise, sunset: tomorrow.sunset, isTomorrow: true };
+  }
+  if (w?.sunrise && w?.sunset) {
+    return { sunrise: w.sunrise, sunset: w.sunset, isTomorrow: false };
+  }
+  return null;
+}
+
+function renderGoldenHour(w) {
+  if (!el.goldenRow) return;
+  const pair = pickRelevantSunPair(w);
+  if (!pair) { el.goldenRow.hidden = true; return; }
+  el.goldenRow.hidden = false;
+
+  // Golden hour (evening) = sunset-60min .. sunset. Blue hour = sunset..sunset+30.
+  // At night we show the next morning's windows instead.
+  const now = Date.now();
+  const useMorning = now > pair.sunset || pair.isTomorrow;
+  const goldenStart = useMorning ? pair.sunrise : pair.sunset - 60 * 60_000;
+  const goldenEnd   = useMorning ? pair.sunrise + 60 * 60_000 : pair.sunset;
+  const blueStart   = useMorning ? pair.sunrise - 30 * 60_000 : pair.sunset;
+  const blueEnd     = useMorning ? pair.sunrise : pair.sunset + 30 * 60_000;
+
+  const label = useMorning ? "morning" : "evening";
+  el.goldenHour.textContent = `${fmtTime(goldenStart)} – ${fmtTime(goldenEnd)}`;
+  el.blueHour.textContent = `${fmtTime(blueStart)} – ${fmtTime(blueEnd)}`;
+  el.goldenHour.title = `Golden hour (${label}) — soft warm light`;
+  el.blueHour.title = `Blue hour (${label}) — twilight blues`;
 }
 
 function scheduleSunArc(w) {
