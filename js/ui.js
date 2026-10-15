@@ -58,6 +58,7 @@ const el = {
   yesterdayText: $("#yesterday-text"),
   cloudChip: $("#cloud-chip"),
   cloudChipText: $("#cloud-chip-text"),
+  scrubberIcon: $("#scrubber-icon"),
   goldenRow: $("#golden-row"),
   goldenHour: $("#golden-hour"),
   blueHour: $("#blue-hour"),
@@ -246,6 +247,9 @@ export const ui = {
     renderMetrics(sampled);
     renderAdvice(sampled);
     highlightHour(highlightHourIndex);
+    if (el.scrubberIcon && sampled?.condition) {
+      el.scrubberIcon.innerHTML = iconFor(sampled.condition);
+    }
     if (state.comfortStrip) state.comfortStrip.highlight(highlightHourIndex);
     if (state.chart && sampled._sampledTs != null) {
       state.chart.setCursor(sampled._sampledTs);

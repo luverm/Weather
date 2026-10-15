@@ -539,11 +539,19 @@ html[data-reduce-motion="true"] *::after {
 }
 [data-scrubbing="true"] .scrubber-reset { opacity: 1; }
 .scrubber-reset:hover { color: var(--fg); background: var(--glass-strong); }
+.scrubber-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 18px; height: 18px;
+  margin-left: auto;
+  color: var(--fg-muted);
+}
+.scrubber-icon:empty { display: none; }
+.scrubber-icon svg { width: 16px; height: 16px; }
 .scrubber-time {
   font-variant-numeric: tabular-nums;
   color: var(--fg);
   letter-spacing: 0.1em;
-  margin-left: auto;
   font-size: 13px;
 }
 .scrubber-delta { font-size: 11px; color: var(--fg-dim); font-variant-numeric: tabular-nums; }
