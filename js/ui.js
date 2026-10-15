@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { precipOutlook, wettestLabel } from "./precipitation.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -88,6 +89,14 @@ const el = {
   activityCard: $("#activity-card"),
   activityList: $("#activity-list"),
   alertsStrip: $("#alerts-strip"),
+  precipCard: $("#precip-card"),
+  precipHeadline: $("#precip-headline"),
+  precipSub: $("#precip-sub"),
+  precip24h: $("#precip-24h"),
+  precipWeek: $("#precip-week"),
+  precipDry: $("#precip-dry"),
+  precipBars: $("#precip-bars"),
+  precipTonePill: $("#precip-tone-pill"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
   comfortStrip: $("#comfort-strip"),
@@ -193,6 +202,7 @@ export const ui = {
     renderActivity(weather);
     renderAlerts(weather);
     renderWeekend(weather);
+    renderPrecipOutlook(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -680,6 +690,80 @@ function renderWeekend(w) {
   el.weekendChip.onclick = () => {
     if (snap.ts) state.handlers.onHourClick?.(snap.ts);
   };
+}
+
+function renderPrecipOutlook(w) {
+  if (!el.precipCard) return;
+  const info = precipOutlook(w);
+  if (!info) {
+    el.precipCard.hidden = true;
+    return;
+  }
+  el.precipCard.hidden = false;
+  el.precipCard.dataset.tone = info.tone;
+
+  el.precipHeadline.textContent = info.headline;
+  const wet = wettestLabel(info.wettest, w?.timezone);
+  const sub = [
+    info.next24Hours > 0 ? `${info.next24Hours} wet hour${info.next24Hours === 1 ? "" : "s"} today` : null,
+    wet ? `Wettest: ${wet}` : null,
+  ].filter(Boolean).join(" · ");
+  el.precipSub.textContent = sub || `Max ${info.next24MaxPop}% chance`;
+
+  el.precip24h.textContent = fmtMm(info.next24Total);
+  el.precipWeek.textContent = fmtMm(info.weekTotal);
+  el.precipDry.textContent = `${info.dryDays}/7`;
+
+  if (el.precipTonePill) {
+    const toneLabel = { wet: "Wet", mix: "Mixed", dry: "Dry" }[info.tone] || "";
+    const toneCls = { wet: "up", mix: "flat", dry: "down" }[info.tone] || "flat";
+    el.precipTonePill.className = `trend ${toneCls}`;
+    el.precipTonePill.textContent = toneLabel;
+  }
+
+  renderPrecipBars(info.daily, w?.timezone);
+}
+
+function fmtMm(mm) {
+  if (mm == null) return "—";
+  if (mm < 0.1) return "0";
+  if (mm < 1) return mm.toFixed(1);
+  if (mm < 10) return mm.toFixed(1);
+  return String(Math.round(mm));
+}
+
+function renderPrecipBars(days, tz) {
+  if (!el.precipBars) return;
+  const maxMm = Math.max(1, ...days.map((d) => d.precip ?? 0));
+  // Mark today so the strip has a visual anchor.
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayMs = todayStart.getTime();
+  el.precipBars.innerHTML = days.map((d) => {
+    const mm = d.precip ?? 0;
+    const h = Math.max(2, (mm / maxMm) * 100);
+    const name = new Date(d.time).toLocaleDateString(undefined, {
+      weekday: "narrow",
+      ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    });
+    const isToday = d.time >= todayMs && d.time < todayMs + 24 * 3600_000;
+    const title = `${name} · ${mm.toFixed(1)} mm · ${d.pop ?? 0}% chance`;
+    const popClass = (d.pop ?? 0) >= 50 ? "has-pop" : "";
+    return `
+      <div class="precip-bar ${isToday ? "today" : ""} ${popClass}" title="${escapeHtml(title)}" data-ts="${d.time}">
+        <div class="precip-bar-fill" style="height:${h.toFixed(1)}%"></div>
+        <span class="precip-bar-mm">${mm >= 0.5 ? mm.toFixed(mm < 10 ? 1 : 0) : ""}</span>
+        <span class="precip-bar-day">${escapeHtml(name)}</span>
+      </div>
+    `;
+  }).join("");
+  el.precipBars.querySelectorAll(".precip-bar[data-ts]").forEach((bar) => {
+    bar.addEventListener("click", () => {
+      const ts = parseInt(bar.dataset.ts, 10);
+      // Jump to that day's noon so the scrubber lands in daytime.
+      if (ts) state.handlers.onHourClick?.(ts + 12 * 3600_000);
+    });
+  });
 }
 
 function renderAlerts(w) {

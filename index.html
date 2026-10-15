@@ -318,6 +318,25 @@
           <ul id="activity-list" class="activity-list"></ul>
         </div>
 
+        <div class="extra-card glass" id="precip-card" hidden>
+          <span class="metric-label">
+            <span id="precip-label-text">Rain outlook</span>
+            <span id="precip-tone-pill" class="trend"></span>
+          </span>
+          <div class="precip-row">
+            <div class="precip-headline">
+              <strong id="precip-headline">—</strong>
+              <span id="precip-sub" class="precip-sub">—</span>
+            </div>
+            <div class="precip-stats">
+              <span class="precip-stat"><span id="precip-24h">—</span><span class="precip-stat-label">next 24h</span></span>
+              <span class="precip-stat"><span id="precip-week">—</span><span class="precip-stat-label">7-day</span></span>
+              <span class="precip-stat"><span id="precip-dry">—</span><span class="precip-stat-label">dry days</span></span>
+            </div>
+          </div>
+          <div class="precip-bars" id="precip-bars" aria-hidden="true"></div>
+        </div>
+
         <div class="extra-card glass" id="sun-card">
           <span class="metric-label"><span id="sun-next-label">Sun</span> <span id="sun-countdown" class="sun-countdown"></span></span>
           <svg id="sun-arc" class="sun-arc" viewBox="0 0 200 84" aria-hidden="true">
