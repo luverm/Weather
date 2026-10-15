@@ -1027,8 +1027,10 @@ kbd {
   transition: transform 400ms var(--ease), background 300ms var(--ease);
 }
 .metric:hover { transform: translateY(-2px); }
-/* On dark tones (night / warm sunset), bump the glass background a touch so
-   the mid-page cards remain legible against the dim sky canvas. */
+/* On dark tones (night / warm sunset), stack a small white wash over the
+   glass so the mid-page cards remain legible against the dim sky canvas.
+   Setting both background-color and background-image avoids the browser
+   dropping the color layer (var(--glass) is not valid as background-image). */
 :not([data-tone="bright"]) .metric,
 :not([data-tone="bright"]) .extra-card,
 :not([data-tone="bright"]) .chart-card,
@@ -1036,7 +1038,8 @@ kbd {
 :not([data-tone="bright"]) .daily,
 :not([data-tone="bright"]) .insights,
 :not([data-tone="bright"]) .radar {
-  background: linear-gradient(rgba(255,255,255,0.04), rgba(255,255,255,0.04)), var(--glass);
+  background-color: var(--glass);
+  background-image: linear-gradient(rgba(255,255,255,0.08), rgba(255,255,255,0.08));
 }
 .metric-label {
   grid-column: 1 / span 2;
