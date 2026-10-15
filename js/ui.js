@@ -1365,17 +1365,65 @@ function bindSearch() {
       el.searchResults.hidden = false;
     }
   });
+  // Keyboard navigation inside the dropdown.
+  el.searchInput.addEventListener("keydown", (e) => {
+    if (el.searchResults.hidden) return;
+    const items = selectableResultItems();
+    if (!items.length) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      moveSearchCursor(1, items);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      moveSearchCursor(-1, items);
+    } else if (e.key === "Enter") {
+      const active = el.searchResults.querySelector("li.active");
+      const idx = active ? parseInt(active.dataset.index, 10) : 0;
+      const pick = el.searchResults._items?.[idx];
+      if (pick) {
+        e.preventDefault();
+        acceptSearchResult(pick);
+      }
+    }
+  });
   el.searchResults.addEventListener("click", (e) => {
     const li = e.target.closest("li");
     if (!li) return;
     const i = parseInt(li.dataset.index, 10);
     const item = el.searchResults._items?.[i];
     if (!item) return;
-    el.searchInput.value = item.name;
-    el.searchResults.hidden = true;
-    places.add(item);
-    state.handlers.onSearchSelect?.(item);
+    acceptSearchResult(item);
   });
+  // Hover highlights without stealing from keyboard — keeps mouse + keys
+  // in sync.
+  el.searchResults.addEventListener("pointermove", (e) => {
+    const li = e.target.closest("li[data-index]");
+    if (!li) return;
+    el.searchResults.querySelectorAll("li.active").forEach((n) => n.classList.remove("active"));
+    li.classList.add("active");
+  });
+}
+
+function selectableResultItems() {
+  return el.searchResults.querySelectorAll("li[data-index]");
+}
+
+function moveSearchCursor(dir, items) {
+  const list = items || selectableResultItems();
+  if (!list.length) return;
+  const current = el.searchResults.querySelector("li.active");
+  let idx = current ? [...list].indexOf(current) : -1;
+  idx = (idx + dir + list.length) % list.length;
+  list.forEach((n) => n.classList.remove("active"));
+  list[idx].classList.add("active");
+  list[idx].scrollIntoView({ block: "nearest" });
+}
+
+function acceptSearchResult(item) {
+  el.searchInput.value = item.name;
+  el.searchResults.hidden = true;
+  places.add(item);
+  state.handlers.onSearchSelect?.(item);
 }
 
 function bindUnitToggle() {
