@@ -99,5 +99,15 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     });
   }
 
+  // 6. Weekly precip total — complements the Next rain insight by giving an
+  // overall volume sense.
+  const weekTotal = days.reduce((s, d) => s + (d.precip ?? 0), 0);
+  if (weekTotal >= 2) {
+    out.push({
+      icon: ICONS.rain, label: "Week total",
+      value: `${weekTotal.toFixed(weekTotal < 10 ? 1 : 0)} mm over 7 days`,
+    });
+  }
+
   return out.slice(0, 6);
 }
