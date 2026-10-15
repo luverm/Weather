@@ -234,6 +234,18 @@ html[data-reduce-motion="true"] *::after {
   font-size: 15px; color: var(--fg);
 }
 .search input::placeholder { color: var(--fg-dim); }
+.search input::-webkit-search-cancel-button { display: none; }
+.search-clear {
+  width: 20px; height: 20px;
+  display: grid; place-items: center;
+  color: var(--fg-dim);
+  border-radius: 50%;
+  flex: 0 0 auto;
+  background: rgba(255,255,255,0.08);
+  transition: color 150ms var(--ease), background 150ms var(--ease);
+}
+.search-clear[hidden] { display: none; }
+.search-clear:hover { color: var(--fg); background: rgba(255,255,255,0.14); }
 
 .search-results {
   position: absolute;

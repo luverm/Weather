@@ -132,6 +132,7 @@ const el = {
   nowcastBars: $("#nowcast-bars"),
   searchInput: $("#search-input"),
   searchResults: $("#search-results"),
+  searchClear: $("#search-clear"),
   locateBtn: $("#locate-btn"),
   audioBtn: $("#audio-btn"),
   hintText: $("#hint-text"),
@@ -1405,11 +1406,18 @@ function showRecentsIfAny() {
 function bindSearch() {
   el.searchInput.addEventListener("input", (e) => {
     const v = e.target.value.trim();
+    if (el.searchClear) el.searchClear.hidden = !v;
     if (v.length < 2) {
       showRecentsIfAny();
       return;
     }
     runSearch(v);
+  });
+  el.searchClear?.addEventListener("click", () => {
+    el.searchInput.value = "";
+    el.searchClear.hidden = true;
+    el.searchInput.focus();
+    showRecentsIfAny();
   });
   el.searchInput.addEventListener("blur", () => {
     setTimeout(() => (el.searchResults.hidden = true), 150);
