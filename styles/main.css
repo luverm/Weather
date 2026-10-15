@@ -800,6 +800,10 @@ html[data-reduce-motion="true"] *::after {
   opacity: 0.55;
 }
 .legend-swatch.precip { background: rgba(154, 209, 255, 0.55); }
+.legend-swatch.accum {
+  background: repeating-linear-gradient(90deg, #9ad1ff 0 3px, transparent 3px 6px);
+  opacity: 0.8;
+}
 
 .chart-wrap {
   position: relative;
@@ -850,6 +854,7 @@ html[data-reduce-motion="true"] *::after {
   touch-action: pan-y;
 }
 .chart-temp-line { filter: drop-shadow(0 1px 3px rgba(154, 209, 255, 0.35)); }
+.chart-precip-accum { color: #9ad1ff; }
 .chart-precip rect {
   fill: rgba(154, 209, 255, 0.42);
   transition: fill 150ms var(--ease);

@@ -224,6 +224,31 @@ export class HourlyChart {
       }
     }
 
+    // Precipitation accumulation line — only drawn when the day will see
+    // more than 1 mm total, so the chart stays clean on dry days.
+    const accumPath = this.svg.querySelector("#chart-precip-accum");
+    if (accumPath) {
+      let total = 0;
+      const cum = this.hours.map((h) => (total += h.precip ?? 0));
+      const sumAll = total;
+      if (sumAll >= 1) {
+        // Map 0..sumAll to the lower band of the chart (bottom 50%), inverted.
+        const aBot = H - PAD_BOT - 2;
+        const aTop = PAD_TOP + innerH * 0.5;
+        const aRange = aBot - aTop;
+        let d = "";
+        cum.forEach((v, i) => {
+          const y = aBot - (v / sumAll) * aRange;
+          d += (i === 0 ? "M" : "L") + iToX(i).toFixed(1) + "," + y.toFixed(1) + " ";
+        });
+        accumPath.setAttribute("d", d.trim());
+        accumPath.setAttribute("opacity", "0.55");
+      } else {
+        accumPath.setAttribute("d", "");
+        accumPath.setAttribute("opacity", "0");
+      }
+    }
+
     // Precipitation probability bars (0-100% -> 0..12px height)
     const precipG = this.svg.querySelector("#chart-precip");
     precipG.innerHTML = "";
