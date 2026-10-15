@@ -1657,6 +1657,7 @@ function bindShare() {
       ? `Sunrise ${fmtTime(w.sunrise)} · Sunset ${fmtTime(w.sunset)}`
       : null;
     const emoji = conditionEmoji(w.condition, w.isDay);
+    const link = window.location.href;
     const lines = [
       `${emoji} Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
@@ -1668,6 +1669,7 @@ function bindShare() {
       outlook ? `Rain: ${outlook.headline}` : null,
       nextRainHour ? `Next rain ~ ${fmtTime(nextRainHour.time)} (${nextRainHour.pop}%)` : null,
       sunTxt,
+      link.includes("lat=") ? link : null,
     ].filter(Boolean);
     const text = lines.join("\n");
     try {
