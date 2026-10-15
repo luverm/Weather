@@ -12,6 +12,7 @@ import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { precipOutlook, wettestLabel } from "./precipitation.js";
 import { moonTimes, nextPhases } from "./moon.js";
+import { dayScore } from "./day-score.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -1092,8 +1093,12 @@ function renderDaily(w) {
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const badge = dayScore(d);
+    const dot = badge
+      ? `<span class="day-score day-score-${badge.cls}" title="${badge.label} day (${badge.score}/100)" aria-label="${badge.label} day">${badge.label}</span>`
+      : "";
     item.innerHTML = `
-      <span class="daily-day">${day}</span>
+      <span class="daily-day">${day}${dot}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>

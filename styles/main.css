@@ -1727,7 +1727,32 @@ kbd {
   transition: background 200ms var(--ease);
 }
 .daily-item:hover { background: var(--glass); }
-.daily-day { font-size: 13px; font-weight: 500; }
+.daily-day {
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.day-score {
+  display: inline-block;
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-muted);
+  background: rgba(255,255,255,0.05);
+}
+.day-score-great { color: #78d06a; background: rgba(120,208,106,0.12); border-color: rgba(120,208,106,0.3); }
+.day-score-good  { color: #9ad1ff; background: rgba(154,209,255,0.12); border-color: rgba(154,209,255,0.3); }
+.day-score-mixed { color: #ffd36a; background: rgba(255,211,106,0.12); border-color: rgba(255,211,106,0.3); }
+.day-score-rough { color: #ff9f5c; background: rgba(255,159,92,0.14); border-color: rgba(255,159,92,0.32); }
+.day-score-bad   { color: #ff6a6a; background: rgba(255,106,106,0.15); border-color: rgba(255,106,106,0.35); }
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
 .daily-range {
   position: relative;
