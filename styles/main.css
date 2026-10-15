@@ -369,7 +369,13 @@ html[data-reduce-motion="true"] *::after {
 .place-localtime .clock-dot {
   width: 5px; height: 5px; border-radius: 50%;
   background: var(--accent); box-shadow: 0 0 6px var(--accent);
+  animation: clockPulse 2s ease-in-out infinite;
 }
+@keyframes clockPulse {
+  0%, 100% { opacity: 0.95; transform: scale(1); }
+  50%      { opacity: 0.5;  transform: scale(0.85); }
+}
+[data-reduce-motion="true"] .place-localtime .clock-dot { animation: none; }
 .narrative {
   margin: 14px 0 0;
   max-width: 52ch;
