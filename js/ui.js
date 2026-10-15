@@ -48,6 +48,7 @@ const el = {
   aqCard: $("#aq-card"),
   aqTrendLine: $("#aq-trend-line"),
   aqTrendFill: $("#aq-trend-fill"),
+  aqBreakdown: $("#aq-breakdown"),
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
@@ -167,6 +168,7 @@ export const ui = {
     bindSettings();
     bindTilt();
     bindHeroDoubleClick();
+    bindAqExpand();
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
@@ -582,6 +584,27 @@ function renderAirQuality(aq) {
   el.aqDetail.textContent =
     `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
   renderAqTrend(aq);
+  renderAqBreakdown(aq);
+}
+
+function renderAqBreakdown(aq) {
+  if (!el.aqBreakdown) return;
+  const items = [
+    { label: "PM₂.₅", v: aq.pm25, unit: "µg/m³", precision: 1 },
+    { label: "PM₁₀",  v: aq.pm10, unit: "µg/m³", precision: 1 },
+    { label: "O₃",    v: aq.o3,   unit: "µg/m³", precision: 0 },
+    { label: "NO₂",   v: aq.no2,  unit: "µg/m³", precision: 1 },
+    { label: "CO",    v: aq.co,   unit: "µg/m³", precision: 2 },
+  ].filter((x) => x.v != null);
+  if (!items.length) {
+    el.aqBreakdown.innerHTML = "";
+    return;
+  }
+  el.aqBreakdown.innerHTML = items.map((i) =>
+    `<div class="aq-pollutant"><span class="aq-pollutant-label">${i.label}</span>` +
+    `<strong>${i.v.toFixed(i.precision)}</strong>` +
+    `<span class="aq-pollutant-unit">${i.unit}</span></div>`
+  ).join("");
 }
 
 function renderAqTrend(aq) {
@@ -1701,6 +1724,17 @@ function bindShare() {
     } catch (err) {
       if (err?.name !== "AbortError") ui.showToast("Share failed");
     }
+  });
+}
+
+function bindAqExpand() {
+  if (!el.aqCard || !el.aqBreakdown) return;
+  el.aqCard.style.cursor = "pointer";
+  el.aqCard.addEventListener("click", (e) => {
+    // Ignore clicks on sub-interactive children (none right now, but future-proof).
+    if (e.target.closest("button, a")) return;
+    el.aqBreakdown.hidden = !el.aqBreakdown.hidden;
+    el.aqCard.classList.toggle("expanded", !el.aqBreakdown.hidden);
   });
 }
 
