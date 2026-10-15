@@ -93,6 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
+    past_days: 1,
     past_hours: 1,
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
@@ -130,10 +131,30 @@ function normalize(d, aq) {
 
   // 24-hour hourly forecast starting from the next hour.
   const hourly = [];
+  // Yesterday-at-this-hour reading, captured from the past_days=1 slice
+  // so we can show a "warmer / cooler than yesterday" chip in the hero.
+  let yesterdayAtThisHour = null;
   if (d.hourly?.time) {
-    for (let i = 0; i < d.hourly.time.length && hourly.length < 24; i++) {
+    const yTarget = now - 24 * 3600_000;
+    let yBest = Infinity;
+    for (let i = 0; i < d.hourly.time.length; i++) {
       const t = new Date(d.hourly.time[i]).getTime();
+      const diff = Math.abs(t - yTarget);
+      // Match within ±90 min so we don't grab the current day accidentally.
+      if (diff < yBest && diff < 90 * 60_000) {
+        const temp = d.hourly.temperature_2m?.[i];
+        if (temp != null) {
+          yBest = diff;
+          yesterdayAtThisHour = {
+            time: t,
+            temp,
+            feelsLike: d.hourly.apparent_temperature?.[i],
+            ...mapWmo(d.hourly.weather_code[i]),
+          };
+        }
+      }
       if (t < now - 30 * 60 * 1000) continue; // allow slight past for scrubbing
+      if (hourly.length >= 24) continue;
       hourly.push({
         time: t,
         temp: d.hourly.temperature_2m[i],
@@ -213,6 +234,7 @@ function normalize(d, aq) {
     daily: dailyForecast,
     nowcast,
     moon,
+    yesterday: yesterdayAtThisHour,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
     fetchedAt: now,
@@ -388,6 +410,7 @@ function mock(lat, lon) {
     })),
     nowcast: [],
     moon: computeMoonPhase(new Date()),
+    yesterday: { time: now - 24 * 3600_000, temp: 15, feelsLike: 14, condition: CONDITIONS.CLOUDS, label: "Cloudy" },
     airQuality: { aqi: 42, pm25: 8, pm10: 14, o3: 40, no2: 15, co: 0.2, label: "Good" },
     pollen: {
       items: [

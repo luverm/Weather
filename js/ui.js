@@ -50,6 +50,9 @@ const el = {
   moonRise: $("#moon-rise"),
   moonSet: $("#moon-set"),
   moonNextPill: $("#moon-next-pill"),
+  yesterdayChip: $("#yesterday-chip"),
+  yesterdayArrow: $("#yesterday-arrow"),
+  yesterdayText: $("#yesterday-text"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -292,6 +295,32 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  renderYesterdayChip(w);
+}
+
+function renderYesterdayChip(w) {
+  if (!el.yesterdayChip) return;
+  // Use the live weather's yesterday reading, not the sampled one — the
+  // comparison is always "now vs 24h ago".
+  const y = state.weather?.yesterday;
+  const cur = state.weather?.temp;
+  if (!y || y.temp == null || cur == null) {
+    el.yesterdayChip.hidden = true;
+    return;
+  }
+  const deltaC = cur - y.temp;
+  // Scale to active unit.
+  const deltaDisplay = Math.round(state.unit === "F" ? deltaC * 9 / 5 : deltaC);
+  // Hide chip when it's basically the same temp — stays out of the way.
+  if (Math.abs(deltaDisplay) < 1) {
+    el.yesterdayChip.hidden = true;
+    return;
+  }
+  el.yesterdayChip.hidden = false;
+  const sign = deltaDisplay > 0 ? "warmer" : "cooler";
+  el.yesterdayChip.dataset.dir = deltaDisplay > 0 ? "up" : "down";
+  el.yesterdayArrow.textContent = deltaDisplay > 0 ? "▲" : "▼";
+  el.yesterdayText.textContent = `${Math.abs(deltaDisplay)}° ${sign} than yesterday`;
 }
 
 function renderDayRange(w) {
