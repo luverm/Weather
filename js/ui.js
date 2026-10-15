@@ -227,6 +227,7 @@ export const ui = {
       });
     }
     renderPlaces();
+    updatePageTitle(weather);
   },
   /** Called by the scrubber whenever simulated time moves. */
   setSampledWeather(sampled, { highlightHourIndex } = {}) {
@@ -1562,6 +1563,19 @@ function bindTilt() {
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function updatePageTitle(w) {
+  if (!w) return;
+  const place = state.place?.name || "Aether";
+  const t = w.temp != null
+    ? `${Math.round(convertTemp(w.temp))}°${state.unit}`
+    : null;
+  const parts = [];
+  if (t) parts.push(t);
+  if (place) parts.push(place);
+  const prefix = parts.length ? `${parts.join(" · ")} — ` : "";
+  document.title = `${prefix}Aether`;
 }
 
 // Export renderPlaces so the app can refresh the strip after a load.
