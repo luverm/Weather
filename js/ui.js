@@ -435,9 +435,15 @@ function renderMetrics(w) {
     }
   }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
-  el.metricPressureSub.textContent = w.visibility != null
-    ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
-    : "visibility —";
+  if (w.visibility != null) {
+    const km = Math.round((w.visibility / 1000) * 10) / 10;
+    const label = visibilityLabel(w.visibility);
+    el.metricPressureSub.textContent = label
+      ? `${km} km · ${label}`
+      : `${km} km visibility`;
+  } else {
+    el.metricPressureSub.textContent = "visibility —";
+  }
   if (el.pressureStory) {
     const story = pressureStory(w);
     el.pressureStory.textContent = story || "";
@@ -496,6 +502,17 @@ function beaufort(kmh) {
   if (kmh < 103) return { label: "Storm", cls: "up" };
   if (kmh < 118) return { label: "Violent storm", cls: "up" };
   return { label: "Hurricane", cls: "up" };
+}
+
+function visibilityLabel(m) {
+  if (m == null) return null;
+  if (m < 500)   return "dense fog";
+  if (m < 1000)  return "fog";
+  if (m < 2000)  return "mist";
+  if (m < 5000)  return "haze";
+  if (m < 10000) return "slight haze";
+  if (m < 20000) return "clear";
+  return "crystal clear";
 }
 
 function uvLevel(v) {
