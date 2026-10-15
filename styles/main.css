@@ -830,6 +830,12 @@ html[data-reduce-motion="true"] *::after {
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
 }
+.chart-comfort {
+  fill: rgba(120, 208, 106, 0.09);
+  stroke: rgba(120, 208, 106, 0.18);
+  stroke-width: 0.4;
+  stroke-dasharray: 3 3;
+}
 .chart-labels text {
   font-size: 9px;
   fill: var(--fg-dim);

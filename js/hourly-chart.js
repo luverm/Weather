@@ -244,6 +244,27 @@ export class HourlyChart {
       precipG.appendChild(r);
     });
 
+    // Comfort band: translucent horizontal band at 16..24°C — the "comfortable"
+    // range for most people. If the chart range doesn't cover any of it, hide it.
+    const comfort = this.svg.querySelector("#chart-comfort");
+    if (comfort) {
+      const LO = 16, HI = 24;
+      const topT = Math.min(HI, tMax);
+      const botT = Math.max(LO, tMin);
+      if (topT > botT) {
+        const yTop = tToY(topT);
+        const yBot = tToY(botT);
+        comfort.setAttribute("x", String(PAD_LEFT));
+        comfort.setAttribute("width", String(innerW));
+        comfort.setAttribute("y", yTop.toFixed(1));
+        comfort.setAttribute("height", Math.max(0, yBot - yTop).toFixed(1));
+        comfort.setAttribute("opacity", "1");
+      } else {
+        comfort.setAttribute("height", "0");
+        comfort.setAttribute("opacity", "0");
+      }
+    }
+
     // Night shading: dim rectangles where !isDay
     const nightG = this.svg.querySelector("#chart-night");
     nightG.innerHTML = "";
