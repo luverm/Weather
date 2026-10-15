@@ -1268,6 +1268,7 @@ function renderNowcast(w) {
   const first = nowcast.find((n) => n.precip > 0.1);
   if (!first) {
     el.nowcast.hidden = true;
+    el.nowcast.classList.remove("imminent");
     return;
   }
   const inMin = Math.max(0, Math.round((first.time - Date.now()) / 60_000));
@@ -1275,6 +1276,9 @@ function renderNowcast(w) {
   el.nowcastHeadline.textContent = inMin === 0
     ? `${kind} now`
     : `${kind} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
+  // Pulse when rain is landing or ≤15 min out — draws attention without
+  // being noisy for a two-hour heads-up.
+  el.nowcast.classList.toggle("imminent", inMin <= 15);
   // 2h outlook summary.
   const totalMm = nowcast.reduce((s, n) => s + (n.precip || 0), 0);
   el.nowcastSub.textContent = `${totalMm.toFixed(1)} mm expected in the next 2 hours`;
