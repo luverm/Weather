@@ -1729,6 +1729,11 @@ kbd {
   transition: background 200ms var(--ease);
 }
 .daily-item:hover { background: var(--glass); }
+.daily-item.today {
+  background: rgba(255,255,255,0.05);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.daily-item.today .daily-day { color: var(--accent); }
 .daily-day {
   font-size: 13px;
   font-weight: 500;

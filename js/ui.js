@@ -1098,6 +1098,7 @@ function renderDaily(w) {
     const dot = badge
       ? `<span class="day-score day-score-${badge.cls}" title="${badge.label} day (${badge.score}/100)" aria-label="${badge.label} day">${badge.label}</span>`
       : "";
+    if (i === 0) item.classList.add("today");
     item.innerHTML = `
       <span class="daily-day">${day}${dot}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
