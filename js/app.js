@@ -302,6 +302,23 @@ installShortcuts({
     if (app.weather) applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
   },
+  jumpToDay: (idx) => {
+    const day = app.weather?.daily?.[idx];
+    if (!day) return;
+    // Target noon in the location's timezone so the sky is daytime.
+    // We approximate with sunrise + half-daylight when available, else noon.
+    let target;
+    if (day.sunrise && day.sunset) {
+      target = day.sunrise + (day.sunset - day.sunrise) / 2;
+    } else {
+      target = day.time + 12 * 3600_000;
+    }
+    clock.setOffset(target - Date.now());
+    scrubber.sync();
+    if (app.weather) applyScene(app.weather);
+    ui.setScrubbing(!clock.isLive());
+    ui.showToast?.(`Jumped to day ${idx + 1}`);
+  },
 });
 
 // ---------- Start ----------
