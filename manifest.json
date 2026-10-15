@@ -1,18 +1,37 @@
 {
   "name": "Aether — Interactive Weather",
   "short_name": "Aether",
-  "description": "An immersive, animated weather experience.",
+  "description": "An immersive, animated weather experience — live radar, scrubbable timeline, air quality, moon phase and a 7-day outlook.",
   "start_url": "./index.html",
+  "scope": "./",
+  "lang": "en",
+  "dir": "ltr",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "orientation": "any",
   "background_color": "#0b1020",
   "theme_color": "#0b1020",
-  "orientation": "any",
+  "categories": ["weather", "utilities", "lifestyle"],
   "icons": [
     {
       "src": "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%230b1020'/%3E%3Ccircle cx='256' cy='256' r='130' fill='%23fff1c9'/%3E%3Ccircle cx='256' cy='256' r='200' fill='none' stroke='%239ad1ff' stroke-opacity='0.35' stroke-width='6'/%3E%3C/svg%3E",
       "sizes": "192x192 512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Use my location",
+      "short_name": "Here",
+      "description": "Load current location's weather",
+      "url": "./index.html?action=locate"
+    },
+    {
+      "name": "Live radar",
+      "short_name": "Radar",
+      "description": "Jump straight to the radar card",
+      "url": "./index.html#radar-card"
     }
   ]
 }

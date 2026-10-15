@@ -351,6 +351,16 @@ installShortcuts({
 
 // ---------- Start ----------
 (async function init() {
+  // PWA shortcut: ?action=locate always triggers geolocation.
+  try {
+    const u = new URL(window.location.href);
+    if (u.searchParams.get("action") === "locate") {
+      u.searchParams.delete("action");
+      window.history.replaceState(null, "", u);
+      await useGeolocation();
+      return;
+    }
+  } catch { /* ignore */ }
   // Deep link (?lat=&lon=&name=) wins over anything else — someone shared a URL.
   const linked = placeFromUrl();
   if (linked) {
