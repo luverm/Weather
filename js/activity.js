@@ -48,7 +48,7 @@ function activityScore(h) {
   return Math.round(tw + ww + pw + daytimeBonus - uvPenalty(h.uv));
 }
 
-function stargazeScore(h) {
+function stargazeScore(h, ctx = {}) {
   if (!h) return 0;
   // Need: night, clear, dry. Cloud cover not in hourly — proxy via condition.
   if (h.isDay) return 0;
@@ -59,7 +59,10 @@ function stargazeScore(h) {
   const base = isClear ? 95 : isCloudy ? 35 : 60;
   const popPenalty = (h.pop ?? 0) * 0.6;
   const windPenalty = Math.max(0, ((h.wind ?? 0) - 18) * 2);
-  return Math.max(0, Math.round(base - popPenalty - windPenalty));
+  // Moonlight washes out faint stars. Illum 0..1 — a full moon hurts, a new
+  // moon barely registers.
+  const moonPenalty = (ctx.moonIllum ?? 0) * 28;
+  return Math.max(0, Math.round(base - popPenalty - windPenalty - moonPenalty));
 }
 
 function rollingPeak(hours, scoreFn, span) {
@@ -119,9 +122,13 @@ export function findActivityWindows(weather) {
     });
   }
 
-  // Stargazing: 2h window.
-  const stars = rollingPeak(hours, stargazeScore, 2);
+  // Stargazing: 2h window. Pass moon context so bright moonlight tempers the
+  // score.
+  const starCtx = { moonIllum: weather?.moon?.illum ?? 0 };
+  const stars = rollingPeak(hours, (h) => stargazeScore(h, starCtx), 2);
   if (stars && stars.score >= 60) {
+    const moonWhy = starCtx.moonIllum >= 0.6
+      ? `moon ${Math.round(starCtx.moonIllum * 100)}%` : null;
     out.push({
       kind: "stars",
       icon: ICONS.stars,
@@ -129,7 +136,7 @@ export function findActivityWindows(weather) {
       start: hours[stars.startIdx].time,
       end: hours[stars.endIdx].time + 60 * 60 * 1000,
       score: Math.round(stars.score),
-      why: reasonsFor(stars, hours),
+      why: [...reasonsFor(stars, hours), moonWhy].filter(Boolean),
     });
   }
 
