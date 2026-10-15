@@ -203,6 +203,12 @@ export const ui = {
   setWeather(weather, { narrative } = {}) {
     state.weather = weather;
     state.sampledWeather = weather; // initially same as live
+    // Restore the place subtitle (setLoading replaced it with "Fetching…"
+    // while the request was in flight).
+    if (state.place) {
+      const sub = [state.place.admin1, state.place.country].filter(Boolean).join(", ");
+      el.placeSub.textContent = sub || "—";
+    }
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
