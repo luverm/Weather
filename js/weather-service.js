@@ -92,6 +92,7 @@ export async function getWeather(lat, lon) {
       "wind_speed_10m_max", "wind_gusts_10m_max", "uv_index_max",
     ].join(","),
     timezone: "auto",
+    timeformat: "unixtime",
     forecast_days: 7,
     past_days: 1,
     past_hours: 1,
@@ -110,6 +111,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     hourly: ["european_aqi", "us_aqi"].join(","),
     timezone: "auto",
+    timeformat: "unixtime",
   });
   const aqUrl = `${AIR_QUALITY}?${aqParams.toString()}`;
 
@@ -121,6 +123,20 @@ export async function getWeather(lat, lon) {
     console.warn("Weather fetch failed, using mock", err);
     return mock(lat, lon);
   }
+}
+
+// Open-Meteo returns time either as "2024-01-01T12:00" (local to the city, no
+// tz) or as a unix timestamp in seconds (when timeformat=unixtime). Unix
+// timestamps are unambiguous: they always represent the real moment, so Intl
+// can convert them to any display timezone correctly. We request unixtime, so
+// this helper just multiplies by 1000 — but we also handle string input in
+// case a mock or an old cached response flows through.
+function toMs(v) {
+  if (v == null) return null;
+  if (typeof v === "number") return v * 1000;
+  const n = Number(v);
+  if (!Number.isNaN(n) && String(v).length <= 11) return n * 1000;
+  return new Date(v).getTime();
 }
 
 function normalize(d, aq) {
@@ -138,7 +154,7 @@ function normalize(d, aq) {
     const yTarget = now - 24 * 3600_000;
     let yBest = Infinity;
     for (let i = 0; i < d.hourly.time.length; i++) {
-      const t = new Date(d.hourly.time[i]).getTime();
+      const t = toMs(d.hourly.time[i]);
       const diff = Math.abs(t - yTarget);
       // Match within ±90 min so we don't grab the current day accidentally.
       if (diff < yBest && diff < 90 * 60_000) {
@@ -176,7 +192,7 @@ function normalize(d, aq) {
   const dailyForecast = [];
   if (daily.time) {
     for (let i = 0; i < daily.time.length; i++) {
-      const ts = new Date(daily.time[i]).getTime();
+      const ts = toMs(daily.time[i]);
       dailyForecast.push({
         time: ts,
         tempMax: daily.temperature_2m_max?.[i],
@@ -186,8 +202,8 @@ function normalize(d, aq) {
         windMax: daily.wind_speed_10m_max?.[i],
         gustsMax: daily.wind_gusts_10m_max?.[i],
         uvMax: daily.uv_index_max?.[i] ?? null,
-        sunrise: daily.sunrise?.[i] ? new Date(daily.sunrise[i]).getTime() : null,
-        sunset: daily.sunset?.[i] ? new Date(daily.sunset[i]).getTime() : null,
+        sunrise: toMs(daily.sunrise?.[i]),
+        sunset: toMs(daily.sunset?.[i]),
         ...mapWmo(daily.weather_code[i]),
       });
     }
@@ -197,7 +213,7 @@ function normalize(d, aq) {
   const nowcast = [];
   if (d.minutely_15?.time) {
     for (let i = 0; i < d.minutely_15.time.length; i++) {
-      const ts = new Date(d.minutely_15.time[i]).getTime();
+      const ts = toMs(d.minutely_15.time[i]);
       if (ts < now - 15 * 60 * 1000) continue;
       nowcast.push({
         time: ts,
@@ -225,8 +241,8 @@ function normalize(d, aq) {
     isDay: !!c.is_day,
     condition,
     label,
-    sunrise: daily.sunrise?.[0] ? new Date(daily.sunrise[0]).getTime() : null,
-    sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null,
+    sunrise: toMs(daily.sunrise?.[0]),
+    sunset: toMs(daily.sunset?.[0]),
     uv: daily.uv_index_max?.[0] ?? null,
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
@@ -246,7 +262,7 @@ function computePressureTrend(hourly, now) {
   // Find index at or just after "now" and 3h earlier.
   let nowIdx = -1;
   for (let i = 0; i < hourly.time.length; i++) {
-    const t = new Date(hourly.time[i]).getTime();
+    const t = toMs(hourly.time[i]);
     if (t >= now - 30 * 60_000) { nowIdx = i; break; }
   }
   if (nowIdx < 0) return null;
@@ -307,7 +323,7 @@ function normalizeAq(aq) {
     const now = Date.now();
     const series = aq.hourly.us_aqi || aq.hourly.european_aqi || [];
     for (let i = 0; i < aq.hourly.time.length && trend.length < 12; i++) {
-      const ts = new Date(aq.hourly.time[i]).getTime();
+      const ts = toMs(aq.hourly.time[i]);
       if (ts < now - 30 * 60_000) continue;
       if (series[i] == null) continue;
       trend.push({ time: ts, aqi: series[i] });
@@ -340,7 +356,7 @@ function findUvPeak(hourly) {
   let peak = { t: null, v: -Infinity };
   for (let i = 0; i < hourly.uv_index.length; i++) {
     const v = hourly.uv_index[i];
-    if (v > peak.v) peak = { t: new Date(hourly.time[i]).getTime(), v };
+    if (v > peak.v) peak = { t: toMs(hourly.time[i]), v };
   }
   if (peak.t == null) return null;
   return { time: peak.t, value: peak.v };
