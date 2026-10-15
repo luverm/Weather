@@ -421,6 +421,14 @@ setInterval(() => {
   refreshWeather();
 }, 15 * 60_000);
 
+// First-time visit hint — point to the keyboard shortcut overlay once.
+if (!localStorage.getItem("aether:seen-hint")) {
+  setTimeout(() => {
+    ui.showToast?.("Press ? for keyboard shortcuts · [ ] to cycle saved cities", 5000);
+    try { localStorage.setItem("aether:seen-hint", "1"); } catch { /* ignore */ }
+  }, 3500);
+}
+
 // PWA service worker — optional, best-effort. Also surfaces a toast when a
 // new version is ready so the user knows they can refresh to pick it up.
 if ("serviceWorker" in navigator) {
