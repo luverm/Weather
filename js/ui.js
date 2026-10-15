@@ -56,6 +56,8 @@ const el = {
   yesterdayChip: $("#yesterday-chip"),
   yesterdayArrow: $("#yesterday-arrow"),
   yesterdayText: $("#yesterday-text"),
+  cloudChip: $("#cloud-chip"),
+  cloudChipText: $("#cloud-chip-text"),
   goldenRow: $("#golden-row"),
   goldenHour: $("#golden-hour"),
   blueHour: $("#blue-hour"),
@@ -304,6 +306,27 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
   renderYesterdayChip(w);
+  renderCloudChip(w);
+}
+
+function renderCloudChip(w) {
+  if (!el.cloudChip) return;
+  // Live weather carries cloudCover; the sampled view's cloud cover isn't
+  // modeled, so pull from the base weather state when available.
+  const cc = state.weather?.cloudCover;
+  if (cc == null || isNaN(cc)) {
+    el.cloudChip.hidden = true;
+    return;
+  }
+  el.cloudChip.hidden = false;
+  const rounded = Math.round(cc);
+  let label;
+  if (rounded < 10)      label = "Clear sky";
+  else if (rounded < 30) label = "Mostly clear";
+  else if (rounded < 60) label = "Partly cloudy";
+  else if (rounded < 85) label = "Mostly cloudy";
+  else                   label = "Overcast";
+  el.cloudChipText.textContent = `${label} · ${rounded}% cloud`;
 }
 
 function renderYesterdayChip(w) {
