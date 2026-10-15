@@ -1653,7 +1653,15 @@ function applyStoredPreferences() {
 // Exposed so app.js can query the current preference on boot.
 ui.isReduceMotion = () => localStorage.getItem("aether:reduceMotion") === "1";
 
+function bindFetchedAgoClick() {
+  if (!el.fetchedAgo) return;
+  el.fetchedAgo.style.cursor = "pointer";
+  el.fetchedAgo.title = "Click to refresh";
+  el.fetchedAgo.addEventListener("click", () => state.handlers.onRefresh?.());
+}
+
 function startFetchedTicker() {
+  bindFetchedAgoClick();
   const update = () => {
     if (!el.fetchedAgo || !state.weather?.fetchedAt) {
       if (el.fetchedAgo) el.fetchedAgo.textContent = "";
