@@ -13,6 +13,7 @@ import { weekendSnapshot } from "./weekend.js";
 import { precipOutlook, wettestLabel } from "./precipitation.js";
 import { moonTimes, nextPhases } from "./moon.js";
 import { dayScore } from "./day-score.js";
+import { pressureStory } from "./pressure-story.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -78,6 +79,7 @@ const el = {
   humidityComfort: $("#m-humidity-comfort"),
   pressureSparkLine: $("#pressure-spark-line"),
   pressureSparkFill: $("#pressure-spark-fill"),
+  pressureStory: $("#m-pressure-story"),
   humiditySparkLine: $("#humidity-spark-line"),
   humiditySparkFill: $("#humidity-spark-fill"),
   dailySpark: $("#daily-spark"),
@@ -394,6 +396,11 @@ function renderMetrics(w) {
   el.metricPressureSub.textContent = w.visibility != null
     ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
     : "visibility —";
+  if (el.pressureStory) {
+    const story = pressureStory(w);
+    el.pressureStory.textContent = story || "";
+    el.pressureStory.hidden = !story;
+  }
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
