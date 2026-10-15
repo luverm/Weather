@@ -653,7 +653,14 @@ html[data-reduce-motion="true"] *::after {
   text-transform: uppercase;
   letter-spacing: 0.14em;
   font-size: 9.5px;
+  animation: livePulse 1.4s ease-out 1 both;
 }
+@keyframes livePulse {
+  0%   { box-shadow: 0 0 0 0 rgba(154,209,255,0.5); }
+  70%  { box-shadow: 0 0 0 8px rgba(154,209,255,0); }
+  100% { box-shadow: 0 0 0 0 rgba(154,209,255,0); }
+}
+[data-reduce-motion="true"] [data-scrubbing="false"] .scrubber-delta { animation: none; }
 .scrubber-track {
   position: relative;
   height: 36px;
