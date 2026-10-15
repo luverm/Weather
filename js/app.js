@@ -299,7 +299,7 @@ ui.init({
     if (app.weather) applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
   },
-  onLiveReset: () => scrubber.reset(),
+  onLiveReset: () => { scrubber.reset(); navigator.vibrate?.(10); },
 });
 
 // Apply saved reduce-motion preference on boot.
@@ -345,6 +345,7 @@ installShortcuts({
     if (app.weather) applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
     ui.showToast?.(`Jumped to day ${idx + 1}`);
+    navigator.vibrate?.(10);
   },
 });
 
