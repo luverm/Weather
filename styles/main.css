@@ -1739,10 +1739,20 @@ kbd {
 .forecast-icon { width: 26px; height: 26px; display: grid; place-items: center; color: var(--fg-muted); }
 .forecast-temp { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .forecast-pop {
-  font-size: 10px; color: var(--accent); font-variant-numeric: tabular-nums;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
   opacity: 0.9;
+  padding: 1px 5px;
+  border-radius: 999px;
+  transition: color 180ms var(--ease), background 180ms var(--ease);
 }
-.forecast-pop.dim { opacity: 0; }
+.forecast-pop.dim,
+.forecast-pop[data-pop="none"] { opacity: 0; }
+.forecast-pop[data-pop="low"]  { color: var(--accent); opacity: 0.75; }
+.forecast-pop[data-pop="mid"]  { color: #ffd36a; background: rgba(255,211,106,0.1); }
+.forecast-pop[data-pop="high"] { color: #ff9c7a; background: rgba(255,156,122,0.12); }
 
 .daily-track {
   display: grid;
