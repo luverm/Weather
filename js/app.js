@@ -195,10 +195,35 @@ const scrubber = new Scrubber({
 });
 
 // ---------- Load flow ----------
+function updateDeepLink(place) {
+  if (!place || place.lat == null || place.lon == null) return;
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set("lat", place.lat.toFixed(4));
+    url.searchParams.set("lon", place.lon.toFixed(4));
+    if (place.name) url.searchParams.set("name", place.name);
+    else url.searchParams.delete("name");
+    window.history.replaceState(null, "", url);
+  } catch { /* ignore */ }
+}
+
+function placeFromUrl() {
+  try {
+    const u = new URL(window.location.href);
+    const lat = parseFloat(u.searchParams.get("lat"));
+    const lon = parseFloat(u.searchParams.get("lon"));
+    if (!isFinite(lat) || !isFinite(lon)) return null;
+    return { name: u.searchParams.get("name") || "Shared location", lat, lon };
+  } catch {
+    return null;
+  }
+}
+
 async function loadByCoords(place) {
   app.place = place;
   ui.setPlace(place);
   ui.setLoading(`Fetching weather for ${place.name}…`);
+  updateDeepLink(place);
 
   // Drop any scrubber offset so we start live on each new city.
   clock.reset();
@@ -325,6 +350,12 @@ installShortcuts({
 
 // ---------- Start ----------
 (async function init() {
+  // Deep link (?lat=&lon=&name=) wins over anything else — someone shared a URL.
+  const linked = placeFromUrl();
+  if (linked) {
+    await loadByCoords(linked);
+    return;
+  }
   // Prefer the most recent saved place if we have one — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();
