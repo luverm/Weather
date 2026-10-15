@@ -395,10 +395,24 @@ setInterval(() => {
   refreshWeather();
 }, 15 * 60_000);
 
-// PWA service worker — optional, best-effort.
+// PWA service worker — optional, best-effort. Also surfaces a toast when a
+// new version is ready so the user knows they can refresh to pick it up.
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js").catch(() => {});
+  window.addEventListener("load", async () => {
+    try {
+      const reg = await navigator.serviceWorker.register("sw.js");
+      if (!reg) return;
+      const notify = (sw) => {
+        if (!sw) return;
+        sw.addEventListener("statechange", () => {
+          if (sw.state === "installed" && navigator.serviceWorker.controller) {
+            ui.showToast?.("A new Aether version is ready — refresh to update", 5000);
+          }
+        });
+      };
+      notify(reg.installing);
+      reg.addEventListener("updatefound", () => notify(reg.installing));
+    } catch { /* ignore */ }
   });
 }
 
