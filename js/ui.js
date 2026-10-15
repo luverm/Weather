@@ -1624,8 +1624,9 @@ function bindShare() {
     const sunTxt = w.sunrise && w.sunset
       ? `Sunrise ${fmtTime(w.sunrise)} · Sunset ${fmtTime(w.sunset)}`
       : null;
+    const emoji = conditionEmoji(w.condition, w.isDay);
     const lines = [
-      `Aether · ${placeName}`,
+      `${emoji} Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
       today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
       `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
@@ -1677,6 +1678,18 @@ function bindTilt() {
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function conditionEmoji(cond, isDay) {
+  switch (cond) {
+    case "clear": return isDay === false ? "🌙" : "☀️";
+    case "clouds": return "⛅";
+    case "rain": return "🌧️";
+    case "snow": return "🌨️";
+    case "storm": return "⛈️";
+    case "fog": return "🌫️";
+    default: return "🌤️";
+  }
 }
 
 function updatePageTitle(w) {
