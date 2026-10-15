@@ -1570,6 +1570,12 @@ function bindShare() {
     const unit = state.unit;
     const t = (v) => `${Math.round(unit === "F" ? v * 9 / 5 + 32 : v)}°${unit}`;
     const today = w.daily?.[0];
+    const story = pressureStory(w);
+    const outlook = precipOutlook(w);
+    const nextRainHour = (w.hourly || []).find((h) => (h.pop ?? 0) >= 55 || (h.precip ?? 0) > 0.5);
+    const sunTxt = w.sunrise && w.sunset
+      ? `Sunrise ${fmtTime(w.sunrise)} · Sunset ${fmtTime(w.sunset)}`
+      : null;
     const lines = [
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
@@ -1577,6 +1583,10 @@ function bindShare() {
       `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
+      story ? story : null,
+      outlook ? `Rain: ${outlook.headline}` : null,
+      nextRainHour ? `Next rain ~ ${fmtTime(nextRainHour.time)} (${nextRainHour.pop}%)` : null,
+      sunTxt,
     ].filter(Boolean);
     const text = lines.join("\n");
     try {
