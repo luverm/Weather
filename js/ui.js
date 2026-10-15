@@ -807,15 +807,29 @@ function startLocaltime(w) {
       const hour = parts.find((p) => p.type === "hour")?.value ?? "";
       const minute = parts.find((p) => p.type === "minute")?.value ?? "";
       const tzName = parts.find((p) => p.type === "timeZoneName")?.value ?? "";
+      const partOfDay = labelPartOfDay(parseInt(hour, 10));
       el.placeLocaltime.innerHTML =
         `<span class="clock-dot" aria-hidden="true"></span>` +
-        `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)} <span style="color:var(--fg-dim)">${escapeHtml(tzName)}</span>`;
+        `${escapeHtml(day)} ${escapeHtml(hour)}:${escapeHtml(minute)}` +
+        ` <span style="color:var(--fg-dim)">${escapeHtml(partOfDay)} · ${escapeHtml(tzName)}</span>`;
     } catch {
       el.placeLocaltime.textContent = "";
     }
   };
   update();
   state.localTimer = setInterval(update, 10_000);
+}
+
+function labelPartOfDay(hour) {
+  if (isNaN(hour)) return "";
+  if (hour < 5)  return "late night";
+  if (hour < 8)  return "early morning";
+  if (hour < 12) return "morning";
+  if (hour < 14) return "midday";
+  if (hour < 17) return "afternoon";
+  if (hour < 20) return "evening";
+  if (hour < 23) return "night";
+  return "late night";
 }
 
 function renderInsights(w) {
