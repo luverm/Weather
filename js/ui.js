@@ -1632,6 +1632,43 @@ function updatePageTitle(w) {
   if (place) parts.push(place);
   const prefix = parts.length ? `${parts.join(" · ")} — ` : "";
   document.title = `${prefix}Aether`;
+  updateFavicon(w);
+}
+
+// Render a tiny SVG favicon with the current temperature as a number so the
+// browser tab shows live weather at a glance. Color follows the temp.
+function updateFavicon(w) {
+  if (w?.temp == null) return;
+  const t = Math.round(convertTemp(w.temp));
+  const bg = faviconBg(w.temp); // use °C for color decisions
+  const text = String(t);
+  // Shrink text size when it's three characters (e.g. -10, 100).
+  const fontSize = text.length >= 3 ? 36 : 44;
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">` +
+    `<rect width="64" height="64" rx="12" fill="${bg}"/>` +
+    `<text x="32" y="32" text-anchor="middle" dominant-baseline="central" font-family="-apple-system,Segoe UI,sans-serif" font-weight="700" font-size="${fontSize}" fill="#fff">${text}°</text>` +
+    `</svg>`;
+  const href = "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+  let link = document.querySelector("link[rel='icon']");
+  if (!link) {
+    link = document.createElement("link");
+    link.rel = "icon";
+    document.head.appendChild(link);
+  }
+  link.href = href;
+}
+
+function faviconBg(tempC) {
+  if (tempC == null) return "#5f72a3";
+  // Deliberately simple ramp — cold → warm.
+  if (tempC <= -10) return "#2b4b8a";
+  if (tempC <= 0)   return "#3a67a8";
+  if (tempC <= 10)  return "#4e85ba";
+  if (tempC <= 18)  return "#6a9fcc";
+  if (tempC <= 24)  return "#d58550";
+  if (tempC <= 30)  return "#c86a3d";
+  return "#a94530";
 }
 
 // Export renderPlaces so the app can refresh the strip after a load.
