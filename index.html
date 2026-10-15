@@ -122,7 +122,14 @@
       <div class="hero-inner glass" data-tilt>
         <div class="place">
           <p class="place-label"><span id="place-live-dot" class="live-dot"></span><span id="place-label-text">Now in</span></p>
-          <h1 id="place-name" class="place-name">—</h1>
+          <h1 id="place-name" class="place-name">
+            <span id="place-name-text">—</span>
+            <button id="place-save" class="place-save" type="button" aria-label="Save location" hidden>
+              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                <path d="M12 3l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </h1>
           <p id="place-sub" class="place-sub">Fetching atmosphere…</p>
           <p id="place-localtime" class="place-localtime"></p>
           <p id="narrative" class="narrative"></p>

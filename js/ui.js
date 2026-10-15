@@ -22,6 +22,8 @@ const el = {
   temp: $("#temp-value"),
   unitBtn: $("#unit-toggle"),
   placeName: $("#place-name"),
+  placeNameText: $("#place-name-text"),
+  placeSave: $("#place-save"),
   placeSub: $("#place-sub"),
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
@@ -200,7 +202,9 @@ export const ui = {
     state.place = place;
     el.placeName.classList.remove("flip-in"); void el.placeName.offsetWidth;
     el.placeName.classList.add("flip-in");
-    el.placeName.textContent = place.name || "Unknown";
+    if (el.placeNameText) el.placeNameText.textContent = place.name || "Unknown";
+    else el.placeName.textContent = place.name || "Unknown";
+    renderPlaceSaveButton(place);
     const sub = [place.admin1, place.country].filter(Boolean).join(", ");
     el.placeSub.textContent = sub || "—";
     // Reset alert dismissals so a fresh location can re-surface them.
@@ -1391,6 +1395,30 @@ function iconFor(condition) {
 }
 
 // ---------- Saved places strip ----------
+function renderPlaceSaveButton(place) {
+  if (!el.placeSave) return;
+  if (!place || place.lat == null || place.lon == null) {
+    el.placeSave.hidden = true;
+    return;
+  }
+  el.placeSave.hidden = false;
+  const saved = places.all().some((p) => places.idFor(p) === places.idFor(place));
+  el.placeSave.classList.toggle("saved", saved);
+  el.placeSave.title = saved ? "Remove from saved places" : "Save this location";
+  el.placeSave.onclick = () => {
+    const isSaved = places.all().some((p) => places.idFor(p) === places.idFor(place));
+    if (isSaved) {
+      places.remove(place);
+      ui.showToast(`Removed ${place.name}`);
+    } else {
+      places.add(place);
+      ui.showToast(`Saved ${place.name}`);
+    }
+    renderPlaceSaveButton(place);
+    renderPlaces();
+  };
+}
+
 function renderPlaces() {
   const all = places.all();
   if (!all.length) { el.placesStrip.hidden = true; el.placesStrip.innerHTML = ""; return; }
