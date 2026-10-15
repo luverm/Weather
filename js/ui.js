@@ -1108,7 +1108,7 @@ function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
   for (const h of (w.hourly || []).slice(0, 24)) {
     const item = document.createElement("div");
-    item.className = "forecast-item";
+    item.className = "forecast-item" + (h.isDay === false ? " night" : "");
     item.dataset.ts = h.time;
     const pop = h.pop ?? 0;
     const popBand = pop >= 60 ? "high" : pop >= 30 ? "mid" : pop >= 15 ? "low" : "none";
