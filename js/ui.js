@@ -1614,7 +1614,13 @@ function startFetchedTicker() {
     const stale = minutes >= 20;
     el.fetchedAgo.classList.toggle("stale", stale);
     // Also mark the refresh icon so the user knows a tap is worthwhile.
-    if (el.refreshBtn) el.refreshBtn.classList.toggle("stale", stale);
+    if (el.refreshBtn) {
+      el.refreshBtn.classList.toggle("stale", stale);
+      // Exact timestamp in the city's timezone (if we know it) so hovering
+      // the refresh icon gives a precise answer, not just "a few minutes ago".
+      const exact = fmtTime(state.weather.fetchedAt);
+      el.refreshBtn.title = `Refresh weather (last updated ${exact})`;
+    }
   };
   update();
   setInterval(update, 30_000);
