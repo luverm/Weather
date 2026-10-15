@@ -1024,9 +1024,14 @@ kbd {
   align-items: baseline;
   row-gap: 3px;
   border-radius: var(--radius-sm);
-  transition: transform 400ms var(--ease);
+  transition: transform 400ms var(--ease), background 300ms var(--ease);
 }
 .metric:hover { transform: translateY(-2px); }
+/* On dark tones (night / warm sunset), bump the glass background a touch so
+   the cards remain legible against the dim sky canvas. */
+:not([data-tone="bright"]) .metric {
+  background: linear-gradient(rgba(255,255,255,0.04), rgba(255,255,255,0.04)), var(--glass);
+}
 .metric-label {
   grid-column: 1 / span 2;
   font-size: 10.5px;
