@@ -613,7 +613,24 @@ html[data-reduce-motion="true"] *::after {
   letter-spacing: 0.1em;
   font-size: 13px;
 }
-.scrubber-delta { font-size: 11px; color: var(--fg-dim); font-variant-numeric: tabular-nums; }
+.scrubber-delta {
+  font-size: 11px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--stroke);
+}
+/* When live, dim the chip to recede — it's just a status marker. */
+[data-scrubbing="false"] .scrubber-delta {
+  color: var(--accent);
+  background: rgba(154,209,255,0.1);
+  border-color: rgba(154,209,255,0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 9.5px;
+}
 .scrubber-track {
   position: relative;
   height: 36px;
