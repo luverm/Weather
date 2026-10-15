@@ -14,6 +14,7 @@ import { precipOutlook, wettestLabel } from "./precipitation.js";
 import { moonTimes, nextPhases } from "./moon.js";
 import { dayScore } from "./day-score.js";
 import { pressureStory } from "./pressure-story.js";
+import { shortOutlook } from "./short-outlook.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -59,6 +60,7 @@ const el = {
   cloudChip: $("#cloud-chip"),
   cloudChipText: $("#cloud-chip-text"),
   scrubberIcon: $("#scrubber-icon"),
+  shortOutlook: $("#short-outlook"),
   goldenRow: $("#golden-row"),
   goldenHour: $("#golden-hour"),
   blueHour: $("#blue-hour"),
@@ -230,6 +232,11 @@ export const ui = {
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
+    if (el.shortOutlook) {
+      const txt = shortOutlook(weather);
+      el.shortOutlook.textContent = txt || "";
+      el.shortOutlook.hidden = !txt;
+    }
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
