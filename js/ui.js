@@ -166,6 +166,7 @@ export const ui = {
     bindRefresh();
     bindSettings();
     bindTilt();
+    bindHeroDoubleClick();
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
@@ -1682,6 +1683,16 @@ function bindShare() {
       if (err?.name !== "AbortError") ui.showToast("Share failed");
     }
   });
+}
+
+function bindHeroDoubleClick() {
+  // Double-tapping the hero temperature snaps the scrubber back to live.
+  // Powerful on touch where there's no 'N' key.
+  if (!el.temp) return;
+  el.temp.addEventListener("dblclick", () => {
+    state.handlers.onLiveReset?.();
+  });
+  el.temp.title = "Double-click to return to live time";
 }
 
 function bindTilt() {
