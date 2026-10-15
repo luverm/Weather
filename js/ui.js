@@ -1603,7 +1603,10 @@ function startFetchedTicker() {
       minutes < 60 ? `Updated ${minutes}m ago` :
       `Updated ${Math.floor(minutes / 60)}h ago`;
     el.fetchedAgo.textContent = "· " + label;
-    el.fetchedAgo.classList.toggle("stale", minutes >= 20);
+    const stale = minutes >= 20;
+    el.fetchedAgo.classList.toggle("stale", stale);
+    // Also mark the refresh icon so the user knows a tap is worthwhile.
+    if (el.refreshBtn) el.refreshBtn.classList.toggle("stale", stale);
   };
   update();
   setInterval(update, 30_000);
