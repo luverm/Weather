@@ -37,6 +37,7 @@ const el = {
   metricPressureSub: $("#m-pressure-sub"),
   metricUV: $("#m-uv"),
   metricUVSub: $("#m-uv-sub"),
+  uvMarker: $("#uv-marker"),
   aqArc: $("#aq-arc"),
   aqValue: $("#aq-value"),
   aqLabel: $("#aq-label"),
@@ -400,6 +401,12 @@ function renderMetrics(w) {
     } else {
       el.uvLevel.textContent = "";
     }
+  }
+  if (el.uvMarker) {
+    const uv = w.uv ?? 0;
+    const frac = Math.max(0, Math.min(1, uv / 11));
+    el.uvMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+    el.uvMarker.style.opacity = w.uv == null ? "0" : "1";
   }
   if (w.uvPeak?.time) {
     el.metricUVSub.textContent = `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`;

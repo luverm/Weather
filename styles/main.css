@@ -568,8 +568,43 @@ html[data-reduce-motion="true"] *::after {
 
 /* ---------- Pressure sparkline ---------- */
 .metric-pressure,
-.metric-humidity {
+.metric-humidity,
+.metric-uv {
   grid-template-rows: auto auto auto auto;
+}
+
+.uv-meter {
+  position: relative;
+  grid-column: 1 / span 2;
+  height: 6px;
+  width: 100%;
+  margin-top: 6px;
+}
+.uv-meter-track {
+  position: absolute;
+  inset: 0;
+  border-radius: 3px;
+  background: linear-gradient(
+    to right,
+    #78d06a 0% 25%,
+    #ffd36a 25% 50%,
+    #ff9f5c 50% 65%,
+    #ff6a6a 65% 85%,
+    #b75cff 85% 100%
+  );
+  opacity: 0.75;
+}
+.uv-meter-marker {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.35), 0 0 6px rgba(0,0,0,0.4);
+  transition: left 400ms var(--ease), opacity 300ms var(--ease);
 }
 .pressure-spark {
   grid-column: 1 / span 2;
