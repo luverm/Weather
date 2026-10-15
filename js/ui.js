@@ -1141,7 +1141,9 @@ function renderDaily(w) {
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
-    const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
+    const popLabel = d.pop >= 30
+      ? ` · <span class="daily-pop" data-pop="${d.pop >= 60 ? "high" : "mid"}">${d.pop}% rain</span>`
+      : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
     const badge = dayScore(d);
     const dot = badge

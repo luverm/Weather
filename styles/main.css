@@ -1714,6 +1714,14 @@ kbd {
   margin-top: 2px;
   letter-spacing: 0.04em;
 }
+.daily-pop {
+  padding: 0 5px;
+  border-radius: 999px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.daily-pop[data-pop="mid"]  { color: #ffd36a; background: rgba(255,211,106,0.1); }
+.daily-pop[data-pop="high"] { color: #ff9c7a; background: rgba(255,156,122,0.14); }
 .daily-gust.show { display: block; }
 .daily-item { grid-auto-rows: auto; }
 
