@@ -11,6 +11,7 @@ import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { precipOutlook, wettestLabel } from "./precipitation.js";
+import { moonTimes, nextPhases } from "./moon.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -46,6 +47,9 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonRise: $("#moon-rise"),
+  moonSet: $("#moon-set"),
+  moonNextPill: $("#moon-next-pill"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -190,7 +194,7 @@ export const ui = {
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
-    renderMoon(weather.moon);
+    renderMoon(weather.moon, weather);
     renderSun(weather);
     renderHourly(weather);
     renderDaily(weather);
@@ -484,10 +488,12 @@ function renderAqTrend(aq) {
   drawSparkline(el.aqTrendLine, el.aqTrendFill, pts, { minSpan: 20 });
 }
 
-function renderMoon(moon) {
+function renderMoon(moon, w) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  renderMoonTimes(w);
+  renderMoonNext(moon);
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
@@ -504,6 +510,47 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+}
+
+function renderMoonTimes(w) {
+  if (!el.moonRise || !el.moonSet) return;
+  const place = state.place;
+  if (!place || place.lat == null || place.lon == null) {
+    el.moonRise.textContent = "—";
+    el.moonSet.textContent = "—";
+    return;
+  }
+  const t = moonTimes(new Date(), place.lat, place.lon);
+  if (t.alwaysUp) {
+    el.moonRise.textContent = "all day";
+    el.moonSet.textContent = "—";
+  } else if (t.alwaysDown) {
+    el.moonRise.textContent = "—";
+    el.moonSet.textContent = "below horizon";
+  } else {
+    el.moonRise.textContent = t.rise ? fmtTime(t.rise) : "—";
+    el.moonSet.textContent = t.set ? fmtTime(t.set) : "—";
+  }
+}
+
+function renderMoonNext(moon) {
+  if (!el.moonNextPill) return;
+  if (!moon || moon.phase == null) {
+    el.moonNextPill.textContent = "";
+    return;
+  }
+  const now = Date.now();
+  const info = nextPhases(moon.phase, now);
+  if (!info?.next) { el.moonNextPill.textContent = ""; return; }
+  const d = Math.max(0, Math.round(info.next.days));
+  // "Next quarter in 3d" or "Full in 7d" — short, inline.
+  const label =
+    info.next.name === "Full moon" ? `Full in ${d}d` :
+    info.next.name === "New moon"  ? `New in ${d}d`  :
+    info.next.name === "First quarter" ? `1st Q in ${d}d` :
+    `Last Q in ${d}d`;
+  el.moonNextPill.className = "trend flat";
+  el.moonNextPill.textContent = label;
 }
 
 function fmtTime(ts) {
