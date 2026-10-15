@@ -399,6 +399,21 @@ setInterval(() => {
   applyScene(app.weather);
 }, 60_000);
 
+// Online/offline indicator — small chip top-right.
+const offlineChip = document.getElementById("offline-chip");
+function updateOnlineChip() {
+  if (!offlineChip) return;
+  offlineChip.hidden = navigator.onLine !== false;
+}
+window.addEventListener("online", updateOnlineChip);
+window.addEventListener("offline", () => {
+  updateOnlineChip();
+  // When we go offline mid-session, try a refresh immediately when we come
+  // back so stale data doesn't linger.
+  window.addEventListener("online", () => refreshWeather(), { once: true });
+});
+updateOnlineChip();
+
 // Auto-refresh every 15 minutes (but only when live and visible).
 setInterval(() => {
   if (document.hidden) return;

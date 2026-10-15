@@ -460,6 +460,34 @@ html[data-reduce-motion="true"] *::after {
 }
 .cloud-chip[hidden] { display: none; }
 .cloud-chip svg { color: var(--fg-muted); opacity: 0.85; }
+
+.offline-chip {
+  position: fixed;
+  top: calc(16px + var(--safe-top));
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  background: rgba(60, 20, 20, 0.78);
+  color: #ffb49a;
+  border: 1px solid rgba(255, 150, 120, 0.3);
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  z-index: 100;
+  animation: slideInUp 300ms var(--ease) both;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+.offline-chip[hidden] { display: none; }
+.offline-chip .offline-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #ff8a6a;
+  box-shadow: 0 0 8px rgba(255,138,106,0.6);
+}
 .day-range {
   margin-top: 10px;
   display: grid;
