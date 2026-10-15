@@ -1028,8 +1028,14 @@ kbd {
 }
 .metric:hover { transform: translateY(-2px); }
 /* On dark tones (night / warm sunset), bump the glass background a touch so
-   the cards remain legible against the dim sky canvas. */
-:not([data-tone="bright"]) .metric {
+   the mid-page cards remain legible against the dim sky canvas. */
+:not([data-tone="bright"]) .metric,
+:not([data-tone="bright"]) .extra-card,
+:not([data-tone="bright"]) .chart-card,
+:not([data-tone="bright"]) .forecast,
+:not([data-tone="bright"]) .daily,
+:not([data-tone="bright"]) .insights,
+:not([data-tone="bright"]) .radar {
   background: linear-gradient(rgba(255,255,255,0.04), rgba(255,255,255,0.04)), var(--glass);
 }
 .metric-label {
