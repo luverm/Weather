@@ -1309,6 +1309,78 @@ kbd {
   border: 1px solid rgba(154,209,255,0.25);
 }
 
+/* ---------- Dress for it ---------- */
+#dress-card .dress-headline {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: none;
+  color: var(--fg-dim);
+  margin-left: 6px;
+}
+.dress-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+  list-style: none;
+  padding: 0;
+}
+.dress-list li {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--stroke);
+  transition: background 160ms var(--ease), transform 160ms var(--ease);
+}
+.dress-list li:hover { background: rgba(255,255,255,0.08); transform: translateY(-1px); }
+.dress-list .dress-icon {
+  width: 30px; height: 30px;
+  display: grid; place-items: center;
+  border-radius: 10px;
+  color: var(--fg);
+  background: rgba(255,255,255,0.06);
+}
+.dress-list .dress-icon svg { width: 20px; height: 20px; }
+.dress-list .dress-meta { display: grid; gap: 2px; min-width: 0; }
+.dress-list .dress-label {
+  font-size: 13px; font-weight: 600; color: var(--fg);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.dress-list .dress-detail {
+  font-size: 10.5px; color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.dress-list li[data-level="no"] .dress-icon { color: var(--fg-dim); background: rgba(255,255,255,0.04); }
+.dress-list li[data-level="maybe"] .dress-icon {
+  color: #ffd68a;
+  background: rgba(255,214,138,0.14);
+  box-shadow: inset 0 0 0 1px rgba(255,214,138,0.28);
+}
+.dress-list li[data-level="yes"] .dress-icon {
+  color: #9ad1ff;
+  background: rgba(154,209,255,0.16);
+  box-shadow: inset 0 0 0 1px rgba(154,209,255,0.32);
+}
+.dress-list li[data-level="essential"] .dress-icon {
+  color: #ff9c7a;
+  background: rgba(255,156,122,0.18);
+  box-shadow: inset 0 0 0 1px rgba(255,156,122,0.42);
+  animation: dress-pulse 2.8s var(--ease) infinite;
+}
+.dress-list li[data-level="essential"] { border-color: rgba(255,156,122,0.32); }
+.dress-list li[data-level="yes"] { border-color: rgba(154,209,255,0.26); }
+@keyframes dress-pulse {
+  0%, 100% { box-shadow: inset 0 0 0 1px rgba(255,156,122,0.42); }
+  50% { box-shadow: inset 0 0 0 1px rgba(255,156,122,0.72), 0 0 10px rgba(255,156,122,0.18); }
+}
+#dress-card[data-top-level="essential"] { border-color: rgba(255,156,122,0.28); }
+:root[data-reduce-motion="true"] .dress-list li[data-level="essential"] .dress-icon { animation: none; }
+
 /* ---------- Weekend snapshot chip ---------- */
 .weekend-chip {
   display: grid;

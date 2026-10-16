@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { dressFor } from "./dress.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -87,6 +88,9 @@ const el = {
   insightsList: $("#insights-list"),
   activityCard: $("#activity-card"),
   activityList: $("#activity-list"),
+  dressCard: $("#dress-card"),
+  dressList: $("#dress-list"),
+  dressHeadline: $("#dress-headline"),
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
@@ -191,6 +195,7 @@ export const ui = {
     renderTrends(weather);
     renderInsights(weather);
     renderActivity(weather);
+    renderDress(weather);
     renderAlerts(weather);
     renderWeekend(weather);
     startLocaltime(weather);
@@ -212,6 +217,7 @@ export const ui = {
     renderLiveValues(sampled, { animate: false });
     renderMetrics(sampled);
     renderAdvice(sampled);
+    renderDress(sampled);
     highlightHour(highlightHourIndex);
     if (state.comfortStrip) state.comfortStrip.highlight(highlightHourIndex);
     if (state.chart && sampled._sampledTs != null) {
@@ -768,6 +774,27 @@ function renderActivity(w) {
       if (ts) state.handlers.onHourClick?.(ts);
     });
   });
+}
+
+function renderDress(sampled) {
+  if (!el.dressCard || !el.dressList) return;
+  const rec = dressFor(sampled);
+  if (!rec || !rec.items?.length) {
+    el.dressCard.hidden = true;
+    return;
+  }
+  el.dressCard.hidden = false;
+  el.dressCard.setAttribute("data-top-level", rec.topLevel);
+  if (el.dressHeadline) el.dressHeadline.textContent = rec.headline;
+  el.dressList.innerHTML = rec.items.map((it) => `
+    <li data-level="${it.level}" title="${escapeHtml(it.label)} — ${escapeHtml(it.detail)}">
+      <span class="dress-icon">${it.icon}</span>
+      <span class="dress-meta">
+        <span class="dress-label">${escapeHtml(it.label)}</span>
+        <span class="dress-detail">${escapeHtml(it.detail)}</span>
+      </span>
+    </li>
+  `).join("");
 }
 
 function renderPollen(pollen) {
