@@ -269,8 +269,10 @@ export class HourlyChart {
     const labG = this.svg.querySelector("#chart-labels");
     labG.innerHTML = "";
     const labelStep = Math.max(3, Math.floor(this.hours.length / 8));
+    const labeledIdx = new Set();
     this.hours.forEach((h, i) => {
       if (i % labelStep !== 0) return;
+      labeledIdx.add(i);
       const hh = this._hourOf(h.time);
       const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
       txt.setAttribute("x", iToX(i).toFixed(1));
@@ -288,5 +290,37 @@ export class HourlyChart {
       tTxt.textContent = `${Math.round(tVal)}°`;
       labG.appendChild(tTxt);
     });
+
+    // Highlight the day's warmest/coldest hour with a dot + label, so long
+    // as the swing is meaningful. Skip if the extremum sits on an index we
+    // already labelled above (avoid double-labels).
+    if (temps.length >= 2 && tMax - tMin >= 3) {
+      let hiIdx = 0, loIdx = 0;
+      for (let i = 1; i < this.hours.length; i++) {
+        if (this.hours[i].temp > this.hours[hiIdx].temp) hiIdx = i;
+        if (this.hours[i].temp < this.hours[loIdx].temp) loIdx = i;
+      }
+      const marker = (idx, cls, dy) => {
+        if (labeledIdx.has(idx)) return;
+        const h = this.hours[idx];
+        const x = iToX(idx), y = tToY(h.temp);
+        const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        dot.setAttribute("cx", x.toFixed(1));
+        dot.setAttribute("cy", y.toFixed(1));
+        dot.setAttribute("r", "2.6");
+        dot.setAttribute("class", `temp-extremum ${cls}`);
+        labG.appendChild(dot);
+        const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        t.setAttribute("x", x.toFixed(1));
+        t.setAttribute("y", (y + dy).toFixed(1));
+        t.setAttribute("text-anchor", "middle");
+        t.setAttribute("class", `temp-point ${cls}`);
+        const tVal = unit === "F" ? h.temp * 9 / 5 + 32 : h.temp;
+        t.textContent = `${Math.round(tVal)}°`;
+        labG.appendChild(t);
+      };
+      marker(hiIdx, "hi", -9);
+      marker(loIdx, "lo", 14);
+    }
   }
 }

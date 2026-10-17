@@ -904,6 +904,10 @@ html[data-reduce-motion="true"] *::after {
   fill: var(--fg-muted);
   font-size: 9.5px;
 }
+.chart-labels text.temp-point.hi { fill: #ffb196; font-weight: 500; }
+.chart-labels text.temp-point.lo { fill: #9ad1ff; font-weight: 500; }
+.chart-labels circle.temp-extremum.hi { fill: #ffb196; filter: drop-shadow(0 0 4px rgba(255,177,150,0.55)); }
+.chart-labels circle.temp-extremum.lo { fill: #9ad1ff; filter: drop-shadow(0 0 4px rgba(154,209,255,0.55)); }
 .chart-cursor {
   stroke: var(--accent);
   stroke-width: 1.2;
