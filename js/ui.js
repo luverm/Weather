@@ -1497,20 +1497,21 @@ const runSearch = debounce(async (q) => {
 function renderSearchResults(results) {
   if (!results.length) { el.searchResults.hidden = true; el.searchResults.innerHTML = ""; return; }
   el.searchResults.innerHTML = results.map((r, i) => `
-    <li role="option" data-index="${i}">
+    <li role="option" data-index="${i}" id="search-opt-${i}">
       <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
       <span class="sub">${escapeHtml(r.country || "")}</span>
     </li>
   `).join("");
   el.searchResults.hidden = false;
   el.searchResults._items = results;
+  state.searchActive = -1;
 }
 
 function showRecentsIfAny() {
   const recents = places.all().slice(0, 5);
   if (!recents.length) { el.searchResults.hidden = true; return; }
   const itemsHtml = recents.map((r, i) => `
-    <li role="option" data-index="${i}">
+    <li role="option" data-index="${i}" id="search-opt-${i}">
       <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
       <span class="sub">${escapeHtml(r.country || "")}</span>
     </li>
@@ -1518,19 +1519,86 @@ function showRecentsIfAny() {
   el.searchResults.innerHTML = `<li class="recent-heading">Recent places</li>${itemsHtml}`;
   el.searchResults._items = recents;
   el.searchResults.hidden = false;
+  state.searchActive = -1;
 }
 
 function bindSearch() {
+  // Keep aria-expanded on the combobox input in sync with the listbox's
+  // visibility, wherever that gets toggled from.
+  const syncExpanded = () => {
+    el.searchInput.setAttribute("aria-expanded", el.searchResults.hidden ? "false" : "true");
+  };
+  new MutationObserver(syncExpanded).observe(el.searchResults, { attributes: true, attributeFilter: ["hidden"] });
+
+  // Index of the highlighted option, or -1 for none. Reset on new list
+  // renders and on input changes.
+  const setActive = (next) => {
+    const items = el.searchResults.querySelectorAll('li[data-index]');
+    if (!items.length) { state.searchActive = -1; return; }
+    const max = items.length - 1;
+    const clamped = next < 0 ? -1 : Math.min(next, max);
+    state.searchActive = clamped;
+    items.forEach((li, i) => {
+      if (i === clamped) {
+        li.setAttribute("aria-selected", "true");
+        li.classList.add("active");
+        li.scrollIntoView({ block: "nearest" });
+      } else {
+        li.removeAttribute("aria-selected");
+        li.classList.remove("active");
+      }
+    });
+    if (clamped >= 0) {
+      el.searchInput.setAttribute("aria-activedescendant", items[clamped].id || "");
+    } else {
+      el.searchInput.removeAttribute("aria-activedescendant");
+    }
+  };
+  state.searchActive = -1;
+
+  const selectAt = (i) => {
+    const item = el.searchResults._items?.[i];
+    if (!item) return;
+    el.searchInput.value = item.name;
+    el.searchResults.hidden = true;
+    state.searchActive = -1;
+    places.add(item);
+    state.handlers.onSearchSelect?.(item);
+  };
+
   el.searchInput.addEventListener("input", (e) => {
     const v = e.target.value.trim();
+    state.searchActive = -1;
     if (v.length < 2) {
       showRecentsIfAny();
       return;
     }
     runSearch(v);
   });
+  el.searchInput.addEventListener("keydown", (e) => {
+    const visible = !el.searchResults.hidden;
+    if (!visible) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActive((state.searchActive ?? -1) + 1);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActive((state.searchActive ?? -1) - 1);
+    } else if (e.key === "Enter") {
+      const i = state.searchActive ?? -1;
+      if (i >= 0) {
+        e.preventDefault();
+        selectAt(i);
+      }
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      el.searchResults.hidden = true;
+      state.searchActive = -1;
+      el.searchInput.blur();
+    }
+  });
   el.searchInput.addEventListener("blur", () => {
-    setTimeout(() => (el.searchResults.hidden = true), 150);
+    setTimeout(() => { el.searchResults.hidden = true; state.searchActive = -1; }, 150);
   });
   el.searchInput.addEventListener("focus", () => {
     if (el.searchInput.value.trim().length < 2) {
@@ -1543,12 +1611,14 @@ function bindSearch() {
     const li = e.target.closest("li");
     if (!li) return;
     const i = parseInt(li.dataset.index, 10);
-    const item = el.searchResults._items?.[i];
-    if (!item) return;
-    el.searchInput.value = item.name;
-    el.searchResults.hidden = true;
-    places.add(item);
-    state.handlers.onSearchSelect?.(item);
+    if (Number.isNaN(i)) return;
+    selectAt(i);
+  });
+  el.searchResults.addEventListener("mousemove", (e) => {
+    const li = e.target.closest("li[data-index]");
+    if (!li) return;
+    const i = parseInt(li.dataset.index, 10);
+    if (!Number.isNaN(i)) setActive(i);
   });
 }
 
