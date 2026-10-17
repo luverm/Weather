@@ -138,6 +138,7 @@ const el = {
   toast: $("#toast"),
   placesStrip: $("#places-strip"),
   offlineBadge: $("#offline-badge"),
+  scrollTopBtn: $("#scroll-top-btn"),
 };
 
 const state = {
@@ -178,6 +179,7 @@ export const ui = {
     window.addEventListener("online", syncConnectivity);
     window.addEventListener("offline", syncConnectivity);
     syncConnectivity();
+    bindScrollTop();
     bindSearch();
     bindUnitToggle();
     bindLocate();
@@ -1904,6 +1906,24 @@ function buildShareText(w) {
   }
 
   return lines.join("\n");
+}
+
+function bindScrollTop() {
+  if (!el.scrollTopBtn) return;
+  const threshold = 480;
+  let visible = false;
+  const update = () => {
+    const next = (window.scrollY || window.pageYOffset || 0) > threshold;
+    if (next === visible) return;
+    visible = next;
+    el.scrollTopBtn.hidden = !next;
+  };
+  window.addEventListener("scroll", update, { passive: true });
+  el.scrollTopBtn.addEventListener("click", () => {
+    hapticTap();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+  update();
 }
 
 function bindShare() {

@@ -1887,6 +1887,31 @@ kbd {
   50% { opacity: 1; transform: scale(1.2); }
 }
 
+.scroll-top-btn {
+  position: fixed;
+  right: calc(16px + var(--safe-right, 0px));
+  bottom: calc(24px + var(--safe-bottom));
+  z-index: 15;
+  width: 44px; height: 44px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: rgba(14, 18, 35, 0.78);
+  border: 1px solid var(--stroke);
+  color: var(--fg);
+  backdrop-filter: blur(18px);
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+  animation: scrollTopIn 240ms var(--ease) both;
+  transition: transform 160ms var(--ease), background 160ms var(--ease);
+}
+.scroll-top-btn:hover { transform: translateY(-2px); background: rgba(28, 34, 60, 0.92); }
+.scroll-top-btn:active { transform: translateY(0); }
+.scroll-top-btn[hidden] { display: none; }
+@keyframes scrollTopIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .toast {
   position: fixed;
   left: 50%;
