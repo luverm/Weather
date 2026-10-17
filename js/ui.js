@@ -1875,7 +1875,9 @@ function startFetchedTicker() {
       minutes < 60 ? `Updated ${minutes}m ago` :
       `Updated ${Math.floor(minutes / 60)}h ago`;
     el.fetchedAgo.textContent = "· " + label;
-    el.fetchedAgo.classList.toggle("stale", minutes >= 20);
+    el.fetchedAgo.classList.toggle("fresh", minutes < 5);
+    el.fetchedAgo.classList.toggle("stale", minutes >= 20 && minutes < 60);
+    el.fetchedAgo.classList.toggle("very-stale", minutes >= 60);
   };
   update();
   setInterval(update, 30_000);
