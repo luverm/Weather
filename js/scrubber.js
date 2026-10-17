@@ -143,11 +143,36 @@ export class Scrubber {
 
     const offMin = Math.round(clock.offset() / 60_000);
     if (this.deltaEl) {
-      if (!offMin) this.deltaEl.textContent = "live";
-      else if (Math.abs(offMin) < 60) this.deltaEl.textContent = `${offMin > 0 ? "+" : ""}${offMin}m`;
-      else {
-        const h = Math.round(offMin / 60);
-        this.deltaEl.textContent = `${h > 0 ? "+" : ""}${h}h`;
+      if (!offMin) {
+        this.deltaEl.textContent = "live";
+      } else {
+        // Compare calendar days of "now" and simulated time so we can switch
+        // from a +Nh style to a 'Tomorrow 09:00' / 'Yesterday 22:30' style
+        // the moment the scrubber crosses midnight.
+        const nowDate = new Date();
+        const simDate = new Date(time);
+        const sameDay = nowDate.toDateString() === simDate.toDateString();
+        const absHours = Math.abs(offMin) / 60;
+        if (sameDay || absHours < 6) {
+          if (Math.abs(offMin) < 60) {
+            this.deltaEl.textContent = `${offMin > 0 ? "+" : ""}${offMin}m`;
+          } else {
+            const h = Math.round(offMin / 60);
+            this.deltaEl.textContent = `${h > 0 ? "+" : ""}${h}h`;
+          }
+        } else {
+          const hh = simDate.getHours().toString().padStart(2, "0");
+          const mm = simDate.getMinutes().toString().padStart(2, "0");
+          const dayDelta = Math.round(
+            (simDate.setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / 86_400_000
+          );
+          const relLabel = dayDelta === 1 ? "Tomorrow"
+            : dayDelta === -1 ? "Yesterday"
+            : dayDelta > 1 ? `+${dayDelta}d`
+            : dayDelta < -1 ? `${dayDelta}d`
+            : "Today";
+          this.deltaEl.textContent = `${relLabel} ${hh}:${mm}`;
+        }
       }
     }
   }
