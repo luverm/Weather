@@ -1427,20 +1427,45 @@ function toggleDailyExpand(item, d, w) {
 
 function renderNowcast(w) {
   const nowcast = (w.nowcast || []).filter((n) => n.time > Date.now());
+  const currentlyWet = w.condition === "rain" || w.condition === "storm" || w.condition === "snow";
   // Find first >0.1 precip entry.
   const first = nowcast.find((n) => n.precip > 0.1);
-  if (!first) {
+  // When it's already precipitating, also look for the first *dry* entry so
+  // we can tell the user when it stops.
+  const firstDry = currentlyWet
+    ? nowcast.find((n) => (n.precip || 0) < 0.05)
+    : null;
+
+  if (!first && !firstDry) {
     el.nowcast.hidden = true;
     return;
   }
-  const inMin = Math.max(0, Math.round((first.time - Date.now()) / 60_000));
-  const kind = first.code >= 71 && first.code <= 86 ? "Snow" : "Rain";
-  el.nowcastHeadline.textContent = inMin === 0
-    ? `${kind} now`
-    : `${kind} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
+
+  const kind = (first && first.code >= 71 && first.code <= 86)
+    || w.condition === "snow"
+    ? "Snow" : "Rain";
+
+  if (first) {
+    const inMin = Math.max(0, Math.round((first.time - Date.now()) / 60_000));
+    el.nowcastHeadline.textContent = inMin === 0
+      ? `${kind} now`
+      : `${kind} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
+  } else if (firstDry) {
+    const inMin = Math.max(1, Math.round((firstDry.time - Date.now()) / 60_000));
+    el.nowcastHeadline.textContent = inMin < 5
+      ? `${kind} easing off`
+      : `${kind} stops in ~${inMin} minute${inMin === 1 ? "" : "s"}`;
+  }
+
   // 2h outlook summary.
   const totalMm = nowcast.reduce((s, n) => s + (n.precip || 0), 0);
-  el.nowcastSub.textContent = `${totalMm.toFixed(1)} mm expected in the next 2 hours`;
+  if (!first && firstDry) {
+    el.nowcastSub.textContent = totalMm > 0.05
+      ? `${totalMm.toFixed(1)} mm still to fall before it clears`
+      : "Clearing in the next few minutes";
+  } else {
+    el.nowcastSub.textContent = `${totalMm.toFixed(1)} mm expected in the next 2 hours`;
+  }
   // Bars (time-labeled, clickable to scrub).
   el.nowcastBars.innerHTML = "";
   const slice = nowcast.slice(0, 8);
