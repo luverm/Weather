@@ -136,6 +136,7 @@ const el = {
   heroInner: document.querySelector(".hero-inner"),
   toast: $("#toast"),
   placesStrip: $("#places-strip"),
+  offlineBadge: $("#offline-badge"),
 };
 
 const state = {
@@ -164,6 +165,18 @@ export const ui = {
     }
     state.handlers = h;
     el.unitBtn.textContent = `°${state.unit}`;
+    // Browser-level online/offline is a secondary signal — the authoritative
+    // state is whether the forecast call fell back to the mock, but reacting
+    // to the connectivity event gives us an instant visual cue.
+    const syncConnectivity = () => {
+      if (!el.offlineBadge) return;
+      const navOffline = typeof navigator !== "undefined" && navigator.onLine === false;
+      const dataOffline = !!state.weather?.offline;
+      el.offlineBadge.hidden = !(navOffline || dataOffline);
+    };
+    window.addEventListener("online", syncConnectivity);
+    window.addEventListener("offline", syncConnectivity);
+    syncConnectivity();
     bindSearch();
     bindUnitToggle();
     bindLocate();
@@ -237,6 +250,7 @@ export const ui = {
     if (el.narrative) el.narrative.textContent = narrative || "";
     updateFavicon(weather.temp, state.unit);
     updatePageTitle(weather);
+    if (el.offlineBadge) el.offlineBadge.hidden = !weather.offline;
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
     if (state.place) {

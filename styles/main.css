@@ -135,7 +135,23 @@ ul { list-style: none; margin: 0; padding: 0; }
   50% { transform: scale(1.08); filter: brightness(1.15); }
 }
 
-.toolbar { display: flex; gap: 8px; position: relative; }
+.toolbar { display: flex; gap: 8px; position: relative; align-items: center; }
+.offline-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(255, 157, 92, 0.14);
+  color: #ffb58a;
+  border: 1px solid rgba(255, 157, 92, 0.25);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  animation: slideInUp 320ms var(--ease) both;
+}
+.offline-badge[hidden] { display: none; }
+.offline-badge svg { color: currentColor; }
 
 /* ---------- Settings menu ---------- */
 .settings-menu {
