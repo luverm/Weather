@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { buildPrecipOutlook } from "./precip.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -86,6 +87,12 @@ const el = {
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
   activityCard: $("#activity-card"),
+  precipCard: $("#precip-card"),
+  precipTotal: $("#precip-total"),
+  precipUnit: $("#precip-unit"),
+  precipDetail: $("#precip-detail"),
+  precipBars: $("#precip-bars"),
+  precipKind: $("#precip-kind"),
   activityList: $("#activity-list"),
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
@@ -191,6 +198,7 @@ export const ui = {
     renderTrends(weather);
     renderInsights(weather);
     renderActivity(weather);
+    renderPrecipOutlook(weather);
     renderAlerts(weather);
     renderWeekend(weather);
     startLocaltime(weather);
@@ -765,6 +773,71 @@ function renderActivity(w) {
   el.activityList.querySelectorAll("li[data-ts]").forEach((li) => {
     li.addEventListener("click", () => {
       const ts = parseInt(li.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    });
+  });
+}
+
+function renderPrecipOutlook(w) {
+  if (!el.precipCard || !el.precipTotal) return;
+  const outlook = buildPrecipOutlook(w.hourly, 24);
+  if (!outlook) {
+    el.precipCard.hidden = true;
+    return;
+  }
+  el.precipCard.hidden = false;
+  const kindLabel = outlook.snowy ? "Snow" : "Rain";
+  if (el.precipKind) {
+    el.precipKind.className = `trend ${outlook.snowy ? "down" : "flat"}`;
+    el.precipKind.textContent = kindLabel;
+  }
+
+  // Choose unit: mm when metric, inches when °F preference is set.
+  const useInches = state.unit === "F";
+  const totalDisplay = useInches ? outlook.totalMm / 25.4 : outlook.totalMm;
+  const unitText = useInches ? "in" : "mm";
+  const precision = useInches ? 2 : (outlook.totalMm >= 10 ? 0 : 1);
+  el.precipTotal.textContent = totalDisplay.toFixed(precision);
+  if (el.precipUnit) el.precipUnit.textContent = unitText;
+
+  // Compose a one-line narrative: peak hour, when wet starts.
+  const parts = [];
+  if (outlook.firstWetHour) {
+    const start = outlook.firstWetHour.time;
+    const now = Date.now();
+    if (start <= now + 30 * 60_000) {
+      parts.push("falling now");
+    } else {
+      parts.push(`starts ${fmtTime(start)}`);
+    }
+  }
+  if (outlook.maxHour && outlook.maxHour.mm >= 0.5) {
+    const mmPeak = useInches ? outlook.maxHour.mm / 25.4 : outlook.maxHour.mm;
+    const peakPrec = useInches ? 2 : 1;
+    parts.push(`peak ${mmPeak.toFixed(peakPrec)} ${unitText} at ${fmtTime(outlook.maxHour.time)}`);
+  }
+  el.precipDetail.textContent = parts.join(" · ") || `${kindLabel.toLowerCase()} on the way`;
+
+  // Bar strip: 24 slim bars, height = mm scaled to the peak within the window.
+  const peakMm = Math.max(0.4, outlook.maxHour?.mm || 0);
+  const barsHtml = outlook.hours.map((h) => {
+    const frac = Math.min(1, h.mm / peakMm);
+    const height = h.mm > 0 ? Math.max(8, Math.round(frac * 100)) : 2;
+    const intensity = h.mm >= 2 ? "heavy" : h.mm >= 0.5 ? "moderate" : h.mm > 0 ? "light" : "none";
+    const hh = new Date(h.time).getHours();
+    const hour12 = hh === 0 ? "12am" : hh < 12 ? `${hh}am` : hh === 12 ? "12pm" : `${hh - 12}pm`;
+    const amountStr = useInches
+      ? `${(h.mm / 25.4).toFixed(2)} in`
+      : `${h.mm.toFixed(1)} mm`;
+    const title = h.mm > 0
+      ? `${hour12} · ${amountStr} · ${h.pop}%`
+      : `${hour12} · dry`;
+    return `<span class="precip-bar" data-ts="${h.time}" data-intensity="${intensity}" style="height:${height}%" title="${title}" aria-label="${title}"></span>`;
+  }).join("");
+  el.precipBars.innerHTML = barsHtml;
+  el.precipBars.querySelectorAll(".precip-bar").forEach((bar) => {
+    bar.addEventListener("click", () => {
+      const ts = parseInt(bar.dataset.ts, 10);
       if (ts) state.handlers.onHourClick?.(ts);
     });
   });
