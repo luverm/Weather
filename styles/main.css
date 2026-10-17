@@ -391,6 +391,28 @@ html[data-reduce-motion="true"] *::after {
 .unit:hover { background: var(--glass); color: var(--fg); }
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
+.yesterday-vs {
+  margin: 4px 0 0;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-dim);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.yesterday-vs[hidden] { display: none; }
+.yesterday-vs::before {
+  content: "";
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--fg-dim);
+}
+.yesterday-vs[data-tone="up"]   { color: #ffb196; }
+.yesterday-vs[data-tone="up"]::before   { background: #ffb196; box-shadow: 0 0 6px rgba(255,177,150,0.5); }
+.yesterday-vs[data-tone="down"] { color: #9ad1ff; }
+.yesterday-vs[data-tone="down"]::before { background: #9ad1ff; box-shadow: 0 0 6px rgba(154,209,255,0.5); }
+.yesterday-vs[data-tone="flat"] { color: var(--fg-dim); }
 .day-range {
   margin-top: 10px;
   display: grid;

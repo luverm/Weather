@@ -93,7 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
-    past_hours: 1,
+    past_hours: 25, // 25 so we have yesterday-same-hour for the comparison chip
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -130,10 +130,24 @@ function normalize(d, aq) {
 
   // 24-hour hourly forecast starting from the next hour.
   const hourly = [];
+  // Yesterday-same-hour snapshot for the "vs yesterday" comparison chip.
+  let yesterday = null;
+  const yTarget = now - 24 * 3600_000;
   if (d.hourly?.time) {
-    for (let i = 0; i < d.hourly.time.length && hourly.length < 24; i++) {
+    for (let i = 0; i < d.hourly.time.length; i++) {
       const t = new Date(d.hourly.time[i]).getTime();
+      // Capture the hourly entry closest to 24h ago (within a 90-min window).
+      const diff = Math.abs(t - yTarget);
+      if (diff <= 90 * 60_000 && (!yesterday || diff < Math.abs(yesterday.time - yTarget))) {
+        yesterday = {
+          time: t,
+          temp: d.hourly.temperature_2m?.[i],
+          feelsLike: d.hourly.apparent_temperature?.[i],
+          code: d.hourly.weather_code?.[i],
+        };
+      }
       if (t < now - 30 * 60 * 1000) continue; // allow slight past for scrubbing
+      if (hourly.length >= 24) continue;
       hourly.push({
         time: t,
         temp: d.hourly.temperature_2m[i],
@@ -212,6 +226,7 @@ function normalize(d, aq) {
     hourly,
     daily: dailyForecast,
     nowcast,
+    yesterday,
     moon,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
@@ -387,6 +402,7 @@ function mock(lat, lon) {
       condition: CONDITIONS.CLOUDS, label: "Cloudy",
     })),
     nowcast: [],
+    yesterday: { time: now - 24 * 3600_000, temp: 17, feelsLike: 16, code: 2 },
     moon: computeMoonPhase(new Date()),
     airQuality: { aqi: 42, pm25: 8, pm10: 14, o3: 40, no2: 15, co: 0.2, label: "Good" },
     pollen: {

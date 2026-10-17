@@ -73,6 +73,8 @@ const el = {
   pollenItems: $("#pollen-items"),
   pressureTrend: $("#m-pressure-trend"),
   tempTrend: $("#temp-trend"),
+  yesterdayVs: $("#yesterday-vs"),
+  yesterdayVsText: $("#yesterday-vs-text"),
   uvLevel: $("#m-uv-level"),
   humidityComfort: $("#m-humidity-comfort"),
   pressureSparkLine: $("#pressure-spark-line"),
@@ -300,6 +302,33 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  renderYesterdayVs(w);
+}
+
+function renderYesterdayVs(w) {
+  if (!el.yesterdayVs || !el.yesterdayVsText) return;
+  // Only compare live weather, not a scrubbed future snapshot. Scrubbed data
+  // keeps `yesterday` from the base weather, but the current `temp` is the
+  // future hour — the comparison would be nonsense.
+  const live = state.weather;
+  const y = live?.yesterday;
+  if (!y || y.temp == null || live?.temp == null) {
+    el.yesterdayVs.hidden = true;
+    return;
+  }
+  const delta = live.temp - y.temp;
+  const deltaDisplay = state.unit === "F" ? delta * 9 / 5 : delta;
+  const abs = Math.abs(deltaDisplay);
+  if (abs < 0.75) {
+    el.yesterdayVsText.textContent = "about the same as yesterday";
+    el.yesterdayVs.setAttribute("data-tone", "flat");
+  } else {
+    const rounded = Math.max(1, Math.round(abs));
+    const dirn = delta > 0 ? "warmer" : "cooler";
+    el.yesterdayVsText.textContent = `${rounded}° ${dirn} than yesterday`;
+    el.yesterdayVs.setAttribute("data-tone", delta > 0 ? "up" : "down");
+  }
+  el.yesterdayVs.hidden = false;
 }
 
 function renderDayRange(w) {
