@@ -460,9 +460,13 @@ function renderMetrics(w) {
     }
   }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
-  el.metricPressureSub.textContent = w.visibility != null
-    ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
-    : "visibility —";
+  if (w.visibility != null) {
+    const vis = visibilityLabel(w.visibility);
+    const km = Math.round((w.visibility / 1000) * 10) / 10;
+    el.metricPressureSub.innerHTML = `visibility <span class="metric-sub-pill" data-level="${vis.cls}">${vis.label}</span> · ${km} km`;
+  } else {
+    el.metricPressureSub.textContent = "visibility —";
+  }
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
@@ -510,6 +514,20 @@ function beaufort(kmh) {
   if (kmh < 103) return { label: "Storm", cls: "up" };
   if (kmh < 118) return { label: "Violent storm", cls: "up" };
   return { label: "Hurricane", cls: "up" };
+}
+
+function visibilityLabel(meters) {
+  // Returns a short classification used both as a pill label and as a CSS
+  // class name on the pill. "down" styles the pill cool/calm (ample
+  // visibility), "up" warns (reduced visibility), "flat" is neutral.
+  if (meters == null) return { label: "—", cls: "flat" };
+  if (meters >= 20000) return { label: "Crystal", cls: "down" };
+  if (meters >= 10000) return { label: "Clear",   cls: "down" };
+  if (meters >= 5000)  return { label: "Good",    cls: "flat" };
+  if (meters >= 2000)  return { label: "Moderate",cls: "flat" };
+  if (meters >= 1000)  return { label: "Hazy",    cls: "up" };
+  if (meters >= 300)   return { label: "Poor",    cls: "up" };
+  return { label: "Fog", cls: "up" };
 }
 
 function uvLevel(v) {
