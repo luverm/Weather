@@ -76,6 +76,7 @@ const el = {
   pollenLevel: $("#pollen-level"),
   pollenDominant: $("#pollen-dominant"),
   pollenItems: $("#pollen-items"),
+  pollenAdvice: $("#pollen-advice"),
   pressureTrend: $("#m-pressure-trend"),
   tempTrend: $("#temp-trend"),
   yesterdayVs: $("#yesterday-vs"),
@@ -1187,6 +1188,27 @@ function renderPollen(pollen) {
   el.pollenItems.innerHTML = pollen.items.map((p) =>
     `<span>${escapeHtml(p.label)} ${p.value.toFixed(1)}</span>`
   ).join("");
+  if (el.pollenAdvice) {
+    const text = pollenAdviceText(pollen);
+    if (text) {
+      el.pollenAdvice.textContent = text;
+      el.pollenAdvice.hidden = false;
+    } else {
+      el.pollenAdvice.hidden = true;
+    }
+  }
+}
+
+function pollenAdviceText(pollen) {
+  if (!pollen) return null;
+  const dom = pollen.dominant?.label?.toLowerCase() || "pollen";
+  if (pollen.level === "Very high") {
+    return `Keep windows closed · take allergy meds before going out (${dom}).`;
+  }
+  if (pollen.level === "High") {
+    return `${dom[0].toUpperCase()}${dom.slice(1)} is high — allergy sufferers plan ahead.`;
+  }
+  return null;
 }
 
 function renderTrends(w) {
