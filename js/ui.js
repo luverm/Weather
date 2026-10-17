@@ -1160,6 +1160,9 @@ function renderDaily(w) {
     if (d.tempMax > gMax) gMax = d.tempMax;
   }
   const span = Math.max(1, gMax - gMin);
+  // Peak daily precipitation across the week — used to scale per-day drops.
+  const maxPrecip = Math.max(0.4, ...days.map((d) => Number(d.precip) || 0));
+  const useInches = state.unit === "F";
   days.forEach((d, i) => {
     const dt = new Date(d.time);
     const tz = state.weather?.timezone;
@@ -1177,6 +1180,8 @@ function renderDaily(w) {
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const mm = Number(d.precip) || 0;
+    const drop = renderDailyDrop(mm, maxPrecip, useInches);
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
@@ -1185,11 +1190,25 @@ function renderDaily(w) {
       </div>
       <span class="daily-temp-min">${Math.round(convertTemp(d.tempMin))}°</span>
       <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°</span>
+      ${drop}
       ${extra}
     `;
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+}
+
+function renderDailyDrop(mm, maxPrecip, useInches) {
+  if (!(mm > 0)) {
+    return `<span class="daily-drop" data-level="dry" title="No measurable precipitation"></span>`;
+  }
+  const frac = Math.min(1, mm / Math.max(0.4, maxPrecip));
+  const fillHeight = Math.max(18, Math.round(frac * 100));
+  const level = mm >= 10 ? "heavy" : mm >= 3 ? "moderate" : "light";
+  const amountStr = useInches ? `${(mm / 25.4).toFixed(2)} in` : `${mm.toFixed(1)} mm`;
+  return `<span class="daily-drop" data-level="${level}" title="${amountStr} expected" aria-label="${amountStr} expected">
+    <span class="daily-drop-fill" style="height:${fillHeight}%"></span>
+  </span>`;
 }
 
 function renderDailyIconStrip(days) {
