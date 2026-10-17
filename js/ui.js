@@ -14,6 +14,7 @@ import { buildPrecipOutlook } from "./precip.js";
 import { buildKit } from "./kit.js";
 import { buildSnaps } from "./snaps.js";
 import { hapticTap, hapticToggle, setHapticsReducedMotion } from "./haptics.js";
+import { updateFavicon } from "./favicon.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -234,6 +235,7 @@ export const ui = {
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
+    updateFavicon(weather.temp, state.unit);
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
@@ -1628,7 +1630,10 @@ function bindUnitToggle() {
     state.unit = state.unit === "C" ? "F" : "C";
     localStorage.setItem("aether:unit", state.unit);
     el.unitBtn.textContent = `°${state.unit}`;
-    if (state.weather) ui.setWeather(state.weather);
+    if (state.weather) {
+      ui.setWeather(state.weather);
+      updateFavicon(state.weather.temp, state.unit);
+    }
   });
 }
 
