@@ -13,6 +13,7 @@ import { weekendSnapshot } from "./weekend.js";
 import { buildPrecipOutlook } from "./precip.js";
 import { buildKit } from "./kit.js";
 import { buildSnaps } from "./snaps.js";
+import { hapticTap, hapticToggle, setHapticsReducedMotion } from "./haptics.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -152,7 +153,15 @@ const state = {
 
 export const ui = {
   init(handlers) {
-    state.handlers = handlers || {};
+    // Wrap onHourClick so every click-to-scrub action (chart cell, snap chip,
+    // kit chip, insight, activity row, golden-hour chip, precip bar, hourly
+    // tile, daily row header) emits a short haptic tap on supported devices.
+    const h = handlers || {};
+    const inner = h.onHourClick;
+    if (typeof inner === "function") {
+      h.onHourClick = (ts) => { hapticTap(); return inner(ts); };
+    }
+    state.handlers = h;
     el.unitBtn.textContent = `°${state.unit}`;
     bindSearch();
     bindUnitToggle();
@@ -1323,6 +1332,7 @@ function renderDailyDelta(days) {
 }
 
 function toggleDailyExpand(item, d, w) {
+  hapticToggle();
   const existing = item.querySelector(".daily-expand");
   if (existing) {
     existing.remove();
@@ -1522,6 +1532,7 @@ function bindSearch() {
 
 function bindUnitToggle() {
   el.unitBtn.addEventListener("click", () => {
+    hapticToggle();
     state.unit = state.unit === "C" ? "F" : "C";
     localStorage.setItem("aether:unit", state.unit);
     el.unitBtn.textContent = `°${state.unit}`;
@@ -1591,6 +1602,7 @@ function bindSettings() {
     const on = el.settingReduceMotion.checked;
     document.documentElement.setAttribute("data-reduce-motion", on ? "true" : "false");
     localStorage.setItem("aether:reduceMotion", on ? "1" : "0");
+    setHapticsReducedMotion(on);
     state.handlers.onReduceMotion?.(on);
   });
 
@@ -1619,6 +1631,7 @@ function applyStoredPreferences() {
   if (reduce) {
     document.documentElement.setAttribute("data-reduce-motion", "true");
     if (el.settingReduceMotion) el.settingReduceMotion.checked = true;
+    setHapticsReducedMotion(true);
     // Defer so app.js has time to install the handler.
     queueMicrotask(() => state.handlers.onReduceMotion?.(true));
   }

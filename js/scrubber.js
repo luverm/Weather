@@ -5,6 +5,7 @@
 // at the simulated time and re-apply to every scene + UI module.
 
 import { clock } from "./clock.js";
+import { hapticTap, hapticToggle } from "./haptics.js";
 
 const RANGE_HOURS = 24;
 
@@ -95,6 +96,7 @@ export class Scrubber {
       else if (e.key === "End") newOffset = (RANGE_HOURS - 1) * 3600_000;
       else return;
       e.preventDefault();
+      hapticTap();
       this._setOffset(newOffset);
     });
 
@@ -102,6 +104,7 @@ export class Scrubber {
   }
 
   reset() {
+    hapticToggle();
     clock.setOffset(0);
     this.appEl?.setAttribute("data-scrubbing", "false");
     this._render(this._currentT());
