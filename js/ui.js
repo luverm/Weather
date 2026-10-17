@@ -11,6 +11,7 @@ import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { buildPrecipOutlook } from "./precip.js";
+import { buildKit } from "./kit.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -93,6 +94,7 @@ const el = {
   precipDetail: $("#precip-detail"),
   precipBars: $("#precip-bars"),
   precipKind: $("#precip-kind"),
+  kitChips: $("#kit-chips"),
   activityList: $("#activity-list"),
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
@@ -199,6 +201,7 @@ export const ui = {
     renderInsights(weather);
     renderActivity(weather);
     renderPrecipOutlook(weather);
+    renderKit(weather);
     renderAlerts(weather);
     renderWeekend(weather);
     startLocaltime(weather);
@@ -776,6 +779,23 @@ function renderActivity(w) {
       if (ts) state.handlers.onHourClick?.(ts);
     });
   });
+}
+
+function renderKit(w) {
+  if (!el.kitChips) return;
+  const chips = buildKit(w);
+  if (!chips.length) {
+    el.kitChips.hidden = true;
+    el.kitChips.innerHTML = "";
+    return;
+  }
+  el.kitChips.hidden = false;
+  el.kitChips.innerHTML = chips.map((c) => `
+    <li class="kit-chip" data-tone="${c.tone}" title="${escapeHtml(c.why)}">
+      <span class="kit-icon">${c.icon}</span>
+      <span class="kit-label">${escapeHtml(c.label)}</span>
+    </li>
+  `).join("");
 }
 
 function renderPrecipOutlook(w) {
