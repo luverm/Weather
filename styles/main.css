@@ -388,6 +388,14 @@ html[data-reduce-motion="true"] *::after {
   width: 5px; height: 5px; border-radius: 50%;
   background: var(--accent); box-shadow: 0 0 6px var(--accent);
 }
+.localtime-offset {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  color: var(--fg-muted);
+  letter-spacing: 0.02em;
+  font-size: 10.5px;
+}
 .narrative {
   margin: 14px 0 0;
   max-width: 52ch;
