@@ -162,10 +162,16 @@
 
       <!-- Nowcast banner: rain in X minutes -->
       <div id="nowcast" class="nowcast glass" hidden>
-        <svg class="nowcast-icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M7 14a4 4 0 010-8 5 5 0 019.9-1A4 4 0 0117 14H7z" fill="none" stroke="currentColor" stroke-width="1.6"/>
-          <path d="M9 18l-1 3M13 18l-1 3M17 18l-1 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-        </svg>
+        <span id="nowcast-icon-wrap" class="nowcast-icon" aria-hidden="true">
+          <svg class="nowcast-icon-rain" viewBox="0 0 24 24">
+            <path d="M7 14a4 4 0 010-8 5 5 0 019.9-1A4 4 0 0117 14H7z" fill="none" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M9 18l-1 3M13 18l-1 3M17 18l-1 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+          <svg class="nowcast-icon-snow" viewBox="0 0 24 24">
+            <path d="M7 14a4 4 0 010-8 5 5 0 019.9-1A4 4 0 0117 14H7z" fill="none" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M12 17v5M9.5 18.5l5 2M9.5 20.5l5-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </span>
         <div class="nowcast-text">
           <strong id="nowcast-headline">—</strong>
           <span id="nowcast-sub"></span>

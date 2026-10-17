@@ -1492,6 +1492,8 @@ function renderNowcast(w) {
   const kind = (first && first.code >= 71 && first.code <= 86)
     || w.condition === "snow"
     ? "Snow" : "Rain";
+  // Expose to CSS so the icon slot can swap between rain/snow.
+  el.nowcast.setAttribute("data-kind", kind.toLowerCase());
 
   if (first) {
     const inMin = Math.max(0, Math.round((first.time - Date.now()) / 60_000));
