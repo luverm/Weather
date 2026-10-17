@@ -12,6 +12,7 @@ import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { buildPrecipOutlook } from "./precip.js";
 import { buildKit } from "./kit.js";
+import { buildSnaps } from "./snaps.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -107,6 +108,7 @@ const el = {
   precipBars: $("#precip-bars"),
   precipKind: $("#precip-kind"),
   kitChips: $("#kit-chips"),
+  scrubberSnaps: $("#scrubber-snaps"),
   activityList: $("#activity-list"),
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
@@ -215,6 +217,7 @@ export const ui = {
     renderActivity(weather);
     renderPrecipOutlook(weather);
     renderKit(weather);
+    renderScrubberSnaps(weather);
     renderAlerts(weather);
     renderWeekend(weather);
     startLocaltime(weather);
@@ -975,6 +978,30 @@ function renderKit(w) {
       <span class="kit-label">${escapeHtml(c.label)}</span>
     </li>
   `).join("");
+}
+
+function renderScrubberSnaps(w) {
+  if (!el.scrubberSnaps) return;
+  const snaps = buildSnaps(w);
+  if (!snaps.length) {
+    el.scrubberSnaps.hidden = true;
+    el.scrubberSnaps.innerHTML = "";
+    return;
+  }
+  el.scrubberSnaps.hidden = false;
+  el.scrubberSnaps.innerHTML = snaps.map((s) => `
+    <button type="button" class="snap-chip" data-ts="${s.time}" data-tone="${s.tone}" aria-label="Jump to ${escapeHtml(s.label)} at ${escapeHtml(fmtTime(s.time))}">
+      <span class="snap-icon">${s.icon}</span>
+      <span class="snap-label">${escapeHtml(s.label)}</span>
+      <span class="snap-time">${escapeHtml(fmtTime(s.time))}</span>
+    </button>
+  `).join("");
+  el.scrubberSnaps.querySelectorAll(".snap-chip").forEach((btn) => {
+    btn.onclick = () => {
+      const ts = parseInt(btn.dataset.ts, 10);
+      if (ts) state.handlers.onHourClick?.(ts);
+    };
+  });
 }
 
 function renderPrecipOutlook(w) {

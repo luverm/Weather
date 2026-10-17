@@ -592,6 +592,50 @@ html[data-reduce-motion="true"] *::after {
 }
 .scrubber-track:active .scrubber-thumb { transform: translate(-50%, -50%) scale(1.15); }
 
+/* ---------- Scrubber snap chips ---------- */
+.scrubber-snaps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.scrubber-snaps[hidden] { display: none; }
+.snap-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 7px;
+  border-radius: 999px;
+  background: var(--glass);
+  border: 1px solid var(--stroke);
+  color: var(--fg-muted);
+  font-size: 11.5px;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background 150ms var(--ease), color 150ms var(--ease), transform 150ms var(--ease);
+}
+.snap-chip:hover {
+  background: rgba(255,255,255,0.1);
+  color: var(--fg);
+  transform: translateY(-1px);
+}
+.snap-chip:active { transform: translateY(0); }
+.snap-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 14px; height: 14px;
+}
+.snap-icon svg { width: 13px; height: 13px; display: block; }
+.snap-time {
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-dim);
+  font-size: 11px;
+}
+.snap-chip[data-tone="sun"]  { color: #ffe9b5; border-color: rgba(255,220,138,0.25); }
+.snap-chip[data-tone="warm"] { color: #ffd4ad; border-color: rgba(255,196,150,0.25); }
+.snap-chip[data-tone="cool"] { color: #c7d8ff; border-color: rgba(154,209,255,0.22); }
+.snap-chip[data-tone="wet"]  { color: #c9e4ff; border-color: rgba(154,209,255,0.25); }
+
 /* ---------- Pressure sparkline ---------- */
 .metric-pressure,
 .metric-humidity {
