@@ -50,6 +50,7 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonNext: $("#moon-next"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -611,6 +612,31 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+  renderMoonNext(moon);
+}
+
+const SYNODIC_DAYS = 29.5305882;
+
+function renderMoonNext(moon) {
+  if (!el.moonNext) return;
+  // Days to the next notable event — pick the nearer of new vs full.
+  const phase = moon.phase; // 0..1 where 0 = new, 0.5 = full
+  const dayPerUnit = SYNODIC_DAYS;
+  // Days until next full moon (phase 0.5).
+  const daysToFull = phase < 0.5
+    ? (0.5 - phase) * dayPerUnit
+    : (1 - phase + 0.5) * dayPerUnit;
+  // Days until next new moon (phase 0 again).
+  const daysToNew = (1 - phase) * dayPerUnit;
+  const next = daysToNew < daysToFull
+    ? { kind: "new moon", days: daysToNew }
+    : { kind: "full moon", days: daysToFull };
+  const rounded = Math.max(0, Math.round(next.days));
+  const label = rounded === 0 ? "today"
+    : rounded === 1 ? "tomorrow"
+    : `in ${rounded} days`;
+  el.moonNext.textContent = `Next ${next.kind} ${label}`;
+  el.moonNext.hidden = false;
 }
 
 function fmtTime(ts) {
