@@ -1436,12 +1436,34 @@ function renderPlaces() {
   if (!all.length) { el.placesStrip.hidden = true; el.placesStrip.innerHTML = ""; return; }
   el.placesStrip.hidden = false;
   const activeId = state.place ? places.idFor(state.place) : null;
+  // Reference temp for the delta badge — only shown on inactive chips when
+  // the live active-city temp is known.
+  const activeTemp = state.weather?.temp;
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
+    const iconHtml = p.condition
+      ? `<span class="place-chip-icon">${iconFor(p.condition)}</span>`
+      : "";
+    const tempHtml = p.temp != null
+      ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>`
+      : "";
+    let deltaHtml = "";
+    if (!active && p.temp != null && activeTemp != null) {
+      const delta = p.temp - activeTemp;
+      const deltaDisplay = state.unit === "F" ? delta * 9 / 5 : delta;
+      const abs = Math.abs(deltaDisplay);
+      if (abs >= 1) {
+        const sign = delta > 0 ? "+" : "−";
+        const cls = delta > 0 ? "up" : "down";
+        deltaHtml = `<span class="place-chip-delta ${cls}" title="vs ${escapeHtml(state.place?.name || "here")}">${sign}${Math.round(abs)}°</span>`;
+      }
+    }
     return `
       <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
+        ${iconHtml}
         <span>${escapeHtml(p.name)}</span>
-        ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
+        ${tempHtml}
+        ${deltaHtml}
         <span class="close" data-action="remove" aria-label="Remove">
           <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
         </span>
