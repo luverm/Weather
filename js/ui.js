@@ -236,6 +236,7 @@ export const ui = {
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     updateFavicon(weather.temp, state.unit);
+    updatePageTitle(weather);
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
@@ -284,6 +285,16 @@ export const ui = {
 // ---------- Rendering ----------
 
 function convertTemp(c) { return state.unit === "F" ? c * 9 / 5 + 32 : c; }
+
+function updatePageTitle(weather) {
+  if (typeof document === "undefined") return;
+  const t = weather?.temp;
+  const place = state.place?.name;
+  if (t == null && !place) { document.title = "Aether — Interactive Weather"; return; }
+  const temp = t != null ? `${Math.round(convertTemp(t))}°${state.unit}` : "—";
+  const title = place ? `${temp} · ${place} — Aether` : `${temp} — Aether`;
+  document.title = title;
+}
 
 function animateNumber(node, target, format) {
   if (target == null || isNaN(target)) { node.textContent = "–"; return; }
@@ -1633,6 +1644,7 @@ function bindUnitToggle() {
     if (state.weather) {
       ui.setWeather(state.weather);
       updateFavicon(state.weather.temp, state.unit);
+      updatePageTitle(state.weather);
     }
   });
 }
