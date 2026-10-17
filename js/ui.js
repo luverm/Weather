@@ -54,6 +54,14 @@ const el = {
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  daylightProgress: $("#daylight-progress"),
+  daylightProgressFill: $("#daylight-progress-fill"),
+  daylightProgressMeta: $("#daylight-progress-meta"),
+  goldenHour: $("#golden-hour"),
+  goldenHourAm: $("#golden-hour-am"),
+  goldenHourPm: $("#golden-hour-pm"),
+  goldenHourAmTime: $("#golden-hour-am-time"),
+  goldenHourPmTime: $("#golden-hour-pm-time"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -133,6 +141,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  daylightTimer: null,
   localTimer: null,
 };
 
@@ -599,6 +608,82 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderGoldenHour(w);
+  scheduleDaylightProgress(w);
+}
+
+const GOLDEN_HOUR_MS = 60 * 60_000;
+
+function renderGoldenHour(w) {
+  if (!el.goldenHour || !w?.sunrise || !w?.sunset) {
+    if (el.goldenHour) el.goldenHour.hidden = true;
+    return;
+  }
+  // Golden hour = roughly the first hour after sunrise and the last hour
+  // before sunset — the window where the sun is low on the horizon.
+  const amStart = w.sunrise;
+  const amEnd = w.sunrise + GOLDEN_HOUR_MS;
+  const pmStart = w.sunset - GOLDEN_HOUR_MS;
+  const pmEnd = w.sunset;
+  // Only show the card if the daylight window is long enough that golden
+  // morning and evening don't overlap.
+  if (pmStart <= amEnd) { el.goldenHour.hidden = true; return; }
+  el.goldenHour.hidden = false;
+  if (el.goldenHourAmTime) {
+    el.goldenHourAmTime.textContent = `${fmtTime(amStart)} – ${fmtTime(amEnd)}`;
+  }
+  if (el.goldenHourPmTime) {
+    el.goldenHourPmTime.textContent = `${fmtTime(pmStart)} – ${fmtTime(pmEnd)}`;
+  }
+  const now = Date.now();
+  const activeAm = now >= amStart && now <= amEnd;
+  const activePm = now >= pmStart && now <= pmEnd;
+  const upcomingAm = now < amStart && (now > amStart - 2 * 60 * 60_000);
+  const upcomingPm = now < pmStart && now > pmStart - 2 * 60 * 60_000;
+  el.goldenHourAm?.setAttribute("data-state",
+    activeAm ? "active" : upcomingAm ? "soon" : (now > amEnd ? "past" : ""));
+  el.goldenHourPm?.setAttribute("data-state",
+    activePm ? "active" : upcomingPm ? "soon" : (now > pmEnd ? "past" : ""));
+  // Click to scrub to that moment. Use onclick so each render replaces the
+  // handler rather than stacking a new listener onto the element.
+  if (el.goldenHourAm) el.goldenHourAm.onclick = () => state.handlers.onHourClick?.(amStart);
+  if (el.goldenHourPm) el.goldenHourPm.onclick = () => state.handlers.onHourClick?.(pmStart);
+}
+
+function scheduleDaylightProgress(w) {
+  if (state.daylightTimer) { clearInterval(state.daylightTimer); state.daylightTimer = null; }
+  if (!el.daylightProgress || !el.daylightProgressFill) return;
+  if (!w?.sunrise || !w?.sunset) {
+    el.daylightProgress.hidden = true;
+    return;
+  }
+  const update = () => {
+    const now = Date.now();
+    const sr = w.sunrise, ss = w.sunset;
+    const total = ss - sr;
+    if (total <= 0) { el.daylightProgress.hidden = true; return; }
+    el.daylightProgress.hidden = false;
+    let pct, meta;
+    if (now < sr) {
+      pct = 0;
+      const mins = Math.max(0, Math.round((sr - now) / 60_000));
+      meta = mins >= 60 ? `starts in ${Math.floor(mins / 60)}h ${mins % 60}m` : `starts in ${mins}m`;
+    } else if (now > ss) {
+      pct = 100;
+      meta = "night";
+    } else {
+      pct = Math.min(100, Math.max(0, ((now - sr) / total) * 100));
+      const leftMins = Math.max(0, Math.round((ss - now) / 60_000));
+      const left = leftMins >= 60
+        ? `${Math.floor(leftMins / 60)}h ${leftMins % 60}m`
+        : `${leftMins}m`;
+      meta = `${Math.round(pct)}% · ${left} of daylight left`;
+    }
+    el.daylightProgressFill.style.width = `${pct.toFixed(1)}%`;
+    el.daylightProgressMeta.textContent = meta;
+  };
+  update();
+  state.daylightTimer = setInterval(update, 60_000);
 }
 
 function scheduleSunArc(w) {
