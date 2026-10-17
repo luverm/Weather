@@ -426,6 +426,30 @@ html[data-reduce-motion="true"] *::after {
   box-shadow: 0 2px 8px rgba(0,0,0,0.35);
   transition: left 380ms var(--ease);
 }
+.day-range-avg {
+  position: absolute;
+  top: 50%;
+  width: 2px; height: 12px;
+  margin-left: -1px;
+  background: rgba(255,255,255,0.65);
+  transform: translateY(-50%);
+  border-radius: 1px;
+  pointer-events: none;
+  transition: left 380ms var(--ease);
+}
+.day-range-avg[hidden] { display: none; }
+.week-vs {
+  display: block;
+  margin: 8px 0 0 auto;
+  width: fit-content;
+  max-width: 240px;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.week-vs[hidden] { display: none; }
 
 /* ---------- Nowcast banner ---------- */
 .nowcast {

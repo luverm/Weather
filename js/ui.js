@@ -28,6 +28,8 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  dayRangeAvg: $("#day-range-avg"),
+  weekVs: $("#week-vs"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -299,12 +301,17 @@ function renderDayRange(w) {
   let lo = today?.tempMin, hi = today?.tempMax;
   if (lo == null || hi == null) {
     const hours = (w.hourly || []).slice(0, 24).map((h) => h.temp).filter((v) => v != null);
-    if (hours.length < 2) { el.dayRange.hidden = true; return; }
+    if (hours.length < 2) {
+      el.dayRange.hidden = true;
+      if (el.weekVs) el.weekVs.hidden = true;
+      return;
+    }
     lo = Math.min(...hours);
     hi = Math.max(...hours);
   }
   if (lo == null || hi == null || lo === hi) {
     el.dayRange.hidden = true;
+    if (el.weekVs) el.weekVs.hidden = true;
     return;
   }
   el.dayRange.hidden = false;
@@ -314,6 +321,64 @@ function renderDayRange(w) {
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
   el.dayRangeMarker.style.left = `${(frac * 100).toFixed(1)}%`;
+
+  renderWeekVs(w, { lo, hi });
+}
+
+function renderWeekVs(w, { lo, hi }) {
+  if (!el.weekVs) return;
+  // Compare today's high against the average of the remaining 6 days so the
+  // chip reads as "how unusual is today vs the coming week". Fall back to
+  // mean of all daily entries if we don't have at least 3 future days.
+  const daily = w.daily || [];
+  if (daily.length < 3) {
+    el.weekVs.hidden = true;
+    if (el.dayRangeAvg) el.dayRangeAvg.hidden = true;
+    return;
+  }
+  const others = daily.slice(1).map((d) => d.tempMax).filter((v) => v != null);
+  if (others.length < 2) {
+    el.weekVs.hidden = true;
+    if (el.dayRangeAvg) el.dayRangeAvg.hidden = true;
+    return;
+  }
+  const avg = others.reduce((s, v) => s + v, 0) / others.length;
+  const delta = hi - avg;
+  // Degrees differ in magnitude by unit — compute delta in °F if displaying °F
+  // so the pill matches the main display's unit.
+  const deltaDisplay = state.unit === "F" ? delta * 9 / 5 : delta;
+  const absDisplay = Math.abs(deltaDisplay);
+  let tone = "flat";
+  let text;
+  if (absDisplay < 0.75) {
+    tone = "flat";
+    text = "around week average";
+  } else {
+    const rounded = Math.round(absDisplay);
+    const safeRounded = rounded < 1 ? 1 : rounded;
+    if (delta > 0) {
+      tone = "up";
+      text = `${safeRounded}° above week avg`;
+    } else {
+      tone = "down";
+      text = `${safeRounded}° below week avg`;
+    }
+  }
+  el.weekVs.className = `week-vs trend ${tone}`;
+  el.weekVs.textContent = text;
+  el.weekVs.hidden = false;
+
+  // Also place a soft tick on the range track at the week-average high.
+  if (el.dayRangeAvg) {
+    if (avg >= lo && avg <= hi && hi !== lo) {
+      const f = (avg - lo) / (hi - lo);
+      el.dayRangeAvg.style.left = `${(f * 100).toFixed(1)}%`;
+      el.dayRangeAvg.hidden = false;
+      el.dayRangeAvg.title = `Week-avg high ${Math.round(convertTemp(avg))}°`;
+    } else {
+      el.dayRangeAvg.hidden = true;
+    }
+  }
 }
 
 function renderMetrics(w) {
