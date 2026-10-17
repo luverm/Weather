@@ -46,6 +46,7 @@ const el = {
   aqValue: $("#aq-value"),
   aqLabel: $("#aq-label"),
   aqDetail: $("#aq-detail"),
+  aqAdvice: $("#aq-advice"),
   aqCard: $("#aq-card"),
   aqTrendLine: $("#aq-trend-line"),
   aqTrendFill: $("#aq-trend-fill"),
@@ -632,7 +633,29 @@ function renderAirQuality(aq) {
   el.aqArc.setAttribute("stroke-dashoffset", String(126 * (1 - frac)));
   el.aqDetail.textContent =
     `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
+  renderAqAdvice(aq);
   renderAqTrend(aq);
+}
+
+function renderAqAdvice(aq) {
+  if (!el.aqAdvice) return;
+  const text = aqAdviceText(aq?.aqi);
+  if (!text) {
+    el.aqAdvice.hidden = true;
+    return;
+  }
+  el.aqAdvice.hidden = false;
+  el.aqAdvice.textContent = text;
+}
+
+function aqAdviceText(v) {
+  // US EPA AQI thresholds.
+  if (v == null) return null;
+  if (v <= 100) return null;
+  if (v <= 150) return "Sensitive groups: limit prolonged outdoor exercise.";
+  if (v <= 200) return "Everyone: reduce outdoor exertion.";
+  if (v <= 300) return "Avoid outdoor activity — wear a mask if you must go out.";
+  return "Hazardous — stay indoors with air sealed.";
 }
 
 function renderAqTrend(aq) {
