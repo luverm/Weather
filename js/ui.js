@@ -1584,24 +1584,88 @@ function startFetchedTicker() {
   setInterval(update, 30_000);
 }
 
+const SHARE_GLYPH = {
+  clear: "☀️",
+  clouds: "⛅",
+  rain: "🌧️",
+  snow: "❄️",
+  storm: "⛈️",
+  fog: "🌫️",
+};
+
+function buildShareText(w) {
+  const placeName = state.place?.name || "Here";
+  const unit = state.unit;
+  const useInches = unit === "F";
+  const t = (v) => (v == null ? "—" : `${Math.round(useInches ? v * 9 / 5 + 32 : v)}°${unit}`);
+  const glyph = SHARE_GLYPH[w.condition] || "🌡";
+  const today = w.daily?.[0];
+  const lines = [];
+  lines.push(`${glyph} Aether · ${placeName}`);
+  lines.push(`${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`);
+
+  // Vs yesterday — a highly conversational data point for sharing.
+  if (w.yesterday?.temp != null && w.temp != null) {
+    const delta = w.temp - w.yesterday.temp;
+    const deltaDisplay = useInches ? delta * 9 / 5 : delta;
+    const abs = Math.abs(deltaDisplay);
+    if (abs >= 0.75) {
+      const r = Math.max(1, Math.round(abs));
+      lines.push(`${delta > 0 ? "↑" : "↓"} ${r}°${unit} ${delta > 0 ? "warmer" : "cooler"} than yesterday`);
+    }
+  }
+
+  if (today?.tempMin != null && today?.tempMax != null) {
+    const popBit = today.pop != null ? ` · ${today.pop}% precip` : "";
+    lines.push(`Today ${t(today.tempMin)} / ${t(today.tempMax)}${popBit}`);
+  }
+
+  lines.push(`Wind ${Math.round(w.windSpeed || 0)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}${
+    w.windGusts && w.windGusts > (w.windSpeed || 0) ? ` · gusts ${Math.round(w.windGusts)}` : ""
+  }`);
+
+  if (w.uv != null || w.airQuality?.aqi != null) {
+    const parts = [];
+    if (w.uv != null) parts.push(`UV ${Math.round(w.uv)}`);
+    if (w.airQuality?.aqi != null) parts.push(`AQI ${Math.round(w.airQuality.aqi)} ${w.airQuality.label}`);
+    if (parts.length) lines.push(parts.join(" · "));
+  }
+
+  // Next rain within 12h adds a useful planning hint.
+  const now = Date.now();
+  const nextRain = (w.hourly || []).find((h) =>
+    h.time > now && h.time < now + 12 * 3600_000 && ((h.pop ?? 0) >= 55 || (h.precip ?? 0) > 0.4)
+  );
+  if (nextRain) {
+    lines.push(`Next rain ${fmtTime(nextRain.time)} · ${nextRain.pop}%`);
+  }
+
+  // Grab-list from the kit module.
+  try {
+    const kit = buildKit(w).map((c) => c.label);
+    if (kit.length) lines.push(`Grab: ${kit.join(", ")}`);
+  } catch { /* non-fatal */ }
+
+  // Sun info — surface the next event with countdown.
+  const nextSunset = w.sunset && w.sunset > now ? w.sunset : null;
+  const nextSunrise = w.sunrise && w.sunrise > now ? w.sunrise : null;
+  const nextSunEvent = (nextSunset && (!nextSunrise || nextSunset < nextSunrise))
+    ? { kind: "Sunset", ts: nextSunset }
+    : nextSunrise ? { kind: "Sunrise", ts: nextSunrise } : null;
+  if (nextSunEvent) {
+    lines.push(`${nextSunEvent.kind} ${fmtTime(nextSunEvent.ts)}`);
+  }
+
+  return lines.join("\n");
+}
+
 function bindShare() {
   if (!el.shareBtn) return;
   el.shareBtn.addEventListener("click", async () => {
     const w = state.weather;
     if (!w) { ui.showToast("No weather to share yet"); return; }
     const placeName = state.place?.name || "Here";
-    const unit = state.unit;
-    const t = (v) => `${Math.round(unit === "F" ? v * 9 / 5 + 32 : v)}°${unit}`;
-    const today = w.daily?.[0];
-    const lines = [
-      `Aether · ${placeName}`,
-      `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
-      today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
-      `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
-      w.uv != null ? `UV ${Math.round(w.uv)}` : null,
-      w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
-    ].filter(Boolean);
-    const text = lines.join("\n");
+    const text = buildShareText(w);
     try {
       if (navigator.share) {
         await navigator.share({ title: `Aether — ${placeName}`, text });
