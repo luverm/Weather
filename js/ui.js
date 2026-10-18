@@ -90,6 +90,14 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcGoldenDawn: $("#sun-arc-golden-dawn"),
+  sunArcGoldenDusk: $("#sun-arc-golden-dusk"),
+  sunTwilight: $("#sun-twilight"),
+  twilightGolden: $("#twilight-golden"),
+  twilightGoldenWhen: $("#twilight-golden-when"),
+  twilightBlue: $("#twilight-blue"),
+  twilightBlueWhen: $("#twilight-blue-when"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -521,8 +529,123 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderTwilight(w);
+  renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+// Rough golden/blue-hour timings. Not an astronomical computation — a
+// photographer's useful approximation: golden hour is a 60-min window
+// immediately after sunrise or before sunset; blue hour is the 30-min
+// window on the sky side of each golden window.
+function twilightWindows(w) {
+  if (!w?.sunrise || !w?.sunset) return null;
+  const MIN = 60_000;
+  return {
+    dawnBlue:       { start: w.sunrise - 30 * MIN, end: w.sunrise,            kind: "blue",   when: "dawn" },
+    morningGolden:  { start: w.sunrise,            end: w.sunrise + 60 * MIN, kind: "golden", when: "morning" },
+    eveningGolden:  { start: w.sunset  - 60 * MIN, end: w.sunset,             kind: "golden", when: "evening" },
+    duskBlue:       { start: w.sunset,             end: w.sunset  + 30 * MIN, kind: "blue",   when: "dusk" },
+  };
+}
+
+function renderTwilight(w) {
+  const tw = twilightWindows(w);
+  if (!tw || !el.sunTwilight) {
+    if (el.sunTwilight) el.sunTwilight.hidden = true;
+    paintTwilightArcs(w, null);
+    return;
+  }
+  const now = Date.now();
+  const pick = (kind) => {
+    const wins = Object.values(tw).filter((x) => x.kind === kind);
+    // Prefer a window currently in progress, else the next upcoming one, else
+    // the last one from today (so the pill still shows after dusk).
+    const active = wins.find((x) => now >= x.start && now < x.end);
+    if (active) return { ...active, state: "active" };
+    const upcoming = wins.filter((x) => x.start > now).sort((a, b) => a.start - b.start)[0];
+    if (upcoming) return { ...upcoming, state: "upcoming" };
+    const past = wins.filter((x) => x.end <= now).sort((a, b) => b.end - a.end)[0];
+    if (past) return { ...past, state: "past" };
+    return null;
+  };
+  const gold = pick("golden");
+  const blue = pick("blue");
+
+  const paintPill = (pillEl, whenEl, win) => {
+    if (!pillEl || !whenEl) return;
+    if (!win) { pillEl.hidden = true; return; }
+    pillEl.hidden = false;
+    pillEl.dataset.state = win.state;
+    const range = `${fmtTime(win.start)}–${fmtTime(win.end)}`;
+    whenEl.textContent = win.state === "active" ? `now · ends ${fmtTime(win.end)}` : range;
+    pillEl.title = `${win.kind === "golden" ? "Golden" : "Blue"} hour (${win.when}): ${range}`;
+  };
+  paintPill(el.twilightGolden, el.twilightGoldenWhen, gold);
+  paintPill(el.twilightBlue, el.twilightBlueWhen, blue);
+  el.sunTwilight.hidden = !(gold || blue);
+  paintTwilightArcs(w, tw);
+}
+
+// Overlay thicker warm-toned segments on the sun arc for the morning and
+// evening golden hours. The arc is a quadratic Bezier from (10,74) to
+// (190,74) via (100,-26); fractions below 1 trace the arc from the
+// corresponding end inward.
+function paintTwilightArcs(w, tw) {
+  if (!el.sunArcGoldenDawn || !el.sunArcGoldenDusk) return;
+  if (!tw || !w?.sunrise || !w?.sunset || w.sunset <= w.sunrise) {
+    el.sunArcGoldenDawn.setAttribute("d", "");
+    el.sunArcGoldenDusk.setAttribute("d", "");
+    return;
+  }
+  const daylight = w.sunset - w.sunrise;
+  const goldFrac = Math.max(0.04, Math.min(0.35, 60 * 60_000 / daylight));
+  el.sunArcGoldenDawn.setAttribute("d", bezierSegment(0, goldFrac));
+  el.sunArcGoldenDusk.setAttribute("d", bezierSegment(1 - goldFrac, 1));
+}
+
+// Build a polyline that follows the arc between fractions t0 and t1. Using a
+// polyline avoids computing a sub-Bezier for just a decorative overlay.
+function bezierSegment(t0, t1, steps = 16) {
+  const pt = (t) => {
+    const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
+    const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
+    return [x, y];
+  };
+  let d = "";
+  for (let i = 0; i <= steps; i++) {
+    const t = t0 + (t1 - t0) * (i / steps);
+    const [x, y] = pt(t);
+    d += `${i === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)} `;
+  }
+  return d.trim();
+}
+
+// Day-length delta: today vs. tomorrow from the daily forecast. "+Xm Ys"
+// means tomorrow is longer; "−" means shorter.
+function renderDaylightDelta(w) {
+  if (!el.sunDaylightDelta) return;
+  const today = w?.daily?.[0];
+  const next = w?.daily?.[1];
+  const todayLen = (today?.sunrise != null && today?.sunset != null) ? today.sunset - today.sunrise : null;
+  const nextLen = (next?.sunrise != null && next?.sunset != null) ? next.sunset - next.sunrise : null;
+  if (todayLen == null || nextLen == null) { el.sunDaylightDelta.hidden = true; return; }
+  const deltaMs = nextLen - todayLen;
+  const absS = Math.round(Math.abs(deltaMs) / 1000);
+  if (absS < 10) {
+    el.sunDaylightDelta.hidden = false;
+    el.sunDaylightDelta.textContent = "same tomorrow";
+    el.sunDaylightDelta.dataset.dir = "flat";
+    return;
+  }
+  const m = Math.floor(absS / 60);
+  const s = absS % 60;
+  const dur = m ? `${m}m ${s.toString().padStart(2, "0")}s` : `${s}s`;
+  const sign = deltaMs >= 0 ? "+" : "−";
+  el.sunDaylightDelta.hidden = false;
+  el.sunDaylightDelta.textContent = `${sign}${dur} tomorrow`;
+  el.sunDaylightDelta.dataset.dir = deltaMs >= 0 ? "longer" : "shorter";
 }
 
 function scheduleSunArc(w) {
@@ -553,6 +676,8 @@ function scheduleSunArc(w) {
     // After sunset, dim the marker so it visually settles.
     const isUp = now >= sr && now <= ss;
     el.sunArcMarker.style.opacity = isUp ? "1" : "0.45";
+    // Refresh twilight pills so "upcoming → active → past" transitions appear.
+    renderTwilight(w);
   };
   update();
   state.sunArcTimer = setInterval(update, 60_000);

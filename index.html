@@ -333,8 +333,24 @@
             <line x1="10" y1="74" x2="190" y2="74" stroke="var(--stroke)" stroke-dasharray="2 4"/>
             <path id="sun-arc-path" d="M10 74 Q100 -26 190 74"
                   fill="none" stroke="url(#sun-arc-grad)" stroke-width="1.5" stroke-linecap="round"/>
+            <path id="sun-arc-golden-dawn" class="sun-arc-golden" d="" fill="none"
+                  stroke="rgba(255,186,120,0.95)" stroke-width="3" stroke-linecap="round"/>
+            <path id="sun-arc-golden-dusk" class="sun-arc-golden" d="" fill="none"
+                  stroke="rgba(255,146,96,0.95)" stroke-width="3" stroke-linecap="round"/>
             <circle id="sun-arc-marker" cx="10" cy="74" r="4.5" fill="#fff1c9"/>
           </svg>
+          <div id="sun-twilight" class="sun-twilight" hidden>
+            <span class="twilight-pill twilight-golden" id="twilight-golden" hidden>
+              <span class="twilight-swatch twilight-swatch-golden" aria-hidden="true"></span>
+              <span class="twilight-label">Golden</span>
+              <span class="twilight-when" id="twilight-golden-when">—</span>
+            </span>
+            <span class="twilight-pill twilight-blue" id="twilight-blue" hidden>
+              <span class="twilight-swatch twilight-swatch-blue" aria-hidden="true"></span>
+              <span class="twilight-label">Blue</span>
+              <span class="twilight-when" id="twilight-blue-when">—</span>
+            </span>
+          </div>
           <div class="sun-row">
             <div class="sun-item">
               <span class="sun-label">Rises</span>
@@ -347,6 +363,7 @@
             <div class="sun-item">
               <span class="sun-label">Daylight</span>
               <strong id="sun-daylight">—</strong>
+              <span id="sun-daylight-delta" class="sun-daylight-delta" hidden></span>
             </div>
           </div>
         </div>

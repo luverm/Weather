@@ -976,6 +976,48 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+.sun-arc-golden { opacity: 0.85; filter: drop-shadow(0 0 3px rgba(255,170,110,0.55)); }
+
+.sun-twilight {
+  display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 8px;
+}
+.twilight-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 8px 3px 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--stroke);
+  font-size: 11px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+  transition: background 220ms var(--ease), border-color 220ms var(--ease), color 220ms var(--ease);
+}
+.twilight-pill[data-state="active"] {
+  background: rgba(255,186,120,0.12);
+  border-color: rgba(255,186,120,0.45);
+  color: #fff1dc;
+}
+.twilight-pill[data-state="past"] { opacity: 0.55; }
+.twilight-label {
+  font-weight: 500; color: var(--fg);
+  letter-spacing: 0.02em;
+}
+.twilight-pill[data-state="past"] .twilight-label { color: var(--fg-dim); }
+.twilight-swatch {
+  width: 8px; height: 8px; border-radius: 2px;
+  box-shadow: 0 0 6px currentColor;
+}
+.twilight-swatch-golden { background: linear-gradient(135deg,#ffcf8a,#ff8f5a); color: rgba(255,160,90,0.6); }
+.twilight-swatch-blue   { background: linear-gradient(135deg,#8db6ff,#4a63c0); color: rgba(100,130,220,0.6); }
+
+.sun-daylight-delta {
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+.sun-daylight-delta[data-dir="longer"]  { color: #ffd49a; }
+.sun-daylight-delta[data-dir="shorter"] { color: #9ad1ff; }
 
 /* ---------- Radar map ---------- */
 .radar {
