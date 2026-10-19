@@ -103,6 +103,7 @@ const el = {
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
   settingClearPlaces: $("#setting-clear-places"),
+  settingYesterdayOverlay: $("#setting-yesterday-overlay"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
@@ -227,7 +228,9 @@ export const ui = {
     if (document.documentElement.dataset.zen === "true") paintZen(weather);
     if (state.chart) {
       state.chart.setHours(weather.hourly);
-      state.chart.setYesterdayHours(weather.yesterday?.hourly);
+      state.chart.setYesterdayHours(
+        ui.yesterdayOverlayOn?.() ? weather.yesterday?.hourly : []
+      );
     }
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
@@ -1479,6 +1482,15 @@ function bindSettings() {
     }
   });
 
+  el.settingYesterdayOverlay?.addEventListener("change", () => {
+    const on = el.settingYesterdayOverlay.checked;
+    localStorage.setItem("aether:yesterdayOverlay", on ? "1" : "0");
+    applyYesterdayOverlayToggle();
+    if (state.chart && state.weather) {
+      state.chart.setYesterdayHours(on ? (state.weather.yesterday?.hourly || []) : []);
+    }
+  });
+
   el.settingClearPlaces?.addEventListener("click", () => {
     if (!confirm("Clear all saved places?")) return;
     for (const p of places.all()) places.remove(p);
@@ -1497,7 +1509,23 @@ function applyStoredPreferences() {
     queueMicrotask(() => state.handlers.onReduceMotion?.(true));
   }
   if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
+  // Yesterday overlay — defaults on, remembered off between sessions.
+  const stored = localStorage.getItem("aether:yesterdayOverlay");
+  const on = stored == null ? true : stored === "1";
+  if (el.settingYesterdayOverlay) el.settingYesterdayOverlay.checked = on;
+  applyYesterdayOverlayToggle();
 }
+
+function applyYesterdayOverlayToggle() {
+  const stored = localStorage.getItem("aether:yesterdayOverlay");
+  const on = stored == null ? true : stored === "1";
+  document.documentElement.setAttribute("data-yesterday-overlay", on ? "on" : "off");
+}
+
+ui.yesterdayOverlayOn = () => {
+  const stored = localStorage.getItem("aether:yesterdayOverlay");
+  return stored == null ? true : stored === "1";
+};
 
 // Exposed so app.js can query the current preference on boot.
 ui.isReduceMotion = () => localStorage.getItem("aether:reduceMotion") === "1";
