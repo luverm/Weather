@@ -301,10 +301,13 @@ export const ui = {
     });
   },
   getUnit: () => state.unit,
-  // Round 47: progress bar for background work.
+  // Round 47: progress bar for background work. Round 49: cancel the
+  // scheduled hide if another fetch starts within the fade window.
   startLoader() {
     const bar = document.getElementById("loader-bar");
     if (!bar) return;
+    if (bar._hideTimer) { clearTimeout(bar._hideTimer); bar._hideTimer = null; }
+    bar.classList.remove("done");
     bar.hidden = false;
     bar.classList.add("running");
   },
@@ -313,9 +316,11 @@ export const ui = {
     if (!bar) return;
     bar.classList.remove("running");
     bar.classList.add("done");
-    setTimeout(() => {
+    if (bar._hideTimer) clearTimeout(bar._hideTimer);
+    bar._hideTimer = setTimeout(() => {
       bar.hidden = true;
       bar.classList.remove("done");
+      bar._hideTimer = null;
     }, 400);
   },
 };
@@ -1838,12 +1843,22 @@ ui.toggleZen = function (force) {
   const target = typeof force === "boolean" ? force : !now;
   document.documentElement.dataset.zen = target ? "true" : "false";
   el.zenOverlay.hidden = !target;
+  // Always clear a prior interval before deciding what to do — this is
+  // safe whether we're toggling on, off, or re-entering (R49).
+  if (state._zenPaintTimer) {
+    clearInterval(state._zenPaintTimer);
+    state._zenPaintTimer = null;
+  }
   if (target) {
     paintZen(state.sampledWeather || state.weather);
     state._zenPaintTimer = setInterval(() => paintZen(state.sampledWeather || state.weather), 60_000);
-  } else if (state._zenPaintTimer) {
-    clearInterval(state._zenPaintTimer);
-    state._zenPaintTimer = null;
+    // Round 49: focus the exit pill so keyboard/SR users land in the dialog;
+    // remember what to return to on close.
+    state._zenReturnFocus = document.activeElement;
+    el.zenExit?.focus?.();
+  } else if (state._zenReturnFocus && document.contains(state._zenReturnFocus)) {
+    state._zenReturnFocus.focus?.();
+    state._zenReturnFocus = null;
   }
 };
 
