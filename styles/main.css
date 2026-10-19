@@ -1807,6 +1807,36 @@ html[data-zen="true"] .stage { opacity: 1; }
   margin: 0;
   letter-spacing: 0.04em;
 }
+.zen-ticker {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(72px, 92px);
+  gap: 10px;
+  margin-top: 24px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--stroke);
+  border-radius: 18px;
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  max-width: min(620px, 90vw);
+  overflow-x: auto;
+}
+.zen-ticker:empty { display: none; }
+.zen-tick {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--fg-muted);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.zen-tick-icon { width: 18px; height: 18px; color: var(--fg); opacity: 0.85; }
+.zen-tick-icon svg { width: 18px; height: 18px; }
+.zen-tick-temp { color: var(--fg); font-size: 13px; font-weight: 500; }
+.zen-tick-time { opacity: 0.75; }
+
 .zen-exit {
   margin-top: 32px;
   display: inline-flex;

@@ -91,6 +91,7 @@ const el = {
   zenCondition: $("#zen-condition"),
   zenSub: $("#zen-sub"),
   zenExit: $("#zen-exit"),
+  zenTicker: $("#zen-ticker"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
   fetchedAgo: $("#fetched-ago"),
@@ -1642,6 +1643,25 @@ function paintZen(w) {
     if (w.humidity != null) bits.push(`${Math.round(w.humidity)}% humidity`);
     el.zenSub.textContent = bits.join(" · ");
   }
+  paintZenTicker(w);
+}
+
+function paintZenTicker(w) {
+  if (!el.zenTicker) return;
+  const live = state.weather || w;
+  const now = Date.now();
+  const upcoming = (live?.hourly || []).filter((h) => h.time >= now).slice(0, 6);
+  if (!upcoming.length) { el.zenTicker.innerHTML = ""; return; }
+  el.zenTicker.innerHTML = upcoming.map((h) => {
+    const t = Math.round(state.unit === "F" ? h.temp * 9 / 5 + 32 : h.temp);
+    return `
+      <div class="zen-tick">
+        <span class="zen-tick-time">${fmtTime(h.time)}</span>
+        <span class="zen-tick-icon">${iconFor(h.condition)}</span>
+        <span class="zen-tick-temp">${t}°</span>
+      </div>
+    `;
+  }).join("");
 }
 
 function bindTilt() {
