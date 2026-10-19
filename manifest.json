@@ -7,12 +7,29 @@
   "background_color": "#0b1020",
   "theme_color": "#0b1020",
   "orientation": "any",
+  "categories": ["weather", "utilities", "lifestyle"],
   "icons": [
     {
       "src": "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%230b1020'/%3E%3Ccircle cx='256' cy='256' r='130' fill='%23fff1c9'/%3E%3Ccircle cx='256' cy='256' r='200' fill='none' stroke='%239ad1ff' stroke-opacity='0.35' stroke-width='6'/%3E%3C/svg%3E",
       "sizes": "192x192 512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Current location",
+      "short_name": "Locate",
+      "description": "Jump to the weather at your current location",
+      "url": "./index.html?locate=1",
+      "icons": [{ "src": "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' rx='18' fill='%230b1020'/%3E%3Ccircle cx='48' cy='48' r='10' fill='%239ad1ff'/%3E%3Ccircle cx='48' cy='48' r='28' fill='none' stroke='%239ad1ff' stroke-width='4'/%3E%3C/svg%3E", "sizes": "96x96" }]
+    },
+    {
+      "name": "Surprise me",
+      "short_name": "Random",
+      "description": "Load a random notable city",
+      "url": "./index.html?surprise=1",
+      "icons": [{ "src": "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' rx='18' fill='%230b1020'/%3E%3Cpath d='M24 24h20v20H24zM52 52h20v20H52zM24 60l20-20M52 44l20-20' fill='none' stroke='%23c7b4ff' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E", "sizes": "96x96" }]
     }
   ]
 }

@@ -345,6 +345,21 @@ function parseUrlPlace() {
     await loadByCoords(urlPlace);
     return;
   }
+  // Round 48: PWA shortcuts land here with ?locate=1 or ?surprise=1.
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("surprise")) {
+    const next = randomNotablePlace();
+    places.add(next);
+    await loadByCoords(next);
+    return;
+  }
+  if (params.get("locate")) {
+    try {
+      const { lat, lon } = await getLocation();
+      await loadByCoords({ name: "Current location", lat, lon });
+      return;
+    } catch { /* fall through */ }
+  }
   // Prefer the most recent saved place if we have one — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();
