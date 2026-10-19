@@ -61,6 +61,11 @@ const el = {
   pollenLevel: $("#pollen-level"),
   pollenDominant: $("#pollen-dominant"),
   pollenItems: $("#pollen-items"),
+  rainCard: $("#rain-card"),
+  rainHeadline: $("#rain-headline"),
+  rainDetail: $("#rain-detail"),
+  rainBars: $("#rain-bars"),
+  rainWeekTotal: $("#rain-week-total"),
   pressureTrend: $("#m-pressure-trend"),
   tempTrend: $("#temp-trend"),
   uvLevel: $("#m-uv-level"),
@@ -201,6 +206,7 @@ export const ui = {
     renderNowcast(weather);
     renderAdvice(weather);
     renderPollen(weather.pollen);
+    renderRainOutlook(weather);
     renderTrends(weather);
     renderInsights(weather);
     renderActivity(weather);
@@ -920,6 +926,65 @@ function renderPollen(pollen) {
   el.pollenItems.innerHTML = pollen.items.map((p) =>
     `<span>${escapeHtml(p.label)} ${p.value.toFixed(1)}</span>`
   ).join("");
+}
+
+function renderRainOutlook(w) {
+  if (!el.rainCard) return;
+  const days = (w?.daily || []).slice(0, 7);
+  if (!days.length) { el.rainCard.hidden = true; return; }
+  const totals = days.map((d) => Math.max(0, d.precip ?? 0));
+  const sum = totals.reduce((a, b) => a + b, 0);
+  const rainyDays = totals.filter((v) => v >= 1).length;
+  const peakIdx = totals.reduce((best, v, i) => (v > totals[best] ? i : best), 0);
+  const peak = totals[peakIdx];
+
+  el.rainCard.hidden = false;
+
+  // Headline + detail.
+  if (sum < 0.5) {
+    el.rainHeadline.textContent = "Dry week ahead";
+    el.rainDetail.textContent = "No measurable rain in the 7-day outlook.";
+  } else if (peak >= 10) {
+    const dayName = new Date(days[peakIdx].time).toLocaleDateString(undefined, {
+      weekday: "short",
+      ...(w.timezone && w.timezone !== "auto" ? { timeZone: w.timezone } : {}),
+    });
+    el.rainHeadline.textContent = `${sum.toFixed(1)} mm expected`;
+    el.rainDetail.textContent = `Wettest ${dayName}: ${peak.toFixed(1)} mm · ${rainyDays} rainy day${rainyDays === 1 ? "" : "s"}`;
+  } else {
+    el.rainHeadline.textContent = `${sum.toFixed(1)} mm expected`;
+    el.rainDetail.textContent = `${rainyDays} rainy day${rainyDays === 1 ? "" : "s"} this week`;
+  }
+
+  if (el.rainWeekTotal) {
+    if (sum >= 10) {
+      el.rainWeekTotal.className = "trend down";
+      el.rainWeekTotal.textContent = "WET";
+    } else if (sum < 0.5) {
+      el.rainWeekTotal.className = "trend up";
+      el.rainWeekTotal.textContent = "DRY";
+    } else {
+      el.rainWeekTotal.textContent = "";
+    }
+  }
+
+  // Day bars — min 2px even for a dry day so the slot stays visible.
+  const maxTotal = Math.max(1, ...totals);
+  const tz = w.timezone;
+  el.rainBars.innerHTML = days.map((d, i) => {
+    const mm = totals[i];
+    const h = mm > 0 ? Math.max(4, (mm / maxTotal) * 32) : 2;
+    const label = i === 0 ? "T" : new Date(d.time).toLocaleDateString(undefined, {
+      weekday: "narrow",
+      ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    });
+    return `
+      <div class="rain-bar-wrap" title="${escapeHtml(label)} · ${mm.toFixed(1)} mm · ${d.pop ?? 0}% chance">
+        <div class="rain-bar" data-peak="${i === peakIdx && peak > 0 ? "true" : "false"}" style="height:${h.toFixed(1)}px"></div>
+        <span class="rain-bar-label">${label}</span>
+      </div>
+    `;
+  }).join("");
 }
 
 function renderTrends(w) {
