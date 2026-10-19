@@ -966,12 +966,12 @@ kbd {
 }
 .metric:hover { transform: translateY(-2px); }
 .metric-label {
-  grid-column: 1 / span 2;
   font-size: 10.5px;
   text-transform: uppercase;
   letter-spacing: 0.18em;
   color: var(--fg-dim);
 }
+.metric .metric-label { grid-column: 1 / span 2; }
 .metric-value { font-size: 22px; font-weight: 500; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
 .metric-unit { font-size: 12px; color: var(--fg-muted); justify-self: end; }
 .metric-sub {
@@ -991,7 +991,8 @@ kbd {
 .extra-card {
   padding: 14px 16px;
   border-radius: var(--radius-sm);
-  display: grid; gap: 10px;
+  display: grid;
+  gap: 10px;
 }
 .aq-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
 .aq-ring { position: relative; width: 48px; height: 48px; color: #78d06a; }
@@ -1029,6 +1030,48 @@ kbd {
 #sun-arc-marker {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
+}
+.sun-golden-band {
+  filter: drop-shadow(0 0 4px rgba(255,180,110,0.45));
+}
+
+/* Round 23 — golden/blue hour one-liner under the sun arc. */
+.golden-hour {
+  display: inline-flex;
+  justify-self: center;
+  align-items: center;
+  gap: 6px;
+  margin: -4px 0 2px;
+  padding: 3px 10px 3px 8px;
+  border-radius: 999px;
+  background: rgba(255,180,110,0.08);
+  border: 1px solid rgba(255,180,110,0.22);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: #ffd4a1;
+  font-variant-numeric: tabular-nums;
+}
+.golden-hour[hidden] { display: none; }
+.golden-hour[data-kind="blue"] {
+  background: rgba(140,180,255,0.08);
+  border-color: rgba(140,180,255,0.22);
+  color: #c7d9ff;
+}
+.golden-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #ffb66b;
+  box-shadow: 0 0 6px rgba(255,180,110,0.7);
+}
+.golden-hour[data-kind="blue"] .golden-dot {
+  background: #8cb4ff;
+  box-shadow: 0 0 6px rgba(140,180,255,0.7);
+}
+.golden-hour[data-live="true"] .golden-dot {
+  animation: goldenPulse 1600ms ease-in-out infinite;
+}
+@keyframes goldenPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.6); opacity: 0.55; }
 }
 
 /* ---------- Radar map ---------- */

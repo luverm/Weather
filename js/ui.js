@@ -11,6 +11,7 @@ import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { yesterdaySummary } from "./yesterday.js";
+import { goldenHourLine, windowsForDay } from "./golden-hour.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -94,6 +95,10 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  goldenHour: $("#golden-hour"),
+  goldenHourText: $("#golden-hour-text"),
+  sunArcGoldenAmClip: $("#sun-arc-golden-am-clip"),
+  sunArcGoldenPmClip: $("#sun-arc-golden-pm-clip"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -126,6 +131,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  goldenTimer: null,
   localTimer: null,
 };
 
@@ -528,6 +534,56 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleGoldenHour(w);
+  renderGoldenBands(w);
+}
+
+function scheduleGoldenHour(w) {
+  if (state.goldenTimer) { clearInterval(state.goldenTimer); state.goldenTimer = null; }
+  if (!el.goldenHour || !el.goldenHourText) return;
+  const update = () => {
+    const line = goldenHourLine(w?.daily, { tz: w?.timezone });
+    if (!line) { el.goldenHour.hidden = true; return; }
+    el.goldenHour.hidden = false;
+    el.goldenHour.dataset.kind = line.kind;
+    el.goldenHour.dataset.live = line.live ? "true" : "false";
+    el.goldenHourText.textContent = line.text;
+  };
+  update();
+  state.goldenTimer = setInterval(update, 30_000);
+}
+
+function renderGoldenBands(w) {
+  if (!el.sunArcGoldenAmClip || !el.sunArcGoldenPmClip) return;
+  const today = w?.daily?.[0];
+  const win = windowsForDay(today?.sunrise, today?.sunset);
+  if (!win) {
+    el.sunArcGoldenAmClip.setAttribute("width", "0");
+    el.sunArcGoldenPmClip.setAttribute("width", "0");
+    return;
+  }
+  // The arc runs sunrise→sunset mapped to viewBox x ∈ [10, 190]. Below
+  // sunrise or above sunset there's no arc, so clamp the golden bands to
+  // that visible span. Pure left/right rect clips give a tidy highlight.
+  const spanMs = today.sunset - today.sunrise;
+  if (spanMs <= 0) {
+    el.sunArcGoldenAmClip.setAttribute("width", "0");
+    el.sunArcGoldenPmClip.setAttribute("width", "0");
+    return;
+  }
+  const toX = (ts) => {
+    const t = Math.max(0, Math.min(1, (ts - today.sunrise) / spanMs));
+    return 10 + t * 180;
+  };
+  // Morning golden: from max(sunrise, winStart) to winEnd.
+  const amStart = Math.max(toX(today.sunrise), toX(win.morning.golden.start));
+  const amEnd = toX(win.morning.golden.end);
+  const pmStart = toX(win.evening.golden.start);
+  const pmEnd = Math.min(toX(today.sunset), toX(win.evening.golden.end));
+  el.sunArcGoldenAmClip.setAttribute("x", amStart.toFixed(1));
+  el.sunArcGoldenAmClip.setAttribute("width", Math.max(0, amEnd - amStart).toFixed(1));
+  el.sunArcGoldenPmClip.setAttribute("x", pmStart.toFixed(1));
+  el.sunArcGoldenPmClip.setAttribute("width", Math.max(0, pmEnd - pmStart).toFixed(1));
 }
 
 function scheduleSunArc(w) {
