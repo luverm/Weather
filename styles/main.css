@@ -628,6 +628,39 @@ html[data-reduce-motion="true"] *::after {
   margin-top: 2px;
 }
 .metric-humidity .pressure-spark { color: #9ad1ff; }
+
+.vis-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.vis-bar {
+  flex: 1 1 auto;
+  height: 4px;
+  min-width: 40px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+.vis-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #9ad1ff, #c7d9ff);
+  border-radius: 2px;
+  transition: width 400ms var(--ease);
+}
+.vis-row[data-tone="poor"] .vis-fill { background: #c7b4ff; }
+.vis-row[data-tone="low"]  .vis-fill { background: linear-gradient(90deg, #9ad1ff, #c7b4ff); }
+.vis-row[data-tone="ok"]   .vis-fill { background: linear-gradient(90deg, #9ad1ff, #a7e3a1); }
+.vis-row[data-tone="high"] .vis-fill { background: linear-gradient(90deg, #a7e3a1, #ffe6c7); }
+.vis-label {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  color: var(--fg-dim);
+}
 .metric-uv { grid-template-rows: auto auto auto auto; }
 .metric-uv .pressure-spark { color: #ffb66b; opacity: 0.9; }
 #uv-spark-now {

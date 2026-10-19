@@ -433,9 +433,22 @@ function renderMetrics(w) {
     }
   }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
-  el.metricPressureSub.textContent = w.visibility != null
-    ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
-    : "visibility —";
+  // Round 39: visibility distance as a horizontal bar + km label. Scale
+  // caps at 20 km (practical ceiling in weather reporting) so a crisp
+  // 50 km day doesn't leave the bar always-full.
+  if (w.visibility != null) {
+    const km = Math.round((w.visibility / 1000) * 10) / 10;
+    const frac = Math.max(0.02, Math.min(1, km / 20));
+    const tone = km < 1 ? "poor" : km < 4 ? "low" : km < 10 ? "ok" : "high";
+    el.metricPressureSub.innerHTML = `
+      <span class="vis-row" data-tone="${tone}">
+        <span class="vis-bar"><span class="vis-fill" style="width:${(frac * 100).toFixed(1)}%"></span></span>
+        <span class="vis-label">${km} km</span>
+      </span>
+    `;
+  } else {
+    el.metricPressureSub.textContent = "visibility —";
+  }
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
