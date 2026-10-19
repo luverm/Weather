@@ -614,6 +614,12 @@ html[data-reduce-motion="true"] *::after {
   margin-top: 2px;
 }
 .metric-humidity .pressure-spark { color: #9ad1ff; }
+.metric-uv { grid-template-rows: auto auto auto auto; }
+.metric-uv .pressure-spark { color: #ffb66b; opacity: 0.9; }
+#uv-spark-now {
+  filter: drop-shadow(0 0 4px rgba(255, 230, 180, 0.95));
+  transition: cx 600ms var(--ease), cy 600ms var(--ease);
+}
 
 /* ---------- Daily expand ---------- */
 .daily-item { cursor: pointer; }

@@ -69,6 +69,9 @@ const el = {
   pressureSparkFill: $("#pressure-spark-fill"),
   humiditySparkLine: $("#humidity-spark-line"),
   humiditySparkFill: $("#humidity-spark-fill"),
+  uvSparkLine: $("#uv-spark-line"),
+  uvSparkFill: $("#uv-spark-fill"),
+  uvSparkNow: $("#uv-spark-now"),
   dailySpark: $("#daily-spark"),
   dailyHi: $("#daily-hi"),
   dailyLo: $("#daily-lo"),
@@ -369,12 +372,54 @@ function renderMetrics(w) {
       el.uvLevel.textContent = "";
     }
   }
-  if (w.uvPeak?.time) {
-    el.metricUVSub.textContent = `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`;
+  const burn = burnMinutes(w.uv);
+  const peakStr = w.uvPeak?.time
+    ? `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`
+    : "peak —";
+  if (burn != null) {
+    el.metricUVSub.textContent = `burn ~${burn} · ${peakStr}`;
   } else {
-    el.metricUVSub.textContent = "peak —";
+    el.metricUVSub.textContent = peakStr;
   }
   renderPressureSparkline(w);
+  renderUvSparkline(w);
+}
+
+function renderUvSparkline(w) {
+  if (!el.uvSparkLine || !el.uvSparkFill) return;
+  const hrs = (w.hourly || []).slice(0, 24);
+  const uvs = hrs.map((h) => h.uv ?? 0);
+  const defined = uvs.some((v) => v > 0.1);
+  if (!defined) {
+    el.uvSparkLine.setAttribute("d", "");
+    el.uvSparkFill.setAttribute("d", "");
+    if (el.uvSparkNow) { el.uvSparkNow.setAttribute("cx", "-10"); el.uvSparkNow.setAttribute("cy", "-10"); }
+    return;
+  }
+  const W = 100, H = 24, PAD = 2;
+  const innerW = W - PAD * 2;
+  const vMax = Math.max(3, ...uvs); // scale so UV 3 reaches the top
+  const x = (i) => PAD + (i / Math.max(1, uvs.length - 1)) * innerW;
+  const y = (v) => H - 1 - (v / vMax) * (H - 3);
+  let line = "", fill = "";
+  uvs.forEach((v, i) => {
+    const cmd = i === 0 ? "M" : "L";
+    line += `${cmd}${x(i).toFixed(1)},${y(v).toFixed(1)} `;
+  });
+  fill = line + ` L${x(uvs.length - 1).toFixed(1)},${H} L${x(0).toFixed(1)},${H} Z`;
+  el.uvSparkLine.setAttribute("d", line.trim());
+  el.uvSparkFill.setAttribute("d", fill);
+  // "Now" dot: nearest-hour point.
+  if (el.uvSparkNow) {
+    const now = Date.now();
+    let bestIdx = 0, bestDiff = Infinity;
+    hrs.forEach((h, i) => {
+      const d = Math.abs(h.time - now);
+      if (d < bestDiff) { bestDiff = d; bestIdx = i; }
+    });
+    el.uvSparkNow.setAttribute("cx", x(bestIdx).toFixed(1));
+    el.uvSparkNow.setAttribute("cy", y(uvs[bestIdx]).toFixed(1));
+  }
 }
 
 function humidityComfort(rh, dew, temp) {
@@ -415,6 +460,20 @@ function uvLevel(v) {
   if (v < 8) return { label: "High", cls: "up" };
   if (v < 11) return { label: "Very High", cls: "up" };
   return { label: "Extreme", cls: "up" };
+}
+
+// Round 25: estimated minutes to a Type-II-skin erythemal response at the
+// current UV index (no sunscreen). ~200/UV is a widely cited rule of thumb;
+// below UV 3 the risk is low enough that we skip the label entirely.
+function burnMinutes(uv) {
+  if (uv == null || uv < 3) return null;
+  const minutes = 200 / uv;
+  if (minutes >= 60) {
+    const h = Math.floor(minutes / 60);
+    const m = Math.round(minutes - h * 60);
+    return m ? `${h}h ${m}m` : `${h}h`;
+  }
+  return `${Math.round(minutes)}m`;
 }
 
 function renderPressureSparkline(w) {

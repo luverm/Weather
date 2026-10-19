@@ -268,10 +268,23 @@
           </svg>
           <span id="m-pressure-sub" class="metric-sub">visibility —</span>
         </div>
-        <div class="metric glass">
+        <div class="metric glass metric-uv">
           <span class="metric-label">UV <span id="m-uv-level" class="trend" aria-hidden="true"></span></span>
           <span id="m-uv" class="metric-value">—</span>
           <span class="metric-unit">idx</span>
+          <svg id="uv-spark" class="pressure-spark uv-spark" viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="uv-spark-grad" x1="0" x2="1" y1="0" y2="0">
+                <stop offset="0%" stop-color="#8ad7ff"/>
+                <stop offset="40%" stop-color="#ffe6c7"/>
+                <stop offset="70%" stop-color="#ff9c7a"/>
+                <stop offset="100%" stop-color="#ff4e78"/>
+              </linearGradient>
+            </defs>
+            <path id="uv-spark-fill" fill="currentColor" fill-opacity="0.12"></path>
+            <path id="uv-spark-line" fill="none" stroke="url(#uv-spark-grad)" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"></path>
+            <circle id="uv-spark-now" r="2.3" fill="#fff1c9" cx="-10" cy="-10"></circle>
+          </svg>
           <span id="m-uv-sub" class="metric-sub">peak —</span>
         </div>
       </div>
