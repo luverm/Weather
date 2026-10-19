@@ -1712,7 +1712,22 @@ function buildShareText() {
     w.uv != null ? `UV ${Math.round(w.uv)}` : null,
     w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
   ].filter(Boolean);
-  return { text: lines.join("\n"), placeName };
+  // Round 42: deep-link URL — recipient reopens the same place.
+  const url = shareableUrl();
+  if (url) lines.push(url);
+  return { text: lines.join("\n"), placeName, url };
+}
+
+function shareableUrl() {
+  const p = state.place;
+  if (!p?.lat || !p?.lon) return null;
+  const params = new URLSearchParams();
+  params.set("name", p.name);
+  params.set("lat", p.lat.toFixed(4));
+  params.set("lon", p.lon.toFixed(4));
+  if (p.country) params.set("country", p.country);
+  const base = window.location.origin + window.location.pathname;
+  return `${base}?${params.toString()}`;
 }
 
 async function shareOrCopy({ preferShare = true } = {}) {

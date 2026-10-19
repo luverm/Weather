@@ -320,7 +320,25 @@ installShortcuts({
 });
 
 // ---------- Start ----------
+function parseUrlPlace() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const lat = parseFloat(params.get("lat"));
+    const lon = parseFloat(params.get("lon"));
+    const name = params.get("name");
+    if (!isFinite(lat) || !isFinite(lon) || !name) return null;
+    return { name, country: params.get("country") || "", lat, lon };
+  } catch { return null; }
+}
+
 (async function init() {
+  // Round 42: deep-link via ?name=&lat=&lon= wins over everything else.
+  const urlPlace = parseUrlPlace();
+  if (urlPlace) {
+    places.add(urlPlace);
+    await loadByCoords(urlPlace);
+    return;
+  }
   // Prefer the most recent saved place if we have one — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();
