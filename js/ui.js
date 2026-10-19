@@ -48,6 +48,7 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonNext: $("#moon-next"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -599,6 +600,7 @@ function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  renderMoonNext(moon);
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
@@ -615,6 +617,37 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+}
+
+// Round 35: approximate countdown to the next noteworthy lunar event.
+// Uses the synodic month (29.53 days) and the current phase (0..1) to pick
+// the nearest upcoming "first quarter / full / last quarter / new" and
+// phrase it as e.g. "Full moon in 11 days".
+function renderMoonNext(moon) {
+  if (!el.moonNext) return;
+  const CYCLE = 29.5305882;
+  const targets = [
+    { phase: 0.25, label: "First quarter" },
+    { phase: 0.50, label: "Full moon" },
+    { phase: 0.75, label: "Last quarter" },
+    { phase: 1.00, label: "New moon" },
+  ];
+  const p = moon.phase;
+  let best = null;
+  for (const t of targets) {
+    let delta = t.phase - p;
+    if (delta <= 0.005) delta += 1;
+    const days = delta * CYCLE;
+    if (!best || days < best.days) best = { ...t, days };
+  }
+  if (!best) { el.moonNext.textContent = ""; return; }
+  const dayN = Math.round(best.days);
+  const label = dayN <= 0
+    ? `${best.label} tonight`
+    : dayN === 1
+      ? `${best.label} tomorrow`
+      : `${best.label} in ${dayN} days`;
+  el.moonNext.textContent = label;
 }
 
 function fmtTime(ts) {
