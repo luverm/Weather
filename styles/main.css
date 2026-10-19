@@ -309,6 +309,20 @@ html[data-reduce-motion="true"] *::after {
   transition: background 150ms var(--ease), color 150ms var(--ease);
 }
 .place-chip .close:hover { background: rgba(255,255,255,0.12); color: var(--fg); }
+.place-chip-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 16px; height: 16px;
+  color: var(--fg-muted);
+  flex: 0 0 auto;
+}
+.place-chip-icon svg { width: 16px; height: 16px; }
+.place-chip[data-condition="clear"] .place-chip-icon { color: #ffd98a; }
+.place-chip[data-condition="rain"] .place-chip-icon { color: #9ad1ff; }
+.place-chip[data-condition="snow"] .place-chip-icon { color: #e8f0ff; }
+.place-chip[data-condition="storm"] .place-chip-icon { color: #c7b4ff; }
+.place-chip[data-condition="fog"] .place-chip-icon { color: #c0c6d4; }
+.place-chip-name { white-space: nowrap; }
 
 /* ---------- Hero ---------- */
 .hero { align-self: start; display: grid; gap: 14px; }
