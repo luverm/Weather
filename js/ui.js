@@ -342,8 +342,33 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  // Round 37: when the feels-like diverges meaningfully, append the
+  // mechanism driving it. We rewrite only the text node that follows the
+  // #temp-trend badge so the trend span (and its live classes) survives.
+  const dRaw = (w.feelsLike ?? w.temp) - w.temp;
+  const dDisp = Math.round(convertTemp(w.feelsLike ?? w.temp) - convertTemp(w.temp));
+  let reason = "";
+  if (Math.abs(dDisp) >= 3) {
+    if (dRaw < 0 && (w.windSpeed ?? 0) > 15) reason = " · wind chill";
+    else if (dRaw > 0 && (w.humidity ?? 0) >= 60) reason = " · humidity";
+    else if (dRaw < 0) reason = " · cooler";
+    else reason = " · warmer";
+  }
+  setFeelsLikeText(`Feels like ${Math.round(feels)}°${reason}`);
   renderDayRange(w);
+}
+
+function setFeelsLikeText(text) {
+  // Remove every node after the #temp-trend span (text or otherwise),
+  // then append our updated text. Avoids clobbering the trend span.
+  const anchor = el.tempTrend;
+  if (!el.feelsLike) return;
+  if (!anchor || !el.feelsLike.contains(anchor)) {
+    el.feelsLike.textContent = text;
+    return;
+  }
+  while (anchor.nextSibling) el.feelsLike.removeChild(anchor.nextSibling);
+  el.feelsLike.appendChild(document.createTextNode(text));
 }
 
 function renderDayRange(w) {
