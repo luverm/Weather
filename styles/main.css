@@ -908,6 +908,17 @@ html[data-yesterday-overlay="off"] #chart-yesterday-line { display: none; }
   position: relative;
 }
 .chart-feels-line { color: var(--fg-muted); }
+.chart-now {
+  stroke: rgba(255, 255, 255, 0.3);
+  stroke-width: 1;
+  stroke-dasharray: 1 3;
+  pointer-events: none;
+}
+[data-scrubbing="true"] .chart-now {
+  stroke: var(--accent);
+  stroke-dasharray: 2 3;
+  opacity: 0.6;
+}
 .chart-yesterday-line {
   color: #c8a0ff;
   mix-blend-mode: screen;

@@ -174,6 +174,26 @@ export class HourlyChart {
 
     this.points = this.hours.map((h, i) => ({ x: iToX(i), y: tToY(h.temp) }));
 
+    // Round 46: subtle "now" marker — position of real-current-time inside
+    // the plotted 24h window, so a scrubbed cursor has a reference.
+    const nowLine = this.svg.querySelector("#chart-now");
+    if (nowLine) {
+      const now = Date.now();
+      let nearestI = 0, nearestDiff = Infinity;
+      for (let i = 0; i < this.hours.length; i++) {
+        const d = Math.abs(this.hours[i].time - now);
+        if (d < nearestDiff) { nearestDiff = d; nearestI = i; }
+      }
+      if (nearestDiff <= 90 * 60_000) {
+        const nx = iToX(nearestI).toFixed(1);
+        nowLine.setAttribute("x1", nx);
+        nowLine.setAttribute("x2", nx);
+      } else {
+        nowLine.setAttribute("x1", "-10");
+        nowLine.setAttribute("x2", "-10");
+      }
+    }
+
     // Temp line path
     let linePath = "";
     this.points.forEach((p, i) => {
