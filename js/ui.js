@@ -279,9 +279,24 @@ export const ui = {
   },
   showToast(msg, dur = 2600) {
     el.toast.textContent = msg;
+    el.toast.classList.remove("has-action");
+    el.toast.onclick = null;
     el.toast.hidden = false;
     clearTimeout(el.toast._t);
     el.toast._t = setTimeout(() => (el.toast.hidden = true), dur);
+  },
+  // Round 40: persistent toast with a reload action for new SW versions.
+  showUpdateAvailable(onReload) {
+    if (!el.toast || el.toast._update) return;
+    el.toast._update = true;
+    el.toast.innerHTML = `New version available · <button class="toast-action" type="button">Reload</button>`;
+    el.toast.classList.add("has-action");
+    el.toast.hidden = false;
+    clearTimeout(el.toast._t);
+    el.toast.querySelector(".toast-action")?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      onReload?.();
+    });
   },
   getUnit: () => state.unit,
 };

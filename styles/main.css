@@ -1814,6 +1814,23 @@ kbd {
   transition: transform 320ms var(--ease), opacity 320ms var(--ease);
 }
 .toast:not([hidden]) { opacity: 1; transform: translate(-50%, 0); }
+.toast.has-action {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px 8px 16px;
+}
+.toast-action {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid var(--stroke);
+  color: var(--fg);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 150ms var(--ease);
+}
+.toast-action:hover, .toast-action:focus-visible { background: rgba(255,255,255,0.18); }
 
 /* ---------- Reveal animations ---------- */
 .flip-in { animation: flipIn 620ms var(--ease) both; }

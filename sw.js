@@ -1,7 +1,7 @@
 // Simple service worker: cache the shell, network-first for everything else.
 // Bump CACHE_VERSION on any deploy that changes which files exist.
 
-const CACHE_VERSION = "aether-v31";
+const CACHE_VERSION = "aether-v32";
 const SHELL = [
   "./",
   "./index.html",
@@ -51,6 +51,11 @@ self.addEventListener("activate", (event) => {
     await Promise.all(keys.filter((k) => k !== CACHE_VERSION).map((k) => caches.delete(k)));
     await self.clients.claim();
   })());
+});
+
+// Round 40: let the page request an immediate takeover of the new worker.
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") self.skipWaiting();
 });
 
 self.addEventListener("fetch", (event) => {

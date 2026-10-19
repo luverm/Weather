@@ -351,10 +351,34 @@ setInterval(() => {
   refreshWeather();
 }, 15 * 60_000);
 
-// PWA service worker — optional, best-effort.
+// PWA service worker — optional, best-effort. Round 40: watch for
+// updates and let the user reload for the new build (manual, not
+// automatic, so a slow refresh doesn't clobber their scrubber state).
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js").catch(() => {});
+  window.addEventListener("load", async () => {
+    try {
+      const reg = await navigator.serviceWorker.register("sw.js");
+      const notifyIfWaiting = () => {
+        if (reg.waiting && navigator.serviceWorker.controller) {
+          ui.showUpdateAvailable?.(() => {
+            reg.waiting?.postMessage({ type: "SKIP_WAITING" });
+          });
+        }
+      };
+      notifyIfWaiting();
+      reg.addEventListener("updatefound", () => {
+        const nw = reg.installing;
+        nw?.addEventListener("statechange", () => {
+          if (nw.state === "installed") notifyIfWaiting();
+        });
+      });
+      let reloading = false;
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (reloading) return;
+        reloading = true;
+        window.location.reload();
+      });
+    } catch { /* ignore registration errors */ }
   });
 }
 
