@@ -12,6 +12,7 @@ import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { yesterdaySummary } from "./yesterday.js";
 import { goldenHourLine, windowsForDay } from "./golden-hour.js";
+import { seasonInfo } from "./season.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -115,6 +116,9 @@ const el = {
   sunArcPath: $("#sun-arc-path"),
   goldenHour: $("#golden-hour"),
   goldenHourText: $("#golden-hour-text"),
+  seasonChip: $("#season-chip"),
+  seasonText: $("#season-text"),
+  seasonDot: $("#season-dot"),
   sunArcGoldenAmClip: $("#sun-arc-golden-am-clip"),
   sunArcGoldenPmClip: $("#sun-arc-golden-pm-clip"),
   comfortStrip: $("#comfort-strip"),
@@ -642,6 +646,20 @@ function renderSun(w) {
   scheduleSunArc(w);
   scheduleGoldenHour(w);
   renderGoldenBands(w);
+  renderSeasonChip();
+}
+
+function renderSeasonChip() {
+  if (!el.seasonChip || !el.seasonText) return;
+  const lat = state.place?.lat ?? 0;
+  const info = seasonInfo(lat);
+  if (!info?.nextName) { el.seasonChip.hidden = true; return; }
+  el.seasonChip.hidden = false;
+  el.seasonChip.dataset.season = info.season.toLowerCase();
+  const label = info.daysUntil === 0
+    ? `${info.season} · ${info.nextName} today`
+    : `${info.season} · ${info.daysUntil} day${info.daysUntil === 1 ? "" : "s"} to ${info.nextName}`;
+  el.seasonText.textContent = label;
 }
 
 function scheduleGoldenHour(w) {

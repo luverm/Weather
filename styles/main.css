@@ -1154,6 +1154,32 @@ kbd {
 .golden-hour[data-live="true"] .golden-dot {
   animation: goldenPulse 1600ms ease-in-out infinite;
 }
+.season-chip {
+  display: inline-flex;
+  justify-self: center;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 0;
+  padding: 3px 10px 3px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--stroke);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+.season-chip[hidden] { display: none; }
+.season-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--fg-muted);
+}
+.season-chip[data-season="spring"] .season-dot { background: #a7e3a1; box-shadow: 0 0 6px rgba(167, 227, 161, 0.6); }
+.season-chip[data-season="summer"] .season-dot { background: #ffd98a; box-shadow: 0 0 6px rgba(255, 217, 138, 0.65); }
+.season-chip[data-season="autumn"] .season-dot { background: #ff9c7a; box-shadow: 0 0 6px rgba(255, 156, 122, 0.6); }
+.season-chip[data-season="winter"] .season-dot { background: #9ad1ff; box-shadow: 0 0 6px rgba(154, 209, 255, 0.6); }
+
 @keyframes goldenPulse {
   0%, 100% { transform: scale(1); opacity: 1; }
   50% { transform: scale(1.6); opacity: 0.55; }
