@@ -391,6 +391,60 @@ html[data-reduce-motion="true"] *::after {
 .unit:hover { background: var(--glass); color: var(--fg); }
 .condition-label { margin: 6px 0 0; font-size: 17px; letter-spacing: 0.01em; }
 .feels-like { margin: 4px 0 0; font-size: 13px; color: var(--fg-muted); }
+
+/* Round 22 — "vs yesterday" chip under feels-like. */
+.yesterday-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 0 auto;
+  padding: 5px 10px 5px 8px;
+  border-radius: 999px;
+  background: var(--glass);
+  border: 1px solid var(--stroke);
+  font-size: 12px;
+  color: var(--fg-muted);
+  line-height: 1.25;
+  max-width: 240px;
+  animation: slideInUp 500ms var(--ease) both;
+  animation-delay: 160ms;
+}
+.yesterday-chip[hidden] { display: none; }
+.yesterday-arrow { color: var(--fg-muted); flex: 0 0 auto; transition: color 220ms var(--ease); }
+.yesterday-arrow .arrow-up,
+.yesterday-arrow .arrow-down,
+.yesterday-arrow .arrow-flat { display: none; }
+.yesterday-chip[data-direction="up"] .yesterday-arrow .arrow-up { display: inline; }
+.yesterday-chip[data-direction="up"] .yesterday-arrow { color: #ff9c7a; }
+.yesterday-chip[data-direction="down"] .yesterday-arrow .arrow-down { display: inline; }
+.yesterday-chip[data-direction="down"] .yesterday-arrow { color: #9ad1ff; }
+.yesterday-chip[data-direction="flat"] .yesterday-arrow .arrow-flat { display: inline; }
+.yesterday-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.yesterday-text strong {
+  color: var(--fg);
+  font-weight: 500;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.yesterday-detail {
+  font-size: 11px;
+  color: var(--fg-dim);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.yesterday-detail:empty { display: none; }
+@media (max-width: 640px) {
+  .yesterday-chip { max-width: 100%; margin-left: 0; }
+}
 .day-range {
   margin-top: 10px;
   display: grid;

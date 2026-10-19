@@ -136,6 +136,17 @@
           </div>
           <p id="condition-label" class="condition-label">—</p>
           <p id="feels-like" class="feels-like"><span id="temp-trend" class="temp-trend" aria-hidden="true"></span>Feels like —</p>
+          <span id="yesterday-chip" class="yesterday-chip" role="status" data-direction="flat" hidden title="Compared to yesterday">
+            <svg class="yesterday-arrow" viewBox="0 0 16 16" aria-hidden="true" width="12" height="12">
+              <path class="arrow-up" d="M8 12V3M4 7l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path class="arrow-down" d="M8 4v9M4 9l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path class="arrow-flat" d="M3 8h10M10 5l3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="yesterday-text">
+              <strong id="yesterday-headline">—</strong>
+              <span id="yesterday-detail" class="yesterday-detail"></span>
+            </span>
+          </span>
           <div id="day-range" class="day-range" hidden aria-label="Today's temperature range">
             <span class="day-range-end" id="day-range-min">—</span>
             <div class="day-range-track">

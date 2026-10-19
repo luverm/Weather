@@ -93,7 +93,8 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
-    past_hours: 1,
+    past_days: 1,
+    past_hours: 25,
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -151,13 +152,17 @@ function normalize(d, aq) {
     }
   }
 
-  // 7-day daily forecast.
+  // 7-day daily forecast. When past_days was requested (one extra entry),
+  // the first row is yesterday — pull it off so index 0 stays today
+  // everywhere else in the UI.
   const dailyForecast = [];
+  let yesterdayDaily = null;
   if (daily.time) {
+    // Any entries beyond 7 at the front are past days (we requested 1).
+    const pastCount = Math.max(0, daily.time.length - 7);
     for (let i = 0; i < daily.time.length; i++) {
-      const ts = new Date(daily.time[i]).getTime();
-      dailyForecast.push({
-        time: ts,
+      const entry = {
+        time: new Date(daily.time[i]).getTime(),
         tempMax: daily.temperature_2m_max?.[i],
         tempMin: daily.temperature_2m_min?.[i],
         precip: daily.precipitation_sum?.[i] ?? 0,
@@ -168,9 +173,35 @@ function normalize(d, aq) {
         sunrise: daily.sunrise?.[i] ? new Date(daily.sunrise[i]).getTime() : null,
         sunset: daily.sunset?.[i] ? new Date(daily.sunset[i]).getTime() : null,
         ...mapWmo(daily.weather_code[i]),
+      };
+      if (i < pastCount) yesterdayDaily = entry;
+      else dailyForecast.push(entry);
+    }
+  }
+
+  // Yesterday's hourly readings — used to show "N° warmer than yesterday
+  // at this hour" and for a mini day-ago overlay. Keep the API's absolute
+  // timestamps; we align by hour-of-day when comparing to "now".
+  const yesterdayHourly = [];
+  if (d.hourly?.time) {
+    const cutoffNew = now - 30 * 60_000;
+    const cutoffOld = now - 26 * 3600_000;
+    for (let i = 0; i < d.hourly.time.length; i++) {
+      const t = new Date(d.hourly.time[i]).getTime();
+      if (t >= cutoffNew || t < cutoffOld) continue;
+      yesterdayHourly.push({
+        time: t,
+        temp: d.hourly.temperature_2m[i],
+        feelsLike: d.hourly.apparent_temperature?.[i],
+        wind: d.hourly.wind_speed_10m?.[i],
+        humidity: d.hourly.relative_humidity_2m?.[i] ?? null,
+        pop: d.hourly.precipitation_probability?.[i] ?? 0,
+        ...mapWmo(d.hourly.weather_code[i]),
       });
     }
   }
+
+  const yesterday = buildYesterday(yesterdayDaily, yesterdayHourly, now, c.temperature_2m);
 
   // 15-min nowcast for the next ~2h — used for "rain in 12 min" banner.
   const nowcast = [];
@@ -215,7 +246,41 @@ function normalize(d, aq) {
     moon,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
+    yesterday,
     fetchedAt: now,
+  };
+}
+
+function buildYesterday(daily, hourly, now, currentTemp) {
+  if (!daily && (!hourly || !hourly.length)) return null;
+  // Pick the hourly reading closest to "exactly 24 hours ago". If missing,
+  // fall back to the latest-available past hour.
+  let tempAtNow = null;
+  if (hourly?.length) {
+    const target = now - 24 * 3600_000;
+    let best = hourly[0];
+    let bestDiff = Math.abs(best.time - target);
+    for (const h of hourly) {
+      const diff = Math.abs(h.time - target);
+      if (diff < bestDiff) { best = h; bestDiff = diff; }
+    }
+    // Only use if we're reasonably close to 24h ago (within 2 hours).
+    if (bestDiff <= 2 * 3600_000) tempAtNow = best.temp;
+  }
+  const daylight = daily?.sunrise && daily?.sunset ? daily.sunset - daily.sunrise : null;
+  return {
+    tempMax: daily?.tempMax ?? null,
+    tempMin: daily?.tempMin ?? null,
+    tempAtNow,
+    deltaNow: (tempAtNow != null && currentTemp != null) ? currentTemp - tempAtNow : null,
+    daylight,
+    sunrise: daily?.sunrise ?? null,
+    sunset: daily?.sunset ?? null,
+    pop: daily?.pop ?? null,
+    precip: daily?.precip ?? null,
+    condition: daily?.condition ?? null,
+    label: daily?.label ?? null,
+    hourly,
   };
 }
 
@@ -400,6 +465,20 @@ function mock(lat, lon) {
       level: "Moderate",
     },
     pressureTrend: { delta: -0.4, direction: "steady" },
+    yesterday: {
+      tempMax: 21,
+      tempMin: 11,
+      tempAtNow: 16,
+      deltaNow: 2,
+      daylight: 12.5 * 3600_000,
+      sunrise: new Date(now - 24 * 3600_000).setHours(6, 32, 0, 0),
+      sunset: new Date(now - 24 * 3600_000).setHours(18, 58, 0, 0),
+      pop: 20,
+      precip: 0.4,
+      condition: CONDITIONS.CLOUDS,
+      label: "Cloudy",
+      hourly: [],
+    },
     fetchedAt: now,
     offline: true,
   };

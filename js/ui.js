@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { yesterdaySummary } from "./yesterday.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -77,6 +78,9 @@ const el = {
   refreshBtn: $("#refresh-btn"),
   fetchedAgo: $("#fetched-ago"),
   dailyIconStrip: $("#daily-icon-strip"),
+  yesterdayChip: $("#yesterday-chip"),
+  yesterdayHeadline: $("#yesterday-headline"),
+  yesterdayDetail: $("#yesterday-detail"),
   settingsBtn: $("#settings-btn"),
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
@@ -193,6 +197,7 @@ export const ui = {
     renderActivity(weather);
     renderAlerts(weather);
     renderWeekend(weather);
+    renderYesterday(weather, weather.temp);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -680,6 +685,20 @@ function renderWeekend(w) {
   el.weekendChip.onclick = () => {
     if (snap.ts) state.handlers.onHourClick?.(snap.ts);
   };
+}
+
+function renderYesterday(w, currentTemp) {
+  if (!el.yesterdayChip) return;
+  const summary = yesterdaySummary(w, { unit: state.unit, currentTemp });
+  if (!summary) {
+    el.yesterdayChip.hidden = true;
+    return;
+  }
+  el.yesterdayChip.hidden = false;
+  el.yesterdayChip.dataset.direction = summary.direction;
+  el.yesterdayHeadline.textContent = summary.headline;
+  el.yesterdayDetail.textContent = summary.detail;
+  if (summary.tooltip) el.yesterdayChip.title = summary.tooltip;
 }
 
 function renderAlerts(w) {
