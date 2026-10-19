@@ -1067,19 +1067,37 @@ function cardinal(deg) {
 
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
-  for (const h of (w.hourly || []).slice(0, 24)) {
+  const hours = (w.hourly || []).slice(0, 24);
+  // "Previous" comparison seed: the live temp (not an earlier hourly entry)
+  // so the first chip's arrow is relative to right-now, not to itself.
+  let prevTemp = w.temp;
+  hours.forEach((h) => {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    const arrow = hourTrendArrow(h.temp, prevTemp);
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
-      <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
+      <span class="forecast-temp">
+        ${arrow}
+        ${Math.round(convertTemp(h.temp))}°
+      </span>
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
-  }
+    prevTemp = h.temp;
+  });
+}
+
+function hourTrendArrow(cur, prev) {
+  if (cur == null || prev == null) return "";
+  const diff = cur - prev;
+  if (Math.abs(diff) < 0.5) return "";
+  return diff > 0
+    ? '<span class="forecast-trend up" aria-hidden="true">▲</span>'
+    : '<span class="forecast-trend down" aria-hidden="true">▼</span>';
 }
 
 function highlightHour(index) {
