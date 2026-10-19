@@ -200,12 +200,18 @@ async function loadByCoords(place) {
   app.place = place;
   ui.setPlace(place);
   ui.setLoading(`Fetching weather for ${place.name}…`);
+  ui.startLoader?.();
 
   // Drop any scrubber offset so we start live on each new city.
   clock.reset();
   ui.setScrubbing(false);
 
-  const w = await getWeather(place.lat, place.lon);
+  let w;
+  try {
+    w = await getWeather(place.lat, place.lon);
+  } finally {
+    ui.stopLoader?.();
+  }
   app.weather = w;
 
   // Render full UI (live + forecasts + narrative).

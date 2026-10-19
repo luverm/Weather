@@ -301,6 +301,23 @@ export const ui = {
     });
   },
   getUnit: () => state.unit,
+  // Round 47: progress bar for background work.
+  startLoader() {
+    const bar = document.getElementById("loader-bar");
+    if (!bar) return;
+    bar.hidden = false;
+    bar.classList.add("running");
+  },
+  stopLoader() {
+    const bar = document.getElementById("loader-bar");
+    if (!bar) return;
+    bar.classList.remove("running");
+    bar.classList.add("done");
+    setTimeout(() => {
+      bar.hidden = true;
+      bar.classList.remove("done");
+    }, 400);
+  },
 };
 
 // ---------- Rendering ----------
