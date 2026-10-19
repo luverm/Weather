@@ -1671,6 +1671,9 @@ kbd {
   background: linear-gradient(90deg, #9ad1ff, #ffe6c7, #ff9c7a);
   border-radius: 3px;
 }
+.daily-trend { font-size: 9px; opacity: 0.75; margin-right: 2px; vertical-align: middle; }
+.daily-trend.up { color: #ff9c7a; }
+.daily-trend.down { color: #9ad1ff; }
 .daily-temp-min, .daily-temp-max {
   font-size: 13px; font-variant-numeric: tabular-nums;
 }

@@ -1100,6 +1100,15 @@ function hourTrendArrow(cur, prev) {
     : '<span class="forecast-trend down" aria-hidden="true">▼</span>';
 }
 
+function dayTrendArrow(cur, prev) {
+  if (cur == null || prev == null) return "";
+  const diff = cur - prev;
+  if (Math.abs(diff) < 1) return "";
+  return diff > 0
+    ? '<span class="daily-trend up" aria-hidden="true">▲</span>'
+    : '<span class="daily-trend down" aria-hidden="true">▼</span>';
+}
+
 function highlightHour(index) {
   const items = el.forecastTrack.querySelectorAll(".forecast-item");
   items.forEach((it, i) => it.classList.toggle("active", i === index));
@@ -1136,6 +1145,8 @@ function renderDaily(w) {
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const prev = i > 0 ? days[i - 1] : null;
+    const dayArrow = dayTrendArrow(d.tempMax, prev?.tempMax);
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
@@ -1143,7 +1154,7 @@ function renderDaily(w) {
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
       </div>
       <span class="daily-temp-min">${Math.round(convertTemp(d.tempMin))}°</span>
-      <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°</span>
+      <span class="daily-temp-max">${dayArrow}${Math.round(convertTemp(d.tempMax))}°</span>
       ${extra}
     `;
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
