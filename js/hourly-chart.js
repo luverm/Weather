@@ -298,10 +298,45 @@ export class HourlyChart {
       }
     }
 
-    // Labels: every ~3 hours
-    const unit = this.getUnit();
+    // Round 36: triangle markers at the min and max temp of this 24h slice.
+    // These sit in the labels group so they clean up with the labels.
     const labG = this.svg.querySelector("#chart-labels");
     labG.innerHTML = "";
+    let minI = 0, maxI = 0;
+    for (let i = 1; i < this.hours.length; i++) {
+      if (this.hours[i].temp < this.hours[minI].temp) minI = i;
+      if (this.hours[i].temp > this.hours[maxI].temp) maxI = i;
+    }
+    const unit = this.getUnit();
+    const mkMarker = (i, kind) => {
+      const x = iToX(i);
+      const y = tToY(this.hours[i].temp);
+      const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      g.setAttribute("class", `chart-extreme chart-extreme-${kind}`);
+      const tri = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      // Upward triangle for max (above the line), downward for min (below).
+      const dy = kind === "max" ? -6 : 6;
+      const d = kind === "max"
+        ? `M ${(x - 3.2).toFixed(1)} ${(y + dy - 3).toFixed(1)} L ${(x + 3.2).toFixed(1)} ${(y + dy - 3).toFixed(1)} L ${x.toFixed(1)} ${(y + dy + 1.5).toFixed(1)} Z`
+        : `M ${(x - 3.2).toFixed(1)} ${(y + dy + 3).toFixed(1)} L ${(x + 3.2).toFixed(1)} ${(y + dy + 3).toFixed(1)} L ${x.toFixed(1)} ${(y + dy - 1.5).toFixed(1)} Z`;
+      tri.setAttribute("d", d);
+      g.appendChild(tri);
+      const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      t.setAttribute("x", x.toFixed(1));
+      t.setAttribute("y", (y + (kind === "max" ? -16 : 20)).toFixed(1));
+      t.setAttribute("text-anchor", "middle");
+      t.setAttribute("class", `chart-extreme-label chart-extreme-label-${kind}`);
+      const v = unit === "F" ? this.hours[i].temp * 9 / 5 + 32 : this.hours[i].temp;
+      t.textContent = `${kind === "max" ? "↑" : "↓"} ${Math.round(v)}°`;
+      g.appendChild(t);
+      labG.appendChild(g);
+    };
+    if (this.hours.length >= 4) {
+      mkMarker(maxI, "max");
+      if (maxI !== minI) mkMarker(minI, "min");
+    }
+
+    // Labels: every ~3 hours
     const labelStep = Math.max(3, Math.floor(this.hours.length / 8));
     this.hours.forEach((h, i) => {
       if (i % labelStep !== 0) return;

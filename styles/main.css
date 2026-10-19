@@ -860,6 +860,23 @@ html[data-yesterday-overlay="off"] #chart-yesterday-line { display: none; }
   color: #c8a0ff;
   mix-blend-mode: screen;
 }
+.chart-extreme-max { color: #ff9c7a; }
+.chart-extreme-min { color: #9ad1ff; }
+.chart-extreme path {
+  fill: currentColor;
+  opacity: 0.9;
+  filter: drop-shadow(0 0 3px currentColor);
+}
+.chart-extreme-label {
+  font-size: 9px;
+  letter-spacing: 0.02em;
+  fill: currentColor;
+  font-weight: 500;
+  opacity: 0.9;
+  font-variant-numeric: tabular-nums;
+}
+.chart-extreme-label-max { fill: #ff9c7a; }
+.chart-extreme-label-min { fill: #9ad1ff; }
 .chart-popover {
   position: absolute;
   pointer-events: none;
