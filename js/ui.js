@@ -205,7 +205,10 @@ export const ui = {
     renderWeekend(weather);
     renderYesterday(weather, weather.temp);
     startLocaltime(weather);
-    if (state.chart) state.chart.setHours(weather.hourly);
+    if (state.chart) {
+      state.chart.setHours(weather.hourly);
+      state.chart.setYesterdayHours(weather.yesterday?.hourly);
+    }
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");

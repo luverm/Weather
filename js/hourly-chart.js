@@ -54,6 +54,13 @@ export class HourlyChart {
     this.setCursor(null);
   }
 
+  // Round 24: optional yesterday-hourly series, aligned by the 24-hour
+  // offset. Rendered as a dashed ghost line so it reads as background.
+  setYesterdayHours(hours) {
+    this.yesterdayHours = Array.isArray(hours) ? hours.slice() : [];
+    this._draw();
+  }
+
   refresh() { this._draw(); }
 
   setCursor(ts) {
@@ -181,6 +188,33 @@ export class HourlyChart {
       `L${firstX.toFixed(1)},${(PAD_TOP + innerH).toFixed(1)} Z`;
     this.svg.querySelector("#chart-temp-line").setAttribute("d", linePath.trim());
     this.svg.querySelector("#chart-temp-fill").setAttribute("d", fillPath);
+
+    // Yesterday ghost line — one point per today-hour, each point lifted
+    // from the yesterday-hourly reading closest to (today - 24h). Shares
+    // the temperature y-axis so differences read directly.
+    const yLine = this.svg.querySelector("#chart-yesterday-line");
+    if (yLine) {
+      const ySrc = this.yesterdayHours || [];
+      const DAY = 24 * 3600_000;
+      const TOL = 90 * 60_000; // 90 minutes
+      let yPath = "";
+      let open = false;
+      this.hours.forEach((h, i) => {
+        const target = h.time - DAY;
+        let best = null, bestDiff = Infinity;
+        for (const yh of ySrc) {
+          if (yh?.temp == null) continue;
+          const d = Math.abs(yh.time - target);
+          if (d < bestDiff) { bestDiff = d; best = yh; }
+        }
+        if (!best || bestDiff > TOL) { open = false; return; }
+        const x = iToX(i).toFixed(1);
+        const y = tToY(best.temp).toFixed(1);
+        yPath += (open ? " L" : (yPath ? " M" : "M")) + x + "," + y;
+        open = true;
+      });
+      yLine.setAttribute("d", yPath.trim());
+    }
 
     // Gust dashed line — mapped onto the lower half of the plot so it
     // doesn't collide with the temperature line. Shows relative magnitude.
