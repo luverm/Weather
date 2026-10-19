@@ -168,6 +168,7 @@ export const ui = {
     bindAudio();
     bindShare();
     bindZen();
+    bindOnlineStatus();
     bindRefresh();
     bindSettings();
     bindTilt();
@@ -231,6 +232,7 @@ export const ui = {
     renderYesterday(weather, weather.temp);
     startLocaltime(weather);
     updatePageTitle(weather);
+    ui._updateOfflineBanner?.();
     if (document.documentElement.dataset.zen === "true") paintZen(weather);
     if (state.chart) {
       state.chart.setHours(weather.hourly);
@@ -1822,6 +1824,29 @@ function paintZenTicker(w) {
       </div>
     `;
   }).join("");
+}
+
+function bindOnlineStatus() {
+  const banner = document.getElementById("offline-banner");
+  if (!banner) return;
+  const text = document.getElementById("offline-text");
+  const update = () => {
+    const online = navigator.onLine !== false;
+    const stale = !online || state.weather?.offline;
+    banner.hidden = !stale;
+    if (text) {
+      if (!online) {
+        text.textContent = "You're offline — showing the last fetched weather.";
+      } else if (state.weather?.offline) {
+        text.textContent = "Live data unreachable — showing a sample forecast.";
+      }
+    }
+  };
+  update();
+  window.addEventListener("online", update);
+  window.addEventListener("offline", update);
+  // Re-check whenever setWeather lands.
+  ui._updateOfflineBanner = update;
 }
 
 function bindTilt() {

@@ -122,6 +122,14 @@
     <!-- Smart alerts strip (synthesized from forecast). -->
     <div id="alerts-strip" class="alerts-strip" role="region" aria-label="Weather alerts" hidden></div>
 
+    <!-- Round 44: offline / stale banner. -->
+    <div id="offline-banner" class="offline-banner" role="status" hidden>
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 3l18 18M6 13a7 7 0 0112 0M9 17a4 4 0 016 0M12 20h.01"/>
+      </svg>
+      <span id="offline-text">You're offline — showing the last fetched weather.</span>
+    </div>
+
     <section class="hero">
       <div class="hero-inner glass" data-tilt>
         <div class="place">
