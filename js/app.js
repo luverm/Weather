@@ -17,6 +17,7 @@ import { narrate } from "./narrative.js";
 import { places } from "./places.js";
 import { RadarMap } from "./radar-map.js";
 import { installShortcuts } from "./shortcuts.js";
+import { randomNotablePlace } from "./random-place.js";
 
 const engine = new AnimationEngine();
 
@@ -308,6 +309,14 @@ installShortcuts({
     return false;
   },
   copyWeather: () => ui.copyWeather?.(),
+  randomPlace: () => {
+    const exceptId = app.place ? places.idFor(app.place) : null;
+    const next = randomNotablePlace(exceptId);
+    if (!next) return;
+    places.add(next);
+    loadByCoords(next);
+    ui.showToast?.(`Surprise! ${next.name}`);
+  },
 });
 
 // ---------- Start ----------

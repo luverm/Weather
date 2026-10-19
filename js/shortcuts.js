@@ -72,6 +72,7 @@ export function installShortcuts(handlers) {
     if (key === "]") { handlers.cyclePlace?.(1); e.preventDefault(); return; }
     if (key === "z" || key === "Z") { handlers.toggleZen?.(); e.preventDefault(); return; }
     if (key === "c" || key === "C") { handlers.copyWeather?.(); e.preventDefault(); return; }
+    if (key === "r" || key === "R") { handlers.randomPlace?.(); e.preventDefault(); return; }
   });
 }
 
