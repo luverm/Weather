@@ -82,6 +82,11 @@
             <path d="M12 3v12M7 10l5 5 5-5M5 20h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </button>
+        <button id="zen-btn" class="icon-btn" title="Zen mode (Z)" aria-label="Toggle zen mode">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 10V4h6M20 10V4h-6M4 14v6h6M20 14v6h-6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
         <button id="share-btn" class="icon-btn" title="Share weather" aria-label="Share weather summary">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M8 12l8-4M8 12l8 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
@@ -513,6 +518,7 @@
           <div><dt><kbd>N</kbd></dt><dd>Return scrubber to now</dd></div>
           <div><dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Nudge time ± 1 h</dd></div>
           <div><dt><kbd>[</kbd> <kbd>]</kbd></dt><dd>Cycle saved cities</dd></div>
+          <div><dt><kbd>Z</kbd></dt><dd>Toggle zen view</dd></div>
           <div><dt><kbd>?</kbd></dt><dd>Show / hide this panel</dd></div>
           <div><dt><kbd>Esc</kbd></dt><dd>Close panels</dd></div>
         </dl>
@@ -521,6 +527,23 @@
   </main>
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <!-- Round 27: Zen overlay — minimal weather face when chrome is hidden. -->
+  <div id="zen-overlay" class="zen-overlay" role="dialog" aria-label="Zen view" aria-modal="true" hidden>
+    <div class="zen-content">
+      <p id="zen-place" class="zen-place">—</p>
+      <div class="zen-temp">
+        <span id="zen-temp-value">—</span>
+        <span class="zen-unit" id="zen-unit">°C</span>
+      </div>
+      <p id="zen-condition" class="zen-condition">—</p>
+      <p id="zen-sub" class="zen-sub">—</p>
+      <button id="zen-exit" class="zen-exit" type="button" aria-label="Exit zen mode">
+        <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 4l8 8M12 4L4 12"/></svg>
+        <span>Exit · Esc</span>
+      </button>
+    </div>
+  </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
           integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>

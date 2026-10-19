@@ -1728,3 +1728,89 @@ kbd {
   .temp { font-size: 78px; }
   .narrative { font-size: 13px; }
 }
+
+/* ---------- Round 27 — Zen / immersive mode ---------- */
+/* Hides every surface except the stage canvases and shows a minimal
+   centered weather face. The scenes keep running behind the overlay. */
+html[data-zen="true"] body > .app > *,
+html[data-zen="true"] body > #toast {
+  display: none !important;
+}
+html[data-zen="true"] .stage { opacity: 1; }
+
+.zen-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.25) 100%);
+  animation: zenFade 480ms var(--ease) both;
+}
+.zen-overlay[hidden] { display: none; }
+.zen-content {
+  text-align: center;
+  color: var(--fg);
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+}
+.zen-place {
+  font-size: clamp(16px, 2.4vw, 22px);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  margin: 0;
+}
+.zen-temp {
+  font-size: clamp(96px, 20vw, 220px);
+  line-height: 0.9;
+  font-weight: 200;
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.1em;
+}
+.zen-unit {
+  font-size: 0.3em;
+  color: var(--fg-muted);
+  margin-top: 0.4em;
+  font-weight: 400;
+}
+.zen-condition {
+  font-size: clamp(18px, 2.6vw, 28px);
+  color: var(--fg);
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+.zen-sub {
+  font-size: clamp(12px, 1.6vw, 15px);
+  color: var(--fg-muted);
+  margin: 0;
+  letter-spacing: 0.04em;
+}
+.zen-exit {
+  margin-top: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px 6px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--stroke);
+  color: var(--fg-muted);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 200ms var(--ease), background 200ms var(--ease);
+}
+.zen-exit:hover, .zen-exit:focus-visible {
+  color: var(--fg);
+  background: rgba(255,255,255,0.1);
+}
+@keyframes zenFade {
+  from { opacity: 0; transform: scale(0.98); }
+  to   { opacity: 1; transform: scale(1); }
+}

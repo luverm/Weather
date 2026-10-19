@@ -302,6 +302,11 @@ installShortcuts({
     if (app.weather) applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
   },
+  toggleZen: () => ui.toggleZen?.(),
+  exitZen: () => {
+    if (ui.isZen?.()) { ui.toggleZen(false); return true; }
+    return false;
+  },
 });
 
 // ---------- Start ----------

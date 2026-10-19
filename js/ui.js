@@ -83,6 +83,14 @@ const el = {
   dailySparkDots: $("#daily-spark-dots"),
   dailyDelta: $("#daily-delta"),
   shareBtn: $("#share-btn"),
+  zenBtn: $("#zen-btn"),
+  zenOverlay: $("#zen-overlay"),
+  zenPlace: $("#zen-place"),
+  zenTempValue: $("#zen-temp-value"),
+  zenUnit: $("#zen-unit"),
+  zenCondition: $("#zen-condition"),
+  zenSub: $("#zen-sub"),
+  zenExit: $("#zen-exit"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
   fetchedAgo: $("#fetched-ago"),
@@ -152,6 +160,7 @@ export const ui = {
     bindLocate();
     bindAudio();
     bindShare();
+    bindZen();
     bindRefresh();
     bindSettings();
     bindTilt();
@@ -235,6 +244,7 @@ export const ui = {
     renderLiveValues(sampled, { animate: false });
     renderMetrics(sampled);
     renderAdvice(sampled);
+    if (document.documentElement.dataset.zen === "true") paintZen(sampled);
     highlightHour(highlightHourIndex);
     if (state.comfortStrip) state.comfortStrip.highlight(highlightHourIndex);
     if (state.chart && sampled._sampledTs != null) {
@@ -1518,6 +1528,51 @@ function bindShare() {
       if (err?.name !== "AbortError") ui.showToast("Share failed");
     }
   });
+}
+
+function bindZen() {
+  if (!el.zenBtn || !el.zenOverlay) return;
+  el.zenBtn.addEventListener("click", () => ui.toggleZen());
+  el.zenExit?.addEventListener("click", () => ui.toggleZen(false));
+  el.zenOverlay.addEventListener("click", (e) => {
+    // Click on the backdrop (not the content card) also exits.
+    if (e.target === el.zenOverlay) ui.toggleZen(false);
+  });
+}
+
+ui.toggleZen = function (force) {
+  const now = document.documentElement.dataset.zen === "true";
+  const target = typeof force === "boolean" ? force : !now;
+  document.documentElement.dataset.zen = target ? "true" : "false";
+  el.zenOverlay.hidden = !target;
+  if (target) {
+    paintZen(state.sampledWeather || state.weather);
+    state._zenPaintTimer = setInterval(() => paintZen(state.sampledWeather || state.weather), 60_000);
+  } else if (state._zenPaintTimer) {
+    clearInterval(state._zenPaintTimer);
+    state._zenPaintTimer = null;
+  }
+};
+
+ui.isZen = () => document.documentElement.dataset.zen === "true";
+
+function paintZen(w) {
+  if (!w || !el.zenOverlay) return;
+  const unit = state.unit;
+  const place = state.place?.name || "Here";
+  const temp = unit === "F" ? w.temp * 9 / 5 + 32 : w.temp;
+  const feels = w.feelsLike != null ? (unit === "F" ? w.feelsLike * 9 / 5 + 32 : w.feelsLike) : null;
+  if (el.zenPlace) el.zenPlace.textContent = place;
+  if (el.zenTempValue) el.zenTempValue.textContent = `${Math.round(temp)}°`;
+  if (el.zenUnit) el.zenUnit.textContent = unit;
+  if (el.zenCondition) el.zenCondition.textContent = capitalize(w.label || "");
+  if (el.zenSub) {
+    const bits = [];
+    if (feels != null && Math.abs(feels - temp) >= 1) bits.push(`Feels ${Math.round(feels)}°`);
+    if (w.windSpeed != null) bits.push(`Wind ${Math.round(w.windSpeed)} km/h`);
+    if (w.humidity != null) bits.push(`${Math.round(w.humidity)}% humidity`);
+    el.zenSub.textContent = bits.join(" · ");
+  }
 }
 
 function bindTilt() {

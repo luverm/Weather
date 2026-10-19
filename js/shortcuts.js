@@ -47,6 +47,7 @@ export function installShortcuts(handlers) {
     // Always available, even while typing.
     if (e.key === "Escape") {
       if (!overlay.hidden) { toggleOverlay(false); e.preventDefault(); return; }
+      if (handlers.exitZen?.()) { e.preventDefault(); return; }
       if (typing) { e.target.blur(); return; }
     }
 
@@ -69,6 +70,7 @@ export function installShortcuts(handlers) {
     if (key === "ArrowRight") { handlers.nudge?.(1); e.preventDefault(); return; }
     if (key === "[") { handlers.cyclePlace?.(-1); e.preventDefault(); return; }
     if (key === "]") { handlers.cyclePlace?.(1); e.preventDefault(); return; }
+    if (key === "z" || key === "Z") { handlers.toggleZen?.(); e.preventDefault(); return; }
   });
 }
 
