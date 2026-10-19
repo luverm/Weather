@@ -1518,6 +1518,7 @@ function showRecentsIfAny() {
 function bindSearch() {
   el.searchInput.addEventListener("input", (e) => {
     const v = e.target.value.trim();
+    el.searchResults._activeIdx = -1;
     if (v.length < 2) {
       showRecentsIfAny();
       return;
@@ -1534,6 +1535,38 @@ function bindSearch() {
       el.searchResults.hidden = false;
     }
   });
+  // Round 45: arrow-key navigation + Enter to pick.
+  el.searchInput.addEventListener("keydown", (e) => {
+    if (el.searchResults.hidden) return;
+    const items = el.searchResults._items || [];
+    if (!items.length) return;
+    const liEls = el.searchResults.querySelectorAll("li[data-index]");
+    const curr = el.searchResults._activeIdx ?? -1;
+    if (e.key === "ArrowDown") {
+      const next = (curr + 1) % items.length;
+      setSearchActive(next);
+      e.preventDefault();
+    } else if (e.key === "ArrowUp") {
+      const next = curr <= 0 ? items.length - 1 : curr - 1;
+      setSearchActive(next);
+      e.preventDefault();
+    } else if (e.key === "Enter") {
+      const idx = curr >= 0 ? curr : 0;
+      const item = items[idx];
+      if (!item) return;
+      el.searchInput.value = item.name;
+      el.searchResults.hidden = true;
+      el.searchResults._activeIdx = -1;
+      places.add(item);
+      state.handlers.onSearchSelect?.(item);
+      el.searchInput.blur();
+      e.preventDefault();
+    } else if (e.key === "Escape") {
+      el.searchResults.hidden = true;
+      el.searchInput.blur();
+      e.preventDefault();
+    }
+  });
   el.searchResults.addEventListener("click", (e) => {
     const li = e.target.closest("li");
     if (!li) return;
@@ -1545,6 +1578,17 @@ function bindSearch() {
     places.add(item);
     state.handlers.onSearchSelect?.(item);
   });
+}
+
+function setSearchActive(idx) {
+  el.searchResults._activeIdx = idx;
+  const items = el.searchResults.querySelectorAll("li[data-index]");
+  items.forEach((li) => li.classList.remove("active"));
+  const target = el.searchResults.querySelector(`li[data-index="${idx}"]`);
+  if (target) {
+    target.classList.add("active");
+    target.scrollIntoView({ block: "nearest" });
+  }
 }
 
 function bindUnitToggle() {
