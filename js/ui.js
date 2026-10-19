@@ -1176,6 +1176,13 @@ function hourTrendArrow(cur, prev) {
     : '<span class="forecast-trend down" aria-hidden="true">▼</span>';
 }
 
+function daylightDuration(ms) {
+  const total = Math.max(0, Math.round(ms / 60_000));
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  return `${h}h ${String(m).padStart(2, "0")}m`;
+}
+
 function dayTrendArrow(cur, prev) {
   if (cur == null || prev == null) return "";
   const diff = cur - prev;
@@ -1223,8 +1230,13 @@ function renderDaily(w) {
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
     const prev = i > 0 ? days[i - 1] : null;
     const dayArrow = dayTrendArrow(d.tempMax, prev?.tempMax);
+    const daylightMs = (d.sunrise && d.sunset) ? d.sunset - d.sunrise : null;
+    const daylightLabel = daylightMs ? daylightDuration(daylightMs) : "";
     item.innerHTML = `
-      <span class="daily-day">${day}</span>
+      <span class="daily-day">
+        <span class="daily-day-name">${day}</span>
+        ${daylightLabel ? `<span class="daily-day-sun" title="Daylight today">${daylightLabel}</span>` : ""}
+      </span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
