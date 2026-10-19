@@ -307,6 +307,7 @@ installShortcuts({
     if (ui.isZen?.()) { ui.toggleZen(false); return true; }
     return false;
   },
+  copyWeather: () => ui.copyWeather?.(),
 });
 
 // ---------- Start ----------

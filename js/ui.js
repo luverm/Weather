@@ -223,6 +223,8 @@ export const ui = {
     renderWeekend(weather);
     renderYesterday(weather, weather.temp);
     startLocaltime(weather);
+    updatePageTitle(weather);
+    if (document.documentElement.dataset.zen === "true") paintZen(weather);
     if (state.chart) {
       state.chart.setHours(weather.hourly);
       state.chart.setYesterdayHours(weather.yesterday?.hourly);
@@ -302,6 +304,28 @@ function animateNumber(node, target, format) {
 }
 
 function capitalize(s) { return (s || "").charAt(0).toUpperCase() + (s || "").slice(1); }
+
+// Round 28: emoji glyph that matches the current condition — used in the
+// page title so the tab shows at-a-glance weather state.
+function conditionEmoji(c, isDay = true) {
+  switch (c) {
+    case "clear":   return isDay ? "☀️" : "🌙";
+    case "clouds":  return isDay ? "⛅" : "☁️";
+    case "rain":    return "🌧️";
+    case "snow":    return "❄️";
+    case "storm":   return "⛈️";
+    case "fog":     return "🌫️";
+    default:        return "🌡️";
+  }
+}
+
+function updatePageTitle(w) {
+  if (!w) return;
+  const temp = Math.round(state.unit === "F" ? w.temp * 9 / 5 + 32 : w.temp);
+  const place = state.place?.name || "Aether";
+  const glyph = conditionEmoji(w.condition, w.isDay);
+  document.title = `${glyph} ${temp}°${state.unit} · ${place} — Aether`;
+}
 
 function renderLiveValues(w, { animate = true } = {}) {
   const temp = convertTemp(w.temp);
@@ -1497,35 +1521,50 @@ function startFetchedTicker() {
   setInterval(update, 30_000);
 }
 
+function buildShareText() {
+  const w = state.weather;
+  if (!w) return null;
+  const placeName = state.place?.name || "Here";
+  const unit = state.unit;
+  const t = (v) => `${Math.round(unit === "F" ? v * 9 / 5 + 32 : v)}°${unit}`;
+  const today = w.daily?.[0];
+  const lines = [
+    `Aether · ${placeName}`,
+    `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
+    today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
+    `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
+    w.uv != null ? `UV ${Math.round(w.uv)}` : null,
+    w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
+  ].filter(Boolean);
+  return { text: lines.join("\n"), placeName };
+}
+
+async function shareOrCopy({ preferShare = true } = {}) {
+  const built = buildShareText();
+  if (!built) { ui.showToast("No weather to share yet"); return false; }
+  try {
+    if (preferShare && navigator.share) {
+      await navigator.share({ title: `Aether — ${built.placeName}`, text: built.text });
+    } else {
+      await navigator.clipboard.writeText(built.text);
+      ui.showToast("Summary copied to clipboard");
+    }
+    return true;
+  } catch (err) {
+    if (err?.name !== "AbortError") ui.showToast("Share failed");
+    return false;
+  }
+}
+
+ui.copyWeather = () => shareOrCopy({ preferShare: false });
+
 function bindShare() {
   if (!el.shareBtn) return;
   el.shareBtn.addEventListener("click", async () => {
-    const w = state.weather;
-    if (!w) { ui.showToast("No weather to share yet"); return; }
-    const placeName = state.place?.name || "Here";
-    const unit = state.unit;
-    const t = (v) => `${Math.round(unit === "F" ? v * 9 / 5 + 32 : v)}°${unit}`;
-    const today = w.daily?.[0];
-    const lines = [
-      `Aether · ${placeName}`,
-      `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
-      today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
-      `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
-      w.uv != null ? `UV ${Math.round(w.uv)}` : null,
-      w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
-    ].filter(Boolean);
-    const text = lines.join("\n");
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: `Aether — ${placeName}`, text });
-      } else {
-        await navigator.clipboard.writeText(text);
-        ui.showToast("Summary copied to clipboard");
-      }
+    const ok = await shareOrCopy({ preferShare: true });
+    if (ok) {
       el.shareBtn.classList.add("just-copied");
       setTimeout(() => el.shareBtn.classList.remove("just-copied"), 600);
-    } catch (err) {
-      if (err?.name !== "AbortError") ui.showToast("Share failed");
     }
   });
 }
