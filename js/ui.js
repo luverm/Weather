@@ -1046,6 +1046,13 @@ function renderDaily(w) {
     if (d.tempMax > gMax) gMax = d.tempMax;
   }
   const span = Math.max(1, gMax - gMin);
+  // Compute score for every day up front so we can also mark the week's best.
+  const scores = days.map(scoreDay);
+  let bestIdx = -1, bestScore = -1;
+  // Skip "today" when nominating "pick of the week" since the user already sees it.
+  for (let i = 1; i < scores.length; i++) {
+    if (scores[i].score > bestScore) { bestScore = scores[i].score; bestIdx = i; }
+  }
   days.forEach((d, i) => {
     const dt = new Date(d.time);
     const tz = state.weather?.timezone;
@@ -1058,13 +1065,18 @@ function renderDaily(w) {
     const item = document.createElement("div");
     item.className = "daily-item";
     item.dataset.ts = d.time;
+    const sc = scores[i];
+    const scoreDot = `<span class="daily-score" data-cls="${sc.cls}" title="Day score ${sc.score} · ${sc.label}" style="--day-score:${sc.score}"></span>`;
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
+    const bestTag = i === bestIdx && sc.score >= 55
+      ? `<span class="daily-pick" title="Pick of the week">★</span>` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
     item.innerHTML = `
-      <span class="daily-day">${day}</span>
+      ${scoreDot}
+      <span class="daily-day">${day}${bestTag}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
@@ -1076,6 +1088,29 @@ function renderDaily(w) {
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+}
+
+// Simple 0-100 "nice day" score tuned for temperate-climate expectations.
+function scoreDay(d) {
+  if (!d) return { score: 0, label: "—", cls: "poor" };
+  let s = 100;
+  const hi = d.tempMax ?? 18;
+  const lo = d.tempMin ?? 10;
+  // Penalty when either end is far from a 10-26°C comfort band.
+  if (hi > 28) s -= (hi - 28) * 3;
+  if (hi < 10) s -= (10 - hi) * 2.5;
+  if (lo < 0)  s -= (0 - lo) * 2;
+  // Rain + probability.
+  if (d.precip != null) s -= Math.min(45, d.precip * 6);
+  if (d.pop != null && d.pop > 50) s -= (d.pop - 50) * 0.4;
+  // Wind.
+  if (d.gustsMax != null && d.gustsMax > 25) s -= (d.gustsMax - 25) * 0.8;
+  // UV extremes.
+  if (d.uvMax != null && d.uvMax > 10) s -= (d.uvMax - 10) * 4;
+  s = Math.max(0, Math.min(100, Math.round(s)));
+  const cls = s >= 80 ? "great" : s >= 60 ? "good" : s >= 40 ? "mixed" : "poor";
+  const label = s >= 80 ? "Great" : s >= 60 ? "Good" : s >= 40 ? "Mixed" : "Rough";
+  return { score: s, label, cls };
 }
 
 function renderDailyIconStrip(days) {

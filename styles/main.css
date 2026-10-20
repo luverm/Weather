@@ -1595,15 +1595,36 @@ kbd {
   padding: 0 6px 4px;
 }
 .daily-item {
+  position: relative;
   display: grid;
   grid-template-columns: 72px 28px 1fr 60px 60px;
   gap: 12px;
   align-items: center;
-  padding: 10px 8px;
+  padding: 10px 8px 10px 14px;
   border-radius: 10px;
   transition: background 200ms var(--ease);
 }
 .daily-item:hover { background: var(--glass); }
+.daily-score {
+  position: absolute;
+  left: 4px;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, currentColor, color-mix(in oklab, currentColor 60%, transparent));
+  opacity: 0.9;
+}
+.daily-score[data-cls="great"]  { color: #86e39a; }
+.daily-score[data-cls="good"]   { color: #ffd36a; }
+.daily-score[data-cls="mixed"]  { color: #ff9f5c; }
+.daily-score[data-cls="poor"]   { color: #b75cff; opacity: 0.65; }
+.daily-pick {
+  color: #ffd36a;
+  font-size: 12px;
+  margin-left: 6px;
+  text-shadow: 0 0 6px rgba(255,210,110,0.55);
+}
 .daily-day { font-size: 13px; font-weight: 500; }
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
 .daily-range {
