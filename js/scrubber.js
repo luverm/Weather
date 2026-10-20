@@ -99,6 +99,7 @@ export class Scrubber {
     });
 
     this.resetEl?.addEventListener("click", () => this.reset());
+    this.timeEl?.addEventListener("dblclick", () => this.reset());
   }
 
   reset() {
