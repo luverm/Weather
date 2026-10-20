@@ -46,6 +46,7 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonNext: $("#moon-next"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -563,6 +564,12 @@ function renderMoon(moon) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  if (el.moonNext) {
+    const upcoming = nextMoonMilestone(moon.phase);
+    el.moonNext.textContent = upcoming
+      ? `${upcoming.name} in ${upcoming.days} day${upcoming.days === 1 ? "" : "s"}`
+      : "";
+  }
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
@@ -579,6 +586,29 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+}
+
+// Given a phase in [0,1), returns the nearest upcoming major moon milestone
+// (New / First Quarter / Full / Last Quarter) with days-until. Lunar cycle
+// is ~29.53 days.
+function nextMoonMilestone(phase) {
+  if (phase == null) return null;
+  const SYNODIC = 29.5305882;
+  const MILESTONES = [
+    { p: 0.00, name: "New moon" },
+    { p: 0.25, name: "First quarter" },
+    { p: 0.50, name: "Full moon" },
+    { p: 0.75, name: "Last quarter" },
+    { p: 1.00, name: "New moon" },
+  ];
+  for (const m of MILESTONES) {
+    if (m.p > phase + 0.005) {
+      const days = Math.round((m.p - phase) * SYNODIC);
+      if (days <= 0) continue;
+      return { name: m.name, days };
+    }
+  }
+  return null;
 }
 
 function fmtTime(ts) {
