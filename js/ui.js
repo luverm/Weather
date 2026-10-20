@@ -63,6 +63,7 @@ const el = {
   nicestHours: $("#nicest-hours"),
   nicestRange: $("#nicest-range"),
   nicestScore: $("#nicest-score"),
+  scrubberPeek: $("#scrubber-peek"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -236,6 +237,7 @@ export const ui = {
       state.chart.setCursor(sampled.hourly?.[highlightHourIndex]?.time);
     }
     updateDocTitle(sampled);
+    updateScrubberPeek(sampled);
   },
   setScrubbing(on) {
     document.documentElement.setAttribute("data-scrubbing", on ? "true" : "false");
@@ -244,6 +246,7 @@ export const ui = {
     } else {
       el.hintText.innerHTML = 'Drag the slider, hover the chart, or press <kbd>?</kbd> for shortcuts.';
     }
+    if (!on && el.scrubberPeek) el.scrubberPeek.hidden = true;
   },
   setAudioState(on) {
     el.audioBtn.classList.toggle("on", !!on);
@@ -679,6 +682,19 @@ function conditionEmoji(condition, isDay) {
     case "fog":    return "🌫";
     default:       return "";
   }
+}
+
+// Peek shown next to the scrubber-time while scrubbing — a tiny chip with
+// the sampled hour's condition icon, temperature, and precipitation chance.
+function updateScrubberPeek(sampled) {
+  if (!el.scrubberPeek) return;
+  const scrubbing = document.documentElement.getAttribute("data-scrubbing") === "true";
+  if (!scrubbing || !sampled) { el.scrubberPeek.hidden = true; return; }
+  const temp = Math.round(convertTemp(sampled.temp));
+  const pop = sampled.hourly?.[sampled._sampledIndex]?.pop;
+  const popStr = (pop != null && pop >= 15) ? ` · ${pop}%` : "";
+  el.scrubberPeek.innerHTML = `${iconFor(sampled.condition)}<span>${temp}°${popStr}</span>`;
+  el.scrubberPeek.hidden = false;
 }
 
 // Updates the <link rel="icon"> with an inline SVG tuned to the condition.

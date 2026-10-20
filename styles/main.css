@@ -498,6 +498,18 @@ html[data-reduce-motion="true"] *::after {
   font-size: 13px;
 }
 .scrubber-delta { font-size: 11px; color: var(--fg-dim); font-variant-numeric: tabular-nums; }
+.scrubber-peek {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11.5px;
+  color: var(--fg);
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+.scrubber-peek[hidden] { display: none; }
+.scrubber-peek svg { width: 13px; height: 13px; color: var(--fg-muted); }
 .scrubber-track {
   position: relative;
   height: 36px;
