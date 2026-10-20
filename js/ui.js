@@ -359,9 +359,15 @@ function renderMetrics(w) {
     }
   }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
-  el.metricPressureSub.textContent = w.visibility != null
-    ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
-    : "visibility —";
+  if (w.visibility != null) {
+    const km = Math.round((w.visibility / 1000) * 10) / 10;
+    const vq = visibilityWord(w.visibility);
+    el.metricPressureSub.textContent = vq
+      ? `visibility ${km} km · ${vq}`
+      : `visibility ${km} km`;
+  } else {
+    el.metricPressureSub.textContent = "visibility —";
+  }
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
@@ -382,6 +388,16 @@ function renderMetrics(w) {
     el.metricUVSub.textContent = "peak —";
   }
   renderPressureSparkline(w);
+}
+
+// Short qualitative label for visibility in metres. Null when crystal clear
+// so we only surface the warning side.
+function visibilityWord(m) {
+  if (m == null) return null;
+  if (m < 1000)  return "very poor";
+  if (m < 4000)  return "poor";
+  if (m < 10000) return "hazy";
+  return null;
 }
 
 // Approximate minimum time to erythema for a Fitzpatrick type II/III, no
@@ -710,6 +726,23 @@ function scheduleGoldenHour(w) {
     if (d.sunset)  windows.push({ kind: "sunset",  start: d.sunset - 60 * 60_000, end: d.sunset });
   }
   windows.sort((a, b) => a.start - b.start);
+
+  // Make the chip jump the scrubber to its window — identical to the G shortcut.
+  el.goldenHour.onclick = () => {
+    const now = Date.now();
+    const target = windows.find((w2) => now >= w2.start && now <= w2.end)
+      || windows.find((w2) => w2.start > now);
+    if (target) state.handlers.onHourClick?.(target.start);
+  };
+  el.goldenHour.style.cursor = "pointer";
+  el.goldenHour.setAttribute("role", "button");
+  el.goldenHour.setAttribute("tabindex", "0");
+  if (!el.goldenHour._keybound) {
+    el.goldenHour.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); el.goldenHour.click(); }
+    });
+    el.goldenHour._keybound = true;
+  }
 
   const update = () => {
     const now = Date.now();
