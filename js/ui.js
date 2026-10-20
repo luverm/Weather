@@ -364,6 +364,7 @@ function renderMetrics(w) {
   } else if (el.windNeedle) {
     el.windNeedle.style.opacity = "0.3";
   }
+  renderWindGustArc(dir, w.windSpeed, w.windGusts);
   if (el.windBft) {
     const bft = beaufort(w.windSpeed);
     if (bft) {
@@ -436,6 +437,32 @@ function uvBurnMinutes(uv) {
   const mins = Math.round(200 / uv);
   if (mins > 90) return null;
   return mins;
+}
+
+// Soft outer arc on the wind compass whose span scales with how much larger
+// the gust is than the sustained wind. Centred on the wind-from direction.
+function renderWindGustArc(dir, wind, gust) {
+  const g = document.getElementById("wind-gust-arc");
+  const path = document.getElementById("wind-gust-arc-path");
+  if (!g || !path) return;
+  if (dir == null || wind == null || gust == null || gust - wind < 8) {
+    g.setAttribute("opacity", "0");
+    return;
+  }
+  // Arc half-span: 10° at just-above-threshold, up to ~45° on very gusty days.
+  const excess = gust - wind;
+  const halfSpan = Math.min(45, 8 + excess * 1.1);
+  const start = dir - halfSpan;
+  const end = dir + halfSpan;
+  const r = 23;
+  const toRad = (deg) => (deg - 90) * Math.PI / 180; // compass bearing -> SVG radians
+  const sx = Math.cos(toRad(start)) * r;
+  const sy = Math.sin(toRad(start)) * r;
+  const ex = Math.cos(toRad(end)) * r;
+  const ey = Math.sin(toRad(end)) * r;
+  const largeArc = halfSpan * 2 > 180 ? 1 : 0;
+  path.setAttribute("d", `M ${sx.toFixed(2)} ${sy.toFixed(2)} A ${r} ${r} 0 ${largeArc} 1 ${ex.toFixed(2)} ${ey.toFixed(2)}`);
+  g.setAttribute("opacity", String(Math.min(0.75, 0.3 + excess * 0.02)));
 }
 
 function humidityComfort(rh, dew, temp) {
