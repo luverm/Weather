@@ -293,8 +293,28 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  // Explain a meaningful feels-like divergence inline — more informative than
+  // just "feels like X°" when wind or humidity shifts the apparent temp.
+  const rawDelta = (w.feelsLike ?? w.temp) - w.temp;
+  const reason = feelsReason(w, rawDelta);
+  const feelsText = reason
+    ? `Feels like ${Math.round(feels)}° · ${reason}`
+    : `Feels like ${Math.round(feels)}°`;
+  el.feelsLike.textContent = feelsText;
   renderDayRange(w);
+}
+
+function feelsReason(w, rawDelta) {
+  if (Math.abs(rawDelta) < 3) return null;
+  if (rawDelta < 0) {
+    // Cooler than actual: wind chill or evaporative cooling.
+    if ((w.windSpeed ?? 0) >= 20) return "wind chill";
+    return "feels colder";
+  }
+  // Warmer than actual: humidity-driven heat index.
+  if ((w.humidity ?? 0) >= 60 && (w.temp ?? 0) >= 24) return "humid heat";
+  if ((w.humidity ?? 0) >= 70) return "muggy";
+  return "feels warmer";
 }
 
 function renderDayRange(w) {
