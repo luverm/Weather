@@ -1175,9 +1175,13 @@ function renderDaily(w) {
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
+    const swingC = (d.tempMax != null && d.tempMin != null) ? d.tempMax - d.tempMin : 0;
+    const swingDisplay = Math.round(convertTemp(d.tempMax) - convertTemp(d.tempMin));
+    const swingLabel = swingC >= 10 ? ` · swing ${swingDisplay}°` : "";
     const bestTag = i === bestIdx && sc.score >= 55
       ? `<span class="daily-pick" title="Pick of the week">★</span>` : "";
-    const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const extraText = `${popLabel}${gustLabel}${swingLabel}`;
+    const extra = extraText ? `<span class="daily-gust">${extraText}</span>` : "";
     item.innerHTML = `
       ${scoreDot}
       <span class="daily-day">${day}${bestTag}</span>
@@ -1342,7 +1346,10 @@ function renderDailyDelta(days) {
   if (Math.abs(dPop) >= 20) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
   }
-  el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
+  // Weekly rain total — a glanceable "how wet is the week overall".
+  const totalMm = days.reduce((s, d) => s + (d.precip || 0), 0);
+  const weekRain = totalMm >= 1 ? ` · week ${totalMm.toFixed(0)} mm` : "";
+  el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}${weekRain}`;
 }
 
 function toggleDailyExpand(item, d, w) {
