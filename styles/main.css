@@ -716,6 +716,7 @@ html[data-reduce-motion="true"] *::after {
   opacity: 0.55;
 }
 .legend-swatch.precip { background: rgba(154, 209, 255, 0.55); }
+.legend-swatch.comfort { background: rgba(134, 227, 154, 0.4); }
 
 .chart-wrap {
   position: relative;
@@ -772,6 +773,14 @@ html[data-reduce-motion="true"] *::after {
 }
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
+}
+.chart-comfort rect {
+  fill: rgba(134, 227, 154, 0.08);
+}
+.chart-comfort line {
+  stroke: rgba(134, 227, 154, 0.3);
+  stroke-width: 0.6;
+  stroke-dasharray: 2 3;
 }
 .chart-labels text {
   font-size: 9px;

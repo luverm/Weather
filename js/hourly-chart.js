@@ -244,6 +244,34 @@ export class HourlyChart {
       precipG.appendChild(r);
     });
 
+    // Comfort band: 15°-24°C soft green shading indicating pleasant hours.
+    const comfG = this.svg.querySelector("#chart-comfort");
+    if (comfG) {
+      comfG.innerHTML = "";
+      const C_LO = 15, C_HI = 24;
+      // Only draw if the band is at least partly inside the plotted temp range.
+      if (C_LO < tMax && C_HI > tMin) {
+        const yLo = tToY(Math.min(tMax, C_HI));
+        const yHi = tToY(Math.max(tMin, C_LO));
+        const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        r.setAttribute("x", String(PAD_LEFT));
+        r.setAttribute("y", yLo.toFixed(1));
+        r.setAttribute("width", String(W - PAD_LEFT - PAD_RIGHT));
+        r.setAttribute("height", Math.max(0, yHi - yLo).toFixed(1));
+        comfG.appendChild(r);
+        // Thin dashed outline on both bounds for legibility.
+        for (const y of [yLo, yHi]) {
+          if (y <= PAD_TOP + 0.5 || y >= PAD_TOP + innerH - 0.5) continue;
+          const ln = document.createElementNS("http://www.w3.org/2000/svg", "line");
+          ln.setAttribute("x1", String(PAD_LEFT));
+          ln.setAttribute("x2", String(W - PAD_RIGHT));
+          ln.setAttribute("y1", y.toFixed(1));
+          ln.setAttribute("y2", y.toFixed(1));
+          comfG.appendChild(ln);
+        }
+      }
+    }
+
     // Night shading: dim rectangles where !isDay
     const nightG = this.svg.querySelector("#chart-night");
     nightG.innerHTML = "";
