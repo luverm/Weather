@@ -64,6 +64,9 @@ const el = {
   nicestRange: $("#nicest-range"),
   nicestScore: $("#nicest-score"),
   scrubberPeek: $("#scrubber-peek"),
+  todayChip: $("#today-chip"),
+  todayChipLabel: $("#today-chip-label"),
+  todayChipScore: $("#today-chip-score"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -209,6 +212,7 @@ export const ui = {
     renderAlerts(weather);
     renderWeekend(weather);
     renderNicestHours(weather);
+    renderTodayChip(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -1212,6 +1216,18 @@ function renderDaily(w) {
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+}
+
+function renderTodayChip(w) {
+  if (!el.todayChip) return;
+  const today = w?.daily?.[0];
+  if (!today) { el.todayChip.hidden = true; return; }
+  const sc = scoreDay(today);
+  if (sc.score == null) { el.todayChip.hidden = true; return; }
+  el.todayChip.hidden = false;
+  el.todayChip.setAttribute("data-cls", sc.cls);
+  if (el.todayChipLabel) el.todayChipLabel.textContent = `Today · ${sc.label}`;
+  if (el.todayChipScore) el.todayChipScore.textContent = `${sc.score}/100`;
 }
 
 // Picks the longest consecutive run of "nice" daytime hours remaining today

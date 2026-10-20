@@ -730,6 +730,39 @@ html[data-reduce-motion="true"] *::after {
 .legend-swatch.precip { background: rgba(154, 209, 255, 0.55); }
 .legend-swatch.comfort { background: rgba(134, 227, 154, 0.4); }
 
+/* ---------- Hero today chip ---------- */
+.today-chip {
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px 5px 7px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--stroke);
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+}
+.today-chip[hidden] { display: none; }
+.today-chip-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+}
+.today-chip-label {
+  color: var(--fg);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.today-chip-score {
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+}
+.today-chip[data-cls="great"] { color: #86e39a; }
+.today-chip[data-cls="good"]  { color: #ffd36a; }
+.today-chip[data-cls="mixed"] { color: #ff9f5c; }
+.today-chip[data-cls="poor"]  { color: #b75cff; }
+
 .chart-wrap {
   position: relative;
 }
