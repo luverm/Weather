@@ -35,14 +35,20 @@ export class HourlyChart {
 
   _formatHour(ts) {
     const tz = this.getTimezone();
+    const hour12 = (localStorage.getItem("aether:hour12") === "1");
     if (tz && tz !== "auto") {
       try {
         return new Intl.DateTimeFormat(undefined, {
-          timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
+          timeZone: tz, hour: hour12 ? "numeric" : "2-digit", minute: "2-digit", hour12,
         }).format(new Date(ts));
       } catch { /* */ }
     }
     const d = new Date(ts);
+    if (hour12) {
+      const h12 = ((d.getHours() + 11) % 12) + 1;
+      const am = d.getHours() < 12 ? "am" : "pm";
+      return `${h12}:${d.getMinutes().toString().padStart(2, "0")} ${am}`;
+    }
     return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
   }
 

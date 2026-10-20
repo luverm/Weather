@@ -101,6 +101,7 @@ const el = {
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
+  settingHour12: $("#setting-hour12"),
   settingClearPlaces: $("#setting-clear-places"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
@@ -134,6 +135,7 @@ const el = {
 
 const state = {
   unit: localStorage.getItem("aether:unit") || "C",
+  hour12: localStorage.getItem("aether:hour12") === "1",
   weather: null,
   place: null,
   sampledWeather: null, // the weather values at the current scrubber time
@@ -671,14 +673,22 @@ function nextMoonMilestone(phase) {
 function fmtTime(ts) {
   if (!ts) return "—";
   const tz = state.weather?.timezone;
+  const hour12 = state.hour12;
   if (tz && tz !== "auto") {
     try {
       return new Intl.DateTimeFormat(undefined, {
-        timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
+        timeZone: tz, hour: hour12 ? "numeric" : "2-digit", minute: "2-digit", hour12,
       }).format(new Date(ts));
     } catch { /* fall through */ }
   }
   const d = new Date(ts);
+  if (hour12) {
+    const h24 = d.getHours();
+    const h12 = ((h24 + 11) % 12) + 1;
+    const am = h24 < 12 ? "am" : "pm";
+    const mm = d.getMinutes().toString().padStart(2, "0");
+    return `${h12}:${mm} ${am}`;
+  }
   const hh = d.getHours().toString().padStart(2, "0");
   const mm = d.getMinutes().toString().padStart(2, "0");
   return `${hh}:${mm}`;
@@ -1811,6 +1821,12 @@ function bindSettings() {
     }
   });
 
+  el.settingHour12?.addEventListener("change", () => {
+    state.hour12 = el.settingHour12.checked;
+    localStorage.setItem("aether:hour12", state.hour12 ? "1" : "0");
+    if (state.weather) ui.setWeather(state.weather);
+  });
+
   el.settingClearPlaces?.addEventListener("click", () => {
     if (!confirm("Clear all saved places?")) return;
     for (const p of places.all()) places.remove(p);
@@ -1829,6 +1845,7 @@ function applyStoredPreferences() {
     queueMicrotask(() => state.handlers.onReduceMotion?.(true));
   }
   if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
+  if (el.settingHour12) el.settingHour12.checked = state.hour12;
 }
 
 // Exposed so app.js can query the current preference on boot.
