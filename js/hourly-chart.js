@@ -336,8 +336,18 @@ export class HourlyChart {
     const labG = this.svg.querySelector("#chart-labels");
     labG.innerHTML = "";
     const labelStep = Math.max(3, Math.floor(this.hours.length / 8));
+    // Find indices of today's max + min temp so we can tag them specifically.
+    let maxIdx = -1, minIdx = -1;
+    for (let i = 0; i < this.hours.length; i++) {
+      const t = this.hours[i].temp;
+      if (t == null) continue;
+      if (maxIdx < 0 || t > this.hours[maxIdx].temp) maxIdx = i;
+      if (minIdx < 0 || t < this.hours[minIdx].temp) minIdx = i;
+    }
+    const extremeIdxs = new Set([maxIdx, minIdx].filter((i) => i >= 0));
     this.hours.forEach((h, i) => {
-      if (i % labelStep !== 0) return;
+      const isExtreme = extremeIdxs.has(i);
+      if (i % labelStep !== 0 && !isExtreme) return;
       const hh = this._hourOf(h.time);
       const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
       txt.setAttribute("x", iToX(i).toFixed(1));
@@ -345,14 +355,15 @@ export class HourlyChart {
       txt.setAttribute("text-anchor", "middle");
       txt.textContent = `${hh}`;
       labG.appendChild(txt);
-      // Temp label above point
+      // Temp label above point. Extremes get the max/min glyph prefix.
       const tVal = unit === "F" ? h.temp * 9 / 5 + 32 : h.temp;
       const tTxt = document.createElementNS("http://www.w3.org/2000/svg", "text");
       tTxt.setAttribute("x", iToX(i).toFixed(1));
       tTxt.setAttribute("y", (tToY(h.temp) - 8).toFixed(1));
       tTxt.setAttribute("text-anchor", "middle");
-      tTxt.setAttribute("class", "temp-point");
-      tTxt.textContent = `${Math.round(tVal)}°`;
+      tTxt.setAttribute("class", isExtreme ? "temp-point extreme" : "temp-point");
+      const prefix = i === maxIdx ? "▲ " : i === minIdx ? "▼ " : "";
+      tTxt.textContent = `${prefix}${Math.round(tVal)}°`;
       labG.appendChild(tTxt);
     });
   }

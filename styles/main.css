@@ -865,6 +865,10 @@ html[data-reduce-motion="true"] *::after {
   fill: var(--fg-muted);
   font-size: 9.5px;
 }
+.chart-labels text.temp-point.extreme {
+  fill: var(--fg);
+  font-weight: 500;
+}
 .chart-cursor {
   stroke: var(--accent);
   stroke-width: 1.2;
