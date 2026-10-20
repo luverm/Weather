@@ -1308,7 +1308,19 @@ function renderTodayChip(w) {
   el.todayChip.hidden = false;
   el.todayChip.setAttribute("data-cls", sc.cls);
   if (el.todayChipLabel) el.todayChipLabel.textContent = `Today · ${sc.label}`;
-  if (el.todayChipScore) el.todayChipScore.textContent = `${sc.score}/100`;
+  // Compare today's high to the 7-day average when at least 3 future days
+  // are known, so "warmer / cooler than the rest of the week" reads cleanly.
+  const future = (w.daily || []).slice(1, 7).map((d) => d.tempMax).filter((v) => v != null);
+  let vs = "";
+  if (future.length >= 3 && today.tempMax != null) {
+    const avg = future.reduce((a, b) => a + b, 0) / future.length;
+    const deltaC = today.tempMax - avg;
+    const deltaDisp = Math.round(state.unit === "F" ? deltaC * 9 / 5 : deltaC);
+    if (Math.abs(deltaDisp) >= 1) {
+      vs = ` · ${deltaDisp > 0 ? "+" : ""}${deltaDisp}° vs week`;
+    }
+  }
+  if (el.todayChipScore) el.todayChipScore.textContent = `${sc.score}/100${vs}`;
 }
 
 // Picks the longest consecutive run of "nice" daytime hours remaining today
