@@ -623,6 +623,10 @@ function renderMoon(moon) {
       ? `${upcoming.name} in ${upcoming.days} day${upcoming.days === 1 ? "" : "s"}`
       : "";
   }
+  // Flip the lit side horizontally for southern-hemisphere observers.
+  if (el.moonLit) {
+    el.moonLit.setAttribute("transform", moon.southern ? "scale(-1 1)" : "");
+  }
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;

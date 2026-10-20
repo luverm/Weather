@@ -68,6 +68,7 @@ export async function searchCities(query) {
 }
 
 export async function getWeather(lat, lon) {
+  const _lat = lat;
   const params = new URLSearchParams({
     latitude: lat,
     longitude: lon,
@@ -116,14 +117,14 @@ export async function getWeather(lat, lon) {
   try {
     const [forecast, air] = await Promise.allSettled([fetchJson(url), fetchJson(aqUrl)]);
     if (forecast.status !== "fulfilled") throw forecast.reason;
-    return normalize(forecast.value, air.status === "fulfilled" ? air.value : null);
+    return normalize(forecast.value, air.status === "fulfilled" ? air.value : null, _lat);
   } catch (err) {
     console.warn("Weather fetch failed, using mock", err);
     return mock(lat, lon);
   }
 }
 
-function normalize(d, aq) {
+function normalize(d, aq, lat) {
   const c = d.current || {};
   const { condition, label } = mapWmo(c.weather_code);
   const daily = d.daily || {};
@@ -193,6 +194,7 @@ function normalize(d, aq) {
 
   // Moon phase is not in Open-Meteo's free tier — compute it locally.
   const moon = computeMoonPhase(new Date());
+  moon.southern = lat != null ? lat < 0 : false;
 
   // Score the next sunrise and sunset for colorful-sky likelihood.
   const skyShow = computeSkyShow(dailyForecast, hourly);
