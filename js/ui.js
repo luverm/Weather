@@ -1497,9 +1497,17 @@ function renderNowcast(w) {
   el.nowcastHeadline.textContent = inMin === 0
     ? `${kind} now`
     : `${kind} in ${inMin} minute${inMin === 1 ? "" : "s"}`;
-  // 2h outlook summary.
+  // 2h outlook summary. Each bucket is 15 minutes, so hourly rate is 4×.
   const totalMm = nowcast.reduce((s, n) => s + (n.precip || 0), 0);
-  el.nowcastSub.textContent = `${totalMm.toFixed(1)} mm expected in the next 2 hours`;
+  const peakRate = Math.max(...nowcast.slice(0, 8).map((n) => (n.precip || 0) * 4), 0);
+  const rateLabel =
+    peakRate >= 7.5 ? "heavy" :
+    peakRate >= 2.5 ? "moderate" :
+    peakRate >= 0.5 ? "light" : null;
+  const rateStr = rateLabel
+    ? ` · peak ~${peakRate.toFixed(1)} mm/h (${rateLabel})`
+    : "";
+  el.nowcastSub.textContent = `${totalMm.toFixed(1)} mm expected in the next 2 hours${rateStr}`;
   // Bars (time-labeled, clickable to scrub).
   el.nowcastBars.innerHTML = "";
   const slice = nowcast.slice(0, 8);
