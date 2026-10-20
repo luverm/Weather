@@ -1729,6 +1729,13 @@ kbd {
   opacity: 0.9;
 }
 .forecast-pop.dim { opacity: 0; }
+.forecast-wind {
+  display: inline-block;
+  font-size: 10px;
+  color: var(--fg-dim);
+  line-height: 1;
+  transform-origin: 50% 50%;
+}
 
 .daily-track {
   display: grid;
