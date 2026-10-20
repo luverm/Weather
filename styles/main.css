@@ -673,7 +673,11 @@ html[data-reduce-motion="true"] *::after {
   margin-top: 3px;
   font-size: 11px; color: var(--fg-dim);
 }
-.pollen-items span { font-variant-numeric: tabular-nums; }
+.pollen-items span { font-variant-numeric: tabular-nums; padding: 1px 6px; border-radius: 999px; }
+.pollen-items span[data-level="low"]       { color: #b4e6a6; background: rgba(120, 208, 106, 0.1); }
+.pollen-items span[data-level="moderate"]  { color: #ffdc8a; background: rgba(255, 211, 106, 0.1); }
+.pollen-items span[data-level="high"]      { color: #ffbb92; background: rgba(255, 159, 92, 0.12); }
+.pollen-items span[data-level="very-high"] { color: #ff9a9a; background: rgba(255, 106, 106, 0.14); }
 
 /* ---------- Advice ---------- */
 .advice {

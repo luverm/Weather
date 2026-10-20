@@ -1162,9 +1162,18 @@ function renderPollen(pollen) {
   el.pollenLevel.textContent = pollen.level;
   el.pollenLevel.setAttribute("data-level", pollen.level);
   el.pollenDominant.textContent = `${pollen.dominant.label} dominant`;
-  el.pollenItems.innerHTML = pollen.items.map((p) =>
-    `<span>${escapeHtml(p.label)} ${p.value.toFixed(1)}</span>`
-  ).join("");
+  el.pollenItems.innerHTML = pollen.items.map((p) => {
+    const lvl = pollenLevelClass(p.value);
+    return `<span data-level="${lvl}">${escapeHtml(p.label)} ${p.value.toFixed(1)}</span>`;
+  }).join("");
+}
+
+function pollenLevelClass(v) {
+  if (v == null) return "none";
+  if (v < 0.5) return "low";
+  if (v < 5)   return "moderate";
+  if (v < 20)  return "high";
+  return "very-high";
 }
 
 function renderTrends(w) {
