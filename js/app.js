@@ -198,11 +198,37 @@ const scrubber = new Scrubber({
   },
 });
 
+// ---------- URL state ----------
+// Compact "#lat,lon,name" hash so copying the URL re-opens the same city.
+function updateUrlHash(place) {
+  if (!place || place.lat == null || place.lon == null) return;
+  const lat = Number(place.lat).toFixed(3);
+  const lon = Number(place.lon).toFixed(3);
+  const name = place.name && place.name !== "Current location"
+    ? encodeURIComponent(place.name) : "";
+  const next = name ? `#${lat},${lon},${name}` : `#${lat},${lon}`;
+  if (window.location.hash !== next) {
+    history.replaceState(null, "", window.location.pathname + window.location.search + next);
+  }
+}
+
+function placeFromHash() {
+  const h = (window.location.hash || "").replace(/^#/, "");
+  if (!h) return null;
+  const parts = h.split(",");
+  const lat = parseFloat(parts[0]);
+  const lon = parseFloat(parts[1]);
+  if (!isFinite(lat) || !isFinite(lon)) return null;
+  const name = parts[2] ? decodeURIComponent(parts.slice(2).join(",")) : "Pinned location";
+  return { name, lat, lon };
+}
+
 // ---------- Load flow ----------
 async function loadByCoords(place) {
   app.place = place;
   ui.setPlace(place);
   ui.setLoading(`Fetching weather for ${place.name}…`);
+  updateUrlHash(place);
 
   // Drop any scrubber offset so we start live on each new city.
   clock.reset();
@@ -335,6 +361,12 @@ installShortcuts({
 
 // ---------- Start ----------
 (async function init() {
+  // Shared URLs win: a hash-pinned location overrides the saved-place default.
+  const fromHash = placeFromHash();
+  if (fromHash) {
+    await loadByCoords(fromHash);
+    return;
+  }
   // Prefer the most recent saved place if we have one — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();
@@ -349,6 +381,12 @@ installShortcuts({
     await loadByCoords({ name: "Reykjavík", country: "Iceland", lat: 64.1466, lon: -21.9426 });
   }
 })();
+
+// Respect hash navigation (back/forward, external links) once loaded.
+window.addEventListener("hashchange", () => {
+  const p = placeFromHash();
+  if (p) loadByCoords(p);
+});
 
 // ---------- Lifecycle ----------
 document.addEventListener("visibilitychange", () => {
