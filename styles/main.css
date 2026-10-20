@@ -852,6 +852,9 @@ html[data-reduce-motion="true"] *::after {
   stroke-width: 0.6;
   stroke-dasharray: 2 3;
 }
+.chart-golden rect {
+  fill: rgba(255, 200, 120, 0.08);
+}
 .chart-labels text {
   font-size: 9px;
   fill: var(--fg-dim);

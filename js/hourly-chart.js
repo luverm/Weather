@@ -24,7 +24,13 @@ export class HourlyChart {
     this.getTimezone = getTimezone || (() => null);
     this.hours = [];
     this.points = [];
+    this.goldenWindows = [];
     this._bind();
+  }
+
+  setGoldenWindows(windows) {
+    this.goldenWindows = windows || [];
+    this._drawGolden();
   }
 
   _formatHour(ts) {
@@ -157,6 +163,29 @@ export class HourlyChart {
     requestAnimationFrame(() => this.popover.classList.add("show"));
   }
 
+  _drawGolden() {
+    const g = this.svg?.querySelector("#chart-golden");
+    if (!g) return;
+    g.innerHTML = "";
+    if (!this.hours.length || !this.goldenWindows.length) return;
+    const t0 = this.hours[0].time;
+    const t1 = this.hours[this.hours.length - 1].time;
+    const innerW = W - PAD_LEFT - PAD_RIGHT;
+    const tToX = (t) => PAD_LEFT + ((t - t0) / Math.max(1, t1 - t0)) * innerW;
+    for (const win of this.goldenWindows) {
+      // Only draw segments that overlap the plotted hour range.
+      if (win.end <= t0 || win.start >= t1) continue;
+      const sx = tToX(Math.max(t0, win.start));
+      const ex = tToX(Math.min(t1, win.end));
+      const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      r.setAttribute("x", sx.toFixed(1));
+      r.setAttribute("y", "0");
+      r.setAttribute("width", Math.max(0, ex - sx).toFixed(1));
+      r.setAttribute("height", String(H));
+      g.appendChild(r);
+    }
+  }
+
   _draw() {
     if (!this.hours.length) return;
     const innerW = W - PAD_LEFT - PAD_RIGHT;
@@ -251,6 +280,8 @@ export class HourlyChart {
       r.setAttribute("opacity", (0.35 + (pop / 100) * 0.55).toFixed(2));
       precipG.appendChild(r);
     });
+
+    this._drawGolden();
 
     // Comfort band: 15°-24°C soft green shading indicating pleasant hours.
     const comfG = this.svg.querySelector("#chart-comfort");

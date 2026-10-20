@@ -223,7 +223,10 @@ export const ui = {
     renderNicestHours(weather);
     renderTodayChip(weather);
     startLocaltime(weather);
-    if (state.chart) state.chart.setHours(weather.hourly);
+    if (state.chart) {
+      state.chart.setHours(weather.hourly);
+      state.chart.setGoldenWindows?.(computeGoldenWindows(weather));
+    }
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     updateDocTitle(weather);
@@ -822,6 +825,18 @@ function faviconSvg(condition, day) {
     default:
       return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">${common}<circle cx="32" cy="32" r="12" fill="${day ? sun : moon}"/></svg>`;
   }
+}
+
+// Returns golden-hour windows for the plotted 24 hours — fed to the chart
+// so a soft gold overlay sits under the temp line at those times.
+function computeGoldenWindows(w) {
+  const days = w?.daily || [];
+  const windows = [];
+  for (const d of days) {
+    if (d.sunrise) windows.push({ start: d.sunrise, end: d.sunrise + 60 * 60_000 });
+    if (d.sunset)  windows.push({ start: d.sunset - 60 * 60_000, end: d.sunset });
+  }
+  return windows;
 }
 
 // ---------- Golden hour window ----------
