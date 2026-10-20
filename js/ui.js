@@ -1261,7 +1261,11 @@ function renderDaily(w) {
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
-    const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
+    // Prefer concrete rain amount when it's non-trivial; fall back to the
+    // probability if the forecast only knows "likely" but not "how much".
+    const popLabel = (d.precip != null && d.precip >= 1)
+      ? ` · ${d.precip.toFixed(d.precip >= 10 ? 0 : 1)} mm`
+      : (d.pop >= 30 ? ` · ${d.pop}% rain` : "");
     const swingC = (d.tempMax != null && d.tempMin != null) ? d.tempMax - d.tempMin : 0;
     const swingDisplay = Math.round(convertTemp(d.tempMax) - convertTemp(d.tempMin));
     const swingLabel = swingC >= 10 ? ` · swing ${swingDisplay}°` : "";
