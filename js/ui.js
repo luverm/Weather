@@ -199,6 +199,12 @@ export const ui = {
   setWeather(weather, { narrative } = {}) {
     state.weather = weather;
     state.sampledWeather = weather; // initially same as live
+    // Enrich the place sub with elevation when the forecast returned one.
+    if (state.place && weather.elevation != null) {
+      const parts = [state.place.admin1, state.place.country].filter(Boolean);
+      parts.push(`${Math.round(weather.elevation)} m`);
+      el.placeSub.textContent = parts.join(", ");
+    }
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);

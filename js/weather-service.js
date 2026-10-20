@@ -215,6 +215,7 @@ function normalize(d, aq) {
     uv: daily.uv_index_max?.[0] ?? null,
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
+    elevation: d.elevation,
     hourly,
     daily: dailyForecast,
     nowcast,
