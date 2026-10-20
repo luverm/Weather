@@ -867,6 +867,7 @@ html[data-reduce-motion="true"] *::after {
   stroke-dasharray: 2 3;
   opacity: 0.75;
   pointer-events: none;
+  transition: x1 150ms var(--ease), x2 150ms var(--ease);
 }
 .chart-dot {
   fill: #fff;
@@ -874,6 +875,7 @@ html[data-reduce-motion="true"] *::after {
   stroke-width: 2;
   pointer-events: none;
   filter: drop-shadow(0 0 6px var(--accent));
+  transition: cx 150ms var(--ease), cy 150ms var(--ease);
 }
 
 /* ---------- Wind compass (inside wind metric) ---------- */
