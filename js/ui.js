@@ -54,6 +54,11 @@ const el = {
   goldenHour: $("#golden-hour"),
   goldenWindow: $("#golden-window"),
   goldenState: $("#golden-state"),
+  skyShow: $("#sky-show"),
+  skyShowKind: $("#sky-show-kind"),
+  skyShowLabel: $("#sky-show-label"),
+  skyShowNote: $("#sky-show-note"),
+  skyShowMarker: $("#sky-show-marker"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -532,6 +537,27 @@ function renderSun(w) {
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   scheduleGoldenHour(w);
+  renderSkyShow(w);
+}
+
+function renderSkyShow(w) {
+  if (!el.skyShow) return;
+  const s = w?.skyShow;
+  if (!s || s.score == null) { el.skyShow.hidden = true; return; }
+  el.skyShow.hidden = false;
+  const kindLabel = s.nextKind === "sunrise" ? "Sunrise forecast" : "Sunset forecast";
+  const whenHint = s.nextTime ? ` · ${fmtTime(s.nextTime)}` : "";
+  if (el.skyShowKind) el.skyShowKind.textContent = kindLabel + whenHint;
+  if (el.skyShowLabel) el.skyShowLabel.textContent = `${s.label} · ${s.score}`;
+  if (el.skyShowMarker) {
+    el.skyShowMarker.style.left = `calc(${Math.max(2, Math.min(98, s.score))}% - 1px)`;
+  }
+  if (el.skyShowNote) {
+    const bits = [];
+    if (s.note) bits.push(s.note);
+    if (s.cloud != null) bits.push(`${Math.round(s.cloud)}% cloud`);
+    el.skyShowNote.textContent = bits.join(" · ");
+  }
 }
 
 function renderDaylightDelta(w) {

@@ -83,7 +83,7 @@ export async function getWeather(lat, lon) {
       "precipitation_probability", "precipitation",
       "wind_speed_10m", "wind_gusts_10m",
       "is_day", "uv_index", "pressure_msl",
-      "relative_humidity_2m",
+      "relative_humidity_2m", "cloud_cover", "visibility",
     ].join(","),
     daily: [
       "sunrise", "sunset",
@@ -146,6 +146,8 @@ function normalize(d, aq) {
         uv: d.hourly.uv_index?.[i] ?? null,
         pressure: d.hourly.pressure_msl?.[i] ?? null,
         humidity: d.hourly.relative_humidity_2m?.[i] ?? null,
+        cloudCover: d.hourly.cloud_cover?.[i] ?? null,
+        visibility: d.hourly.visibility?.[i] ?? null,
         ...mapWmo(d.hourly.weather_code[i]),
       });
     }
@@ -189,6 +191,9 @@ function normalize(d, aq) {
   // Moon phase is not in Open-Meteo's free tier — compute it locally.
   const moon = computeMoonPhase(new Date());
 
+  // Score the next sunrise and sunset for colorful-sky likelihood.
+  const skyShow = computeSkyShow(dailyForecast, hourly);
+
   return {
     temp: c.temperature_2m,
     feelsLike: c.apparent_temperature,
@@ -213,10 +218,74 @@ function normalize(d, aq) {
     daily: dailyForecast,
     nowcast,
     moon,
+    skyShow,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
     fetchedAt: now,
   };
+}
+
+// Score how colorful an upcoming sunrise/sunset is likely to be. The key
+// variable is mid/high cloud coverage near the horizon event: a bit of cloud
+// catches the horizontal light rays; too much blocks the sun; none means a
+// clean pastel gradient. Humidity and precipitation gently dampen the show.
+function computeSkyShow(dailyForecast, hourly) {
+  const now = Date.now();
+  const out = { nextKind: null, nextTime: null, score: null, label: null, note: null };
+  // Pick the nearest future sunrise or sunset.
+  let next = null;
+  for (const d of dailyForecast) {
+    for (const [ts, kind] of [[d.sunrise, "sunrise"], [d.sunset, "sunset"]]) {
+      if (ts && ts > now && (!next || ts < next.ts)) next = { ts, kind };
+    }
+  }
+  if (!next) return out;
+
+  const anchor = hourly.find((h) => Math.abs(h.time - next.ts) <= 60 * 60_000)
+    ?? nearestBy(hourly, (h) => Math.abs(h.time - next.ts));
+  const cloud = anchor?.cloudCover;
+  const hum = anchor?.humidity;
+  const precip = anchor?.precip ?? 0;
+
+  let score = null;
+  if (cloud != null) {
+    // Peak colour around 45-65% cloud cover. Penalise overcast + humid + wet air.
+    const sweet = 55;
+    score = 100 - Math.abs(cloud - sweet) * 1.3;
+    if (precip > 0.3) score -= 25;
+    if (hum != null && hum > 85) score -= 15;
+    if (cloud < 10) score = Math.min(score, 35); // clean pastel ceiling
+    if (cloud > 95) score = Math.min(score, 15); // fully socked in
+    score = Math.max(0, Math.min(100, Math.round(score)));
+  }
+
+  const label =
+    score == null ? "—" :
+    score >= 80 ? "Spectacular" :
+    score >= 65 ? "Dramatic" :
+    score >= 45 ? "Nice" :
+    score >= 25 ? "Soft" :
+    "Muted";
+  const note =
+    cloud == null ? null :
+    cloud < 10 ? "Clear horizon — pastel band" :
+    cloud < 30 ? "Light cirrus — gentle colour" :
+    cloud < 70 ? "Mid cloud deck — colour likely" :
+    cloud < 95 ? "Thick cloud — muted light" :
+    "Overcast — little colour";
+
+  return { nextKind: next.kind, nextTime: next.ts, score, label, note, cloud, humidity: hum };
+}
+
+function nearestBy(arr, keyFn) {
+  if (!arr?.length) return null;
+  let best = arr[0];
+  let bestKey = keyFn(best);
+  for (let i = 1; i < arr.length; i++) {
+    const k = keyFn(arr[i]);
+    if (k < bestKey) { best = arr[i]; bestKey = k; }
+  }
+  return best;
 }
 
 function computePressureTrend(hourly, now) {
@@ -388,6 +457,13 @@ function mock(lat, lon) {
     })),
     nowcast: [],
     moon: computeMoonPhase(new Date()),
+    skyShow: {
+      nextKind: "sunset",
+      nextTime: new Date().setHours(19, 0, 0, 0),
+      score: 62, label: "Nice",
+      note: "Mid cloud deck — colour likely",
+      cloud: 55, humidity: 60,
+    },
     airQuality: { aqi: 42, pm25: 8, pm10: 14, o3: 40, no2: 15, co: 0.2, label: "Good" },
     pollen: {
       items: [
