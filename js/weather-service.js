@@ -68,7 +68,6 @@ export async function searchCities(query) {
 }
 
 export async function getWeather(lat, lon) {
-  const _lat = lat;
   const params = new URLSearchParams({
     latitude: lat,
     longitude: lon,
@@ -117,7 +116,7 @@ export async function getWeather(lat, lon) {
   try {
     const [forecast, air] = await Promise.allSettled([fetchJson(url), fetchJson(aqUrl)]);
     if (forecast.status !== "fulfilled") throw forecast.reason;
-    return normalize(forecast.value, air.status === "fulfilled" ? air.value : null, _lat);
+    return normalize(forecast.value, air.status === "fulfilled" ? air.value : null, lat);
   } catch (err) {
     console.warn("Weather fetch failed, using mock", err);
     return mock(lat, lon);
