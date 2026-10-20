@@ -1188,6 +1188,13 @@ kbd {
   transition: left 600ms var(--ease);
   left: 0%;
 }
+.sky-show-cloud {
+  width: 100%;
+  height: 18px;
+  display: block;
+  color: #d8dbe8;
+  opacity: 0.9;
+}
 .sky-show-note {
   font-size: 11.5px;
   color: var(--fg-dim);

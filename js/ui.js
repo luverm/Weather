@@ -61,6 +61,8 @@ const el = {
   skyShowLabel: $("#sky-show-label"),
   skyShowNote: $("#sky-show-note"),
   skyShowMarker: $("#sky-show-marker"),
+  skyShowCloudLine: $("#sky-show-cloud-line"),
+  skyShowCloudFill: $("#sky-show-cloud-fill"),
   nicestHours: $("#nicest-hours"),
   nicestRange: $("#nicest-range"),
   nicestScore: $("#nicest-score"),
@@ -688,6 +690,14 @@ function renderSkyShow(w) {
     if (s.cloud != null) bits.push(`${Math.round(s.cloud)}% cloud`);
     el.skyShowNote.textContent = bits.join(" · ");
   }
+  // 12-hour cloud cover sparkline — supports the headline score.
+  const cloudSeries = (w.hourly || [])
+    .map((h) => h.cloudCover)
+    .filter((v) => v != null)
+    .slice(0, 12);
+  drawSparkline(el.skyShowCloudLine, el.skyShowCloudFill, cloudSeries, {
+    fixedMin: 0, fixedMax: 100, minSpan: 10,
+  });
 }
 
 function renderDaylightDelta(w) {
