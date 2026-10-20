@@ -8,6 +8,7 @@ import { RainScene } from "./scenes/rain.js";
 import { SnowScene } from "./scenes/snow.js";
 import { LightningScene } from "./scenes/lightning.js";
 import { WindScene } from "./scenes/wind.js";
+import { RainbowScene } from "./scenes/rainbow.js";
 import { getWeather, getLocation } from "./weather-service.js";
 import { ui } from "./ui.js";
 import { clock } from "./clock.js";
@@ -26,6 +27,7 @@ const clouds = engine.add("clouds", new CloudsScene(document.getElementById("clo
 const wind = engine.add("wind", new WindScene(document.getElementById("wind")));
 const rain = engine.add("rain", new RainScene(document.getElementById("rain")));
 const snow = engine.add("snow", new SnowScene(document.getElementById("snow")));
+const rainbow = engine.add("rainbow", new RainbowScene(document.getElementById("rainbow")));
 const lightning = engine.add("lightning", new LightningScene(document.getElementById("lightning")));
 
 const audio = new AmbientAudio();
@@ -136,6 +138,7 @@ function sampleAt(weather, ts) {
     windSpeed: nearest.wind ?? weather.windSpeed,
     windGusts: nearest.gusts ?? weather.windGusts,
     uv: nearest.uv ?? weather.uv,
+    cloudCover: nearest.cloudCover ?? weather.cloudCover,
     sunrise: day?.sunrise ?? weather.sunrise,
     sunset: day?.sunset ?? weather.sunset,
     _sampledIndex: idx,
@@ -158,6 +161,7 @@ function applyScene(weather) {
   clouds.setWeather(payload);
   rain.setWeather(payload);
   snow.setWeather(payload);
+  rainbow.setWeather(payload);
   lightning.setWeather(payload);
   wind.setWeather(payload);
 
