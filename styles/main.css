@@ -763,6 +763,27 @@ html[data-reduce-motion="true"] *::after {
 .today-chip[data-cls="mixed"] { color: #ff9f5c; }
 .today-chip[data-cls="poor"]  { color: #b75cff; }
 
+/* ---------- Offline badge ---------- */
+.offline-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  margin-right: 4px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #ff9f5c;
+  background: rgba(255, 159, 92, 0.1);
+  border: 1px solid rgba(255, 159, 92, 0.3);
+  animation: offline-pulse 2.4s var(--ease) infinite;
+}
+.offline-badge[hidden] { display: none; }
+@keyframes offline-pulse {
+  0%, 100% { opacity: 0.75; }
+  50%      { opacity: 1; }
+}
+
 .chart-wrap {
   position: relative;
 }

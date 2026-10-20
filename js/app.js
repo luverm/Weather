@@ -380,4 +380,18 @@ if ("serviceWorker" in navigator) {
   });
 }
 
+// Online/offline badge + auto-refresh when the connection comes back.
+(function wireOnlineState() {
+  const badge = document.getElementById("offline-badge");
+  if (!badge) return;
+  const sync = () => { badge.hidden = navigator.onLine; };
+  window.addEventListener("online", () => {
+    sync();
+    // Only chase a fresh fetch if the current snapshot is a fallback.
+    if (app.weather?.offline && app.place) refreshWeather();
+  });
+  window.addEventListener("offline", sync);
+  sync();
+})();
+
 window.__aether = { engine, app, clock, audio };
