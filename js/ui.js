@@ -60,6 +60,9 @@ const el = {
   skyShowLabel: $("#sky-show-label"),
   skyShowNote: $("#sky-show-note"),
   skyShowMarker: $("#sky-show-marker"),
+  nicestHours: $("#nicest-hours"),
+  nicestRange: $("#nicest-range"),
+  nicestScore: $("#nicest-score"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -204,6 +207,7 @@ export const ui = {
     renderActivity(weather);
     renderAlerts(weather);
     renderWeekend(weather);
+    renderNicestHours(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -1110,6 +1114,61 @@ function renderDaily(w) {
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
     el.dailyTrack.appendChild(item);
   });
+}
+
+// Picks the longest consecutive run of "nice" daytime hours remaining today
+// (bounded by sunset) and renders a compact chip. Clicking it jumps the
+// scrubber to the window's start.
+function renderNicestHours(w) {
+  if (!el.nicestHours || !el.nicestRange) return;
+  const hours = w?.hourly || [];
+  const sunset = w?.sunset ?? w?.daily?.[0]?.sunset;
+  const todayEnd = sunset ?? (Date.now() + 24 * 3600_000);
+  const now = Date.now();
+
+  const windowed = hours.filter((h) => h.time >= now && h.time <= todayEnd);
+  if (windowed.length < 3) { el.nicestHours.hidden = true; return; }
+
+  // Score each hour on comfort (temp 15-24, low pop, low gust, moderate UV).
+  const scores = windowed.map((h) => {
+    const t = h.temp ?? 18;
+    let s = 100;
+    if (t > 26) s -= (t - 26) * 2.5;
+    if (t < 14) s -= (14 - t) * 2;
+    if (h.pop != null && h.pop > 30) s -= (h.pop - 30) * 0.6;
+    if (h.precip != null && h.precip > 0) s -= Math.min(40, h.precip * 25);
+    if (h.gusts != null && h.gusts > 25) s -= (h.gusts - 25) * 0.8;
+    if (h.uv != null && h.uv > 8) s -= (h.uv - 8) * 3;
+    if (!h.isDay) s -= 25;
+    return Math.max(0, Math.round(s));
+  });
+
+  // Find the best contiguous window of consecutive hours with score >= 60.
+  const THRESH = 60;
+  let bestStart = -1, bestLen = 0, bestAvg = 0;
+  let curStart = -1, curLen = 0, curSum = 0;
+  for (let i = 0; i < scores.length; i++) {
+    if (scores[i] >= THRESH) {
+      if (curStart < 0) { curStart = i; curLen = 0; curSum = 0; }
+      curLen++; curSum += scores[i];
+      if (curLen > bestLen) {
+        bestStart = curStart; bestLen = curLen;
+        bestAvg = Math.round(curSum / curLen);
+      }
+    } else {
+      curStart = -1; curLen = 0; curSum = 0;
+    }
+  }
+
+  if (bestLen < 2) { el.nicestHours.hidden = true; return; }
+  const startHour = windowed[bestStart];
+  const endHour = windowed[bestStart + bestLen - 1];
+  // "End" shown as the hour just past the last qualifying slot (natural UX).
+  const endLabelTs = endHour.time + 60 * 60_000;
+  el.nicestRange.textContent = `${fmtTime(startHour.time)} – ${fmtTime(endLabelTs)} · ${bestLen}h`;
+  if (el.nicestScore) el.nicestScore.textContent = `${bestAvg}/100`;
+  el.nicestHours.hidden = false;
+  el.nicestHours.onclick = () => state.handlers.onHourClick?.(startHour.time);
 }
 
 // Simple 0-100 "nice day" score tuned for temperate-climate expectations.
