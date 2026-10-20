@@ -72,6 +72,7 @@ export function installShortcuts(handlers) {
     if (key === "g" || key === "G") { handlers.jumpTo?.("golden"); e.preventDefault(); return; }
     if (key === "r" || key === "R") { handlers.jumpTo?.("sunrise"); e.preventDefault(); return; }
     if (key === "s" || key === "S") { handlers.jumpTo?.("sunset"); e.preventDefault(); return; }
+    if (key === "c" || key === "C") { handlers.copySummary?.(); e.preventDefault(); return; }
   });
 }
 

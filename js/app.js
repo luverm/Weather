@@ -306,6 +306,7 @@ installShortcuts({
     if (app.weather) applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
   },
+  copySummary: () => document.getElementById("share-btn")?.click(),
   jumpTo: (target) => {
     if (!app.weather?.daily?.length) return;
     const now = Date.now();
