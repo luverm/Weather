@@ -373,11 +373,25 @@ function renderMetrics(w) {
     }
   }
   if (w.uvPeak?.time) {
-    el.metricUVSub.textContent = `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`;
+    const peakStr = `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`;
+    const burn = uvBurnMinutes(w.uv);
+    el.metricUVSub.textContent = burn
+      ? `${peakStr} · burn ~${burn}m`
+      : peakStr;
   } else {
     el.metricUVSub.textContent = "peak —";
   }
   renderPressureSparkline(w);
+}
+
+// Approximate minimum time to erythema for a Fitzpatrick type II/III, no
+// sunscreen. Returned in whole minutes, or null when the sun is weak enough
+// that it isn't worth surfacing.
+function uvBurnMinutes(uv) {
+  if (uv == null || uv < 3) return null;
+  const mins = Math.round(200 / uv);
+  if (mins > 90) return null;
+  return mins;
 }
 
 function humidityComfort(rh, dew, temp) {
@@ -475,9 +489,20 @@ function renderAirQuality(aq) {
   // Circumference of r=20 is ~125.66 — we use 126 in the SVG.
   const frac = Math.max(0, Math.min(1, (aq.aqi ?? 0) / 200));
   el.aqArc.setAttribute("stroke-dashoffset", String(126 * (1 - frac)));
-  el.aqDetail.textContent =
-    `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
+  const advice = aqAdvice(aq.aqi);
+  const pollutantLine = `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
+  el.aqDetail.textContent = advice ? `${pollutantLine} · ${advice}` : pollutantLine;
   renderAqTrend(aq);
+}
+
+function aqAdvice(aqi) {
+  if (aqi == null) return null;
+  if (aqi <= 50)  return null;
+  if (aqi <= 100) return "sensitive groups: watch exertion";
+  if (aqi <= 150) return "sensitive: limit outdoor exercise";
+  if (aqi <= 200) return "everyone: cut back outdoor exertion";
+  if (aqi <= 300) return "avoid outdoor exertion";
+  return "stay indoors";
 }
 
 function renderAqTrend(aq) {
