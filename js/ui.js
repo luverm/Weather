@@ -19,6 +19,7 @@ const el = {
   placeName: $("#place-name"),
   placeSub: $("#place-sub"),
   placeLocaltime: $("#place-localtime"),
+  placeLabelText: $("#place-label-text"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
   narrative: $("#narrative"),
@@ -787,12 +788,10 @@ function startLocaltime(w) {
   if (state.localTimer) { clearInterval(state.localTimer); state.localTimer = null; }
   if (!el.placeLocaltime) return;
   const tz = w?.timezone;
-  if (!tz || tz === "auto") {
-    // Fall back to browser — still useful.
-    el.placeLocaltime.textContent = "";
-    return;
-  }
   const update = () => {
+    const hourAtPlace = currentHourAt(tz);
+    renderGreeting(hourAtPlace);
+    if (!tz || tz === "auto") { el.placeLocaltime.textContent = ""; return; }
     try {
       const parts = new Intl.DateTimeFormat([], {
         timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
@@ -811,6 +810,29 @@ function startLocaltime(w) {
   };
   update();
   state.localTimer = setInterval(update, 10_000);
+}
+
+function currentHourAt(tz) {
+  try {
+    if (tz && tz !== "auto") {
+      const h = new Intl.DateTimeFormat("en-US", {
+        timeZone: tz, hour: "2-digit", hour12: false,
+      }).formatToParts(new Date()).find((p) => p.type === "hour")?.value;
+      if (h != null) return parseInt(h, 10) % 24;
+    }
+  } catch { /* ignore */ }
+  return new Date().getHours();
+}
+
+function renderGreeting(hour) {
+  if (!el.placeLabelText) return;
+  let g;
+  if (hour >= 5 && hour < 12)  g = "Good morning in";
+  else if (hour >= 12 && hour < 17) g = "Good afternoon in";
+  else if (hour >= 17 && hour < 21) g = "Good evening in";
+  else g = "Good night in";
+  // Avoid re-writing identical content — keeps DOM diff tiny.
+  if (el.placeLabelText.textContent !== g) el.placeLabelText.textContent = g;
 }
 
 function renderInsights(w) {
@@ -1125,7 +1147,13 @@ function renderDailySpark(days) {
   const W = 600, H = 60, PAD = 10, TOP = 6, BOT = 6;
   const hi = days.map((d) => d.tempMax).filter((v) => v != null);
   const lo = days.map((d) => d.tempMin).filter((v) => v != null);
-  if (!hi.length || !lo.length) return;
+  // A spark needs at least 2 points to draw a line.
+  if (hi.length < 2 || lo.length < 2 || days.length < 2) {
+    el.dailyHi.setAttribute("d", "");
+    el.dailyLo.setAttribute("d", "");
+    el.dailySparkDots.innerHTML = "";
+    return;
+  }
   const tMin = Math.min(...lo);
   const tMax = Math.max(...hi);
   const span = Math.max(4, tMax - tMin);
