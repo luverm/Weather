@@ -8,6 +8,12 @@ const PAD_RIGHT = 6;
 const PAD_TOP = 16;
 const PAD_BOT = 22;
 
+// Compact N/NE/E/… label from a wind-from bearing in degrees.
+function cardinalShort(deg) {
+  const dirs = ["N","NE","E","SE","S","SW","W","NW"];
+  return dirs[Math.round(((deg % 360) + 360) % 360 / 45) % 8];
+}
+
 export class HourlyChart {
   constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit, getTimezone }) {
     this.svg = svgEl;
@@ -137,7 +143,8 @@ export class HourlyChart {
       : null;
     const feelsStr = (feels != null && Math.abs(feels - t) >= 1)
       ? `<em>feels ${Math.round(feels)}°</em>` : "";
-    const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h` : "";
+    const windDirLabel = h.windDir != null ? ` ${cardinalShort(h.windDir)}` : "";
+    const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h${windDirLabel}` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
     const cloud = h.cloudCover != null ? ` · ${Math.round(h.cloudCover)}% cloud` : "";
     this.popover.innerHTML =
