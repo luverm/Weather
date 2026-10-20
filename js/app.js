@@ -302,6 +302,30 @@ installShortcuts({
     if (app.weather) applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
   },
+  jumpTo: (target) => {
+    if (!app.weather?.daily?.length) return;
+    const now = Date.now();
+    const days = app.weather.daily;
+    const picks = [];
+    for (const d of days) {
+      if (!d.sunrise || !d.sunset) continue;
+      if (target === "sunrise") picks.push(d.sunrise);
+      else if (target === "sunset") picks.push(d.sunset);
+      else if (target === "golden") {
+        // Prefer sunset golden; fall back to sunrise if sunset already passed.
+        picks.push(d.sunset - 30 * 60_000);
+        picks.push(d.sunrise + 30 * 60_000);
+      }
+    }
+    picks.sort((a, b) => a - b);
+    const next = picks.find((t) => t > now) ?? picks[0];
+    if (!next) return;
+    clock.setOffset(next - Date.now());
+    scrubber.sync();
+    applyScene(app.weather);
+    ui.setScrubbing(!clock.isLive());
+    ui.showToast(`Jumped to ${target}`);
+  },
 });
 
 // ---------- Start ----------

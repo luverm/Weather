@@ -599,6 +599,7 @@ function updateDocTitle(w) {
   const emoji = conditionEmoji(w.condition, w.isDay);
   const parts = [emoji, temp, place].filter(Boolean).join(" ");
   document.title = parts ? `${parts} · Aether` : base;
+  updateFavicon(w.condition, w.isDay);
 }
 
 function conditionEmoji(condition, isDay) {
@@ -611,6 +612,56 @@ function conditionEmoji(condition, isDay) {
     case "storm":  return "⛈";
     case "fog":    return "🌫";
     default:       return "";
+  }
+}
+
+// Updates the <link rel="icon"> with an inline SVG tuned to the condition.
+// Rendered on a dark square so it stays legible on both light and dark tab
+// bars. Memoised so we don't thrash the DOM on every scrub.
+let _faviconKey = "";
+function updateFavicon(condition, isDay) {
+  const day = isDay !== false;
+  const key = `${condition || ""}:${day ? "d" : "n"}`;
+  if (key === _faviconKey) return;
+  _faviconKey = key;
+  const svg = faviconSvg(condition, day);
+  const url = "data:image/svg+xml," + encodeURIComponent(svg);
+  let link = document.querySelector('link[rel="icon"]');
+  if (!link) {
+    link = document.createElement("link");
+    link.rel = "icon";
+    document.head.appendChild(link);
+  }
+  link.setAttribute("href", url);
+}
+
+function faviconSvg(condition, day) {
+  const bg = "#0b1020";
+  const sun = "#ffd36a";
+  const moon = "#e8edff";
+  const cloud = "#c7d0e0";
+  const rain = "#7cc0ff";
+  const snow = "#e8f3ff";
+  const bolt = "#ffe067";
+  const common = `<rect width="64" height="64" rx="12" fill="${bg}"/>`;
+  switch (condition) {
+    case "clear":
+      return day
+        ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">${common}<circle cx="32" cy="32" r="12" fill="${sun}"/><g stroke="${sun}" stroke-width="3" stroke-linecap="round">
+            <path d="M32 10v6M32 48v6M10 32h6M48 32h6M16 16l4 4M44 44l4 4M16 48l4-4M44 20l4-4"/></g></svg>`
+        : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">${common}<path d="M44 20a16 16 0 1 0 0 24 12 12 0 0 1 0-24z" fill="${moon}"/></svg>`;
+    case "clouds":
+      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">${common}${day ? `<circle cx="20" cy="24" r="8" fill="${sun}"/>` : ""}<path d="M18 44a9 9 0 0 1 0-18 11 11 0 0 1 22-2 9 9 0 0 1 4 20H18z" fill="${cloud}"/></svg>`;
+    case "rain":
+      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">${common}<path d="M16 38a9 9 0 0 1 0-18 11 11 0 0 1 22-2 9 9 0 0 1 4 20H16z" fill="${cloud}"/><g stroke="${rain}" stroke-width="3" stroke-linecap="round"><path d="M22 46l-3 8M32 46l-3 8M42 46l-3 8"/></g></svg>`;
+    case "snow":
+      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">${common}<path d="M16 38a9 9 0 0 1 0-18 11 11 0 0 1 22-2 9 9 0 0 1 4 20H16z" fill="${cloud}"/><g fill="${snow}"><circle cx="22" cy="50" r="2.5"/><circle cx="32" cy="54" r="2.5"/><circle cx="42" cy="50" r="2.5"/></g></svg>`;
+    case "storm":
+      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">${common}<path d="M16 34a9 9 0 0 1 0-18 11 11 0 0 1 22-2 9 9 0 0 1 4 20H16z" fill="${cloud}"/><path d="M32 36l-6 12h6l-4 10 12-16h-6l4-6z" fill="${bolt}"/></svg>`;
+    case "fog":
+      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">${common}<g stroke="${cloud}" stroke-width="4" stroke-linecap="round"><path d="M12 24h40M8 36h48M14 48h36"/></g></svg>`;
+    default:
+      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">${common}<circle cx="32" cy="32" r="12" fill="${day ? sun : moon}"/></svg>`;
   }
 }
 
