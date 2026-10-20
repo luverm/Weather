@@ -48,8 +48,12 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  goldenHour: $("#golden-hour"),
+  goldenWindow: $("#golden-window"),
+  goldenState: $("#golden-state"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -122,6 +126,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  goldenTimer: null,
   localTimer: null,
 };
 
@@ -197,6 +202,7 @@ export const ui = {
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
+    updateDocTitle(weather);
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
@@ -219,6 +225,7 @@ export const ui = {
     } else if (state.chart) {
       state.chart.setCursor(sampled.hourly?.[highlightHourIndex]?.time);
     }
+    updateDocTitle(sampled);
   },
   setScrubbing(on) {
     document.documentElement.setAttribute("data-scrubbing", on ? "true" : "false");
@@ -521,8 +528,109 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleGoldenHour(w);
+}
+
+function renderDaylightDelta(w) {
+  if (!el.sunDaylightDelta) return;
+  const days = w?.daily || [];
+  // Compare today's daylight to tomorrow's — "+3m tomorrow" / "−2m tomorrow".
+  const today = days[0], tomorrow = days[1];
+  if (!today?.sunrise || !today?.sunset || !tomorrow?.sunrise || !tomorrow?.sunset) {
+    el.sunDaylightDelta.textContent = "";
+    el.sunDaylightDelta.removeAttribute("data-dir");
+    return;
+  }
+  const t = today.sunset - today.sunrise;
+  const n = tomorrow.sunset - tomorrow.sunrise;
+  const diffMin = Math.round((n - t) / 60_000);
+  if (Math.abs(diffMin) < 1) {
+    el.sunDaylightDelta.textContent = "same tomorrow";
+    el.sunDaylightDelta.setAttribute("data-dir", "flat");
+    return;
+  }
+  const sign = diffMin > 0 ? "+" : "−";
+  const abs = Math.abs(diffMin);
+  const label = abs >= 60
+    ? `${sign}${Math.floor(abs / 60)}h ${abs % 60}m tomorrow`
+    : `${sign}${abs}m tomorrow`;
+  el.sunDaylightDelta.textContent = label;
+  el.sunDaylightDelta.setAttribute("data-dir", diffMin > 0 ? "gain" : "loss");
+}
+
+// ---------- Document title ----------
+// Keeps the browser tab informative when the user has multiple tabs open:
+// "☀ 72° Paris · Aether". Falls back gracefully if any piece is missing.
+function updateDocTitle(w) {
+  const base = "Aether — Interactive Weather";
+  if (!w || w.temp == null) { document.title = base; return; }
+  const t = convertTemp(w.temp);
+  const temp = `${Math.round(t)}°${state.unit}`;
+  const place = state.place?.name;
+  const emoji = conditionEmoji(w.condition, w.isDay);
+  const parts = [emoji, temp, place].filter(Boolean).join(" ");
+  document.title = parts ? `${parts} · Aether` : base;
+}
+
+function conditionEmoji(condition, isDay) {
+  const day = isDay !== false; // treat undefined as day
+  switch (condition) {
+    case "clear":  return day ? "☀" : "🌙";
+    case "clouds": return day ? "⛅" : "☁";
+    case "rain":   return "🌧";
+    case "snow":   return "🌨";
+    case "storm":  return "⛈";
+    case "fog":    return "🌫";
+    default:       return "";
+  }
+}
+
+// ---------- Golden hour window ----------
+// Picks the next (or active) golden hour: one hour after sunrise, or one hour
+// before sunset. Updates every 60s so the "ends in Xm" state label stays live.
+function scheduleGoldenHour(w) {
+  if (state.goldenTimer) { clearInterval(state.goldenTimer); state.goldenTimer = null; }
+  if (!el.goldenHour || !el.goldenWindow) return;
+  const days = w?.daily || [];
+  if (!days.length) { el.goldenHour.hidden = true; return; }
+
+  const windows = [];
+  for (const d of days) {
+    if (d.sunrise) windows.push({ kind: "sunrise", start: d.sunrise, end: d.sunrise + 60 * 60_000 });
+    if (d.sunset)  windows.push({ kind: "sunset",  start: d.sunset - 60 * 60_000, end: d.sunset });
+  }
+  windows.sort((a, b) => a.start - b.start);
+
+  const update = () => {
+    const now = Date.now();
+    // Prefer an active window; otherwise the next future one.
+    const active = windows.find((win) => now >= win.start && now <= win.end);
+    const win = active || windows.find((w2) => w2.start > now);
+    if (!win) { el.goldenHour.hidden = true; return; }
+    el.goldenHour.hidden = false;
+    const whichSun = win.kind === "sunrise" ? "sunrise" : "sunset";
+    const range = `${fmtTime(win.start)} → ${fmtTime(win.end)}`;
+    el.goldenWindow.textContent = `${range} · at ${whichSun}`;
+    if (el.goldenState) {
+      if (active) {
+        const mins = Math.max(0, Math.round((win.end - now) / 60_000));
+        el.goldenState.textContent = `Now · ends in ${mins}m`;
+        el.goldenState.setAttribute("data-active", "true");
+      } else {
+        const mins = Math.max(0, Math.round((win.start - now) / 60_000));
+        const label = mins >= 60
+          ? `in ${Math.floor(mins / 60)}h ${mins % 60}m`
+          : `in ${mins}m`;
+        el.goldenState.textContent = label;
+        el.goldenState.setAttribute("data-active", "false");
+      }
+    }
+  };
+  update();
+  state.goldenTimer = setInterval(update, 60_000);
 }
 
 function scheduleSunArc(w) {
