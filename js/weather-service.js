@@ -84,6 +84,7 @@ export async function getWeather(lat, lon) {
       "wind_speed_10m", "wind_gusts_10m", "wind_direction_10m",
       "is_day", "uv_index", "pressure_msl",
       "relative_humidity_2m", "cloud_cover", "visibility",
+      "dew_point_2m",
     ].join(","),
     daily: [
       "sunrise", "sunset",
@@ -149,6 +150,7 @@ function normalize(d, aq) {
         humidity: d.hourly.relative_humidity_2m?.[i] ?? null,
         cloudCover: d.hourly.cloud_cover?.[i] ?? null,
         visibility: d.hourly.visibility?.[i] ?? null,
+        dewPoint: d.hourly.dew_point_2m?.[i] ?? null,
         ...mapWmo(d.hourly.weather_code[i]),
       });
     }

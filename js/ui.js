@@ -386,9 +386,13 @@ function renderMetrics(w) {
     }
   }
   el.metricHumidity.textContent = Math.round(w.humidity ?? 0);
-  el.metricHumiditySub.textContent = w.dewPoint != null
-    ? `dew ${Math.round(convertTemp(w.dewPoint))}°`
-    : "dew —";
+  if (w.dewPoint != null) {
+    const trend = dewPointTrend(w.hourly);
+    el.metricHumiditySub.textContent =
+      `dew ${Math.round(convertTemp(w.dewPoint))}°${trend}`;
+  } else {
+    el.metricHumiditySub.textContent = "dew —";
+  }
   if (el.humidityComfort) {
     const pill = humidityComfort(w.humidity, w.dewPoint, w.temp);
     if (pill) {
@@ -448,6 +452,17 @@ function uvBurnMinutes(uv) {
   const mins = Math.round(200 / uv);
   if (mins > 90) return null;
   return mins;
+}
+
+// Dew-point direction over the next 3 hours — tiny ▲/▼/→ hint after the sub.
+function dewPointTrend(hourly) {
+  if (!hourly?.length) return "";
+  const now = hourly[0]?.dewPoint;
+  const future = hourly[3]?.dewPoint;
+  if (now == null || future == null) return "";
+  const d = future - now;
+  if (Math.abs(d) < 0.5) return " →";
+  return d > 0 ? " ▲" : " ▼";
 }
 
 // Soft outer arc on the wind compass whose span scales with how much larger
