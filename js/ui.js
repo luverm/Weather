@@ -249,7 +249,9 @@ export const ui = {
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
       places.updateSummary(state.place, {
-        temp: weather.temp, condition: weather.condition,
+        temp: weather.temp,
+        condition: weather.condition,
+        timezone: weather.timezone,
       });
     }
     renderPlaces();
@@ -1483,6 +1485,21 @@ function iconFor(condition) {
   }
 }
 
+function localTimeFor(tz) {
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
+    }).format(new Date());
+  } catch { return ""; }
+}
+
+// Refresh the saved-places strip once a minute so the per-city local times
+// tick forward. renderPlaces() reads the current state so it stays in sync
+// with the active city, saved list, and unit settings.
+setInterval(() => {
+  if (el.placesStrip && !el.placesStrip.hidden) renderPlaces();
+}, 60_000);
+
 // ---------- Saved places strip ----------
 function renderPlaces() {
   const all = places.all();
@@ -1492,11 +1509,15 @@ function renderPlaces() {
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
     const icon = p.condition ? `<span class="place-chip-icon" aria-hidden="true">${iconFor(p.condition)}</span>` : "";
+    // Inactive chips carry a tiny local-time readout when we know the city's
+    // timezone — handy for a saved-places strip that spans continents.
+    const time = (!active && p.timezone && p.timezone !== "auto") ? localTimeFor(p.timezone) : "";
     return `
       <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
         ${icon}
         <span>${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
+        ${time ? `<span class="place-chip-time" aria-hidden="true">${escapeHtml(time)}</span>` : ""}
         <span class="close" data-action="remove" aria-label="Remove">
           <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
         </span>
