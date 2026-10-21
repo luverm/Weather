@@ -84,6 +84,12 @@ export function installShortcuts(handlers) {
       handlers.jumpPlace?.(parseInt(key, 10) - 1);
       return;
     }
+    // 0 as a quick alias for "use my current location".
+    if (key === "0") {
+      e.preventDefault();
+      handlers.locate?.();
+      return;
+    }
   });
 }
 
