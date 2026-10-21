@@ -910,7 +910,15 @@ html[data-reduce-motion="true"] *::after {
 }
 .wind-needle {
   transform-origin: 0 0;
-  transition: transform 900ms var(--ease);
+  transition: transform 900ms var(--ease), color 400ms var(--ease), filter 400ms var(--ease);
+}
+.metric-wind[data-wind-level="mid"] .wind-needle {
+  color: #ffd28c;
+  filter: drop-shadow(0 0 4px rgba(255,210,140,0.6));
+}
+.metric-wind[data-wind-level="high"] .wind-needle {
+  color: #ff9c7a;
+  filter: drop-shadow(0 0 6px rgba(255,156,122,0.75));
 }
 
 /* ---------- Sun countdown ---------- */

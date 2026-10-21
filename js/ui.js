@@ -445,6 +445,15 @@ function renderMetrics(w) {
   } else if (el.windNeedle) {
     el.windNeedle.style.opacity = "0.3";
   }
+  // Flag the compass as "windy" when a real gust is pushing — the needle
+  // picks up a warm glow via CSS.
+  const windCardEl = el.metricWind?.closest(".metric-wind");
+  if (windCardEl) {
+    const level = (w.windGusts ?? w.windSpeed ?? 0) >= 50 ? "high"
+      : (w.windGusts ?? w.windSpeed ?? 0) >= 30 ? "mid"
+      : "calm";
+    windCardEl.dataset.windLevel = level;
+  }
   if (el.windBft) {
     const bft = beaufort(w.windSpeed);
     if (bft) {
