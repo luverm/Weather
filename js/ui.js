@@ -1149,6 +1149,15 @@ function findExtremes(hours) {
 function highlightHour(index) {
   const items = el.forecastTrack.querySelectorAll(".forecast-item");
   items.forEach((it, i) => it.classList.toggle("active", i === index));
+  // When the scrubbed hour would otherwise be out of view, nudge the track
+  // so the active cell is visible. Skip when the track isn't overflowing.
+  if (index == null || index < 0) return;
+  const active = items[index];
+  if (!active) return;
+  const track = el.forecastTrack;
+  if (track.scrollWidth <= track.clientWidth + 2) return;
+  const left = active.offsetLeft - track.clientWidth / 2 + active.clientWidth / 2;
+  track.scrollTo({ left, behavior: "smooth" });
 }
 
 // Scan the next 24 hours of hourly precipitation. If the sky is essentially
