@@ -89,6 +89,7 @@ const el = {
   settingWindMph: $("#setting-wind-mph"),
   settingClock12h: $("#setting-clock-12h"),
   settingClearPlaces: $("#setting-clear-places"),
+  settingResetAll: $("#setting-reset-all"),
   metricWindUnit: $("#m-wind-unit"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
@@ -1738,6 +1739,27 @@ function bindSettings() {
     for (const p of places.all()) places.remove(p);
     renderPlaces();
     ui.showToast("Saved places cleared");
+    close();
+  });
+
+  el.settingResetAll?.addEventListener("click", () => {
+    if (!confirm("Reset all preferences to defaults?")) return;
+    const keys = ["aether:unit", "aether:windUnit", "aether:clock12h", "aether:reduceMotion"];
+    for (const k of keys) {
+      try { localStorage.removeItem(k); } catch { /* ignore */ }
+    }
+    state.unit = "C";
+    state.windUnit = "kmh";
+    state.clock12h = false;
+    el.unitBtn.textContent = `°${state.unit}`;
+    if (el.settingUnitF) el.settingUnitF.checked = false;
+    if (el.settingWindMph) el.settingWindMph.checked = false;
+    if (el.settingClock12h) el.settingClock12h.checked = false;
+    if (el.settingReduceMotion) el.settingReduceMotion.checked = false;
+    document.documentElement.setAttribute("data-reduce-motion", "false");
+    state.handlers.onReduceMotion?.(false);
+    if (state.weather) ui.setWeather(state.weather);
+    ui.showToast("Preferences reset");
     close();
   });
 }
