@@ -251,7 +251,11 @@ export const ui = {
       });
       el.narrative.textContent = line || "";
     }
-    if (weather.offline) ui.showToast("Offline — showing sample weather");
+    if (weather.offline) {
+      ui.showToast(navigator.onLine === false
+        ? "Offline — showing sample weather"
+        : "Can't reach forecast API — showing sample");
+    }
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
       places.updateSummary(state.place, {
