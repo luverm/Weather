@@ -101,5 +101,21 @@ export function buildInsights(weather, { fmtTime, weekday, fmtTemp, fmtWind } = 
     });
   }
 
+  // 6. Weekly rain total — only when enough days remain to call it a "week".
+  if (days.length >= 3) {
+    const total = days.reduce((s, d) => s + (d.precip ?? 0), 0);
+    if (total >= 1) {
+      const prettyTotal = total >= 10 ? `${total.toFixed(0)}mm` : `${total.toFixed(1)}mm`;
+      const wettest = days.reduce((best, d) =>
+        (d.precip ?? 0) > (best?.precip ?? -1) ? d : best, null);
+      out.push({
+        icon: ICONS.rain, label: "Week rain",
+        value: wettest && (wettest.precip ?? 0) >= 2
+          ? `${prettyTotal} total · ${dow(wettest.time)} wettest`
+          : `${prettyTotal} total`,
+      });
+    }
+  }
+
   return out.slice(0, 6);
 }
