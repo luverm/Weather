@@ -144,6 +144,20 @@ export function buildAlerts(weather) {
     });
   }
 
+  // ---- Rainbow possibility ----
+  // Sun low (within ~90 min of sunrise/sunset), rain nearby, sky not fully
+  // sealed up by overcast — those are the three ingredients.
+  const rainbowTs = rainbowWindow(weather, hours);
+  if (rainbowTs) {
+    out.push({
+      id: "rainbow",
+      severity: "info",
+      title: "Rainbow possible",
+      detail: `Sun low with rain nearby around ${shortClock(rainbowTs)} — keep an eye on the opposite horizon.`,
+      ts: rainbowTs,
+    });
+  }
+
   // De-dupe (if a daily heat triggers heat AND severe-heat, keep the worst).
   const SEV = { danger: 3, warn: 2, info: 1 };
   return dedupe(out)
@@ -203,6 +217,34 @@ function shortClock(ts) {
   if (!ts) return "later";
   const d = new Date(ts);
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+}
+
+function rainbowWindow(weather, hours) {
+  const now = Date.now();
+  // Pull every sunrise/sunset in the forecast — not just today's — so an
+  // evening check at 20:00 still catches a dawn-time rainbow tomorrow.
+  const marks = [];
+  for (const d of weather.daily || []) {
+    if (d.sunrise) marks.push(d.sunrise);
+    if (d.sunset) marks.push(d.sunset);
+  }
+  if (!marks.length) return null;
+  for (const h of hours) {
+    if (!h.isDay) continue;
+    const precip = (h.precip ?? 0);
+    const nextH = hours[hours.indexOf(h) + 1];
+    const soonRain =
+      h.condition === "rain" || precip >= 0.1 ||
+      (nextH && (nextH.condition === "rain" || (nextH.precip ?? 0) >= 0.1));
+    if (!soonRain) continue;
+    // Must be within 90 min of a sun transition.
+    const nearMark = marks.find((m) => Math.abs(m - h.time) <= 90 * 60_000);
+    if (!nearMark) continue;
+    // Skip if the hour's already clearly behind us.
+    if (h.time < now - 30 * 60_000) continue;
+    return h.time;
+  }
+  return null;
 }
 
 function dedupe(items) {
