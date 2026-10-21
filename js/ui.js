@@ -1727,6 +1727,21 @@ function startFetchedTicker() {
   };
   update();
   setInterval(update, 30_000);
+
+  // Make the chip actionable: a click or Enter triggers the same refresh
+  // the toolbar button runs. Keyboard focusable so screen-reader users can
+  // reach it from the footer.
+  if (el.fetchedAgo && !el.fetchedAgo.dataset.bound) {
+    el.fetchedAgo.dataset.bound = "1";
+    el.fetchedAgo.setAttribute("role", "button");
+    el.fetchedAgo.setAttribute("tabindex", "0");
+    el.fetchedAgo.title = "Refresh now";
+    const click = () => el.refreshBtn?.click();
+    el.fetchedAgo.addEventListener("click", click);
+    el.fetchedAgo.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); click(); }
+    });
+  }
 }
 
 function bindShare() {
