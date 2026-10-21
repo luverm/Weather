@@ -94,6 +94,7 @@ export async function getWeather(lat, lon) {
     timezone: "auto",
     forecast_days: 7,
     past_hours: 1,
+    past_days: 1,            // enables "same hour yesterday" delta
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -150,6 +151,12 @@ function normalize(d, aq) {
       });
     }
   }
+
+  // "Yesterday same hour": scan the full hourly series for the entry whose
+  // timestamp is closest to (now - 24h). API returns past_days=1, so the row
+  // is in the series; we take the nearest within ±90 minutes so a stale cache
+  // or DST skew doesn't give a 23-hour-old reading.
+  const yesterday = findSameHourYesterday(d.hourly, now);
 
   // 7-day daily forecast.
   const dailyForecast = [];
@@ -215,8 +222,26 @@ function normalize(d, aq) {
     moon,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
+    yesterday,
     fetchedAt: now,
   };
+}
+
+function findSameHourYesterday(hourly, now) {
+  if (!hourly?.time || !hourly?.temperature_2m) return null;
+  const target = now - 24 * 3600_000;
+  const MAX_SKEW = 90 * 60_000;
+  let best = null;
+  for (let i = 0; i < hourly.time.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    const diff = Math.abs(t - target);
+    if (diff > MAX_SKEW) continue;
+    if (!best || diff < best.diff) {
+      best = { diff, time: t, temp: hourly.temperature_2m[i] };
+    }
+  }
+  if (!best || best.temp == null) return null;
+  return { time: best.time, temp: best.temp };
 }
 
 function computePressureTrend(hourly, now) {
@@ -400,6 +425,7 @@ function mock(lat, lon) {
       level: "Moderate",
     },
     pressureTrend: { delta: -0.4, direction: "steady" },
+    yesterday: { time: now - 24 * 3600_000, temp: 16 },
     fetchedAt: now,
     offline: true,
   };

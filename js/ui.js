@@ -61,6 +61,9 @@ const el = {
   pollenItems: $("#pollen-items"),
   pressureTrend: $("#m-pressure-trend"),
   tempTrend: $("#temp-trend"),
+  yesterdayDelta: $("#yesterday-delta"),
+  yesterdayDeltaArrow: $("#yesterday-delta-arrow"),
+  yesterdayDeltaText: $("#yesterday-delta-text"),
   uvLevel: $("#m-uv-level"),
   humidityComfort: $("#m-humidity-comfort"),
   pressureSparkLine: $("#pressure-spark-line"),
@@ -230,12 +233,14 @@ export const ui = {
     }
   },
   setScrubbing(on) {
+    state.scrubbing = !!on;
     document.documentElement.setAttribute("data-scrubbing", on ? "true" : "false");
     if (on) {
       el.hintText.textContent = "Drag to explore future weather.";
     } else {
       el.hintText.innerHTML = 'Drag the slider, hover the chart, or press <kbd>?</kbd> for shortcuts.';
     }
+    renderYesterdayDelta(state.weather);
   },
   setAudioState(on) {
     el.audioBtn.classList.toggle("on", !!on);
@@ -287,6 +292,39 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  renderYesterdayDelta(w);
+}
+
+// "Vs same hour yesterday" chip. Pinned to live temp, so it stays stable while
+// the scrubber moves; shown only when yesterday data exists AND we're viewing
+// the current moment.
+function renderYesterdayDelta(w) {
+  if (!el.yesterdayDelta) return;
+  const live = state.weather;
+  const y = live?.yesterday;
+  if (!y || live?.temp == null || state.scrubbing) {
+    el.yesterdayDelta.hidden = true;
+    return;
+  }
+  // Delta is a temperature difference — scale, not offset — so we convert the
+  // raw ΔC into either ΔC or ΔF depending on the user's unit.
+  const rawDelta = live.temp - y.temp;
+  const unitScale = state.unit === "F" ? 9 / 5 : 1;
+  const delta = rawDelta * unitScale;
+  const rounded = Math.round(delta * 10) / 10;
+  if (Math.abs(rounded) < 0.5) {
+    el.yesterdayDeltaArrow.textContent = "≈";
+    el.yesterdayDeltaText.textContent = "same as yesterday";
+    el.yesterdayDelta.dataset.dir = "flat";
+  } else {
+    const sign = rounded > 0 ? "▲" : "▼";
+    const magnitude = Math.abs(Math.round(rounded));
+    el.yesterdayDeltaArrow.textContent = sign;
+    el.yesterdayDeltaText.textContent =
+      `${magnitude}° ${rounded > 0 ? "warmer" : "cooler"} than yesterday`;
+    el.yesterdayDelta.dataset.dir = rounded > 0 ? "up" : "down";
+  }
+  el.yesterdayDelta.hidden = false;
 }
 
 function renderDayRange(w) {
