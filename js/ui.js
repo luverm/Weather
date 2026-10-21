@@ -240,6 +240,7 @@ export const ui = {
       });
     }
     renderPlaces();
+    updateFavicon(weather);
   },
   /** Called by the scrubber whenever simulated time moves. */
   setSampledWeather(sampled, { highlightHourIndex } = {}) {
@@ -254,6 +255,8 @@ export const ui = {
     } else if (state.chart) {
       state.chart.setCursor(sampled.hourly?.[highlightHourIndex]?.time);
     }
+    // Reflect scrubbed weather in the tab icon too.
+    updateFavicon(sampled);
   },
   setScrubbing(on) {
     state.scrubbing = !!on;
@@ -1340,6 +1343,55 @@ function renderNowcast(w) {
 }
 
 // ---------- Icons ----------
+// Build a condition-aware favicon so the browser tab reflects the weather.
+// Keeps the data URL tiny (SVG only) and is idempotent — the <link rel="icon">
+// element is reused across updates.
+function updateFavicon(w) {
+  if (!w) return;
+  const svg = faviconSvg(w.condition, w.isDay);
+  const href = "data:image/svg+xml," + encodeURIComponent(svg);
+  let link = document.querySelector('link[rel="icon"]');
+  if (!link) {
+    link = document.createElement("link");
+    link.rel = "icon";
+    document.head.appendChild(link);
+  }
+  if (link.getAttribute("href") !== href) link.setAttribute("href", href);
+}
+
+function faviconSvg(condition, isDay) {
+  const bg = "#0b1020";
+  const sun = "#fff1c9", moon = "#dfe4f3", cloud = "#cfd6e4", drop = "#9ad1ff";
+  const base = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>
+    <rect width='64' height='64' rx='14' fill='${bg}'/>`;
+  const close = "</svg>";
+  switch (condition) {
+    case "clear":
+      return isDay === false
+        ? `${base}<path d='M44 36a16 16 0 11-16-20 12 12 0 0016 20z' fill='${moon}'/>${close}`
+        : `${base}<circle cx='32' cy='32' r='14' fill='${sun}'/><g stroke='${sun}' stroke-width='3' stroke-linecap='round'><path d='M32 10v6M32 48v6M10 32h6M48 32h6M16 16l4 4M44 44l4 4M16 48l4-4M44 20l4-4'/></g>${close}`;
+    case "clouds":
+      return `${base}<path d='M20 42a9 9 0 010-18 11 11 0 0121-2 9 9 0 013 20H20z' fill='${cloud}'/>${close}`;
+    case "rain":
+      return `${base}<path d='M20 36a9 9 0 010-18 11 11 0 0121-2 9 9 0 013 20H20z' fill='${cloud}'/>
+        <g stroke='${drop}' stroke-width='3' stroke-linecap='round'>
+          <path d='M22 44l-3 8M34 44l-3 8M46 44l-3 8'/>
+        </g>${close}`;
+    case "snow":
+      return `${base}<path d='M20 36a9 9 0 010-18 11 11 0 0121-2 9 9 0 013 20H20z' fill='${cloud}'/>
+        <g fill='${drop}'><circle cx='22' cy='48' r='2.4'/><circle cx='34' cy='52' r='2.4'/><circle cx='46' cy='48' r='2.4'/></g>${close}`;
+    case "storm":
+      return `${base}<path d='M20 34a9 9 0 010-18 11 11 0 0121-2 9 9 0 013 20H20z' fill='${cloud}'/>
+        <path d='M34 36l-6 10h7l-5 8' fill='none' stroke='${sun}' stroke-width='3' stroke-linejoin='round' stroke-linecap='round'/>${close}`;
+    case "fog":
+      return `${base}<g stroke='${cloud}' stroke-width='4' stroke-linecap='round'>
+          <path d='M12 22h40M12 32h32M18 42h40M18 52h30'/>
+        </g>${close}`;
+    default:
+      return `${base}<circle cx='32' cy='32' r='14' fill='${sun}'/>${close}`;
+  }
+}
+
 function iconFor(condition) {
   const common = 'fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"';
   switch (condition) {
