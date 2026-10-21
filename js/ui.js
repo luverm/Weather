@@ -62,6 +62,7 @@ const el = {
   pollenItems: $("#pollen-items"),
   pressureTrend: $("#m-pressure-trend"),
   tempTrend: $("#temp-trend"),
+  placePin: $("#place-pin"),
   yesterdayDelta: $("#yesterday-delta"),
   yesterdayDeltaArrow: $("#yesterday-delta-arrow"),
   yesterdayDeltaText: $("#yesterday-delta-text"),
@@ -215,6 +216,7 @@ export const ui = {
     el.placeSub.textContent = sub || "—";
     // Reset alert dismissals so a fresh location can re-surface them.
     try { sessionStorage.removeItem("aether:dismissed-alerts"); } catch { /* ignore */ }
+    updatePlacePin();
     renderPlaces();
   },
   setWeather(weather, { narrative } = {}) {
@@ -1523,6 +1525,48 @@ function iconFor(condition) {
     default:
       return `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" ${common}/></svg>`;
   }
+}
+
+// Pin-the-current-place button beside the hero label. Hides when there's no
+// place yet; otherwise reflects whether the place is already in saved list.
+function updatePlacePin() {
+  if (!el.placePin) return;
+  const p = state.place;
+  if (!p || p.lat == null) { el.placePin.hidden = true; return; }
+  const saved = places.isSaved(p);
+  el.placePin.hidden = false;
+  el.placePin.dataset.saved = saved ? "true" : "false";
+  el.placePin.title = saved ? "Remove from saved places" : "Save this location";
+  el.placePin.setAttribute("aria-label", el.placePin.title);
+}
+
+if (typeof window !== "undefined") {
+  const bind = () => {
+    if (!el.placePin || el.placePin.dataset.bound) return;
+    el.placePin.dataset.bound = "1";
+    el.placePin.addEventListener("click", () => {
+      const p = state.place;
+      if (!p) return;
+      if (places.isSaved(p)) {
+        places.remove(p);
+        ui.showToast?.("Removed from saved places");
+      } else {
+        places.add(p);
+        // Re-store summary so chip has temp/condition right away.
+        if (state.weather) places.updateSummary(p, {
+          temp: state.weather.temp,
+          condition: state.weather.condition,
+          timezone: state.weather.timezone,
+        });
+        ui.showToast?.("Saved");
+      }
+      updatePlacePin();
+      renderPlaces();
+    });
+  };
+  // Bind lazily — the DOM element existed since boot, but the handler needs
+  // `places` / `state` fully initialised.
+  queueMicrotask(bind);
 }
 
 function localTimeFor(tz) {

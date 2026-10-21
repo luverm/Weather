@@ -352,6 +352,22 @@ html[data-reduce-motion="true"] *::after {
   background: var(--accent); box-shadow: 0 0 8px var(--accent);
   animation: pulse 2.4s ease-in-out infinite;
 }
+.place-pin {
+  background: transparent;
+  border: 1px solid var(--stroke);
+  color: var(--fg-dim);
+  width: 24px; height: 24px;
+  padding: 0;
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+  margin-left: 6px;
+  transition: color 160ms var(--ease), background 160ms var(--ease), transform 160ms var(--ease);
+}
+.place-pin:hover { color: #ffd28c; background: rgba(255,210,140,0.12); transform: translateY(-1px); }
+.place-pin[data-saved="true"] { color: #ffd28c; background: rgba(255,210,140,0.14); border-color: rgba(255,210,140,0.4); }
+.place-pin[data-saved="true"] svg path { fill: currentColor; }
 [data-scrubbing="true"] .live-dot { background: #ffb86b; box-shadow: 0 0 8px #ffb86b; animation: none; }
 .place-name {
   margin: 0;
