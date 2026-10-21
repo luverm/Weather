@@ -151,6 +151,18 @@ function fmtWind(kmh) {
   return v == null ? "—" : `${Math.round(v)} ${windUnitLabel()}`;
 }
 
+// Visibility reads in miles whenever the user prefers mph (the sibling imperial
+// unit), otherwise in km with one decimal.
+function formatVisibility(meters) {
+  if (meters == null) return "—";
+  if (state.windUnit === "mph") {
+    const miles = meters / 1609.344;
+    return `${Math.round(miles * 10) / 10} mi`;
+  }
+  const km = meters / 1000;
+  return `${Math.round(km * 10) / 10} km`;
+}
+
 export const ui = {
   init(handlers) {
     state.handlers = handlers || {};
@@ -420,7 +432,7 @@ function renderMetrics(w) {
   }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
   const visLabel = w.visibility != null
-    ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
+    ? `visibility ${formatVisibility(w.visibility)}`
     : "visibility —";
   const pressureStory = pressureNarrative(w.pressureTrend);
   el.metricPressureSub.textContent = pressureStory
