@@ -1903,6 +1903,10 @@ function bindShare() {
     const windStr = w.windSpeed != null
       ? `Wind ${fmtWind(w.windSpeed)}${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`
       : null;
+    const weekTotal = (w.daily || []).reduce((s, d) => s + (d.precip ?? 0), 0);
+    const weekRain = weekTotal >= 1
+      ? `Week rain: ${weekTotal >= 10 ? weekTotal.toFixed(0) : weekTotal.toFixed(1)}mm`
+      : null;
     const lines = [
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
@@ -1912,6 +1916,7 @@ function bindShare() {
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
       sun,
+      weekRain,
     ].filter(Boolean);
     const text = lines.join("\n");
     const shareUrl = window.location.href;
