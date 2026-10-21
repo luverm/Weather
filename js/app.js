@@ -299,7 +299,10 @@ installShortcuts({
     const currentId = app.place ? places.idFor(app.place) : null;
     const idx = Math.max(0, list.findIndex((p) => places.idFor(p) === currentId));
     const next = list[(idx + dir + list.length) % list.length];
-    if (next) loadByCoords(next);
+    if (next) {
+      ui.showToast?.(`→ ${next.name}`);
+      loadByCoords(next);
+    }
   },
   jumpPlace: (index) => {
     const list = places.all();
@@ -307,6 +310,7 @@ installShortcuts({
     if (!target) return;
     const currentId = app.place ? places.idFor(app.place) : null;
     if (places.idFor(target) === currentId) return;
+    ui.showToast?.(`→ ${target.name}`);
     loadByCoords(target);
   },
   nudge: (hours) => {
