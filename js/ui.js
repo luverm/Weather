@@ -1695,11 +1695,12 @@ function bindShare() {
       sun,
     ].filter(Boolean);
     const text = lines.join("\n");
+    const shareUrl = window.location.href;
     try {
       if (navigator.share) {
-        await navigator.share({ title: `Aether — ${placeName}`, text });
+        await navigator.share({ title: `Aether — ${placeName}`, text, url: shareUrl });
       } else {
-        await navigator.clipboard.writeText(text);
+        await navigator.clipboard.writeText(`${text}\n${shareUrl}`);
         ui.showToast("Summary copied to clipboard");
       }
       el.shareBtn.classList.add("just-copied");

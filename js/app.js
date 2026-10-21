@@ -203,6 +203,9 @@ async function loadByCoords(place) {
   clock.reset();
   ui.setScrubbing(false);
 
+  // Keep the URL in sync so a copy-paste link reopens the same city.
+  updateShareableUrl(place);
+
   const w = await getWeather(place.lat, place.lon);
   app.weather = w;
 
@@ -314,8 +317,39 @@ installShortcuts({
   },
 });
 
+function updateShareableUrl(place) {
+  if (!place || place.lat == null || place.lon == null) return;
+  try {
+    const u = new URL(window.location.href);
+    u.searchParams.set("lat", place.lat.toFixed(4));
+    u.searchParams.set("lon", place.lon.toFixed(4));
+    if (place.name) u.searchParams.set("name", place.name);
+    else u.searchParams.delete("name");
+    window.history.replaceState(null, "", u.toString());
+  } catch { /* history API unavailable — fine */ }
+}
+
+function placeFromUrl() {
+  try {
+    const u = new URL(window.location.href);
+    const lat = parseFloat(u.searchParams.get("lat"));
+    const lon = parseFloat(u.searchParams.get("lon"));
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+    if (lat < -90 || lat > 90 || lon < -180 || lon > 180) return null;
+    const name = u.searchParams.get("name") || "Shared location";
+    return { name, lat, lon };
+  } catch { return null; }
+}
+
 // ---------- Start ----------
 (async function init() {
+  // Deep link wins over everything else — anyone opening a shared URL
+  // expects to see that exact city.
+  const linked = placeFromUrl();
+  if (linked) {
+    await loadByCoords(linked);
+    return;
+  }
   // Prefer the most recent saved place if we have one — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();
