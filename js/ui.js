@@ -1665,9 +1665,9 @@ function renderPlaces() {
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
     const icon = p.condition ? `<span class="place-chip-icon" aria-hidden="true">${iconFor(p.condition)}</span>` : "";
-    // Inactive chips carry a tiny local-time readout when we know the city's
-    // timezone — handy for a saved-places strip that spans continents.
-    const time = (!active && p.timezone && p.timezone !== "auto") ? localTimeFor(p.timezone) : "";
+    // Local-time readout — now shown on every chip (including active) so a
+    // user comparing their city to a saved one has both times visible.
+    const time = (p.timezone && p.timezone !== "auto") ? localTimeFor(p.timezone) : "";
     const titleBits = [p.name];
     if (p.admin1 || p.country) titleBits.push([p.admin1, p.country].filter(Boolean).join(", "));
     if (p.timezone && p.timezone !== "auto") titleBits.push(p.timezone.replace(/_/g, " "));
