@@ -1652,8 +1652,12 @@ function renderPlaces() {
     // Inactive chips carry a tiny local-time readout when we know the city's
     // timezone — handy for a saved-places strip that spans continents.
     const time = (!active && p.timezone && p.timezone !== "auto") ? localTimeFor(p.timezone) : "";
+    const titleBits = [p.name];
+    if (p.admin1 || p.country) titleBits.push([p.admin1, p.country].filter(Boolean).join(", "));
+    if (p.timezone && p.timezone !== "auto") titleBits.push(p.timezone.replace(/_/g, " "));
+    const title = titleBits.join(" · ");
     return `
-      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}" role="button" tabindex="0"${active ? ' aria-current="true"' : ""}>
+      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}" role="button" tabindex="0" title="${escapeHtml(title)}"${active ? ' aria-current="true"' : ""}>
         ${icon}
         <span>${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
