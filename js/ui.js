@@ -1439,6 +1439,13 @@ function bindUnitToggle() {
     state.unit = state.unit === "C" ? "F" : "C";
     localStorage.setItem("aether:unit", state.unit);
     el.unitBtn.textContent = `°${state.unit}`;
+    if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
+    if (state.weather) ui.setWeather(state.weather);
+  });
+  el.metricWindUnit?.addEventListener("click", () => {
+    state.windUnit = state.windUnit === "mph" ? "kmh" : "mph";
+    localStorage.setItem("aether:windUnit", state.windUnit);
+    if (el.settingWindMph) el.settingWindMph.checked = state.windUnit === "mph";
     if (state.weather) ui.setWeather(state.weather);
   });
 }
