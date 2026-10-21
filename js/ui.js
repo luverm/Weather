@@ -103,6 +103,9 @@ const el = {
   weekendIconSat: $("#weekend-icon-sat"),
   weekendIconSun: $("#weekend-icon-sun"),
   forecastTrack: $("#forecast-track"),
+  rainSummary: $("#rain-summary"),
+  rainSummaryTotal: $("#rain-summary-total"),
+  rainSummaryWindow: $("#rain-summary-window"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
   nowcastHeadline: $("#nowcast-headline"),
@@ -911,6 +914,7 @@ function cardinal(deg) {
 }
 
 function renderHourly(w) {
+  renderRainSummary(w);
   el.forecastTrack.innerHTML = "";
   for (const h of (w.hourly || []).slice(0, 24)) {
     const item = document.createElement("div");
@@ -930,6 +934,60 @@ function renderHourly(w) {
 function highlightHour(index) {
   const items = el.forecastTrack.querySelectorAll(".forecast-item");
   items.forEach((it, i) => it.classList.toggle("active", i === index));
+}
+
+// Scan the next 24 hours of hourly precipitation. If the sky is essentially
+// dry, surface a "dry 24h ahead" pill; otherwise show total mm + the driest
+// 3-hour window (where you could reasonably step outside).
+function renderRainSummary(w) {
+  if (!el.rainSummary) return;
+  const hours = (w.hourly || []).slice(0, 24);
+  if (hours.length < 6) { el.rainSummary.hidden = true; return; }
+
+  let total = 0;
+  for (const h of hours) total += Math.max(0, h.precip || 0);
+  const prettyTotal = total >= 10 ? `${total.toFixed(0)}mm` : `${total.toFixed(1)}mm`;
+
+  // "Dry" threshold matches a passing drizzle you'd shrug off.
+  const DRY = 0.3;
+  if (total < DRY) {
+    el.rainSummaryTotal.textContent = "Dry";
+    el.rainSummaryWindow.textContent = "no rain next 24h";
+    el.rainSummary.dataset.dry = "true";
+    el.rainSummary.dataset.heavy = "false";
+    el.rainSummary.hidden = false;
+    return;
+  }
+
+  // Slide a 3-hour window across the hourly series and pick the window with
+  // minimum total precip. Score ties with the lowest pop sum so a 0% window
+  // beats a 0% + 10% + 0% window of the same mm total.
+  const WIN = 3;
+  let bestStart = 0;
+  let bestPrecip = Infinity;
+  let bestPop = Infinity;
+  for (let i = 0; i + WIN <= hours.length; i++) {
+    let p = 0, pop = 0;
+    for (let j = 0; j < WIN; j++) {
+      p += Math.max(0, hours[i + j].precip || 0);
+      pop += hours[i + j].pop || 0;
+    }
+    if (p < bestPrecip - 0.01 || (Math.abs(p - bestPrecip) < 0.01 && pop < bestPop)) {
+      bestPrecip = p;
+      bestPop = pop;
+      bestStart = i;
+    }
+  }
+  const windowStart = hours[bestStart].time;
+  const windowEnd = hours[bestStart + WIN - 1].time + 3600_000;
+  el.rainSummaryTotal.textContent = prettyTotal;
+  el.rainSummaryWindow.textContent =
+    bestPrecip < 0.05
+      ? `driest ${fmtTime(windowStart)}–${fmtTime(windowEnd)}`
+      : `wet throughout`;
+  el.rainSummary.dataset.dry = "false";
+  el.rainSummary.dataset.heavy = total >= 10 ? "true" : "false";
+  el.rainSummary.hidden = false;
 }
 
 function renderDaily(w) {

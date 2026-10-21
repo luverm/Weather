@@ -1439,6 +1439,39 @@ kbd {
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+
+.rain-summary {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(140, 180, 220, 0.08);
+  border: 1px solid rgba(140, 180, 220, 0.18);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+.rain-summary strong { font-weight: 600; }
+.rain-summary-sep { color: var(--fg-dim); }
+.rain-summary-icon {
+  display: inline-flex;
+  color: #9fc8ff;
+  filter: drop-shadow(0 0 4px rgba(140, 190, 255, 0.5));
+}
+.rain-summary[data-dry="true"] {
+  background: rgba(160, 220, 170, 0.08);
+  border-color: rgba(160, 220, 170, 0.2);
+}
+.rain-summary[data-dry="true"] .rain-summary-icon { color: #a0dcbf; }
+.rain-summary[data-heavy="true"] {
+  background: rgba(255, 140, 110, 0.1);
+  border-color: rgba(255, 140, 110, 0.26);
+}
+.rain-summary[data-heavy="true"] .rain-summary-icon { color: #ff9c7a; }
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;
