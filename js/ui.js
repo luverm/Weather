@@ -1478,7 +1478,9 @@ function updateTabTitle(w) {
   const place = state.place?.name;
   if (temp == null) { document.title = BASE_TITLE; return; }
   const t = `${Math.round(convertTemp(temp))}°`;
-  document.title = place ? `${t} · ${place} · Aether` : `${t} · Aether`;
+  const emoji = conditionEmoji(w.condition, w.isDay);
+  const prefix = emoji ? `${emoji} ${t}` : t;
+  document.title = place ? `${prefix} · ${place} · Aether` : `${prefix} · Aether`;
 }
 
 // Build a condition-aware favicon so the browser tab reflects the weather.
