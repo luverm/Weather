@@ -1336,12 +1336,13 @@ function toggleDailyExpand(item, d, w) {
     item.dataset.expanded = "false";
     return;
   }
-  // Build mini hourly bars for the 12 daytime-ish hours of that day, if we
-  // have them in the hourly series (only first 24h). Otherwise skip.
+  // Build mini hourly bars for the 12 daytime-ish hours of that day. Use the
+  // 7-day hourly series so days 2-7 also render real values.
   const dayStart = new Date(d.time);
   dayStart.setHours(0, 0, 0, 0);
   const dayEnd = dayStart.getTime() + 24 * 3600_000;
-  const hrs = (w.hourly || []).filter((h) => h.time >= dayStart.getTime() && h.time < dayEnd);
+  const series = w.hourlyWeek?.length ? w.hourlyWeek : w.hourly;
+  const hrs = (series || []).filter((h) => h.time >= dayStart.getTime() && h.time < dayEnd);
   if (!hrs.length) {
     // For days beyond the 24h hourly range, just show summary text.
     const summary = document.createElement("div");

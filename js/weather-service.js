@@ -129,13 +129,15 @@ function normalize(d, aq) {
   const daily = d.daily || {};
   const now = Date.now();
 
-  // 24-hour hourly forecast starting from the next hour.
+  // 24 hours for the chart / most downstream views, plus a wider 7-day
+  // slice stored separately so daily expands past tomorrow have real data.
   const hourly = [];
+  const hourlyWeek = [];
   if (d.hourly?.time) {
-    for (let i = 0; i < d.hourly.time.length && hourly.length < 24; i++) {
+    for (let i = 0; i < d.hourly.time.length; i++) {
       const t = new Date(d.hourly.time[i]).getTime();
       if (t < now - 30 * 60 * 1000) continue; // allow slight past for scrubbing
-      hourly.push({
+      const entry = {
         time: t,
         temp: d.hourly.temperature_2m[i],
         feelsLike: d.hourly.apparent_temperature?.[i],
@@ -148,7 +150,9 @@ function normalize(d, aq) {
         pressure: d.hourly.pressure_msl?.[i] ?? null,
         humidity: d.hourly.relative_humidity_2m?.[i] ?? null,
         ...mapWmo(d.hourly.weather_code[i]),
-      });
+      };
+      hourlyWeek.push(entry);
+      if (hourly.length < 24) hourly.push(entry);
     }
   }
 
@@ -217,6 +221,7 @@ function normalize(d, aq) {
     uvPeak: findUvPeak(d.hourly),
     timezone: d.timezone,
     hourly,
+    hourlyWeek,
     daily: dailyForecast,
     nowcast,
     moon,
@@ -391,6 +396,16 @@ function mock(lat, lon) {
     uvPeak: { time: new Date().setHours(13, 0, 0, 0), value: 5 },
     timezone: "UTC",
     hourly: Array.from({ length: 24 }, (_, i) => ({
+      time: now + (i + 1) * 3600_000,
+      temp: 18 + Math.sin(i / 2) * 3,
+      feelsLike: 17 + Math.sin(i / 2) * 3,
+      pop: 20, precip: 0,
+      wind: 8 + Math.sin(i) * 3, gusts: 12 + Math.sin(i) * 4,
+      isDay: (i + hour) % 24 >= 6 && (i + hour) % 24 < 19,
+      uv: Math.max(0, Math.sin((i - 6) * Math.PI / 13) * 6),
+      condition: CONDITIONS.CLOUDS, label: "Cloudy",
+    })),
+    hourlyWeek: Array.from({ length: 24 * 7 }, (_, i) => ({
       time: now + (i + 1) * 3600_000,
       temp: 18 + Math.sin(i / 2) * 3,
       feelsLike: 17 + Math.sin(i / 2) * 3,
