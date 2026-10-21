@@ -241,6 +241,7 @@ export const ui = {
     }
     renderPlaces();
     updateFavicon(weather);
+    updateTabTitle(weather);
   },
   /** Called by the scrubber whenever simulated time moves. */
   setSampledWeather(sampled, { highlightHourIndex } = {}) {
@@ -257,6 +258,7 @@ export const ui = {
     }
     // Reflect scrubbed weather in the tab icon too.
     updateFavicon(sampled);
+    updateTabTitle(sampled);
   },
   setScrubbing(on) {
     state.scrubbing = !!on;
@@ -1343,6 +1345,15 @@ function renderNowcast(w) {
 }
 
 // ---------- Icons ----------
+const BASE_TITLE = "Aether — Interactive Weather";
+function updateTabTitle(w) {
+  const temp = w?.temp;
+  const place = state.place?.name;
+  if (temp == null) { document.title = BASE_TITLE; return; }
+  const t = `${Math.round(convertTemp(temp))}°`;
+  document.title = place ? `${t} · ${place} · Aether` : `${t} · Aether`;
+}
+
 // Build a condition-aware favicon so the browser tab reflects the weather.
 // Keeps the data URL tiny (SVG only) and is idempotent — the <link rel="icon">
 // element is reused across updates.
