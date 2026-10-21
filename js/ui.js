@@ -429,6 +429,15 @@ function renderMetrics(w) {
   el.metricWindSub.textContent = dirLabel
     ? `${dirLabel} · gust ${gustStr}`
     : `gust ${gustStr}`;
+  // Native-tooltip detail on the wind card: exact bearing + plain English.
+  const windCard = el.metricWind.closest(".metric-wind");
+  if (windCard) {
+    const bearing = dir != null ? ` (${Math.round(dir)}°)` : "";
+    const beaufortName = beaufort(w.windSpeed)?.label || "";
+    windCard.title = dirLabel
+      ? `From ${dirLabel}${bearing}${beaufortName ? " · " + beaufortName : ""}`
+      : (beaufortName || "");
+  }
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
