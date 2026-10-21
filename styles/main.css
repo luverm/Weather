@@ -564,12 +564,19 @@ html[data-reduce-motion="true"] *::after {
   position: relative;
   height: 36px;
   border-radius: 18px;
-  background: linear-gradient(90deg,
-    rgba(10,15,40,0.5) 0%,
-    rgba(40,60,120,0.4) 25%,
-    rgba(255,200,120,0.3) 50%,
-    rgba(40,60,120,0.4) 75%,
-    rgba(10,15,40,0.5) 100%);
+  background:
+    /* Hour ticks: every 3h along the 24h track = 7 interior ticks at 1/8…7/8. */
+    repeating-linear-gradient(90deg,
+      transparent 0,
+      transparent calc(100% / 8 - 1px),
+      rgba(255,255,255,0.08) calc(100% / 8 - 1px),
+      rgba(255,255,255,0.08) calc(100% / 8)),
+    linear-gradient(90deg,
+      rgba(10,15,40,0.5) 0%,
+      rgba(40,60,120,0.4) 25%,
+      rgba(255,200,120,0.3) 50%,
+      rgba(40,60,120,0.4) 75%,
+      rgba(10,15,40,0.5) 100%);
   overflow: hidden;
   cursor: ew-resize;
   touch-action: none;
