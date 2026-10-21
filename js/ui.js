@@ -720,22 +720,50 @@ function scheduleSunCountdown(w) {
   if (!w?.daily?.length) return;
   const update = () => {
     const now = Date.now();
-    let nextTs = null, nextKind = null;
+    // Candidates: upcoming sunrises & sunsets, plus their adjacent golden
+    // hour bookends. The soonest wins, with golden hour preferred inside
+    // its own window (so "golden hour now · ends in Xm" takes precedence).
+    const candidates = [];
+    const BAND = 60 * 60_000;
     for (const d of w.daily) {
-      for (const [ts, kind] of [[d.sunrise, "Sunrise"], [d.sunset, "Sunset"]]) {
-        if (ts && ts > now && (!nextTs || ts < nextTs)) { nextTs = ts; nextKind = kind; }
+      if (d.sunrise && d.sunset) {
+        const bandSize = Math.min(BAND, (d.sunset - d.sunrise) / 2);
+        const amEnd = d.sunrise + bandSize;
+        const pmStart = d.sunset - bandSize;
+        // During golden hour window: show its remaining time.
+        if (now >= d.sunrise && now <= amEnd) {
+          candidates.push({ ts: amEnd, label: "Golden hour ends in", imminent: true });
+        }
+        if (now >= pmStart && now <= d.sunset) {
+          candidates.push({ ts: d.sunset, label: "Golden hour ends in", imminent: true });
+        }
+        // Within 60 min of next golden hour start: show countdown.
+        if (d.sunrise > now && d.sunrise - now <= BAND) {
+          candidates.push({ ts: d.sunrise, label: "Golden hour in", imminent: true });
+        }
+        if (pmStart > now && pmStart - now <= BAND) {
+          candidates.push({ ts: pmStart, label: "Golden hour in", imminent: true });
+        }
       }
+      if (d.sunrise && d.sunrise > now) candidates.push({ ts: d.sunrise, label: "Sunrise in" });
+      if (d.sunset && d.sunset > now) candidates.push({ ts: d.sunset, label: "Sunset in" });
     }
-    if (!nextTs) {
+    if (!candidates.length) {
       if (el.sunCountdown) el.sunCountdown.textContent = "";
       if (el.sunNextLabel) el.sunNextLabel.textContent = "Sun";
       return;
     }
-    const mins = Math.max(0, Math.round((nextTs - now) / 60_000));
+    // Pick: imminent golden-hour signals win over distant sunrise/sunset.
+    candidates.sort((a, b) => {
+      if ((a.imminent ? 1 : 0) !== (b.imminent ? 1 : 0)) return b.imminent - a.imminent;
+      return a.ts - b.ts;
+    });
+    const next = candidates[0];
+    const mins = Math.max(0, Math.round((next.ts - now) / 60_000));
     const label = mins >= 60
       ? `${Math.floor(mins / 60)}h ${mins % 60}m`
       : `${mins}m`;
-    if (el.sunNextLabel) el.sunNextLabel.textContent = `${nextKind} in`;
+    if (el.sunNextLabel) el.sunNextLabel.textContent = next.label;
     if (el.sunCountdown) el.sunCountdown.textContent = label;
   };
   update();
