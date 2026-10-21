@@ -121,6 +121,22 @@ export class Scrubber {
     clock.setOffset(offset);
     // Snap "close enough" to live — prevents 0.2 min drift when releasing.
     if (Math.abs(offset) < 5 * 60_000) clock.setOffset(0);
+    // Snap to sunrise/sunset if the thumb is within ~8 minutes of either —
+    // makes those magic moments easy to land on with a drag.
+    else {
+      const nowMs = clock.now();
+      for (const mark of [this.sunrise, this.sunset]) {
+        if (!mark) continue;
+        const d = Math.abs(nowMs - mark);
+        if (d < 8 * 60_000) {
+          const alreadySnapped = Math.abs(clock.offset() - (mark - Date.now())) < 60_000;
+          clock.setOffset(mark - Date.now());
+          // Only buzz the first time we snap, not every pointer-move.
+          if (!alreadySnapped) navigator.vibrate?.(8);
+          break;
+        }
+      }
+    }
     const scrubbing = !clock.isLive();
     this.appEl?.setAttribute("data-scrubbing", scrubbing ? "true" : "false");
     // Short haptic blip when the thumb crosses an hour boundary mid-drag
