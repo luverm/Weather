@@ -124,13 +124,21 @@ export function buildAlerts(weather, opts = {}) {
     });
   }
 
-  // ---- Fog ----
+  // ---- Fog / haze ----
   if (weather.visibility != null && weather.visibility < 500) {
     out.push({
       id: "fog",
       severity: "warn",
       title: "Dense fog",
       detail: `Visibility under ${Math.round(weather.visibility)} m right now.`,
+    });
+  } else if (weather.visibility != null && weather.visibility < 5000) {
+    const km = Math.round((weather.visibility / 1000) * 10) / 10;
+    out.push({
+      id: "haze",
+      severity: "info",
+      title: "Hazy air",
+      detail: `Visibility down to ${km} km — careful on the road.`,
     });
   }
 
