@@ -1886,6 +1886,12 @@ function startFetchedTicker() {
       `Updated ${Math.floor(minutes / 60)}h ago`;
     el.fetchedAgo.textContent = "· " + label;
     el.fetchedAgo.classList.toggle("stale", minutes >= 20);
+    // Precise timestamp on hover for anyone who wants exact.
+    const exact = new Date(state.weather.fetchedAt).toLocaleTimeString([], {
+      hour: "2-digit", minute: "2-digit", second: "2-digit",
+      hour12: state.clock12h,
+    });
+    el.fetchedAgo.title = `Refresh now · last fetched at ${exact}`;
   };
   update();
   setInterval(update, 30_000);
