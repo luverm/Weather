@@ -39,7 +39,14 @@ export function installShortcuts(handlers) {
   });
 
   window.addEventListener("keydown", (e) => {
-    // Let browsers handle modifier combos (copy, find, etc.)
+    // Cmd/Ctrl-K is the universal "open search" shortcut; intercept before
+    // the generic modifier-combo guard below hands control back to the OS.
+    if ((e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey && (e.key === "k" || e.key === "K")) {
+      e.preventDefault();
+      handlers.focusSearch?.();
+      return;
+    }
+    // Let browsers handle other modifier combos (copy, find, etc.)
     if (e.metaKey || e.ctrlKey || e.altKey) return;
 
     const typing = isTyping(e.target);
