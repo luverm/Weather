@@ -87,6 +87,7 @@ const el = {
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
   settingWindMph: $("#setting-wind-mph"),
+  settingClock12h: $("#setting-clock-12h"),
   settingClearPlaces: $("#setting-clear-places"),
   metricWindUnit: $("#m-wind-unit"),
   chartPopover: $("#chart-popover"),
@@ -131,6 +132,7 @@ const el = {
 const state = {
   unit: localStorage.getItem("aether:unit") || "C",
   windUnit: localStorage.getItem("aether:windUnit") || "kmh",
+  clock12h: localStorage.getItem("aether:clock12h") === "1",
   weather: null,
   place: null,
   sampledWeather: null, // the weather values at the current scrubber time
@@ -595,12 +597,15 @@ function renderMoon(moon) {
 function fmtTime(ts) {
   if (!ts) return "—";
   const tz = state.weather?.timezone;
+  const h12 = state.clock12h;
+  const opts = { hour: "2-digit", minute: "2-digit", hour12: h12 };
   if (tz && tz !== "auto") {
     try {
-      return new Intl.DateTimeFormat(undefined, {
-        timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
-      }).format(new Date(ts));
+      return new Intl.DateTimeFormat(undefined, { timeZone: tz, ...opts }).format(new Date(ts));
     } catch { /* fall through */ }
+  }
+  if (h12) {
+    return new Intl.DateTimeFormat(undefined, opts).format(new Date(ts));
   }
   const d = new Date(ts);
   const hh = d.getHours().toString().padStart(2, "0");
@@ -1719,6 +1724,15 @@ function bindSettings() {
     }
   });
 
+  el.settingClock12h?.addEventListener("change", () => {
+    const desired = !!el.settingClock12h.checked;
+    if (state.clock12h !== desired) {
+      state.clock12h = desired;
+      localStorage.setItem("aether:clock12h", desired ? "1" : "0");
+      if (state.weather) ui.setWeather(state.weather);
+    }
+  });
+
   el.settingClearPlaces?.addEventListener("click", () => {
     if (!confirm("Clear all saved places?")) return;
     for (const p of places.all()) places.remove(p);
@@ -1738,6 +1752,7 @@ function applyStoredPreferences() {
   }
   if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
   if (el.settingWindMph) el.settingWindMph.checked = state.windUnit === "mph";
+  if (el.settingClock12h) el.settingClock12h.checked = state.clock12h;
 }
 
 // Exposed so app.js can query the current preference on boot.
