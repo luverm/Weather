@@ -75,6 +75,7 @@ const el = {
   dailyHi: $("#daily-hi"),
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
+  dailySparkRain: $("#daily-spark-rain"),
   dailyDelta: $("#daily-delta"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
@@ -1255,6 +1256,28 @@ function renderDailySpark(days) {
       el.dailySparkDots.appendChild(c);
     }
   });
+  // Precip bars anchored to the baseline so a week's rainfall shape reads
+  // alongside the temperature lines.
+  if (el.dailySparkRain) {
+    el.dailySparkRain.innerHTML = "";
+    const maxPrecip = Math.max(1, ...days.map((d) => d.precip ?? 0));
+    const baseY = H - 2;
+    const maxBarH = 10;
+    const halfW = Math.min(16, innerW / Math.max(1, days.length) * 0.35);
+    days.forEach((d, i) => {
+      const p = d.precip ?? 0;
+      if (p < 0.1) return;
+      const barH = (p / maxPrecip) * maxBarH;
+      const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      r.setAttribute("x", (x(i) - halfW).toFixed(1));
+      r.setAttribute("y", (baseY - barH).toFixed(1));
+      r.setAttribute("width", (halfW * 2).toFixed(1));
+      r.setAttribute("height", barH.toFixed(1));
+      r.setAttribute("rx", "1.2");
+      r.setAttribute("opacity", (0.3 + Math.min(1, p / 10) * 0.6).toFixed(2));
+      el.dailySparkRain.appendChild(r);
+    });
+  }
 }
 
 function renderDailyDelta(days) {
