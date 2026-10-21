@@ -581,6 +581,14 @@ function renderAirQuality(aq) {
   el.aqArc.setAttribute("stroke-dashoffset", String(126 * (1 - frac)));
   el.aqDetail.textContent =
     `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
+  // Richer breakdown tucked into the native title tooltip.
+  const parts = [];
+  if (aq.pm25 != null) parts.push(`PM2.5 ${aq.pm25.toFixed(1)} µg/m³`);
+  if (aq.pm10 != null) parts.push(`PM10 ${aq.pm10.toFixed(1)} µg/m³`);
+  if (aq.o3 != null) parts.push(`O₃ ${aq.o3.toFixed(0)} µg/m³`);
+  if (aq.no2 != null) parts.push(`NO₂ ${aq.no2.toFixed(0)} µg/m³`);
+  if (aq.co != null) parts.push(`CO ${aq.co.toFixed(2)} mg/m³`);
+  if (el.aqCard) el.aqCard.title = parts.length ? parts.join(" · ") : "";
   renderAqTrend(aq);
 }
 
