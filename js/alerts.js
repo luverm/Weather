@@ -100,7 +100,7 @@ export function buildAlerts(weather, opts = {}) {
     });
   }
 
-  // ---- Snow ----
+  // ---- Snow (next 24h) ----
   const snowHour = hours.find((h) => h.condition === "snow");
   if (snowHour) {
     out.push({
@@ -110,6 +110,19 @@ export function buildAlerts(weather, opts = {}) {
       detail: `Starts around ${shortClock(snowHour.time)}.`,
       ts: snowHour.time,
     });
+  } else {
+    // Look ahead past tomorrow for a non-trivial snowfall day.
+    const snowDay = (weather.daily || []).find((d) => (d.snow ?? 0) >= 1);
+    if (snowDay && snowDay.time > Date.now() + 24 * 3600_000) {
+      const cm = snowDay.snow >= 5 ? `${Math.round(snowDay.snow)}cm` : `${snowDay.snow.toFixed(1)}cm`;
+      out.push({
+        id: "snow-week",
+        severity: "info",
+        title: "Snow this week",
+        detail: `~${cm} forecast ${new Date(snowDay.time).toLocaleDateString(undefined, { weekday: "long" })}.`,
+        ts: snowDay.sunrise || snowDay.time,
+      });
+    }
   }
 
   // ---- Thunder ----
