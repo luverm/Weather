@@ -490,6 +490,13 @@ function renderMetrics(w) {
   } else {
     el.metricUVSub.textContent = "peak —";
   }
+  // Rough burn time for average skin (type II): 200 / UV minutes. Only
+  // surface it when it's actionably short.
+  if (w.uv != null && w.uv >= 3) {
+    const minutes = Math.max(5, Math.round(200 / w.uv));
+    const uvCard = el.metricUV?.closest(".metric");
+    if (uvCard) uvCard.title = `~${minutes} min to burn (fair skin, unprotected)`;
+  }
   renderPressureSparkline(w);
 }
 
