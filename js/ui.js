@@ -954,11 +954,19 @@ function cardinal(deg) {
 function renderHourly(w) {
   renderRainSummary(w);
   el.forecastTrack.innerHTML = "";
-  for (const h of (w.hourly || []).slice(0, 24)) {
+  const hours = (w.hourly || []).slice(0, 24);
+  // Find peak/trough. Only annotate when the spread is meaningful (≥3°) so a
+  // mostly-flat day doesn't acquire silly "peak" / "cool" badges.
+  const { peakIdx, troughIdx } = findExtremes(hours);
+  hours.forEach((h, i) => {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    const badge = i === peakIdx ? '<span class="forecast-badge peak" title="Warmest in the next 24 hours">peak</span>'
+      : i === troughIdx ? '<span class="forecast-badge trough" title="Coolest in the next 24 hours">cool</span>'
+      : "";
     item.innerHTML = `
+      ${badge}
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
@@ -966,7 +974,20 @@ function renderHourly(w) {
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
+  });
+}
+
+function findExtremes(hours) {
+  if (hours.length < 3) return { peakIdx: -1, troughIdx: -1 };
+  let hi = -Infinity, lo = Infinity, peakIdx = -1, troughIdx = -1;
+  for (let i = 0; i < hours.length; i++) {
+    const t = hours[i].temp;
+    if (t == null) continue;
+    if (t > hi) { hi = t; peakIdx = i; }
+    if (t < lo) { lo = t; troughIdx = i; }
   }
+  if (hi - lo < 3) return { peakIdx: -1, troughIdx: -1 };
+  return { peakIdx, troughIdx };
 }
 
 function highlightHour(index) {
