@@ -113,6 +113,12 @@ export function narrate(weather, opts = {}) {
     }
   }
 
+  // Hazy / low visibility — informative when air isn't fully clear.
+  if (bits.length < 2 && weather.visibility != null && weather.visibility < 5000) {
+    const km = Math.round((weather.visibility / 1000) * 10) / 10;
+    bits.push(`Visibility down to ${km} km.`);
+  }
+
   // Calm night fallback.
   if (bits.length < 2 && condition === "clear" && windSpeed < 10) {
     bits.push("Calm and settled for the next few hours.");
