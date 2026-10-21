@@ -1078,6 +1078,14 @@ function renderHourly(w) {
       <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
+    // Mirror hover onto the chart cursor so the chart and list read together.
+    item.addEventListener("mouseenter", () => state.chart?.setCursor?.(h.time));
+    item.addEventListener("mouseleave", () => {
+      // Return the cursor to whatever the current sampled time is (live or
+      // scrubbed) so the chart doesn't blink to an empty state.
+      const sampledTs = state.sampledWeather?._sampledTs;
+      state.chart?.setCursor?.(sampledTs ?? null);
+    });
     el.forecastTrack.appendChild(item);
   });
 }
