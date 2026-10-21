@@ -1653,7 +1653,7 @@ function renderPlaces() {
     // timezone — handy for a saved-places strip that spans continents.
     const time = (!active && p.timezone && p.timezone !== "auto") ? localTimeFor(p.timezone) : "";
     return `
-      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
+      <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}" role="button" tabindex="0"${active ? ' aria-current="true"' : ""}>
         ${icon}
         <span>${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
@@ -1673,6 +1673,12 @@ function renderPlaces() {
         return;
       }
       state.handlers.onPlaceClick?.(item);
+    });
+    chip.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        state.handlers.onPlaceClick?.(item);
+      }
     });
   });
 }
