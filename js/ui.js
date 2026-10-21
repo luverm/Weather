@@ -404,9 +404,13 @@ function renderMetrics(w) {
     }
   }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
-  el.metricPressureSub.textContent = w.visibility != null
+  const visLabel = w.visibility != null
     ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
     : "visibility —";
+  const pressureStory = pressureNarrative(w.pressureTrend);
+  el.metricPressureSub.textContent = pressureStory
+    ? `${visLabel} · ${pressureStory}`
+    : visLabel;
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
@@ -990,6 +994,18 @@ function renderHourly(w) {
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
   });
+}
+
+// Barometric trend into plain-English hint. Only speaks up when the 3-hour
+// delta is big enough that a sailor's rule of thumb would call it something.
+function pressureNarrative(trend) {
+  if (!trend || trend.delta == null) return null;
+  const d = trend.delta;
+  if (d >= 3) return "clearing fast";
+  if (d >= 0.8) return "settling in";
+  if (d <= -3) return "front approaching";
+  if (d <= -0.8) return "change ahead";
+  return null;
 }
 
 function findExtremes(hours) {
