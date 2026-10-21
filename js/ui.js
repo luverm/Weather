@@ -1191,7 +1191,7 @@ function renderDaily(w) {
     const left = ((d.tempMin - gMin) / span) * 100;
     const width = ((d.tempMax - d.tempMin) / span) * 100;
     const item = document.createElement("div");
-    item.className = "daily-item";
+    item.className = `daily-item${i === 0 ? " today" : ""}`;
     item.dataset.ts = d.time;
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${fmtWind(d.gustsMax)}`
