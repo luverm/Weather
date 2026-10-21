@@ -1551,10 +1551,16 @@ kbd {
   padding: 0 10px;
   display: block;
 }
-.daily-spark circle { transition: r 160ms var(--ease); }
+.daily-spark circle { transition: r 160ms var(--ease), opacity 160ms var(--ease); }
 .daily-spark .dot-hi { fill: #ff9c7a; }
 .daily-spark .dot-lo { fill: #9ad1ff; }
-.daily-spark-rain rect { fill: #6ba9ff; }
+.daily-spark-rain rect {
+  fill: #6ba9ff;
+  transition: opacity 160ms var(--ease);
+}
+.daily-spark [data-day].faded { opacity: 0.25 !important; }
+.daily-spark [data-day].active { r: 4; opacity: 1 !important; }
+.daily-spark-rain [data-day].active { filter: drop-shadow(0 0 4px rgba(107,169,255,0.7)); }
 .forecast-track {
   display: grid;
   grid-auto-flow: column;

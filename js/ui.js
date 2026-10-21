@@ -1195,6 +1195,7 @@ function renderDaily(w) {
     const item = document.createElement("div");
     item.className = `daily-item${i === 0 ? " today" : ""}`;
     item.dataset.ts = d.time;
+    item.dataset.day = String(i);
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${fmtWind(d.gustsMax)}`
       : "";
@@ -1211,7 +1212,26 @@ function renderDaily(w) {
       ${extra}
     `;
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));
+    item.addEventListener("mouseenter", () => highlightDay(i));
+    item.addEventListener("mouseleave", () => highlightDay(null));
     el.dailyTrack.appendChild(item);
+  });
+}
+
+// Visually tie a daily row to its sparkline mark + precip bar. Hovering a
+// row dims the others so the eye tracks across the two views.
+function highlightDay(idx) {
+  const nodes = el.dailySpark?.querySelectorAll("[data-day]");
+  if (!nodes) return;
+  nodes.forEach((n) => {
+    if (idx == null) n.classList.remove("faded", "active");
+    else if (parseInt(n.dataset.day, 10) === idx) {
+      n.classList.add("active");
+      n.classList.remove("faded");
+    } else {
+      n.classList.add("faded");
+      n.classList.remove("active");
+    }
   });
 }
 
@@ -1247,6 +1267,7 @@ function renderDailySpark(days) {
       c.setAttribute("cy", y(d.tempMax).toFixed(1));
       c.setAttribute("r", "2.5");
       c.setAttribute("class", "dot-hi");
+      c.dataset.day = String(i);
       el.dailySparkDots.appendChild(c);
     }
     if (d.tempMin != null) {
@@ -1255,6 +1276,7 @@ function renderDailySpark(days) {
       c.setAttribute("cy", y(d.tempMin).toFixed(1));
       c.setAttribute("r", "2.5");
       c.setAttribute("class", "dot-lo");
+      c.dataset.day = String(i);
       el.dailySparkDots.appendChild(c);
     }
   });
@@ -1277,6 +1299,7 @@ function renderDailySpark(days) {
       r.setAttribute("height", barH.toFixed(1));
       r.setAttribute("rx", "1.2");
       r.setAttribute("opacity", (0.3 + Math.min(1, p / 10) * 0.6).toFixed(2));
+      r.dataset.day = String(i);
       el.dailySparkRain.appendChild(r);
     });
   }
