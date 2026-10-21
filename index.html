@@ -333,6 +333,12 @@
             <line x1="10" y1="74" x2="190" y2="74" stroke="var(--stroke)" stroke-dasharray="2 4"/>
             <path id="sun-arc-path" d="M10 74 Q100 -26 190 74"
                   fill="none" stroke="url(#sun-arc-grad)" stroke-width="1.5" stroke-linecap="round"/>
+            <path id="sun-arc-golden-am" class="sun-arc-golden" d="M10 74 Q100 -26 190 74"
+                  pathLength="1000" fill="none" stroke="#ffb46a" stroke-width="4"
+                  stroke-linecap="round" stroke-opacity="0" stroke-dasharray="0 1000"/>
+            <path id="sun-arc-golden-pm" class="sun-arc-golden" d="M10 74 Q100 -26 190 74"
+                  pathLength="1000" fill="none" stroke="#ff8c66" stroke-width="4"
+                  stroke-linecap="round" stroke-opacity="0" stroke-dasharray="0 1000"/>
             <circle id="sun-arc-marker" cx="10" cy="74" r="4.5" fill="#fff1c9"/>
           </svg>
           <div class="sun-row">
@@ -349,6 +355,15 @@
               <strong id="sun-daylight">—</strong>
             </div>
           </div>
+          <div id="sun-golden" class="sun-golden" hidden>
+            <span class="sun-golden-swatch sun-golden-swatch--am" aria-hidden="true"></span>
+            <span class="sun-golden-label">Golden ↑</span>
+            <strong id="sun-golden-am">—</strong>
+            <span class="sun-golden-swatch sun-golden-swatch--pm" aria-hidden="true"></span>
+            <span class="sun-golden-label">↓</span>
+            <strong id="sun-golden-pm">—</strong>
+          </div>
+          <p id="sun-delta" class="sun-delta" hidden></p>
         </div>
       </div>
 

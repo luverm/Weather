@@ -90,6 +90,12 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcGoldenAm: $("#sun-arc-golden-am"),
+  sunArcGoldenPm: $("#sun-arc-golden-pm"),
+  sunGolden: $("#sun-golden"),
+  sunGoldenAm: $("#sun-golden-am"),
+  sunGoldenPm: $("#sun-golden-pm"),
+  sunDelta: $("#sun-delta"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -521,8 +527,87 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderGoldenHour(w);
+  renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+// Golden hour: ~first and last hour of daylight. The band is clamped so very
+// short polar daylight still renders something sensible.
+function renderGoldenHour(w) {
+  const sr = w?.sunrise, ss = w?.sunset;
+  const daylight = sr && ss ? ss - sr : 0;
+  if (!sr || !ss || daylight <= 0) {
+    if (el.sunGolden) el.sunGolden.hidden = true;
+    hideGoldenBands();
+    return;
+  }
+  const bandMs = Math.min(60 * 60_000, daylight / 2);
+  const amEnd = sr + bandMs;
+  const pmStart = ss - bandMs;
+  if (el.sunGoldenAm) el.sunGoldenAm.textContent = `${fmtTime(sr)}–${fmtTime(amEnd)}`;
+  if (el.sunGoldenPm) el.sunGoldenPm.textContent = `${fmtTime(pmStart)}–${fmtTime(ss)}`;
+  if (el.sunGolden) el.sunGolden.hidden = false;
+
+  // Paint the matching bands on the sun arc. pathLength is normalized to 1000,
+  // so fractions map directly onto dash lengths. We approximate t-fraction on
+  // the arc with the time-fraction of daylight — close enough visually since
+  // the quadratic bezier is symmetric.
+  const total = 1000;
+  const amFrac = bandMs / daylight;
+  const pmFrac = bandMs / daylight;
+  const amLen = Math.round(amFrac * total);
+  const pmLen = Math.round(pmFrac * total);
+  const pmStartLen = total - pmLen;
+  if (el.sunArcGoldenAm) {
+    el.sunArcGoldenAm.setAttribute("stroke-dasharray", `${amLen} ${total}`);
+    el.sunArcGoldenAm.setAttribute("stroke-dashoffset", "0");
+    el.sunArcGoldenAm.setAttribute("stroke-opacity", "0.55");
+  }
+  if (el.sunArcGoldenPm) {
+    // Shift the single dash to start at pmStartLen along the path so only the
+    // trailing portion renders. Negative dash-offset moves the pattern toward
+    // the path end — avoids a zero-length dash that round linecap would show
+    // as a stray dot at the sunrise position.
+    el.sunArcGoldenPm.setAttribute("stroke-dasharray", `${pmLen} ${total}`);
+    el.sunArcGoldenPm.setAttribute("stroke-dashoffset", `${-pmStartLen}`);
+    el.sunArcGoldenPm.setAttribute("stroke-opacity", "0.55");
+  }
+}
+
+function hideGoldenBands() {
+  if (el.sunArcGoldenAm) el.sunArcGoldenAm.setAttribute("stroke-opacity", "0");
+  if (el.sunArcGoldenPm) el.sunArcGoldenPm.setAttribute("stroke-opacity", "0");
+}
+
+// Day-length delta vs tomorrow (positive = tomorrow is longer).
+function renderDaylightDelta(w) {
+  if (!el.sunDelta) return;
+  const d = w?.daily;
+  if (!d || d.length < 2 || !d[0]?.sunrise || !d[0]?.sunset || !d[1]?.sunrise || !d[1]?.sunset) {
+    el.sunDelta.hidden = true;
+    return;
+  }
+  const today = d[0].sunset - d[0].sunrise;
+  const tomorrow = d[1].sunset - d[1].sunrise;
+  const deltaSec = Math.round((tomorrow - today) / 1000);
+  if (Math.abs(deltaSec) < 10) {
+    el.sunDelta.textContent = "Same length tomorrow";
+    el.sunDelta.hidden = false;
+    el.sunDelta.dataset.dir = "flat";
+    return;
+  }
+  const abs = Math.abs(deltaSec);
+  const mins = Math.floor(abs / 60);
+  const secs = abs % 60;
+  const parts = [];
+  if (mins) parts.push(`${mins}m`);
+  parts.push(`${secs}s`);
+  const dir = deltaSec > 0 ? "longer" : "shorter";
+  el.sunDelta.textContent = `${deltaSec > 0 ? "+" : "−"}${parts.join(" ")} ${dir} tomorrow`;
+  el.sunDelta.dataset.dir = deltaSec > 0 ? "up" : "down";
+  el.sunDelta.hidden = false;
 }
 
 function scheduleSunArc(w) {
