@@ -117,11 +117,18 @@ export class Scrubber {
   }
 
   _setOffset(offset) {
+    const prevHour = Math.round(clock.offset() / 3600_000);
     clock.setOffset(offset);
     // Snap "close enough" to live — prevents 0.2 min drift when releasing.
     if (Math.abs(offset) < 5 * 60_000) clock.setOffset(0);
     const scrubbing = !clock.isLive();
     this.appEl?.setAttribute("data-scrubbing", scrubbing ? "true" : "false");
+    // Short haptic blip when the thumb crosses an hour boundary mid-drag
+    // (ignored on devices without the API, including every desktop browser).
+    if (this.dragging) {
+      const nextHour = Math.round(clock.offset() / 3600_000);
+      if (nextHour !== prevHour) navigator.vibrate?.(4);
+    }
     this._render(this._currentT());
     this.onScrub?.(clock.offset());
   }
