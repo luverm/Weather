@@ -393,6 +393,14 @@ setInterval(() => {
   refreshWeather();
 }, 15 * 60_000);
 
+// If the connection comes back online and we're showing stale mock data
+// (fetched while offline), refresh immediately so the user sees real data.
+window.addEventListener("online", () => {
+  if (!app.weather?.offline) return;
+  if (!clock.isLive()) return;
+  refreshWeather();
+});
+
 // PWA service worker — optional, best-effort.
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
