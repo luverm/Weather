@@ -978,6 +978,17 @@ function renderHourly(w) {
   // mostly-flat day doesn't acquire silly "peak" / "cool" badges.
   const { peakIdx, troughIdx } = findExtremes(hours);
   hours.forEach((h, i) => {
+    // Sunrise/sunset divider between adjacent hours that cross day/night.
+    if (i > 0 && hours[i - 1].isDay !== h.isDay) {
+      const divider = document.createElement("div");
+      divider.className = "forecast-divider";
+      const rising = h.isDay;
+      divider.innerHTML = `
+        <span class="forecast-divider-glyph" aria-hidden="true">${rising ? sunriseGlyph() : sunsetGlyph()}</span>
+        <span class="forecast-divider-text">${rising ? "Sunrise" : "Sunset"} ~ ${fmtTime(h.time)}</span>
+      `;
+      el.forecastTrack.appendChild(divider);
+    }
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
@@ -994,6 +1005,15 @@ function renderHourly(w) {
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
   });
+}
+
+function sunriseGlyph() {
+  return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="14" r="3.5"/><path d="M5 20h14M12 7v3M8 10l1.5 1.5M16 10l-1.5 1.5M12 4l-2 3h4z"/></svg>`;
+}
+function sunsetGlyph() {
+  return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="14" r="3.5"/><path d="M5 20h14M12 10V7M8 10l1.5 1.5M16 10l-1.5 1.5M12 4l2 3h-4z"/></svg>`;
 }
 
 // Barometric trend into plain-English hint. Only speaks up when the 3-hour
