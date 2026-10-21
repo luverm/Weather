@@ -1954,8 +1954,9 @@ function bindShare() {
     const sun = (today?.sunrise && today?.sunset)
       ? `☀ ${fmtTime(today.sunrise)}–${fmtTime(today.sunset)}`
       : null;
+    const bfLabel = beaufort(w.windSpeed)?.label || "";
     const windStr = w.windSpeed != null
-      ? `Wind ${fmtWind(w.windSpeed)}${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`
+      ? `Wind ${fmtWind(w.windSpeed)}${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}${bfLabel && w.windSpeed >= 20 ? ` (${bfLabel})` : ""}`
       : null;
     const weekTotal = (w.daily || []).reduce((s, d) => s + (d.precip ?? 0), 0);
     const weekRain = weekTotal >= 1
