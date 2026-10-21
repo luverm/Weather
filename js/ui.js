@@ -1922,9 +1922,13 @@ function bindShare() {
     const weekRain = weekTotal >= 1
       ? `Week rain: ${weekTotal >= 10 ? weekTotal.toFixed(0) : weekTotal.toFixed(1)}mm`
       : null;
+    const emoji = conditionEmoji(w.condition, w.isDay);
+    const headline = emoji
+      ? `${emoji} ${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`
+      : `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`;
     const lines = [
       `Aether · ${placeName}`,
-      `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
+      headline,
       today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
       windStr,
       w.humidity != null ? `Humidity ${Math.round(w.humidity)}%` : null,
