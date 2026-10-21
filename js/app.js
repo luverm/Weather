@@ -13,7 +13,6 @@ import { ui } from "./ui.js";
 import { clock } from "./clock.js";
 import { Scrubber } from "./scrubber.js";
 import { AmbientAudio } from "./audio.js";
-import { narrate } from "./narrative.js";
 import { places } from "./places.js";
 import { RadarMap } from "./radar-map.js";
 import { installShortcuts } from "./shortcuts.js";
@@ -208,7 +207,8 @@ async function loadByCoords(place) {
   app.weather = w;
 
   // Render full UI (live + forecasts + narrative).
-  ui.setWeather(w, { narrative: narrate(w) });
+  // narrative is built inside ui.setWeather so it honors unit preferences.
+  ui.setWeather(w);
 
   // Apply to scenes at current (live) time.
   applyScene(w);

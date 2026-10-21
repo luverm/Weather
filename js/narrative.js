@@ -56,16 +56,19 @@ function findGusts(hourly) {
 /**
  * Return a one or two-sentence narrative for the current weather.
  */
-export function narrate(weather) {
+export function narrate(weather, opts = {}) {
   if (!weather) return "";
   const bits = [];
   const { condition, label, temp, feelsLike, uvPeak, windSpeed } = weather;
+  const tempStr = opts.fmtTemp || ((c) => `${Math.round(c)}°`);
+  const deltaStr = opts.fmtTempDelta || ((c) => `${Math.round(c)}°`);
+  const windStr = opts.fmtWind || ((kmh) => `${Math.round(kmh)} km/h`);
 
   // Lead: describe current state.
   const feels = Math.abs((feelsLike ?? temp) - temp) >= 3
-    ? ` — feels closer to ${Math.round(feelsLike)}°`
+    ? ` — feels closer to ${tempStr(feelsLike)}`
     : "";
-  bits.push(`${label} at ${Math.round(temp)}°${feels}.`);
+  bits.push(`${label} at ${tempStr(temp)}${feels}.`);
 
   // Precipitation arriving.
   const rain = findNextPrecip(weather.nowcast, weather.hourly);
@@ -84,15 +87,15 @@ export function narrate(weather) {
     const swing = findTempSwing(weather.hourly);
     if (swing) {
       bits.push(swing.kind === "drop"
-        ? `Temperature drops ${swing.by}° by ${fmtHour(swing.ts)}.`
-        : `Warming ${swing.by}° by ${fmtHour(swing.ts)}.`);
+        ? `Temperature drops ${deltaStr(swing.by)} by ${fmtHour(swing.ts)}.`
+        : `Warming ${deltaStr(swing.by)} by ${fmtHour(swing.ts)}.`);
     }
   }
 
   // Wind gusts.
   if (bits.length < 2) {
     const gust = findGusts(weather.hourly);
-    if (gust) bits.push(`Gusts up to ${gust.kmh} km/h around ${fmtHour(gust.ts)}.`);
+    if (gust) bits.push(`Gusts up to ${windStr(gust.kmh)} around ${fmtHour(gust.ts)}.`);
   }
 
   // UV warning.

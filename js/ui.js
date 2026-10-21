@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { narrate } from "./narrative.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -221,7 +222,16 @@ export const ui = {
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
-    if (el.narrative) el.narrative.textContent = narrative || "";
+    // Build the narrative here so it picks up state.unit / state.windUnit; the
+    // old opt-passed-in path still wins when a caller supplies one explicitly.
+    if (el.narrative) {
+      const line = narrative != null ? narrative : narrate(weather, {
+        fmtTemp: (c) => `${Math.round(convertTemp(c))}°`,
+        fmtTempDelta: (c) => `${Math.round(c * (state.unit === "F" ? 9 / 5 : 1))}°`,
+        fmtWind: (kmh) => fmtWind(kmh),
+      });
+      el.narrative.textContent = line || "";
+    }
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
@@ -834,7 +844,10 @@ function renderWeekend(w) {
 
 function renderAlerts(w) {
   if (!el.alertsStrip) return;
-  const alerts = buildAlerts(w);
+  const alerts = buildAlerts(w, {
+    fmtTemp: (c) => `${Math.round(convertTemp(c))}°`,
+    fmtWind: (kmh) => fmtWind(kmh),
+  });
   // Respect per-place dismissals so the user isn't nagged.
   const dismissed = getDismissedAlerts();
   const visible = alerts.filter((a) => !dismissed.has(a.id));
@@ -890,7 +903,10 @@ function rememberDismissedAlert(id) {
 
 function renderActivity(w) {
   if (!el.activityCard || !el.activityList) return;
-  const items = findActivityWindows(w);
+  const items = findActivityWindows(w, {
+    fmtTemp: (c) => `${Math.round(convertTemp(c))}°`,
+    fmtWind: (kmh) => fmtWind(kmh),
+  });
   if (!items.length) {
     el.activityCard.hidden = true;
     return;
