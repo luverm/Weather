@@ -154,7 +154,7 @@ export function buildAlerts(weather, opts = {}) {
     out.push({
       id: "rainbow",
       severity: "info",
-      title: "Rainbow possible",
+      title: "Rainbow possible 🌈",
       detail: `Sun low with rain nearby around ${shortClock(rainbowTs)} — keep an eye on the opposite horizon.`,
       ts: rainbowTs,
     });
