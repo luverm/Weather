@@ -1214,6 +1214,14 @@ function renderDaily(w) {
     item.className = `daily-item${i === 0 ? " today" : ""}`;
     item.dataset.ts = d.time;
     item.dataset.day = String(i);
+    // Hover tooltip summarising the whole day — great for touch users who
+    // long-press, and screen readers via title/aria.
+    const summaryBits = [capitalize(d.label || d.condition || "")];
+    if (d.pop >= 10) summaryBits.push(`${d.pop}% rain`);
+    if (d.precip >= 0.1) summaryBits.push(`${d.precip.toFixed(1)}mm`);
+    if (d.gustsMax >= 15) summaryBits.push(`gust ${fmtWind(d.gustsMax)}`);
+    if (d.uvMax >= 3) summaryBits.push(`UV ${Math.round(d.uvMax)}`);
+    item.title = summaryBits.filter(Boolean).join(" · ");
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${fmtWind(d.gustsMax)}`
       : "";
