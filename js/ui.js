@@ -337,10 +337,25 @@ function renderLiveValues(w, { animate = true } = {}) {
   const feels = convertTemp(w.feelsLike ?? w.temp);
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
-  el.conditionLabel.textContent = capitalize(w.label);
+  const emoji = conditionEmoji(w.condition, w.isDay);
+  el.conditionLabel.textContent = emoji
+    ? `${emoji} ${capitalize(w.label)}`
+    : capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
   renderYesterdayDelta(w);
+}
+
+function conditionEmoji(cond, isDay) {
+  switch (cond) {
+    case "clear": return isDay === false ? "🌙" : "☀️";
+    case "clouds": return "☁️";
+    case "rain": return "🌧️";
+    case "snow": return "❄️";
+    case "storm": return "⛈️";
+    case "fog": return "🌫️";
+    default: return "";
+  }
 }
 
 // "Vs same hour yesterday" chip. Pinned to live temp, so it stays stable while
