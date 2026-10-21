@@ -613,12 +613,23 @@ html[data-reduce-motion="true"] *::after {
 .daily-expand {
   grid-column: 1 / -1;
   padding: 10px 6px 4px;
+  display: block;
+  border-top: 1px solid var(--stroke);
+  margin-top: 4px;
+}
+.daily-expand-bars {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
   gap: 3px;
   align-items: end;
-  border-top: 1px solid var(--stroke);
-  margin-top: 4px;
+  min-height: 48px;
+}
+.daily-expand-meta {
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--fg-dim);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
 }
 .daily-expand-bar {
   position: relative;

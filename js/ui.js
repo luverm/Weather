@@ -1362,13 +1362,24 @@ function toggleDailyExpand(item, d, w) {
   const stepped = [];
   const step = Math.max(1, Math.floor(hrs.length / 12));
   for (let i = 0; i < hrs.length && stepped.length < 12; i += step) stepped.push(hrs[i]);
-  box.innerHTML = stepped.map((h) => {
+  const barsHtml = stepped.map((h) => {
     const pct = ((h.temp - tMin) / tSpan) * 100;
     const height = 10 + (pct / 100) * 36;
     const precipLevel = h.pop >= 60 ? 2 : h.pop >= 25 ? 1 : 0;
     const hh = new Date(h.time).getHours().toString().padStart(2, "0");
     return `<div class="daily-expand-bar" data-precip="${precipLevel}" style="height:${height.toFixed(1)}px" title="${hh}:00 · ${Math.round(convertTemp(h.temp))}° · ${h.pop}%"><span>${Math.round(convertTemp(h.temp))}°</span></div>`;
   }).join("");
+  // Little footer summarising the day: sunrise/sunset + rain + gust + UV.
+  const metaBits = [];
+  if (d.sunrise && d.sunset) metaBits.push(`☀ ${fmtTime(d.sunrise)}–${fmtTime(d.sunset)}`);
+  if ((d.precip ?? 0) >= 0.1) metaBits.push(`${d.precip.toFixed(1)}mm`);
+  if ((d.pop ?? 0) >= 20) metaBits.push(`${d.pop}% rain`);
+  if ((d.gustsMax ?? 0) >= 15) metaBits.push(`gust ${fmtWind(d.gustsMax)}`);
+  if ((d.uvMax ?? 0) >= 3) metaBits.push(`UV ${Math.round(d.uvMax)}`);
+  const metaHtml = metaBits.length
+    ? `<div class="daily-expand-meta">${metaBits.map(escapeHtml).join(" · ")}</div>`
+    : "";
+  box.innerHTML = `<div class="daily-expand-bars">${barsHtml}</div>${metaHtml}`;
   item.appendChild(box);
   item.dataset.expanded = "true";
 }
