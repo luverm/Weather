@@ -45,6 +45,10 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  stargaze: $("#stargaze"),
+  stargazeStars: $("#stargaze-stars"),
+  stargazeHeadline: $("#stargaze-headline"),
+  stargazeDetail: $("#stargaze-detail"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -187,7 +191,7 @@ export const ui = {
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
-    renderMoon(weather.moon);
+    renderMoon(weather.moon, weather);
     renderSun(weather);
     renderHourly(weather);
     renderDaily(weather);
@@ -483,10 +487,11 @@ function renderAqTrend(aq) {
   drawSparkline(el.aqTrendLine, el.aqTrendFill, pts, { minSpan: 20 });
 }
 
-function renderMoon(moon) {
+function renderMoon(moon, w) {
   if (!moon) return;
   el.moonName.textContent = moon.name;
   el.moonIllum.textContent = Math.round(moon.illum * 100);
+  renderStargaze(moon, w);
   // Render lit region as a path. phase: 0 new, 0.5 full, 1 new again.
   const r = 18;
   const phase = moon.phase;
@@ -503,6 +508,36 @@ function renderMoon(moon) {
                            : (Math.cos(phase * 2 * Math.PI) > 0 ? 1 : 0);
   const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
   el.moonLit.setAttribute("d", outer + " " + terminator);
+}
+
+// Combines tonight's average cloud cover with moon illumination into a 0-5
+// star rating. Darker + clearer skies win.
+function renderStargaze(moon, w) {
+  if (!el.stargaze) return;
+  const night = (w?.hourly || []).filter((h) => h.isDay === false && h.cloudCover != null);
+  if (!night.length) { el.stargaze.hidden = true; return; }
+  const nextSix = night.slice(0, 6);
+  const avgCloud = nextSix.reduce((s, h) => s + h.cloudCover, 0) / nextSix.length;
+  const illum = moon?.illum ?? 0; // 0..1
+  // Clarity is the dominant factor; moon brightness has a smaller effect.
+  const score = (1 - avgCloud / 100) * 0.75 + (1 - illum) * 0.25;
+  const stars = Math.max(0, Math.min(5, Math.round(score * 5)));
+  el.stargaze.hidden = false;
+  el.stargaze.setAttribute("data-score", String(stars));
+  if (el.stargazeStars) {
+    el.stargazeStars.textContent = "★★★★★☆☆☆☆☆".slice(5 - stars, 10 - stars);
+  }
+  let headline, detail;
+  if (stars >= 4) { headline = "Great skies tonight"; }
+  else if (stars === 3) { headline = "Decent viewing"; }
+  else if (stars === 2) { headline = "Patchy clouds"; }
+  else if (stars === 1) { headline = "Mostly cloudy"; }
+  else { headline = "Overcast"; }
+  const cloudPct = Math.round(avgCloud);
+  const moonPct = Math.round(illum * 100);
+  detail = `${cloudPct}% clouds · ${moonPct}% moon`;
+  if (el.stargazeHeadline) el.stargazeHeadline.textContent = headline;
+  if (el.stargazeDetail) el.stargazeDetail.textContent = detail;
 }
 
 function fmtTime(ts) {
