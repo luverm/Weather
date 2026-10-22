@@ -90,6 +90,11 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcGoldenAm: $("#sun-arc-golden-am"),
+  sunArcGoldenPm: $("#sun-arc-golden-pm"),
+  goldenHour: $("#golden-hour"),
+  goldenHourLabel: $("#golden-hour-label"),
+  goldenHourDetail: $("#golden-hour-detail"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -122,6 +127,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  goldenHourTimer: null,
   localTimer: null,
 };
 
@@ -523,6 +529,102 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  renderGoldenHourArcs(w);
+  scheduleGoldenHour(w);
+}
+
+const GOLDEN_HOUR_MS = 60 * 60 * 1000;
+
+function sunArcPoint(t) {
+  const u = 1 - t;
+  const x = u * u * 10 + 2 * u * t * 100 + t * t * 190;
+  const y = u * u * 74 + 2 * u * t * -26 + t * t * 74;
+  return [x, y];
+}
+
+function sunArcSegmentPath(t0, t1, steps = 16) {
+  if (!(t1 > t0)) return "";
+  const parts = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = t0 + (t1 - t0) * (i / steps);
+    const [x, y] = sunArcPoint(t);
+    parts.push(`${i === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`);
+  }
+  return parts.join(" ");
+}
+
+function goldenHourWindows(w) {
+  if (!w?.sunrise || !w?.sunset) return null;
+  const daylight = w.sunset - w.sunrise;
+  if (daylight < 2 * GOLDEN_HOUR_MS + 10 * 60_000) {
+    // Near polar day/night the two windows would overlap — hide them.
+    return null;
+  }
+  return {
+    amStart: w.sunrise,
+    amEnd: w.sunrise + GOLDEN_HOUR_MS,
+    pmStart: w.sunset - GOLDEN_HOUR_MS,
+    pmEnd: w.sunset,
+    daylight,
+  };
+}
+
+function renderGoldenHourArcs(w) {
+  if (!el.sunArcGoldenAm || !el.sunArcGoldenPm) return;
+  const gh = goldenHourWindows(w);
+  if (!gh) {
+    el.sunArcGoldenAm.setAttribute("d", "");
+    el.sunArcGoldenPm.setAttribute("d", "");
+    return;
+  }
+  const fAm = GOLDEN_HOUR_MS / gh.daylight;
+  const fPm = 1 - fAm;
+  el.sunArcGoldenAm.setAttribute("d", sunArcSegmentPath(0, fAm));
+  el.sunArcGoldenPm.setAttribute("d", sunArcSegmentPath(fPm, 1));
+}
+
+function scheduleGoldenHour(w) {
+  if (state.goldenHourTimer) { clearInterval(state.goldenHourTimer); state.goldenHourTimer = null; }
+  if (!el.goldenHour) return;
+  const gh = goldenHourWindows(w);
+  if (!gh) { el.goldenHour.hidden = true; return; }
+
+  const update = () => {
+    const now = Date.now();
+    // Also check tomorrow's morning window for the "after sunset" case.
+    const tomorrow = w.daily?.find((d) => d.sunrise && d.sunrise > w.sunset);
+    const nextAmStart = tomorrow?.sunrise ?? null;
+
+    let state_ = null; // {active, label, detail}
+    if (now < gh.amStart) {
+      state_ = { active: false, detail: `starts in ${fmtDur(gh.amStart - now)}` };
+    } else if (now >= gh.amStart && now <= gh.amEnd) {
+      state_ = { active: true, detail: `ends in ${fmtDur(gh.amEnd - now)}` };
+    } else if (now > gh.amEnd && now < gh.pmStart) {
+      state_ = { active: false, detail: `evening in ${fmtDur(gh.pmStart - now)}` };
+    } else if (now >= gh.pmStart && now <= gh.pmEnd) {
+      state_ = { active: true, detail: `ends in ${fmtDur(gh.pmEnd - now)}` };
+    } else if (nextAmStart && now > gh.pmEnd) {
+      state_ = { active: false, detail: `tomorrow in ${fmtDur(nextAmStart - now)}` };
+    }
+    if (!state_) { el.goldenHour.hidden = true; return; }
+    el.goldenHour.hidden = false;
+    el.goldenHour.setAttribute("data-active", state_.active ? "true" : "false");
+    if (el.goldenHourLabel) {
+      el.goldenHourLabel.textContent = state_.active ? "Golden hour · now" : "Golden hour";
+    }
+    if (el.goldenHourDetail) el.goldenHourDetail.textContent = state_.detail;
+  };
+  update();
+  state.goldenHourTimer = setInterval(update, 30_000);
+}
+
+function fmtDur(ms) {
+  const mins = Math.max(0, Math.round(ms / 60_000));
+  if (mins < 60) return `${mins}m`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return m ? `${h}h ${m}m` : `${h}h`;
 }
 
 function scheduleSunArc(w) {
