@@ -108,6 +108,9 @@ export class Scrubber {
     this.onScrub?.(0);
   }
 
+  /** Externally move the scrubber to a specific offset (ms from now). */
+  setOffset(offset) { this._setOffset(offset); }
+
   _updateFromEvent(e) {
     const r = this.track.getBoundingClientRect();
     const t = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
