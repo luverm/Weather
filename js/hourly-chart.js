@@ -54,6 +54,11 @@ export class HourlyChart {
     this.setCursor(null);
   }
 
+  setGoldenHours(ranges) {
+    this.goldenRanges = Array.isArray(ranges) ? ranges : [];
+    this._drawGolden();
+  }
+
   refresh() { this._draw(); }
 
   setCursor(ts) {
@@ -147,6 +152,44 @@ export class HourlyChart {
     this.popover.hidden = false;
     // Next frame to allow transition.
     requestAnimationFrame(() => this.popover.classList.add("show"));
+  }
+
+  _tsToX(ts) {
+    if (!this.hours.length) return null;
+    const first = this.hours[0].time;
+    const last = this.hours[this.hours.length - 1].time;
+    if (ts <= first || ts >= last) {
+      if (ts < first || ts > last) return null;
+    }
+    const innerW = W - PAD_LEFT - PAD_RIGHT;
+    const t = (ts - first) / (last - first);
+    return PAD_LEFT + Math.max(0, Math.min(1, t)) * innerW;
+  }
+
+  _drawGolden() {
+    const g = this.svg.querySelector("#chart-golden");
+    if (!g || !this.hours.length) return;
+    g.innerHTML = "";
+    const ranges = this.goldenRanges || [];
+    const first = this.hours[0].time;
+    const last = this.hours[this.hours.length - 1].time;
+    for (const r of ranges) {
+      const s = Math.max(r.start, first);
+      const e = Math.min(r.end, last);
+      if (e <= s) continue;
+      const x1 = this._tsToX(s);
+      const x2 = this._tsToX(e);
+      if (x1 == null || x2 == null || x2 - x1 < 0.5) continue;
+      // Thin band just above the x-axis — subtle but visible, keeps the plot clean.
+      const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      rect.setAttribute("x", x1.toFixed(1));
+      rect.setAttribute("y", (PAD_TOP - 3).toFixed(1));
+      rect.setAttribute("width", (x2 - x1).toFixed(1));
+      rect.setAttribute("height", "3");
+      rect.setAttribute("rx", "1");
+      rect.setAttribute("class", "chart-golden-band");
+      g.appendChild(rect);
+    }
   }
 
   _draw() {
@@ -243,6 +286,8 @@ export class HourlyChart {
       r.setAttribute("opacity", (0.35 + (pop / 100) * 0.55).toFixed(2));
       precipG.appendChild(r);
     });
+
+    this._drawGolden();
 
     // Night shading: dim rectangles where !isDay
     const nightG = this.svg.querySelector("#chart-night");

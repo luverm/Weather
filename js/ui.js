@@ -200,7 +200,10 @@ export const ui = {
     renderAlerts(weather);
     renderWeekend(weather);
     startLocaltime(weather);
-    if (state.chart) state.chart.setHours(weather.hourly);
+    if (state.chart) {
+      state.chart.setHours(weather.hourly);
+      state.chart.setGoldenHours(computeGoldenHourRanges(weather, GOLDEN_HOUR_MS));
+    }
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
@@ -625,6 +628,18 @@ function fmtDur(ms) {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
   return m ? `${h}h ${m}m` : `${h}h`;
+}
+
+// Flatten each day's sunrise/sunset into {start,end,kind} ranges, keeping only
+// those that fall inside the chart's visible 24 h window.
+function computeGoldenHourRanges(w, windowMs) {
+  const out = [];
+  const daily = w?.daily || [];
+  for (const d of daily) {
+    if (d.sunrise) out.push({ start: d.sunrise, end: d.sunrise + windowMs, kind: "am" });
+    if (d.sunset)  out.push({ start: d.sunset - windowMs, end: d.sunset, kind: "pm" });
+  }
+  return out;
 }
 
 function scheduleSunArc(w) {

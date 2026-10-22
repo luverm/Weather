@@ -773,6 +773,11 @@ html[data-reduce-motion="true"] *::after {
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
 }
+.chart-golden .chart-golden-band {
+  fill: url(#chart-golden-grad);
+  opacity: 0.85;
+  filter: drop-shadow(0 0 3px rgba(255, 170, 100, 0.5));
+}
 .chart-labels text {
   font-size: 9px;
   fill: var(--fg-dim);
