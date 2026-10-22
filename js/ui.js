@@ -356,7 +356,7 @@ function renderMetrics(w) {
   }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
   el.metricPressureSub.textContent = w.visibility != null
-    ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
+    ? visibilityLabel(w.visibility / 1000)
     : "visibility —";
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
@@ -374,6 +374,19 @@ function renderMetrics(w) {
     el.metricUVSub.textContent = "peak —";
   }
   renderPressureSparkline(w);
+}
+
+function visibilityLabel(km) {
+  if (km == null || !isFinite(km)) return "visibility —";
+  const rounded = km >= 10 ? Math.round(km) : Math.round(km * 10) / 10;
+  let desc;
+  if (km < 0.2) desc = "dense fog";
+  else if (km < 1) desc = "fog";
+  else if (km < 4) desc = "mist";
+  else if (km < 10) desc = "hazy";
+  else if (km < 20) desc = "clear";
+  else desc = "very clear";
+  return `${desc} · ${rounded} km`;
 }
 
 function humidityComfort(rh, dew, temp) {
