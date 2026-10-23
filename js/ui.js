@@ -5,6 +5,7 @@ import { searchCities } from "./weather-service.js";
 import { places } from "./places.js";
 import { HourlyChart } from "./hourly-chart.js";
 import { ComfortStrip } from "./comfort-strip.js";
+import { PrecipOutlook } from "./precip-outlook.js";
 import { advise } from "./advice.js";
 import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
@@ -91,6 +92,7 @@ const el = {
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
   comfortStrip: $("#comfort-strip"),
+  precipOutlook: $("#precip-outlook"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
   weekendDetail: $("#weekend-detail"),
@@ -120,6 +122,7 @@ const state = {
   handlers: {},
   chart: null,
   comfortStrip: null,
+  precipOutlook: null,
   sunTimer: null,
   sunArcTimer: null,
   localTimer: null,
@@ -151,6 +154,11 @@ export const ui = {
     state.comfortStrip = new ComfortStrip({
       rootEl: el.comfortStrip,
       onCellClick: (ts) => state.handlers.onHourClick?.(ts),
+      getUnit: () => state.unit,
+    });
+    state.precipOutlook = new PrecipOutlook({
+      rootEl: el.precipOutlook,
+      onDayClick: (ts) => state.handlers.onHourClick?.(ts),
       getUnit: () => state.unit,
     });
     bindInstallPrompt();
@@ -854,6 +862,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  if (state.precipOutlook) state.precipOutlook.setDays(days, { timezone: w.timezone });
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
