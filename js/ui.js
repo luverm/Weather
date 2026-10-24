@@ -50,6 +50,7 @@ const el = {
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  lightPhases: $("#light-phases"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -122,6 +123,7 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  lightTimer: null,
   localTimer: null,
 };
 
@@ -523,6 +525,72 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleLightPhases(w);
+}
+
+// Approximate blue/golden hour windows derived from today's sunrise/sunset.
+// Civil twilight ≈ 30 min from the horizon; golden hour ≈ first/last hour of
+// visible sun. These are close enough for everyday planning without needing
+// a solar-position library. The main "daylight" period isn't shown — it's
+// already in the DAYLIGHT total above.
+function computeLightPhases(w) {
+  if (!w?.sunrise || !w?.sunset) return [];
+  const BLUE = 30 * 60_000;
+  const GOLD = 60 * 60_000;
+  const sr = w.sunrise, ss = w.sunset;
+  // At extreme latitudes the sun may never rise/set; the twilight model falls
+  // apart there, so we skip the strip when daylight is < 2h.
+  if (ss - sr < 2 * 3600_000) return [];
+  return [
+    { kind: "blue", time: "am", label: "Blue hour",   start: sr - BLUE, end: sr },
+    { kind: "gold", time: "am", label: "Golden hour", start: sr, end: sr + GOLD },
+    { kind: "gold", time: "pm", label: "Golden hour", start: ss - GOLD, end: ss },
+    { kind: "blue", time: "pm", label: "Blue hour",   start: ss, end: ss + BLUE },
+  ];
+}
+
+const PHASE_ICONS = {
+  // Crescent moon-ish for pre-dawn / post-dusk blue hour.
+  blue: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1110.5 4a7 7 0 009.5 10.5z" fill="currentColor"/></svg>',
+  // Sun on horizon for golden hour.
+  gold: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="15" r="4.5" fill="currentColor"/><path d="M3 18h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M12 4v3M5.3 7.3l2.1 2.1M18.7 7.3l-2.1 2.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+};
+
+function scheduleLightPhases(w) {
+  if (state.lightTimer) { clearInterval(state.lightTimer); state.lightTimer = null; }
+  const host = el.lightPhases;
+  if (!host) return;
+  const phases = computeLightPhases(w);
+  if (!phases.length) { host.hidden = true; host.innerHTML = ""; return; }
+
+  const render = () => {
+    const now = Date.now();
+    const items = phases.map((p) => {
+      const current = now >= p.start && now < p.end;
+      const upcoming = p.start > now;
+      const past = p.end <= now;
+      const range = `${fmtTime(p.start)}–${fmtTime(p.end)}`;
+      const classes = [
+        "phase",
+        `phase-${p.kind}`,
+        `phase-${p.time}`,
+        current && "is-current",
+        upcoming && "is-upcoming",
+        past && "is-past",
+      ].filter(Boolean).join(" ");
+      return `<li class="${classes}">
+        <span class="phase-icon">${PHASE_ICONS[p.kind] || ""}</span>
+        <span class="phase-meta">
+          <span class="phase-label">${p.label}</span>
+          <span class="phase-range">${range}</span>
+        </span>
+      </li>`;
+    }).join("");
+    host.innerHTML = items;
+    host.hidden = false;
+  };
+  render();
+  state.lightTimer = setInterval(render, 60_000);
 }
 
 function scheduleSunArc(w) {

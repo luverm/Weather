@@ -977,6 +977,80 @@ kbd {
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
 
+/* Light phases strip — blue hour & golden hour for sunrise and sunset.
+ * The parent .extra-card is an implicit 2-column grid (the global
+ * `.metric-label { grid-column: 1 / span 2 }` rule leaks in here too), so
+ * span both tracks explicitly to get full width. */
+.light-phases {
+  grid-column: 1 / span 2;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--stroke);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.light-phases .phase {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 1px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid transparent;
+  transition: background 320ms var(--ease), border-color 320ms var(--ease),
+              transform 320ms var(--ease);
+}
+.light-phases .phase.is-current {
+  background: var(--glass-strong);
+  border-color: var(--stroke);
+  transform: translateY(-1px);
+}
+.light-phases .phase.is-past { opacity: 0.55; }
+.light-phases .phase.is-upcoming { opacity: 0.9; }
+.phase-icon {
+  grid-row: 1 / span 2;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.phase-icon svg { width: 100%; height: 100%; display: block; }
+.phase-blue .phase-icon { color: #9ad1ff; }
+.phase-gold .phase-icon { color: #ffcf85; }
+.phase-meta { display: contents; }
+.phase-label {
+  grid-column: 2;
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.light-phases .phase.is-current .phase-label { color: var(--fg); }
+.phase-range {
+  grid-column: 2;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (max-width: 520px) {
+  .phase-label { font-size: 9px; letter-spacing: 0.1em; }
+  .phase-range { font-size: 11px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .light-phases .phase { transition: none; }
+}
+
 /* ---------- Radar map ---------- */
 .radar {
   padding: 12px;
