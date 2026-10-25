@@ -1333,6 +1333,11 @@ function renderPlaces() {
       state.handlers.onPlaceClick?.(item);
     });
   });
+  // Keep the active chip visible when the strip overflows horizontally.
+  const activeChip = el.placesStrip.querySelector(".place-chip.active");
+  if (activeChip && typeof activeChip.scrollIntoView === "function") {
+    activeChip.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }
 }
 
 // ---------- Bindings ----------
