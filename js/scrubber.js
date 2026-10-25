@@ -99,6 +99,26 @@ export class Scrubber {
     });
 
     this.resetEl?.addEventListener("click", () => this.reset());
+
+    // Clicking the sunrise/sunset dots jumps the clock to that moment.
+    const jumpTo = (ts) => {
+      if (!ts) return;
+      const offset = ts - Date.now();
+      const minOff = -3600_000;
+      const maxOff = (RANGE_HOURS - 1) * 3600_000;
+      if (offset < minOff || offset > maxOff) return;
+      this._setOffset(offset);
+    };
+    const stop = (e) => { e.stopPropagation(); e.preventDefault(); };
+    this.sunriseEl?.addEventListener("pointerdown", (e) => {
+      stop(e); jumpTo(this.sunrise);
+    });
+    this.sunsetEl?.addEventListener("pointerdown", (e) => {
+      stop(e); jumpTo(this.sunset);
+    });
+    [this.sunriseEl, this.sunsetEl].forEach((n) => {
+      n?.addEventListener("click", (e) => e.stopPropagation());
+    });
   }
 
   reset() {
