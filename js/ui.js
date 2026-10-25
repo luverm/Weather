@@ -71,7 +71,9 @@ const el = {
   dailySpark: $("#daily-spark"),
   dailyHi: $("#daily-hi"),
   dailyLo: $("#daily-lo"),
+  dailyBand: $("#daily-band"),
   dailySparkDots: $("#daily-spark-dots"),
+  dailySparkMarkers: $("#daily-spark-markers"),
   dailyDelta: $("#daily-delta"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
@@ -963,7 +965,19 @@ function renderDailySpark(days) {
   const linePath = (arr) => arr.map((v, i) => (i === 0 ? "M" : "L") + x(i).toFixed(1) + "," + y(v).toFixed(1)).join(" ");
   el.dailyHi.setAttribute("d", linePath(days.map((d) => d.tempMax)));
   el.dailyLo.setAttribute("d", linePath(days.map((d) => d.tempMin)));
-  // Dots at each day + per-day temp labels above/below
+
+  // Range band: hi line forward, lo line backward, closed.
+  if (el.dailyBand) {
+    const hiPts = days.map((d, i) => ({ x: x(i), y: y(d.tempMax) }));
+    const loPts = days.map((d, i) => ({ x: x(i), y: y(d.tempMin) }));
+    let bandPath = "M" + hiPts[0].x.toFixed(1) + "," + hiPts[0].y.toFixed(1);
+    for (let i = 1; i < hiPts.length; i++) bandPath += " L" + hiPts[i].x.toFixed(1) + "," + hiPts[i].y.toFixed(1);
+    for (let i = loPts.length - 1; i >= 0; i--) bandPath += " L" + loPts[i].x.toFixed(1) + "," + loPts[i].y.toFixed(1);
+    bandPath += " Z";
+    el.dailyBand.setAttribute("d", bandPath);
+  }
+
+  // Hi/Lo dots + "today" vertical marker.
   el.dailySparkDots.innerHTML = "";
   days.forEach((d, i) => {
     if (d.tempMax != null) {
@@ -983,6 +997,18 @@ function renderDailySpark(days) {
       el.dailySparkDots.appendChild(c);
     }
   });
+
+  // "Today" vertical dashed guide.
+  if (el.dailySparkMarkers) {
+    el.dailySparkMarkers.innerHTML = "";
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", x(0).toFixed(1));
+    line.setAttribute("x2", x(0).toFixed(1));
+    line.setAttribute("y1", String(TOP - 2));
+    line.setAttribute("y2", String(H - BOT + 2));
+    line.setAttribute("class", "spark-today-line");
+    el.dailySparkMarkers.appendChild(line);
+  }
 }
 
 function renderDailyDelta(days) {
