@@ -135,7 +135,29 @@ ul { list-style: none; margin: 0; padding: 0; }
   50% { transform: scale(1.08); filter: brightness(1.15); }
 }
 
-.toolbar { display: flex; gap: 8px; position: relative; }
+.toolbar { display: flex; align-items: center; gap: 8px; position: relative; }
+.offline-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 130, 110, 0.14);
+  border: 1px solid rgba(255, 130, 110, 0.35);
+  color: #ffb9a6;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  font-weight: 500;
+  animation: offline-pulse 2.6s ease-in-out infinite;
+}
+.offline-badge[hidden] { display: none; }
+.offline-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #ff826e;
+  box-shadow: 0 0 0 3px rgba(255, 130, 110, 0.18);
+}
+@keyframes offline-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
 
 /* ---------- Settings menu ---------- */
 .settings-menu {

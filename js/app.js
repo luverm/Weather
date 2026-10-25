@@ -359,4 +359,23 @@ if ("serviceWorker" in navigator) {
   });
 }
 
+// Online/offline badge.
+function syncOffline() {
+  const badge = document.getElementById("offline-badge");
+  if (!badge) return;
+  const off = !navigator.onLine;
+  badge.hidden = !off;
+  document.documentElement.setAttribute("data-connectivity", off ? "offline" : "online");
+}
+window.addEventListener("online", () => {
+  syncOffline();
+  ui.showToast("Back online — refreshing");
+  if (app.place) loadByCoords(app.place).catch(() => {});
+});
+window.addEventListener("offline", () => {
+  syncOffline();
+  ui.showToast("You are offline");
+});
+syncOffline();
+
 window.__aether = { engine, app, clock, audio };
