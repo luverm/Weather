@@ -1392,7 +1392,7 @@ function bindSearch() {
   });
   el.searchResults.addEventListener("click", (e) => {
     const li = e.target.closest("li");
-    if (!li) return;
+    if (!li || li.classList.contains("recent-heading")) return;
     const i = parseInt(li.dataset.index, 10);
     const item = el.searchResults._items?.[i];
     if (!item) return;
@@ -1400,6 +1400,39 @@ function bindSearch() {
     el.searchResults.hidden = true;
     places.add(item);
     state.handlers.onSearchSelect?.(item);
+  });
+
+  // Arrow-key navigation + Enter to select the highlighted result.
+  el.searchInput.addEventListener("keydown", (e) => {
+    const openables = el.searchResults.hidden ? null : el.searchResults.querySelectorAll('li[data-index]');
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      if (!openables || !openables.length) return;
+      e.preventDefault();
+      const list = Array.from(openables);
+      let cur = list.findIndex((li) => li.classList.contains("active"));
+      if (e.key === "ArrowDown") cur = (cur + 1) % list.length;
+      else cur = (cur <= 0 ? list.length : cur) - 1;
+      list.forEach((li, i) => li.classList.toggle("active", i === cur));
+      list[cur]?.scrollIntoView({ block: "nearest" });
+    } else if (e.key === "Enter") {
+      if (!openables || !openables.length) return;
+      const active = Array.from(openables).find((li) => li.classList.contains("active"));
+      const li = active || openables[0];
+      const i = parseInt(li.dataset.index, 10);
+      const item = el.searchResults._items?.[i];
+      if (!item) return;
+      e.preventDefault();
+      el.searchInput.value = item.name;
+      el.searchResults.hidden = true;
+      el.searchInput.blur();
+      places.add(item);
+      state.handlers.onSearchSelect?.(item);
+    } else if (e.key === "Escape") {
+      if (!el.searchResults.hidden) {
+        el.searchResults.hidden = true;
+        e.preventDefault();
+      }
+    }
   });
 }
 
