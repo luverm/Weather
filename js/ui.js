@@ -1146,10 +1146,19 @@ function bindDailySparkInteractions(days, x, y, TOP, BOT, H) {
     return best;
   };
 
+  const applyRowHighlight = (ts) => {
+    const rows = el.dailyTrack?.querySelectorAll(".daily-item") || [];
+    rows.forEach((row) => {
+      const match = ts != null && parseInt(row.dataset.ts, 10) === ts;
+      row.classList.toggle("sync-highlight", !!match);
+    });
+  };
+
   svg.addEventListener("pointermove", (e) => {
     const i = indexFromEvent(e);
     const d = bind._days[i];
     if (!d) return;
+    applyRowHighlight(d.time);
     const px = bind._x(i);
     const line = hoverG.querySelector(".hover-line");
     const hiDot = hoverG.querySelector(".hover-dot.hi");
@@ -1183,6 +1192,7 @@ function bindDailySparkInteractions(days, x, y, TOP, BOT, H) {
     hoverG.querySelector(".hover-line").setAttribute("x1", "-10");
     hoverG.querySelector(".hover-line").setAttribute("x2", "-10");
     hoverG.querySelectorAll(".hover-dot").forEach((n) => { n.setAttribute("cx", "-10"); n.setAttribute("cy", "-10"); });
+    applyRowHighlight(null);
   });
   svg.addEventListener("click", (e) => {
     const i = indexFromEvent(e);
