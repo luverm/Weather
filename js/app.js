@@ -199,6 +199,7 @@ async function loadByCoords(place) {
   app.place = place;
   ui.setPlace(place);
   ui.setLoading(`Fetching weather for ${place.name}…`);
+  writePlaceHash(place);
 
   // Drop any scrubber offset so we start live on each new city.
   clock.reset();
@@ -311,10 +312,43 @@ installShortcuts({
   },
 });
 
+function writePlaceHash(place) {
+  if (!place || place.lat == null || place.lon == null) return;
+  const name = encodeURIComponent(place.name || "");
+  const hash = `#@${place.lat.toFixed(4)},${place.lon.toFixed(4)}${name ? `,${name}` : ""}`;
+  if (location.hash !== hash) {
+    try { history.replaceState(null, "", hash); } catch { /* ignore */ }
+  }
+}
+
+function readPlaceHash() {
+  const h = location.hash || "";
+  const m = h.match(/^#@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:,(.+))?$/);
+  if (!m) return null;
+  const lat = parseFloat(m[1]);
+  const lon = parseFloat(m[2]);
+  if (!isFinite(lat) || !isFinite(lon)) return null;
+  const name = m[3] ? decodeURIComponent(m[3]) : `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
+  return { name, lat, lon };
+}
+
+// Listen for in-page hash navigation (e.g. shared link opened in-app).
+window.addEventListener("hashchange", () => {
+  const p = readPlaceHash();
+  if (!p) return;
+  if (app.place && places.idFor(app.place) === places.idFor(p)) return;
+  loadByCoords(p);
+});
+
 // ---------- Start ----------
 (async function init() {
-  // Prefer the most recent saved place if we have one — avoids the geolocation
-  // prompt on every load and feels snappier.
+  // 1) Deep link via #@lat,lon,name takes precedence.
+  const hashPlace = readPlaceHash();
+  if (hashPlace) {
+    await loadByCoords(hashPlace);
+    return;
+  }
+  // 2) Prefer the most recent saved place.
   const saved = places.all();
   if (saved.length) {
     await loadByCoords(saved[0]);
