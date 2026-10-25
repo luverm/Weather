@@ -230,6 +230,7 @@ export const ui = {
     } else if (state.chart) {
       state.chart.setCursor(sampled.hourly?.[highlightHourIndex]?.time);
     }
+    highlightDailyForTimestamp(sampled._sampledTs);
   },
   setScrubbing(on) {
     document.documentElement.setAttribute("data-scrubbing", on ? "true" : "false");
@@ -976,6 +977,26 @@ function renderHourly(w) {
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
   }
+}
+
+function highlightDailyForTimestamp(ts) {
+  if (!el.dailyTrack) return;
+  const rows = el.dailyTrack.querySelectorAll(".daily-item");
+  if (!rows.length) return;
+  // Only mark when actually scrubbing — don't highlight at live time.
+  const scrubbing = document.documentElement.getAttribute("data-scrubbing") === "true";
+  if (!scrubbing || ts == null) {
+    rows.forEach((r) => r.classList.remove("scrub-highlight"));
+    return;
+  }
+  const day = new Date(ts);
+  day.setHours(0, 0, 0, 0);
+  const target = day.getTime();
+  rows.forEach((row) => {
+    const rowDay = new Date(parseInt(row.dataset.ts, 10));
+    rowDay.setHours(0, 0, 0, 0);
+    row.classList.toggle("scrub-highlight", rowDay.getTime() === target);
+  });
 }
 
 function highlightHour(index) {
