@@ -202,6 +202,7 @@ export const ui = {
     renderRainOutlook(weather);
     renderAlerts(weather);
     renderWeekend(weather);
+    updateDocumentTitle(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -777,6 +778,26 @@ function renderActivity(w) {
       if (ts) state.handlers.onHourClick?.(ts);
     });
   });
+}
+
+const CONDITION_GLYPHS = {
+  clear: "☀",
+  clouds: "☁",
+  rain: "🌧",
+  snow: "❄",
+  storm: "⛈",
+  fog: "🌫",
+};
+
+function updateDocumentTitle(w) {
+  if (!w) return;
+  const glyph = (w.isDay ? CONDITION_GLYPHS[w.condition] : (w.condition === "clear" ? "🌙" : CONDITION_GLYPHS[w.condition])) || "";
+  const temp = w.temp != null ? `${Math.round(convertTemp(w.temp))}°${state.unit}` : "";
+  const place = state.place?.name || "Aether";
+  // Keep both machine-friendly (temp) and human (city) fragments in the title.
+  const bits = [glyph && temp ? `${glyph} ${temp}` : (glyph || temp), place, "Aether"].filter(Boolean);
+  const next = bits.join(" · ");
+  if (document.title !== next) document.title = next;
 }
 
 function renderRainOutlook(w) {
