@@ -799,6 +799,59 @@ function updateDocumentTitle(w) {
   const bits = [glyph && temp ? `${glyph} ${temp}` : (glyph || temp), place, "Aether"].filter(Boolean);
   const next = bits.join(" · ");
   if (document.title !== next) document.title = next;
+  updateFavicon(w);
+}
+
+function updateFavicon(w) {
+  const link = document.querySelector('link[rel="icon"]');
+  if (!link) return;
+  const svg = faviconSvg(w);
+  const href = "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+  if (link.getAttribute("href") !== href) link.setAttribute("href", href);
+}
+
+function faviconSvg(w) {
+  const night = !w.isDay;
+  const bg = night ? "#0b1020" : "#1a3b6b";
+  const temp = w.temp != null ? `${Math.round(convertTemp(w.temp))}` : "";
+  const unit = state.unit === "F" ? "F" : "C";
+  // Pick a tint based on temp.
+  let fg = "#eaf1ff";
+  if (w.temp != null) {
+    if (w.temp >= 28) fg = "#ff9c7a";
+    else if (w.temp >= 18) fg = "#ffe6c7";
+    else if (w.temp <= 0) fg = "#9ad1ff";
+    else if (w.temp <= 10) fg = "#c7e3ff";
+  }
+  // Secondary icon marker in a corner based on condition.
+  const mark = conditionCorner(w.condition, night);
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <rect width="64" height="64" rx="14" fill="${bg}"/>
+    ${mark}
+    <text x="32" y="42" text-anchor="middle" font-family="-apple-system,SF Pro Display,Segoe UI,Inter,system-ui,sans-serif" font-weight="700" font-size="34" fill="${fg}">${temp}</text>
+    <text x="52" y="22" text-anchor="middle" font-family="-apple-system,SF Pro Display,Segoe UI,Inter,system-ui,sans-serif" font-size="12" fill="${fg}" opacity="0.75">°${unit}</text>
+  </svg>`;
+}
+
+function conditionCorner(cond, night) {
+  const col = night ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.4)";
+  switch (cond) {
+    case "rain":
+      return `<path d="M8 20c0-4 3-7 7-7a7 7 0 0113-2 6 6 0 013 11H15a7 7 0 01-7-2z" fill="${col}"/>`;
+    case "snow":
+      return `<circle cx="14" cy="18" r="2" fill="${col}"/><circle cx="22" cy="14" r="2" fill="${col}"/><circle cx="18" cy="24" r="2" fill="${col}"/>`;
+    case "storm":
+      return `<path d="M8 20c0-4 3-7 7-7a7 7 0 0113-2 6 6 0 013 11H15a7 7 0 01-7-2z" fill="${col}"/><path d="M20 23l-3 5h3l-2 4 5-6h-3l2-3z" fill="#ffe066"/>`;
+    case "fog":
+      return `<path d="M8 16h18M6 22h22M10 28h16" stroke="${col}" stroke-width="3" stroke-linecap="round" fill="none"/>`;
+    case "clouds":
+      return `<path d="M10 20c0-3 3-5 6-5a6 6 0 0112-1 5 5 0 013 9H17a5 5 0 01-7-3z" fill="${col}"/>`;
+    case "clear":
+    default:
+      return night
+        ? `<path d="M22 10a10 10 0 1012 12 8 8 0 01-12-12z" fill="#f6efc6"/>`
+        : `<circle cx="20" cy="18" r="7" fill="#ffd98a"/>`;
+  }
 }
 
 function renderRainOutlook(w) {
