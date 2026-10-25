@@ -957,6 +957,57 @@ kbd {
   opacity: 0.85;
 }
 
+/* Rain outlook card */
+#rain-outlook-card[hidden] { display: none; }
+.rain-outlook-row { display: grid; gap: 2px; min-width: 0; }
+.rain-outlook-meta strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+}
+.rain-outlook-sub { font-size: 11.5px; color: var(--fg-dim); }
+.rain-outlook-total {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(120, 180, 255, 0.18);
+  color: #b7d4ff;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  border: 1px solid rgba(120, 180, 255, 0.3);
+  font-variant-numeric: tabular-nums;
+}
+.rain-outlook-bars {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  gap: 2px;
+  align-items: end;
+  height: 32px;
+  padding-top: 4px;
+  border-top: 1px dashed var(--stroke);
+}
+.rain-outlook-bar {
+  all: unset;
+  display: block;
+  height: 2px;
+  min-width: 2px;
+  border-radius: 2px 2px 1px 1px;
+  background: linear-gradient(180deg, #9ad1ff 0%, #5a9bff 100%);
+  cursor: pointer;
+  transition: transform 160ms var(--ease), filter 160ms var(--ease);
+}
+.rain-outlook-bar:hover,
+.rain-outlook-bar:focus-visible {
+  transform: scaleY(1.15);
+  filter: brightness(1.2);
+  outline: none;
+}
+.rain-outlook-bar.tick {
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.3);
+}
+
 .moon-row, .sun-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
 .moon-svg { width: 48px; height: 48px; }
 .moon-meta strong { display: block; font-size: 14px; font-weight: 500; }

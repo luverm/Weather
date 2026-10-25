@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { buildRainOutlook } from "./rain-outlook.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -87,6 +88,11 @@ const el = {
   insightsList: $("#insights-list"),
   activityCard: $("#activity-card"),
   activityList: $("#activity-list"),
+  rainOutlookCard: $("#rain-outlook-card"),
+  rainOutlookHeadline: $("#rain-outlook-headline"),
+  rainOutlookSub: $("#rain-outlook-sub"),
+  rainOutlookTotal: $("#rain-outlook-total"),
+  rainOutlookBars: $("#rain-outlook-bars"),
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
@@ -191,6 +197,7 @@ export const ui = {
     renderTrends(weather);
     renderInsights(weather);
     renderActivity(weather);
+    renderRainOutlook(weather);
     renderAlerts(weather);
     renderWeekend(weather);
     startLocaltime(weather);
@@ -767,6 +774,46 @@ function renderActivity(w) {
       const ts = parseInt(li.dataset.ts, 10);
       if (ts) state.handlers.onHourClick?.(ts);
     });
+  });
+}
+
+function renderRainOutlook(w) {
+  if (!el.rainOutlookCard || !el.rainOutlookBars) return;
+  const outlook = buildRainOutlook(w, { fmtTime });
+  if (!outlook) {
+    el.rainOutlookCard.hidden = true;
+    el.rainOutlookBars.innerHTML = "";
+    return;
+  }
+  el.rainOutlookCard.hidden = false;
+  el.rainOutlookHeadline.textContent = outlook.headline;
+  el.rainOutlookSub.textContent = outlook.subtitle;
+
+  const totalText = outlook.totalMm >= 0.1
+    ? `${outlook.totalMm.toFixed(outlook.totalMm >= 10 ? 0 : 1)} mm`
+    : `${outlook.maxPop}% peak`;
+  el.rainOutlookTotal.textContent = totalText;
+
+  // Scale bars: height encodes mm (if any), opacity encodes pop%.
+  const maxMm = Math.max(0.5, ...outlook.bars.map((b) => b.precip));
+  const popOnly = outlook.totalMm < 0.1;
+  el.rainOutlookBars.innerHTML = "";
+  outlook.bars.forEach((b, i) => {
+    const bar = document.createElement("button");
+    bar.type = "button";
+    bar.className = "rain-outlook-bar";
+    bar.dataset.ts = b.time;
+    // Height: either from precip (preferred) or from pop fallback.
+    const h = popOnly ? (b.pop / 100) * 28 : (b.precip / maxMm) * 28;
+    bar.style.height = `${Math.max(2, h).toFixed(1)}px`;
+    bar.style.opacity = (0.25 + (b.pop / 100) * 0.75).toFixed(2);
+    const hour = new Date(b.time).getHours().toString().padStart(2, "0");
+    bar.title = `${hour}:00 · ${b.pop}%${b.precip > 0 ? ` · ${b.precip.toFixed(1)} mm` : ""}`;
+    bar.setAttribute("aria-label", bar.title);
+    // Light tick every 6 hours.
+    if (i % 6 === 0) bar.classList.add("tick");
+    bar.addEventListener("click", () => state.handlers.onHourClick?.(b.time));
+    el.rainOutlookBars.appendChild(bar);
   });
 }
 
