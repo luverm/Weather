@@ -161,6 +161,7 @@ export const ui = {
       onCellClick: (ts) => state.handlers.onHourClick?.(ts),
       getUnit: () => state.unit,
     });
+    bindChartLegend();
     bindInstallPrompt();
   },
   focusSearch() { el.searchInput?.focus(); el.searchInput?.select?.(); },
@@ -1112,7 +1113,12 @@ function bindDailySparkInteractions(days, x, y, TOP, BOT, H) {
     tip.style.top = `${(svgRect.top - wrapRect.top - 6).toFixed(1)}px`;
     tip.hidden = false;
   });
-  svg.addEventListener("pointerleave", () => { tip.hidden = true; });
+  svg.addEventListener("pointerleave", () => {
+    tip.hidden = true;
+    hoverG.querySelector(".hover-line").setAttribute("x1", "-10");
+    hoverG.querySelector(".hover-line").setAttribute("x2", "-10");
+    hoverG.querySelectorAll(".hover-dot").forEach((n) => { n.setAttribute("cx", "-10"); n.setAttribute("cy", "-10"); });
+  });
   svg.addEventListener("click", (e) => {
     const i = indexFromEvent(e);
     const d = bind._days[i];
@@ -1341,6 +1347,23 @@ function bindSearch() {
     el.searchResults.hidden = true;
     places.add(item);
     state.handlers.onSearchSelect?.(item);
+  });
+}
+
+function bindChartLegend() {
+  const chips = document.querySelectorAll(".chart-legend .legend-chip");
+  if (!chips.length || !state.chart) return;
+  chips.forEach((chip) => {
+    const series = chip.dataset.series;
+    const on = state.chart.isSeriesVisible(series);
+    chip.setAttribute("aria-pressed", on ? "true" : "false");
+    chip.classList.toggle("off", !on);
+    chip.addEventListener("click", () => {
+      const next = !state.chart.isSeriesVisible(series);
+      state.chart.setSeriesVisible(series, next);
+      chip.setAttribute("aria-pressed", next ? "true" : "false");
+      chip.classList.toggle("off", !next);
+    });
   });
 }
 

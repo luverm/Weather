@@ -1,6 +1,18 @@
 // Interactive hourly chart: temperature line + precipitation probability bars.
 // Fills the full 24-point domain, synced to the scrubber cursor.
 
+const VISIBLE_KEY = "aether:chart-visible";
+function loadVisible() {
+  try {
+    const raw = localStorage.getItem(VISIBLE_KEY);
+    if (raw) return { temp: true, feels: true, gust: true, precip: true, ...JSON.parse(raw) };
+  } catch { /* ignore */ }
+  return { temp: true, feels: true, gust: true, precip: true };
+}
+function saveVisible(v) {
+  try { localStorage.setItem(VISIBLE_KEY, JSON.stringify(v)); } catch { /* ignore */ }
+}
+
 const W = 600;
 const H = 140;
 const PAD_LEFT = 6;
@@ -18,7 +30,35 @@ export class HourlyChart {
     this.getTimezone = getTimezone || (() => null);
     this.hours = [];
     this.points = [];
+    this.visible = loadVisible();
     this._bind();
+    this._applyVisibility();
+  }
+
+  setSeriesVisible(series, on) {
+    this.visible[series] = !!on;
+    saveVisible(this.visible);
+    this._applyVisibility();
+  }
+
+  isSeriesVisible(series) {
+    return this.visible[series] !== false;
+  }
+
+  _applyVisibility() {
+    const map = {
+      temp: ["#chart-temp-line", "#chart-temp-fill"],
+      feels: ["#chart-feels-line"],
+      gust: ["#chart-gust-line"],
+      precip: ["#chart-precip"],
+    };
+    for (const [k, sels] of Object.entries(map)) {
+      const on = this.isSeriesVisible(k);
+      for (const sel of sels) {
+        const node = this.svg.querySelector(sel);
+        if (node) node.style.display = on ? "" : "none";
+      }
+    }
   }
 
   _formatHour(ts) {
