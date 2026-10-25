@@ -1112,6 +1112,15 @@ kbd {
 .rain-outlook-bar.tick {
   box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.3);
 }
+.rain-outlook-axis {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  padding: 2px 0 0;
+}
 
 .moon-row, .sun-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
 .moon-svg { width: 48px; height: 48px; }
