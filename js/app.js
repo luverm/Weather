@@ -289,6 +289,15 @@ installShortcuts({
   toggleFullscreenRadar: () => document.getElementById("radar-full")?.click(),
   toggleRadar: () => document.getElementById("radar-play")?.click(),
   resetScrubber: () => scrubber.reset(),
+  toggleReduceMotion: () => {
+    const next = !app.reducedMotion;
+    setReducedMotion(next);
+    try { localStorage.setItem("aether:reduceMotion", next ? "1" : "0"); } catch { /* ignore */ }
+    const checkbox = document.getElementById("setting-reduce-motion");
+    if (checkbox) checkbox.checked = next;
+    document.documentElement.setAttribute("data-reduce-motion", next ? "true" : "false");
+    ui.showToast(next ? "Animations off" : "Animations on");
+  },
   cyclePlace: (dir) => {
     const list = places.all();
     if (list.length < 2) return;
