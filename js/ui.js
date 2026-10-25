@@ -582,6 +582,15 @@ function scheduleSunCountdown(w) {
         if (ts && ts > now && (!nextTs || ts < nextTs)) { nextTs = ts; nextKind = kind; }
       }
     }
+    // Compute how far through today's daylight we are, for the badge.
+     const today = w.daily?.find((d) => d.sunrise && d.sunset) || w.daily?.[0];
+    const sr = today?.sunrise;
+    const ss = today?.sunset;
+    let dayPct = null;
+    if (sr && ss && now >= sr && now <= ss) {
+      dayPct = Math.round(((now - sr) / (ss - sr)) * 100);
+    }
+
     if (!nextTs) {
       if (el.sunCountdown) el.sunCountdown.textContent = "";
       if (el.sunNextLabel) el.sunNextLabel.textContent = "Sun";
@@ -591,7 +600,8 @@ function scheduleSunCountdown(w) {
     const label = mins >= 60
       ? `${Math.floor(mins / 60)}h ${mins % 60}m`
       : `${mins}m`;
-    if (el.sunNextLabel) el.sunNextLabel.textContent = `${nextKind} in`;
+    const prefix = dayPct != null ? `${dayPct}% through daylight · ` : "";
+    if (el.sunNextLabel) el.sunNextLabel.textContent = `${prefix}${nextKind} in`;
     if (el.sunCountdown) el.sunCountdown.textContent = label;
   };
   update();
