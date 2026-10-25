@@ -998,6 +998,8 @@ function renderDailySpark(days) {
     }
   });
 
+  bindDailySparkInteractions(days, x, y, TOP, BOT, H);
+
   // "Today" vertical dashed guide.
   if (el.dailySparkMarkers) {
     el.dailySparkMarkers.innerHTML = "";
@@ -1009,6 +1011,95 @@ function renderDailySpark(days) {
     line.setAttribute("class", "spark-today-line");
     el.dailySparkMarkers.appendChild(line);
   }
+}
+
+function bindDailySparkInteractions(days, x, y, TOP, BOT, H) {
+  if (!el.dailySpark) return;
+  const svg = el.dailySpark;
+  if (svg._boundDaily) {
+    svg._boundDaily._days = days;
+    svg._boundDaily._x = x;
+    svg._boundDaily._y = y;
+    svg._boundDaily._TOP = TOP;
+    svg._boundDaily._BOT = BOT;
+    svg._boundDaily._H = H;
+    return;
+  }
+  // Shared hover group — one cursor line + one dot per end of range.
+  const hoverG = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  hoverG.setAttribute("class", "daily-spark-hover");
+  hoverG.setAttribute("pointer-events", "none");
+  hoverG.innerHTML = `
+    <line class="hover-line" x1="-10" x2="-10" y1="0" y2="60"/>
+    <circle class="hover-dot hi" r="3.6" cx="-10" cy="-10"/>
+    <circle class="hover-dot lo" r="3.6" cx="-10" cy="-10"/>
+  `;
+  svg.appendChild(hoverG);
+
+  const tip = document.createElement("div");
+  tip.className = "daily-spark-tip";
+  tip.hidden = true;
+  svg.parentElement.style.position = svg.parentElement.style.position || "relative";
+  svg.parentElement.appendChild(tip);
+
+  const bind = {
+    _days: days, _x: x, _y: y, _TOP: TOP, _BOT: BOT, _H: H,
+  };
+  svg._boundDaily = bind;
+
+  const indexFromEvent = (evt) => {
+    const rect = svg.getBoundingClientRect();
+    const vx = (evt.clientX - rect.left) / rect.width * 600;
+    const dys = bind._days;
+    let best = 0, bestD = Infinity;
+    for (let i = 0; i < dys.length; i++) {
+      const d = Math.abs(bind._x(i) - vx);
+      if (d < bestD) { bestD = d; best = i; }
+    }
+    return best;
+  };
+
+  svg.addEventListener("pointermove", (e) => {
+    const i = indexFromEvent(e);
+    const d = bind._days[i];
+    if (!d) return;
+    const px = bind._x(i);
+    const line = hoverG.querySelector(".hover-line");
+    const hiDot = hoverG.querySelector(".hover-dot.hi");
+    const loDot = hoverG.querySelector(".hover-dot.lo");
+    line.setAttribute("x1", px.toFixed(1));
+    line.setAttribute("x2", px.toFixed(1));
+    if (d.tempMax != null) {
+      hiDot.setAttribute("cx", px.toFixed(1));
+      hiDot.setAttribute("cy", bind._y(d.tempMax).toFixed(1));
+    }
+    if (d.tempMin != null) {
+      loDot.setAttribute("cx", px.toFixed(1));
+      loDot.setAttribute("cy", bind._y(d.tempMin).toFixed(1));
+    }
+    const tz = state.weather?.timezone;
+    const dayName = i === 0 ? "Today" : i === 1 ? "Tomorrow" : new Date(d.time).toLocaleDateString(undefined, {
+      weekday: "short", ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    });
+    tip.innerHTML = `<strong>${escapeHtml(dayName)}</strong>` +
+      `<em>${Math.round(convertTemp(d.tempMin))}° / ${Math.round(convertTemp(d.tempMax))}°</em>` +
+      (d.pop >= 20 ? `<em class="pop">${d.pop}% rain</em>` : "");
+    const svgRect = svg.getBoundingClientRect();
+    const wrapRect = svg.parentElement.getBoundingClientRect();
+    const scaleX = svgRect.width / 600;
+    tip.style.left = `${((svgRect.left - wrapRect.left) + px * scaleX).toFixed(1)}px`;
+    tip.style.top = `${(svgRect.top - wrapRect.top - 6).toFixed(1)}px`;
+    tip.hidden = false;
+  });
+  svg.addEventListener("pointerleave", () => { tip.hidden = true; });
+  svg.addEventListener("click", (e) => {
+    const i = indexFromEvent(e);
+    const d = bind._days[i];
+    if (!d) return;
+    // Jump to noon of that day (or now if today).
+    const noon = d.sunrise ? d.sunrise + 6 * 3600_000 : new Date(d.time).setHours(12, 0, 0, 0);
+    state.handlers.onHourClick?.(noon);
+  });
 }
 
 function renderDailyDelta(days) {
