@@ -819,6 +819,17 @@ html[data-reduce-motion="true"] *::after {
   fill: var(--fg-muted);
   font-size: 9.5px;
 }
+.chart-labels .peak-dot { stroke: rgba(255,255,255,0.5); stroke-width: 1; }
+.chart-labels .peak-hi { fill: #ff9c7a; }
+.chart-labels .peak-lo { fill: #9ad1ff; }
+.chart-labels text.peak-label {
+  font-size: 10px;
+  font-weight: 600;
+  paint-order: stroke;
+  stroke: rgba(10, 14, 28, 0.85);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
 .chart-cursor {
   stroke: var(--accent);
   stroke-width: 1.2;

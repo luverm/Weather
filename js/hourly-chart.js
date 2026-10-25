@@ -309,6 +309,16 @@ export class HourlyChart {
     const labG = this.svg.querySelector("#chart-labels");
     labG.innerHTML = "";
     const labelStep = Math.max(3, Math.floor(this.hours.length / 8));
+
+    // Peak and trough indices so we can skip their 3h slot and let the
+    // dedicated markers take over.
+    let peakIdx = 0, troughIdx = 0;
+    for (let i = 1; i < this.hours.length; i++) {
+      if (this.hours[i].temp > this.hours[peakIdx].temp) peakIdx = i;
+      if (this.hours[i].temp < this.hours[troughIdx].temp) troughIdx = i;
+    }
+    const skipLabel = new Set([peakIdx, troughIdx]);
+
     this.hours.forEach((h, i) => {
       if (i % labelStep !== 0) return;
       const hh = this._hourOf(h.time);
@@ -318,6 +328,7 @@ export class HourlyChart {
       txt.setAttribute("text-anchor", "middle");
       txt.textContent = `${hh}`;
       labG.appendChild(txt);
+      if (skipLabel.has(i)) return;
       // Temp label above point
       const tVal = unit === "F" ? h.temp * 9 / 5 + 32 : h.temp;
       const tTxt = document.createElementNS("http://www.w3.org/2000/svg", "text");
@@ -328,5 +339,29 @@ export class HourlyChart {
       tTxt.textContent = `${Math.round(tVal)}°`;
       labG.appendChild(tTxt);
     });
+
+    // Peak and trough annotations: dot + colored label chip above/below.
+    const drawPeak = (idx, kind) => {
+      if (this.hours.length < 4) return;
+      const h = this.hours[idx];
+      const tVal = unit === "F" ? h.temp * 9 / 5 + 32 : h.temp;
+      const cx = iToX(idx);
+      const cy = tToY(h.temp);
+      const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      dot.setAttribute("cx", cx.toFixed(1));
+      dot.setAttribute("cy", cy.toFixed(1));
+      dot.setAttribute("r", "3");
+      dot.setAttribute("class", `peak-dot peak-${kind}`);
+      labG.appendChild(dot);
+      const lbl = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      lbl.setAttribute("x", cx.toFixed(1));
+      lbl.setAttribute("y", (kind === "hi" ? cy - 10 : cy + 14).toFixed(1));
+      lbl.setAttribute("text-anchor", "middle");
+      lbl.setAttribute("class", `peak-label peak-${kind}`);
+      lbl.textContent = `${kind === "hi" ? "▲" : "▼"} ${Math.round(tVal)}°`;
+      labG.appendChild(lbl);
+    };
+    drawPeak(peakIdx, "hi");
+    if (peakIdx !== troughIdx) drawPeak(troughIdx, "lo");
   }
 }
