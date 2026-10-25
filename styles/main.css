@@ -330,6 +330,13 @@ html[data-reduce-motion="true"] *::after {
   border-color: rgba(154, 209, 255, 0.4);
   color: #cfe3ff;
 }
+.place-chip .chip-glyph {
+  font-size: 13px;
+  line-height: 1;
+  display: inline-grid;
+  place-items: center;
+  width: 14px; height: 14px;
+}
 
 /* ---------- Hero ---------- */
 .hero { align-self: start; display: grid; gap: 14px; }

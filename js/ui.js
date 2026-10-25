@@ -1311,9 +1311,10 @@ function renderPlaces() {
   el.placesStrip.innerHTML = all.map((p, i) => {
     const active = places.idFor(p) === activeId;
     const kbd = i < 9 ? `<span class="chip-kbd" aria-hidden="true">${i + 1}</span>` : "";
+    const glyph = p.condition ? `<span class="chip-glyph" aria-hidden="true">${CONDITION_GLYPHS[p.condition] || ""}</span>` : "";
     return `
       <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}" title="Press ${i < 9 ? i + 1 : "the chip"} to jump here">
-        ${kbd}<span>${escapeHtml(p.name)}</span>
+        ${kbd}${glyph}<span>${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
         <span class="close" data-action="remove" aria-label="Remove">
           <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
