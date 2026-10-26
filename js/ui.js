@@ -42,6 +42,8 @@ const el = {
   aqCard: $("#aq-card"),
   aqTrendLine: $("#aq-trend-line"),
   aqTrendFill: $("#aq-trend-fill"),
+  windowAdvice: $("#window-advice"),
+  windowAdviceText: $("#window-advice-text"),
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
@@ -188,6 +190,7 @@ export const ui = {
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
+    renderWindowAdvice(weather);
     renderMoon(weather.moon);
     renderSun(weather);
     renderHourly(weather);
@@ -528,6 +531,55 @@ function aqColor(aqi) {
   if (aqi <= 200) return "#ff6a6a";
   if (aqi <= 300) return "#b75cff";
   return "#8a3a3a";
+}
+
+function renderWindowAdvice(w) {
+  if (!el.windowAdvice || !el.windowAdviceText) return;
+  const temp = w.temp;
+  const aqi = w.airQuality?.aqi;
+  const humidity = w.humidity;
+  const wind = w.windSpeed;
+  // Rain within the next hour, from the 15-min nowcast.
+  const nowcast = w.nowcast || [];
+  const soonRain = nowcast.slice(0, 4).some((n) => (n.precip || 0) >= 0.15);
+  // Current precip from the hero snapshot.
+  const rainingNow = soonRain || (nowcast[0] && (nowcast[0].precip || 0) > 0);
+
+  if (temp == null) { el.windowAdvice.hidden = true; return; }
+
+  // Decide verdict: good / caution / closed.
+  let verdict = "good";
+  const reasons = [];
+  if (rainingNow) { verdict = "closed"; reasons.push("rain incoming"); }
+  else if (aqi != null && aqi >= 150) { verdict = "closed"; reasons.push("air unhealthy"); }
+  else if (temp < 5 || temp > 30) { verdict = "closed"; reasons.push(temp < 5 ? "too cold" : "too hot"); }
+  else {
+    if (aqi != null && aqi >= 100) { verdict = "caution"; reasons.push("air moderate"); }
+    if (humidity != null && humidity >= 85) {
+      verdict = verdict === "closed" ? "closed" : "caution";
+      reasons.push("damp");
+    }
+    if (wind != null && wind >= 30) {
+      verdict = verdict === "closed" ? "closed" : "caution";
+      reasons.push("gusty");
+    }
+  }
+
+  // If totally fine, surface the positives rather than vagueness.
+  if (verdict === "good" && !reasons.length) {
+    const bits = [];
+    if (temp != null) bits.push(`${Math.round(convertTemp(temp))}° out`);
+    if (aqi != null) bits.push(aqi < 50 ? "clean air" : "fair air");
+    if (!rainingNow) bits.push("no rain");
+    reasons.push(...bits);
+  }
+
+  const head = verdict === "good" ? "Open the windows"
+    : verdict === "caution" ? "Open briefly"
+    : "Keep closed";
+  el.windowAdvice.hidden = false;
+  el.windowAdvice.className = `window-advice ${verdict}`;
+  el.windowAdviceText.textContent = `${head} · ${reasons.slice(0, 3).join(" · ")}`;
 }
 
 function renderAirQuality(aq) {
