@@ -17,6 +17,7 @@ import { narrate } from "./narrative.js";
 import { places } from "./places.js";
 import { RadarMap } from "./radar-map.js";
 import { installShortcuts } from "./shortcuts.js";
+import { favicon } from "./favicon.js";
 
 const engine = new AnimationEngine();
 
@@ -171,6 +172,15 @@ function applyScene(weather) {
 
   // Update audio to match whatever the scene now shows.
   audio.setWeather(sampled, bucket);
+
+  // Dynamic favicon reflects condition + bucket + rounded temp.
+  const faviconUnit = ui.getUnit?.() === "F" ? "F" : "C";
+  const favTemp = faviconUnit === "F" ? sampled.temp * 9 / 5 + 32 : sampled.temp;
+  favicon.set({
+    condition: sampled.condition,
+    bucket,
+    tempText: isFinite(favTemp) ? `${Math.round(favTemp)}°` : "",
+  });
 
   // In reduced-motion mode, repaint exactly one frame now that weather changed.
   if (app.reducedMotion) engine.tickOnce();
