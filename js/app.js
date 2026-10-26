@@ -325,6 +325,24 @@ installShortcuts({
     ui.setScrubbing(!clock.isLive());
     ui.showToast(`Jumped to ${noon.toLocaleDateString(undefined, { weekday: "long" })} noon`);
   },
+  copyLink: async () => {
+    if (!app.place || app.place.lat == null || app.place.lon == null) {
+      ui.showToast("No location to share yet");
+      return;
+    }
+    const params = new URLSearchParams({
+      lat: app.place.lat.toFixed(4),
+      lon: app.place.lon.toFixed(4),
+      name: app.place.name || "Shared location",
+    });
+    const url = `${location.origin}${location.pathname}?${params.toString()}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      ui.showToast("Link copied — share away");
+    } catch {
+      ui.showToast("Clipboard blocked — try the share button");
+    }
+  },
 });
 
 // ---------- Start ----------

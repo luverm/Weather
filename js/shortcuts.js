@@ -71,6 +71,7 @@ export function installShortcuts(handlers) {
     if (key === "[") { handlers.cyclePlace?.(-1); e.preventDefault(); return; }
     if (key === "]") { handlers.cyclePlace?.(1); e.preventDefault(); return; }
     if (key === "b" || key === "B") { e.preventDefault(); handlers.jumpToBestDay?.(); return; }
+    if (key === "c" || key === "C") { e.preventDefault(); handlers.copyLink?.(); return; }
   });
 }
 
