@@ -92,6 +92,8 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  goldenHour: $("#golden-hour"),
+  goldenHourText: $("#golden-hour-text"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -125,6 +127,7 @@ const state = {
   sunTimer: null,
   sunArcTimer: null,
   localTimer: null,
+  goldenTimer: null,
 };
 
 export const ui = {
@@ -568,6 +571,45 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  scheduleGoldenHour(w);
+}
+
+function scheduleGoldenHour(w) {
+  if (!el.goldenHour || !el.goldenHourText) return;
+  if (state.goldenTimer) { clearInterval(state.goldenTimer); state.goldenTimer = null; }
+  // Collect golden/blue windows across today and the next few days so we can
+  // always point at a sensible "next" one.
+  const windows = [];
+  const push = (start, end, label) => {
+    if (start && end && end > start) windows.push({ start, end, label });
+  };
+  for (const d of (w.daily || []).slice(0, 3)) {
+    push(d.sunrise - 20 * 60_000, d.sunrise, "Blue hour (morning)");
+    push(d.sunrise, d.sunrise + 60 * 60_000, "Golden hour (morning)");
+    push(d.sunset - 60 * 60_000, d.sunset, "Golden hour (evening)");
+    push(d.sunset, d.sunset + 20 * 60_000, "Blue hour (evening)");
+  }
+  windows.sort((a, b) => a.start - b.start);
+
+  const update = () => {
+    const now = Date.now();
+    // Prefer the current window; else the next upcoming one.
+    const current = windows.find((win) => now >= win.start && now <= win.end);
+    const next = windows.find((win) => win.start > now);
+    const target = current || next;
+    if (!target) { el.goldenHour.hidden = true; return; }
+    el.goldenHour.hidden = false;
+    el.goldenHour.classList.toggle("live", !!current);
+    const inMin = Math.max(0, Math.round((target.start - now) / 60_000));
+    const whenText = current
+      ? `now · ends ${fmtTime(target.end)}`
+      : inMin < 60
+        ? `in ${inMin}m · ${fmtTime(target.start)}`
+        : `at ${fmtTime(target.start)}`;
+    el.goldenHourText.textContent = `${target.label} · ${whenText}`;
+  };
+  update();
+  state.goldenTimer = setInterval(update, 60_000);
 }
 
 function scheduleSunArc(w) {
