@@ -259,6 +259,11 @@ export const ui = {
     el.toast._t = setTimeout(() => (el.toast.hidden = true), dur);
   },
   getUnit: () => state.unit,
+  getBestDayTime: () => {
+    const days = state.weather?.daily || [];
+    const idx = pickBestDay(days);
+    return idx >= 0 ? days[idx].time : null;
+  },
 };
 
 // ---------- Rendering ----------

@@ -312,6 +312,19 @@ installShortcuts({
     if (app.weather) applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
   },
+  jumpToBestDay: () => {
+    if (!app.weather) return;
+    const dayTs = ui.getBestDayTime?.();
+    if (!dayTs) { ui.showToast("No standout day this week"); return; }
+    // Aim for noon on that day in the city's local-ish time.
+    const noon = new Date(dayTs);
+    noon.setHours(12, 0, 0, 0);
+    clock.setOffset(noon.getTime() - Date.now());
+    scrubber.sync();
+    applyScene(app.weather);
+    ui.setScrubbing(!clock.isLive());
+    ui.showToast(`Jumped to ${noon.toLocaleDateString(undefined, { weekday: "long" })} noon`);
+  },
 });
 
 // ---------- Start ----------
