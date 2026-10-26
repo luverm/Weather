@@ -409,9 +409,13 @@ function renderMetrics(w) {
     }
   }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
-  el.metricPressureSub.textContent = w.visibility != null
+  const visText = w.visibility != null
     ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
     : "visibility —";
+  const narration = pressureNarrative(w.pressureTrend);
+  el.metricPressureSub.textContent = narration
+    ? `${narration} · ${visText}`
+    : visText;
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
@@ -428,6 +432,17 @@ function renderMetrics(w) {
     el.metricUVSub.textContent = "peak —";
   }
   renderPressureSparkline(w);
+}
+
+function pressureNarrative(trend) {
+  if (!trend) return null;
+  const d = trend.delta;
+  if (d == null) return null;
+  if (d >= 2.0) return "rising fast";
+  if (d >= 0.8) return "rising";
+  if (d <= -2.0) return "falling fast";
+  if (d <= -0.8) return "falling";
+  return null; // "steady" — already shown by the arrow next to the label
 }
 
 function humidityComfort(rh, dew, temp) {
