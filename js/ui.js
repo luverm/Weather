@@ -96,6 +96,8 @@ const el = {
   sunArcPath: $("#sun-arc-path"),
   goldenHour: $("#golden-hour"),
   goldenHourText: $("#golden-hour-text"),
+  sunsetQuality: $("#sunset-quality"),
+  sunsetQualityText: $("#sunset-quality-text"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -671,6 +673,47 @@ function renderSun(w) {
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   scheduleGoldenHour(w);
+  renderSunsetQuality(w);
+}
+
+function renderSunsetQuality(w) {
+  if (!el.sunsetQuality || !el.sunsetQualityText) return;
+  const sunsetTs = w?.sunset;
+  if (!sunsetTs) { el.sunsetQuality.hidden = true; return; }
+  // If the sun has already set today, point at tomorrow's.
+  const now = Date.now();
+  const target = sunsetTs > now
+    ? sunsetTs
+    : (w.daily || []).map((d) => d.sunset).find((t) => t && t > now);
+  if (!target) { el.sunsetQuality.hidden = true; return; }
+  // Find the hour closest to that sunset to read condition + cloud cover.
+  let best = null, bestDiff = Infinity;
+  for (const h of w.hourly || []) {
+    const diff = Math.abs(h.time - target);
+    if (diff < bestDiff) { best = h; bestDiff = diff; }
+  }
+  if (!best) { el.sunsetQuality.hidden = true; return; }
+  const cloud = best.cloudCover;
+  const cond = best.condition;
+  let verdict, cls;
+  if (cond === "storm" || cond === "fog") {
+    verdict = "Overcast — muted sunset"; cls = "muted";
+  } else if (cond === "rain" || cond === "snow") {
+    verdict = "Showers — pass this one up"; cls = "muted";
+  } else if (cloud == null) {
+    el.sunsetQuality.hidden = true; return;
+  } else if (cloud >= 85) {
+    verdict = "Overcast — muted sunset"; cls = "muted";
+  } else if (cloud >= 30) {
+    verdict = "Great sunset ahead — clouds will catch fire"; cls = "great";
+  } else if (cloud >= 10) {
+    verdict = "Soft colors tonight — a few wisps"; cls = "soft";
+  } else {
+    verdict = "Clear sky — a quiet, pure sunset"; cls = "clear";
+  }
+  el.sunsetQuality.hidden = false;
+  el.sunsetQuality.className = `sunset-quality ${cls}`;
+  el.sunsetQualityText.textContent = verdict;
 }
 
 function scheduleGoldenHour(w) {
