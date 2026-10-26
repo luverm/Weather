@@ -417,9 +417,7 @@ function renderMetrics(w) {
     }
   }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
-  const visText = w.visibility != null
-    ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
-    : "visibility —";
+  const visText = formatVisibility(w.visibility);
   const narration = pressureNarrative(w.pressureTrend);
   el.metricPressureSub.textContent = narration
     ? `${narration} · ${visText}`
@@ -440,6 +438,16 @@ function renderMetrics(w) {
     el.metricUVSub.textContent = "peak —";
   }
   renderPressureSparkline(w);
+}
+
+function formatVisibility(m) {
+  if (m == null) return "visibility —";
+  const km = m / 1000;
+  if (km < 0.2) return `dense fog · ${Math.round(m)} m`;
+  if (km < 1)   return `fog · ${(km).toFixed(1)} km`;
+  if (km < 4)   return `hazy · ${km.toFixed(1)} km`;
+  if (km >= 30) return `crystal clear · ${Math.round(km)} km`;
+  return `visibility ${Math.round(km * 10) / 10} km`;
 }
 
 function pressureNarrative(trend) {
