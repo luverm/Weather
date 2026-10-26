@@ -1245,6 +1245,20 @@ function renderDailySpark(days) {
       c.setAttribute("class", "dot-lo");
       el.dailySparkDots.appendChild(c);
     }
+    // Transparent hitbox so a click anywhere in this day's column scrubs to noon.
+    const hit = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    const bandW = innerW / days.length;
+    hit.setAttribute("x", (x(i) - bandW / 2).toFixed(1));
+    hit.setAttribute("y", "0");
+    hit.setAttribute("width", bandW.toFixed(1));
+    hit.setAttribute("height", String(H));
+    hit.setAttribute("class", "day-hit");
+    hit.setAttribute("data-day-ts", String(d.time));
+    hit.addEventListener("click", () => {
+      const noon = new Date(d.time); noon.setHours(12, 0, 0, 0);
+      state.handlers.onHourClick?.(noon.getTime());
+    });
+    el.dailySparkDots.appendChild(hit);
     // Rain bar: height ∝ precip mm, hidden when the whole week is dry.
     const mm = d.precip || 0;
     if (mm > 0 && maxPrecip > 0) {
