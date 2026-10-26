@@ -296,8 +296,24 @@ function renderDocumentTitle(w) {
   const t = unit === "F" ? Math.round(w.temp * 9 / 5 + 32) : Math.round(w.temp);
   const place = state.place?.name;
   const label = capitalize(w.label || "");
-  const prefix = place ? `${t}° ${label} · ${place}` : `${t}° ${label}`;
+  const emoji = emojiForCondition(w.condition, w.isDay);
+  const head = emoji ? `${emoji} ` : "";
+  const prefix = place
+    ? `${head}${t}° ${label} · ${place}`
+    : `${head}${t}° ${label}`;
   document.title = `${prefix} — Aether`;
+}
+
+function emojiForCondition(condition, isDay) {
+  switch (condition) {
+    case "clear": return isDay ? "☀️" : "🌙";
+    case "clouds": return isDay ? "⛅" : "☁️";
+    case "rain": return "🌧️";
+    case "snow": return "🌨️";
+    case "storm": return "⛈️";
+    case "fog": return "🌫️";
+    default: return "";
+  }
 }
 
 function renderYesterdayChip(w) {
