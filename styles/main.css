@@ -635,6 +635,46 @@ html[data-reduce-motion="true"] *::after {
 .temp-trend.down { background: rgba(154, 209, 255, 0.18); color: #9ad1ff; }
 .temp-trend.flat { background: rgba(255,255,255,0.08); color: var(--fg-dim); }
 
+/* ---------- Yesterday-comparison chip ---------- */
+.yesterday-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 3px 10px 3px 8px;
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.07);
+  color: var(--fg-muted);
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: background 0.4s ease, color 0.4s ease, border-color 0.4s ease;
+}
+.yesterday-chip[hidden] { display: none; }
+.yesterday-chip .chip-arrow {
+  width: 10px; height: 10px;
+  display: inline-block;
+  background: currentColor;
+  -webkit-mask: var(--chip-mask) center/contain no-repeat;
+          mask: var(--chip-mask) center/contain no-repeat;
+}
+.yesterday-chip.warmer {
+  background: rgba(255, 156, 122, 0.16);
+  color: #ffb196;
+  border-color: rgba(255, 156, 122, 0.28);
+  --chip-mask: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath fill='black' d='M5 1 L9 7 L1 7 Z'/%3E%3C/svg%3E");
+}
+.yesterday-chip.cooler {
+  background: rgba(154, 209, 255, 0.16);
+  color: #9ad1ff;
+  border-color: rgba(154, 209, 255, 0.28);
+  --chip-mask: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath fill='black' d='M5 9 L9 3 L1 3 Z'/%3E%3C/svg%3E");
+}
+.yesterday-chip.flat {
+  --chip-mask: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Crect x='1' y='4' width='8' height='2' fill='black'/%3E%3C/svg%3E");
+}
+
 /* ---------- Pollen card ---------- */
 #pollen-card[hidden] { display: none; }
 .pollen-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }

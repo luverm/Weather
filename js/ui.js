@@ -61,6 +61,8 @@ const el = {
   pollenItems: $("#pollen-items"),
   pressureTrend: $("#m-pressure-trend"),
   tempTrend: $("#temp-trend"),
+  yesterdayChip: $("#yesterday-chip"),
+  yesterdayText: $("#yesterday-text"),
   uvLevel: $("#m-uv-level"),
   humidityComfort: $("#m-humidity-comfort"),
   pressureSparkLine: $("#pressure-spark-line"),
@@ -278,6 +280,35 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  renderYesterdayChip(w);
+}
+
+function renderYesterdayChip(w) {
+  if (!el.yesterdayChip || !el.yesterdayText) return;
+  // Only show on live view, not while scrubbing — delta is meaningful only now.
+  const isLive = document.documentElement.getAttribute("data-scrubbing") !== "true";
+  const yTemp = state.weather?.yesterdayTemp;
+  const nowTemp = state.weather?.temp;
+  if (!isLive || yTemp == null || nowTemp == null) {
+    el.yesterdayChip.hidden = true;
+    return;
+  }
+  // Compute delta in current unit so the number matches the big temperature.
+  const deltaC = nowTemp - yTemp;
+  const delta = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
+  const rounded = Math.round(delta);
+  if (Math.abs(delta) < 0.6) {
+    el.yesterdayChip.hidden = false;
+    el.yesterdayChip.className = "yesterday-chip flat";
+    el.yesterdayText.textContent = "About the same as yesterday";
+    return;
+  }
+  const direction = rounded >= 1 ? "warmer" : "cooler";
+  const cls = rounded >= 1 ? "warmer" : "cooler";
+  el.yesterdayChip.hidden = false;
+  el.yesterdayChip.className = `yesterday-chip ${cls}`;
+  el.yesterdayText.textContent =
+    `${Math.abs(rounded)}° ${direction} than yesterday`;
 }
 
 function renderDayRange(w) {

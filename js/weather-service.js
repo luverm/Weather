@@ -93,7 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
-    past_hours: 1,
+    past_days: 1,          // yesterday's hourly (also gives scrubber headroom)
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -189,6 +189,10 @@ function normalize(d, aq) {
   // Moon phase is not in Open-Meteo's free tier — compute it locally.
   const moon = computeMoonPhase(new Date());
 
+  // Yesterday-at-this-hour temperature, pulled from the raw hourly before
+  // the future-only filter above. Used by the "vs yesterday" chip.
+  const yesterdayTemp = findHourlyTempAt(d.hourly, now - 24 * 3600_000);
+
   return {
     temp: c.temperature_2m,
     feelsLike: c.apparent_temperature,
@@ -215,8 +219,25 @@ function normalize(d, aq) {
     moon,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
+    yesterdayTemp,
     fetchedAt: now,
   };
+}
+
+function findHourlyTempAt(hourly, targetTs) {
+  if (!hourly?.time || !hourly?.temperature_2m) return null;
+  let bestIdx = -1;
+  let bestDiff = Infinity;
+  for (let i = 0; i < hourly.time.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    const diff = Math.abs(t - targetTs);
+    if (diff < bestDiff) { bestDiff = diff; bestIdx = i; }
+  }
+  // Only accept if within 90 min of the target to avoid returning garbage
+  // when the API hasn't given us anywhere near 24h in the past.
+  if (bestIdx < 0 || bestDiff > 90 * 60_000) return null;
+  const v = hourly.temperature_2m[bestIdx];
+  return typeof v === "number" ? v : null;
 }
 
 function computePressureTrend(hourly, now) {
@@ -400,6 +421,7 @@ function mock(lat, lon) {
       level: "Moderate",
     },
     pressureTrend: { delta: -0.4, direction: "steady" },
+    yesterdayTemp: 15,
     fetchedAt: now,
     offline: true,
   };
