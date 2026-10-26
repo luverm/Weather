@@ -1064,8 +1064,12 @@ function renderDailySpark(days) {
   const linePath = (arr) => arr.map((v, i) => (i === 0 ? "M" : "L") + x(i).toFixed(1) + "," + y(v).toFixed(1)).join(" ");
   el.dailyHi.setAttribute("d", linePath(days.map((d) => d.tempMax)));
   el.dailyLo.setAttribute("d", linePath(days.map((d) => d.tempMin)));
-  // Dots at each day + per-day temp labels above/below
+  // Dots at each day + per-day temp labels above/below.
   el.dailySparkDots.innerHTML = "";
+  const maxPrecip = Math.max(0, ...days.map((d) => d.precip || 0));
+  const RAIN_BASE = H - 1;        // sit the drops just above the chart's bottom edge
+  const RAIN_MAX_H = 14;          // tallest bar for the wettest day
+  const RAIN_MIN_H = 3;           // visible floor so any rain shows up at all
   days.forEach((d, i) => {
     if (d.tempMax != null) {
       const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
@@ -1082,6 +1086,19 @@ function renderDailySpark(days) {
       c.setAttribute("r", "2.5");
       c.setAttribute("class", "dot-lo");
       el.dailySparkDots.appendChild(c);
+    }
+    // Rain bar: height ∝ precip mm, hidden when the whole week is dry.
+    const mm = d.precip || 0;
+    if (mm > 0 && maxPrecip > 0) {
+      const h = Math.max(RAIN_MIN_H, (mm / maxPrecip) * RAIN_MAX_H);
+      const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      r.setAttribute("x", (x(i) - 3.5).toFixed(1));
+      r.setAttribute("y", (RAIN_BASE - h).toFixed(1));
+      r.setAttribute("width", "7");
+      r.setAttribute("height", h.toFixed(1));
+      r.setAttribute("rx", "1.5");
+      r.setAttribute("class", mm >= 8 ? "day-rainbar heavy" : mm >= 2 ? "day-rainbar moderate" : "day-rainbar light");
+      el.dailySparkDots.appendChild(r);
     }
   });
 }

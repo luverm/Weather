@@ -1525,6 +1525,9 @@ kbd {
 .daily-spark circle { transition: r 160ms var(--ease); }
 .daily-spark .dot-hi { fill: #ff9c7a; }
 .daily-spark .dot-lo { fill: #9ad1ff; }
+.daily-spark .day-rainbar.light     { fill: rgba(140, 200, 255, 0.75); }
+.daily-spark .day-rainbar.moderate  { fill: rgba(106, 167, 255, 0.9); }
+.daily-spark .day-rainbar.heavy     { fill: rgba(107, 125, 255, 1); }
 .forecast-track {
   display: grid;
   grid-auto-flow: column;
