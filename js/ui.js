@@ -1494,12 +1494,22 @@ function renderSearchResults(results) {
 function showRecentsIfAny() {
   const recents = places.all().slice(0, 5);
   if (!recents.length) { el.searchResults.hidden = true; return; }
-  const itemsHtml = recents.map((r, i) => `
-    <li role="option" data-index="${i}">
-      <span>${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
-      <span class="sub">${escapeHtml(r.country || "")}</span>
-    </li>
-  `).join("");
+  const itemsHtml = recents.map((r, i) => {
+    const icon = r.condition
+      ? `<span class="recent-icon">${iconFor(r.condition)}</span>`
+      : `<span class="recent-icon"></span>`;
+    const temp = r.temp != null
+      ? `<span class="recent-temp">${Math.round(convertTemp(r.temp))}°</span>`
+      : "";
+    return `
+      <li role="option" data-index="${i}">
+        ${icon}
+        <span class="recent-name">${escapeHtml(r.name)}${r.admin1 ? `, ${escapeHtml(r.admin1)}` : ""}</span>
+        ${temp}
+        <span class="sub">${escapeHtml(r.country || "")}</span>
+      </li>
+    `;
+  }).join("");
   el.searchResults.innerHTML = `<li class="recent-heading">Recent places</li>${itemsHtml}`;
   el.searchResults._items = recents;
   el.searchResults.hidden = false;
