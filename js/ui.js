@@ -1118,6 +1118,30 @@ function highlightHour(index) {
   items.forEach((it, i) => it.classList.toggle("active", i === index));
 }
 
+// Rank each forecast day by a simple comfort+pleasantness score and return
+// the index of the best one, or -1 if nothing stands out above the others.
+function pickBestDay(days) {
+  if (!days?.length) return -1;
+  const scores = days.map((d) => {
+    const tempC = (d.tempMax + d.tempMin) / 2;
+    // Peak comfort around 20 °C; penalty grows quadratically from there.
+    const tempScore = Math.max(0, 100 - Math.abs(tempC - 20) * 4);
+    const rainPenalty = Math.min(60, (d.pop ?? 0) * 0.4 + (d.precip ?? 0) * 6);
+    const windPenalty = Math.min(30, Math.max(0, ((d.windMax ?? 0) - 20)) * 1.2);
+    const condPenalty = d.condition === "storm" ? 50
+      : d.condition === "rain" || d.condition === "snow" ? 30
+      : d.condition === "fog" ? 15
+      : 0;
+    return tempScore - rainPenalty - windPenalty - condPenalty;
+  });
+  let bestIdx = 0;
+  for (let i = 1; i < scores.length; i++) if (scores[i] > scores[bestIdx]) bestIdx = i;
+  // Only badge when the best beats the median by a meaningful margin.
+  const sorted = [...scores].sort((a, b) => a - b);
+  const median = sorted[Math.floor(sorted.length / 2)];
+  return scores[bestIdx] - median >= 10 ? bestIdx : -1;
+}
+
 function renderDaily(w) {
   el.dailyTrack.innerHTML = "";
   const days = (w.daily || []).slice(0, 7);
@@ -1125,6 +1149,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  const bestIdx = pickBestDay(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1142,16 +1167,20 @@ function renderDaily(w) {
     const left = ((d.tempMin - gMin) / span) * 100;
     const width = ((d.tempMax - d.tempMin) / span) * 100;
     const item = document.createElement("div");
-    item.className = "daily-item";
+    item.className = `daily-item${i === bestIdx ? " best" : ""}`;
     item.dataset.ts = d.time;
     const extraBits = [];
+    if (i === bestIdx) extraBits.push("best day of the week");
     if (d.pop >= 30) extraBits.push(`${d.pop}% rain`);
     if (d.gustsMax && d.gustsMax >= 25) extraBits.push(`gusts ${Math.round(d.gustsMax)} km/h`);
     const extra = extraBits.length
       ? `<span class="daily-gust">${extraBits.join(" · ")}</span>`
       : "";
+    const bestBadge = i === bestIdx
+      ? `<span class="daily-best-badge" title="Best day of the week">★</span>`
+      : "";
     item.innerHTML = `
-      <span class="daily-day">${day}</span>
+      <span class="daily-day">${day}${bestBadge}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
