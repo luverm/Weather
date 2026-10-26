@@ -1659,10 +1659,21 @@ function bindShare() {
     const unit = state.unit;
     const t = (v) => `${Math.round(unit === "F" ? v * 9 / 5 + 32 : v)}°${unit}`;
     const today = w.daily?.[0];
+    const tmrw = w.daily?.[1];
+    const days = w.daily || [];
+    const bestIdx = pickBestDay(days);
+    const bestLine = bestIdx > 0
+      ? `Best day: ${new Date(days[bestIdx].time).toLocaleDateString(undefined, { weekday: "long" })} (${t(days[bestIdx].tempMax)})`
+      : null;
+    const tmrwLine = tmrw
+      ? `Tomorrow: ${t(tmrw.tempMin)} / ${t(tmrw.tempMax)} · ${tmrw.pop}% precip`
+      : null;
     const lines = [
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
       today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
+      tmrwLine,
+      bestLine,
       `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
