@@ -101,6 +101,8 @@ const el = {
   weekendIconSat: $("#weekend-icon-sat"),
   weekendIconSun: $("#weekend-icon-sun"),
   forecastTrack: $("#forecast-track"),
+  rainSummary: $("#rain-summary"),
+  rainSummaryText: $("#rain-summary-text"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
   nowcastHeadline: $("#nowcast-headline"),
@@ -189,6 +191,7 @@ export const ui = {
     renderMoon(weather.moon);
     renderSun(weather);
     renderHourly(weather);
+    renderRainSummary(weather);
     renderDaily(weather);
     renderNowcast(weather);
     renderAdvice(weather);
@@ -926,6 +929,36 @@ function cardinal(deg) {
                 "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
   const i = Math.round(((deg % 360) + 360) % 360 / 22.5) % 16;
   return dirs[i];
+}
+
+function renderRainSummary(w) {
+  if (!el.rainSummary || !el.rainSummaryText) return;
+  const hours = (w.hourly || []).slice(0, 24);
+  if (!hours.length) { el.rainSummary.hidden = true; return; }
+  let total = 0;
+  let wetHours = 0;
+  let peakMm = 0;
+  let peakTs = null;
+  for (const h of hours) {
+    const mm = Math.max(0, h.precip || 0);
+    if (mm > 0) wetHours++;
+    total += mm;
+    if (mm > peakMm) { peakMm = mm; peakTs = h.time; }
+  }
+  el.rainSummary.hidden = false;
+  if (total < 0.1) {
+    el.rainSummary.className = "rain-summary dry";
+    el.rainSummaryText.textContent = "Dry next 24 h — no measurable precipitation";
+    return;
+  }
+  const totalLabel = total < 1
+    ? `${total.toFixed(1)} mm`
+    : `${Math.round(total)} mm`;
+  const peakLabel = peakTs ? ` · peak around ${fmtTime(peakTs)}` : "";
+  const bucket = total >= 15 ? "heavy" : total >= 4 ? "moderate" : "light";
+  el.rainSummary.className = `rain-summary ${bucket}`;
+  el.rainSummaryText.textContent =
+    `${totalLabel} in next 24 h · ${wetHours} wet ${wetHours === 1 ? "hour" : "hours"}${peakLabel}`;
 }
 
 function renderHourly(w) {

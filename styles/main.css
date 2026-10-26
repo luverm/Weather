@@ -1233,6 +1233,38 @@ kbd {
   position: relative;
 }
 .comfort-strip[hidden] { display: none; }
+
+.rain-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 6px;
+  padding: 4px 11px 4px 9px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  letter-spacing: 0.01em;
+  background: rgba(255,255,255,0.05);
+  color: var(--fg-dim);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.rain-summary[hidden] { display: none; }
+.rain-summary-icon { display: inline-flex; opacity: 0.9; }
+.rain-summary.dry { color: var(--fg-dim); }
+.rain-summary.light {
+  background: rgba(140, 200, 255, 0.1);
+  color: #a4d4ff;
+  border-color: rgba(140, 200, 255, 0.22);
+}
+.rain-summary.moderate {
+  background: rgba(106, 167, 255, 0.14);
+  color: #9bbdff;
+  border-color: rgba(106, 167, 255, 0.3);
+}
+.rain-summary.heavy {
+  background: rgba(79, 95, 232, 0.18);
+  color: #a9b2ff;
+  border-color: rgba(79, 95, 232, 0.4);
+}
 .cstrip-cell {
   position: relative;
   padding: 0;
