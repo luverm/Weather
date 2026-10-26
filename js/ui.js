@@ -862,11 +862,23 @@ function renderHourly(w) {
     const item = document.createElement("div");
     item.className = "forecast-item";
     item.dataset.ts = h.time;
+    // Rain bar: width scales with probability; hue deepens with mm/h.
+    const pop = Math.max(0, Math.min(100, h.pop || 0));
+    const precipMm = Math.max(0, h.precip || 0);
+    // Treat >= 2.5 mm/h as heavy, >= 0.5 as moderate, else light.
+    const intensity = precipMm >= 2.5 ? "heavy"
+      : precipMm >= 0.5 ? "moderate"
+      : pop > 0 ? "light" : "none";
+    const showPct = pop >= 20;
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
       <span class="forecast-icon">${iconFor(h.condition)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
-      <span class="forecast-pop ${h.pop < 20 ? "dim" : ""}">${h.pop}%</span>
+      <span class="forecast-pop ${showPct ? "" : "dim"}">${pop}%</span>
+      <span class="forecast-rainbar" data-intensity="${intensity}"
+            title="${pop}% chance · ${precipMm.toFixed(precipMm < 1 ? 1 : 0)} mm">
+        <span class="forecast-rainbar-fill" style="width:${pop}%"></span>
+      </span>
     `;
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
