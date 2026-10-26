@@ -200,6 +200,7 @@ export const ui = {
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
+  renderDocumentTitle(weather);
     // Save summary for the strip so chips can show current temp.
     if (state.place) {
       places.updateSummary(state.place, {
@@ -281,6 +282,19 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
   renderYesterdayChip(w);
+}
+
+function renderDocumentTitle(w) {
+  if (!w || w.temp == null) {
+    document.title = "Aether — Interactive Weather";
+    return;
+  }
+  const unit = state.unit === "F" ? "F" : "C";
+  const t = unit === "F" ? Math.round(w.temp * 9 / 5 + 32) : Math.round(w.temp);
+  const place = state.place?.name;
+  const label = capitalize(w.label || "");
+  const prefix = place ? `${t}° ${label} · ${place}` : `${t}° ${label}`;
+  document.title = `${prefix} — Aether`;
 }
 
 function renderYesterdayChip(w) {
