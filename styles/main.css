@@ -1631,6 +1631,11 @@ kbd {
 }
 .forecast-item:hover { background: var(--glass); transform: translateY(-2px); }
 .forecast-item.active { background: var(--glass-strong); }
+.forecast-item.is-night {
+  background: linear-gradient(180deg, rgba(10, 20, 40, 0.35), rgba(10, 20, 40, 0));
+}
+.forecast-item.is-night .forecast-icon { color: #c0c8e0; }
+.forecast-item.is-night .forecast-time { color: #8a93b0; }
 .forecast-time { font-size: 11px; letter-spacing: 0.08em; color: var(--fg-dim); text-transform: uppercase; }
 .forecast-icon { width: 26px; height: 26px; display: grid; place-items: center; color: var(--fg-muted); }
 .forecast-temp { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }

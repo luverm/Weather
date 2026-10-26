@@ -1093,7 +1093,7 @@ function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
   for (const h of (w.hourly || []).slice(0, 24)) {
     const item = document.createElement("div");
-    item.className = "forecast-item";
+    item.className = `forecast-item ${h.isDay ? "is-day" : "is-night"}`;
     item.dataset.ts = h.time;
     // Rain bar: width scales with probability; hue deepens with mm/h.
     const pop = Math.max(0, Math.min(100, h.pop || 0));
@@ -1105,7 +1105,7 @@ function renderHourly(w) {
     const showPct = pop >= 20;
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
-      <span class="forecast-icon">${iconFor(h.condition)}</span>
+      <span class="forecast-icon">${iconFor(h.condition, h.isDay !== false)}</span>
       <span class="forecast-temp">${Math.round(convertTemp(h.temp))}°</span>
       <span class="forecast-pop ${showPct ? "" : "dim"}">${pop}%</span>
       <span class="forecast-rainbar" data-intensity="${intensity}"
@@ -1391,10 +1391,15 @@ function renderNowcast(w) {
 }
 
 // ---------- Icons ----------
-function iconFor(condition) {
+function iconFor(condition, isDay = true) {
   const common = 'fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"';
   switch (condition) {
     case "clear":
+      if (!isDay) {
+        // Crescent moon drawn as a single filled path (no SVG mask, so it
+        // tolerates being inlined in many hourly cells without ID clashes).
+        return `<svg viewBox="0 0 24 24"><path d="M19.5 14.5A7 7 0 1 1 9.5 4.5a5 5 0 0 0 10 10z" fill="currentColor"/></svg>`;
+      }
       return `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" ${common}/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5" ${common}/></svg>`;
     case "clouds":
       return `<svg viewBox="0 0 24 24"><path d="M7 17a4 4 0 010-8 5 5 0 019.9-1A4 4 0 0117 17H7z" ${common}/></svg>`;
