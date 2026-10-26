@@ -1246,7 +1246,15 @@ function renderDailyDelta(days) {
   if (Math.abs(dPop) >= 20) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
   }
-  el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
+  // Weekly rain total — only mentioned when there's enough to notice.
+  const weekRain = days.reduce((sum, d) => sum + Math.max(0, d.precip || 0), 0);
+  const tomorrowLine = `Tomorrow: ${parts.join(" · ")}`;
+  if (weekRain >= 1) {
+    const rainLabel = weekRain < 10 ? weekRain.toFixed(1) : Math.round(weekRain);
+    el.dailyDelta.textContent = `${tomorrowLine} · week ${rainLabel} mm`;
+  } else {
+    el.dailyDelta.textContent = `${tomorrowLine} · dry week`;
+  }
 }
 
 function toggleDailyExpand(item, d, w) {
