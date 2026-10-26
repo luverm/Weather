@@ -329,6 +329,17 @@ installShortcuts({
 
 // ---------- Start ----------
 (async function init() {
+  // Deep link: ?lat=48.85&lon=2.35&name=Paris trumps everything else, so
+  // shared links drop you directly on the right city.
+  const params = new URLSearchParams(location.search);
+  const lat = parseFloat(params.get("lat"));
+  const lon = parseFloat(params.get("lon"));
+  if (isFinite(lat) && isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180) {
+    const name = params.get("name") || "Shared location";
+    await loadByCoords({ name, lat, lon });
+    return;
+  }
+
   // Prefer the most recent saved place if we have one — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();
@@ -337,8 +348,8 @@ installShortcuts({
     return;
   }
   try {
-    const { lat, lon } = await getLocation();
-    await loadByCoords({ name: "Current location", lat, lon });
+    const { lat: glat, lon: glon } = await getLocation();
+    await loadByCoords({ name: "Current location", lat: glat, lon: glon });
   } catch {
     await loadByCoords({ name: "Reykjavík", country: "Iceland", lat: 64.1466, lon: -21.9426 });
   }
