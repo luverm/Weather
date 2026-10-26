@@ -1342,6 +1342,28 @@ function renderNowcast(w) {
     el.nowcast.hidden = true;
     return;
   }
+  // Clicking anywhere on the banner (except on a bar) jumps to the radar.
+  // Setting role=button and tabindex makes it keyboard-reachable too.
+  if (!el.nowcast.dataset.clickBound) {
+    el.nowcast.setAttribute("role", "button");
+    el.nowcast.setAttribute("tabindex", "0");
+    el.nowcast.setAttribute("aria-label", "Jump to the live radar");
+    const jump = () => {
+      const radar = document.getElementById("radar-card");
+      if (!radar) return;
+      radar.scrollIntoView({ behavior: "smooth", block: "center" });
+      radar.classList.add("radar-flash");
+      setTimeout(() => radar.classList.remove("radar-flash"), 1200);
+    };
+    el.nowcast.addEventListener("click", (e) => {
+      if (e.target.closest(".nowcast-bar")) return; // bars have their own behavior
+      jump();
+    });
+    el.nowcast.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); jump(); }
+    });
+    el.nowcast.dataset.clickBound = "true";
+  }
   const inMin = Math.max(0, Math.round((first.time - Date.now()) / 60_000));
   const kind = first.code >= 71 && first.code <= 86 ? "Snow" : "Rain";
   el.nowcastHeadline.textContent = inMin === 0
