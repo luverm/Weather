@@ -187,6 +187,11 @@ export const ui = {
   setWeather(weather, { narrative } = {}) {
     state.weather = weather;
     state.sampledWeather = weather; // initially same as live
+    // Restore the place subtitle in case setLoading() left 'Fetching…' on it.
+    if (state.place) {
+      const sub = [state.place.admin1, state.place.country].filter(Boolean).join(", ");
+      el.placeSub.textContent = sub || "—";
+    }
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
@@ -1088,11 +1093,12 @@ function renderDaily(w) {
     const item = document.createElement("div");
     item.className = "daily-item";
     item.dataset.ts = d.time;
-    const gustLabel = (d.gustsMax && d.gustsMax >= 25)
-      ? ` · gusts ${Math.round(d.gustsMax)} km/h`
+    const extraBits = [];
+    if (d.pop >= 30) extraBits.push(`${d.pop}% rain`);
+    if (d.gustsMax && d.gustsMax >= 25) extraBits.push(`gusts ${Math.round(d.gustsMax)} km/h`);
+    const extra = extraBits.length
+      ? `<span class="daily-gust">${extraBits.join(" · ")}</span>`
       : "";
-    const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
-    const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
