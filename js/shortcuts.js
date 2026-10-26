@@ -65,8 +65,9 @@ export function installShortcuts(handlers) {
       handlers.toggleRadar?.();
       return;
     }
-    if (key === "ArrowLeft") { handlers.nudge?.(-1); e.preventDefault(); return; }
-    if (key === "ArrowRight") { handlers.nudge?.(1); e.preventDefault(); return; }
+    // Shift+arrow = fine (15 min) nudge; plain arrow = coarse (1 h).
+    if (key === "ArrowLeft") { handlers.nudge?.(e.shiftKey ? -0.25 : -1); e.preventDefault(); return; }
+    if (key === "ArrowRight") { handlers.nudge?.(e.shiftKey ? 0.25 : 1); e.preventDefault(); return; }
     if (key === "[") { handlers.cyclePlace?.(-1); e.preventDefault(); return; }
     if (key === "]") { handlers.cyclePlace?.(1); e.preventDefault(); return; }
     if (key === "b" || key === "B") { e.preventDefault(); handlers.jumpToBestDay?.(); return; }
