@@ -171,6 +171,7 @@ export const ui = {
     bindConditionTap();
     bindVersion();
     bindScrollTop();
+    bindScrubberJumps();
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
@@ -1975,6 +1976,22 @@ function bindConditionTap() {
   el.conditionLabel.addEventListener("keydown", (e) => {
     if (e.key === "Enter" || e.key === " ") { e.preventDefault(); announce(); }
   });
+}
+
+function bindScrubberJumps() {
+  const sr = document.getElementById("scrubber-sr-jump");
+  const ss = document.getElementById("scrubber-ss-jump");
+  const jump = (kind) => {
+    const w = state.weather;
+    if (!w?.daily?.length) return;
+    const now = Date.now();
+    for (const d of w.daily) {
+      const ts = kind === "sunrise" ? d.sunrise : d.sunset;
+      if (ts && ts > now) { state.handlers.onHourClick?.(ts); return; }
+    }
+  };
+  sr?.addEventListener("click", () => jump("sunrise"));
+  ss?.addEventListener("click", () => jump("sunset"));
 }
 
 function bindScrollTop() {

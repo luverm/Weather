@@ -610,6 +610,20 @@ html[data-reduce-motion="true"] *::after {
 }
 [data-scrubbing="true"] .scrubber-reset { opacity: 1; }
 .scrubber-reset:hover { color: var(--fg); background: var(--glass-strong); }
+.scrubber-jump {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--stroke);
+  color: var(--fg-muted);
+  cursor: pointer;
+  transition: color 200ms var(--ease), background 200ms var(--ease);
+}
+.scrubber-jump + .scrubber-jump { margin-left: 4px; }
+.scrubber-jump:hover { color: var(--fg); background: var(--glass-strong); }
+.scrubber-jump:focus-visible { outline: 2px solid rgba(255,255,255,0.3); outline-offset: 2px; }
 .scrubber-time {
   font-variant-numeric: tabular-nums;
   color: var(--fg);
