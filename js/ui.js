@@ -164,6 +164,7 @@ export const ui = {
     bindLegendToggles();
     bindAqExpand();
     bindBrand();
+    bindConditionTap();
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
@@ -1805,6 +1806,29 @@ function bindShare() {
     } catch (err) {
       if (err?.name !== "AbortError") ui.showToast("Share failed");
     }
+  });
+}
+
+function bindConditionTap() {
+  if (!el.conditionLabel) return;
+  el.conditionLabel.classList.add("tappable");
+  el.conditionLabel.setAttribute("role", "button");
+  el.conditionLabel.setAttribute("tabindex", "0");
+  el.conditionLabel.setAttribute("title", "More detail");
+  const announce = () => {
+    const w = state.sampledWeather || state.weather;
+    if (!w) return;
+    const bits = [];
+    if (w.cloudCover != null) bits.push(`Clouds ${Math.round(w.cloudCover)}%`);
+    if (w.visibility != null) bits.push(`Visibility ${(w.visibility / 1000).toFixed(1)} km`);
+    if (w.dewPoint != null) bits.push(`Dew ${Math.round(convertTemp(w.dewPoint))}°`);
+    if (w.pressure != null) bits.push(`${Math.round(w.pressure)} hPa`);
+    if (!bits.length) return;
+    ui.showToast(bits.join(" · "));
+  };
+  el.conditionLabel.addEventListener("click", announce);
+  el.conditionLabel.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); announce(); }
   });
 }
 
