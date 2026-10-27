@@ -144,6 +144,38 @@ export function buildAlerts(weather) {
     });
   }
 
+  // ---- Freeze transitions (temp crossing 0°) ----
+  // Useful heads-up for driving, plants, and pipes — matters more than
+  // the absolute value in temperate climates.
+  for (let i = 1; i < hours.length; i++) {
+    const a = hours[i - 1].temp, b = hours[i].temp;
+    if (a == null || b == null) continue;
+    if (a > 0 && b <= 0) {
+      out.push({
+        id: "freeze-down",
+        severity: "info",
+        title: "Dropping below freezing",
+        detail: `Around ${shortClock(hours[i].time)}.`,
+        ts: hours[i].time,
+      });
+      break;
+    }
+  }
+  for (let i = 1; i < hours.length; i++) {
+    const a = hours[i - 1].temp, b = hours[i].temp;
+    if (a == null || b == null) continue;
+    if (a <= 0 && b > 0) {
+      out.push({
+        id: "freeze-up",
+        severity: "info",
+        title: "Thaw: back above freezing",
+        detail: `Around ${shortClock(hours[i].time)}.`,
+        ts: hours[i].time,
+      });
+      break;
+    }
+  }
+
   // ---- Pressure change ----
   // Rapid falls (> 3 hPa over 3 h) often precede incoming weather; sharp
   // rises mean fast clearing. Both are worth a note.
