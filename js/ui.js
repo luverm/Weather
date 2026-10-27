@@ -108,6 +108,7 @@ const el = {
   weekendIconSun: $("#weekend-icon-sun"),
   forecastTrack: $("#forecast-track"),
   precipSummary: $("#precip-summary"),
+  bestDayChip: $("#best-day-chip"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
   nowcastHeadline: $("#nowcast-headline"),
@@ -1049,6 +1050,58 @@ function highlightHour(index) {
   items.forEach((it, i) => it.classList.toggle("active", i === index));
 }
 
+function dayScore(d) {
+  // Mild temp (ideal ~20°C), dry, low gusts, decent UV — tuned for a
+  // "pleasant outdoor day" score 0..100. Prefers the warmer side slightly.
+  if (d.tempMax == null) return -Infinity;
+  const temp = d.tempMax;
+  const tempDist = Math.min(14, Math.abs(temp - 22));
+  const tempScore = 100 - tempDist * 5; // 100 at 22°, 30 at 36°, 30 at 8°
+  const popPenalty = (d.pop ?? 0) * 0.5;
+  const precipPenalty = Math.min(40, (d.precip ?? 0) * 8);
+  const gustPenalty = Math.max(0, ((d.gustsMax ?? 0) - 25) * 1.0);
+  return tempScore - popPenalty - precipPenalty - gustPenalty;
+}
+
+function pickBestDay(days) {
+  // Prefer the earliest day that is clearly best; ignore today when the
+  // week has a visibly better future day (keeps "best" forward-looking).
+  if (!days?.length) return null;
+  const scored = days.map((d, i) => ({ d, i, score: dayScore(d) }));
+  // Sort descending by score, tie-break on earlier day.
+  scored.sort((a, b) => (b.score - a.score) || (a.i - b.i));
+  const best = scored[0];
+  if (!best || best.score < 40) return null;
+  // Only call it out if the best day is noticeably better than today.
+  const todayScore = scored.find((s) => s.i === 0)?.score ?? -Infinity;
+  if (best.i === 0 || best.score - todayScore >= 10) return best;
+  return null;
+}
+
+function renderBestDayChip(days, best) {
+  if (!el.bestDayChip) return;
+  if (!best) { el.bestDayChip.hidden = true; return; }
+  const d = best.d;
+  const tz = state.weather?.timezone;
+  const dt = new Date(d.time);
+  const dayName = best.i === 0 ? "Today" : dt.toLocaleDateString(undefined, {
+    weekday: "short", ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  const bits = [];
+  if (d.pop != null) bits.push(d.pop < 20 ? "dry" : d.pop < 50 ? "mostly dry" : `${d.pop}% rain`);
+  if (d.tempMax != null) bits.push(`${Math.round(convertTemp(d.tempMax))}°`);
+  if (d.gustsMax != null && d.gustsMax < 25) bits.push("light wind");
+  el.bestDayChip.hidden = false;
+  el.bestDayChip.innerHTML = `<span class="best-day-star" aria-hidden="true"></span><span>Best: ${dayName} · ${bits.join(", ")}</span>`;
+  el.bestDayChip.setAttribute("title", `Best outdoor conditions this week — ${dayName}`);
+  el.bestDayChip.onclick = () => {
+    const row = el.dailyTrack.querySelector(`.daily-item[data-ts="${d.time}"]`);
+    row?.scrollIntoView({ behavior: "smooth", block: "center" });
+    row?.classList.add("flash");
+    setTimeout(() => row?.classList.remove("flash"), 900);
+  };
+}
+
 function renderDaily(w) {
   el.dailyTrack.innerHTML = "";
   const days = (w.daily || []).slice(0, 7);
@@ -1056,6 +1109,8 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  const best = pickBestDay(days);
+  renderBestDayChip(days, best);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1074,6 +1129,7 @@ function renderDaily(w) {
     const width = ((d.tempMax - d.tempMin) / span) * 100;
     const item = document.createElement("div");
     item.className = "daily-item";
+    if (best && best.i === i) item.classList.add("best-day");
     item.dataset.ts = d.time;
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
