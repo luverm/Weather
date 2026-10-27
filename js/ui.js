@@ -57,6 +57,9 @@ const el = {
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
+  sunRiseTemp: $("#sun-rise-temp"),
+  sunSetTemp: $("#sun-set-temp"),
+  sunNoonTemp: $("#sun-noon-temp"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
   windNeedle: $("#wind-needle"),
@@ -672,8 +675,43 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderSunTemps(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function tempAtTime(w, ts) {
+  if (!ts || !w.hourly?.length) return null;
+  let best = null, bestDiff = Infinity;
+  for (const h of w.hourly) {
+    const d = Math.abs(h.time - ts);
+    if (d < bestDiff) { bestDiff = d; best = h; }
+  }
+  // Only report when the sample is within 90 minutes of the target.
+  if (bestDiff > 90 * 60_000) return null;
+  return best?.temp ?? null;
+}
+
+function renderSunTemps(w) {
+  const setTemp = (node, c) => {
+    if (!node) return;
+    node.textContent = c == null ? "" : `${Math.round(convertTemp(c))}°`;
+  };
+  if (!w?.hourly?.length) {
+    setTemp(el.sunRiseTemp, null);
+    setTemp(el.sunSetTemp, null);
+    setTemp(el.sunNoonTemp, null);
+    return;
+  }
+  setTemp(el.sunRiseTemp, tempAtTime(w, w.sunrise));
+  setTemp(el.sunSetTemp, tempAtTime(w, w.sunset));
+  // "Daylight" column shows the daytime temperature span today.
+  const today = w.daily?.[0];
+  if (el.sunNoonTemp) {
+    el.sunNoonTemp.textContent = (today?.tempMin != null && today?.tempMax != null)
+      ? `${Math.round(convertTemp(today.tempMin))}°–${Math.round(convertTemp(today.tempMax))}°`
+      : "";
+  }
 }
 
 // Golden-hour: 60 min after sunrise, 60 min before sunset — clipped if the
