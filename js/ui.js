@@ -1486,7 +1486,15 @@ function toggleDailyExpand(item, d, w) {
     const summary = document.createElement("div");
     summary.className = "daily-expand";
     summary.style.gridTemplateColumns = "1fr";
-    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${Math.round(d.gustsMax ?? 0)} km/h · UV ${Math.round(d.uvMax ?? 0)}</span>`;
+    const sunBits = [];
+    if (d.sunrise) sunBits.push(`☀ ${fmtTime(d.sunrise)}`);
+    if (d.sunset) sunBits.push(`☾ ${fmtTime(d.sunset)}`);
+    if (d.sunrise && d.sunset) {
+      const h = Math.round((d.sunset - d.sunrise) / 60_000);
+      sunBits.push(`${Math.floor(h / 60)}h ${h % 60}m daylight`);
+    }
+    const sunLine = sunBits.length ? `<br>${sunBits.join(" · ")}` : "";
+    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${Math.round(d.gustsMax ?? 0)} km/h · UV ${Math.round(d.uvMax ?? 0)}${sunLine}</span>`;
     item.appendChild(summary);
     item.dataset.expanded = "true";
     return;
