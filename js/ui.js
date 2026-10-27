@@ -141,6 +141,7 @@ export const ui = {
     bindRefresh();
     bindSettings();
     bindTilt();
+    bindLegendToggles();
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
@@ -1436,6 +1437,30 @@ function bindShare() {
     } catch (err) {
       if (err?.name !== "AbortError") ui.showToast("Share failed");
     }
+  });
+}
+
+function bindLegendToggles() {
+  const card = document.getElementById("chart-card");
+  if (!card) return;
+  // Restore prior preference.
+  for (const key of ["feels", "gust", "precip"]) {
+    const off = localStorage.getItem(`aether:legend:${key}`) === "0";
+    if (off) card.setAttribute(`data-hide-${key}`, "true");
+  }
+  const buttons = card.querySelectorAll(".legend-item[data-series]");
+  buttons.forEach((btn) => {
+    const key = btn.dataset.series;
+    const off = card.getAttribute(`data-hide-${key}`) === "true";
+    btn.setAttribute("aria-pressed", off ? "false" : "true");
+    btn.addEventListener("click", () => {
+      const isPressed = btn.getAttribute("aria-pressed") === "true";
+      const nextPressed = !isPressed;
+      btn.setAttribute("aria-pressed", nextPressed ? "true" : "false");
+      if (nextPressed) card.removeAttribute(`data-hide-${key}`);
+      else card.setAttribute(`data-hide-${key}`, "true");
+      localStorage.setItem(`aether:legend:${key}`, nextPressed ? "1" : "0");
+    });
   });
 }
 

@@ -698,10 +698,38 @@ html[data-reduce-motion="true"] *::after {
   color: var(--fg-dim);
 }
 .chart-legend {
-  display: inline-flex; align-items: center; gap: 8px;
+  display: inline-flex; align-items: center; gap: 4px;
   font-size: 11px; color: var(--fg-dim);
   margin-left: auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
+.chart-legend .legend-item {
+  display: inline-flex; align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 2px 6px;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: color 160ms var(--ease), background 160ms var(--ease), border-color 160ms var(--ease), opacity 160ms var(--ease);
+}
+.chart-legend .legend-item.legend-static { cursor: default; }
+.chart-legend button.legend-item:hover {
+  color: var(--fg);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+.chart-legend button.legend-item[aria-pressed="false"] {
+  opacity: 0.42;
+  text-decoration: line-through;
+  text-decoration-color: rgba(255, 255, 255, 0.3);
+}
+.chart-legend button.legend-item[aria-pressed="false"] .legend-swatch { opacity: 0.4; }
+.chart-card[data-hide-feels="true"] #chart-feels-line { display: none; }
+.chart-card[data-hide-gust="true"] #chart-gust-line { display: none; }
+.chart-card[data-hide-precip="true"] #chart-precip { display: none; }
 .legend-swatch {
   display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle;
   margin-right: 4px;
