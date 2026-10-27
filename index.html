@@ -116,7 +116,7 @@
     <nav id="places-strip" class="places-strip" aria-label="Saved locations" hidden></nav>
 
     <!-- Smart alerts strip (synthesized from forecast). -->
-    <div id="alerts-strip" class="alerts-strip" role="region" aria-label="Weather alerts" hidden></div>
+    <div id="alerts-strip" class="alerts-strip" role="region" aria-label="Weather alerts" aria-live="polite" hidden></div>
 
     <!-- Perfect-weather celebration pill. -->
     <div id="perfect-chip" class="perfect-chip" hidden></div>
@@ -510,7 +510,7 @@
 
     <footer class="hint">
       <span class="dot"></span>
-      <span id="hint-text">Drag the slider, hover the chart, or press <kbd>?</kbd> for shortcuts.</span>
+      <span id="hint-text" aria-live="polite">Drag the slider, hover the chart, or press <kbd>?</kbd> for shortcuts.</span>
       <span id="fetched-ago" class="fetched-ago" aria-live="polite"></span>
     </footer>
 
