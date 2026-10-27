@@ -1238,7 +1238,8 @@ function cardinal(deg) {
 function renderHourly(w) {
   el.forecastTrack.innerHTML = "";
   for (const h of (w.hourly || []).slice(0, 24)) {
-    const item = document.createElement("div");
+    const item = document.createElement("button");
+    item.type = "button";
     item.className = "forecast-item";
     item.setAttribute("role", "listitem");
     item.setAttribute("aria-label",

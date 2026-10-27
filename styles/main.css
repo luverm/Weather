@@ -1965,6 +1965,15 @@ html[data-hide-radar="true"] .radar { display: none; }
   scroll-snap-align: start;
   transition: background 200ms var(--ease), transform 200ms var(--ease);
   cursor: pointer;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: center;
+}
+.forecast-item:focus-visible {
+  outline: 2px solid rgba(255,255,255,0.3);
+  outline-offset: 2px;
 }
 .forecast-item:hover { background: var(--glass); transform: translateY(-2px); }
 .forecast-item.active {
