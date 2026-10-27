@@ -1850,7 +1850,13 @@ kbd {
   color: var(--fg-dim);
   letter-spacing: 0.12em;
   margin-left: 8px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 999px;
+  transition: color 160ms var(--ease), background 160ms var(--ease);
 }
+.fetched-ago:hover { color: var(--fg); background: rgba(255,255,255,0.05); }
+.fetched-ago:focus-visible { outline: 2px solid rgba(255,255,255,0.3); outline-offset: 2px; }
 .fetched-ago:empty { display: none; }
 .fetched-ago.stale { color: #ffb86b; }
 

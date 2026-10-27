@@ -1637,6 +1637,20 @@ function bindInstallPrompt() {
 function bindRefresh() {
   if (!el.refreshBtn) return;
   el.refreshBtn.addEventListener("click", () => state.handlers.onRefresh?.());
+  // The small "updated Xm ago" indicator in the footer doubles as a refresh
+  // link once the data is at least a minute old.
+  if (el.fetchedAgo) {
+    el.fetchedAgo.setAttribute("role", "button");
+    el.fetchedAgo.setAttribute("tabindex", "0");
+    el.fetchedAgo.setAttribute("title", "Click to refresh");
+    el.fetchedAgo.addEventListener("click", () => state.handlers.onRefresh?.());
+    el.fetchedAgo.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        state.handlers.onRefresh?.();
+      }
+    });
+  }
 }
 
 function bindSettings() {
