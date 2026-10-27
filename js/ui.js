@@ -1920,11 +1920,22 @@ ui.isReduceMotion = () => localStorage.getItem("aether:reduceMotion") === "1";
 function startFetchedTicker() {
   const update = () => {
     if (!el.fetchedAgo || !state.weather?.fetchedAt) {
-      if (el.fetchedAgo) el.fetchedAgo.textContent = "";
+      if (el.fetchedAgo) {
+        el.fetchedAgo.textContent = "";
+        el.fetchedAgo.removeAttribute("title");
+      }
       return;
     }
     const ms = Date.now() - state.weather.fetchedAt;
     const minutes = Math.max(0, Math.floor(ms / 60_000));
+    // Tooltip: exact absolute time of the fetch, since the relative label
+    // alone makes it hard to tell "a few minutes" from "half an hour".
+    try {
+      const abs = new Intl.DateTimeFormat(undefined, {
+        hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+      }).format(new Date(state.weather.fetchedAt));
+      el.fetchedAgo.title = `Fetched ${abs} · click to refresh`;
+    } catch { el.fetchedAgo.title = "Click to refresh"; }
     const label =
       minutes < 1 ? "Just now" :
       minutes < 60 ? `Updated ${minutes}m ago` :
