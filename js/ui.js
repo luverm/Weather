@@ -172,6 +172,7 @@ export const ui = {
     bindVersion();
     bindScrollTop();
     bindScrubberJumps();
+    bindHeroSwipe();
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
@@ -1993,6 +1994,29 @@ function bindConditionTap() {
   el.conditionLabel.addEventListener("click", announce);
   el.conditionLabel.addEventListener("keydown", (e) => {
     if (e.key === "Enter" || e.key === " ") { e.preventDefault(); announce(); }
+  });
+}
+
+function bindHeroSwipe() {
+  // Horizontal swipe on the hero cycles saved cities (same as [ and ]
+  // keys). No vertical cost — a diagonal gesture lets regular page
+  // scrolling win. Only reacts to touch pointers so a mouse drag inside
+  // the tilt handler keeps its usual behavior.
+  if (!el.heroInner) return;
+  let start = null;
+  el.heroInner.addEventListener("pointerdown", (e) => {
+    if (e.pointerType !== "touch") return;
+    start = { x: e.clientX, y: e.clientY, t: Date.now() };
+  });
+  el.heroInner.addEventListener("pointerup", (e) => {
+    if (!start || e.pointerType !== "touch") { start = null; return; }
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    const dt = Date.now() - start.t;
+    start = null;
+    if (dt > 700) return; // slow drag isn't a swipe
+    if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.6) return;
+    state.handlers.cyclePlace?.(dx < 0 ? 1 : -1);
   });
 }
 

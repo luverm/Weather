@@ -275,6 +275,15 @@ function goHome() {
   else useGeolocation();
 }
 
+function cyclePlace(dir) {
+  const list = places.all();
+  if (list.length < 2) return;
+  const currentId = app.place ? places.idFor(app.place) : null;
+  const idx = Math.max(0, list.findIndex((p) => places.idFor(p) === currentId));
+  const next = list[(idx + dir + list.length) % list.length];
+  if (next) loadByCoords(next);
+}
+
 ui.init({
   onSearchSelect: (place) => { places.add(place); loadByCoords(place); },
   onLocate: () => useGeolocation(),
@@ -283,6 +292,7 @@ ui.init({
   onReduceMotion: (on) => setReducedMotion(on),
   onPlaceClick: (place) => loadByCoords(place),
   onHome: () => goHome(),
+  cyclePlace,
   onHourClick: (ts) => {
     clock.setOffset(ts - Date.now());
     scrubber.sync();
@@ -329,14 +339,7 @@ installShortcuts({
     ui.setPlace(app.place);
     if (radar) radar.setPins(places.all(), places.idFor(app.place));
   },
-  cyclePlace: (dir) => {
-    const list = places.all();
-    if (list.length < 2) return;
-    const currentId = app.place ? places.idFor(app.place) : null;
-    const idx = Math.max(0, list.findIndex((p) => places.idFor(p) === currentId));
-    const next = list[(idx + dir + list.length) % list.length];
-    if (next) loadByCoords(next);
-  },
+  cyclePlace,
   nudge: (hours) => {
     clock.setOffset(clock.offset() + hours * 3600_000);
     scrubber.sync();
