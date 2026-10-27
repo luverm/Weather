@@ -8,6 +8,16 @@ const PAD_RIGHT = 6;
 const PAD_TOP = 16;
 const PAD_BOT = 22;
 
+// Hourly precip bar fill, driven by mm/hr intensity. Bands are rough NWS
+// categories: trace, light, moderate, heavy.
+function precipColor(mm) {
+  if (mm < 0.1) return "#9ad1ff";       // trace — pale blue
+  if (mm < 1)   return "#6ab6f5";       // light — blue
+  if (mm < 4)   return "#4e9ee0";       // moderate — deeper blue
+  if (mm < 10)  return "#a46ad8";       // heavy — purple
+  return "#ff6a6a";                     // torrential — red
+}
+
 export class HourlyChart {
   constructor({ svgEl, hoverEl, popoverEl, onHoverHour, getUnit, getTimezone }) {
     this.svg = svgEl;
@@ -226,7 +236,9 @@ export class HourlyChart {
       }
     }
 
-    // Precipitation probability bars (0-100% -> 0..12px height)
+    // Precipitation probability bars (0-100% -> 0..26px height). Color
+    // shifts from pale blue (low intensity) through teal to red based on
+    // mm/hr, so a line of bars reads intensity, not just probability.
     const precipG = this.svg.querySelector("#chart-precip");
     precipG.innerHTML = "";
     const barW = Math.max(4, innerW / this.hours.length - 3);
@@ -242,7 +254,8 @@ export class HourlyChart {
       r.setAttribute("width", barW.toFixed(1));
       r.setAttribute("height", barH.toFixed(1));
       r.setAttribute("rx", "1.5");
-      r.setAttribute("opacity", (0.35 + (pop / 100) * 0.55).toFixed(2));
+      r.setAttribute("fill", precipColor(h.precip || 0));
+      r.setAttribute("opacity", (0.4 + (pop / 100) * 0.5).toFixed(2));
       precipG.appendChild(r);
     });
 
