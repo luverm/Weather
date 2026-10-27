@@ -42,6 +42,7 @@ const el = {
   aqCard: $("#aq-card"),
   aqTrendLine: $("#aq-trend-line"),
   aqTrendFill: $("#aq-trend-fill"),
+  aqBreakdown: $("#aq-breakdown"),
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
@@ -150,6 +151,7 @@ export const ui = {
     bindSettings();
     bindTilt();
     bindLegendToggles();
+    bindAqExpand();
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
@@ -475,6 +477,43 @@ function renderAirQuality(aq) {
   el.aqDetail.textContent =
     `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
   renderAqTrend(aq);
+  renderAqBreakdown(aq);
+}
+
+// Reference thresholds roughly aligned with WHO/EPA "unhealthy" levels so
+// the bars convey severity, not just a raw number.
+const AQ_POLLUTANTS = [
+  { key: "pm25", label: "PM2.5", unit: "μg/m³", max: 55 },
+  { key: "pm10", label: "PM10",  unit: "μg/m³", max: 150 },
+  { key: "o3",   label: "O₃",    unit: "μg/m³", max: 180 },
+  { key: "no2",  label: "NO₂",   unit: "μg/m³", max: 200 },
+  { key: "co",   label: "CO",    unit: "μg/m³", max: 10000 },
+];
+
+function pollutantColor(frac) {
+  if (frac < 0.3) return "#78d06a";
+  if (frac < 0.6) return "#ffd36a";
+  if (frac < 0.85) return "#ff9f5c";
+  return "#ff6a6a";
+}
+
+function renderAqBreakdown(aq) {
+  if (!el.aqBreakdown) return;
+  el.aqBreakdown.innerHTML = AQ_POLLUTANTS.map((p) => {
+    const v = aq?.[p.key];
+    const frac = v == null ? 0 : Math.max(0, Math.min(1, v / p.max));
+    const color = pollutantColor(frac);
+    const valueText = v == null ? "—" : `${v >= 100 ? Math.round(v) : v.toFixed(1)}`;
+    return `
+      <li>
+        <span class="aq-pollutant-label">${p.label}</span>
+        <div class="aq-bar-track" style="color:${color}">
+          <div class="aq-bar-fill" style="width:${(frac * 100).toFixed(1)}%"></div>
+        </div>
+        <span class="aq-pollutant-value">${valueText} <span style="opacity:0.6">${p.unit}</span></span>
+      </li>
+    `;
+  }).join("");
 }
 
 function renderAqTrend(aq) {
@@ -1573,6 +1612,21 @@ function bindShare() {
     } catch (err) {
       if (err?.name !== "AbortError") ui.showToast("Share failed");
     }
+  });
+}
+
+function bindAqExpand() {
+  if (!el.aqCard) return;
+  const toggle = () => {
+    const open = el.aqCard.getAttribute("data-expanded") === "true";
+    const next = !open;
+    el.aqCard.setAttribute("data-expanded", next ? "true" : "false");
+    el.aqCard.setAttribute("aria-expanded", next ? "true" : "false");
+    el.aqBreakdown?.setAttribute("aria-hidden", next ? "false" : "true");
+  };
+  el.aqCard.addEventListener("click", toggle);
+  el.aqCard.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); }
   });
 }
 
