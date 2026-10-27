@@ -208,6 +208,15 @@ export const ui = {
   setWeather(weather, { narrative } = {}) {
     state.weather = weather;
     state.sampledWeather = weather; // initially same as live
+    // Brief pulse on the brand mark so the user sees "fresh data landed".
+    const mark = document.querySelector(".brand-mark");
+    if (mark) {
+      mark.classList.remove("fetched");
+      // Reflow to retrigger the animation.
+      void mark.offsetWidth;
+      mark.classList.add("fetched");
+      setTimeout(() => mark.classList.remove("fetched"), 1000);
+    }
     renderLiveValues(weather);
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
