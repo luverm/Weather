@@ -90,6 +90,9 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcGoldenRise: $("#sun-arc-golden-rise"),
+  sunArcGoldenSet: $("#sun-arc-golden-set"),
+  sunGoldenBadge: $("#sun-golden-badge"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -525,34 +528,70 @@ function renderSun(w) {
   scheduleSunArc(w);
 }
 
+// Golden-hour: 60 min after sunrise, 60 min before sunset — clipped if the
+// day is too short to fit the full window.
+const GOLDEN_HOUR_MS = 60 * 60_000;
+
+function goldenWindows(sunrise, sunset) {
+  if (!sunrise || !sunset || sunset <= sunrise) return null;
+  const day = sunset - sunrise;
+  const span = Math.min(GOLDEN_HOUR_MS, Math.floor(day / 3));
+  return {
+    morning: { start: sunrise, end: sunrise + span },
+    evening: { start: sunset - span, end: sunset },
+    span,
+  };
+}
+
+function arcPoint(frac) {
+  const t = clamp01(frac);
+  const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
+  const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
+  return { x, y };
+}
+
 function scheduleSunArc(w) {
   if (!el.sunArcMarker || !el.sunArcPath) return;
   if (state.sunArcTimer) { clearInterval(state.sunArcTimer); state.sunArcTimer = null; }
   if (!w?.sunrise || !w?.sunset) return;
 
+  const sr = w.sunrise, ss = w.sunset;
+  const win = goldenWindows(sr, ss);
+
+  // Place the two golden-hour markers once per load — they don't move.
+  if (win && el.sunArcGoldenRise && el.sunArcGoldenSet) {
+    const morningFrac = (win.morning.end - sr) / (ss - sr);
+    const eveningFrac = (win.evening.start - sr) / (ss - sr);
+    const mp = arcPoint(morningFrac);
+    const ep = arcPoint(eveningFrac);
+    el.sunArcGoldenRise.setAttribute("cx", mp.x.toFixed(1));
+    el.sunArcGoldenRise.setAttribute("cy", mp.y.toFixed(1));
+    el.sunArcGoldenSet.setAttribute("cx", ep.x.toFixed(1));
+    el.sunArcGoldenSet.setAttribute("cy", ep.y.toFixed(1));
+  } else {
+    if (el.sunArcGoldenRise) el.sunArcGoldenRise.setAttribute("cx", "-10");
+    if (el.sunArcGoldenSet) el.sunArcGoldenSet.setAttribute("cx", "-10");
+  }
+
   const update = () => {
     const now = Date.now();
-    const sr = w.sunrise, ss = w.sunset;
     let frac;
-    if (now < sr) {
-      // Before sunrise: ride the night arc fraction toward 0 (left horizon).
-      frac = 0;
-    } else if (now > ss) {
-      frac = 1;
-    } else {
-      frac = (now - sr) / (ss - sr);
-    }
-    // Quadratic Bezier from (10,74) to (190,74) via (100,-26). The midpoint
-    // (50% t) reaches y = 0.5*(74) + 0.5*(74 + 2*(-26-74)/2*(...)) — easier
-    // to evaluate the curve directly.
-    const t = clamp01(frac);
-    const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
-    const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
-    el.sunArcMarker.setAttribute("cx", x.toFixed(1));
-    el.sunArcMarker.setAttribute("cy", y.toFixed(1));
-    // After sunset, dim the marker so it visually settles.
+    if (now < sr) frac = 0;
+    else if (now > ss) frac = 1;
+    else frac = (now - sr) / (ss - sr);
+    const p = arcPoint(frac);
+    el.sunArcMarker.setAttribute("cx", p.x.toFixed(1));
+    el.sunArcMarker.setAttribute("cy", p.y.toFixed(1));
     const isUp = now >= sr && now <= ss;
     el.sunArcMarker.style.opacity = isUp ? "1" : "0.45";
+
+    // Light up the active golden-hour marker.
+    if (win) {
+      const inMorning = now >= win.morning.start && now <= win.morning.end;
+      const inEvening = now >= win.evening.start && now <= win.evening.end;
+      el.sunArcGoldenRise?.setAttribute("data-active", inMorning ? "true" : "false");
+      el.sunArcGoldenSet?.setAttribute("data-active", inEvening ? "true" : "false");
+    }
   };
   update();
   state.sunArcTimer = setInterval(update, 60_000);
@@ -563,25 +602,72 @@ function clamp01(v) { return Math.max(0, Math.min(1, v)); }
 function scheduleSunCountdown(w) {
   if (state.sunTimer) { clearInterval(state.sunTimer); state.sunTimer = null; }
   if (!w?.daily?.length) return;
+
+  // Pre-compute golden-hour windows for every day in the daily forecast so
+  // the countdown can reach into tomorrow once today's windows are spent.
+  const goldens = w.daily
+    .map((d) => ({ day: d, win: goldenWindows(d.sunrise, d.sunset) }))
+    .filter((x) => x.win);
+
+  const fmtDur = (mins) => mins >= 60
+    ? `${Math.floor(mins / 60)}h ${mins % 60}m`
+    : `${mins}m`;
+
   const update = () => {
     const now = Date.now();
+
+    // If we are inside a golden-hour window right now, show it ending.
+    let activeGolden = null;
+    for (const { win } of goldens) {
+      if (now >= win.morning.start && now <= win.morning.end) { activeGolden = win.morning; break; }
+      if (now >= win.evening.start && now <= win.evening.end) { activeGolden = win.evening; break; }
+    }
+    if (activeGolden) {
+      const mins = Math.max(0, Math.round((activeGolden.end - now) / 60_000));
+      if (el.sunNextLabel) el.sunNextLabel.textContent = "Golden hour ends in";
+      if (el.sunCountdown) el.sunCountdown.textContent = fmtDur(mins);
+      if (el.sunGoldenBadge) { el.sunGoldenBadge.hidden = false; el.sunGoldenBadge.textContent = "Now"; }
+      return;
+    }
+
+    // Otherwise find the next event: sunrise / sunset / upcoming golden.
     let nextTs = null, nextKind = null;
     for (const d of w.daily) {
       for (const [ts, kind] of [[d.sunrise, "Sunrise"], [d.sunset, "Sunset"]]) {
         if (ts && ts > now && (!nextTs || ts < nextTs)) { nextTs = ts; nextKind = kind; }
       }
     }
+    // Nearest upcoming golden-hour start (either morning or evening).
+    let nextGoldenStart = null;
+    for (const { win } of goldens) {
+      for (const g of [win.morning, win.evening]) {
+        if (g.start > now && (!nextGoldenStart || g.start < nextGoldenStart)) {
+          nextGoldenStart = g.start;
+        }
+      }
+    }
+    // If golden hour starts within 90 min AND before the next sunrise/sunset,
+    // promote it to the headline (otherwise sunrise/sunset is more useful).
+    const goldenSoon = nextGoldenStart != null
+      && nextGoldenStart - now <= 90 * 60_000
+      && (nextTs == null || nextGoldenStart <= nextTs);
+    if (goldenSoon) {
+      const mins = Math.max(0, Math.round((nextGoldenStart - now) / 60_000));
+      if (el.sunNextLabel) el.sunNextLabel.textContent = "Golden hour in";
+      if (el.sunCountdown) el.sunCountdown.textContent = fmtDur(mins);
+      if (el.sunGoldenBadge) { el.sunGoldenBadge.hidden = false; el.sunGoldenBadge.textContent = "Soon"; }
+      return;
+    }
+
+    if (el.sunGoldenBadge) el.sunGoldenBadge.hidden = true;
     if (!nextTs) {
       if (el.sunCountdown) el.sunCountdown.textContent = "";
       if (el.sunNextLabel) el.sunNextLabel.textContent = "Sun";
       return;
     }
     const mins = Math.max(0, Math.round((nextTs - now) / 60_000));
-    const label = mins >= 60
-      ? `${Math.floor(mins / 60)}h ${mins % 60}m`
-      : `${mins}m`;
     if (el.sunNextLabel) el.sunNextLabel.textContent = `${nextKind} in`;
-    if (el.sunCountdown) el.sunCountdown.textContent = label;
+    if (el.sunCountdown) el.sunCountdown.textContent = fmtDur(mins);
   };
   update();
   state.sunTimer = setInterval(update, 30_000);
