@@ -162,6 +162,7 @@ export const ui = {
     bindTilt();
     bindLegendToggles();
     bindAqExpand();
+    bindBrand();
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
@@ -1765,6 +1766,12 @@ function bindShare() {
       if (err?.name !== "AbortError") ui.showToast("Share failed");
     }
   });
+}
+
+function bindBrand() {
+  const btn = document.getElementById("brand-home");
+  if (!btn) return;
+  btn.addEventListener("click", () => state.handlers.onHome?.());
 }
 
 function bindAqExpand() {

@@ -261,6 +261,12 @@ function setReducedMotion(on) {
   }
 }
 
+function goHome() {
+  const saved = places.all();
+  if (saved.length) loadByCoords(saved[0]);
+  else useGeolocation();
+}
+
 ui.init({
   onSearchSelect: (place) => { places.add(place); loadByCoords(place); },
   onLocate: () => useGeolocation(),
@@ -268,6 +274,7 @@ ui.init({
   onRefresh: () => refreshWeather(),
   onReduceMotion: (on) => setReducedMotion(on),
   onPlaceClick: (place) => loadByCoords(place),
+  onHome: () => goHome(),
   onHourClick: (ts) => {
     clock.setOffset(ts - Date.now());
     scrubber.sync();
