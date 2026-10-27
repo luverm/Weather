@@ -23,6 +23,7 @@ const el = {
   feelsLike: $("#feels-like"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
+  tempAnomaly: $("#temp-anomaly"),
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
@@ -294,6 +295,31 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  renderTempAnomaly(w);
+}
+
+function renderTempAnomaly(w) {
+  if (!el.tempAnomaly) return;
+  const days = w.daily || [];
+  if (days.length < 3) { el.tempAnomaly.hidden = true; return; }
+  const today = days[0];
+  if (today?.tempMax == null || today?.tempMin == null) { el.tempAnomaly.hidden = true; return; }
+  // Compare today's mean to the mean of the remaining days we have.
+  const todayMean = (today.tempMax + today.tempMin) / 2;
+  const rest = days.slice(1).filter((d) => d.tempMax != null && d.tempMin != null);
+  if (rest.length < 2) { el.tempAnomaly.hidden = true; return; }
+  const restMean = rest.reduce((s, d) => s + (d.tempMax + d.tempMin) / 2, 0) / rest.length;
+  const deltaC = todayMean - restMean;
+  // Convert span to active unit (°F spans are 1.8× °C).
+  const deltaDisplay = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
+  const absD = Math.abs(deltaDisplay);
+  if (absD < 1.2) { el.tempAnomaly.hidden = true; return; }
+  const dir = deltaDisplay > 0 ? "warm" : "cool";
+  const arrow = deltaDisplay > 0 ? "▲" : "▼";
+  const word = deltaDisplay > 0 ? "warmer" : "cooler";
+  el.tempAnomaly.hidden = false;
+  el.tempAnomaly.setAttribute("data-dir", dir);
+  el.tempAnomaly.innerHTML = `<span class="temp-anomaly-arrow">${arrow}</span><span>${Math.round(absD)}° ${word} than the week</span>`;
 }
 
 function renderDayRange(w) {
