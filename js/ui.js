@@ -166,6 +166,7 @@ export const ui = {
     bindAqExpand();
     bindBrand();
     bindConditionTap();
+    bindVersion();
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
@@ -1856,6 +1857,24 @@ function bindConditionTap() {
   el.conditionLabel.addEventListener("keydown", (e) => {
     if (e.key === "Enter" || e.key === " ") { e.preventDefault(); announce(); }
   });
+}
+
+function bindVersion() {
+  const node = document.getElementById("settings-version");
+  if (!node || !navigator.serviceWorker) return;
+  // Peek at the active controller via its scriptURL — the version is
+  // encoded in CACHE_VERSION in sw.js and bumped per round.
+  const render = (ver) => { node.textContent = ver || "offline"; };
+  navigator.serviceWorker.ready.then((reg) => {
+    // Ask the sw for its cache name by sending a message, if supported.
+    const sw = reg.active;
+    if (!sw) { render("installing…"); return; }
+    const channel = new MessageChannel();
+    channel.port1.onmessage = (e) => render(e.data?.version);
+    try { sw.postMessage({ type: "version" }, [channel.port2]); } catch { /* ignore */ }
+    // Fallback: show a short-form "live".
+    setTimeout(() => { if (node.textContent === "v—") render("live"); }, 1000);
+  }).catch(() => render("offline"));
 }
 
 function bindBrand() {

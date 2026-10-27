@@ -1,7 +1,7 @@
 // Simple service worker: cache the shell, network-first for everything else.
 // Bump CACHE_VERSION on any deploy that changes which files exist.
 
-const CACHE_VERSION = "aether-v44";
+const CACHE_VERSION = "aether-v45";
 const SHELL = [
   "./",
   "./index.html",
@@ -34,6 +34,12 @@ const SHELL = [
   "./js/scenes/lightning.js",
   "./js/scenes/wind.js",
 ];
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "version") {
+    event.ports?.[0]?.postMessage({ version: CACHE_VERSION });
+  }
+});
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
