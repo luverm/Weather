@@ -290,6 +290,9 @@ export const ui = {
     el.toast.hidden = false;
     clearTimeout(el.toast._t);
     el.toast._t = setTimeout(() => (el.toast.hidden = true), dur);
+    // Mobile haptic — short tick when a toast fires. Guarded; harmless if
+    // Vibration API isn't supported.
+    try { navigator.vibrate?.(10); } catch { /* ignore */ }
   },
   getUnit: () => state.unit,
 };
