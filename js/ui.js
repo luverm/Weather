@@ -168,6 +168,7 @@ export const ui = {
     bindBrand();
     bindConditionTap();
     bindVersion();
+    bindScrollTop();
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
@@ -1886,6 +1887,24 @@ function bindConditionTap() {
   el.conditionLabel.addEventListener("keydown", (e) => {
     if (e.key === "Enter" || e.key === " ") { e.preventDefault(); announce(); }
   });
+}
+
+function bindScrollTop() {
+  const btn = document.getElementById("scroll-top");
+  if (!btn) return;
+  const THRESHOLD = 480; // show only after some meaningful scrolling
+  const onScroll = () => {
+    const y = window.scrollY || document.documentElement.scrollTop || 0;
+    if (y > THRESHOLD) {
+      if (btn.hidden) { btn.hidden = false; requestAnimationFrame(() => btn.classList.add("visible")); }
+    } else {
+      btn.classList.remove("visible");
+      // Hide after transition so it doesn't catch pointer events.
+      setTimeout(() => { if (!btn.classList.contains("visible")) btn.hidden = true; }, 220);
+    }
+  };
+  window.addEventListener("scroll", onScroll, { passive: true });
+  btn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
 }
 
 function bindVersion() {

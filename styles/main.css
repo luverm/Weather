@@ -1939,6 +1939,30 @@ html[data-hide-radar="true"] .radar { display: none; }
 .fetched-ago:empty { display: none; }
 .fetched-ago.stale { color: #ffb86b; }
 
+.scroll-top {
+  position: fixed;
+  right: 18px;
+  bottom: 22px;
+  z-index: 40;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: rgba(14, 18, 35, 0.78);
+  color: var(--fg);
+  border: 1px solid var(--stroke);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  display: grid; place-items: center;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 200ms var(--ease), transform 200ms var(--ease), background 160ms var(--ease);
+}
+.scroll-top[hidden] { display: none; }
+.scroll-top.visible { opacity: 1; transform: translateY(0); }
+.scroll-top:hover { background: rgba(28, 34, 60, 0.9); }
+.scroll-top:focus-visible { outline: 2px solid rgba(255,255,255,0.3); outline-offset: 2px; }
+
 #refresh-btn.spinning svg { animation: spin 700ms var(--ease) both; }
 @keyframes spin { from { transform: rotate(0) } to { transform: rotate(360deg) } }
 @keyframes pulse {
