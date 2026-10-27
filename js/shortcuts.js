@@ -72,6 +72,12 @@ export function installShortcuts(handlers) {
     if (key === "g" || key === "G") { e.preventDefault(); handlers.goHome?.(); return; }
     if (key === "r" || key === "R") { e.preventDefault(); handlers.refresh?.(); return; }
     if (key === "p" || key === "P") { e.preventDefault(); handlers.togglePin?.(); return; }
+    // 1..7 → jump the scrubber to that day of the forecast.
+    if (/^[1-7]$/.test(key)) {
+      e.preventDefault();
+      handlers.jumpToDay?.(parseInt(key, 10) - 1);
+      return;
+    }
   });
 }
 

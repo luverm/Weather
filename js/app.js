@@ -305,6 +305,17 @@ installShortcuts({
   resetScrubber: () => scrubber.reset(),
   goHome: () => goHome(),
   refresh: () => refreshWeather(),
+  jumpToDay: (idx) => {
+    const d = app.weather?.daily?.[idx];
+    if (!d) return;
+    // Mid-morning on that day; onHourClick does the scrub.
+    const dt = new Date(d.time);
+    dt.setHours(9, 0, 0, 0);
+    clock.setOffset(dt.getTime() - Date.now());
+    scrubber.sync();
+    if (app.weather) applyScene(app.weather);
+    ui.setScrubbing(!clock.isLive());
+  },
   togglePin: () => {
     if (!app.place) return;
     if (places.isSaved(app.place)) {
