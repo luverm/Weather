@@ -2010,8 +2010,10 @@ function bindConditionTap() {
     if (w.visibility != null) bits.push(`Visibility ${(w.visibility / 1000).toFixed(1)} km`);
     if (w.dewPoint != null) bits.push(`Dew ${Math.round(convertTemp(w.dewPoint))}°`);
     if (w.pressure != null) bits.push(`${Math.round(w.pressure)} hPa`);
+    const nextHour = w.hourly?.[0];
+    if (nextHour?.pop != null) bits.push(`${nextHour.pop}% rain next hour`);
     if (!bits.length) return;
-    ui.showToast(bits.join(" · "));
+    ui.showToast(bits.join(" · "), 3600);
   };
   el.conditionLabel.addEventListener("click", announce);
   el.conditionLabel.addEventListener("keydown", (e) => {
