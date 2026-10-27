@@ -1363,7 +1363,18 @@ function renderDaily(w) {
       ${windArrow}
       ${extra}
     `;
-    item.addEventListener("click", () => toggleDailyExpand(item, d, w));
+    item.addEventListener("click", (ev) => {
+      // Shift-click (or ⌘/Ctrl-click) jumps the scrubber to the start of
+      // that day instead of expanding — useful once you know the row's
+      // detail is already visible further down.
+      if (ev.shiftKey || ev.metaKey || ev.ctrlKey) {
+        const dayStart = new Date(d.time);
+        dayStart.setHours(9, 0, 0, 0); // mid-morning so sampling lands on a day entry
+        state.handlers.onHourClick?.(dayStart.getTime());
+        return;
+      }
+      toggleDailyExpand(item, d, w);
+    });
     el.dailyTrack.appendChild(item);
   });
 }
