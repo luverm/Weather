@@ -1301,8 +1301,11 @@ function renderDaily(w) {
     const windLabel = (d.windMax != null && d.windDir != null)
       ? ` · ${cardinal(d.windDir)} ${Math.round(d.windMax)} km/h`
       : "";
-    const extra = (gustLabel || popLabel || windLabel)
-      ? `<span class="daily-gust">${popLabel}${windLabel}${gustLabel}</span>`
+    const snowLabel = (d.snow && d.snow >= 0.5)
+      ? ` · ❄ ${d.snow >= 10 ? Math.round(d.snow) : d.snow.toFixed(1)} cm`
+      : "";
+    const extra = (gustLabel || popLabel || windLabel || snowLabel)
+      ? `<span class="daily-gust">${popLabel}${snowLabel}${windLabel}${gustLabel}</span>`
       : "";
     const windArrow = d.windDir != null
       ? `<span class="daily-wind" title="Wind from ${cardinal(d.windDir)}" style="transform:rotate(${d.windDir}deg)" aria-hidden="true">

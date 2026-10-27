@@ -100,12 +100,24 @@ export function buildAlerts(weather) {
 
   // ---- Snow ----
   const snowHour = hours.find((h) => h.condition === "snow");
-  if (snowHour) {
+  const snowToday = today?.snow ?? 0;
+  const snowTomorrow = tomorrow?.snow ?? 0;
+  if (snowToday >= 10 || snowTomorrow >= 10) {
+    const which = snowToday >= 10 ? "today" : "tomorrow";
+    const amt = which === "today" ? snowToday : snowTomorrow;
+    out.push({
+      id: "heavy-snow",
+      severity: "warn",
+      title: "Heavy snow",
+      detail: `${Math.round(amt)} cm expected ${which}.`,
+      ts: snowHour?.time,
+    });
+  } else if (snowHour) {
     out.push({
       id: "snow",
       severity: "info",
       title: "Snow in forecast",
-      detail: `Starts around ${shortClock(snowHour.time)}.`,
+      detail: `Starts around ${shortClock(snowHour.time)}${snowToday >= 1 ? ` · ${snowToday.toFixed(1)} cm expected today` : ""}.`,
       ts: snowHour.time,
     });
   }
