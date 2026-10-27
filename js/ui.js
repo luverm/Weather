@@ -1465,6 +1465,13 @@ function renderDailySpark(days) {
       c.setAttribute("r", "2.5");
       c.setAttribute("class", "dot-hi");
       el.dailySparkDots.appendChild(c);
+      const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      t.setAttribute("x", x(i).toFixed(1));
+      t.setAttribute("y", (y(d.tempMax) - 5).toFixed(1));
+      t.setAttribute("text-anchor", "middle");
+      t.setAttribute("class", "daily-spark-label daily-spark-hi-label");
+      t.textContent = `${Math.round(convertTemp(d.tempMax))}°`;
+      el.dailySparkDots.appendChild(t);
     }
     if (d.tempMin != null) {
       const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
@@ -1473,6 +1480,19 @@ function renderDailySpark(days) {
       c.setAttribute("r", "2.5");
       c.setAttribute("class", "dot-lo");
       el.dailySparkDots.appendChild(c);
+      // Lo label hugged above the dot — never outside the 60-tall viewBox.
+      const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      t.setAttribute("x", x(i).toFixed(1));
+      // Only draw a lo label if there is vertical room between the hi and
+      // lo dots for this day (keeps text from overlapping).
+      const gap = y(d.tempMin) - y(d.tempMax);
+      if (gap >= 16) {
+        t.setAttribute("y", (y(d.tempMin) - 5).toFixed(1));
+        t.setAttribute("text-anchor", "middle");
+        t.setAttribute("class", "daily-spark-label daily-spark-lo-label");
+        t.textContent = `${Math.round(convertTemp(d.tempMin))}°`;
+        el.dailySparkDots.appendChild(t);
+      }
     }
   });
 }

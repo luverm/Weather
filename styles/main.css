@@ -1893,6 +1893,14 @@ html[data-hide-radar="true"] .radar { display: none; }
 .daily-spark circle { transition: r 160ms var(--ease); }
 .daily-spark .dot-hi { fill: #ff9c7a; }
 .daily-spark .dot-lo { fill: #9ad1ff; }
+.daily-spark .daily-spark-label {
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.daily-spark .daily-spark-hi-label { fill: #ffcfaa; }
+.daily-spark .daily-spark-lo-label { fill: #b8d1ff; }
 .forecast-track {
   display: grid;
   grid-auto-flow: column;
