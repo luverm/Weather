@@ -182,6 +182,12 @@ ul { list-style: none; margin: 0; padding: 0; }
   transition: background 120ms var(--ease);
 }
 .settings-row:hover { background: rgba(255,255,255,0.05); }
+.settings-divider {
+  height: 1px;
+  background: var(--stroke);
+  margin: 4px 0;
+  opacity: 0.6;
+}
 .settings-row input[type="checkbox"] {
   appearance: none; -webkit-appearance: none;
   width: 30px; height: 18px;
