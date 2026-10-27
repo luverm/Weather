@@ -1645,14 +1645,32 @@ function renderPlaces() {
   if (!all.length) { el.placesStrip.hidden = true; el.placesStrip.innerHTML = ""; return; }
   el.placesStrip.hidden = false;
   const activeId = state.place ? places.idFor(state.place) : null;
+  // Find the warmest and coldest among saved places that have a cached temp,
+  // so we can label them with a small indicator — only when there are at
+  // least three places and a meaningful spread (>= 3°).
+  let warmest = null, coldest = null;
+  const temps = all.filter((p) => p.temp != null).map((p) => p.temp);
+  const canFlag = all.length >= 3 && temps.length >= 2
+    && (Math.max(...temps) - Math.min(...temps)) >= 3;
+  if (canFlag) {
+    for (const p of all) {
+      if (p.temp == null) continue;
+      if (!warmest || p.temp > warmest.temp) warmest = p;
+      if (!coldest || p.temp < coldest.temp) coldest = p;
+    }
+  }
   el.placesStrip.innerHTML = all.map((p) => {
     const active = places.idFor(p) === activeId;
     const icon = p.condition ? `<span class="place-chip-icon">${iconFor(p.condition)}</span>` : "";
+    const tag = canFlag && p === warmest ? '<span class="place-chip-tag hot" title="Warmest in your list">▲</span>'
+             : canFlag && p === coldest ? '<span class="place-chip-tag cold" title="Coldest in your list">▼</span>'
+             : "";
     return `
       <div class="place-chip ${active ? "active" : ""}" data-id="${p.id}">
         ${icon}
         <span>${escapeHtml(p.name)}</span>
         ${p.temp != null ? `<span class="temp">${Math.round(convertTemp(p.temp))}°</span>` : ""}
+        ${tag}
         <span class="close" data-action="remove" aria-label="Remove">
           <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
         </span>
