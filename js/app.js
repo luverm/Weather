@@ -217,7 +217,11 @@ async function loadByCoords(place) {
   scrubber.setBounds({ start: Date.now(), sunrise: w.sunrise, sunset: w.sunset });
 
   // Move the radar to the new location (fire-and-forget; resolves later).
-  ensureRadar([place.lat, place.lon]).then((r) => r?.setCenter(place.lat, place.lon, place.name));
+  ensureRadar([place.lat, place.lon]).then((r) => {
+    if (!r) return;
+    r.setCenter(place.lat, place.lon, place.name);
+    r.setPins(places.all(), places.idFor(place));
+  });
 }
 
 async function useGeolocation() {

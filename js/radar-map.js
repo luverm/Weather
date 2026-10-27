@@ -75,6 +75,10 @@ export class RadarMap {
       this.setCenter(...this._pendingCenter);
       this._pendingCenter = null;
     }
+    if (this._pendingPins) {
+      this.setPins(this._pendingPins.pins, this._pendingPins.activeId);
+      this._pendingPins = null;
+    }
     this._schedulePlayback();
     this._refreshTimer = setInterval(() => this._load().catch(() => {}), REFRESH_MS);
   }
@@ -93,6 +97,29 @@ export class RadarMap {
       className: "radar-pin",
     }).addTo(this.map);
     if (label) this.locationMarker.bindTooltip(label, { permanent: false, direction: "top" });
+  }
+
+  /** Render a small marker per saved city. The active one is skipped so
+   *  it doesn't double up with the primary location marker. */
+  setPins(pins, activeId) {
+    if (!this.map) { this._pendingPins = { pins, activeId }; return; }
+    if (!this._savedLayer) this._savedLayer = L.layerGroup().addTo(this.map);
+    this._savedLayer.clearLayers();
+    for (const p of (pins || [])) {
+      if (p.id === activeId) continue;
+      if (p.lat == null || p.lon == null) continue;
+      const m = L.circleMarker([p.lat, p.lon], {
+        radius: 4,
+        color: "rgba(255, 230, 199, 0.9)",
+        weight: 1.5,
+        fillColor: "rgba(255, 230, 199, 0.75)",
+        fillOpacity: 0.65,
+        className: "radar-saved-pin",
+      });
+      const tempLabel = p.temp != null ? ` · ${Math.round(p.temp)}°` : "";
+      m.bindTooltip(`${p.name}${tempLabel}`, { permanent: false, direction: "top" });
+      m.addTo(this._savedLayer);
+    }
   }
 
   /** Fit the map to a pre-sized container (call after layout changes). */
