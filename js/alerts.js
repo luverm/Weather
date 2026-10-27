@@ -132,6 +132,20 @@ export function buildAlerts(weather) {
     });
   }
 
+  // ---- Pressure change ----
+  // Rapid falls (> 3 hPa over 3 h) often precede incoming weather; sharp
+  // rises mean fast clearing. Both are worth a note.
+  const pt = weather.pressureTrend;
+  if (pt && Math.abs(pt.delta) >= 3) {
+    const falling = pt.delta < 0;
+    out.push({
+      id: falling ? "pressure-fall" : "pressure-rise",
+      severity: Math.abs(pt.delta) >= 5 ? "warn" : "info",
+      title: falling ? "Pressure falling fast" : "Pressure rising fast",
+      detail: `${pt.delta >= 0 ? "+" : ""}${pt.delta.toFixed(1)} hPa over 3 h — ${falling ? "weather change likely" : "quick clearing likely"}.`,
+    });
+  }
+
   // ---- UV (only if not already mentioned by heat) ----
   if (!out.some((a) => a.id === "severe-heat" || a.id === "heat")
       && weather.uvPeak?.value >= 9) {
