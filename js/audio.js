@@ -25,6 +25,17 @@ export class AmbientAudio {
   isEnabled() { return this.enabled; }
   onChange(fn) { this.listeners.add(fn); return () => this.listeners.delete(fn); }
 
+  /** Set the global ambient volume (0..1). Clamped and persistent only via
+   *  the caller — the audio layer itself just applies it. */
+  setMasterVolume(v) {
+    this._masterVol = Math.max(0, Math.min(1, v));
+    if (this.master && this.enabled) {
+      const t = this.ctx.currentTime;
+      this.master.gain.cancelScheduledValues(t);
+      this.master.gain.setTargetAtTime(this._masterVol, t, 0.2);
+    }
+  }
+
   async enable() {
     if (this.enabled) return;
     const Ctx = window.AudioContext || window.webkitAudioContext;
@@ -74,7 +85,8 @@ export class AmbientAudio {
 
     // Fade master up.
     const t = this.ctx.currentTime;
-    this.master.gain.linearRampToValueAtTime(0.5, t + 0.6);
+    const target = this._masterVol ?? 0.5;
+    this.master.gain.linearRampToValueAtTime(target, t + 0.6);
     this.enabled = true;
     for (const fn of this.listeners) fn(true);
   }

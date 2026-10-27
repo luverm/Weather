@@ -101,6 +101,7 @@ const el = {
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
   settingHideRadar: $("#setting-hide-radar"),
+  settingAudioVolume: $("#setting-audio-volume"),
   settingClearPlaces: $("#setting-clear-places"),
   settingResetAll: $("#setting-reset-all"),
   chartPopover: $("#chart-popover"),
@@ -1873,6 +1874,12 @@ function bindSettings() {
     localStorage.setItem("aether:hideRadar", hide ? "1" : "0");
   });
 
+  el.settingAudioVolume?.addEventListener("input", () => {
+    const v = Number(el.settingAudioVolume.value) / 100;
+    localStorage.setItem("aether:audioVolume", String(v));
+    state.handlers.onAudioVolume?.(v);
+  });
+
   el.settingResetAll?.addEventListener("click", () => {
     if (!confirm("Reset all Aether preferences to defaults? (Keeps saved places.)")) return;
     // Wipe every aether: key except the saved places list.
@@ -1901,6 +1908,10 @@ function applyStoredPreferences() {
     document.documentElement.setAttribute("data-hide-radar", "true");
     if (el.settingHideRadar) el.settingHideRadar.checked = true;
   }
+  const storedVol = parseFloat(localStorage.getItem("aether:audioVolume"));
+  const vol = isFinite(storedVol) ? storedVol : 0.5;
+  if (el.settingAudioVolume) el.settingAudioVolume.value = String(Math.round(vol * 100));
+  queueMicrotask(() => state.handlers.onAudioVolume?.(vol));
 }
 
 // Exposed so app.js can query the current preference on boot.

@@ -204,6 +204,12 @@ ul { list-style: none; margin: 0; padding: 0; }
   transform: translateX(12px);
   background: var(--accent);
 }
+.settings-row input[type="range"] {
+  flex: 0 0 100px;
+  accent-color: var(--accent);
+  background: transparent;
+  cursor: pointer;
+}
 .settings-btn-inline {
   text-align: left; padding: 8px 10px;
   border-radius: 10px;

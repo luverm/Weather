@@ -288,6 +288,7 @@ ui.init({
   onSearchSelect: (place) => { places.add(place); loadByCoords(place); },
   onLocate: () => useGeolocation(),
   onAudioToggle: () => toggleAudio(),
+  onAudioVolume: (v) => audio.setMasterVolume(v),
   onRefresh: () => refreshWeather(),
   onReduceMotion: (on) => setReducedMotion(on),
   onPlaceClick: (place) => loadByCoords(place),
