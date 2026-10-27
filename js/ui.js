@@ -18,6 +18,7 @@ const el = {
   unitBtn: $("#unit-toggle"),
   placeName: $("#place-name"),
   placeSub: $("#place-sub"),
+  placeLabelText: $("#place-label-text"),
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
@@ -256,6 +257,15 @@ export const ui = {
       el.hintText.textContent = "Drag to explore future weather.";
     } else {
       el.hintText.innerHTML = 'Drag the slider, hover the chart, or press <kbd>?</kbd> for shortcuts.';
+    }
+    // Flip the "Now in" / "At HH:mm in" label so the hero always says
+    // what time you're looking at.
+    if (el.placeLabelText) {
+      if (on && state.sampledWeather?._sampledTs) {
+        el.placeLabelText.textContent = `At ${fmtTime(state.sampledWeather._sampledTs)} in`;
+      } else {
+        el.placeLabelText.textContent = "Now in";
+      }
     }
   },
   setAudioState(on) {
