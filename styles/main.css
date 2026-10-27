@@ -1133,6 +1133,35 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+
+.uv-scale {
+  position: relative;
+  width: 100%;
+  height: 4px;
+  margin-top: 4px;
+}
+.uv-scale-track {
+  position: absolute; inset: 0;
+  border-radius: 2px;
+  background: linear-gradient(90deg,
+    #78d06a 0%, #78d06a 20%,
+    #ffd36a 20%, #ffd36a 50%,
+    #ff9f5c 50%, #ff9f5c 70%,
+    #ff6a6a 70%, #ff6a6a 90%,
+    #b75cff 90%, #b75cff 100%);
+  opacity: 0.75;
+}
+.uv-scale-marker {
+  position: absolute;
+  top: -3px;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid rgba(14, 18, 35, 0.8);
+  transform: translateX(-50%);
+  transition: left 420ms var(--ease);
+  box-shadow: 0 0 6px rgba(255,255,255,0.4);
+}
 .sun-arc-golden {
   filter: drop-shadow(0 0 4px rgba(255,196,120,0.9));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), r 320ms var(--ease), opacity 320ms var(--ease);

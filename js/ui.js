@@ -36,6 +36,7 @@ const el = {
   metricPressureSub: $("#m-pressure-sub"),
   metricUV: $("#m-uv"),
   metricUVSub: $("#m-uv-sub"),
+  uvScaleMarker: $("#uv-scale-marker"),
   aqArc: $("#aq-arc"),
   aqValue: $("#aq-value"),
   aqLabel: $("#aq-label"),
@@ -391,6 +392,16 @@ function renderMetrics(w) {
     ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
     : "visibility —";
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
+  if (el.uvScaleMarker) {
+    if (w.uv != null) {
+      // Cap display at 11 (anything beyond is "extreme" anyway).
+      const pct = Math.min(1, Math.max(0, w.uv / 11)) * 100;
+      el.uvScaleMarker.style.left = `${pct.toFixed(1)}%`;
+      el.uvScaleMarker.style.display = "";
+    } else {
+      el.uvScaleMarker.style.display = "none";
+    }
+  }
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
     if (lvl) {
