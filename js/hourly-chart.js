@@ -307,6 +307,20 @@ export class HourlyChart {
     const unit = this.getUnit();
     const labG = this.svg.querySelector("#chart-labels");
     labG.innerHTML = "";
+    // Horizontal grid lines at round temperatures — step adapts so we
+    // never emit more than ~4 lines in the chart.
+    const gridStep = span > 20 ? 10 : span > 10 ? 5 : 2;
+    const gridFirst = Math.ceil(tMin / gridStep) * gridStep;
+    for (let v = gridFirst; v <= tMax; v += gridStep) {
+      const y = tToY(v);
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("x1", String(PAD_LEFT));
+      line.setAttribute("x2", String(W - PAD_RIGHT));
+      line.setAttribute("y1", y.toFixed(1));
+      line.setAttribute("y2", y.toFixed(1));
+      line.setAttribute("class", "chart-grid");
+      labG.appendChild(line);
+    }
     const labelStep = Math.max(3, Math.floor(this.hours.length / 8));
     // Find extrema so we can both skip regular labels at those slots and
     // emit dedicated "H"/"L" annotations.
