@@ -45,6 +45,13 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  cloudCard: $("#cloud-card"),
+  cloudValue: $("#cloud-value"),
+  cloudLabel: $("#cloud-label"),
+  cloudTrend: $("#cloud-trend"),
+  cloudGlyphFill: $("#cloud-glyph-fill"),
+  cloudSparkLine: $("#cloud-spark-line"),
+  cloudSparkFill: $("#cloud-spark-fill"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -187,6 +194,7 @@ export const ui = {
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
     renderMoon(weather.moon);
+    renderCloudCover(weather);
     renderSun(weather);
     renderHourly(weather);
     renderDaily(weather);
@@ -477,6 +485,78 @@ function renderAqTrend(aq) {
     return;
   }
   drawSparkline(el.aqTrendLine, el.aqTrendFill, pts, { minSpan: 20 });
+}
+
+function cloudLevel(pct) {
+  if (pct == null) return { key: "partly", label: "—" };
+  if (pct < 10)  return { key: "clear",  label: "Clear" };
+  if (pct < 30)  return { key: "few",    label: "Mostly clear" };
+  if (pct < 60)  return { key: "partly", label: "Partly cloudy" };
+  if (pct < 85)  return { key: "mostly", label: "Mostly cloudy" };
+  return { key: "over", label: "Overcast" };
+}
+
+function renderCloudCover(w) {
+  if (!el.cloudCard) return;
+  // Prefer the current field, fall back to the first hourly entry.
+  let current = w.cloudCover;
+  if (current == null) current = w.hourly?.[0]?.cloudCover;
+  const lvl = cloudLevel(current);
+  if (current == null) {
+    el.cloudCard.style.opacity = 0.5;
+    el.cloudValue.textContent = "—";
+    el.cloudLabel.textContent = "—";
+    el.cloudCard.setAttribute("data-level", lvl.key);
+    if (el.cloudGlyphFill) el.cloudGlyphFill.setAttribute("d", "");
+    if (el.cloudTrend) el.cloudTrend.textContent = "";
+    drawSparkline(el.cloudSparkLine, el.cloudSparkFill, [], {});
+    return;
+  }
+  el.cloudCard.style.opacity = 1;
+  el.cloudCard.setAttribute("data-level", lvl.key);
+  el.cloudValue.textContent = Math.round(current);
+  el.cloudLabel.textContent = lvl.label;
+
+  // Lens glyph: a tiny cloud/sun fused shape whose cloud area grows with %.
+  // Build a cloud polygon by stacking three circles whose radii scale.
+  const pct = Math.max(0, Math.min(100, current)) / 100;
+  // Full cloud outline for pct=1; shrunk to a wisp for pct=0.
+  const r = 10 + pct * 4;
+  const d = pct < 0.1
+    ? "" // let the sun shine through — glyph is empty
+    : `M ${-r} 2
+       a ${r * 0.55} ${r * 0.55} 0 0 1 ${r * 0.7} ${-r * 0.6}
+       a ${r * 0.7} ${r * 0.7} 0 0 1 ${r * 1.2} 0.3
+       a ${r * 0.5} ${r * 0.5} 0 0 1 ${r * 0.5} ${r * 0.4}
+       a ${r * 0.5} ${r * 0.5} 0 0 1 ${-r * 0.1} ${r * 0.6}
+       L ${-r + r * 0.1} ${r * 0.6 + 2}
+       a ${r * 0.5} ${r * 0.5} 0 0 1 ${-r * 0.3} ${-r * 0.5}
+       Z`.replace(/\s+/g, " ");
+  if (el.cloudGlyphFill) el.cloudGlyphFill.setAttribute("d", d);
+
+  // Hourly trend sparkline (next 12 hours).
+  const hourly = (w.hourly || []).slice(0, 12).map((h) => h.cloudCover).filter((v) => v != null);
+  drawSparkline(el.cloudSparkLine, el.cloudSparkFill, hourly, { minSpan: 10, fixedMin: 0, fixedMax: 100 });
+
+  // Trend badge: delta between now and ~3h ahead.
+  if (el.cloudTrend) {
+    const later = w.hourly?.[3]?.cloudCover;
+    if (later != null) {
+      const delta = later - current;
+      if (Math.abs(delta) < 10) {
+        el.cloudTrend.className = "trend flat";
+        el.cloudTrend.textContent = "steady";
+      } else if (delta < 0) {
+        el.cloudTrend.className = "trend down";
+        el.cloudTrend.textContent = "clearing";
+      } else {
+        el.cloudTrend.className = "trend up";
+        el.cloudTrend.textContent = "clouding";
+      }
+    } else {
+      el.cloudTrend.textContent = "";
+    }
+  }
 }
 
 function renderMoon(moon) {

@@ -1003,10 +1003,23 @@ kbd {
   opacity: 0.85;
 }
 
-.moon-row, .sun-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
+.moon-row, .sun-row, .cloud-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
 .moon-svg { width: 48px; height: 48px; }
 .moon-meta strong { display: block; font-size: 14px; font-weight: 500; }
 .moon-detail { font-size: 11.5px; color: var(--fg-dim); }
+
+.cloud-glyph { width: 48px; height: 48px; color: #cfe0f5; }
+.cloud-glyph svg { width: 48px; height: 48px; display: block; }
+.cloud-meta { display: grid; gap: 2px; min-width: 0; color: #cfe0f5; }
+.cloud-meta strong { font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.cloud-meta .cloud-unit { font-size: 11px; opacity: 0.65; margin-left: 2px; }
+.cloud-detail { font-size: 11.5px; color: var(--fg-dim); }
+#cloud-card[data-level="clear"]   { --cloud-tint: rgba(255, 220, 160, 0.9); }
+#cloud-card[data-level="few"]     { --cloud-tint: rgba(220, 230, 245, 0.85); }
+#cloud-card[data-level="partly"]  { --cloud-tint: rgba(200, 215, 240, 0.85); }
+#cloud-card[data-level="mostly"]  { --cloud-tint: rgba(180, 195, 220, 0.9); }
+#cloud-card[data-level="over"]    { --cloud-tint: rgba(160, 175, 200, 0.95); }
+#cloud-card #cloud-glyph-fill { fill: var(--cloud-tint, rgba(220, 230, 245, 0.85)); transition: fill 320ms var(--ease); }
 
 .sun-row { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .sun-item { display: grid; gap: 2px; }
