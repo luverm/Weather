@@ -305,6 +305,19 @@ installShortcuts({
   resetScrubber: () => scrubber.reset(),
   goHome: () => goHome(),
   refresh: () => refreshWeather(),
+  togglePin: () => {
+    if (!app.place) return;
+    if (places.isSaved(app.place)) {
+      places.remove(app.place);
+      ui.showToast(`Removed ${app.place.name}`);
+    } else {
+      places.add(app.place);
+      ui.showToast(`Pinned ${app.place.name}`);
+    }
+    // Re-render place strip + radar pins so the state matches.
+    ui.setPlace(app.place);
+    if (radar) radar.setPins(places.all(), places.idFor(app.place));
+  },
   cyclePlace: (dir) => {
     const list = places.all();
     if (list.length < 2) return;
