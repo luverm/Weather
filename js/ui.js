@@ -1926,6 +1926,12 @@ function startFetchedTicker() {
       }
       return;
     }
+    if (state.weather.offline) {
+      el.fetchedAgo.textContent = "· offline sample";
+      el.fetchedAgo.classList.add("stale");
+      el.fetchedAgo.title = "Fetch failed — showing offline sample. Click to retry.";
+      return;
+    }
     const ms = Date.now() - state.weather.fetchedAt;
     const minutes = Math.max(0, Math.floor(ms / 60_000));
     // Tooltip: exact absolute time of the fetch, since the relative label
