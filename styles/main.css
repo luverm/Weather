@@ -1950,7 +1950,12 @@ html[data-hide-radar="true"] .radar { display: none; }
   cursor: pointer;
 }
 .forecast-item:hover { background: var(--glass); transform: translateY(-2px); }
-.forecast-item.active { background: var(--glass-strong); }
+.forecast-item.active {
+  background: var(--glass-strong);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.14), 0 0 18px rgba(154, 209, 255, 0.18);
+}
+.forecast-item.active .forecast-icon { color: var(--fg); }
+.forecast-item.active .forecast-temp { color: var(--fg); }
 .forecast-time { font-size: 11px; letter-spacing: 0.08em; color: var(--fg-dim); text-transform: uppercase; }
 .forecast-icon { width: 26px; height: 26px; display: grid; place-items: center; color: var(--fg-muted); }
 .forecast-temp { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
