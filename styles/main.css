@@ -370,6 +370,23 @@ html[data-reduce-motion="true"] *::after {
   animation: pulse 2.4s ease-in-out infinite;
 }
 [data-scrubbing="true"] .live-dot { background: #ffb86b; box-shadow: 0 0 8px #ffb86b; animation: none; }
+
+/* Loading state while a new city's weather is being fetched. The hero
+   shows a soft pulse so the user has a sense of "working" instead of a
+   stale screen. Values keep their last known content so the layout
+   doesn't jump. */
+[data-loading="true"] .temp-value,
+[data-loading="true"] .condition-label,
+[data-loading="true"] .place-name {
+  animation: loadingPulse 1.6s ease-in-out infinite;
+}
+@keyframes loadingPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+:root[data-reduce-motion="true"] [data-loading="true"] .temp-value,
+:root[data-reduce-motion="true"] [data-loading="true"] .condition-label,
+:root[data-reduce-motion="true"] [data-loading="true"] .place-name { animation: none; }
 [data-scrubbing="true"] .hero-inner {
   box-shadow: inset 0 0 0 1px rgba(255, 184, 107, 0.3), 0 0 24px rgba(255, 184, 107, 0.08);
 }
