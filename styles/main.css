@@ -1112,6 +1112,44 @@ kbd {
 #cloud-card[data-level="over"]    { --cloud-tint: rgba(160, 175, 200, 0.95); }
 #cloud-card #cloud-glyph-fill { fill: var(--cloud-tint, rgba(220, 230, 245, 0.85)); transition: fill 320ms var(--ease); }
 
+.visibility-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
+.visibility-icon { width: 48px; height: 48px; color: #cfe0f5; }
+.visibility-icon svg { width: 48px; height: 48px; display: block; }
+.visibility-meta { display: grid; gap: 4px; min-width: 0; color: #cfe0f5; }
+.visibility-meta strong {
+  font-size: 15px; font-weight: 500;
+  font-variant-numeric: tabular-nums; letter-spacing: -0.01em;
+}
+.visibility-unit { font-size: 11px; opacity: 0.65; margin-left: 2px; }
+.visibility-detail { font-size: 11.5px; color: var(--fg-dim); }
+.visibility-gauge {
+  position: relative;
+  width: 100%;
+  height: 4px;
+}
+.visibility-track {
+  position: absolute; inset: 0;
+  border-radius: 2px;
+  background: linear-gradient(90deg,
+    #b75cff 0%, #b75cff 10%,
+    #ff6a6a 10%, #ff6a6a 25%,
+    #ff9f5c 25%, #ff9f5c 50%,
+    #ffd36a 50%, #ffd36a 75%,
+    #78d06a 75%, #78d06a 100%);
+  opacity: 0.65;
+}
+.visibility-marker {
+  position: absolute;
+  top: -3px;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid rgba(14, 18, 35, 0.8);
+  transform: translateX(-50%);
+  transition: left 420ms var(--ease);
+  box-shadow: 0 0 6px rgba(255,255,255,0.4);
+}
+
 .sun-row { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .sun-item { display: grid; gap: 2px; }
 .sun-label { font-size: 10.5px; color: var(--fg-dim); letter-spacing: 0.14em; text-transform: uppercase; }

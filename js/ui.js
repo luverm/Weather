@@ -48,6 +48,11 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  visibilityCard: $("#visibility-card"),
+  visibilityValue: $("#visibility-value"),
+  visibilityLabel: $("#visibility-label"),
+  visibilityDetail: $("#visibility-detail"),
+  visibilityMarker: $("#visibility-marker"),
   cloudCard: $("#cloud-card"),
   cloudValue: $("#cloud-value"),
   cloudLabel: $("#cloud-label"),
@@ -202,6 +207,7 @@ export const ui = {
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
     renderMoon(weather.moon);
+    renderVisibility(weather);
     renderCloudCover(weather);
     renderSun(weather);
     renderHourly(weather);
@@ -565,6 +571,48 @@ function renderAqTrend(aq) {
     return;
   }
   drawSparkline(el.aqTrendLine, el.aqTrendFill, pts, { minSpan: 20 });
+}
+
+function visibilityLevel(km) {
+  if (km == null) return { label: "—", cls: "flat", pct: 0 };
+  if (km < 1)  return { label: "Very low", cls: "down", pct: Math.max(1, km / 10 * 100) };
+  if (km < 4)  return { label: "Poor", cls: "down", pct: km / 10 * 100 };
+  if (km < 10) return { label: "Moderate", cls: "flat", pct: km / 10 * 100 };
+  return { label: "Excellent", cls: "up", pct: 100 };
+}
+
+function renderVisibility(w) {
+  if (!el.visibilityCard) return;
+  // Open-Meteo reports visibility in meters; clamp absurd values to 20 km.
+  const km = w.visibility != null ? Math.min(20, w.visibility / 1000) : null;
+  const lvl = visibilityLevel(km);
+  if (km == null) {
+    el.visibilityCard.style.opacity = 0.5;
+    if (el.visibilityValue) el.visibilityValue.textContent = "—";
+    if (el.visibilityDetail) el.visibilityDetail.textContent = "—";
+    if (el.visibilityMarker) el.visibilityMarker.style.display = "none";
+    return;
+  }
+  el.visibilityCard.style.opacity = 1;
+  if (el.visibilityValue) {
+    el.visibilityValue.textContent = km < 10 ? km.toFixed(1) : Math.round(km);
+  }
+  if (el.visibilityLabel) {
+    el.visibilityLabel.className = `trend ${lvl.cls}`;
+    el.visibilityLabel.textContent = lvl.label;
+  }
+  if (el.visibilityDetail) {
+    const miles = km / 1.609344;
+    el.visibilityDetail.textContent = km >= 10
+      ? `Clear view to the horizon · ${miles.toFixed(1)} mi`
+      : `${miles.toFixed(1)} mi · haze or precipitation reducing range`;
+  }
+  if (el.visibilityMarker) {
+    el.visibilityMarker.style.display = "";
+    // Gauge is 0-10 km mapped left to right; cap display at 10 km.
+    const pct = Math.max(0, Math.min(100, (km / 10) * 100));
+    el.visibilityMarker.style.left = `${pct.toFixed(1)}%`;
+  }
 }
 
 function cloudLevel(pct) {
