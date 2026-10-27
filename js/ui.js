@@ -1477,6 +1477,11 @@ function renderDailyDelta(days) {
   if (Math.abs(dPop) >= 20) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
   }
+  // Weekly rainfall accumulation — only mentioned when meaningful (≥ 1 mm).
+  const weekRain = days.reduce((s, d) => s + (d.precip ?? 0), 0);
+  if (weekRain >= 1) {
+    parts.push(`week ${weekRain >= 10 ? Math.round(weekRain) : weekRain.toFixed(1)} mm`);
+  }
   el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
 }
 
