@@ -370,6 +370,18 @@ html[data-reduce-motion="true"] *::after {
   animation: pulse 2.4s ease-in-out infinite;
 }
 [data-scrubbing="true"] .live-dot { background: #ffb86b; box-shadow: 0 0 8px #ffb86b; animation: none; }
+[data-offline="true"] .live-dot { background: #ff7a7a; box-shadow: 0 0 8px #ff7a7a; animation: none; }
+[data-offline="true"] .place-label::after {
+  content: "offline";
+  margin-left: 8px;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: #ffb0b0;
+  background: rgba(255, 122, 122, 0.12);
+  border: 1px solid rgba(255, 122, 122, 0.3);
+  padding: 1px 7px;
+  border-radius: 999px;
+}
 
 /* Loading state while a new city's weather is being fetched. The hero
    shows a soft pulse so the user has a sense of "working" instead of a
