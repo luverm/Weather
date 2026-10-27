@@ -102,6 +102,7 @@ const el = {
   settingUnitF: $("#setting-unit-f"),
   settingHideRadar: $("#setting-hide-radar"),
   settingClearPlaces: $("#setting-clear-places"),
+  settingResetAll: $("#setting-reset-all"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
   insightsList: $("#insights-list"),
@@ -1850,6 +1851,19 @@ function bindSettings() {
     const hide = el.settingHideRadar.checked;
     document.documentElement.setAttribute("data-hide-radar", hide ? "true" : "false");
     localStorage.setItem("aether:hideRadar", hide ? "1" : "0");
+  });
+
+  el.settingResetAll?.addEventListener("click", () => {
+    if (!confirm("Reset all Aether preferences to defaults? (Keeps saved places.)")) return;
+    // Wipe every aether: key except the saved places list.
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith("aether:") && k !== "aether:places") {
+        localStorage.removeItem(k);
+      }
+    }
+    ui.showToast("Preferences reset — reloading");
+    setTimeout(() => location.reload(), 600);
   });
 }
 
