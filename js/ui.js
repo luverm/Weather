@@ -1208,6 +1208,9 @@ function renderHourly(w) {
   for (const h of (w.hourly || []).slice(0, 24)) {
     const item = document.createElement("div");
     item.className = "forecast-item";
+    item.setAttribute("role", "listitem");
+    item.setAttribute("aria-label",
+      `${fmtTime(h.time)} ${Math.round(convertTemp(h.temp))}°${state.unit}, ${h.pop}% chance of precipitation, ${capitalize(h.label || h.condition || "")}`);
     item.dataset.ts = h.time;
     item.innerHTML = `
       <span class="forecast-time">${fmtTime(h.time)}</span>
@@ -1264,7 +1267,12 @@ function renderPrecipSummary(w) {
 
 function highlightHour(index) {
   const items = el.forecastTrack.querySelectorAll(".forecast-item");
-  items.forEach((it, i) => it.classList.toggle("active", i === index));
+  items.forEach((it, i) => {
+    const on = i === index;
+    it.classList.toggle("active", on);
+    if (on) it.setAttribute("aria-current", "time");
+    else it.removeAttribute("aria-current");
+  });
 }
 
 function dayScore(d) {
