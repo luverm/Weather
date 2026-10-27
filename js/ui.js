@@ -1908,6 +1908,9 @@ function applyStoredPreferences() {
     document.documentElement.setAttribute("data-hide-radar", "true");
     if (el.settingHideRadar) el.settingHideRadar.checked = true;
   }
+  if (localStorage.getItem("aether:hideAdvice") === "1") {
+    document.documentElement.setAttribute("data-hide-advice", "true");
+  }
   const storedVol = parseFloat(localStorage.getItem("aether:audioVolume"));
   const vol = isFinite(storedVol) ? storedVol : 0.5;
   if (el.settingAudioVolume) el.settingAudioVolume.value = String(Math.round(vol * 100));

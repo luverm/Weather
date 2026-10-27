@@ -327,6 +327,13 @@ installShortcuts({
     if (app.weather) applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
   },
+  toggleAdvice: () => {
+    const hidden = localStorage.getItem("aether:hideAdvice") === "1";
+    const next = !hidden;
+    localStorage.setItem("aether:hideAdvice", next ? "1" : "0");
+    document.documentElement.setAttribute("data-hide-advice", next ? "true" : "false");
+    ui.showToast(next ? "Advice hidden" : "Advice shown");
+  },
   togglePin: () => {
     if (!app.place) return;
     if (places.isSaved(app.place)) {

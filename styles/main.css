@@ -387,6 +387,7 @@ html[data-reduce-motion="true"] *::after {
 }
 [data-scrubbing="true"] .live-dot { background: #ffb86b; box-shadow: 0 0 8px #ffb86b; animation: none; }
 [data-offline="true"] .live-dot { background: #ff7a7a; box-shadow: 0 0 8px #ff7a7a; animation: none; }
+html[data-hide-advice="true"] #advice { display: none !important; }
 [data-offline="true"] .place-label::after {
   content: "offline";
   margin-left: 8px;
