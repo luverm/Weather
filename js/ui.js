@@ -108,6 +108,7 @@ const el = {
   activityCard: $("#activity-card"),
   activityList: $("#activity-list"),
   alertsStrip: $("#alerts-strip"),
+  perfectChip: $("#perfect-chip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
   sunArcGoldenRise: $("#sun-arc-golden-rise"),
@@ -239,6 +240,7 @@ export const ui = {
     renderInsights(weather);
     renderActivity(weather);
     renderAlerts(weather);
+    renderPerfectChip(weather);
     renderWeekend(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
@@ -1062,6 +1064,23 @@ function renderWeekend(w) {
   el.weekendChip.onclick = () => {
     if (snap.ts) state.handlers.onHourClick?.(snap.ts);
   };
+}
+
+function renderPerfectChip(w) {
+  if (!el.perfectChip) return;
+  const t = w?.temp;
+  const cloud = w?.cloudCover;
+  const wind = w?.windSpeed ?? 0;
+  const pop = w?.hourly?.[0]?.pop ?? 0;
+  // "Perfect" window: comfortable, mostly clear, calm, dry — and daytime.
+  const perfect = t != null && t >= 18 && t <= 24
+    && (cloud == null || cloud < 35)
+    && wind < 15
+    && pop < 15
+    && w?.isDay;
+  if (!perfect) { el.perfectChip.hidden = true; el.perfectChip.textContent = ""; return; }
+  el.perfectChip.hidden = false;
+  el.perfectChip.innerHTML = `<span class="perfect-spark" aria-hidden="true"></span><span>Picture-perfect weather right now</span>`;
 }
 
 function renderAlerts(w) {
