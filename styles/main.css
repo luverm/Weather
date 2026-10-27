@@ -782,6 +782,24 @@ html[data-reduce-motion="true"] *::after {
   fill: var(--fg-muted);
   font-size: 9.5px;
 }
+.chart-labels .chart-extremum {
+  stroke: rgba(255, 255, 255, 0.85);
+  stroke-width: 1;
+}
+.chart-labels .chart-extremum-h { fill: #ffb77d; }
+.chart-labels .chart-extremum-l { fill: #8fb6ff; }
+.chart-labels .chart-extremum-label {
+  font-size: 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.chart-labels .chart-extremum-h-label { fill: #ffd3a7; }
+.chart-labels .chart-extremum-l-label { fill: #b8d1ff; }
+.chart-labels text.chart-extremum-time {
+  fill: var(--fg-muted);
+  font-size: 9px;
+  font-weight: 600;
+}
 .chart-cursor {
   stroke: var(--accent);
   stroke-width: 1.2;

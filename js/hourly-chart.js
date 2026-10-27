@@ -269,8 +269,17 @@ export class HourlyChart {
     const labG = this.svg.querySelector("#chart-labels");
     labG.innerHTML = "";
     const labelStep = Math.max(3, Math.floor(this.hours.length / 8));
+    // Find extrema so we can both skip regular labels at those slots and
+    // emit dedicated "H"/"L" annotations.
+    let maxI = 0, minI = 0;
+    this.hours.forEach((h, i) => {
+      if (h.temp > this.hours[maxI].temp) maxI = i;
+      if (h.temp < this.hours[minI].temp) minI = i;
+    });
+    const toF = (c) => unit === "F" ? c * 9 / 5 + 32 : c;
     this.hours.forEach((h, i) => {
       if (i % labelStep !== 0) return;
+      if (i === maxI || i === minI) return; // let the extrema label win
       const hh = this._hourOf(h.time);
       const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
       txt.setAttribute("x", iToX(i).toFixed(1));
@@ -278,15 +287,49 @@ export class HourlyChart {
       txt.setAttribute("text-anchor", "middle");
       txt.textContent = `${hh}`;
       labG.appendChild(txt);
-      // Temp label above point
-      const tVal = unit === "F" ? h.temp * 9 / 5 + 32 : h.temp;
       const tTxt = document.createElementNS("http://www.w3.org/2000/svg", "text");
       tTxt.setAttribute("x", iToX(i).toFixed(1));
       tTxt.setAttribute("y", (tToY(h.temp) - 8).toFixed(1));
       tTxt.setAttribute("text-anchor", "middle");
       tTxt.setAttribute("class", "temp-point");
-      tTxt.textContent = `${Math.round(tVal)}°`;
+      tTxt.textContent = `${Math.round(toF(h.temp))}°`;
       labG.appendChild(tTxt);
     });
+    // Extrema annotations (H / L): only annotate when the span is meaningful.
+    if (this.hours.length >= 6 && this.hours[maxI].temp - this.hours[minI].temp >= 2) {
+      this._annotateExtremum(labG, maxI, iToX, tToY, toF, "H");
+      this._annotateExtremum(labG, minI, iToX, tToY, toF, "L");
+    }
+  }
+
+  _annotateExtremum(parent, i, iToX, tToY, toF, kind) {
+    const h = this.hours[i];
+    const x = iToX(i);
+    const y = tToY(h.temp);
+    const above = kind === "H";
+    // Dot at the point.
+    const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    dot.setAttribute("cx", x.toFixed(1));
+    dot.setAttribute("cy", y.toFixed(1));
+    dot.setAttribute("r", "2.6");
+    dot.setAttribute("class", `chart-extremum chart-extremum-${kind.toLowerCase()}`);
+    parent.appendChild(dot);
+    // "H 24°" / "L 14°" label.
+    const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    label.setAttribute("x", x.toFixed(1));
+    label.setAttribute("y", (y + (above ? -12 : 14)).toFixed(1));
+    label.setAttribute("text-anchor", "middle");
+    label.setAttribute("class", `chart-extremum-label chart-extremum-${kind.toLowerCase()}-label`);
+    label.textContent = `${kind} ${Math.round(toF(h.temp))}°`;
+    parent.appendChild(label);
+    // Clock label at the x-axis to say *when*.
+    const hh = this._hourOf(h.time);
+    const timeLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    timeLabel.setAttribute("x", x.toFixed(1));
+    timeLabel.setAttribute("y", String(H - 4));
+    timeLabel.setAttribute("text-anchor", "middle");
+    timeLabel.setAttribute("class", "chart-extremum-time");
+    timeLabel.textContent = hh;
+    parent.appendChild(timeLabel);
   }
 }
