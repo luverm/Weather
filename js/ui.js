@@ -1089,6 +1089,8 @@ function renderPerfectChip(w) {
     && w?.isDay;
   if (!perfect) { el.perfectChip.hidden = true; el.perfectChip.textContent = ""; return; }
   el.perfectChip.hidden = false;
+  el.perfectChip.setAttribute("role", "status");
+  el.perfectChip.setAttribute("aria-label", "Picture-perfect weather right now");
   el.perfectChip.innerHTML = `<span class="perfect-spark" aria-hidden="true"></span><span>Picture-perfect weather right now</span>`;
 }
 
@@ -1388,8 +1390,10 @@ function renderDaily(w) {
         });
     const left = ((d.tempMin - gMin) / span) * 100;
     const width = ((d.tempMax - d.tempMin) / span) * 100;
-    const item = document.createElement("div");
+    const item = document.createElement("button");
+    item.type = "button";
     item.className = "daily-item";
+    item.setAttribute("aria-expanded", "false");
     if (best && best.i === i) item.classList.add("best-day");
     item.dataset.ts = d.time;
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
@@ -1541,6 +1545,7 @@ function toggleDailyExpand(item, d, w) {
   if (existing) {
     existing.remove();
     item.dataset.expanded = "false";
+    item.setAttribute("aria-expanded", "false");
     return;
   }
   // Build mini hourly bars for the 12 daytime-ish hours of that day, if we
@@ -1565,6 +1570,7 @@ function toggleDailyExpand(item, d, w) {
     summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${Math.round(d.gustsMax ?? 0)} km/h · UV ${Math.round(d.uvMax ?? 0)}${sunLine}</span>`;
     item.appendChild(summary);
     item.dataset.expanded = "true";
+    item.setAttribute("aria-expanded", "true");
     return;
   }
   const tMin = Math.min(...hrs.map((h) => h.temp));
@@ -1585,6 +1591,7 @@ function toggleDailyExpand(item, d, w) {
   }).join("");
   item.appendChild(box);
   item.dataset.expanded = "true";
+  item.setAttribute("aria-expanded", "true");
 }
 
 function renderNowcast(w) {

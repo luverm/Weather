@@ -2005,6 +2005,16 @@ html[data-hide-radar="true"] .radar { display: none; }
   padding: 10px 8px;
   border-radius: 10px;
   transition: background 200ms var(--ease);
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  width: 100%;
+}
+.daily-item:focus-visible {
+  outline: 2px solid rgba(255,255,255,0.3);
+  outline-offset: 2px;
 }
 .daily-wind {
   display: inline-grid;
