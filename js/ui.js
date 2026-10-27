@@ -351,8 +351,19 @@ function renderDayRange(w) {
     return;
   }
   el.dayRange.hidden = false;
+  // Find the matching hours so we can tooltip the exact time of each extreme.
+  const hours = (w.hourly || []).slice(0, 24);
+  let loHour = null, hiHour = null;
+  for (const h of hours) {
+    if (h.temp == null) continue;
+    if (!loHour || h.temp < loHour.temp) loHour = h;
+    if (!hiHour || h.temp > hiHour.temp) hiHour = h;
+  }
   el.dayRangeMin.textContent = `${Math.round(convertTemp(lo))}°`;
   el.dayRangeMax.textContent = `${Math.round(convertTemp(hi))}°`;
+  el.dayRangeMin.title = loHour ? `Low at ${fmtTime(loHour.time)}` : "Today's low";
+  el.dayRangeMax.title = hiHour ? `High at ${fmtTime(hiHour.time)}` : "Today's high";
+  el.dayRangeMarker.title = w.temp != null ? `Now · ${Math.round(convertTemp(w.temp))}°` : "Now";
   // Marker position: clamp current temp to [lo,hi] so marker stays on track.
   const t = w.temp ?? (lo + hi) / 2;
   const frac = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
