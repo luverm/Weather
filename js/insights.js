@@ -109,6 +109,16 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     });
   }
 
+  // 7. Snow accumulation — only if any day in the week carries ≥ 1 cm.
+  const snowyDay = (days || []).find((d) => (d.snow ?? 0) >= 1);
+  if (snowyDay) {
+    out.push({
+      icon: ICONS.cold, label: "Snow coming",
+      value: `${snowyDay.snow.toFixed(1)} cm on ${dow(snowyDay.time)}`,
+      ts: snowyDay.sunrise || snowyDay.time,
+    });
+  }
+
   return out.slice(0, 6);
 }
 
