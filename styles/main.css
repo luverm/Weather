@@ -1960,7 +1960,16 @@ html[data-hide-radar="true"] .radar { display: none; }
 .daily-wind svg { width: 14px; height: 14px; }
 .daily-wind-blank { visibility: hidden; }
 .daily-item:hover { background: var(--glass); }
-.daily-day { font-size: 13px; font-weight: 500; }
+.daily-day { font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
+.daily-today-dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+  animation: pulse 2.4s ease-in-out infinite;
+}
+:root[data-reduce-motion="true"] .daily-today-dot { animation: none; }
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
 .daily-range {
   position: relative;
