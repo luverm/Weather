@@ -305,7 +305,26 @@ installShortcuts({
 });
 
 // ---------- Start ----------
+function readUrlPlace() {
+  try {
+    const params = new URLSearchParams(location.search);
+    const lat = parseFloat(params.get("lat"));
+    const lon = parseFloat(params.get("lon"));
+    if (!isFinite(lat) || !isFinite(lon)) return null;
+    const name = params.get("name") || "Shared location";
+    const country = params.get("c") || "";
+    return { name, country, lat, lon };
+  } catch { return null; }
+}
+
 (async function init() {
+  // Shared link via ?lat=&lon= wins over anything else.
+  const urlPlace = readUrlPlace();
+  if (urlPlace) {
+    places.add(urlPlace);
+    await loadByCoords(urlPlace);
+    return;
+  }
   // Prefer the most recent saved place if we have one — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();

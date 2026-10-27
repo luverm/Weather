@@ -1659,6 +1659,19 @@ function startFetchedTicker() {
   setInterval(update, 30_000);
 }
 
+function buildShareUrl() {
+  if (!state.place) return location.href;
+  const url = new URL(location.href);
+  url.search = ""; // drop any prior params so we don't stack
+  const lat = state.place.lat?.toFixed?.(3);
+  const lon = state.place.lon?.toFixed?.(3);
+  if (lat != null) url.searchParams.set("lat", lat);
+  if (lon != null) url.searchParams.set("lon", lon);
+  if (state.place.name) url.searchParams.set("name", state.place.name);
+  if (state.place.country) url.searchParams.set("c", state.place.country);
+  return url.toString();
+}
+
 function bindShare() {
   if (!el.shareBtn) return;
   el.shareBtn.addEventListener("click", async () => {
@@ -1668,6 +1681,7 @@ function bindShare() {
     const unit = state.unit;
     const t = (v) => `${Math.round(unit === "F" ? v * 9 / 5 + 32 : v)}°${unit}`;
     const today = w.daily?.[0];
+    const shareUrl = buildShareUrl();
     const lines = [
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
@@ -1675,11 +1689,13 @@ function bindShare() {
       `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
-    ].filter(Boolean);
+      "",
+      shareUrl,
+    ].filter((l) => l != null);
     const text = lines.join("\n");
     try {
       if (navigator.share) {
-        await navigator.share({ title: `Aether — ${placeName}`, text });
+        await navigator.share({ title: `Aether — ${placeName}`, text, url: shareUrl });
       } else {
         await navigator.clipboard.writeText(text);
         ui.showToast("Summary copied to clipboard");
