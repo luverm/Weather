@@ -84,6 +84,8 @@ export class Scrubber {
     this.track.addEventListener("pointermove", onMove);
     this.track.addEventListener("pointerup", onUp);
     this.track.addEventListener("pointercancel", onUp);
+    // Double-click anywhere on the track is a shortcut for "back to live".
+    this.track.addEventListener("dblclick", () => this.reset());
 
     // Keyboard: arrow keys nudge by 1h, shift+arrow by 6h.
     this.track.addEventListener("keydown", (e) => {
