@@ -99,5 +99,30 @@ export function buildInsights(weather, { fmtTime, weekday } = {}) {
     });
   }
 
+  // 6. Longest dry stretch — only when it covers more than 4 hours.
+  const dryRun = longestDryRun(hours);
+  if (dryRun && dryRun.length >= 4) {
+    out.push({
+      icon: ICONS.sun, label: "Dry stretch",
+      value: `${dryRun.length} h from ${fmt(dryRun.start)}`,
+      ts: dryRun.start,
+    });
+  }
+
   return out.slice(0, 6);
+}
+
+function longestDryRun(hours) {
+  let best = null, curStart = null, curLen = 0;
+  for (const h of hours) {
+    const dry = (h.pop ?? 0) < 25 && (h.precip ?? 0) < 0.1;
+    if (dry) {
+      if (!curStart) curStart = h.time;
+      curLen += 1;
+      if (!best || curLen > best.length) best = { start: curStart, length: curLen };
+    } else {
+      curStart = null; curLen = 0;
+    }
+  }
+  return best;
 }
