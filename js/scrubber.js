@@ -87,6 +87,19 @@ export class Scrubber {
     // Double-click anywhere on the track is a shortcut for "back to live".
     this.track.addEventListener("dblclick", () => this.reset());
 
+    // Hover tooltip — shows what time the pointer is parked at before you
+    // commit to dragging. Attached to the track and uses the scrubber-time
+    // element as a live preview label.
+    this.track.addEventListener("pointermove", (e) => {
+      if (this.dragging || e.pointerType === "touch") return;
+      const r = this.track.getBoundingClientRect();
+      const t = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+      const totalMs = RANGE_HOURS * 3600_000;
+      const ts = (this.start - 3600_000) + t * totalMs;
+      this._showHoverTime(ts, e.clientX - r.left);
+    });
+    this.track.addEventListener("pointerleave", () => this._hideHoverTime());
+
     // Keyboard: arrow keys nudge by 1h, shift+arrow by 6h.
     this.track.addEventListener("keydown", (e) => {
       const step = e.shiftKey ? 6 : 1;
@@ -101,6 +114,32 @@ export class Scrubber {
     });
 
     this.resetEl?.addEventListener("click", () => this.reset());
+  }
+
+  _ensureHoverTip() {
+    if (this._hoverTip) return this._hoverTip;
+    const tip = document.createElement("div");
+    tip.className = "scrubber-hover-tip";
+    tip.hidden = true;
+    this.track.appendChild(tip);
+    this._hoverTip = tip;
+    return tip;
+  }
+
+  _showHoverTime(ts, pixelX) {
+    const tip = this._ensureHoverTip();
+    const d = new Date(ts);
+    const label = d.toLocaleString(undefined, {
+      weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false,
+    });
+    tip.textContent = label;
+    tip.hidden = false;
+    const r = this.track.getBoundingClientRect();
+    tip.style.left = `${Math.max(10, Math.min(r.width - 10, pixelX))}px`;
+  }
+
+  _hideHoverTime() {
+    if (this._hoverTip) this._hoverTip.hidden = true;
   }
 
   reset() {

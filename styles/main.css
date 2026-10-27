@@ -657,6 +657,22 @@ html[data-reduce-motion="true"] *::after {
   pointer-events: none;
 }
 .scrubber-track:active .scrubber-thumb { transform: translate(-50%, -50%) scale(1.15); }
+.scrubber-hover-tip {
+  position: absolute;
+  top: -24px;
+  transform: translateX(-50%);
+  background: rgba(14, 18, 35, 0.92);
+  color: var(--fg);
+  border: 1px solid var(--stroke);
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.scrubber-hover-tip[hidden] { display: none; }
 
 /* ---------- Pressure sparkline ---------- */
 .metric-pressure,
