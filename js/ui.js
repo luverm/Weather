@@ -1229,6 +1229,14 @@ function renderPrecipSummary(w) {
   el.precipSummary.hidden = false;
   el.precipSummary.setAttribute("data-level", level);
   el.precipSummary.innerHTML = `<span class="precip-dot"></span><span>${text}</span>`;
+  // Jump to the wettest hour on click, when there is one worth jumping to.
+  el.precipSummary.onclick = (peakHour && (peakHour.precip ?? 0) > 0.1)
+    ? () => state.handlers.onHourClick?.(peakHour.time)
+    : null;
+  el.precipSummary.style.cursor = el.precipSummary.onclick ? "pointer" : "default";
+  el.precipSummary.setAttribute("title", el.precipSummary.onclick
+    ? `Jump to ${fmtTime(peakHour.time)} — the wettest hour`
+    : "");
 }
 
 function highlightHour(index) {
