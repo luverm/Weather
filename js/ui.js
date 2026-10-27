@@ -286,10 +286,18 @@ export const ui = {
       el.hintText.innerHTML = 'Drag the slider, hover the chart, or press <kbd>?</kbd> for shortcuts.';
     }
     // Flip the "Now in" / "At HH:mm in" label so the hero always says
-    // what time you're looking at.
+    // what time you're looking at. When the sampled time is more than
+    // ~24 hours away, add a short weekday prefix.
     if (el.placeLabelText) {
       if (on && state.sampledWeather?._sampledTs) {
-        el.placeLabelText.textContent = `At ${fmtTime(state.sampledWeather._sampledTs)} in`;
+        const ts = state.sampledWeather._sampledTs;
+        const hoursAway = Math.abs(ts - Date.now()) / 3600_000;
+        if (hoursAway > 24) {
+          const day = new Date(ts).toLocaleDateString(undefined, { weekday: "short" });
+          el.placeLabelText.textContent = `${day} ${fmtTime(ts)} in`;
+        } else {
+          el.placeLabelText.textContent = `At ${fmtTime(ts)} in`;
+        }
       } else {
         el.placeLabelText.textContent = "Now in";
       }
