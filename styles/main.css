@@ -847,6 +847,22 @@ html[data-reduce-motion="true"] *::after {
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
 }
+.chart-night .chart-sun-line {
+  stroke: rgba(255, 220, 160, 0.4);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+.chart-night .chart-sun-sunset {
+  stroke: rgba(140, 170, 220, 0.4);
+}
+.chart-night .chart-sun-glyph {
+  font-size: 9px;
+  fill: #ffd9a8;
+  dominant-baseline: central;
+}
+.chart-night .chart-sun-sunset-glyph {
+  fill: #b8c7e4;
+}
 .chart-labels text {
   font-size: 9px;
   fill: var(--fg-dim);

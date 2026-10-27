@@ -259,12 +259,19 @@ export class HourlyChart {
       precipG.appendChild(r);
     });
 
-    // Night shading: dim rectangles where !isDay
+    // Night shading: dim rectangles where !isDay. Also drop a tiny ☀/🌙
+    // marker where day flips to night and vice versa, so the exact
+    // sunrise/sunset moment is visible.
     const nightG = this.svg.querySelector("#chart-night");
     nightG.innerHTML = "";
     let runStart = null;
+    const transitions = [];
     for (let i = 0; i <= this.hours.length; i++) {
       const dark = i < this.hours.length && !this.hours[i].isDay;
+      const prevDark = i > 0 ? !this.hours[i - 1].isDay : null;
+      if (prevDark != null && i < this.hours.length && dark !== prevDark) {
+        transitions.push({ i, kind: dark ? "sunset" : "sunrise" });
+      }
       if (dark && runStart == null) runStart = i;
       if ((!dark || i === this.hours.length) && runStart != null) {
         const x1 = iToX(Math.max(0, runStart - 0.5));
@@ -277,6 +284,23 @@ export class HourlyChart {
         nightG.appendChild(r);
         runStart = null;
       }
+    }
+    for (const tr of transitions) {
+      const x = iToX(Math.max(0, tr.i - 0.5));
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("x1", x.toFixed(1));
+      line.setAttribute("x2", x.toFixed(1));
+      line.setAttribute("y1", "4");
+      line.setAttribute("y2", String(H - PAD_BOT));
+      line.setAttribute("class", `chart-sun-line chart-sun-${tr.kind}`);
+      nightG.appendChild(line);
+      const glyph = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      glyph.setAttribute("x", x.toFixed(1));
+      glyph.setAttribute("y", "9");
+      glyph.setAttribute("text-anchor", "middle");
+      glyph.setAttribute("class", `chart-sun-glyph chart-sun-${tr.kind}-glyph`);
+      glyph.textContent = tr.kind === "sunrise" ? "☀" : "☾";
+      nightG.appendChild(glyph);
     }
 
     // Labels: every ~3 hours
