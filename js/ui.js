@@ -112,6 +112,7 @@ const el = {
   sunArcPath: $("#sun-arc-path"),
   sunArcGoldenRise: $("#sun-arc-golden-rise"),
   sunArcGoldenSet: $("#sun-arc-golden-set"),
+  sunArcNoon: $("#sun-arc-noon"),
   sunGoldenBadge: $("#sun-golden-badge"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
@@ -850,6 +851,14 @@ function scheduleSunArc(w) {
   } else {
     if (el.sunArcGoldenRise) el.sunArcGoldenRise.setAttribute("cx", "-10");
     if (el.sunArcGoldenSet) el.sunArcGoldenSet.setAttribute("cx", "-10");
+  }
+  // Solar-noon tick — midpoint of the arc, labeled by its tooltip.
+  if (el.sunArcNoon) {
+    const noon = arcPoint(0.5);
+    el.sunArcNoon.setAttribute("cx", noon.x.toFixed(1));
+    el.sunArcNoon.setAttribute("cy", noon.y.toFixed(1));
+    const noonTs = (sr + ss) / 2;
+    try { el.sunArcNoon.innerHTML = `<title>Solar noon · ${fmtTime(noonTs)}</title>`; } catch { /* ignore */ }
   }
 
   const update = () => {

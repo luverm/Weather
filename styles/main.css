@@ -1281,6 +1281,11 @@ kbd {
 .sun-arc-golden[data-active="true"] { r: 4.5; opacity: 1; }
 .sun-arc-golden[data-active="false"] { opacity: 0.65; }
 
+.sun-arc-noon {
+  filter: drop-shadow(0 0 3px rgba(255,240,200,0.65));
+  opacity: 0.85;
+}
+
 .sun-golden-badge {
   display: inline-block;
   margin-left: 6px;
