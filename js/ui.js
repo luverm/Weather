@@ -1200,7 +1200,17 @@ function renderDaily(w) {
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
-    const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const windLabel = (d.windMax != null && d.windDir != null)
+      ? ` · ${cardinal(d.windDir)} ${Math.round(d.windMax)} km/h`
+      : "";
+    const extra = (gustLabel || popLabel || windLabel)
+      ? `<span class="daily-gust">${popLabel}${windLabel}${gustLabel}</span>`
+      : "";
+    const windArrow = d.windDir != null
+      ? `<span class="daily-wind" title="Wind from ${cardinal(d.windDir)}" style="transform:rotate(${d.windDir}deg)" aria-hidden="true">
+           <svg viewBox="0 0 16 16"><path d="M8 2 L5 10 L8 8 L11 10 Z" fill="currentColor"/></svg>
+         </span>`
+      : `<span class="daily-wind daily-wind-blank" aria-hidden="true"></span>`;
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
@@ -1209,6 +1219,7 @@ function renderDaily(w) {
       </div>
       <span class="daily-temp-min">${Math.round(convertTemp(d.tempMin))}°</span>
       <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°</span>
+      ${windArrow}
       ${extra}
     `;
     item.addEventListener("click", () => toggleDailyExpand(item, d, w));

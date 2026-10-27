@@ -1713,13 +1713,23 @@ kbd {
 }
 .daily-item {
   display: grid;
-  grid-template-columns: 72px 28px 1fr 60px 60px;
+  grid-template-columns: 72px 28px 1fr 48px 48px 20px;
   gap: 12px;
   align-items: center;
   padding: 10px 8px;
   border-radius: 10px;
   transition: background 200ms var(--ease);
 }
+.daily-wind {
+  display: inline-grid;
+  place-items: center;
+  width: 16px; height: 16px;
+  color: var(--fg-muted);
+  transform-origin: center;
+  transition: transform 320ms var(--ease), color 160ms var(--ease);
+}
+.daily-wind svg { width: 14px; height: 14px; }
+.daily-wind-blank { visibility: hidden; }
 .daily-item:hover { background: var(--glass); }
 .daily-day { font-size: 13px; font-weight: 500; }
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
@@ -1805,7 +1815,7 @@ kbd {
   .metrics { grid-template-columns: repeat(2, 1fr); }
   .extras { grid-template-columns: 1fr; }
   .brand-name { display: none; }
-  .daily-item { grid-template-columns: 64px 24px 1fr 48px 48px; gap: 8px; }
+  .daily-item { grid-template-columns: 64px 24px 1fr 40px 40px 18px; gap: 8px; }
   .chart-svg { height: 120px; }
   .shortcuts-list { grid-template-columns: 1fr; }
 }
