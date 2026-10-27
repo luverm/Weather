@@ -99,6 +99,7 @@ const el = {
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
+  settingHideRadar: $("#setting-hide-radar"),
   settingClearPlaces: $("#setting-clear-places"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
@@ -1701,6 +1702,12 @@ function bindSettings() {
     ui.showToast("Saved places cleared");
     close();
   });
+
+  el.settingHideRadar?.addEventListener("change", () => {
+    const hide = el.settingHideRadar.checked;
+    document.documentElement.setAttribute("data-hide-radar", hide ? "true" : "false");
+    localStorage.setItem("aether:hideRadar", hide ? "1" : "0");
+  });
 }
 
 function applyStoredPreferences() {
@@ -1712,6 +1719,11 @@ function applyStoredPreferences() {
     queueMicrotask(() => state.handlers.onReduceMotion?.(true));
   }
   if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
+  const hideRadar = localStorage.getItem("aether:hideRadar") === "1";
+  if (hideRadar) {
+    document.documentElement.setAttribute("data-hide-radar", "true");
+    if (el.settingHideRadar) el.settingHideRadar.checked = true;
+  }
 }
 
 // Exposed so app.js can query the current preference on boot.

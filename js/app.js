@@ -217,11 +217,15 @@ async function loadByCoords(place) {
   scrubber.setBounds({ start: Date.now(), sunrise: w.sunrise, sunset: w.sunset });
 
   // Move the radar to the new location (fire-and-forget; resolves later).
-  ensureRadar([place.lat, place.lon]).then((r) => {
-    if (!r) return;
-    r.setCenter(place.lat, place.lon, place.name);
-    r.setPins(places.all(), places.idFor(place));
-  });
+  // Skip entirely when the user has hidden the radar in settings — avoids
+  // the Leaflet poll and keeps the page lean on slow connections.
+  if (document.documentElement.getAttribute("data-hide-radar") !== "true") {
+    ensureRadar([place.lat, place.lon]).then((r) => {
+      if (!r) return;
+      r.setCenter(place.lat, place.lon, place.name);
+      r.setPins(places.all(), places.idFor(place));
+    });
+  }
 }
 
 async function useGeolocation() {

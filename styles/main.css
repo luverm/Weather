@@ -1246,6 +1246,7 @@ kbd {
   transition: all 320ms var(--ease);
 }
 .radar[data-unavailable="true"] { display: none; }
+html[data-hide-radar="true"] .radar { display: none; }
 .radar-head {
   display: flex; align-items: center; justify-content: space-between;
   padding: 2px 6px 0;
