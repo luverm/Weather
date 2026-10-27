@@ -1416,6 +1416,46 @@ kbd {
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+
+.precip-summary {
+  margin-left: auto;
+  padding: 2px 9px;
+  border-radius: 999px;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  text-transform: none;
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--fg-muted);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.precip-summary[data-level="dry"] {
+  color: #c8e6c8;
+  background: rgba(120, 208, 106, 0.10);
+  border-color: rgba(120, 208, 106, 0.22);
+}
+.precip-summary[data-level="chance"] {
+  color: #ffe6a9;
+  background: rgba(255, 211, 106, 0.10);
+  border-color: rgba(255, 211, 106, 0.24);
+}
+.precip-summary[data-level="wet"] {
+  color: #cfe4ff;
+  background: rgba(118, 170, 255, 0.14);
+  border-color: rgba(118, 170, 255, 0.32);
+}
+.precip-summary[data-level="heavy"] {
+  color: #ffd4d4;
+  background: rgba(255, 110, 120, 0.14);
+  border-color: rgba(255, 110, 120, 0.32);
+}
+.precip-summary .precip-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor; opacity: 0.75;
+}
 .daily-icon-strip {
   display: grid;
   grid-auto-flow: column;

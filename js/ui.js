@@ -100,6 +100,7 @@ const el = {
   weekendIconSat: $("#weekend-icon-sat"),
   weekendIconSun: $("#weekend-icon-sun"),
   forecastTrack: $("#forecast-track"),
+  precipSummary: $("#precip-summary"),
   dailyTrack: $("#daily-track"),
   nowcast: $("#nowcast"),
   nowcastHeadline: $("#nowcast-headline"),
@@ -926,6 +927,40 @@ function renderHourly(w) {
     item.addEventListener("click", () => state.handlers.onHourClick?.(h.time));
     el.forecastTrack.appendChild(item);
   }
+  renderPrecipSummary(w);
+}
+
+function renderPrecipSummary(w) {
+  if (!el.precipSummary) return;
+  const hours = (w.hourly || []).slice(0, 24);
+  if (hours.length < 3) { el.precipSummary.hidden = true; return; }
+
+  let total = 0, peakHour = null, maxPop = 0;
+  for (const h of hours) {
+    const p = h.precip ?? 0;
+    total += p;
+    if (h.pop > maxPop) maxPop = h.pop;
+    if (!peakHour || p > (peakHour.precip ?? 0)) peakHour = h;
+  }
+
+  let level, text;
+  if (total < 0.1 && maxPop < 25) {
+    level = "dry";
+    text = `Dry · ${maxPop}% max chance`;
+  } else if (total < 0.3) {
+    level = "chance";
+    text = `${maxPop}% chance · stays dry`;
+  } else {
+    level = total >= 10 ? "heavy" : "wet";
+    const totalLabel = total >= 10 ? `${Math.round(total)}` : `${total.toFixed(1)}`;
+    const peakLabel = peakHour && (peakHour.precip ?? 0) > 0.1
+      ? ` · peak ${fmtTime(peakHour.time)}`
+      : "";
+    text = `${totalLabel} mm · ${maxPop}%${peakLabel}`;
+  }
+  el.precipSummary.hidden = false;
+  el.precipSummary.setAttribute("data-level", level);
+  el.precipSummary.innerHTML = `<span class="precip-dot"></span><span>${text}</span>`;
 }
 
 function highlightHour(index) {
