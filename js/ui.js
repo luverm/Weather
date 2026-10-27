@@ -1312,6 +1312,7 @@ function renderDaily(w) {
     if (d.tempMax > gMax) gMax = d.tempMax;
   }
   const span = Math.max(1, gMax - gMin);
+  const maxPrecip = Math.max(1, ...days.map((d) => d.precip ?? 0));
   days.forEach((d, i) => {
     const dt = new Date(d.time);
     const tz = state.weather?.timezone;
@@ -1343,11 +1344,18 @@ function renderDaily(w) {
            <svg viewBox="0 0 16 16"><path d="M8 2 L5 10 L8 8 L11 10 Z" fill="currentColor"/></svg>
          </span>`
       : `<span class="daily-wind daily-wind-blank" aria-hidden="true"></span>`;
+    // Rain intensity accent — a thin bar under the temp range sized to
+    // the day's precip proportion against the week's max.
+    const rainFrac = (d.precip ?? 0) / maxPrecip;
+    const rainBar = rainFrac > 0.02
+      ? `<div class="daily-rain" style="width:${(rainFrac * 100).toFixed(1)}%" title="${d.precip?.toFixed(1) ?? 0} mm"></div>`
+      : "";
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
       <div class="daily-range">
         <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
+        ${rainBar}
       </div>
       <span class="daily-temp-min">${Math.round(convertTemp(d.tempMin))}°</span>
       <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°</span>
