@@ -10,6 +10,7 @@ import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
+import { precipSummary } from "./precip-summary.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -91,6 +92,10 @@ const el = {
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
   comfortStrip: $("#comfort-strip"),
+  precipSummary: $("#precip-summary"),
+  precipSummaryTotal: $("#precip-summary-total"),
+  precipSummaryHours: $("#precip-summary-hours"),
+  precipSummaryWhen: $("#precip-summary-when"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
   weekendDetail: $("#weekend-detail"),
@@ -193,6 +198,7 @@ export const ui = {
     renderActivity(weather);
     renderAlerts(weather);
     renderWeekend(weather);
+    renderPrecipSummary(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -1001,6 +1007,28 @@ function toggleDailyExpand(item, d, w) {
   }).join("");
   item.appendChild(box);
   item.dataset.expanded = "true";
+}
+
+function renderPrecipSummary(w) {
+  const btn = el.precipSummary;
+  if (!btn) return;
+  const s = precipSummary(w);
+  if (!s) { btn.hidden = true; return; }
+  btn.hidden = false;
+  btn.dataset.kind = s.kind;
+  const unit = s.kind === "snow" ? "cm" : "mm";
+  const amount = s.kind === "snow" ? s.totalMm / 10 : s.totalMm;
+  const total = amount < 10 ? amount.toFixed(1) : Math.round(amount).toString();
+  el.precipSummaryTotal.textContent = `${total} ${unit}`;
+  el.precipSummaryHours.textContent = `${s.rainyHours} h`;
+  // "wettest" window label — collapse single hour vs. a range.
+  const startTxt = fmtTime(s.windowStart);
+  const endTxt = fmtTime(s.windowEnd + 3600_000);
+  el.precipSummaryWhen.textContent = s.windowStart === s.windowEnd
+    ? startTxt
+    : `${startTxt}–${endTxt}`;
+  btn.title = `${total} ${unit} of ${s.kind} expected in the next 24 hours · peak ${s.peakMm.toFixed(1)} ${unit} around ${fmtTime(s.peakTime)}`;
+  btn.onclick = () => state.handlers.onHourClick?.(s.peakTime);
 }
 
 function renderNowcast(w) {

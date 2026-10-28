@@ -758,6 +758,62 @@ html[data-reduce-motion="true"] *::after {
   border-radius: 999px;
   background: rgba(255,255,255,0.08);
 }
+.chart-subhead {
+  display: flex;
+  padding: 0 2px;
+}
+.chart-subhead:has(.precip-summary[hidden]) { display: none; }
+.precip-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font: inherit;
+  color: var(--fg);
+  background: linear-gradient(135deg, rgba(154,209,255,0.14), rgba(154,209,255,0.06));
+  border: 1px solid rgba(154,209,255,0.22);
+  border-radius: 999px;
+  padding: 4px 12px 4px 8px;
+  cursor: pointer;
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  transition: background 160ms var(--ease), transform 160ms var(--ease);
+}
+.precip-summary[hidden] { display: none; }
+.precip-summary:hover { background: rgba(154,209,255,0.18); }
+.precip-summary:active { transform: scale(0.98); }
+.precip-summary[data-kind="snow"] {
+  background: linear-gradient(135deg, rgba(220,230,255,0.18), rgba(220,230,255,0.06));
+  border-color: rgba(220,230,255,0.28);
+}
+.precip-summary-icon {
+  width: 18px; height: 18px;
+  color: #9ad1ff;
+}
+.precip-summary[data-kind="snow"] .precip-summary-icon { color: #dde7ff; }
+.precip-summary[data-kind="snow"] .precip-summary-drops { stroke-dasharray: 1.5 2.5; }
+.precip-summary-main { display: inline-flex; align-items: baseline; gap: 6px; }
+.precip-summary-main strong { font-size: 12.5px; font-weight: 600; }
+.precip-summary-hours { color: var(--fg-dim); font-size: 11px; }
+.precip-summary-hours::before {
+  content: "·";
+  margin-right: 4px;
+  color: var(--fg-muted);
+}
+.precip-summary-sep {
+  width: 1px; height: 14px; background: rgba(255,255,255,0.14);
+}
+.precip-summary-window { display: inline-flex; align-items: baseline; gap: 6px; }
+.precip-summary-sublabel {
+  color: var(--fg-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 9.5px;
+}
+.precip-summary-window strong { font-size: 12px; font-weight: 600; }
+@media (max-width: 540px) {
+  .precip-summary { width: 100%; justify-content: center; }
+}
 .chart-svg {
   width: 100%;
   height: 140px;
