@@ -308,6 +308,17 @@ function renderLiveValues(w, { animate = true } = {}) {
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  // Dual-unit tooltip so the hidden unit is one hover away.
+  if (w.temp != null) {
+    const c = Math.round(w.temp);
+    const f = Math.round(w.temp * 9 / 5 + 32);
+    el.temp.title = state.unit === "F" ? `${c}°C · ${f}°F` : `${f}°F · ${c}°C`;
+    if (w.feelsLike != null) {
+      const fc = Math.round(w.feelsLike);
+      const ff = Math.round(w.feelsLike * 9 / 5 + 32);
+      el.feelsLike.title = state.unit === "F" ? `Feels ${fc}°C · ${ff}°F` : `Feels ${ff}°F · ${fc}°C`;
+    }
+  }
   renderDayRange(w);
   // Only recompute the "vs yesterday" chip on live renders — during scrubbing
   // the sampled hour's temp doesn't represent today's high.
