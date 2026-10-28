@@ -1156,6 +1156,43 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+.aurora-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: center;
+}
+.aurora-svg {
+  width: 42px;
+  height: 42px;
+  filter: drop-shadow(0 0 8px rgba(138, 247, 198, 0.4));
+}
+.aurora-meta strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #c9ffe3;
+}
+.aurora-detail {
+  font-size: 11.5px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+}
+.aurora-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(138, 247, 198, 0.14);
+  border: 1px solid rgba(138, 247, 198, 0.28);
+  color: #c9ffe3;
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.aurora-card[data-level="likely"] .aurora-svg {
+  filter: drop-shadow(0 0 12px rgba(138, 247, 198, 0.7));
+}
 .sun-magichours {
   list-style: none;
   margin: 2px 0 0;

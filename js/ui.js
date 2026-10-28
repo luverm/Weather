@@ -12,6 +12,7 @@ import { findActivityWindows } from "./activity.js";
 import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { precipSummary } from "./precip-summary.js";
+import { auroraWatch } from "./aurora.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -94,6 +95,10 @@ const el = {
   insightsList: $("#insights-list"),
   activityCard: $("#activity-card"),
   activityList: $("#activity-list"),
+  auroraCard: $("#aurora-card"),
+  auroraLabel: $("#aurora-label"),
+  auroraDetail: $("#aurora-detail"),
+  auroraBadge: $("#aurora-badge"),
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
@@ -215,6 +220,7 @@ export const ui = {
     renderAlerts(weather);
     renderWeekend(weather);
     renderPrecipSummary(weather);
+    renderAurora(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -1107,6 +1113,21 @@ function toggleDailyExpand(item, d, w) {
   }).join("");
   item.appendChild(box);
   item.dataset.expanded = "true";
+}
+
+function renderAurora(w) {
+  if (!el.auroraCard) return;
+  const lat = state.place?.lat;
+  const info = auroraWatch({ lat, weather: w });
+  if (!info) { el.auroraCard.hidden = true; return; }
+  el.auroraCard.hidden = false;
+  el.auroraLabel.textContent = info.label;
+  el.auroraDetail.textContent = info.detail;
+  el.auroraCard.dataset.level = info.label.toLowerCase();
+  if (el.auroraBadge) {
+    el.auroraBadge.textContent = `score ${info.score}/5`;
+    el.auroraBadge.className = "aurora-badge";
+  }
 }
 
 function renderPrecipSummary(w) {

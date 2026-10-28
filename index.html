@@ -345,6 +345,27 @@
           <ul id="activity-list" class="activity-list"></ul>
         </div>
 
+        <div class="extra-card glass" id="aurora-card" hidden>
+          <span class="metric-label">Aurora watch <span id="aurora-badge" class="aurora-badge"></span></span>
+          <div class="aurora-row">
+            <svg class="aurora-svg" viewBox="0 0 48 48" aria-hidden="true">
+              <defs>
+                <linearGradient id="aurora-grad" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stop-color="#8af7c6" stop-opacity="0"/>
+                  <stop offset="40%" stop-color="#8af7c6" stop-opacity="0.9"/>
+                  <stop offset="100%" stop-color="#5a3fff" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path d="M4 36 C12 10, 22 10, 24 24 S 36 38, 44 12"
+                    fill="none" stroke="url(#aurora-grad)" stroke-width="6" stroke-linecap="round"/>
+            </svg>
+            <div class="aurora-meta">
+              <strong id="aurora-label">—</strong>
+              <span id="aurora-detail" class="aurora-detail">—</span>
+            </div>
+          </div>
+        </div>
+
         <div class="extra-card glass" id="sun-card">
           <span class="metric-label"><span id="sun-next-label">Sun</span> <span id="sun-countdown" class="sun-countdown"></span></span>
           <svg id="sun-arc" class="sun-arc" viewBox="0 0 200 84" aria-hidden="true">
