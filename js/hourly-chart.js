@@ -290,6 +290,46 @@ export class HourlyChart {
       }
     }
 
+    // Peak / trough markers: find the hottest and coldest hour across the 24h
+    // window and tag each with a tiny labelled dot on the line.
+    const extG = this.svg.querySelector("#chart-extremes");
+    if (extG) {
+      extG.innerHTML = "";
+      if (this.hours.length >= 3) {
+        let hotIdx = 0, coldIdx = 0;
+        for (let i = 1; i < this.hours.length; i++) {
+          if (this.hours[i].temp > this.hours[hotIdx].temp) hotIdx = i;
+          if (this.hours[i].temp < this.hours[coldIdx].temp) coldIdx = i;
+        }
+        const unit = this.getUnit();
+        const drawExt = (idx, kind) => {
+          const p = this.points[idx];
+          if (!p) return;
+          const t = this.hours[idx].temp;
+          const vLabel = unit === "F" ? t * 9 / 5 + 32 : t;
+          const yOff = kind === "hi" ? -12 : 14;
+          const ns = "http://www.w3.org/2000/svg";
+          const c = document.createElementNS(ns, "circle");
+          c.setAttribute("cx", p.x.toFixed(1));
+          c.setAttribute("cy", p.y.toFixed(1));
+          c.setAttribute("r", "3");
+          c.setAttribute("class", `chart-ext chart-ext-${kind}`);
+          extG.appendChild(c);
+          const txt = document.createElementNS(ns, "text");
+          txt.setAttribute("x", p.x.toFixed(1));
+          txt.setAttribute("y", (p.y + yOff).toFixed(1));
+          txt.setAttribute("text-anchor", "middle");
+          txt.setAttribute("class", `chart-ext-label chart-ext-${kind}`);
+          txt.textContent = `${kind === "hi" ? "↑" : "↓"} ${Math.round(vLabel)}°`;
+          extG.appendChild(txt);
+        };
+        if (hotIdx !== coldIdx) {
+          drawExt(hotIdx, "hi");
+          drawExt(coldIdx, "lo");
+        }
+      }
+    }
+
     // Labels: every ~3 hours
     const unit = this.getUnit();
     const labG = this.svg.querySelector("#chart-labels");
