@@ -983,6 +983,33 @@ kbd {
   margin-top: 4px;
   font-variant-numeric: tabular-nums;
 }
+.fog-badge {
+  display: inline-block;
+  padding: 1px 7px;
+  margin-left: 2px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  font-weight: 500;
+  background: rgba(190, 210, 230, 0.14);
+  color: rgba(220, 232, 245, 0.9);
+  border: 1px solid rgba(200, 220, 240, 0.22);
+  vertical-align: baseline;
+}
+.metric-sub.fog-possible .fog-badge {
+  background: rgba(190, 210, 230, 0.2);
+  color: rgba(230, 240, 250, 0.95);
+}
+.metric-sub.fog-likely .fog-badge {
+  background: rgba(255, 220, 120, 0.18);
+  color: rgba(255, 235, 160, 0.95);
+  border-color: rgba(255, 220, 120, 0.3);
+}
+.metric-sub.fog-present .fog-badge {
+  background: rgba(255, 160, 120, 0.2);
+  color: rgba(255, 200, 170, 0.95);
+  border-color: rgba(255, 160, 120, 0.32);
+}
 
 /* ---------- Extras row: AQ + moon + sun ---------- */
 .extras {

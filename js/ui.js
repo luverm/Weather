@@ -348,9 +348,7 @@ function renderMetrics(w) {
     }
   }
   el.metricPressure.textContent = Math.round(w.pressure ?? 0);
-  el.metricPressureSub.textContent = w.visibility != null
-    ? `visibility ${Math.round((w.visibility / 1000) * 10) / 10} km`
-    : "visibility —";
+  renderVisibility(w);
   el.metricUV.textContent = w.uv != null ? Math.round(w.uv) : "—";
   if (el.uvLevel) {
     const lvl = uvLevel(w.uv);
@@ -367,6 +365,37 @@ function renderMetrics(w) {
     el.metricUVSub.textContent = "peak —";
   }
   renderPressureSparkline(w);
+}
+
+function renderVisibility(w) {
+  const sub = el.metricPressureSub;
+  if (!sub) return;
+  const visKm = w.visibility != null ? w.visibility / 1000 : null;
+  const spread = (w.temp != null && w.dewPoint != null) ? w.temp - w.dewPoint : null;
+  const fog = fogRisk(spread, visKm, w.humidity);
+  const visText = visKm != null ? `${Math.round(visKm * 10) / 10} km` : "—";
+  const prefix = `visibility ${visText}`;
+  sub.classList.remove("fog-mist", "fog-possible", "fog-likely", "fog-present");
+  if (fog) {
+    sub.classList.add(fog.cls);
+    sub.innerHTML = `${escapeHtml(prefix)} · <span class="fog-badge">${escapeHtml(fog.label)}</span>`;
+  } else {
+    sub.textContent = prefix;
+  }
+}
+
+// Rate the odds of fog using the dew-point depression, humidity and visibility.
+// A spread < 2 °C with high humidity is the classic radiation-fog setup; a reported
+// visibility < 1 km means fog is already in the field.
+function fogRisk(spread, visKm, humidity) {
+  if (visKm != null && visKm < 1) return { label: "Fog in field", cls: "fog-present" };
+  if (visKm != null && visKm < 4) return { label: "Mist", cls: "fog-mist" };
+  if (spread == null) return null;
+  const rh = humidity ?? 0;
+  if (spread < 1 && rh >= 92) return { label: "Fog likely", cls: "fog-likely" };
+  if (spread < 2 && rh >= 85) return { label: "Fog possible", cls: "fog-possible" };
+  if (spread < 3 && rh >= 90) return { label: "Mist possible", cls: "fog-mist" };
+  return null;
 }
 
 function humidityComfort(rh, dew, temp) {
