@@ -1395,6 +1395,7 @@ function bindWindUnitCycle() {
     if (state.weather) {
       renderInsights(state.weather);
       renderDaily(state.weather);
+      renderAlerts(state.weather);
       // Hourly chart popover reads the unit lazily when the user hovers, no
       // explicit refresh needed.
     }
