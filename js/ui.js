@@ -307,7 +307,14 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  // Feels-like line, written WITHOUT replacing the inner #temp-trend span —
+  // other render passes mutate that span's text and would lose their handle
+  // if we blew it away with innerHTML. We walk the sibling text nodes instead.
+  const gap = (w.feelsLike ?? w.temp) - w.temp;
+  let glyph = "";
+  if (gap <= -3) glyph = "❄ ";
+  else if (gap >= 3) glyph = "💧 ";
+  setFeelsText(el.feelsLike, `${glyph}Feels like ${Math.round(feels)}°`);
   // Dual-unit tooltip so the hidden unit is one hover away.
   if (w.temp != null) {
     const c = Math.round(w.temp);
@@ -323,6 +330,25 @@ function renderLiveValues(w, { animate = true } = {}) {
   // Only recompute the "vs yesterday" chip on live renders — during scrubbing
   // the sampled hour's temp doesn't represent today's high.
   if (animate) renderYesterdayChip(w);
+}
+
+function setFeelsText(container, text) {
+  // Preserve the #temp-trend span inside #feels-like. The previous
+  // implementation used textContent which obliterated the span and left
+  // el.tempTrend as a detached reference. Here we always re-establish the
+  // span (empty if missing), then the trailing text node, then refresh the
+  // cached el.tempTrend reference to the live node.
+  container.textContent = "";
+  let span = document.getElementById("temp-trend");
+  if (!span || span.parentElement !== container) {
+    span = document.createElement("span");
+    span.id = "temp-trend";
+    span.className = "temp-trend";
+    span.setAttribute("aria-hidden", "true");
+  }
+  container.appendChild(span);
+  container.appendChild(document.createTextNode(text));
+  el.tempTrend = span;
 }
 
 function renderYesterdayChip(w) {
