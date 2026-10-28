@@ -91,6 +91,9 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunMagicHours: $("#sun-magichours"),
+  magicGolden: $("#magic-golden"),
+  magicBlue: $("#magic-blue"),
   comfortStrip: $("#comfort-strip"),
   precipSummary: $("#precip-summary"),
   precipSummaryTotal: $("#precip-summary-total"),
@@ -556,8 +559,24 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderMagicHours(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+}
+
+function renderMagicHours(w) {
+  if (!el.sunMagicHours) return;
+  if (!w?.sunrise || !w?.sunset) { el.sunMagicHours.hidden = true; return; }
+  // Daylight too short (polar twilight) → magic hours aren't meaningful.
+  const dayMs = w.sunset - w.sunrise;
+  if (dayMs < 90 * 60_000) { el.sunMagicHours.hidden = true; return; }
+  const GOLDEN = 60 * 60_000;
+  const BLUE = 30 * 60_000;
+  el.sunMagicHours.hidden = false;
+  el.magicGolden.textContent =
+    `${fmtTime(w.sunrise)}–${fmtTime(w.sunrise + GOLDEN)} · ${fmtTime(w.sunset - GOLDEN)}–${fmtTime(w.sunset)}`;
+  el.magicBlue.textContent =
+    `${fmtTime(w.sunrise - BLUE)}–${fmtTime(w.sunrise)} · ${fmtTime(w.sunset)}–${fmtTime(w.sunset + BLUE)}`;
 }
 
 function scheduleSunArc(w) {

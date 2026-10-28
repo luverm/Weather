@@ -1059,6 +1059,49 @@ kbd {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);
 }
+.sun-magichours {
+  list-style: none;
+  margin: 2px 0 0;
+  padding: 8px 0 0;
+  display: grid;
+  gap: 6px;
+  border-top: 1px dashed rgba(255,255,255,0.08);
+}
+.sun-magichours[hidden] { display: none; }
+.magic-item {
+  display: grid;
+  grid-template-columns: 10px auto 1fr;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--fg-dim);
+}
+.magic-item strong {
+  justify-self: end;
+  font-weight: 500;
+  color: var(--fg);
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.magic-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  display: inline-block;
+}
+.magic-golden .magic-dot {
+  background: radial-gradient(circle at 30% 30%, #ffe6a8, #ff9c40);
+  box-shadow: 0 0 6px rgba(255, 180, 90, 0.5);
+}
+.magic-blue .magic-dot {
+  background: radial-gradient(circle at 30% 30%, #a9c8ff, #4a6cc8);
+  box-shadow: 0 0 6px rgba(130, 170, 230, 0.5);
+}
+.magic-label {
+  color: var(--fg-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 9.5px;
+}
 
 /* ---------- Radar map ---------- */
 .radar {
