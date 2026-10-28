@@ -308,7 +308,12 @@ export class HourlyChart {
           if (!p) return;
           const t = this.hours[idx].temp;
           const vLabel = unit === "F" ? t * 9 / 5 + 32 : t;
-          const yOff = kind === "hi" ? -12 : 14;
+          // When the hot peak sits right at the top of the plot the label
+          // would clip above the SVG; flip to below the dot in that case.
+          const wantAbove = kind === "hi";
+          const upOff = wantAbove && p.y > 12 ? -12 : 14;
+          const dnOff = !wantAbove && p.y < H - 18 ? 14 : -12;
+          const yOff = wantAbove ? upOff : dnOff;
           const ns = "http://www.w3.org/2000/svg";
           const c = document.createElementNS(ns, "circle");
           c.setAttribute("cx", p.x.toFixed(1));
@@ -317,8 +322,9 @@ export class HourlyChart {
           c.setAttribute("class", `chart-ext chart-ext-${kind}`);
           extG.appendChild(c);
           const txt = document.createElementNS(ns, "text");
+          const labelY = Math.max(8, Math.min(H - 2, p.y + yOff));
           txt.setAttribute("x", p.x.toFixed(1));
-          txt.setAttribute("y", (p.y + yOff).toFixed(1));
+          txt.setAttribute("y", labelY.toFixed(1));
           txt.setAttribute("text-anchor", "middle");
           txt.setAttribute("class", `chart-ext-label chart-ext-${kind}`);
           txt.textContent = `${kind === "hi" ? "↑" : "↓"} ${Math.round(vLabel)}°`;

@@ -158,7 +158,11 @@ function normalize(d, aq) {
   const dailyForecast = [];
   let yesterday = null;
   if (daily.time) {
-    const todayKey = dateKeyLocal(new Date(now));
+    // Open-Meteo returns ISO calendar dates in the *location's* timezone when
+    // we send timezone=auto. Compare against today in that same tz, not the
+    // viewer's — otherwise a user in Tokyo looking at a London forecast could
+    // mis-bucket on the day boundary.
+    const todayKey = dateKeyInTz(new Date(now), d.timezone);
     for (let i = 0; i < daily.time.length; i++) {
       const dateStr = daily.time[i];
       const ts = new Date(dateStr).getTime();
@@ -246,12 +250,26 @@ function normalize(d, aq) {
   };
 }
 
-function dateKeyLocal(d) {
-  // Open-Meteo returns daily dates in local time (ISO YYYY-MM-DD when timezone=auto).
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+function dateKeyInTz(d, tz) {
+  // Open-Meteo returns daily dates in the location's local time; format the
+  // same date in that tz so comparisons line up.
+  if (!tz || tz === "auto") {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }
+  try {
+    // en-CA renders dates as YYYY-MM-DD natively.
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit",
+    }).format(d);
+  } catch {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }
 }
 
 function computePressureTrend(hourly, now) {
