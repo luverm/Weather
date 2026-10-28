@@ -10,7 +10,8 @@ const RANGE_HOURS = 24;
 
 export class Scrubber {
   constructor({ trackEl, thumbEl, fillEl, timeEl, deltaEl, resetEl,
-                sunriseEl, sunsetEl, jumpsEl, appEl, onScrub }) {
+                sunriseEl, sunsetEl, jumpsEl, appEl, onScrub,
+                getTimezone }) {
     this.track = trackEl;
     this.thumb = thumbEl;
     this.fill = fillEl;
@@ -22,6 +23,7 @@ export class Scrubber {
     this.jumpsEl = jumpsEl;
     this.appEl = appEl; // receives data-scrubbing attribute
     this.onScrub = onScrub;
+    this.getTimezone = getTimezone || (() => null);
     this.dragging = false;
     this.start = Date.now();
     this.sunrise = null;
@@ -59,16 +61,15 @@ export class Scrubber {
       items.push({ label, ts });
     };
     if (this.sunrise) push("Sunrise", this.sunrise);
-    // Local noon of the current and next day.
-    const makeAt = (dayOffset, hour) => {
-      const d = new Date(now + dayOffset * 86400_000);
-      d.setHours(hour, 0, 0, 0);
-      return d.getTime();
-    };
-    push("Noon", makeAt(0, 12));
-    push("Noon tmrw", makeAt(1, 12));
+    // Noon / midnight anchored to the LOCATION's timezone — the chart's hour
+    // labels and sunrise/sunset use that timezone, so landing on the city's
+    // noon (not the viewer's) is what the chips should do. nextLocalHour
+    // walks forward 24h at a time until the moment lands inside the scrubber
+    // window.
+    const tz = this.getTimezone();
+    push("Noon", nextLocalHour(now, 12, tz, lo, hi));
     if (this.sunset) push("Sunset", this.sunset);
-    push("Midnight", makeAt(1, 0));
+    push("Midnight", nextLocalHour(now, 0, tz, lo, hi, true));
     items.sort((a, b) => a.ts - b.ts);
     if (!items.length) { this.jumpsEl.hidden = true; this.jumpsEl.innerHTML = ""; return; }
     this.jumpsEl.hidden = false;
@@ -190,5 +191,45 @@ export class Scrubber {
         this.deltaEl.textContent = `${h > 0 ? "+" : ""}${h}h`;
       }
     }
+  }
+}
+
+// Find the next instant at `hour`:00 in the given IANA timezone that falls in
+// [lo, hi]. If `preferTomorrow`, prefer the second match (skips a near-now
+// hit — useful for "Midnight" since it means the midnight ahead, not the one
+// that just happened). Falls back to viewer-local when tz is missing.
+function nextLocalHour(now, hour, tz, lo, hi, preferTomorrow = false) {
+  const candidates = [];
+  for (let dayOff = 0; dayOff <= 2; dayOff++) {
+    const base = now + dayOff * 86400_000;
+    const ts = atLocalHour(base, hour, tz);
+    if (ts != null) candidates.push(ts);
+  }
+  const inWindow = candidates.filter((t) => t >= lo && t <= hi && t > now - 15 * 60_000);
+  if (!inWindow.length) return null;
+  return preferTomorrow && inWindow.length > 1 ? inWindow[1] : inWindow[0];
+}
+
+// Returns the timestamp of hour:00 on the date that `baseTs` lands on in the
+// given IANA timezone. Falls back to viewer-local when tz is missing.
+function atLocalHour(baseTs, hour, tz) {
+  if (!tz || tz === "auto") {
+    const d = new Date(baseTs);
+    d.setHours(hour, 0, 0, 0);
+    return d.getTime();
+  }
+  try {
+    const guess = new Date(baseTs);
+    // Two passes: snap the viewer-local date, then correct for the tz hour.
+    guess.setHours(hour, 0, 0, 0);
+    const tzHour = parseInt(new Intl.DateTimeFormat("en-GB", {
+      timeZone: tz, hour: "2-digit", hour12: false,
+    }).format(guess), 10);
+    const diffHours = ((hour - tzHour + 36) % 24) - 12;
+    return guess.getTime() + diffHours * 3600_000;
+  } catch {
+    const d = new Date(baseTs);
+    d.setHours(hour, 0, 0, 0);
+    return d.getTime();
   }
 }

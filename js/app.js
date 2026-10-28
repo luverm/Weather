@@ -188,6 +188,7 @@ const scrubber = new Scrubber({
   sunsetEl: document.getElementById("scrubber-sunset"),
   jumpsEl: document.getElementById("scrubber-jumps"),
   appEl: document.querySelector(".app"),
+  getTimezone: () => app.weather?.timezone,
   onScrub: () => {
     if (!app.weather) return;
     applyScene(app.weather);
