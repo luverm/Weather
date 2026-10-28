@@ -528,6 +528,35 @@ html[data-reduce-motion="true"] *::after {
   font-size: 13px;
 }
 .scrubber-delta { font-size: 11px; color: var(--fg-dim); font-variant-numeric: tabular-nums; }
+.scrubber-jumps {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 10px;
+  flex-wrap: wrap;
+}
+.scrubber-jumps[hidden] { display: none; }
+.scrub-jump {
+  font: inherit;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--stroke);
+  border-radius: 999px;
+  padding: 3px 10px;
+  cursor: pointer;
+  transition: color 160ms var(--ease), background 160ms var(--ease), border-color 160ms var(--ease);
+}
+.scrub-jump:hover {
+  color: var(--fg);
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.2);
+}
+@media (max-width: 540px) {
+  .scrubber-jumps { width: 100%; margin-left: 0; margin-top: 4px; justify-content: center; }
+}
 .scrubber-track {
   position: relative;
   height: 36px;

@@ -10,7 +10,7 @@ const RANGE_HOURS = 24;
 
 export class Scrubber {
   constructor({ trackEl, thumbEl, fillEl, timeEl, deltaEl, resetEl,
-                sunriseEl, sunsetEl, appEl, onScrub }) {
+                sunriseEl, sunsetEl, jumpsEl, appEl, onScrub }) {
     this.track = trackEl;
     this.thumb = thumbEl;
     this.fill = fillEl;
@@ -19,6 +19,7 @@ export class Scrubber {
     this.resetEl = resetEl;
     this.sunriseEl = sunriseEl;
     this.sunsetEl = sunsetEl;
+    this.jumpsEl = jumpsEl;
     this.appEl = appEl; // receives data-scrubbing attribute
     this.onScrub = onScrub;
     this.dragging = false;
@@ -38,7 +39,49 @@ export class Scrubber {
     this.sunset = sunset;
     this._placeMarker(this.sunriseEl, sunrise, "Sunrise");
     this._placeMarker(this.sunsetEl, sunset, "Sunset");
+    this._renderJumps();
     this._render(this._currentT());
+  }
+
+  // Pick a handful of named moments in the next 24h — sunrise, noon, sunset,
+  // midnight. Only emit the ones that fall inside the scrubber's range so the
+  // chips don't send the clock out of bounds.
+  _renderJumps() {
+    if (!this.jumpsEl) return;
+    const now = Date.now();
+    const lo = this.start - 3600_000;
+    const hi = this.start + 23 * 3600_000;
+    const items = [];
+    const push = (label, ts) => {
+      if (ts == null || ts < lo || ts > hi) return;
+      // Dedupe close hits (within 20 min of a chip already queued).
+      if (items.some((x) => Math.abs(x.ts - ts) < 20 * 60_000)) return;
+      items.push({ label, ts });
+    };
+    if (this.sunrise) push("Sunrise", this.sunrise);
+    // Local noon of the current and next day.
+    const makeAt = (dayOffset, hour) => {
+      const d = new Date(now + dayOffset * 86400_000);
+      d.setHours(hour, 0, 0, 0);
+      return d.getTime();
+    };
+    push("Noon", makeAt(0, 12));
+    push("Noon tmrw", makeAt(1, 12));
+    if (this.sunset) push("Sunset", this.sunset);
+    push("Midnight", makeAt(1, 0));
+    items.sort((a, b) => a.ts - b.ts);
+    if (!items.length) { this.jumpsEl.hidden = true; this.jumpsEl.innerHTML = ""; return; }
+    this.jumpsEl.hidden = false;
+    this.jumpsEl.innerHTML = items.map((it) =>
+      `<button class="scrub-jump" type="button" data-ts="${it.ts}">${it.label}</button>`
+    ).join("");
+    this.jumpsEl.querySelectorAll(".scrub-jump").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const ts = parseInt(btn.dataset.ts, 10);
+        if (!isFinite(ts)) return;
+        this._setOffset(ts - Date.now());
+      });
+    });
   }
 
   /** Called when we externally reset to "now" (e.g. search selected). */
