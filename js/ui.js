@@ -13,6 +13,7 @@ import { buildAlerts } from "./alerts.js";
 import { weekendSnapshot } from "./weekend.js";
 import { precipSummary } from "./precip-summary.js";
 import { auroraWatch } from "./aurora.js";
+import { WIND_UNITS, WIND_ORDER, activeWindUnit, formatWind } from "./wind-units.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -404,12 +405,12 @@ function renderDayRange(w) {
 }
 
 function renderMetrics(w) {
-  const wu = WIND_UNITS[state.windUnit] || WIND_UNITS.kmh;
+  const wu = activeWindUnit();
   el.metricWind.textContent = w.windSpeed != null ? wu.round(wu.from(w.windSpeed)) : "—";
   if (el.metricWindUnit) el.metricWindUnit.textContent = wu.label;
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
-  const gustText = w.windGusts != null ? `${wu.round(wu.from(w.windGusts))} ${wu.label}` : "—";
+  const gustText = w.windGusts != null ? formatWind(w.windGusts) : "—";
   el.metricWindSub.textContent = dirLabel
     ? `${dirLabel} · gust ${gustText}`
     : `gust ${gustText}`;
@@ -1024,7 +1025,7 @@ function renderDaily(w) {
     item.className = "daily-item";
     item.dataset.ts = d.time;
     const gustLabel = (d.gustsMax && d.gustsMax >= 25)
-      ? ` · gusts ${Math.round(d.gustsMax)} km/h`
+      ? ` · gusts ${formatWind(d.gustsMax)}`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
@@ -1128,7 +1129,7 @@ function toggleDailyExpand(item, d, w) {
     const summary = document.createElement("div");
     summary.className = "daily-expand";
     summary.style.gridTemplateColumns = "1fr";
-    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${Math.round(d.gustsMax ?? 0)} km/h · UV ${Math.round(d.uvMax ?? 0)}</span>`;
+    summary.innerHTML = `<span style="padding:8px;color:var(--fg-dim);font-size:12px">Pop ${d.pop}% · gust up to ${formatWind(d.gustsMax ?? 0)} · UV ${Math.round(d.uvMax ?? 0)}</span>`;
     item.appendChild(summary);
     item.dataset.expanded = "true";
     return;
@@ -1355,20 +1356,20 @@ function bindUnitToggle() {
   bindWindUnitCycle();
 }
 
-const WIND_UNITS = {
-  kmh: { label: "km/h", from: (v) => v, round: (v) => Math.round(v) },
-  mph: { label: "mph", from: (v) => v * 0.621371, round: (v) => Math.round(v) },
-  ms:  { label: "m/s", from: (v) => v / 3.6, round: (v) => (v < 10 ? v.toFixed(1) : Math.round(v)) },
-  kn:  { label: "kn",  from: (v) => v * 0.539957, round: (v) => Math.round(v) },
-};
-const WIND_ORDER = ["kmh", "mph", "ms", "kn"];
-
 function bindWindUnitCycle() {
   const cycle = () => {
     const i = WIND_ORDER.indexOf(state.windUnit);
     state.windUnit = WIND_ORDER[(i + 1) % WIND_ORDER.length];
     localStorage.setItem("aether:wind-unit", state.windUnit);
+    // Rerender every surface that spells out a wind figure — not just the
+    // primary wind card.
     if (state.sampledWeather) renderMetrics(state.sampledWeather);
+    if (state.weather) {
+      renderInsights(state.weather);
+      renderDaily(state.weather);
+      // Hourly chart popover reads the unit lazily when the user hovers, no
+      // explicit refresh needed.
+    }
     ui.showToast?.(`Wind in ${WIND_UNITS[state.windUnit].label}`, 1400);
   };
   el.metricWind?.addEventListener("click", cycle);
@@ -1506,7 +1507,7 @@ function bindShare() {
       `Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
       today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
-      `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
+      `Wind ${formatWind(w.windSpeed)}${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
     ].filter(Boolean);

@@ -1,5 +1,6 @@
 // Interactive hourly chart: temperature line + precipitation probability bars.
 // Fills the full 24-point domain, synced to the scrubber cursor.
+import { formatWind } from "./wind-units.js";
 
 const W = 600;
 const H = 140;
@@ -138,7 +139,7 @@ export class HourlyChart {
     const feelsStr = (feels != null && Math.abs(feels - t) >= 1)
       ? `<em>feels ${Math.round(feels)}°</em>` : "";
     const windDirStr = h.windDir != null ? ` ${compassShort(h.windDir)}` : "";
-    const wind = h.wind != null ? ` · ${Math.round(h.wind)} km/h${windDirStr}` : "";
+    const wind = h.wind != null ? ` · ${formatWind(h.wind)}${windDirStr}` : "";
     const hum = h.humidity != null ? ` · ${Math.round(h.humidity)}% rh` : "";
     const cloud = h.cloud != null ? ` · ${Math.round(h.cloud)}% cloud` : "";
     this.popover.innerHTML =
