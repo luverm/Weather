@@ -94,6 +94,7 @@ export async function getWeather(lat, lon) {
     timezone: "auto",
     forecast_days: 7,
     past_hours: 1,
+    past_days: 1, // yesterday for the "vs yesterday" comparison
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -151,12 +152,15 @@ function normalize(d, aq) {
     }
   }
 
-  // 7-day daily forecast.
+  // 7-day daily forecast (strips past days so index 0 is always today).
   const dailyForecast = [];
+  let yesterday = null;
   if (daily.time) {
+    const todayKey = dateKeyLocal(new Date(now));
     for (let i = 0; i < daily.time.length; i++) {
-      const ts = new Date(daily.time[i]).getTime();
-      dailyForecast.push({
+      const dateStr = daily.time[i];
+      const ts = new Date(dateStr).getTime();
+      const row = {
         time: ts,
         tempMax: daily.temperature_2m_max?.[i],
         tempMin: daily.temperature_2m_min?.[i],
@@ -168,7 +172,14 @@ function normalize(d, aq) {
         sunrise: daily.sunrise?.[i] ? new Date(daily.sunrise[i]).getTime() : null,
         sunset: daily.sunset?.[i] ? new Date(daily.sunset[i]).getTime() : null,
         ...mapWmo(daily.weather_code[i]),
-      });
+      };
+      // Past days land before today's key — bucket yesterday separately so the
+      // forecast list stays "today + 6 days" like before.
+      if (dateStr < todayKey) {
+        yesterday = row;
+        continue;
+      }
+      dailyForecast.push(row);
     }
   }
 
@@ -188,6 +199,19 @@ function normalize(d, aq) {
 
   // Moon phase is not in Open-Meteo's free tier — compute it locally.
   const moon = computeMoonPhase(new Date());
+
+  // Build a "today vs yesterday" comparison when the API returned a past day.
+  const today = dailyForecast[0];
+  const yesterdayCompare = (yesterday && today) ? {
+    tempMax: yesterday.tempMax,
+    tempMin: yesterday.tempMin,
+    highDelta: today.tempMax != null && yesterday.tempMax != null
+      ? today.tempMax - yesterday.tempMax : null,
+    lowDelta: today.tempMin != null && yesterday.tempMin != null
+      ? today.tempMin - yesterday.tempMin : null,
+    condition: yesterday.condition,
+    label: yesterday.label,
+  } : null;
 
   return {
     temp: c.temperature_2m,
@@ -213,10 +237,19 @@ function normalize(d, aq) {
     daily: dailyForecast,
     nowcast,
     moon,
+    yesterday: yesterdayCompare,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
     fetchedAt: now,
   };
+}
+
+function dateKeyLocal(d) {
+  // Open-Meteo returns daily dates in local time (ISO YYYY-MM-DD when timezone=auto).
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 function computePressureTrend(hourly, now) {
@@ -400,6 +433,7 @@ function mock(lat, lon) {
       level: "Moderate",
     },
     pressureTrend: { delta: -0.4, direction: "steady" },
+    yesterday: { tempMax: 17, tempMin: 10, highDelta: 1, lowDelta: 1, condition: "clouds", label: "Cloudy" },
     fetchedAt: now,
     offline: true,
   };

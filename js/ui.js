@@ -27,6 +27,9 @@ const el = {
   dayRangeMin: $("#day-range-min"),
   dayRangeMax: $("#day-range-max"),
   dayRangeMarker: $("#day-range-marker"),
+  yesterdayChip: $("#yesterday-chip"),
+  yesterdayArrow: $("#yesterday-arrow"),
+  yesterdayText: $("#yesterday-text"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
   windBft: $("#m-wind-bft"),
@@ -287,6 +290,36 @@ function renderLiveValues(w, { animate = true } = {}) {
   el.conditionLabel.textContent = capitalize(w.label);
   el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderDayRange(w);
+  // Only recompute the "vs yesterday" chip on live renders — during scrubbing
+  // the sampled hour's temp doesn't represent today's high.
+  if (animate) renderYesterdayChip(w);
+}
+
+function renderYesterdayChip(w) {
+  if (!el.yesterdayChip) return;
+  const y = w.yesterday;
+  // Only show on the live view, not while scrubbing a future hour.
+  const sampledHigh = state.weather?.daily?.[0]?.tempMax;
+  if (!y || sampledHigh == null || y.tempMax == null) {
+    el.yesterdayChip.hidden = true;
+    return;
+  }
+  const delta = sampledHigh - y.tempMax;
+  const rounded = Math.round(delta);
+  if (Math.abs(delta) < 0.5) {
+    el.yesterdayChip.hidden = false;
+    el.yesterdayChip.dataset.dir = "flat";
+    el.yesterdayArrow.textContent = "≈";
+    el.yesterdayText.textContent = "same as yesterday";
+    return;
+  }
+  el.yesterdayChip.hidden = false;
+  const warmer = delta > 0;
+  el.yesterdayChip.dataset.dir = warmer ? "up" : "down";
+  el.yesterdayArrow.textContent = warmer ? "▲" : "▼";
+  const unitDelta = state.unit === "F" ? Math.round(delta * 9 / 5) : rounded;
+  const abs = Math.abs(unitDelta);
+  el.yesterdayText.textContent = `${abs}° ${warmer ? "warmer" : "cooler"} than yesterday`;
 }
 
 function renderDayRange(w) {

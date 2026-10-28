@@ -427,6 +427,36 @@ html[data-reduce-motion="true"] *::after {
   transition: left 380ms var(--ease);
 }
 
+.yesterday-chip {
+  margin: 8px 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--fg-dim);
+  letter-spacing: 0.02em;
+  padding: 3px 10px 3px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  max-width: fit-content;
+  font-variant-numeric: tabular-nums;
+}
+.yesterday-chip[hidden] { display: none; }
+.yesterday-arrow {
+  font-size: 9.5px;
+  line-height: 1;
+  display: inline-grid;
+  place-items: center;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--fg-muted);
+}
+.yesterday-chip[data-dir="up"] .yesterday-arrow { background: #ff9c7a; }
+.yesterday-chip[data-dir="down"] .yesterday-arrow { background: #9ad1ff; color: #0b1020; }
+.yesterday-chip[data-dir="flat"] .yesterday-arrow { background: rgba(255,255,255,0.18); }
+
 /* ---------- Nowcast banner ---------- */
 .nowcast {
   padding: 14px 18px;
