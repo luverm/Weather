@@ -33,6 +33,7 @@ const el = {
   yesterdayText: $("#yesterday-text"),
   metricWind: $("#m-wind"),
   metricWindSub: $("#m-wind-sub"),
+  metricWindUnit: $("#m-wind-unit"),
   windBft: $("#m-wind-bft"),
   metricHumidity: $("#m-humidity"),
   metricHumiditySub: $("#m-humidity-sub"),
@@ -127,6 +128,7 @@ const el = {
 
 const state = {
   unit: localStorage.getItem("aether:unit") || "C",
+  windUnit: localStorage.getItem("aether:wind-unit") || "kmh",
   weather: null,
   place: null,
   sampledWeather: null, // the weather values at the current scrubber time
@@ -357,12 +359,15 @@ function renderDayRange(w) {
 }
 
 function renderMetrics(w) {
-  el.metricWind.textContent = Math.round(w.windSpeed ?? 0);
+  const wu = WIND_UNITS[state.windUnit] || WIND_UNITS.kmh;
+  el.metricWind.textContent = w.windSpeed != null ? wu.round(wu.from(w.windSpeed)) : "—";
+  if (el.metricWindUnit) el.metricWindUnit.textContent = wu.label;
   const dir = w.windDir;
   const dirLabel = dir != null ? cardinal(dir) : null;
+  const gustText = w.windGusts != null ? `${wu.round(wu.from(w.windGusts))} ${wu.label}` : "—";
   el.metricWindSub.textContent = dirLabel
-    ? `${dirLabel} · gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`
-    : `gust ${w.windGusts != null ? Math.round(w.windGusts) + " km/h" : "—"}`;
+    ? `${dirLabel} · gust ${gustText}`
+    : `gust ${gustText}`;
   if (el.windNeedle && dir != null) {
     // Wind direction is where wind comes FROM, so the needle points TO that direction.
     el.windNeedle.setAttribute("transform", `rotate(${dir})`);
@@ -1283,6 +1288,27 @@ function bindUnitToggle() {
     el.unitBtn.textContent = `°${state.unit}`;
     if (state.weather) ui.setWeather(state.weather);
   });
+  bindWindUnitCycle();
+}
+
+const WIND_UNITS = {
+  kmh: { label: "km/h", from: (v) => v, round: (v) => Math.round(v) },
+  mph: { label: "mph", from: (v) => v * 0.621371, round: (v) => Math.round(v) },
+  ms:  { label: "m/s", from: (v) => v / 3.6, round: (v) => (v < 10 ? v.toFixed(1) : Math.round(v)) },
+  kn:  { label: "kn",  from: (v) => v * 0.539957, round: (v) => Math.round(v) },
+};
+const WIND_ORDER = ["kmh", "mph", "ms", "kn"];
+
+function bindWindUnitCycle() {
+  const cycle = () => {
+    const i = WIND_ORDER.indexOf(state.windUnit);
+    state.windUnit = WIND_ORDER[(i + 1) % WIND_ORDER.length];
+    localStorage.setItem("aether:wind-unit", state.windUnit);
+    if (state.sampledWeather) renderMetrics(state.sampledWeather);
+    ui.showToast?.(`Wind in ${WIND_UNITS[state.windUnit].label}`, 1400);
+  };
+  el.metricWind?.addEventListener("click", cycle);
+  el.metricWindUnit?.addEventListener("click", cycle);
 }
 
 function bindLocate() {

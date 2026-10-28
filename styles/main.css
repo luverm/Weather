@@ -1010,6 +1010,24 @@ kbd {
 }
 .metric-value { font-size: 22px; font-weight: 500; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
 .metric-unit { font-size: 12px; color: var(--fg-muted); justify-self: end; }
+.metric-value-btn,
+.metric-unit-btn {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  letter-spacing: inherit;
+  transition: color 160ms var(--ease);
+}
+.metric-value-btn:hover,
+.metric-unit-btn:hover { color: var(--fg); }
+.metric-unit-btn {
+  border-bottom: 1px dashed rgba(255,255,255,0.18);
+  padding-bottom: 1px;
+}
+.metric-unit-btn:hover { border-bottom-color: var(--fg); }
 .metric-sub {
   grid-column: 1 / span 2;
   font-size: 11px;
