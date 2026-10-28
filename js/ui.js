@@ -1113,22 +1113,30 @@ function renderDailyDelta(days) {
   if (!el.dailyDelta) return;
   if (days.length < 2) { el.dailyDelta.textContent = ""; return; }
   const today = days[0], tmrw = days[1];
-  if (today.tempMax == null || tmrw.tempMax == null) {
-    el.dailyDelta.textContent = "";
-    return;
+  const segments = [];
+  if (today.tempMax != null && tmrw.tempMax != null) {
+    const deltaC = tmrw.tempMax - today.tempMax;
+    // Scale delta to the active unit: °F spans 1.8x a °C span.
+    const deltaDisplay = Math.round(state.unit === "F" ? deltaC * 9 / 5 : deltaC);
+    const dPop = (tmrw.pop ?? 0) - (today.pop ?? 0);
+    const parts = [];
+    if (deltaDisplay > 0) parts.push(`${deltaDisplay}° warmer`);
+    else if (deltaDisplay < 0) parts.push(`${Math.abs(deltaDisplay)}° cooler`);
+    else parts.push("similar temp");
+    if (Math.abs(dPop) >= 20) {
+      parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
+    }
+    segments.push(`Tomorrow: ${parts.join(" · ")}`);
   }
-  const deltaC = tmrw.tempMax - today.tempMax;
-  // Scale delta to the active unit: °F spans 1.8x a °C span.
-  const deltaDisplay = Math.round(state.unit === "F" ? deltaC * 9 / 5 : deltaC);
-  const dPop = (tmrw.pop ?? 0) - (today.pop ?? 0);
-  const parts = [];
-  if (deltaDisplay > 0) parts.push(`${deltaDisplay}° warmer`);
-  else if (deltaDisplay < 0) parts.push(`${Math.abs(deltaDisplay)}° cooler`);
-  else parts.push("similar temp");
-  if (Math.abs(dPop) >= 20) {
-    parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
+  // Week-ahead precipitation total — adds a line only when it's a non-trivial
+  // amount, so dry weeks don't shout "0 mm this week".
+  const weekTotal = days.reduce((s, d) => s + (d.precip ?? 0), 0);
+  if (weekTotal >= 1) {
+    const rainyDays = days.filter((d) => (d.precip ?? 0) >= 1).length;
+    const total = weekTotal < 10 ? weekTotal.toFixed(1) : Math.round(weekTotal);
+    segments.push(`Week: ${total} mm over ${rainyDays} day${rainyDays === 1 ? "" : "s"}`);
   }
-  el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
+  el.dailyDelta.textContent = segments.join(" · ");
 }
 
 function toggleDailyExpand(item, d, w) {
