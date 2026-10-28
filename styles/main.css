@@ -1317,6 +1317,43 @@ kbd {
   position: relative;
 }
 .comfort-strip[hidden] { display: none; }
+.wind-strip {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  gap: 1px;
+  margin-top: 2px;
+  padding: 2px 4px 4px;
+  height: 22px;
+  color: var(--fg-dim);
+}
+.wind-strip[hidden] { display: none; }
+.wind-cell {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background 160ms var(--ease), transform 160ms var(--ease);
+}
+.wind-cell svg {
+  width: 14px; height: 14px;
+  display: block;
+  transition: transform 220ms var(--ease), opacity 220ms var(--ease);
+}
+.wind-cell:hover {
+  background: rgba(255,255,255,0.06);
+}
+.wind-cell:hover svg {
+  color: var(--fg);
+  opacity: 1 !important;
+}
+.wind-cell.active {
+  background: rgba(154, 209, 255, 0.14);
+  outline: 1px solid rgba(154, 209, 255, 0.4);
+}
+.wind-cell.active svg { color: var(--accent); }
 .cstrip-cell {
   position: relative;
   padding: 0;

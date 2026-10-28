@@ -5,6 +5,7 @@ import { searchCities } from "./weather-service.js";
 import { places } from "./places.js";
 import { HourlyChart } from "./hourly-chart.js";
 import { ComfortStrip } from "./comfort-strip.js";
+import { WindStrip } from "./wind-strip.js";
 import { advise } from "./advice.js";
 import { buildInsights } from "./insights.js";
 import { findActivityWindows } from "./activity.js";
@@ -98,6 +99,7 @@ const el = {
   magicGolden: $("#magic-golden"),
   magicBlue: $("#magic-blue"),
   comfortStrip: $("#comfort-strip"),
+  windStrip: $("#wind-strip"),
   precipSummary: $("#precip-summary"),
   precipSummaryTotal: $("#precip-summary-total"),
   precipSummaryHours: $("#precip-summary-hours"),
@@ -131,6 +133,7 @@ const state = {
   handlers: {},
   chart: null,
   comfortStrip: null,
+  windStrip: null,
   sunTimer: null,
   sunArcTimer: null,
   localTimer: null,
@@ -163,6 +166,10 @@ export const ui = {
       rootEl: el.comfortStrip,
       onCellClick: (ts) => state.handlers.onHourClick?.(ts),
       getUnit: () => state.unit,
+    });
+    state.windStrip = new WindStrip({
+      rootEl: el.windStrip,
+      onCellClick: (ts) => state.handlers.onHourClick?.(ts),
     });
     bindInstallPrompt();
   },
@@ -208,6 +215,7 @@ export const ui = {
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
+    if (state.windStrip) state.windStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";
     if (weather.offline) ui.showToast("Offline — showing sample weather");
     // Save summary for the strip so chips can show current temp.
@@ -226,6 +234,7 @@ export const ui = {
     renderAdvice(sampled);
     highlightHour(highlightHourIndex);
     if (state.comfortStrip) state.comfortStrip.highlight(highlightHourIndex);
+    if (state.windStrip) state.windStrip.highlight(highlightHourIndex);
     if (state.chart && sampled._sampledTs != null) {
       state.chart.setCursor(sampled._sampledTs);
     } else if (state.chart) {
