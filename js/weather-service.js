@@ -204,7 +204,10 @@ function normalize(d, aq) {
   }
 
   // Moon phase is not in Open-Meteo's free tier — compute it locally.
-  const moon = computeMoonPhase(new Date());
+  const nowDate = new Date();
+  const moon = computeMoonPhase(nowDate);
+  moon.nextFull = nextMoonEvent(nowDate, 0.5)?.getTime() ?? null;
+  moon.nextNew = nextMoonEvent(nowDate, 0)?.getTime() ?? null;
 
   // Build a "today vs yesterday" comparison when the API returned a past day.
   const today = dailyForecast[0];
@@ -377,6 +380,29 @@ function findUvPeak(hourly) {
   return { time: peak.t, value: peak.v };
 }
 
+// Walk forward day by day (up to a lunar month) to find the next date whose
+// phase crosses the target phase (0 = new, 0.5 = full). Approximate but good
+// enough for a "next full moon" caption.
+function nextMoonEvent(from, targetPhase) {
+  const start = computeMoonPhase(from).phase;
+  let prevDist = circularDist(start, targetPhase);
+  for (let d = 1; d <= 40; d++) {
+    const next = new Date(from.getTime() + d * 86400_000);
+    const dist = circularDist(computeMoonPhase(next).phase, targetPhase);
+    if (dist > prevDist && prevDist < 0.08) {
+      // Previous day was closer and already near — pick that one.
+      return new Date(from.getTime() + (d - 1) * 86400_000);
+    }
+    prevDist = dist;
+  }
+  return null;
+}
+
+function circularDist(a, b) {
+  const d = Math.abs(a - b);
+  return Math.min(d, 1 - d);
+}
+
 // Conway's simplified moon-phase algorithm — accurate enough for UI glyphs.
 // Returns { phase: 0..1, name: "Waxing crescent", illum: 0..1 }
 function computeMoonPhase(date) {
@@ -442,7 +468,12 @@ function mock(lat, lon) {
       condition: CONDITIONS.CLOUDS, label: "Cloudy",
     })),
     nowcast: [],
-    moon: computeMoonPhase(new Date()),
+    moon: (() => {
+      const m = computeMoonPhase(new Date());
+      m.nextFull = nextMoonEvent(new Date(), 0.5)?.getTime() ?? null;
+      m.nextNew = nextMoonEvent(new Date(), 0)?.getTime() ?? null;
+      return m;
+    })(),
     airQuality: { aqi: 42, pm25: 8, pm10: 14, o3: 40, no2: 15, co: 0.2, label: "Good" },
     pollen: {
       items: [
