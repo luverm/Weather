@@ -163,6 +163,24 @@ ul { list-style: none; margin: 0; padding: 0; }
   transition: background 120ms var(--ease);
 }
 .settings-row:hover { background: rgba(255,255,255,0.05); }
+.settings-select {
+  appearance: none; -webkit-appearance: none;
+  background: rgba(255,255,255,0.08);
+  color: var(--fg);
+  border: 1px solid var(--stroke);
+  border-radius: 8px;
+  padding: 4px 24px 4px 8px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--fg-muted) 50%),
+                    linear-gradient(135deg, var(--fg-muted) 50%, transparent 50%);
+  background-position: calc(100% - 12px) 50%, calc(100% - 7px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+.settings-select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.settings-select option { background: #0b1020; color: var(--fg); }
 .settings-row input[type="checkbox"] {
   appearance: none; -webkit-appearance: none;
   width: 30px; height: 18px;

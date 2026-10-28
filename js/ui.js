@@ -91,6 +91,7 @@ const el = {
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
+  settingWindUnit: $("#setting-wind-unit"),
   settingClearPlaces: $("#setting-clear-places"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
@@ -1399,6 +1400,8 @@ function bindWindUnitCycle() {
       // Hourly chart popover reads the unit lazily when the user hovers, no
       // explicit refresh needed.
     }
+    // Keep the settings dropdown in sync so the two controls agree.
+    if (el.settingWindUnit) el.settingWindUnit.value = state.windUnit;
     ui.showToast?.(`Wind in ${WIND_UNITS[state.windUnit].label}`, 1400);
   };
   el.metricWind?.addEventListener("click", cycle);
@@ -1481,6 +1484,19 @@ function bindSettings() {
     }
   });
 
+  el.settingWindUnit?.addEventListener("change", () => {
+    const value = el.settingWindUnit.value;
+    if (!WIND_UNITS[value]) return;
+    state.windUnit = value;
+    localStorage.setItem("aether:wind-unit", value);
+    if (state.sampledWeather) renderMetrics(state.sampledWeather);
+    if (state.weather) {
+      renderInsights(state.weather);
+      renderDaily(state.weather);
+      renderAlerts(state.weather);
+    }
+  });
+
   el.settingClearPlaces?.addEventListener("click", () => {
     if (!confirm("Clear all saved places?")) return;
     for (const p of places.all()) places.remove(p);
@@ -1499,6 +1515,7 @@ function applyStoredPreferences() {
     queueMicrotask(() => state.handlers.onReduceMotion?.(true));
   }
   if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
+  if (el.settingWindUnit) el.settingWindUnit.value = state.windUnit;
 }
 
 // Exposed so app.js can query the current preference on boot.
