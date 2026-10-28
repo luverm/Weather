@@ -264,6 +264,30 @@ export class HourlyChart {
       }
     }
 
+    // Cloud-cover strip: a thin band across the top of the chart whose per-hour
+    // opacity rides cloud_cover 0..100. Clear hours leave the strip empty so a
+    // sunny morning is visibly brighter than an overcast afternoon.
+    const cloudG = this.svg.querySelector("#chart-clouds");
+    if (cloudG) {
+      cloudG.innerHTML = "";
+      const anyCloud = this.hours.some((h) => h.cloud != null);
+      if (anyCloud) {
+        this.hours.forEach((h, i) => {
+          const cover = Math.max(0, Math.min(100, h.cloud ?? 0));
+          if (cover < 8) return; // basically clear — skip for a cleaner look
+          const x1 = iToX(Math.max(0, i - 0.5));
+          const x2 = iToX(Math.min(this.hours.length - 1, i + 0.5));
+          const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+          r.setAttribute("x", x1.toFixed(1));
+          r.setAttribute("y", "0");
+          r.setAttribute("width", Math.max(0, x2 - x1).toFixed(1));
+          r.setAttribute("height", "6");
+          r.setAttribute("opacity", (cover / 100 * 0.7).toFixed(2));
+          cloudG.appendChild(r);
+        });
+      }
+    }
+
     // Labels: every ~3 hours
     const unit = this.getUnit();
     const labG = this.svg.querySelector("#chart-labels");

@@ -859,6 +859,10 @@ html[data-reduce-motion="true"] *::after {
 .chart-night rect {
   fill: rgba(8, 12, 30, 0.35);
 }
+.chart-clouds rect {
+  fill: rgba(220, 230, 250, 0.9);
+  transition: opacity 180ms var(--ease);
+}
 .chart-labels text {
   font-size: 9px;
   fill: var(--fg-dim);
