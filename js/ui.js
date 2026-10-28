@@ -53,6 +53,7 @@ const el = {
   moonIllum: $("#moon-illum"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
+  sunNoon: $("#sun-noon"),
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
@@ -605,7 +606,11 @@ function renderSun(w) {
     const hh = Math.floor(mins / 60);
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
-  } else el.sunDaylight.textContent = "—";
+    if (el.sunNoon) el.sunNoon.textContent = fmtTime((w.sunrise + w.sunset) / 2);
+  } else {
+    el.sunDaylight.textContent = "—";
+    if (el.sunNoon) el.sunNoon.textContent = "—";
+  }
   renderMagicHours(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
