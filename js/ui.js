@@ -442,7 +442,9 @@ function renderMetrics(w) {
     }
   }
   if (w.uvPeak?.time) {
-    el.metricUVSub.textContent = `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`;
+    const burn = uvBurnTime(w.uv);
+    const peakStr = `peak ${Math.round(w.uvPeak.value)} at ${fmtTime(w.uvPeak.time)}`;
+    el.metricUVSub.textContent = burn ? `${burn} · ${peakStr}` : peakStr;
   } else {
     el.metricUVSub.textContent = "peak —";
   }
@@ -487,6 +489,15 @@ function uvLevel(v) {
   if (v < 8) return { label: "High", cls: "up" };
   if (v < 11) return { label: "Very High", cls: "up" };
   return { label: "Extreme", cls: "up" };
+}
+
+// Rough "burn time" at the current UV for an unprotected Fitzpatrick type II
+// skin — a widely-cited average. Formula: 200 min / UV, capped so the number
+// never implies all-day safety.
+function uvBurnTime(uv) {
+  if (uv == null || uv < 3) return null;
+  const mins = Math.max(5, Math.min(90, Math.round(200 / uv)));
+  return `burn ~${mins}m`;
 }
 
 function renderPressureSparkline(w) {
