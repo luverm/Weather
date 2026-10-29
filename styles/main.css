@@ -830,6 +830,18 @@ html[data-reduce-motion="true"] *::after {
 }
 .chart-sun-dot.sunrise { fill: #ffd9a8; stroke: #ffd9a8; filter: drop-shadow(0 0 4px rgba(255, 200, 140, 0.8)); }
 .chart-sun-dot.sunset  { fill: transparent; stroke: #ff9c7a; filter: drop-shadow(0 0 4px rgba(255, 120, 90, 0.7)); }
+.chart-uv-dot {
+  fill: #ffcf66;
+  stroke: rgba(255, 200, 100, 0.6);
+  stroke-width: 2;
+  filter: drop-shadow(0 0 5px rgba(255, 207, 102, 0.75));
+}
+.chart-uv-label {
+  fill: #ffcf66;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
 .chart-popover {
   position: absolute;
   pointer-events: none;

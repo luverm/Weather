@@ -223,6 +223,7 @@ export const ui = {
     if (state.chart) {
       state.chart.setHours(weather.hourly);
       state.chart.setDaily(weather.daily);
+      state.chart.setUvPeak(weather.uvPeak);
     }
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
     if (el.narrative) el.narrative.textContent = narrative || "";

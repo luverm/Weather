@@ -60,6 +60,12 @@ export class HourlyChart {
     this._drawSunMarkers();
   }
 
+  /** Optional UV peak location — a gold spot sits at this time on the chart. */
+  setUvPeak(peak) {
+    this.uvPeak = peak || null;
+    this._drawSunMarkers();
+  }
+
   refresh() { this._draw(); this._drawSunMarkers(); }
 
   setCursor(ts) {
@@ -339,6 +345,26 @@ export class HourlyChart {
     for (const d of this.daily) {
       draw(d.sunrise, "sunrise");
       draw(d.sunset, "sunset");
+    }
+
+    // UV peak marker — a filled dot higher up with a short tether to the
+    // horizontal rail so it doesn't crowd the sunrise/sunset glyphs.
+    if (this.uvPeak?.time != null && this.uvPeak.time >= first && this.uvPeak.time <= last) {
+      const x = timeToX(this.uvPeak.time);
+      const ns = "http://www.w3.org/2000/svg";
+      const dot = document.createElementNS(ns, "circle");
+      dot.setAttribute("cx", x.toFixed(1));
+      dot.setAttribute("cy", "18");
+      dot.setAttribute("r", "4");
+      dot.setAttribute("class", "chart-uv-dot");
+      const label = document.createElementNS(ns, "text");
+      label.setAttribute("x", x.toFixed(1));
+      label.setAttribute("y", "32");
+      label.setAttribute("text-anchor", "middle");
+      label.setAttribute("class", "chart-uv-label");
+      label.textContent = "UV";
+      g.appendChild(dot);
+      g.appendChild(label);
     }
   }
 }
