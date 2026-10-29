@@ -1763,6 +1763,17 @@ function bindShare() {
     const sunLine = (w.sunrise && w.sunset)
       ? `🌅 ${fmtTime(w.sunrise)}  🌇 ${fmtTime(w.sunset)}`
       : null;
+    // Build a deep link so recipients can tap into the same view.
+    let link = null;
+    try {
+      const p = state.place;
+      if (p?.lat != null && p?.lon != null) {
+        const url = new URL(window.location.href);
+        url.hash = `loc=${p.lat.toFixed(4)},${p.lon.toFixed(4)}` +
+          (p.name ? `,${encodeURIComponent(p.name)}` : "");
+        link = url.toString();
+      }
+    } catch { /* ignore */ }
     const lines = [
       `${emoji} Aether · ${placeName}`,
       `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})${vsYesterday ? ` · ${vsYesterday}` : ""}`,
@@ -1771,6 +1782,7 @@ function bindShare() {
       `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
+      link,
     ].filter(Boolean);
     const text = lines.join("\n");
     try {
