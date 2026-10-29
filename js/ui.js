@@ -66,6 +66,7 @@ const el = {
   pollenLevel: $("#pollen-level"),
   pollenDominant: $("#pollen-dominant"),
   pollenItems: $("#pollen-items"),
+  pollenAdvice: $("#pollen-advice"),
   pressureTrend: $("#m-pressure-trend"),
   tempTrend: $("#temp-trend"),
   uvLevel: $("#m-uv-level"),
@@ -1074,6 +1075,19 @@ function renderPollen(pollen) {
   el.pollenItems.innerHTML = pollen.items.map((p) =>
     `<span>${escapeHtml(p.label)} ${p.value.toFixed(1)}</span>`
   ).join("");
+  if (el.pollenAdvice) el.pollenAdvice.textContent = pollenAdvice(pollen.level);
+}
+
+// Short pollen prompt mirroring the AQ advice line.
+function pollenAdvice(level) {
+  if (!level) return "";
+  switch (level) {
+    case "Low":       return "Allergy-friendly day — low pollen in the air.";
+    case "Moderate":  return "Mild pollen — sensitive folks keep antihistamines handy.";
+    case "High":      return "Pollen is up — close windows during peak hours.";
+    case "Very high": return "Heavy pollen — limit outdoor exposure if sensitive.";
+    default: return "";
+  }
 }
 
 function renderTrends(w) {
