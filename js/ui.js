@@ -216,6 +216,7 @@ export const ui = {
     renderAlerts(weather);
     renderWeekend(weather);
     renderRainSummary(weather);
+    updateDocumentChrome(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -1211,6 +1212,40 @@ function renderRainSummary(w) {
   else box.dataset.severity = "light";
 
   box.hidden = false;
+}
+
+// Update the browser tab's title and favicon so you can glance at the weather
+// without switching tabs. Favicons stay cached heavily — set them with inline
+// SVG data URIs so each condition change takes effect immediately.
+function updateDocumentChrome(w) {
+  if (!w) return;
+  const emoji = conditionEmoji(w.condition, w.isDay);
+  const temp = w.temp == null ? "" : `${Math.round(convertTemp(w.temp))}°`;
+  const place = state.place?.name;
+  const bits = [temp, emoji, place].filter(Boolean);
+  const prefix = bits.join(" ");
+  document.title = prefix ? `${prefix} · Aether` : "Aether — Interactive Weather";
+
+  const link = document.querySelector('link[rel="icon"]');
+  if (link) {
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>
+      <rect width='64' height='64' rx='12' fill='#0b1020'/>
+      <text x='50%' y='56%' text-anchor='middle' dominant-baseline='middle' font-size='40' font-family='system-ui,Apple Color Emoji,Segoe UI Emoji'>${emoji}</text>
+    </svg>`;
+    link.setAttribute("href", `data:image/svg+xml,${encodeURIComponent(svg)}`);
+  }
+}
+
+function conditionEmoji(cond, isDay) {
+  switch (cond) {
+    case "clear": return isDay === false ? "🌙" : "☀️";
+    case "clouds": return isDay === false ? "☁️" : "⛅";
+    case "rain": return "🌧️";
+    case "snow": return "❄️";
+    case "storm": return "⛈️";
+    case "fog": return "🌫️";
+    default: return "🌤️";
+  }
 }
 
 // ---------- Icons ----------
