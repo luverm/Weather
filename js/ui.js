@@ -81,6 +81,7 @@ const el = {
   dailyPrecipBars: $("#daily-precip-bars"),
   dailyDelta: $("#daily-delta"),
   dailyExtremes: $("#daily-extremes"),
+  dailyRainTotal: $("#daily-rain-total"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -1143,6 +1144,7 @@ function renderDaily(w) {
   renderDailySpark(days);
   renderDailyDelta(days);
   renderDailyExtremes(days);
+  renderDailyRainTotal(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1281,6 +1283,18 @@ function renderDailyDelta(days) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
   }
   el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
+}
+
+// Total rain mm across the visible forecast days, surfaced as a tiny chip
+// in the daily card header. Hidden on a dry week.
+function renderDailyRainTotal(days) {
+  const chip = el.dailyRainTotal;
+  if (!chip) return;
+  const total = days.reduce((s, d) => s + Math.max(0, d.precip || 0), 0);
+  if (total < 0.3) { chip.hidden = true; return; }
+  const n = days.length;
+  chip.textContent = `☔ ${total.toFixed(1)} mm · ${n} days`;
+  chip.hidden = false;
 }
 
 // Pick the hottest and coolest days of the week and surface them as two

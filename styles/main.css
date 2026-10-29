@@ -1650,6 +1650,19 @@ kbd {
   font-size: 11px;
 }
 .daily-delta:empty { display: none; }
+.daily-rain-total {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(154, 209, 255, 0.14);
+  color: #9ad1ff;
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  text-transform: none;
+  white-space: nowrap;
+}
+.daily-rain-total[hidden] { display: none; }
+
 .daily-extremes {
   display: inline-flex;
   gap: 6px;
