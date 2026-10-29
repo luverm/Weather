@@ -348,7 +348,17 @@ function renderLiveValues(w, { animate = true } = {}) {
     }
   }
   if (el.conditionText) {
-    el.conditionText.textContent = capitalize(w.label);
+    // Append cloud cover percent when it adds information — "Partly cloudy
+    // · 70%" is more precise than "Partly cloudy" alone. Skip when the label
+    // itself is already a precise cover (Clear, Overcast) or when the number
+    // is missing.
+    const label = capitalize(w.label);
+    const cloudy = w.cloudCover != null &&
+      w.condition === "clouds" &&
+      !/overcast/i.test(label);
+    el.conditionText.textContent = cloudy
+      ? `${label} · ${Math.round(w.cloudCover)}%`
+      : label;
     if (el.conditionIcon) el.conditionIcon.innerHTML = iconFor(w.condition);
   } else {
     el.conditionLabel.textContent = capitalize(w.label);
