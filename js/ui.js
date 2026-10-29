@@ -20,6 +20,8 @@ const el = {
   placeSub: $("#place-sub"),
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
+  conditionText: $("#condition-text"),
+  conditionIcon: $("#condition-icon"),
   feelsLike: $("#feels-like"),
   feelsLikeText: $("#feels-like-text"),
   yesterdayDelta: $("#yesterday-delta"),
@@ -309,7 +311,12 @@ function renderLiveValues(w, { animate = true } = {}) {
   const feels = convertTemp(w.feelsLike ?? w.temp);
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
-  el.conditionLabel.textContent = capitalize(w.label);
+  if (el.conditionText) {
+    el.conditionText.textContent = capitalize(w.label);
+    if (el.conditionIcon) el.conditionIcon.innerHTML = iconFor(w.condition);
+  } else {
+    el.conditionLabel.textContent = capitalize(w.label);
+  }
   if (el.feelsLikeText) el.feelsLikeText.textContent = `Feels like ${Math.round(feels)}°`;
   else el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderYesterdayDelta(w);
