@@ -1704,10 +1704,24 @@ function bindShare() {
     const unit = state.unit;
     const t = (v) => `${Math.round(unit === "F" ? v * 9 / 5 + 32 : v)}°${unit}`;
     const today = w.daily?.[0];
+    const emoji = conditionEmoji(w.condition, w.isDay);
+    // "vs yesterday" chip text, in share units.
+    let vsYesterday = null;
+    if (w.yesterdayTemp != null && w.temp != null) {
+      const deltaC = w.temp - w.yesterdayTemp;
+      if (Math.abs(deltaC) >= 0.3) {
+        const d = unit === "F" ? deltaC * 9 / 5 : deltaC;
+        vsYesterday = `${d > 0 ? "+" : "−"}${Math.abs(d).toFixed(1)}° vs yesterday`;
+      }
+    }
+    const sunLine = (w.sunrise && w.sunset)
+      ? `🌅 ${fmtTime(w.sunrise)}  🌇 ${fmtTime(w.sunset)}`
+      : null;
     const lines = [
-      `Aether · ${placeName}`,
-      `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})`,
+      `${emoji} Aether · ${placeName}`,
+      `${capitalize(w.label)} · ${t(w.temp)} (feels ${t(w.feelsLike ?? w.temp)})${vsYesterday ? ` · ${vsYesterday}` : ""}`,
       today ? `Today: ${t(today.tempMin)} / ${t(today.tempMax)} · ${today.pop}% precip` : null,
+      sunLine,
       `Wind ${Math.round(w.windSpeed)} km/h${w.windDir != null ? ` ${cardinal(w.windDir)}` : ""}`,
       w.uv != null ? `UV ${Math.round(w.uv)}` : null,
       w.airQuality?.aqi != null ? `AQI ${Math.round(w.airQuality.aqi)} (${w.airQuality.label})` : null,
