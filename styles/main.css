@@ -363,14 +363,39 @@ html[data-reduce-motion="true"] *::after {
   line-height: 1.55;
   color: var(--fg-muted);
 }
-.temp-wrap { text-align: right; }
+.temp-wrap { text-align: right; position: relative; }
+/* Temperature-tinted glow sitting behind the big number. The hue is set from
+   JS (--temp-glow) based on the live temperature, bluish for cold, warm red
+   for hot. Reduced-motion keeps the glow but drops the pulse. */
+.temp-wrap::before {
+  content: "";
+  position: absolute;
+  top: 10%; right: -4%;
+  width: 70%; height: 72%;
+  background: radial-gradient(closest-side, var(--temp-glow, rgba(154, 209, 255, 0.25)) 0%, transparent 70%);
+  filter: blur(14px);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.9;
+  transition: background 1200ms var(--ease);
+  animation: temp-glow-pulse 6s ease-in-out infinite;
+}
+@keyframes temp-glow-pulse {
+  0%, 100% { transform: scale(1);   opacity: 0.85; }
+  50%      { transform: scale(1.05); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .temp-wrap::before { animation: none; }
+}
 .temp {
   display: inline-flex; align-items: flex-start; gap: 6px;
   font-weight: 200;
   font-size: clamp(64px, 12vw, 148px);
   line-height: 0.95;
   letter-spacing: -0.05em;
+  position: relative; z-index: 1;
 }
+.condition-label, .feels-like, .day-range { position: relative; z-index: 1; }
 .temp-value {
   display: inline-block;
   background: linear-gradient(180deg, var(--fg) 0%, color-mix(in oklab, var(--fg) 70%, transparent) 100%);

@@ -308,6 +308,35 @@ function renderLiveValues(w, { animate = true } = {}) {
   else el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderYesterdayDelta(w);
   renderDayRange(w);
+  renderTempGlow(w.temp);
+}
+
+// Set the halo colour behind the hero temperature. Maps °C through a cold →
+// warm → hot gradient so the room instantly reads warmer or cooler without
+// hunting for the digits.
+function renderTempGlow(tempC) {
+  const wrap = el.temp?.closest(".temp-wrap");
+  if (!wrap || tempC == null) return;
+  // Clamp so arctic & tropical never saturate too hard.
+  const t = Math.max(-15, Math.min(40, tempC));
+  // Stops: -15 deep blue, 0 pale blue, 15 soft green, 25 amber, 35 red.
+  const stops = [
+    { t: -15, r: 110, g: 155, b: 255 },
+    { t:   0, r: 154, g: 209, b: 255 },
+    { t:  15, r: 170, g: 230, b: 180 },
+    { t:  25, r: 255, g: 200, b: 140 },
+    { t:  35, r: 255, g: 110, b:  90 },
+  ];
+  let [a, b] = [stops[0], stops[stops.length - 1]];
+  for (let i = 0; i < stops.length - 1; i++) {
+    if (t >= stops[i].t && t <= stops[i + 1].t) { a = stops[i]; b = stops[i + 1]; break; }
+  }
+  const span = Math.max(1, b.t - a.t);
+  const frac = (t - a.t) / span;
+  const r = Math.round(a.r + (b.r - a.r) * frac);
+  const g = Math.round(a.g + (b.g - a.g) * frac);
+  const bl = Math.round(a.b + (b.b - a.b) * frac);
+  wrap.style.setProperty("--temp-glow", `rgba(${r}, ${g}, ${bl}, 0.35)`);
 }
 
 function renderYesterdayDelta(w) {
