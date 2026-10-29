@@ -304,6 +304,7 @@ installShortcuts({
     ui.setScrubbing(!clock.isLive());
   },
   jumpToGolden: () => jumpToGolden(),
+  jumpToUvPeak: () => jumpToUvPeak(),
   refresh: () => refreshWeather(),
 });
 
@@ -327,6 +328,18 @@ function jumpToGolden() {
   if (app.weather) applyScene(app.weather);
   ui.setScrubbing(!clock.isLive());
   ui.showToast?.(`Jumped to ${target.kind} golden hour`);
+}
+
+// Scrub the clock to the hour of the day's UV peak (set in weather-service).
+function jumpToUvPeak() {
+  const w = app.weather;
+  const t = w?.uvPeak?.time;
+  if (!t) { ui.showToast?.("No UV peak available"); return; }
+  clock.setOffset(t - Date.now());
+  scrubber.sync();
+  if (app.weather) applyScene(app.weather);
+  ui.setScrubbing(!clock.isLive());
+  ui.showToast?.(`Jumped to UV peak (${Math.round(w.uvPeak.value)})`);
 }
 
 // ---------- Start ----------
