@@ -331,8 +331,16 @@
               </linearGradient>
             </defs>
             <line x1="10" y1="74" x2="190" y2="74" stroke="var(--stroke)" stroke-dasharray="2 4"/>
+            <line id="sun-blue-left"  x1="0"   y1="74" x2="10"  y2="74"
+                  stroke="#9ab8ff" stroke-width="3" stroke-linecap="round" opacity="0"/>
+            <line id="sun-blue-right" x1="190" y1="74" x2="200" y2="74"
+                  stroke="#9ab8ff" stroke-width="3" stroke-linecap="round" opacity="0"/>
             <path id="sun-arc-path" d="M10 74 Q100 -26 190 74"
                   fill="none" stroke="url(#sun-arc-grad)" stroke-width="1.5" stroke-linecap="round"/>
+            <path id="sun-gold-left"  fill="none" stroke="#ffb060" stroke-width="3"
+                  stroke-linecap="round" stroke-linejoin="round" opacity="0"/>
+            <path id="sun-gold-right" fill="none" stroke="#ffb060" stroke-width="3"
+                  stroke-linecap="round" stroke-linejoin="round" opacity="0"/>
             <circle id="sun-arc-marker" cx="10" cy="74" r="4.5" fill="#fff1c9"/>
           </svg>
           <div class="sun-row">
@@ -348,6 +356,11 @@
               <span class="sun-label">Daylight</span>
               <strong id="sun-daylight">—</strong>
             </div>
+          </div>
+          <div class="photo-window" id="photo-window" hidden>
+            <span class="photo-window-dot" aria-hidden="true"></span>
+            <strong id="photo-window-label">—</strong>
+            <span class="photo-window-detail" id="photo-window-detail"></span>
           </div>
         </div>
       </div>

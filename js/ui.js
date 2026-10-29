@@ -90,6 +90,13 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunGoldLeft: $("#sun-gold-left"),
+  sunGoldRight: $("#sun-gold-right"),
+  sunBlueLeft: $("#sun-blue-left"),
+  sunBlueRight: $("#sun-blue-right"),
+  photoWindow: $("#photo-window"),
+  photoWindowLabel: $("#photo-window-label"),
+  photoWindowDetail: $("#photo-window-detail"),
   comfortStrip: $("#comfort-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
@@ -122,8 +129,16 @@ const state = {
   comfortStrip: null,
   sunTimer: null,
   sunArcTimer: null,
+  photoWindowTimer: null,
   localTimer: null,
 };
+
+// Photo-window durations (minutes). Golden hour is the warm, low-sun period
+// just after sunrise / just before sunset; blue hour straddles the horizon on
+// the other side. These are approximations — true durations depend on latitude
+// and season, but they match the window photographers care about to ±10 min.
+const GOLDEN_MIN = 60;
+const BLUE_MIN = 30;
 
 export const ui = {
   init(handlers) {
@@ -523,12 +538,41 @@ function renderSun(w) {
   } else el.sunDaylight.textContent = "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
+  schedulePhotoWindow(w);
+}
+
+// Evaluate the sun arc's quadratic Bezier at parameter t ∈ [0,1].
+// Control points match the SVG path "M10 74 Q100 -26 190 74".
+function sunArcPoint(t) {
+  const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
+  const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
+  return [x, y];
+}
+
+// Polyline approximation of the arc from t0 to t1 (good enough visually at 12
+// segments across a 60-min slice).
+function sunArcSegmentPath(t0, t1, steps = 12) {
+  if (t1 <= t0) return "";
+  const parts = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = t0 + ((t1 - t0) * i) / steps;
+    const [x, y] = sunArcPoint(t);
+    parts.push(`${i === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`);
+  }
+  return parts.join(" ");
 }
 
 function scheduleSunArc(w) {
   if (!el.sunArcMarker || !el.sunArcPath) return;
   if (state.sunArcTimer) { clearInterval(state.sunArcTimer); state.sunArcTimer = null; }
   if (!w?.sunrise || !w?.sunset) return;
+
+  // Shade the golden-hour slice at each horizon end. Cap at 0.4 of the arc so
+  // short winter days don't let the two slices meet in the middle.
+  const daylight = Math.max(1, w.sunset - w.sunrise);
+  const goldFrac = Math.min(0.4, (GOLDEN_MIN * 60_000) / daylight);
+  if (el.sunGoldLeft)  el.sunGoldLeft.setAttribute("d",  sunArcSegmentPath(0, goldFrac));
+  if (el.sunGoldRight) el.sunGoldRight.setAttribute("d", sunArcSegmentPath(1 - goldFrac, 1));
 
   const update = () => {
     const now = Date.now();
@@ -542,20 +586,79 @@ function scheduleSunArc(w) {
     } else {
       frac = (now - sr) / (ss - sr);
     }
-    // Quadratic Bezier from (10,74) to (190,74) via (100,-26). The midpoint
-    // (50% t) reaches y = 0.5*(74) + 0.5*(74 + 2*(-26-74)/2*(...)) — easier
-    // to evaluate the curve directly.
     const t = clamp01(frac);
-    const x = (1 - t) ** 2 * 10 + 2 * (1 - t) * t * 100 + t ** 2 * 190;
-    const y = (1 - t) ** 2 * 74 + 2 * (1 - t) * t * -26 + t ** 2 * 74;
+    const [x, y] = sunArcPoint(t);
     el.sunArcMarker.setAttribute("cx", x.toFixed(1));
     el.sunArcMarker.setAttribute("cy", y.toFixed(1));
-    // After sunset, dim the marker so it visually settles.
     const isUp = now >= sr && now <= ss;
     el.sunArcMarker.style.opacity = isUp ? "1" : "0.45";
+
+    // Highlight whichever photo window the sun is currently in.
+    const G = GOLDEN_MIN * 60_000, B = BLUE_MIN * 60_000;
+    const inGoldM = now >= sr && now <= sr + G;
+    const inGoldE = now >= ss - G && now <= ss;
+    const inBlueM = now >= sr - B && now <= sr;
+    const inBlueE = now >= ss && now <= ss + B;
+    if (el.sunGoldLeft)  el.sunGoldLeft.style.opacity  = inGoldM ? "1" : "0.5";
+    if (el.sunGoldRight) el.sunGoldRight.style.opacity = inGoldE ? "1" : "0.5";
+    if (el.sunBlueLeft)  el.sunBlueLeft.style.opacity  = inBlueM ? "0.95" : "0";
+    if (el.sunBlueRight) el.sunBlueRight.style.opacity = inBlueE ? "0.95" : "0";
   };
   update();
   state.sunArcTimer = setInterval(update, 60_000);
+}
+
+// Build the next few days' worth of photo windows so a transition that
+// crosses midnight (evening blue hour → next-morning blue hour) still has
+// something ahead to count down to.
+function photoWindows(w) {
+  const out = [];
+  for (const d of (w?.daily || [])) {
+    if (!d.sunrise || !d.sunset) continue;
+    const sr = d.sunrise, ss = d.sunset;
+    const G = GOLDEN_MIN * 60_000;
+    const B = BLUE_MIN * 60_000;
+    out.push({ kind: "Blue hour",   tag: "blue",   side: "morning", start: sr - B, end: sr });
+    out.push({ kind: "Golden hour", tag: "golden", side: "morning", start: sr,     end: sr + G });
+    out.push({ kind: "Golden hour", tag: "golden", side: "evening", start: ss - G, end: ss });
+    out.push({ kind: "Blue hour",   tag: "blue",   side: "evening", start: ss,     end: ss + B });
+  }
+  return out.filter(x => x.end > x.start).sort((a, b) => a.start - b.start);
+}
+
+function fmtMins(mins) {
+  if (mins <= 0) return "now";
+  return mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
+}
+
+function schedulePhotoWindow(w) {
+  if (state.photoWindowTimer) { clearInterval(state.photoWindowTimer); state.photoWindowTimer = null; }
+  const box = el.photoWindow;
+  if (!box) return;
+  const windows = photoWindows(w);
+  if (!windows.length) { box.hidden = true; return; }
+
+  const update = () => {
+    const now = Date.now();
+    const cur = windows.find(x => now >= x.start && now < x.end);
+    if (cur) {
+      box.hidden = false;
+      box.dataset.state = cur.tag;
+      el.photoWindowLabel.textContent = `${cur.kind} · ${cur.side}`;
+      const until = Math.max(0, Math.round((cur.end - now) / 60_000));
+      el.photoWindowDetail.textContent = until > 0 ? `${until}m left` : "ending";
+      return;
+    }
+    const next = windows.find(x => x.start > now);
+    if (!next) { box.hidden = true; return; }
+    box.hidden = false;
+    box.dataset.state = `${next.tag}-pending`;
+    el.photoWindowLabel.textContent = `${next.kind} · ${next.side}`;
+    const mins = Math.max(0, Math.round((next.start - now) / 60_000));
+    el.photoWindowDetail.textContent = `in ${fmtMins(mins)}`;
+  };
+  update();
+  state.photoWindowTimer = setInterval(update, 30_000);
 }
 
 function clamp01(v) { return Math.max(0, Math.min(1, v)); }
