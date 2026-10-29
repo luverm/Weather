@@ -103,6 +103,8 @@ const el = {
   alertsStrip: $("#alerts-strip"),
   sunArcMarker: $("#sun-arc-marker"),
   sunArcPath: $("#sun-arc-path"),
+  sunArcRiseLabel: $("#sun-arc-rise-label"),
+  sunArcSetLabel: $("#sun-arc-set-label"),
   sunGoldLeft: $("#sun-gold-left"),
   sunGoldRight: $("#sun-gold-right"),
   sunBlueLeft: $("#sun-blue-left"),
@@ -724,6 +726,8 @@ function renderSun(w) {
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
   renderDaylightDelta(w);
+  if (el.sunArcRiseLabel) el.sunArcRiseLabel.textContent = w.sunrise ? fmtTime(w.sunrise) : "—";
+  if (el.sunArcSetLabel) el.sunArcSetLabel.textContent = w.sunset ? fmtTime(w.sunset) : "—";
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   schedulePhotoWindow(w);

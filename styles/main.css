@@ -1230,9 +1230,15 @@ kbd {
 .sun-daylight-delta[hidden] { display: none; }
 .sun-arc {
   width: 100%;
-  height: 76px;
+  height: 82px;
   display: block;
   margin: -2px 0 4px;
+}
+.sun-arc-tag {
+  fill: var(--fg-dim);
+  font-size: 7.5px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
 }
 
 #sun-card.tappable {
