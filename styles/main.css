@@ -994,6 +994,24 @@ html[data-reduce-motion="true"] *::after {
 }
 .sun-countdown:empty { display: none; }
 
+/* ---------- Zen mode ---------- */
+/* Hide every secondary surface so the hero sits alone on top of the scenes. */
+body.zen .places-strip,
+body.zen .alerts-strip,
+body.zen .chart-card,
+body.zen .nowcast,
+body.zen .metrics,
+body.zen .extras,
+body.zen .radar,
+body.zen .insights,
+body.zen .forecast,
+body.zen .daily,
+body.zen .hint,
+body.zen .scrubber {
+  display: none !important;
+}
+body.zen .hero { padding-top: 20vh; }
+
 /* ---------- Keyboard shortcuts overlay ---------- */
 .shortcuts {
   position: fixed;

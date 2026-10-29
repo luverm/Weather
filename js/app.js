@@ -314,7 +314,19 @@ installShortcuts({
   jumpToUvPeak: () => jumpToUvPeak(),
   refresh: () => refreshWeather(),
   copySummary: () => document.getElementById("share-btn")?.click(),
+  toggleZen: () => toggleZen(),
 });
+
+function toggleZen() {
+  const on = document.body.classList.toggle("zen");
+  try { localStorage.setItem("aether:zen", on ? "1" : "0"); } catch { /* ignore */ }
+  ui.showToast?.(on ? "Zen mode on" : "Zen mode off");
+}
+
+// Restore zen preference on boot.
+try {
+  if (localStorage.getItem("aether:zen") === "1") document.body.classList.add("zen");
+} catch { /* ignore */ }
 
 // Scrub the clock to the midpoint of the next golden hour. Looks across
 // today's daily entry and tomorrow's so an evening "G" after sunset still
