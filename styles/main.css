@@ -994,6 +994,29 @@ html[data-reduce-motion="true"] *::after {
 }
 .sun-countdown:empty { display: none; }
 
+/* ---------- Back-to-top FAB ---------- */
+.to-top {
+  position: fixed;
+  right: 18px; bottom: 22px;
+  width: 44px; height: 44px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  color: var(--fg);
+  background: rgba(14, 18, 35, 0.88);
+  border: 1px solid var(--stroke);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.3);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 220ms var(--ease), transform 220ms var(--ease), background 180ms var(--ease);
+  z-index: 55;
+}
+.to-top[hidden] { display: none; }
+.to-top.show { opacity: 1; transform: translateY(0); }
+.to-top:hover { background: rgba(30, 36, 60, 0.95); }
+body.zen .to-top { display: none; }
+
 /* ---------- Zen mode ---------- */
 /* Hide every secondary surface so the hero sits alone on top of the scenes. */
 body.zen .places-strip,

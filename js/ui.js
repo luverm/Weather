@@ -168,6 +168,7 @@ export const ui = {
     bindSettings();
     bindTilt();
     bindSunCardJump();
+    bindToTop();
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
@@ -1829,6 +1830,27 @@ function bindShare() {
       if (err?.name !== "AbortError") ui.showToast("Share failed");
     }
   });
+}
+
+// Show a small FAB after the user has scrolled past the hero, so getting
+// back to the top on long pages is one tap away.
+function bindToTop() {
+  const btn = document.getElementById("to-top");
+  if (!btn) return;
+  btn.hidden = false;
+  let frame = 0;
+  const sync = () => {
+    frame = 0;
+    const show = window.scrollY > 500;
+    btn.classList.toggle("show", show);
+  };
+  window.addEventListener("scroll", () => {
+    if (!frame) frame = requestAnimationFrame(sync);
+  }, { passive: true });
+  btn.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+  sync();
 }
 
 // Click the sun card to jump the scrubber to the next golden hour.
