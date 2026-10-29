@@ -205,6 +205,7 @@ const scrubber = new Scrubber({
 async function loadByCoords(place) {
   app.place = place;
   ui.setPlace(place);
+  syncHashToPlace(place);
   ui.setLoading(`Fetching weather for ${place.name}…`);
 
   // Drop any scrubber offset so we start live on each new city.
@@ -362,8 +363,44 @@ function jumpToUvPeak() {
   ui.showToast?.(`Jumped to UV peak (${Math.round(w.uvPeak.value)})`);
 }
 
+// Deep-link: parse ?loc=lat,lon(,name) or #loc=lat,lon(,name) from the URL.
+function parseLocationFromUrl() {
+  const sources = [window.location.search.slice(1), window.location.hash.slice(1)];
+  for (const src of sources) {
+    for (const seg of src.split("&")) {
+      const [key, raw] = seg.split("=");
+      if (key !== "loc" || !raw) continue;
+      const parts = decodeURIComponent(raw).split(",");
+      const lat = parseFloat(parts[0]);
+      const lon = parseFloat(parts[1]);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+      const name = (parts.slice(2).join(",") || `${lat.toFixed(2)}, ${lon.toFixed(2)}`).trim();
+      return { lat, lon, name };
+    }
+  }
+  return null;
+}
+
+// Keep the URL hash in sync with the active place so a copy-paste share
+// restores the view.
+function syncHashToPlace(place) {
+  if (!place || place.lat == null || place.lon == null) return;
+  const parts = [place.lat.toFixed(4), place.lon.toFixed(4)];
+  if (place.name) parts.push(encodeURIComponent(place.name));
+  const hash = `#loc=${parts.join(",")}`;
+  if (window.location.hash !== hash) {
+    history.replaceState(null, "", hash);
+  }
+}
+
 // ---------- Start ----------
 (async function init() {
+  // Deep-link wins: let a shared URL always open at that place.
+  const linked = parseLocationFromUrl();
+  if (linked) {
+    await loadByCoords(linked);
+    return;
+  }
   // Prefer the most recent saved place if we have one — avoids the geolocation
   // prompt on every load and feels snappier.
   const saved = places.all();
