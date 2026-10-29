@@ -1081,11 +1081,20 @@ function renderDaily(w) {
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
     const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    const popPct = Math.max(0, Math.min(100, d.pop || 0));
+    const popBar = popPct >= 10
+      ? `<div class="daily-pop" title="${popPct}% chance of rain" aria-label="${popPct}% chance of rain">
+           <span class="daily-pop-fill" style="width:${popPct}%"></span>
+         </div>`
+      : "";
     item.innerHTML = `
       <span class="daily-day">${day}</span>
       <span class="daily-icon">${iconFor(d.condition)}</span>
-      <div class="daily-range">
-        <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
+      <div class="daily-range-wrap">
+        <div class="daily-range">
+          <div class="daily-range-fill" style="left:${left}%;width:${Math.max(8, width)}%"></div>
+        </div>
+        ${popBar}
       </div>
       <span class="daily-temp-min">${Math.round(convertTemp(d.tempMin))}°</span>
       <span class="daily-temp-max">${Math.round(convertTemp(d.tempMax))}°</span>

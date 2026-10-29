@@ -1685,11 +1685,24 @@ kbd {
 .daily-item:hover { background: var(--glass); }
 .daily-day { font-size: 13px; font-weight: 500; }
 .daily-icon { color: var(--fg-muted); width: 24px; height: 24px; display: grid; place-items: center; }
+.daily-range-wrap { display: grid; gap: 3px; }
 .daily-range {
   position: relative;
   height: 6px; border-radius: 3px;
   background: rgba(255,255,255,0.08);
   overflow: hidden;
+}
+.daily-pop {
+  position: relative;
+  height: 3px; border-radius: 2px;
+  background: rgba(154, 209, 255, 0.1);
+  overflow: hidden;
+}
+.daily-pop-fill {
+  position: absolute; top: 0; bottom: 0; left: 0;
+  background: linear-gradient(90deg, rgba(154, 209, 255, 0.75), rgba(190, 170, 255, 0.9));
+  border-radius: 2px;
+  transition: width 400ms var(--ease);
 }
 .daily-range-fill {
   position: absolute; top: 0; bottom: 0;
