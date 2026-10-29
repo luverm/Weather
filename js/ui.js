@@ -1302,6 +1302,22 @@ function renderDailyDelta(days) {
   el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
 }
 
+// Coldest night of the week. Useful heads-up for frost risk even when the
+// day is mild; the chip only shows when the minimum is below 5°C.
+function coldestNightChip(days) {
+  const candidates = days.filter((d) => d.tempMin != null);
+  if (candidates.length < 2) return null;
+  const coldest = candidates.reduce((a, b) => (b.tempMin < a.tempMin ? b : a));
+  if (coldest.tempMin >= 5) return null;
+  const tz = state.weather?.timezone;
+  const label = new Date(coldest.time).toLocaleDateString(undefined, {
+    weekday: "short",
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  const temp = Math.round(convertTemp(coldest.tempMin));
+  return `❄ Coldest: ${label} ${temp}°`;
+}
+
 // Score each daily entry and surface the best outdoor day of the week as a
 // chip. Score blends dryness, pop, wind, and comfort-zone temperature.
 function renderDailyBest(days) {
@@ -1319,15 +1335,20 @@ function renderDailyBest(days) {
     return comfort * 0.4 + dry * 0.25 + lowPop * 0.25 + calm * 0.1;
   };
   const best = candidates.reduce((a, b) => (score(b) > score(a) ? b : a));
-  // Hide when the best day isn't actually pleasant enough to recommend.
-  if (score(best) < 0.5) { chip.hidden = true; return; }
+  const bestIsNice = score(best) >= 0.5;
+  const cold = coldestNightChip(candidates);
   const tz = state.weather?.timezone;
-  const dayLabel = new Date(best.time).toLocaleDateString(undefined, {
-    weekday: "short",
-    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
-  });
-  const temp = Math.round(convertTemp(best.tempMax));
-  chip.textContent = `☀ Best: ${dayLabel} ${temp}°`;
+  const parts = [];
+  if (bestIsNice) {
+    const dayLabel = new Date(best.time).toLocaleDateString(undefined, {
+      weekday: "short",
+      ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    });
+    parts.push(`☀ Best: ${dayLabel} ${Math.round(convertTemp(best.tempMax))}°`);
+  }
+  if (cold) parts.push(cold);
+  if (!parts.length) { chip.hidden = true; return; }
+  chip.textContent = parts.join("  ·  ");
   chip.hidden = false;
 }
 
