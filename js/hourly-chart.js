@@ -305,6 +305,7 @@ export class HourlyChart {
     // Keep the sun markers in sync with any re-draw (e.g. unit toggle).
     this._drawSunMarkers();
     this._drawExtremes();
+    this._drawFreezeLine(tToY, tMin, tMax);
 
     // Labels: every ~3 hours
     const unit = this.getUnit();
@@ -393,6 +394,33 @@ export class HourlyChart {
       g.appendChild(dot);
       g.appendChild(label);
     }
+  }
+
+  // Horizontal dashed line at 0°C — only drawn when freezing falls inside
+  // the chart's y range. A tiny "0°" tag at the right edge keeps it legible.
+  _drawFreezeLine(tToY, tMin, tMax) {
+    const g = this.svg.querySelector("#chart-freeze");
+    if (!g) return;
+    g.innerHTML = "";
+    if (!(tMin < 0 && tMax > 0)) return;
+    const y = tToY(0);
+    const unit = this.getUnit();
+    const freezeTempDisplay = unit === "F" ? "32°" : "0°";
+    const ns = "http://www.w3.org/2000/svg";
+    const line = document.createElementNS(ns, "line");
+    line.setAttribute("x1", String(PAD_LEFT));
+    line.setAttribute("x2", String(W - PAD_RIGHT));
+    line.setAttribute("y1", y.toFixed(1));
+    line.setAttribute("y2", y.toFixed(1));
+    line.setAttribute("class", "chart-freeze-line");
+    const label = document.createElementNS(ns, "text");
+    label.setAttribute("x", String(W - PAD_RIGHT - 4));
+    label.setAttribute("y", (y - 3).toFixed(1));
+    label.setAttribute("text-anchor", "end");
+    label.setAttribute("class", "chart-freeze-label");
+    label.textContent = freezeTempDisplay;
+    g.appendChild(line);
+    g.appendChild(label);
   }
 
   // Mark the hottest and coldest hour of the chart window with tiny labelled
