@@ -1654,10 +1654,12 @@ function iconFor(condition) {
 // ---------- Saved places strip ----------
 function renderPlaces() {
   const all = places.all();
+  // Hide the strip entirely when there are no saved places so an empty row
+  // doesn't claim vertical space on first launch.
   if (!all.length) { el.placesStrip.hidden = true; el.placesStrip.innerHTML = ""; return; }
   el.placesStrip.hidden = false;
   const activeId = state.place ? places.idFor(state.place) : null;
-  el.placesStrip.innerHTML = all.map((p) => {
+  const chips = all.map((p) => {
     const active = places.idFor(p) === activeId;
     const icon = p.condition ? `<span class="place-chip-icon">${iconFor(p.condition)}</span>` : "";
     return `
@@ -1669,7 +1671,16 @@ function renderPlaces() {
           <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
         </span>
       </div>`;
-  }).join("");
+  });
+  // Trailing "+" chip to re-open search without hunting for the top bar.
+  chips.push(`
+    <button type="button" class="place-chip add" data-action="add" aria-label="Add a place">
+      <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 2v12M2 8h12"/></svg>
+    </button>
+  `);
+  el.placesStrip.innerHTML = chips.join("");
+  const addBtn = el.placesStrip.querySelector('[data-action="add"]');
+  addBtn?.addEventListener("click", () => ui.focusSearch());
   el.placesStrip.querySelectorAll(".place-chip").forEach((chip) => {
     const id = chip.dataset.id;
     const item = all.find((p) => p.id === id);
