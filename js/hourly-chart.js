@@ -3,6 +3,26 @@
 
 const W = 600;
 const H = 140;
+
+// Rain-bar tint: cool blue at light drizzle, deep violet at >=5 mm/h.
+function precipFill(t) {
+  const stops = [
+    [0,   { r: 154, g: 209, b: 255 }], // #9ad1ff
+    [0.5, { r: 180, g: 174, b: 255 }],
+    [1,   { r: 150, g: 100, b: 230 }],
+  ];
+  let [a, b] = [stops[0], stops[stops.length - 1]];
+  for (let i = 0; i < stops.length - 1; i++) {
+    if (t >= stops[i][0] && t <= stops[i + 1][0]) { a = stops[i]; b = stops[i + 1]; break; }
+  }
+  const span = Math.max(0.001, b[0] - a[0]);
+  const f = (t - a[0]) / span;
+  const r = Math.round(a[1].r + (b[1].r - a[1].r) * f);
+  const g = Math.round(a[1].g + (b[1].g - a[1].g) * f);
+  const bl = Math.round(a[1].b + (b[1].b - a[1].b) * f);
+  return `rgb(${r},${g},${bl})`;
+}
+
 const PAD_LEFT = 6;
 const PAD_RIGHT = 6;
 const PAD_TOP = 16;
@@ -236,7 +256,9 @@ export class HourlyChart {
       }
     }
 
-    // Precipitation probability bars (0-100% -> 0..12px height)
+    // Precipitation bars: height = probability (0..100%), fill tint = intensity.
+    // Light drizzle stays cool blue; heavier mm per hour pushes toward
+    // deep indigo so a rainy stretch's heavy hours stand out from its light ones.
     const precipG = this.svg.querySelector("#chart-precip");
     precipG.innerHTML = "";
     const barW = Math.max(4, innerW / this.hours.length - 3);
@@ -252,6 +274,10 @@ export class HourlyChart {
       r.setAttribute("width", barW.toFixed(1));
       r.setAttribute("height", barH.toFixed(1));
       r.setAttribute("rx", "1.5");
+      // Intensity tint from mm/h (0 → cool rain, 5+ → heavy violet).
+      const mm = Math.max(0, h.precip || 0);
+      const intensity = Math.min(1, mm / 5);
+      r.setAttribute("fill", precipFill(intensity));
       r.setAttribute("opacity", (0.35 + (pop / 100) * 0.55).toFixed(2));
       precipG.appendChild(r);
     });
