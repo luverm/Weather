@@ -306,6 +306,7 @@ installShortcuts({
   jumpToGolden: () => jumpToGolden(),
   jumpToUvPeak: () => jumpToUvPeak(),
   refresh: () => refreshWeather(),
+  copySummary: () => document.getElementById("share-btn")?.click(),
 });
 
 // Scrub the clock to the midpoint of the next golden hour. Looks across
