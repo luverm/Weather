@@ -82,6 +82,7 @@ const el = {
   dailyDelta: $("#daily-delta"),
   dailyExtremes: $("#daily-extremes"),
   dailyRainTotal: $("#daily-rain-total"),
+  dailyBest: $("#daily-best"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -1145,6 +1146,7 @@ function renderDaily(w) {
   renderDailyDelta(days);
   renderDailyExtremes(days);
   renderDailyRainTotal(days);
+  renderDailyBest(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1283,6 +1285,35 @@ function renderDailyDelta(days) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
   }
   el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
+}
+
+// Score each daily entry and surface the best outdoor day of the week as a
+// chip. Score blends dryness, pop, wind, and comfort-zone temperature.
+function renderDailyBest(days) {
+  const chip = el.dailyBest;
+  if (!chip) return;
+  const candidates = days.filter((d) => d.tempMax != null && d.tempMin != null);
+  if (candidates.length < 3) { chip.hidden = true; return; }
+  const score = (d) => {
+    // 0..1 for each term, higher is better.
+    const mid = (d.tempMin + d.tempMax) / 2;
+    const comfort = 1 - Math.min(1, Math.abs(mid - 21) / 15);
+    const dry = 1 - Math.min(1, (d.precip || 0) / 8);
+    const lowPop = 1 - Math.min(1, (d.pop || 0) / 100);
+    const calm = 1 - Math.min(1, (d.windMax || 0) / 50);
+    return comfort * 0.4 + dry * 0.25 + lowPop * 0.25 + calm * 0.1;
+  };
+  const best = candidates.reduce((a, b) => (score(b) > score(a) ? b : a));
+  // Hide when the best day isn't actually pleasant enough to recommend.
+  if (score(best) < 0.5) { chip.hidden = true; return; }
+  const tz = state.weather?.timezone;
+  const dayLabel = new Date(best.time).toLocaleDateString(undefined, {
+    weekday: "short",
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  const temp = Math.round(convertTemp(best.tempMax));
+  chip.textContent = `☀ Best: ${dayLabel} ${temp}°`;
+  chip.hidden = false;
 }
 
 // Total rain mm across the visible forecast days, surfaced as a tiny chip
