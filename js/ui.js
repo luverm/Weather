@@ -77,6 +77,7 @@ const el = {
   dailySparkDots: $("#daily-spark-dots"),
   dailyPrecipBars: $("#daily-precip-bars"),
   dailyDelta: $("#daily-delta"),
+  dailyExtremes: $("#daily-extremes"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
   refreshBtn: $("#refresh-btn"),
@@ -1057,6 +1058,7 @@ function renderDaily(w) {
   renderDailyIconStrip(days);
   renderDailySpark(days);
   renderDailyDelta(days);
+  renderDailyExtremes(days);
   // Global min/max for the range bar.
   let gMin = Infinity, gMax = -Infinity;
   for (const d of days) {
@@ -1195,6 +1197,31 @@ function renderDailyDelta(days) {
     parts.push(dPop > 0 ? `+${dPop}% rain` : `${dPop}% rain`);
   }
   el.dailyDelta.textContent = `Tomorrow: ${parts.join(" · ")}`;
+}
+
+// Pick the hottest and coolest days of the week and surface them as two
+// chips. Weekday short name + the day's high / low, so the span of the
+// week reads at a glance without scanning rows.
+function renderDailyExtremes(days) {
+  const box = el.dailyExtremes;
+  if (!box) return;
+  const candidates = days.filter((d) => d.tempMax != null && d.tempMin != null);
+  if (candidates.length < 3) { box.hidden = true; return; }
+  const tz = state.weather?.timezone;
+  const weekday = (d) => new Date(d.time).toLocaleDateString(undefined, {
+    weekday: "short",
+    ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+  });
+  const warmest = candidates.reduce((a, b) => (b.tempMax > a.tempMax ? b : a));
+  const coolest = candidates.reduce((a, b) => (b.tempMin < a.tempMin ? b : a));
+  // When one day is both, show it once as the warmest and skip coolest.
+  const sameDay = warmest.time === coolest.time;
+  const warmTemp = Math.round(convertTemp(warmest.tempMax));
+  const coolTemp = Math.round(convertTemp(coolest.tempMin));
+  const pieces = [`<span class="daily-extreme hi">↑ ${weekday(warmest)} ${warmTemp}°</span>`];
+  if (!sameDay) pieces.push(`<span class="daily-extreme lo">↓ ${weekday(coolest)} ${coolTemp}°</span>`);
+  box.innerHTML = pieces.join(" ");
+  box.hidden = false;
 }
 
 function toggleDailyExpand(item, d, w) {
