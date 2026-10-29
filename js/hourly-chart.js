@@ -54,7 +54,13 @@ export class HourlyChart {
     this.setCursor(null);
   }
 
-  refresh() { this._draw(); }
+  /** Set the daily list so sunrise/sunset tick marks can be drawn. */
+  setDaily(daily) {
+    this.daily = daily || [];
+    this._drawSunMarkers();
+  }
+
+  refresh() { this._draw(); this._drawSunMarkers(); }
 
   setCursor(ts) {
     const cursor = this.svg.querySelector("#chart-cursor");
@@ -264,6 +270,9 @@ export class HourlyChart {
       }
     }
 
+    // Keep the sun markers in sync with any re-draw (e.g. unit toggle).
+    this._drawSunMarkers();
+
     // Labels: every ~3 hours
     const unit = this.getUnit();
     const labG = this.svg.querySelector("#chart-labels");
@@ -288,5 +297,48 @@ export class HourlyChart {
       tTxt.textContent = `${Math.round(tVal)}°`;
       labG.appendChild(tTxt);
     });
+  }
+
+  // Sunrise/sunset ticks across the hourly chart's time window. Rendered as
+  // dashed verticals with a sun or moon glyph at the top rail so you can see
+  // where the day begins and ends in context with the temperature curve.
+  _drawSunMarkers() {
+    const g = this.svg.querySelector("#chart-sun-markers");
+    if (!g) return;
+    g.innerHTML = "";
+    if (!this.hours.length || !this.daily?.length) return;
+
+    const first = this.hours[0].time;
+    const last = this.hours[this.hours.length - 1].time;
+    if (last <= first) return;
+    const innerW = W - PAD_LEFT - PAD_RIGHT;
+    const timeToX = (ts) =>
+      PAD_LEFT + ((ts - first) / (last - first)) * innerW;
+
+    const draw = (ts, kind) => {
+      if (ts == null || ts < first || ts > last) return;
+      const x = timeToX(ts);
+      const ns = "http://www.w3.org/2000/svg";
+      const line = document.createElementNS(ns, "line");
+      line.setAttribute("x1", x.toFixed(1));
+      line.setAttribute("x2", x.toFixed(1));
+      line.setAttribute("y1", "4");
+      line.setAttribute("y2", String(H - PAD_BOT));
+      line.setAttribute("class", `chart-sun-line ${kind}`);
+      g.appendChild(line);
+
+      // Glyph at top: a 10px disc for sunrise, outlined for sunset.
+      const dot = document.createElementNS(ns, "circle");
+      dot.setAttribute("cx", x.toFixed(1));
+      dot.setAttribute("cy", "6");
+      dot.setAttribute("r", "3.2");
+      dot.setAttribute("class", `chart-sun-dot ${kind}`);
+      g.appendChild(dot);
+    };
+
+    for (const d of this.daily) {
+      draw(d.sunrise, "sunrise");
+      draw(d.sunset, "sunset");
+    }
   }
 }

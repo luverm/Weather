@@ -792,6 +792,19 @@ html[data-reduce-motion="true"] *::after {
   position: relative;
 }
 .chart-feels-line { color: var(--fg-muted); }
+
+.chart-sun-line {
+  stroke-width: 0.9;
+  stroke-dasharray: 2 4;
+  opacity: 0.55;
+}
+.chart-sun-line.sunrise { stroke: #ffd9a8; }
+.chart-sun-line.sunset  { stroke: #ff9c7a; }
+.chart-sun-dot {
+  stroke-width: 1;
+}
+.chart-sun-dot.sunrise { fill: #ffd9a8; stroke: #ffd9a8; filter: drop-shadow(0 0 4px rgba(255, 200, 140, 0.8)); }
+.chart-sun-dot.sunset  { fill: transparent; stroke: #ff9c7a; filter: drop-shadow(0 0 4px rgba(255, 120, 90, 0.7)); }
 .chart-popover {
   position: absolute;
   pointer-events: none;
