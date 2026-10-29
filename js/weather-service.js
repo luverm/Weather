@@ -93,7 +93,7 @@ export async function getWeather(lat, lon) {
     ].join(","),
     timezone: "auto",
     forecast_days: 7,
-    past_hours: 1,
+    past_days: 1, // 24h of past hourly data for the "vs yesterday" chip and pressure trend
     forecast_minutely_15: 8, // next 2h in 15-min buckets
   });
   const url = `${FORECAST}?${params.toString()}`;
@@ -189,6 +189,10 @@ function normalize(d, aq) {
   // Moon phase is not in Open-Meteo's free tier — compute it locally.
   const moon = computeMoonPhase(new Date());
 
+  // Temperature at this same hour yesterday, for the "vs yesterday" chip.
+  // We pulled past_days=1, so the hourly series starts 24h ago.
+  const yesterdayTemp = temperatureAt(d.hourly, now - 24 * 60 * 60 * 1000);
+
   return {
     temp: c.temperature_2m,
     feelsLike: c.apparent_temperature,
@@ -208,6 +212,7 @@ function normalize(d, aq) {
     sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null,
     uv: daily.uv_index_max?.[0] ?? null,
     uvPeak: findUvPeak(d.hourly),
+    yesterdayTemp,
     timezone: d.timezone,
     hourly,
     daily: dailyForecast,
@@ -217,6 +222,22 @@ function normalize(d, aq) {
     pollen: normalizePollen(aq),
     fetchedAt: now,
   };
+}
+
+// Nearest-hourly temperature at a target timestamp. Snaps within ±90 min of
+// the exact bucket so an off-by-fifteen-minutes clock doesn't lose it.
+function temperatureAt(hourly, target) {
+  if (!hourly?.time || !hourly?.temperature_2m) return null;
+  const times = hourly.time;
+  let bestIdx = -1, bestDist = Infinity;
+  for (let i = 0; i < times.length; i++) {
+    const t = new Date(times[i]).getTime();
+    const d = Math.abs(t - target);
+    if (d < bestDist) { bestDist = d; bestIdx = i; }
+  }
+  if (bestIdx < 0 || bestDist > 90 * 60_000) return null;
+  const v = hourly.temperature_2m[bestIdx];
+  return v == null ? null : v;
 }
 
 function computePressureTrend(hourly, now) {
@@ -400,6 +421,7 @@ function mock(lat, lon) {
       level: "Moderate",
     },
     pressureTrend: { delta: -0.4, direction: "steady" },
+    yesterdayTemp: 16.2,
     fetchedAt: now,
     offline: true,
   };

@@ -21,6 +21,8 @@ const el = {
   placeLocaltime: $("#place-localtime"),
   conditionLabel: $("#condition-label"),
   feelsLike: $("#feels-like"),
+  feelsLikeText: $("#feels-like-text"),
+  yesterdayDelta: $("#yesterday-delta"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -291,8 +293,30 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
   el.conditionLabel.textContent = capitalize(w.label);
-  el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  if (el.feelsLikeText) el.feelsLikeText.textContent = `Feels like ${Math.round(feels)}°`;
+  else el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
+  renderYesterdayDelta(w);
   renderDayRange(w);
+}
+
+function renderYesterdayDelta(w) {
+  const chip = el.yesterdayDelta;
+  if (!chip) return;
+  if (w.temp == null || w.yesterdayTemp == null) { chip.hidden = true; return; }
+  // Delta in the user's current unit, so the display reads naturally even in °F.
+  const deltaC = w.temp - w.yesterdayTemp;
+  const deltaDisplay = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
+  const rounded = Math.round(deltaDisplay * 10) / 10;
+  // Below 0.3°C the "difference" is noise — mark it "same as yesterday".
+  if (Math.abs(deltaC) < 0.3) {
+    chip.dataset.dir = "same";
+    chip.textContent = `same as yesterday`;
+  } else {
+    chip.dataset.dir = deltaC > 0 ? "up" : "down";
+    const sign = deltaC > 0 ? "+" : "−";
+    chip.textContent = `${sign}${Math.abs(rounded).toFixed(1)}° vs yesterday`;
+  }
+  chip.hidden = false;
 }
 
 function renderDayRange(w) {
