@@ -316,6 +316,7 @@ installShortcuts({
   refresh: () => refreshWeather(),
   copySummary: () => document.getElementById("share-btn")?.click(),
   toggleZen: () => toggleZen(),
+  toggleDualUnit: () => ui.toggleDualUnit?.(),
 });
 
 function toggleZen() {

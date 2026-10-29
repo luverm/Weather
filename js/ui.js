@@ -16,6 +16,7 @@ const $ = (sel) => document.querySelector(sel);
 const el = {
   temp: $("#temp-value"),
   unitBtn: $("#unit-toggle"),
+  tempAlt: $("#temp-alt"),
   placeName: $("#place-name"),
   placeSub: $("#place-sub"),
   placeLocaltime: $("#place-localtime"),
@@ -137,6 +138,7 @@ const el = {
 
 const state = {
   unit: localStorage.getItem("aether:unit") || "C",
+  dualUnit: localStorage.getItem("aether:dual-unit") === "1",
   weather: null,
   place: null,
   sampledWeather: null, // the weather values at the current scrubber time
@@ -190,6 +192,12 @@ export const ui = {
   },
   focusSearch() { el.searchInput?.focus(); el.searchInput?.select?.(); },
   toggleUnits() { el.unitBtn?.click(); },
+  toggleDualUnit() {
+    state.dualUnit = !state.dualUnit;
+    try { localStorage.setItem("aether:dual-unit", state.dualUnit ? "1" : "0"); } catch { /* ignore */ }
+    if (state.weather) ui.setWeather(state.weather);
+    ui.showToast(state.dualUnit ? "Showing both °C and °F" : "Single unit");
+  },
   isSearchOpen() { return !el.searchResults.hidden; },
   closeSearch() { el.searchResults.hidden = true; el.searchInput?.blur(); },
   markRefreshSpin(on) {
@@ -315,6 +323,16 @@ function renderLiveValues(w, { animate = true } = {}) {
   const feels = convertTemp(w.feelsLike ?? w.temp);
   if (animate) animateNumber(el.temp, temp, (v) => `${Math.round(v)}°`);
   else el.temp.textContent = `${Math.round(temp)}°`;
+  if (el.tempAlt) {
+    if (state.dualUnit && w.temp != null) {
+      const other = state.unit === "C" ? w.temp * 9 / 5 + 32 : w.temp;
+      const label = state.unit === "C" ? "°F" : "°C";
+      el.tempAlt.textContent = `${Math.round(other)}${label}`;
+      el.tempAlt.hidden = false;
+    } else {
+      el.tempAlt.hidden = true;
+    }
+  }
   if (el.conditionText) {
     el.conditionText.textContent = capitalize(w.label);
     if (el.conditionIcon) el.conditionIcon.innerHTML = iconFor(w.condition);

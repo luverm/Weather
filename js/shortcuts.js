@@ -75,6 +75,7 @@ export function installShortcuts(handlers) {
     if (key === "v" || key === "V") { handlers.jumpToUvPeak?.(); e.preventDefault(); return; }
     if (key === "c" || key === "C") { handlers.copySummary?.(); e.preventDefault(); return; }
     if (key === "z" || key === "Z") { handlers.toggleZen?.(); e.preventDefault(); return; }
+    if (key === "d" || key === "D") { handlers.toggleDualUnit?.(); e.preventDefault(); return; }
   });
 }
 
