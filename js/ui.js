@@ -212,6 +212,12 @@ export const ui = {
     el.placeName.classList.remove("flip-in"); void el.placeName.offsetWidth;
     el.placeName.classList.add("flip-in");
     el.placeName.textContent = place.name || "Unknown";
+    // Soft fade on the hero + metric block so the switch reads as a transition
+    // rather than a jarring content swap.
+    if (el.heroInner) {
+      el.heroInner.classList.remove("fade-in"); void el.heroInner.offsetWidth;
+      el.heroInner.classList.add("fade-in");
+    }
     const sub = [place.admin1, place.country].filter(Boolean).join(", ");
     el.placeSub.textContent = sub || "—";
     // Reset alert dismissals so a fresh location can re-surface them.
