@@ -274,6 +274,7 @@ ui.init({
     if (app.weather) applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
   },
+  jumpToGolden: () => jumpToGolden(),
 });
 
 // Apply saved reduce-motion preference on boot.
@@ -302,7 +303,30 @@ installShortcuts({
     if (app.weather) applyScene(app.weather);
     ui.setScrubbing(!clock.isLive());
   },
+  jumpToGolden: () => jumpToGolden(),
 });
+
+// Scrub the clock to the midpoint of the next golden hour. Looks across
+// today's daily entry and tomorrow's so an evening "G" after sunset still
+// lands at tomorrow morning's golden hour.
+function jumpToGolden() {
+  const w = app.weather;
+  if (!w?.daily?.length) return;
+  const GOLDEN_MIN = 60;
+  const now = clock.now();
+  const windows = [];
+  for (const d of w.daily) {
+    if (d.sunrise) windows.push({ at: d.sunrise + (GOLDEN_MIN * 60_000) / 2, kind: "morning" });
+    if (d.sunset)  windows.push({ at: d.sunset  - (GOLDEN_MIN * 60_000) / 2, kind: "evening" });
+  }
+  const target = windows.find((x) => x.at > now);
+  if (!target) return;
+  clock.setOffset(target.at - Date.now());
+  scrubber.sync();
+  if (app.weather) applyScene(app.weather);
+  ui.setScrubbing(!clock.isLive());
+  ui.showToast?.(`Jumped to ${target.kind} golden hour`);
+}
 
 // ---------- Start ----------
 (async function init() {

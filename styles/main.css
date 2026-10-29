@@ -1043,6 +1043,19 @@ kbd {
   display: block;
   margin: -2px 0 4px;
 }
+
+#sun-card.tappable {
+  cursor: pointer;
+  transition: background 240ms var(--ease), transform 200ms var(--ease);
+}
+#sun-card.tappable:hover {
+  background: rgba(255, 210, 160, 0.06);
+}
+#sun-card.tappable:focus-visible {
+  outline: 2px solid rgba(255, 210, 160, 0.6);
+  outline-offset: 2px;
+}
+#sun-card.tappable:active { transform: scale(0.995); }
 #sun-arc-marker {
   filter: drop-shadow(0 0 6px rgba(255,225,170,0.8));
   transition: cx 800ms var(--ease), cy 800ms var(--ease), opacity 600ms var(--ease);

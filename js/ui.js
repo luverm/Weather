@@ -158,6 +158,7 @@ export const ui = {
     bindRefresh();
     bindSettings();
     bindTilt();
+    bindSunCardJump();
     applyStoredPreferences();
     renderPlaces();
     startFetchedTicker();
@@ -1490,6 +1491,22 @@ function bindShare() {
     } catch (err) {
       if (err?.name !== "AbortError") ui.showToast("Share failed");
     }
+  });
+}
+
+// Click the sun card to jump the scrubber to the next golden hour.
+// Mirrors the "G" keyboard shortcut without needing a visible button.
+function bindSunCardJump() {
+  const card = document.getElementById("sun-card");
+  if (!card) return;
+  card.classList.add("tappable");
+  card.setAttribute("role", "button");
+  card.setAttribute("tabindex", "0");
+  card.setAttribute("aria-label", "Jump to next golden hour");
+  const fire = () => state.handlers.jumpToGolden?.();
+  card.addEventListener("click", fire);
+  card.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fire(); }
   });
 }
 
