@@ -9,7 +9,7 @@ import { SnowScene } from "./scenes/snow.js";
 import { LightningScene } from "./scenes/lightning.js";
 import { WindScene } from "./scenes/wind.js";
 import { getWeather, getLocation } from "./weather-service.js";
-import { ui } from "./ui.js";
+import { ui, themeColorFor } from "./ui.js";
 import { clock } from "./clock.js";
 import { Scrubber } from "./scrubber.js";
 import { AmbientAudio } from "./audio.js";
@@ -101,8 +101,15 @@ function pickBucket(time, sunrise, sunset) {
   return "day";
 }
 
-function toneToColor(tone) {
-  return { dark: "#0b1020", warm: "#2a1c2d", bright: "#7cc0ff" }[tone] || "#0b1020";
+// Blend the scene tone (dark/warm/bright, driven by sun angle) with the
+// weather condition so the browser chrome reads both the time of day and the
+// weather — e.g. "warm" tone + "storm" condition → sunset-plum, not generic.
+function themeColor(sampled, tone) {
+  // Warm/bright scenes override the night check, so sunrise/sunset still read
+  // warm even when the sun is technically still below the horizon.
+  if (tone === "bright") return "#7cc0ff";
+  if (tone === "warm")   return "#2a1c2d";
+  return themeColorFor(sampled?.condition, sampled?.isDay);
 }
 
 // ---------- Sampling ----------
@@ -166,7 +173,7 @@ function applyScene(weather) {
 
   document.documentElement.setAttribute("data-tone", sky.getTone());
   document.querySelector('meta[name="theme-color"]').setAttribute(
-    "content", toneToColor(sky.getTone())
+    "content", themeColor(sampled, sky.getTone())
   );
 
   // Update audio to match whatever the scene now shows.

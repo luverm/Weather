@@ -1442,9 +1442,10 @@ function renderRainSummary(w) {
   box.hidden = false;
 }
 
-// Update the browser tab's title and favicon so you can glance at the weather
-// without switching tabs. Favicons stay cached heavily — set them with inline
-// SVG data URIs so each condition change takes effect immediately.
+// Update the browser tab's title, favicon, and meta theme-color so the
+// browser chrome on mobile tints to match the sky and the tab reads at a
+// glance. Favicons cache heavily — inline SVG data URIs so changes take
+// effect immediately.
 function updateDocumentChrome(w) {
   if (!w) return;
   const emoji = conditionEmoji(w.condition, w.isDay);
@@ -1461,6 +1462,20 @@ function updateDocumentChrome(w) {
       <text x='50%' y='56%' text-anchor='middle' dominant-baseline='middle' font-size='40' font-family='system-ui,Apple Color Emoji,Segoe UI Emoji'>${emoji}</text>
     </svg>`;
     link.setAttribute("href", `data:image/svg+xml,${encodeURIComponent(svg)}`);
+  }
+
+}
+
+export function themeColorFor(cond, isDay) {
+  if (isDay === false) return "#060a1a"; // deep night
+  switch (cond) {
+    case "clear":  return "#1a3b6b"; // clear-sky blue
+    case "clouds": return "#28364f"; // overcast slate
+    case "rain":   return "#1a2a44"; // rain blue
+    case "snow":   return "#2a3a4c"; // snowy haze
+    case "storm":  return "#1a1424"; // storm plum
+    case "fog":    return "#2b303a"; // foggy grey
+    default:       return "#0b1020";
   }
 }
 
