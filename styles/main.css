@@ -1016,6 +1016,32 @@ html[data-reduce-motion="true"] *::after {
 }
 .sun-countdown:empty { display: none; }
 
+/* ---------- Loading bar ---------- */
+.loading-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  z-index: 70;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(154, 209, 255, 0.9) 40%,
+    rgba(255, 230, 199, 0.9) 60%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: loading-sweep 1.2s linear infinite;
+  opacity: 0;
+  transition: opacity 180ms var(--ease);
+  pointer-events: none;
+}
+.loading-bar[hidden] { display: none; }
+.loading-bar.show { opacity: 1; }
+@keyframes loading-sweep {
+  from { background-position: 200% 0; }
+  to   { background-position: -100% 0; }
+}
+
 /* ---------- Back-to-top FAB ---------- */
 .to-top {
   position: fixed;

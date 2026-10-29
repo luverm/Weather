@@ -207,6 +207,8 @@ async function loadByCoords(place) {
   ui.setPlace(place);
   syncHashToPlace(place);
   ui.setLoading(`Fetching weather for ${place.name}…`);
+  const bar = document.getElementById("loading-bar");
+  if (bar) { bar.hidden = false; requestAnimationFrame(() => bar.classList.add("show")); }
 
   // Drop any scrubber offset so we start live on each new city.
   clock.reset();
@@ -226,6 +228,11 @@ async function loadByCoords(place) {
 
   // Move the radar to the new location (fire-and-forget; resolves later).
   ensureRadar([place.lat, place.lon]).then((r) => r?.setCenter(place.lat, place.lon, place.name));
+
+  if (bar) {
+    bar.classList.remove("show");
+    setTimeout(() => { bar.hidden = true; }, 220);
+  }
 }
 
 async function useGeolocation() {
