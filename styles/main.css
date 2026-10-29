@@ -849,6 +849,14 @@ html[data-reduce-motion="true"] *::after {
   font-weight: 600;
   letter-spacing: 0.1em;
 }
+.chart-extreme {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.chart-extreme.hi { fill: #ff9c7a; }
+.chart-extreme.lo { fill: #9ad1ff; }
 .chart-popover {
   position: absolute;
   pointer-events: none;

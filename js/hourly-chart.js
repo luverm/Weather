@@ -304,6 +304,7 @@ export class HourlyChart {
 
     // Keep the sun markers in sync with any re-draw (e.g. unit toggle).
     this._drawSunMarkers();
+    this._drawExtremes();
 
     // Labels: every ~3 hours
     const unit = this.getUnit();
@@ -392,5 +393,42 @@ export class HourlyChart {
       g.appendChild(dot);
       g.appendChild(label);
     }
+  }
+
+  // Mark the hottest and coldest hour of the chart window with tiny labelled
+  // arrows above the line. Only draws when the hi/lo differ by more than 2°,
+  // so flat days stay uncluttered.
+  _drawExtremes() {
+    const g = this.svg.querySelector("#chart-extremes");
+    if (!g) return;
+    g.innerHTML = "";
+    if (!this.hours.length || !this.points.length) return;
+    let iHi = -1, iLo = -1;
+    for (let i = 0; i < this.hours.length; i++) {
+      const t = this.hours[i].temp;
+      if (t == null) continue;
+      if (iHi < 0 || t > this.hours[iHi].temp) iHi = i;
+      if (iLo < 0 || t < this.hours[iLo].temp) iLo = i;
+    }
+    if (iHi < 0 || iLo < 0 || iHi === iLo) return;
+    const spread = this.hours[iHi].temp - this.hours[iLo].temp;
+    if (spread < 2) return;
+
+    const unit = this.getUnit();
+    const show = (v) => Math.round(unit === "F" ? v * 9 / 5 + 32 : v);
+    const mark = (idx, kind) => {
+      const p = this.points[idx];
+      if (!p) return;
+      const ns = "http://www.w3.org/2000/svg";
+      const text = document.createElementNS(ns, "text");
+      text.setAttribute("x", p.x.toFixed(1));
+      text.setAttribute("y", (kind === "hi" ? p.y - 14 : p.y + 20).toFixed(1));
+      text.setAttribute("text-anchor", "middle");
+      text.setAttribute("class", `chart-extreme ${kind}`);
+      text.textContent = `${kind === "hi" ? "▲" : "▼"} ${show(this.hours[idx].temp)}°`;
+      g.appendChild(text);
+    };
+    mark(iHi, "hi");
+    mark(iLo, "lo");
   }
 }
