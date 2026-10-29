@@ -53,6 +53,7 @@ const el = {
   sunDaylight: $("#sun-daylight"),
   sunCountdown: $("#sun-countdown"),
   sunNextLabel: $("#sun-next-label"),
+  sunDaylightDelta: $("#sun-daylight-delta"),
   windNeedle: $("#wind-needle"),
   advice: $("#advice"),
   adviceText: $("#advice-text"),
@@ -618,9 +619,26 @@ function renderSun(w) {
     const mm = mins % 60;
     el.sunDaylight.textContent = `${hh}h ${mm}m`;
   } else el.sunDaylight.textContent = "—";
+  renderDaylightDelta(w);
   scheduleSunCountdown(w);
   scheduleSunArc(w);
   schedulePhotoWindow(w);
+}
+
+function renderDaylightDelta(w) {
+  const chip = el.sunDaylightDelta;
+  if (!chip) return;
+  const d = w?.daylightDeltaMs;
+  if (d == null) { chip.hidden = true; return; }
+  const secs = Math.round(d / 1000);
+  // Below 20s the swing is noise.
+  if (Math.abs(secs) < 20) { chip.hidden = true; return; }
+  const absMin = Math.floor(Math.abs(secs) / 60);
+  const absSec = Math.abs(secs) % 60;
+  const dur = absMin > 0 ? `${absMin}m ${absSec}s` : `${absSec}s`;
+  chip.dataset.dir = secs > 0 ? "up" : "down";
+  chip.textContent = `${secs > 0 ? "+" : "−"}${dur} vs yesterday`;
+  chip.hidden = false;
 }
 
 // Evaluate the sun arc's quadratic Bezier at parameter t ∈ [0,1].

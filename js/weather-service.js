@@ -197,6 +197,10 @@ function normalize(d, aq) {
   // We pulled past_days=1, so the hourly series starts 24h ago.
   const yesterdayTemp = temperatureAt(d.hourly, now - 24 * 60 * 60 * 1000);
 
+  // How much daylight today vs yesterday, in ms — tiny chip in the sun card.
+  // Uses the raw daily arrays (which include yesterday thanks to past_days=1).
+  const daylightDeltaMs = computeDaylightDelta(daily, dailyForecast);
+
   return {
     temp: c.temperature_2m,
     feelsLike: c.apparent_temperature,
@@ -219,6 +223,7 @@ function normalize(d, aq) {
     uv: dailyForecast[0]?.uvMax ?? null,
     uvPeak: findUvPeak(d.hourly),
     yesterdayTemp,
+    daylightDeltaMs,
     timezone: d.timezone,
     hourly,
     daily: dailyForecast,
@@ -228,6 +233,28 @@ function normalize(d, aq) {
     pollen: normalizePollen(aq),
     fetchedAt: now,
   };
+}
+
+// Compare today's daylight length against yesterday's. Returns ms (positive =
+// gaining daylight) or null if either day's bounds are missing.
+function computeDaylightDelta(rawDaily, today) {
+  if (!rawDaily?.sunrise || !rawDaily?.sunset) return null;
+  if (!today?.length) return null;
+  const todayDay = today[0]; // first forecast entry is today
+  if (!todayDay?.sunrise || !todayDay?.sunset) return null;
+  // Find yesterday's raw entry (any one strictly before today).
+  let ySr = null, ySs = null;
+  for (let i = 0; i < rawDaily.sunrise.length; i++) {
+    const sr = rawDaily.sunrise[i] ? new Date(rawDaily.sunrise[i]).getTime() : null;
+    if (sr != null && sr < todayDay.sunrise) {
+      ySr = sr;
+      ySs = rawDaily.sunset[i] ? new Date(rawDaily.sunset[i]).getTime() : null;
+    }
+  }
+  if (ySr == null || ySs == null) return null;
+  const todayLen = todayDay.sunset - todayDay.sunrise;
+  const yLen = ySs - ySr;
+  return todayLen - yLen;
 }
 
 // Nearest-hourly temperature at a target timestamp. Snaps within ±90 min of
