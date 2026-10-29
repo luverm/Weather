@@ -167,6 +167,7 @@ export const ui = {
     el.unitBtn.textContent = `°${state.unit}`;
     bindSearch();
     bindUnitToggle();
+    bindTempCopy();
     bindLocate();
     bindAudio();
     bindShare();
@@ -1717,6 +1718,31 @@ function bindUnitToggle() {
     localStorage.setItem("aether:unit", state.unit);
     el.unitBtn.textContent = `°${state.unit}`;
     if (state.weather) ui.setWeather(state.weather);
+  });
+}
+
+// Tap/click the big temperature to copy a one-line summary (handy on mobile).
+function bindTempCopy() {
+  if (!el.temp) return;
+  el.temp.style.cursor = "pointer";
+  el.temp.setAttribute("role", "button");
+  el.temp.setAttribute("tabindex", "0");
+  el.temp.setAttribute("aria-label", "Copy current weather summary");
+  const fire = async () => {
+    const w = state.weather;
+    if (!w) return;
+    const unit = state.unit;
+    const t = (v) => `${Math.round(unit === "F" ? v * 9 / 5 + 32 : v)}°${unit}`;
+    const text = `${capitalize(w.label)} · ${t(w.temp)}` +
+      (state.place?.name ? ` in ${state.place.name}` : "");
+    try {
+      await navigator.clipboard.writeText(text);
+      ui.showToast("Copied " + text);
+    } catch { /* ignore */ }
+  };
+  el.temp.addEventListener("click", fire);
+  el.temp.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fire(); }
   });
 }
 
