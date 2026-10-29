@@ -1239,6 +1239,31 @@ kbd {
 }
 .moon-cell svg { width: 20px; height: 20px; display: block; }
 
+.stargazing {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(130, 110, 240, 0.14);
+  border: 1px solid rgba(130, 110, 240, 0.26);
+  color: var(--fg-muted);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+.stargazing[hidden] { display: none; }
+.stargazing-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #c7b4ff;
+  box-shadow: 0 0 6px rgba(190, 170, 255, 0.9);
+}
+.stargazing[data-quality="excellent"] {
+  background: rgba(130, 110, 240, 0.22);
+  border-color: rgba(190, 170, 255, 0.5);
+  color: #e5dcff;
+}
+
 .sun-row { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .sun-item { display: grid; gap: 2px; }
 .sun-label { font-size: 10.5px; color: var(--fg-dim); letter-spacing: 0.14em; text-transform: uppercase; }

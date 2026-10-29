@@ -52,6 +52,8 @@ const el = {
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
   moonStrip: $("#moon-strip"),
+  stargazing: $("#stargazing"),
+  stargazingText: $("#stargazing-text"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -235,6 +237,7 @@ export const ui = {
     renderAirQuality(weather.airQuality);
     renderMoon(weather.moon);
     renderMoonStrip(weather.moonSeries, weather.timezone);
+    renderStargazing(weather);
     renderSun(weather);
     renderHourly(weather);
     renderDaily(weather);
@@ -685,6 +688,28 @@ function renderMoonStrip(series, tz) {
       if (ts) state.handlers.onHourClick?.(ts + 12 * 3600_000);
     });
   });
+}
+
+// Highlight nights when the sky is likely to be clear enough for stargazing
+// — only shown at night with low cloud cover. The moon illumination hints at
+// how much natural light will drown out faint stars.
+function renderStargazing(w) {
+  const box = el.stargazing;
+  if (!box) return;
+  // Current conditions must be dark + clear enough.
+  if (w.isDay !== false) { box.hidden = true; return; }
+  const cloud = w.cloudCover;
+  if (cloud != null && cloud > 40) { box.hidden = true; return; }
+  if (w.condition !== "clear" && w.condition !== "clouds") { box.hidden = true; return; }
+  const illum = Math.round((w.moon?.illum ?? 0) * 100);
+  const quality =
+    (cloud ?? 0) <= 15 && illum <= 40 ? "Excellent" :
+    (cloud ?? 0) <= 25 && illum <= 70 ? "Good" :
+    "Fair";
+  el.stargazingText.textContent =
+    `${quality} stargazing · ${cloud != null ? `${Math.round(cloud)}% cloud` : "clear"} · ${illum}% moon`;
+  box.dataset.quality = quality.toLowerCase();
+  box.hidden = false;
 }
 
 function renderMoon(moon) {
