@@ -344,6 +344,9 @@ function renderTempGlow(tempC) {
 function renderYesterdayDelta(w) {
   const chip = el.yesterdayDelta;
   if (!chip) return;
+  // Only valid against the live reading; a scrubber-sampled temperature
+  // compared with yesterday-at-this-actual-moment would mislead.
+  if (w._sampledIndex != null) { chip.hidden = true; return; }
   if (w.temp == null || w.yesterdayTemp == null) { chip.hidden = true; return; }
   // Delta in the user's current unit, so the display reads naturally even in °F.
   const deltaC = w.temp - w.yesterdayTemp;

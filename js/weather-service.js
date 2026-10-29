@@ -151,11 +151,15 @@ function normalize(d, aq) {
     }
   }
 
-  // 7-day daily forecast.
+  // 7-day daily forecast. past_days=1 means the raw series starts yesterday;
+  // drop any day whose end is already in the past so daily[0] = today.
   const dailyForecast = [];
   if (daily.time) {
     for (let i = 0; i < daily.time.length; i++) {
       const ts = new Date(daily.time[i]).getTime();
+      // A daily bucket represents a local day; anything whose end
+      // (ts + 24h - 1ms) is before "now" is in the past.
+      if (ts + 24 * 60 * 60 * 1000 <= now) continue;
       dailyForecast.push({
         time: ts,
         tempMax: daily.temperature_2m_max?.[i],
@@ -208,9 +212,11 @@ function normalize(d, aq) {
     isDay: !!c.is_day,
     condition,
     label,
-    sunrise: daily.sunrise?.[0] ? new Date(daily.sunrise[0]).getTime() : null,
-    sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).getTime() : null,
-    uv: daily.uv_index_max?.[0] ?? null,
+    // dailyForecast[0] is today — not the raw daily[0] which, with past_days=1,
+    // is yesterday.
+    sunrise: dailyForecast[0]?.sunrise ?? null,
+    sunset: dailyForecast[0]?.sunset ?? null,
+    uv: dailyForecast[0]?.uvMax ?? null,
     uvPeak: findUvPeak(d.hourly),
     yesterdayTemp,
     timezone: d.timezone,
