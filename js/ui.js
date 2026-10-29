@@ -424,9 +424,14 @@ function renderMetrics(w) {
     }
   }
   el.metricHumidity.textContent = Math.round(w.humidity ?? 0);
-  el.metricHumiditySub.textContent = w.dewPoint != null
-    ? `dew ${Math.round(convertTemp(w.dewPoint))}°`
-    : "dew —";
+  // Dew point sub-text, plus a word for how the air feels (dry/muggy etc.).
+  if (w.dewPoint != null) {
+    const dewRaw = Math.round(convertTemp(w.dewPoint));
+    const comfort = dewPointComfort(w.dewPoint);
+    el.metricHumiditySub.textContent = `dew ${dewRaw}°${comfort ? ` · ${comfort}` : ""}`;
+  } else {
+    el.metricHumiditySub.textContent = "dew —";
+  }
   if (el.humidityComfort) {
     const pill = humidityComfort(w.humidity, w.dewPoint, w.temp);
     if (pill) {
@@ -498,6 +503,18 @@ function uvLevel(v) {
   if (v < 8) return { label: "High", cls: "up" };
   if (v < 11) return { label: "Very High", cls: "up" };
   return { label: "Extreme", cls: "up" };
+}
+
+// One-word label for how the air at a given dew point tends to feel on skin.
+// Dew point maps better than relative humidity for perceived mugginess.
+function dewPointComfort(dewC) {
+  if (dewC == null) return null;
+  if (dewC < 5) return "dry";
+  if (dewC < 10) return "crisp";
+  if (dewC < 16) return "comfortable";
+  if (dewC < 20) return "muggy";
+  if (dewC < 24) return "oppressive";
+  return "tropical";
 }
 
 // Rough "burn time" at the current UV for an unprotected Fitzpatrick type II
