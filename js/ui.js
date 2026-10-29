@@ -41,6 +41,7 @@ const el = {
   aqValue: $("#aq-value"),
   aqLabel: $("#aq-label"),
   aqDetail: $("#aq-detail"),
+  aqAdvice: $("#aq-advice"),
   aqCard: $("#aq-card"),
   aqTrendLine: $("#aq-trend-line"),
   aqTrendFill: $("#aq-trend-fill"),
@@ -539,7 +540,20 @@ function renderAirQuality(aq) {
   el.aqArc.setAttribute("stroke-dashoffset", String(126 * (1 - frac)));
   el.aqDetail.textContent =
     `PM2.5 ${aq.pm25 != null ? Math.round(aq.pm25) : "—"} · O₃ ${aq.o3 != null ? Math.round(aq.o3) : "—"}`;
+  if (el.aqAdvice) el.aqAdvice.textContent = aqAdvice(aq.aqi);
   renderAqTrend(aq);
+}
+
+// One-line AQI health prompt using US EPA breakpoints. Keep it short so the
+// line fits beside the AQ ring without wrapping.
+function aqAdvice(aqi) {
+  if (aqi == null) return "";
+  if (aqi <= 50) return "Great air — enjoy the outdoors.";
+  if (aqi <= 100) return "Decent — sensitive folks go easy on long exertion.";
+  if (aqi <= 150) return "Sensitive groups: cut back prolonged outdoor effort.";
+  if (aqi <= 200) return "Unhealthy — limit prolonged outdoor exertion.";
+  if (aqi <= 300) return "Very unhealthy — stay indoors when you can.";
+  return "Hazardous — avoid outdoor exposure.";
 }
 
 function renderAqTrend(aq) {
