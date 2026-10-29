@@ -100,6 +100,10 @@ const el = {
   photoWindowLabel: $("#photo-window-label"),
   photoWindowDetail: $("#photo-window-detail"),
   comfortStrip: $("#comfort-strip"),
+  rainSummary: $("#rain-summary"),
+  rainSummaryTotal: $("#rain-summary-total"),
+  rainSummaryDetail: $("#rain-summary-detail"),
+  rainSummaryStrip: $("#rain-summary-strip"),
   weekendChip: $("#weekend-chip"),
   weekendHeadline: $("#weekend-headline"),
   weekendDetail: $("#weekend-detail"),
@@ -210,6 +214,7 @@ export const ui = {
     renderActivity(weather);
     renderAlerts(weather);
     renderWeekend(weather);
+    renderRainSummary(weather);
     startLocaltime(weather);
     if (state.chart) state.chart.setHours(weather.hourly);
     if (state.comfortStrip) state.comfortStrip.setHours(weather.hourly);
@@ -1162,6 +1167,49 @@ function renderNowcast(w) {
     el.nowcastBars.appendChild(bar);
   });
   el.nowcast.hidden = false;
+}
+
+// Compact total-rain summary for the next 24h, pinned above the chart.
+// Hides when the air is dry (<0.1 mm) — the chart itself already shows that.
+function renderRainSummary(w) {
+  const box = el.rainSummary;
+  if (!box) return;
+  const hours = (w.hourly || []).slice(0, 24);
+  if (!hours.length) { box.hidden = true; return; }
+  const totalMm = hours.reduce((s, h) => s + (h.precip || 0), 0);
+  if (totalMm < 0.1) { box.hidden = true; return; }
+
+  // Find the peak hour (max precip). Ties fall to the earliest.
+  let peakIdx = 0;
+  for (let i = 1; i < hours.length; i++) {
+    if ((hours[i].precip || 0) > (hours[peakIdx].precip || 0)) peakIdx = i;
+  }
+  const peak = hours[peakIdx];
+  const peakTime = fmtTime(peak.time);
+
+  // Count rainy hours (above a light-drizzle threshold).
+  const rainyHours = hours.filter((h) => (h.precip || 0) >= 0.1).length;
+
+  el.rainSummaryTotal.textContent = `${totalMm.toFixed(1)} mm`;
+  el.rainSummaryDetail.textContent =
+    `· next 24h · ${rainyHours} rainy hour${rainyHours === 1 ? "" : "s"} · peak ${peakTime}`;
+
+  // Mini intensity strip — one bar per hour, height scaled to peak.
+  if (el.rainSummaryStrip) {
+    const maxP = Math.max(0.3, ...hours.map((h) => h.precip || 0));
+    el.rainSummaryStrip.innerHTML = hours.map((h) => {
+      const pct = Math.max(6, ((h.precip || 0) / maxP) * 100);
+      const dim = (h.precip || 0) < 0.1 ? "dim" : "";
+      return `<span class="rain-summary-cell ${dim}" style="--h:${pct.toFixed(0)}%"></span>`;
+    }).join("");
+  }
+
+  // Severity colouring: heavy rain gets a stronger accent.
+  if (totalMm >= 10) box.dataset.severity = "heavy";
+  else if (totalMm >= 3) box.dataset.severity = "moderate";
+  else box.dataset.severity = "light";
+
+  box.hidden = false;
 }
 
 // ---------- Icons ----------
