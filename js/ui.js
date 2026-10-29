@@ -1251,7 +1251,13 @@ function renderDaily(w) {
       ? ` · gusts ${Math.round(d.gustsMax)} km/h`
       : "";
     const popLabel = d.pop >= 30 ? ` · ${d.pop}% rain` : "";
-    const extra = gustLabel || popLabel ? `<span class="daily-gust">${popLabel}${gustLabel}</span>` : "";
+    // Winter heads-up: a daily that dips below freezing AND has precip is a
+    // candidate for ice/snow — mark it so a quick scroll flags the ice days.
+    const iceLabel = (d.tempMin != null && d.tempMin <= 0 && (d.precip || 0) >= 0.1)
+      ? " · ❄ ice risk"
+      : "";
+    const extraText = `${popLabel}${gustLabel}${iceLabel}`;
+    const extra = extraText ? `<span class="daily-gust">${extraText}</span>` : "";
     const popPct = Math.max(0, Math.min(100, d.pop || 0));
     const popBar = popPct >= 10
       ? `<div class="daily-pop" title="${popPct}% chance of rain" aria-label="${popPct}% chance of rain">
