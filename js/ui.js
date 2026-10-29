@@ -94,6 +94,7 @@ const el = {
   settingsMenu: $("#settings-menu"),
   settingReduceMotion: $("#setting-reduce-motion"),
   settingUnitF: $("#setting-unit-f"),
+  settingDualUnit: $("#setting-dual-unit"),
   settingClearPlaces: $("#setting-clear-places"),
   chartPopover: $("#chart-popover"),
   insightsCard: $("#insights-card"),
@@ -197,6 +198,7 @@ export const ui = {
   toggleDualUnit() {
     state.dualUnit = !state.dualUnit;
     try { localStorage.setItem("aether:dual-unit", state.dualUnit ? "1" : "0"); } catch { /* ignore */ }
+    if (el.settingDualUnit) el.settingDualUnit.checked = state.dualUnit;
     if (state.weather) ui.setWeather(state.weather);
     ui.showToast(state.dualUnit ? "Showing both °C and °F" : "Single unit");
   },
@@ -1794,6 +1796,14 @@ function bindSettings() {
     }
   });
 
+  el.settingDualUnit?.addEventListener("change", () => {
+    const on = el.settingDualUnit.checked;
+    if (state.dualUnit === on) return;
+    state.dualUnit = on;
+    try { localStorage.setItem("aether:dual-unit", on ? "1" : "0"); } catch { /* ignore */ }
+    if (state.weather) ui.setWeather(state.weather);
+  });
+
   el.settingClearPlaces?.addEventListener("click", () => {
     if (!confirm("Clear all saved places?")) return;
     for (const p of places.all()) places.remove(p);
@@ -1812,6 +1822,7 @@ function applyStoredPreferences() {
     queueMicrotask(() => state.handlers.onReduceMotion?.(true));
   }
   if (el.settingUnitF) el.settingUnitF.checked = state.unit === "F";
+  if (el.settingDualUnit) el.settingDualUnit.checked = !!state.dualUnit;
 }
 
 // Exposed so app.js can query the current preference on boot.
