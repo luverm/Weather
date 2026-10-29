@@ -73,6 +73,7 @@ const el = {
   dailyHi: $("#daily-hi"),
   dailyLo: $("#daily-lo"),
   dailySparkDots: $("#daily-spark-dots"),
+  dailyPrecipBars: $("#daily-precip-bars"),
   dailyDelta: $("#daily-delta"),
   shareBtn: $("#share-btn"),
   installBtn: $("#install-btn"),
@@ -1053,6 +1054,31 @@ function renderDailySpark(days) {
   const linePath = (arr) => arr.map((v, i) => (i === 0 ? "M" : "L") + x(i).toFixed(1) + "," + y(v).toFixed(1)).join(" ");
   el.dailyHi.setAttribute("d", linePath(days.map((d) => d.tempMax)));
   el.dailyLo.setAttribute("d", linePath(days.map((d) => d.tempMin)));
+
+  // Precipitation bars anchored at the sparkline baseline. Height scales to
+  // the wettest day across the week (floor of 2 mm so a dry week doesn't look
+  // like a monsoon). Dry days get a tiny tick so the row still reads.
+  if (el.dailyPrecipBars) {
+    el.dailyPrecipBars.innerHTML = "";
+    const precipMax = Math.max(2, ...days.map((d) => d.precip || 0));
+    const barMaxH = 14;
+    const barW = Math.max(4, innerW / days.length / 3);
+    days.forEach((d, i) => {
+      const mm = Math.max(0, d.precip || 0);
+      if (mm < 0.1) return;
+      const barH = Math.max(1.2, (mm / precipMax) * barMaxH);
+      const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      r.setAttribute("x", (x(i) - barW / 2).toFixed(1));
+      r.setAttribute("y", (H - BOT - barH).toFixed(1));
+      r.setAttribute("width", barW.toFixed(1));
+      r.setAttribute("height", barH.toFixed(1));
+      r.setAttribute("rx", "1.5");
+      const opacity = 0.35 + Math.min(0.55, mm / 10);
+      r.setAttribute("opacity", opacity.toFixed(2));
+      el.dailyPrecipBars.appendChild(r);
+    });
+  }
+
   // Dots at each day + per-day temp labels above/below
   el.dailySparkDots.innerHTML = "";
   days.forEach((d, i) => {
