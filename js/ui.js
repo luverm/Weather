@@ -26,6 +26,7 @@ const el = {
   feelsLike: $("#feels-like"),
   feelsLikeText: $("#feels-like-text"),
   yesterdayDelta: $("#yesterday-delta"),
+  tomorrowDelta: $("#tomorrow-delta"),
   narrative: $("#narrative"),
   dayRange: $("#day-range"),
   dayRangeMin: $("#day-range-min"),
@@ -366,8 +367,39 @@ function renderLiveValues(w, { animate = true } = {}) {
   if (el.feelsLikeText) el.feelsLikeText.textContent = `Feels like ${Math.round(feels)}°`;
   else el.feelsLike.textContent = `Feels like ${Math.round(feels)}°`;
   renderYesterdayDelta(w);
+  renderTomorrowDelta(w);
   renderDayRange(w);
   renderTempGlow(w.temp);
+}
+
+// Mirror of the "vs yesterday" chip but looking 24h forward. Hidden while
+// scrubbing (sampled time), and quiet when the swing is under 0.3°C.
+function renderTomorrowDelta(w) {
+  const chip = el.tomorrowDelta;
+  if (!chip) return;
+  // Only valid at live time — the forecast's "same hour tomorrow" compares
+  // against the actual now, not the scrubbed time.
+  if (document.documentElement.getAttribute("data-scrubbing") === "true") {
+    chip.hidden = true; return;
+  }
+  if (w.temp == null || !w.hourly?.length) { chip.hidden = true; return; }
+  const target = Date.now() + 24 * 60 * 60 * 1000;
+  let best = null, bestDist = Infinity;
+  for (const h of w.hourly) {
+    const d = Math.abs((h.time ?? 0) - target);
+    if (d < bestDist && h.temp != null) { bestDist = d; best = h; }
+  }
+  // Need to land within 90 minutes of 24h-ahead for honesty.
+  if (!best || bestDist > 90 * 60_000) { chip.hidden = true; return; }
+  const deltaC = best.temp - w.temp;
+  if (Math.abs(deltaC) < 0.3) { chip.dataset.dir = "same"; chip.textContent = "same tomorrow"; }
+  else {
+    const d = state.unit === "F" ? deltaC * 9 / 5 : deltaC;
+    const rounded = Math.round(d * 10) / 10;
+    chip.dataset.dir = deltaC > 0 ? "up" : "down";
+    chip.textContent = `${deltaC > 0 ? "+" : "−"}${Math.abs(rounded).toFixed(1)}° tomorrow`;
+  }
+  chip.hidden = false;
 }
 
 // Set the halo colour behind the hero temperature. Maps °C through a cold →
@@ -403,7 +435,9 @@ function renderYesterdayDelta(w) {
   if (!chip) return;
   // Only valid against the live reading; a scrubber-sampled temperature
   // compared with yesterday-at-this-actual-moment would mislead.
-  if (w._sampledIndex != null) { chip.hidden = true; return; }
+  if (document.documentElement.getAttribute("data-scrubbing") === "true") {
+    chip.hidden = true; return;
+  }
   if (w.temp == null || w.yesterdayTemp == null) { chip.hidden = true; return; }
   // Delta in the user's current unit, so the display reads naturally even in °F.
   const deltaC = w.temp - w.yesterdayTemp;
