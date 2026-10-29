@@ -324,7 +324,26 @@ installShortcuts({
   copySummary: () => document.getElementById("share-btn")?.click(),
   toggleZen: () => toggleZen(),
   toggleDualUnit: () => ui.toggleDualUnit?.(),
+  jumpToRain: () => jumpToRain(),
 });
+
+// Scrub the clock to the next hour whose rain probability or mm reaches a
+// "noticeable" threshold.
+function jumpToRain() {
+  const w = app.weather;
+  if (!w?.hourly?.length) return;
+  const now = clock.now();
+  const target = w.hourly.find((h) =>
+    h.time > now && ((h.pop ?? 0) >= 50 || (h.precip ?? 0) >= 0.3)
+  );
+  if (!target) { ui.showToast?.("No rain in the next 24h"); return; }
+  clock.setOffset(target.time - Date.now());
+  scrubber.sync();
+  if (app.weather) applyScene(app.weather);
+  ui.setScrubbing(!clock.isLive());
+  const mins = Math.round((target.time - now) / 60_000);
+  ui.showToast?.(`Jumped to rain in ${mins >= 60 ? Math.round(mins / 60) + "h" : mins + "m"}`);
+}
 
 function toggleZen() {
   const on = document.body.classList.toggle("zen");

@@ -76,6 +76,7 @@ export function installShortcuts(handlers) {
     if (key === "c" || key === "C") { handlers.copySummary?.(); e.preventDefault(); return; }
     if (key === "z" || key === "Z") { handlers.toggleZen?.(); e.preventDefault(); return; }
     if (key === "d" || key === "D") { handlers.toggleDualUnit?.(); e.preventDefault(); return; }
+    if (key === "j" || key === "J") { handlers.jumpToRain?.(); e.preventDefault(); return; }
   });
 }
 
