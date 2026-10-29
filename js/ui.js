@@ -48,6 +48,7 @@ const el = {
   moonLit: $("#moon-lit"),
   moonName: $("#moon-name"),
   moonIllum: $("#moon-illum"),
+  moonStrip: $("#moon-strip"),
   sunRise: $("#sun-rise"),
   sunSet: $("#sun-set"),
   sunDaylight: $("#sun-daylight"),
@@ -208,6 +209,7 @@ export const ui = {
     renderMetrics(weather);
     renderAirQuality(weather.airQuality);
     renderMoon(weather.moon);
+    renderMoonStrip(weather.moonSeries, weather.timezone);
     renderSun(weather);
     renderHourly(weather);
     renderDaily(weather);
@@ -582,6 +584,50 @@ function renderAqTrend(aq) {
     return;
   }
   drawSparkline(el.aqTrendLine, el.aqTrendFill, pts, { minSpan: 20 });
+}
+
+// Render the 7-day moon-phase strip under the moon card. Each cell is a tiny
+// disc with a dark cut-out shaped by that day's phase, plus the weekday
+// initial as a label. Click a cell to scrub the clock to that day's noon.
+function renderMoonStrip(series, tz) {
+  const root = el.moonStrip;
+  if (!root) return;
+  if (!series?.length) { root.innerHTML = ""; return; }
+  const r = 10;
+  root.innerHTML = series.map((p, i) => {
+    const dt = new Date(p.time);
+    const letter = dt.toLocaleDateString(undefined, {
+      weekday: "narrow",
+      ...(tz && tz !== "auto" ? { timeZone: tz } : {}),
+    });
+    const waxing = p.phase < 0.5;
+    const outer = waxing
+      ? `M 0 ${-r} A ${r} ${r} 0 0 1 0 ${r}`
+      : `M 0 ${-r} A ${r} ${r} 0 0 0 0 ${r}`;
+    const termX = Math.abs(Math.cos(p.phase * 2 * Math.PI)) * r;
+    const large = Math.cos(p.phase * 2 * Math.PI) > 0 ? 0 : 1;
+    const termSweep = waxing
+      ? (Math.cos(p.phase * 2 * Math.PI) > 0 ? 0 : 1)
+      : (Math.cos(p.phase * 2 * Math.PI) > 0 ? 1 : 0);
+    const terminator = `A ${termX} ${r} 0 ${large} ${termSweep} 0 ${-r} Z`;
+    return `
+      <button type="button" class="moon-cell ${i === 0 ? "today" : ""}"
+              data-ts="${p.time}" title="${p.name}, ${Math.round(p.illum * 100)}% illuminated">
+        <svg viewBox="-12 -12 24 24" aria-hidden="true">
+          <circle cx="0" cy="0" r="${r}" fill="rgba(255,255,255,0.08)"/>
+          <path d="${outer} ${terminator}" fill="#f0e6cb"/>
+        </svg>
+        <span>${letter}</span>
+      </button>
+    `;
+  }).join("");
+  root.querySelectorAll(".moon-cell").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const ts = parseInt(btn.dataset.ts, 10);
+      // Noon for that day — pleasant for scenes.
+      if (ts) state.handlers.onHourClick?.(ts + 12 * 3600_000);
+    });
+  });
 }
 
 function renderMoon(moon) {

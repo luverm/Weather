@@ -192,6 +192,12 @@ function normalize(d, aq) {
 
   // Moon phase is not in Open-Meteo's free tier — compute it locally.
   const moon = computeMoonPhase(new Date());
+  // Seven-day moon phase glyph strip.
+  const moonSeries = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(now + i * 86_400_000);
+    const p = computeMoonPhase(d);
+    return { time: d.getTime(), phase: p.phase, illum: p.illum, name: p.name };
+  });
 
   // Temperature at this same hour yesterday, for the "vs yesterday" chip.
   // We pulled past_days=1, so the hourly series starts 24h ago.
@@ -229,6 +235,7 @@ function normalize(d, aq) {
     daily: dailyForecast,
     nowcast,
     moon,
+    moonSeries,
     airQuality: normalizeAq(aq),
     pollen: normalizePollen(aq),
     fetchedAt: now,
@@ -442,6 +449,11 @@ function mock(lat, lon) {
     })),
     nowcast: [],
     moon: computeMoonPhase(new Date()),
+    moonSeries: Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(now + i * 86_400_000);
+      const p = computeMoonPhase(d);
+      return { time: d.getTime(), phase: p.phase, illum: p.illum, name: p.name };
+    }),
     airQuality: { aqi: 42, pm25: 8, pm10: 14, o3: 40, no2: 15, co: 0.2, label: "Good" },
     pollen: {
       items: [
