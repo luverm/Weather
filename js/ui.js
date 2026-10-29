@@ -1840,7 +1840,8 @@ function startFetchedTicker() {
       minutes < 1 ? "Just now" :
       minutes < 60 ? `Updated ${minutes}m ago` :
       `Updated ${Math.floor(minutes / 60)}h ago`;
-    el.fetchedAgo.textContent = "· " + label;
+    const atLabel = fmtTime(state.weather.fetchedAt);
+    el.fetchedAgo.textContent = `· ${label}${atLabel && atLabel !== "—" ? ` (${atLabel})` : ""}`;
     el.fetchedAgo.classList.toggle("stale", minutes >= 20);
   };
   update();
