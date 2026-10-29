@@ -304,6 +304,7 @@ installShortcuts({
     ui.setScrubbing(!clock.isLive());
   },
   jumpToGolden: () => jumpToGolden(),
+  refresh: () => refreshWeather(),
 });
 
 // Scrub the clock to the midpoint of the next golden hour. Looks across
